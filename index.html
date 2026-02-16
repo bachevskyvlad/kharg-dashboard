@@ -67,12 +67,12 @@ a {
 
     <div class="methodology">
       <h2>Data and methodology</h2>
+
       <p>
         Kharg island, Iran, hosts the country’s primary crude oil export terminal.
         A significant share of Iranian seaborne exports departs from this location.
-        Because global oil markets are structurally opaque, independent estimates of
-        storage levels at major export hubs provide additional insight into supply dynamics
-        and potential price pressure.
+        Independent storage estimates at major export hubs provide additional insight
+        into supply dynamics and inventory shifts.
       </p>
 
       <p>
@@ -82,32 +82,35 @@ a {
       </p>
 
       <h3>How the estimate is produced</h3>
+
       <p>
         The model uses Sentinel-1 C-band synthetic aperture radar imagery.
-        Radar backscatter from floating-roof tanks varies depending on the roof position:
+        Radar backscatter from floating-roof tanks varies depending on roof position:
         when the tank is full, the metallic roof sits higher; when empty, the roof drops,
-        altering the radar reflection geometry. These variations are used to derive
+        altering radar reflection geometry. These variations are used to derive
         a relative fill ratio for each tank.
       </p>
+
       <p>
         Tank diameters are mapped individually. Assuming cylindrical geometry,
         estimated fill ratios are converted into volumetric values and then expressed in barrels.
         Weekly values are calculated by aggregating observations and smoothing short-term noise.
       </p>
 
-      <h3>Limitations</h3>
+      <h3>Model assumptions</h3>
+
       <p>
-        The figures represent a modeled estimate. They are more reliable as a directional
-        storage trend indicator than as an exact statement of absolute inventory.
-        Synthetic aperture radar is used because it allows consistent observation
-        regardless of daylight or weather conditions.
+        The figures represent a modeled estimate derived from radar signal behavior.
+        The series should be interpreted primarily as a directional storage trend indicator
+        rather than an exact statement of absolute inventory. Synthetic aperture radar
+        enables consistent observation regardless of daylight or weather conditions.
       </p>
 
-      <h3>Validation and research</h3>
       <p>
         A detailed description of comparable remote sensing methodologies can be found in
         <a href="https://sentinels.copernicus.eu/web/success-stories/-/copernicus-sentinel-1-helps-monitor-oil-industry-activity" target="_blank">link</a>.
       </p>
+
     </div>
   </div>
 </div>
@@ -155,9 +158,12 @@ async function loadData() {
       },
       plugins: {
         legend: { 
-          position: "left",
+          position: "top",
           align: "start",
-          labels: { color: "#e2e8f0" }
+          labels: { 
+            color: "#e2e8f0",
+            boxWidth: 40
+          }
         }
       }
     }
