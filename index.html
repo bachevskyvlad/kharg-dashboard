@@ -2,7 +2,7 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>Kharg Storage Monitor</title>
+<title>oil storage dynamics at kharg export terminal</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <style>
 body {
@@ -30,6 +30,12 @@ h1 {
   font-size:14px;
   opacity:0.7;
 }
+.methodology {
+  margin-top:30px;
+  font-size:13px;
+  opacity:0.6;
+  line-height:1.6;
+}
 canvas {
   width:100% !important;
 }
@@ -38,10 +44,20 @@ canvas {
 <body>
 
 <div class="container">
-  <h1>Kharg Terminal Storage Signal</h1>
+  <h1>oil storage dynamics at kharg island export terminal</h1>
+
   <div class="card">
     <div class="stat" id="latest"></div>
     <canvas id="chart"></canvas>
+
+    <div class="methodology">
+      <p>1. weekly estimation of total crude oil stored across all major tanks located at kharg island export terminal.</p>
+      <p>2. calculation is based on sentinel-1 synthetic aperture radar data (c-band), which is insensitive to cloud cover and weather conditions.</p>
+      <p>3. radar backscatter intensity from floating tank roofs is used to estimate relative fill levels.</p>
+      <p>4. tank geometry (diameter-based cylindrical volume assumption) is applied to convert estimated fill ratio into barrels.</p>
+      <p>5. values represent modeled storage levels and should be interpreted as directional trend indicators rather than exact absolute inventories.</p>
+      <p>6. external validation methodology and research reference: [insert research link here]</p>
+    </div>
   </div>
 </div>
 
@@ -54,15 +70,18 @@ async function loadData() {
   const dates = data.dates;
 
   const latest = values[values.length - 1];
+
   document.getElementById("latest").innerText =
-    "Latest weekly median VV: " + latest.toFixed(2) + " dB";
+    "latest weekly estimated storage: " + 
+    Math.round(latest).toLocaleString() + 
+    " barrels";
 
   new Chart(document.getElementById("chart"), {
     type: "line",
     data: {
       labels: dates,
       datasets: [{
-        label: "Median VV (dB)",
+        label: "estimated barrels",
         data: values,
         borderColor: "#3b82f6",
         borderWidth: 2,
@@ -74,7 +93,14 @@ async function loadData() {
       interaction: { intersect: false, mode: 'index' },
       scales: {
         x: { ticks: { color: "#94a3b8" } },
-        y: { ticks: { color: "#94a3b8" } }
+        y: { 
+          ticks: { 
+            color: "#94a3b8",
+            callback: function(value) {
+              return (value / 1000000).toFixed(1) + "m";
+            }
+          }
+        }
       },
       plugins: {
         legend: { labels: { color: "#e2e8f0" } }
