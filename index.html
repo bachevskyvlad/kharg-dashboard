@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Kharg Storage Monitor</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+body {
+  margin:0;
+  background:#0f172a;
+  color:#e2e8f0;
+  font-family: system-ui, -apple-system, sans-serif;
+}
+.container {
+  max-width:1100px;
+  margin:60px auto;
+  padding:0 20px;
+}
+h1 {
+  font-size:28px;
+  margin-bottom:30px;
+}
+.card {
+  background:#1e293b;
+  padding:30px;
+  border-radius:14px;
+}
+.stat {
+  margin-bottom:20px;
+  font-size:14px;
+  opacity:0.7;
+}
+canvas {
+  width:100% !important;
+}
+</style>
+</head>
+<body>
+
+<div class="container">
+  <h1>Kharg Terminal Storage Signal</h1>
+  <div class="card">
+    <div class="stat" id="latest"></div>
+    <canvas id="chart"></canvas>
+  </div>
+</div>
+
+<script>
+async function loadData() {
+  const res = await fetch("data.json");
+  const data = await res.json();
+
+  const values = data.values;
+  const dates = data.dates;
+
+  const latest = values[values.length - 1];
+  document.getElementById("latest").innerText =
+    "Latest weekly median VV: " + latest.toFixed(2) + " dB";
+
+  new Chart(document.getElementById("chart"), {
+    type: "line",
+    data: {
+      labels: dates,
+      datasets: [{
+        label: "Median VV (dB)",
+        data: values,
+        borderColor: "#3b82f6",
+        borderWidth: 2,
+        pointRadius: 0
+      }]
+    },
+    options: {
+      responsive: true,
+      interaction: { intersect: false, mode: 'index' },
+      scales: {
+        x: { ticks: { color: "#94a3b8" } },
+        y: { ticks: { color: "#94a3b8" } }
+      },
+      plugins: {
+        legend: { labels: { color: "#e2e8f0" } }
+      }
+    }
+  });
+}
+
+loadData();
+</script>
+
+</body>
+</html>
