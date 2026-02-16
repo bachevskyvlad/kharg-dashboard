@@ -59,15 +59,14 @@ a {
 <body>
 
 <div class="container">
-  <h1>Oil storage dynamics at Kharg (Iran) island export terminal</h1>
-  <h2>about the data and calculation methodology</h2>
+  <h1>Oil storage dynamics at Kharg export terminal</h1>
 
   <div class="card">
     <div class="stat" id="latest"></div>
     <canvas id="chart"></canvas>
 
     <div class="methodology">
-      <h3>context</h3>
+      <h2>Data and methodology</h2>
       <p>
         Kharg island, Iran, hosts the country’s primary crude oil export terminal.
         A significant share of Iranian seaborne exports departs from this location.
@@ -76,14 +75,13 @@ a {
         and potential price pressure.
       </p>
 
-      <h3>what is being measured</h3>
       <p>
         The chart represents a weekly estimate of total crude oil stored across
         the main above-ground storage tanks located at the Kharg export complex.
         The calculation aggregates all identified large cylindrical tanks within the facility.
       </p>
 
-      <h3>how the estimate is produced</h3>
+      <h3>How the estimate is produced</h3>
       <p>
         The model uses Sentinel-1 C-band synthetic aperture radar imagery.
         Radar backscatter from floating-roof tanks varies depending on the roof position:
@@ -97,7 +95,7 @@ a {
         Weekly values are calculated by aggregating observations and smoothing short-term noise.
       </p>
 
-      <h3>limitations</h3>
+      <h3>Limitations</h3>
       <p>
         The figures represent a modeled estimate. They are more reliable as a directional
         storage trend indicator than as an exact statement of absolute inventory.
@@ -105,7 +103,7 @@ a {
         regardless of daylight or weather conditions.
       </p>
 
-      <h3>validation and research</h3>
+      <h3>Validation and research</h3>
       <p>
         A detailed description of comparable remote sensing methodologies can be found in
         <a href="https://sentinels.copernicus.eu/web/success-stories/-/copernicus-sentinel-1-helps-monitor-oil-industry-activity" target="_blank">link</a>.
@@ -156,7 +154,11 @@ async function loadData() {
         }
       },
       plugins: {
-        legend: { labels: { color: "#e2e8f0" } }
+        legend: { 
+          position: "left",
+          align: "start",
+          labels: { color: "#e2e8f0" }
+        }
       }
     }
   });
