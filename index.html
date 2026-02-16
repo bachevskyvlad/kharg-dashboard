@@ -18,6 +18,12 @@ body {
 }
 h1 {
   font-size:28px;
+  margin-bottom:8px;
+}
+h2 {
+  font-size:16px;
+  font-weight:400;
+  opacity:0.6;
   margin-bottom:30px;
 }
 .card {
@@ -31,32 +37,79 @@ h1 {
   opacity:0.7;
 }
 .methodology {
-  margin-top:30px;
+  margin-top:35px;
   font-size:13px;
-  opacity:0.6;
+  opacity:0.75;
   line-height:1.6;
+}
+.methodology h3 {
+  font-size:14px;
+  margin-bottom:12px;
+  opacity:0.9;
 }
 canvas {
   width:100% !important;
+}
+a {
+  color:#93c5fd;
+  text-decoration:none;
 }
 </style>
 </head>
 <body>
 
 <div class="container">
-  <h1>oil storage dynamics at kharg island export terminal</h1>
+  <h1>Oil storage dynamics at Kharg (Iran) island export terminal</h1>
+  <h2>about the data and calculation methodology</h2>
 
   <div class="card">
     <div class="stat" id="latest"></div>
     <canvas id="chart"></canvas>
 
     <div class="methodology">
-      <p>1. weekly estimation of total crude oil stored across all major tanks located at kharg island export terminal.</p>
-      <p>2. calculation is based on sentinel-1 synthetic aperture radar data (c-band), which is insensitive to cloud cover and weather conditions.</p>
-      <p>3. radar backscatter intensity from floating tank roofs is used to estimate relative fill levels.</p>
-      <p>4. tank geometry (diameter-based cylindrical volume assumption) is applied to convert estimated fill ratio into barrels.</p>
-      <p>5. values represent modeled storage levels and should be interpreted as directional trend indicators rather than exact absolute inventories.</p>
-      <p>6. external validation methodology and research reference: [insert research link here]</p>
+      <h3>context</h3>
+      <p>
+        Kharg island, Iran, hosts the country’s primary crude oil export terminal.
+        A significant share of Iranian seaborne exports departs from this location.
+        Because global oil markets are structurally opaque, independent estimates of
+        storage levels at major export hubs provide additional insight into supply dynamics
+        and potential price pressure.
+      </p>
+
+      <h3>what is being measured</h3>
+      <p>
+        The chart represents a weekly estimate of total crude oil stored across
+        the main above-ground storage tanks located at the Kharg export complex.
+        The calculation aggregates all identified large cylindrical tanks within the facility.
+      </p>
+
+      <h3>how the estimate is produced</h3>
+      <p>
+        The model uses Sentinel-1 C-band synthetic aperture radar imagery.
+        Radar backscatter from floating-roof tanks varies depending on the roof position:
+        when the tank is full, the metallic roof sits higher; when empty, the roof drops,
+        altering the radar reflection geometry. These variations are used to derive
+        a relative fill ratio for each tank.
+      </p>
+      <p>
+        Tank diameters are mapped individually. Assuming cylindrical geometry,
+        estimated fill ratios are converted into volumetric values and then expressed in barrels.
+        Weekly values are calculated by aggregating observations and smoothing short-term noise.
+      </p>
+
+      <h3>limitations</h3>
+      <p>
+        The figures represent a modeled estimate. They are more reliable as a directional
+        storage trend indicator than as an exact statement of absolute inventory.
+        Synthetic aperture radar is used because it allows consistent observation
+        regardless of daylight or weather conditions.
+      </p>
+
+      <h3>validation and research</h3>
+      <p>
+        A detailed description of comparable remote sensing methodologies can be found in
+        <a href="https://sentinels.copernicus.eu/web/success-stories/-/copernicus-sentinel-1-helps-monitor-oil-industry-activity" target="_blank">link</a>.
+      </p>
     </div>
   </div>
 </div>
