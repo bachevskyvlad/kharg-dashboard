@@ -92,6 +92,6 @@
     "tanks_count": 31,
     "measurements_count": 1395,
     "aggregation": "weekly_mean_of_daily_means_then_sum",
-    "generated": "2026-02-17T09:54:19.036892"
+    "generated": "2026-02-17T10:21:59.105990"
   }
 }
