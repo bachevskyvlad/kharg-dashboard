@@ -65,6 +65,11 @@ a {
   color:#93c5fd;
   text-decoration:none;
 }
+img.method-image {
+  width:100%;
+  border-radius:12px;
+  margin:20px 0;
+}
 </style>
 </head>
 <body>
@@ -91,6 +96,11 @@ a {
         the main above-ground storage tanks located at the Kharg export complex.
         The calculation aggregates all identified large cylindrical tanks within the facility.
       </p>
+
+      <!-- <!-- ДОБАВЛЕННОЕ ИЗОБРАЖЕНИЕ -->
+      <!-- <img src="images/kharg_sar_example.jpg"
+           alt="Sentinel-1 SAR image of Kharg oil storage tanks"
+           class="method-image"> --> -->
 
       <h3>How the estimate is produced</h3>
 
@@ -136,22 +146,22 @@ async function loadData() {
   const res = await fetch("data.json");
   const data = await res.json();
 
-  const values = data.values;
+  const values = data.values;   // уже в миллионах баррелей
   const dates = data.dates;
 
   const latest = values[values.length - 1];
 
   document.getElementById("latest").innerText =
-    "latest weekly estimated storage: " + 
-    Math.round(latest).toLocaleString() + 
-    " barrels";
+    "latest weekly estimated storage: " +
+    latest.toFixed(2) +
+    " mln barrels";
 
   new Chart(document.getElementById("chart"), {
     type: "line",
     data: {
       labels: dates,
       datasets: [{
-        label: "estimated barrels",
+        label: "estimated storage (mln barrels)",
         data: values,
         borderColor: "#3b82f6",
         borderWidth: 2,
@@ -163,20 +173,20 @@ async function loadData() {
       interaction: { intersect: false, mode: 'index' },
       scales: {
         x: { ticks: { color: "#94a3b8" } },
-        y: { 
-          ticks: { 
+        y: {
+          ticks: {
             color: "#94a3b8",
             callback: function(value) {
-              return (value / 1000000).toFixed(1) + "m";
+              return value.toFixed(1) + " mln";
             }
           }
         }
       },
       plugins: {
-        legend: { 
+        legend: {
           position: "top",
           align: "start",
-          labels: { 
+          labels: {
             color: "#e2e8f0",
             boxWidth: 40
           }
