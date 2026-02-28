@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Live Monitor — OilRadar</title>
+<title>Storage Monitor — OilRadar</title>
 
 <!-- Google tag (gtag.js) -->
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-TZQ5VH3GPY"></script>
@@ -55,9 +55,6 @@
   .monitor-wrap { background:var(--panel); border:1px solid var(--border); padding:32px; box-shadow:0 20px 40px rgba(0,0,0,0.5); }
   .monitor-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:20px; }
   .monitor-title { font-family:'DM Mono',monospace; font-size:11px; letter-spacing:2px; text-transform:uppercase; color:var(--accent); }
-  .live-dot { display:flex; align-items:center; gap:8px; font-family:'DM Mono',monospace; font-size:10px; color:var(--accent2); letter-spacing:2px; }
-  .live-dot::before { content:''; width:8px; height:8px; background:var(--accent2); border-radius:50%; animation:blink 1.5s ease infinite; }
-  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:.2} }
   
   .monitor-stat { font-family:'DM Mono',monospace; font-size:14px; color:var(--white); margin-bottom:24px; padding:12px 16px; background:rgba(59,130,246,0.06); border-left:2px solid var(--accent); display:flex; gap:24px; }
   
@@ -70,7 +67,13 @@
   .explain-card h4 { font-family:'DM Mono',monospace; font-size:11px; letter-spacing:2px; text-transform:uppercase; color:var(--muted); margin-bottom:12px; }
   .explain-card.alert h4 { color:var(--accent2); }
   .explain-card p { font-size:13px; line-height:1.7; color:var(--text); }
+  .explain-card p.muted { color:var(--muted); font-size:12px; margin-top:12px; }
   .explain-card strong { color:var(--white); font-weight:500; }
+  
+  .linkedin-block { margin-top:20px; padding-top:20px; border-top:1px solid rgba(255,71,87,0.2); }
+  .linkedin-block p { font-size:12px; color:var(--muted); }
+  .linkedin-link { color:var(--accent); text-decoration:none; border-bottom:1px dashed var(--accent); transition:color .2s; }
+  .linkedin-link:hover { color:var(--white); border-color:var(--white); }
 
   /* FOOTER */
   footer { background:var(--panel); border-top:1px solid var(--border); padding:32px 48px; display:flex; align-items:center; justify-content:space-between; margin-top:auto; }
@@ -93,14 +96,13 @@
 </nav>
 
 <main>
-  <div class="section-label">Live Daily Feed (Last 3 Months)</div>
+  <div class="section-label">Data Feed (Last 3 Months)</div>
   <h1 class="section-title">Kharg Island Storage Monitor</h1>
   
   <div class="monitor-container">
     <div class="monitor-wrap">
       <div class="monitor-header">
         <div class="monitor-title">Daily Storage Dynamics — SAR Extraction</div>
-        <div class="live-dot">LIVE FEED</div>
       </div>
       
       <div class="monitor-stat" id="latestStat">
@@ -115,11 +117,16 @@
         <div class="explain-card">
           <h4>🛰️ How The Radar Works</h4>
           <p>Oil storage tanks on Kharg Island use <strong>floating roofs</strong> that lower as oil is pumped out and rise as tanks fill. Sentinel-1 SAR (Synthetic Aperture Radar) signals bounce off the internal walls of the tank. A low roof creates a deep cavity, returning a brighter radar reflection. We invert this radiometric signal to calculate the physical volume in millions of barrels.</p>
+          <p class="muted">On average, the satellite passes over the region twice a week, meaning we receive a fresh signal twice a week.</p>
         </div>
         <div class="explain-card alert">
           <h4>📊 Reading The Signal</h4>
           <p><strong>Rising Volume (Build):</strong> Oil is accumulating. This indicates a disruption or bottleneck in export logistics. Tankers are likely delayed or loading is slower than production.<br><br>
-          <strong>Falling Volume (Draw):</strong> Active exporting. Tankers are actively draining the terminal, sending physical supply into the global market.</p>
+          <strong>Falling Volume (Drawdown):</strong> Tankers are draining the terminal, sending physical supply into the global market.</p>
+          
+          <div class="linkedin-block">
+            <p>If you have specific requests for custom monitoring or need data access for other regions, feel free to reach out to me on <a href="https://www.linkedin.com/in/bachevsky/" target="_blank" class="linkedin-link">LinkedIn</a>.</p>
+          </div>
         </div>
       </div>
     </div>
@@ -134,7 +141,6 @@
 <script>
 async function loadDailyMonitor() {
   try {
-    // We assume data_daily.json is deployed to the root of the site (e.g. your public folder)
     const res = await fetch('/data_daily.json'); 
     const d = await res.json();
     
@@ -147,8 +153,8 @@ async function loadDailyMonitor() {
     const diff   = (latest - prev).toFixed(2);
     const sign   = diff > 0 ? '+' : '';
     const trend  = diff > 0
-      ? '<span style="color:#f0a500">▲ INVENTORY BUILDING</span>'
-      : '<span style="color:#3b82f6">▼ ACTIVE DRAWDOWN</span>';
+      ? '<span style="color:#f0a500">▲ BUILDING</span>'
+      : '<span style="color:#3b82f6">▼ DRAWDOWN</span>';
 
     document.getElementById('latestStat').innerHTML =
       `<div>Latest Reading: <strong style="color:#3b82f6;">${latest.toFixed(2)} Mn Bbl</strong></div>
