@@ -5,8 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>OilRadar — Satellite Intelligence for Physical Oil Supply</title>
 
-
-  <!-- Google tag (gtag.js) -->
+<!-- Google tag (gtag.js) -->
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-TZQ5VH3GPY"></script>
 <script>
   window.dataLayer = window.dataLayer || [];
@@ -97,8 +96,7 @@
   .monitor-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:20px; }
   .monitor-title { font-family:'DM Mono',monospace; font-size:11px; letter-spacing:2px; text-transform:uppercase; color:var(--accent); }
   .live-dot { display:flex; align-items:center; gap:8px; font-family:'DM Mono',monospace; font-size:10px; color:var(--accent2); letter-spacing:2px; }
-  .live-dot::before { content:''; width:8px; height:8px; background:var(--accent2); border-radius:50%; animation:blink 1.5s ease infinite; }
-  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:.2} }
+  .live-dot::before { content:''; width:8px; height:8px; background:var(--accent2); border-radius:50%; } /* Removed blink animation */
   .monitor-stat { font-family:'DM Mono',monospace; font-size:12px; color:var(--muted); margin-bottom:20px; padding:10px 14px; background:rgba(59,130,246,0.06); border-left:2px solid var(--accent); line-height:1.8; }
   .monitor-note { margin-top:16px; font-family:'DM Mono',monospace; font-size:10px; color:var(--muted); line-height:1.8; padding:14px; border:1px solid var(--border); }
 
@@ -192,7 +190,7 @@
     <h1 class="hero-title">See The <span>Supply</span><br>Before The Market</h1>
     <p class="hero-sub">We track <strong>physical crude oil exports</strong> from every major Persian Gulf terminal using SAR satellite imagery — delivering a <strong>4–7 week lead</strong> over official reports and market consensus.</p>
     <div class="hero-badges">
-      <div class="badge active">Live Signal</div>
+      <div class="badge active">Satellite Signal</div>
       <div class="badge">Kharg Island ✓</div>
       <div class="badge">Persian Gulf Expansion</div>
       <div class="badge">Not in Bloomberg</div>
@@ -219,7 +217,7 @@
     <div class="problem-card vs">
       <div class="card-label good">OilRadar Approach</div>
       <h3>Satellite Observation at Source</h3>
-      <p>We read the tanks directly. SAR radar doesn't lie. Every week, we count what's physically stored before ships move. You get the signal at the export node — not the rumor, not the report.</p>
+      <p>We read the tanks directly. SAR radar doesn't lie. We consistently count what's physically stored before ships move. You get the signal at the export node — not the rumor, not the report.</p>
     </div>
     <div class="problem-card vs">
       <div class="card-label good">The Edge You Get</div>
@@ -237,7 +235,7 @@
     <div class="step" data-n="1">
       <div class="step-icon">🛰️</div>
       <h3>SAR Acquisition</h3>
-      <p>Sentinel-1 C-band radar images the terminal weekly, penetrating clouds and darkness. No optical satellite dependency.</p>
+      <p>Sentinel-1 C-band radar images the terminal 2-3 times a week on average, penetrating clouds and darkness. No optical satellite dependency.</p>
       <div class="step-arrow"></div>
     </div>
     <div class="step" data-n="2">
@@ -249,31 +247,33 @@
     <div class="step" data-n="3">
       <div class="step-icon">📐</div>
       <h3>Volume Calculation</h3>
-      <p>Known tank diameter × fill ratio = approximate crude volume. Aggregated across the full terminal for total weekly storage.</p>
+      <p>Known tank diameter × fill ratio = approximate crude volume. Aggregated across the full terminal for total storage estimation.</p>
       <div class="step-arrow"></div>
     </div>
     <div class="step" data-n="4">
       <div class="step-icon">📊</div>
       <h3>Export Signal</h3>
-      <p>Weekly dynamics reveal accumulation (export slowdown) or drawdown (active loading) — before any tanker moves.</p>
+      <p>Dynamics reveal accumulation (export slowdown) or drawdown (active loading) — before any tanker moves.</p>
     </div>
   </div>
 </section>
 
 <!-- SIGNAL -->
 <section id="signal">
-  <div class="section-label">Live Monitor · Kharg Island, Iran</div>
-  <h2 class="section-title">Real Data.<br><span>Real Signal.</span></h2>
+  <div class="section-label">Terminal Monitor · Kharg Island, Iran</div>
+  <h2 class="section-title">Actual Data.<br><span>Reliable Signal.</span></h2>
   <div class="signal-layout reveal">
     <div>
       <div class="monitor-wrap">
         <div class="monitor-header">
           <div class="monitor-title">Oil Storage Dynamics — Kharg Export Terminal</div>
-          <div class="live-dot">LIVE FEED</div>
+          <div class="live-dot" style="opacity:0.8;">SATELLITE FEED</div>
         </div>
         <div class="monitor-stat" id="latestStat">Loading data...</div>
         <canvas id="liveChart"></canvas>
         <div class="monitor-note">
+          <span style="color:var(--accent)">UPDATE FREQUENCY:</span>
+          Data is updated 2-3 times a week as the satellite passes over the region.<br><br>
           <span style="color:var(--accent)">SIGNAL:</span>
           Storage build → export friction, supply accumulating.
           Storage draw → active loading, oil flowing to market.
@@ -283,7 +283,7 @@
     </div>
     <div>
       <div class="data-table-wrap">
-        <div class="table-title">Weekly Storage Log — Last 12 Weeks</div>
+        <div class="table-title">Recent Storage Log — Smoothed Extract</div>
         <div id="tableContainer"><div class="table-loading">Loading...</div></div>
       </div>
     </div>
@@ -317,7 +317,7 @@
       <div class="lag-row">
         <div class="lag-label">OilRadar</div>
         <div class="lag-track"><div class="lag-fill" style="width:8%;background:var(--accent)"></div></div>
-        <div class="lag-value" style="color:var(--accent)">Real-time</div>
+        <div class="lag-value" style="color:var(--accent)">2-3 times/wk</div>
       </div>
       <div class="lag-row">
         <div class="lag-label">AIS Trackers</div>
@@ -352,12 +352,12 @@
       <div class="offer-tier">Tier 01</div>
       <h3>Kharg Monitor</h3>
       <ul class="offer-items">
-        <li>Weekly storage level updates for Kharg Island terminal</li>
+        <li>Storage level updates 2-3 times a week for Kharg Island terminal</li>
         <li>Export bottleneck signal with geopolitical event overlay</li>
         <li>Iran physical supply indicator — accumulation vs. drawdown</li>
         <li>Available now — running since March 2023</li>
       </ul>
-      <button class="offer-btn" onclick="window.open('https://calendly.com/bachevsky/60min', '_blank')">Request Access</button>
+      <button class="offer-btn" onclick="window.location.href='https://oilradar.io/monitor'">Open Monitor</button>
     </div>
     <div class="offer-card featured">
       <div class="offer-tier">Tier 02 — Exclusive Dataset</div>
@@ -365,7 +365,7 @@
       <ul class="offer-items">
         <li>All 6 major exporters: Saudi Arabia, Iran, Iraq, Kuwait, UAE, Qatar</li>
         <li>Per-terminal, per-tank resolution — not aggregated guesses</li>
-        <li>Weekly storage dynamics across the entire Gulf supply chain</li>
+        <li>Data updated 2-3 times a week across the entire Gulf supply chain</li>
         <li>Bespoke dataset built for your fund — no competitors see your data</li>
         <li>4–7 week lead over official flows + direct analyst access</li>
       </ul>
@@ -414,7 +414,7 @@ new IntersectionObserver(e => {
   }
 },{threshold:0.3}).observe(document.getElementById('insights'));
 
-// ── LIVE MONITOR ──────────────────────────────────────────
+// ── DATA MONITOR ──────────────────────────────────────────
 async function loadMonitor() {
   const res = await fetch('data.json');
   const d = await res.json();
@@ -431,7 +431,7 @@ async function loadMonitor() {
 
   document.getElementById('latestStat').innerHTML =
     `Latest: <strong style="color:#3b82f6;font-size:14px">${latest.toFixed(2)} Mn Bbl</strong>
-     &nbsp;|&nbsp; WoW: ${sign}${diff} Mn Bbl
+     &nbsp;|&nbsp; Change: ${sign}${diff} Mn Bbl
      &nbsp;|&nbsp; ${trend}`;
 
   new Chart(document.getElementById('liveChart'), {
@@ -475,7 +475,7 @@ async function loadMonitor() {
     }
   });
 
-  // Table: last 12 weeks
+  // Table: last 12 log lines
   const last12v = values.slice(-12).reverse();
   const last12d = dates.slice(-12).reverse();
   let rows = '';
@@ -493,7 +493,7 @@ async function loadMonitor() {
 
   document.getElementById('tableContainer').innerHTML = `
     <table class="data-table">
-      <thead><tr><th>Date</th><th>Mn Bbl</th><th>WoW</th></tr></thead>
+      <thead><tr><th>Date</th><th>Mn Bbl</th><th>Change</th></tr></thead>
       <tbody>${rows}</tbody>
     </table>`;
 }
