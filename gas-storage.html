@@ -272,31 +272,15 @@ footer{
 
     </div>
 
-    <!-- ROW 2: YoY + seasonal -->
-    <div class="section-label">Year-on-Year Comparison</div>
-    <div class="grid-2 reveal">
-
-      <div class="panel">
-        <div class="panel-title">EU Storage — Current Year vs Prior Years</div>
-        <div class="chart-wrap" style="height:240px;">
-          <canvas id="chartYoY"></canvas>
-        </div>
+    <!-- ROW 2: all countries multi-line -->
+    <div class="section-label">All Countries — Storage Level</div>
+    <div class="panel reveal">
+      <div class="chart-wrap" style="height:380px;">
+        <canvas id="chartAllCountries"></canvas>
       </div>
-
-      <div class="panel">
-        <div class="panel-title">Seasonal Pattern — Monthly Average</div>
-        <div class="chart-wrap" style="height:240px;">
-          <canvas id="chartSeasonal"></canvas>
-        </div>
-      </div>
-
     </div>
 
-    <!-- ROW 3: country detail charts -->
-    <div class="section-label">Country Detail</div>
-    <div class="grid-3 reveal" id="countryCharts"></div>
-
-    <!-- ROW 4: data table -->
+    <!-- ROW 3: data table -->
     <div class="section-label">Latest Readings — All Countries</div>
     <div class="panel reveal">
       <table class="data-table">
@@ -440,34 +424,46 @@ async function init() {
   });
 
   // ── Compute EU aggregate if API returned empty ──────
-  if (!parsed["EU"] || parsed["EU"].data.length === 0) {
-    // Collect all dates across non-EU countries
-    const nonEU = countryKeys.filter(c => c !== "EU" && parsed[c].data.length > 0);
+  // Note: DE is also often empty from API — skip it for aggregate
+  const AGGREGATE_KEYS = ["IT","FR","NL","AT","PL","HU","ES","UA"];
+
+  function computeAggregate(keys, name) {
     const dateMap = {};
-    nonEU.forEach(code => {
+    keys.forEach(code => {
+      if (!parsed[code] || !parsed[code].data.length) return;
       parsed[code].data.forEach(d => {
         const key = d.date.toISOString().slice(0,10);
-        if (!dateMap[key]) dateMap[key] = { date: d.date, totalGas: 0, totalCapacity: 0 };
-        // capacity = gasInStorage / (full/100)
+        if (!dateMap[key]) dateMap[key] = { date: d.date, totalGas: 0, totalCapacity: 0, count: 0 };
         if (d.full > 0 && d.gasInStorage != null) {
           const capacity = d.gasInStorage / (d.full / 100);
           dateMap[key].totalGas      += d.gasInStorage;
           dateMap[key].totalCapacity += capacity;
+          dateMap[key].count++;
         }
       });
     });
-    const euData = Object.values(dateMap)
-      .filter(d => d.totalCapacity > 0)
-      .map(d => ({
-        date:         d.date,
-        full:         parseFloat(((d.totalGas / d.totalCapacity) * 100).toFixed(2)),
-        gasInStorage: parseFloat(d.totalGas.toFixed(4)),
-        injection:    0,
-        withdrawal:   0,
-        trend:        "0",
-      }))
-      .sort((a, b) => a.date - b.date);
-    parsed["EU"] = { name: "Europe (aggregate)", data: euData };
+    return {
+      name,
+      data: Object.values(dateMap)
+        .filter(d => d.totalCapacity > 0 && d.count >= 3)
+        .map(d => ({
+          date:         d.date,
+          full:         parseFloat(((d.totalGas / d.totalCapacity) * 100).toFixed(2)),
+          gasInStorage: parseFloat(d.totalGas.toFixed(4)),
+          injection: 0, withdrawal: 0, trend: "0",
+        }))
+        .sort((a, b) => a.date - b.date)
+    };
+  }
+
+  if (!parsed["EU"] || parsed["EU"].data.length === 0) {
+    parsed["EU"] = computeAggregate(AGGREGATE_KEYS, "Europe (aggregate)");
+  }
+  // DE is usually empty from API — remove it from display if so
+  if (!parsed["DE"] || parsed["DE"].data.length === 0) {
+    delete parsed["DE"];
+    const idx = countryKeys.indexOf("DE");
+    if (idx > -1) countryKeys.splice(idx, 1);
   }
 
   // ── EU latest ──────────────────────────────────────
@@ -574,152 +570,55 @@ async function init() {
     });
   }, 300);
 
-  // ══ CHART 2: YoY ═══════════════════════════════════
-  const euByYear = {};
-  eu.data.forEach(d => {
-    const yr = d.date.getFullYear();
-    const doy = Math.floor((d.date - new Date(yr, 0, 0)) / 86400000);
-    if (!euByYear[yr]) euByYear[yr] = [];
-    euByYear[yr].push({ doy, full: d.full });
+  // ══ CHART: ALL COUNTRIES multi-line ══════════════
+  const nonEUKeys = countryKeys.filter(c => c !== 'EU' && parsed[c].data.length > 0);
+  const allDatasets = nonEUKeys.map((code, i) => {
+    const d = parsed[code];
+    const recent = d.data.slice(-365);
+    const col = COUNTRY_COLORS[i % COUNTRY_COLORS.length];
+    return {
+      label: d.name,
+      data:  recent.map(r => ({ x: fmtShort(r.date), y: r.full })),
+      borderColor: col,
+      borderWidth: 1.5,
+      pointRadius: 0,
+      tension: 0.3,
+      fill: false,
+    };
   });
 
-  const yoyYears = Object.keys(euByYear).map(Number).sort().slice(-4);
-  const yoyColors = ["#1a2a3a", C.muted, "#5a7a94", C.accent];
-  const yoyDatasets = yoyYears.map((yr, i) => ({
-    label: String(yr),
-    data:  euByYear[yr].sort((a,b) => a.doy - b.doy).map(d => ({ x: d.doy, y: d.full })),
-    borderColor: yoyColors[i],
-    borderWidth: yr === new Date().getFullYear() ? 2.5 : 1,
-    pointRadius: 0,
-    tension: 0.3,
-    fill: false,
-  }));
-
-  new Chart(document.getElementById("chartYoY"), {
-    type: "line",
-    data: { datasets: yoyDatasets },
+  new Chart(document.getElementById('chartAllCountries'), {
+    type: 'line',
+    data: { datasets: allDatasets },
     options: {
       responsive: true, maintainAspectRatio: false,
-      interaction: { mode:"index", intersect:false },
+      interaction: { mode: 'index', intersect: false },
       scales: {
         x: {
-          type: "linear",
-          min: 1, max: 366,
-          grid:  { color:"rgba(26,42,58,.4)", drawBorder:false },
-          ticks: {
-            color: C.muted, maxTicksLimit: 12,
-            callback: v => {
-              const d = new Date(2024, 0, 0);
-              d.setDate(d.getDate() + v);
-              return MONTH_LABELS[d.getMonth()];
-            }
-          }
+          type: 'category',
+          grid: { color: 'rgba(26,42,58,.4)', drawBorder: false },
+          ticks: { color: C.muted, maxTicksLimit: 12, maxRotation: 0 }
         },
-        y: { ...baseScales().y, min:0, max:105, ticks:{color:C.muted,callback:v=>v+"%"} }
+        y: {
+          ...baseScales().y,
+          min: 0, max: 105,
+          ticks: { color: C.muted, callback: v => v + '%' }
+        }
       },
       plugins: {
-        legend: { labels:{ color:C.muted } },
+        legend: {
+          labels: { color: C.muted, boxWidth: 12, padding: 14, font: { size: 11 } }
+        },
         tooltip: {
-          backgroundColor:"#0a0f14", borderColor:C.border, borderWidth:1,
-          titleColor:C.muted, bodyColor:C.text,
+          backgroundColor: '#0a0f14', borderColor: C.border, borderWidth: 1,
+          titleColor: C.muted, bodyColor: C.text,
+          callbacks: { label: ctx => ' ' + ctx.dataset.label + ': ' + ctx.parsed.y.toFixed(1) + '%' }
         }
       }
     }
   });
 
-  // ══ CHART 3: Seasonal ══════════════════════════════
-  const euMonthly = {};
-  eu.data.forEach(d => {
-    const key = `${d.date.getFullYear()}-${d.date.getMonth()}`;
-    if (!euMonthly[key]) euMonthly[key] = { yr: d.date.getFullYear(), mo: d.date.getMonth(), vals: [] };
-    euMonthly[key].vals.push(d.full);
-  });
-
-  const seasonByYr = {};
-  Object.values(euMonthly).forEach(({ yr, mo, vals }) => {
-    if (!seasonByYr[yr]) seasonByYr[yr] = new Array(12).fill(null);
-    seasonByYr[yr][mo] = vals.reduce((a,b) => a+b, 0) / vals.length;
-  });
-
-  const seasonYears = Object.keys(seasonByYr).map(Number).sort().slice(-4);
-  const seasonColors = ["#1a2a3a", C.muted, "#5a7a94", C.accent];
-
-  new Chart(document.getElementById("chartSeasonal"), {
-    type: "line",
-    data: {
-      labels: MONTH_LABELS,
-      datasets: seasonYears.map((yr,i) => ({
-        label: String(yr),
-        data:  seasonByYr[yr],
-        borderColor: seasonColors[i],
-        borderWidth: yr === new Date().getFullYear() ? 2.5 : 1,
-        pointRadius: 3,
-        pointBackgroundColor: seasonColors[i],
-        tension: 0.3, fill: false,
-      }))
-    },
-    options: {
-      responsive: true, maintainAspectRatio: false,
-      scales: {
-        x: { grid:{color:"rgba(26,42,58,.4)",drawBorder:false}, ticks:{color:C.muted} },
-        y: { ...baseScales().y, min:0, max:105, ticks:{color:C.muted,callback:v=>v+"%"} }
-      },
-      plugins: {
-        legend:{ labels:{ color:C.muted } },
-        tooltip:{ backgroundColor:"#0a0f14", borderColor:C.border, borderWidth:1 }
-      }
-    }
-  });
-
-  // ══ COUNTRY MINI CHARTS ════════════════════════════
-  const grid = document.getElementById("countryCharts");
-  countryKeys.filter(c => c !== "EU").forEach((code, i) => {
-    const d = parsed[code];
-    const recent = d.data.slice(-180);
-    const last   = d.data[d.data.length - 1];
-    const col    = COUNTRY_COLORS[i % COUNTRY_COLORS.length];
-
-    const div = document.createElement("div");
-    div.className = "panel";
-    div.innerHTML = `
-      <div class="panel-title">
-        ${d.name}
-        <span style="color:${colorFill(last?.full)}">${last?.full?.toFixed(1) ?? "—"}%</span>
-      </div>
-      <div class="chart-wrap" style="height:130px;">
-        <canvas id="mini_${code}"></canvas>
-      </div>
-    `;
-    grid.appendChild(div);
-
-    new Chart(document.getElementById(`mini_${code}`), {
-      type: "line",
-      data: {
-        labels: recent.map(d => fmtShort(d.date)),
-        datasets: [{
-          data:  recent.map(d => d.full),
-          borderColor: col,
-          borderWidth: 1.5,
-          backgroundColor: col.replace(")", ",.06)").replace("rgb","rgba"),
-          fill: true, pointRadius: 0, tension: 0.3,
-        }]
-      },
-      options: {
-        responsive: true, maintainAspectRatio: false,
-        scales: {
-          x: { display:false },
-          y: { min:0, max:105, grid:{color:"rgba(26,42,58,.3)",drawBorder:false},
-               ticks:{color:C.muted,maxTicksLimit:4,callback:v=>v+"%"} }
-        },
-        plugins: { legend:{display:false}, tooltip:{
-          backgroundColor:"#0a0f14", borderColor:C.border, borderWidth:1,
-          callbacks:{ label: ctx => " "+ctx.parsed.y.toFixed(1)+"%" }
-        }}
-      }
-    });
-  });
-
-  // ══ DATA TABLE ═════════════════════════════════════
+    // ══ DATA TABLE ═════════════════════════════════════
   const tbody = document.getElementById("dataTableBody");
   countryKeys.forEach(code => {
     const d   = parsed[code];
