@@ -1,0 +1,730 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OilRadar — Europe Gas Storage Monitor</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@300;400;500&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+:root {
+  --black:  #060809;
+  --deep:   #0a0f14;
+  --panel:  #0f1823;
+  --border: #1a2a3a;
+  --accent: #2d7ff9;
+  --accent-glow: rgba(45,127,249,0.10);
+  --red:    #e83a3a;
+  --gold:   #d4970a;
+  --green:  #1a9e5c;
+  --text:   #b8cad8;
+  --muted:  #4a6678;
+  --white:  #eef2f7;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+html{scroll-behavior:smooth;}
+body{background:var(--black);color:var(--text);font-family:'DM Sans',sans-serif;overflow-x:hidden;min-height:100vh;}
+
+/* scanline */
+body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:9999;
+  background:repeating-linear-gradient(0deg,transparent,transparent 3px,rgba(0,0,0,0.07) 3px,rgba(0,0,0,0.07) 4px);}
+
+/* ── NAV ─────────────────────────────────────────────── */
+nav{
+  position:fixed;top:0;left:0;right:0;z-index:200;
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0 48px;height:56px;
+  background:rgba(6,8,9,0.92);backdrop-filter:blur(12px);
+  border-bottom:1px solid var(--border);
+}
+.nav-logo{font-family:'Bebas Neue',sans-serif;font-size:20px;letter-spacing:4px;color:var(--white);text-decoration:none;}
+.nav-logo em{color:var(--accent);font-style:normal;}
+.nav-links{display:flex;gap:32px;list-style:none;}
+.nav-links a{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:2px;
+  text-transform:uppercase;color:var(--muted);text-decoration:none;transition:color .2s;}
+.nav-links a:hover,.nav-links a.active{color:var(--accent);}
+.nav-live{display:flex;align-items:center;gap:8px;font-family:'DM Mono',monospace;
+  font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);}
+.nav-live::before{content:'';width:6px;height:6px;border-radius:50%;background:var(--green);
+  animation:pulse 2s ease infinite;}
+@keyframes pulse{0%,100%{opacity:1;box-shadow:0 0 0 0 rgba(26,158,92,.4)}50%{opacity:.7;box-shadow:0 0 0 4px rgba(26,158,92,0)}}
+
+/* ── PAGE ────────────────────────────────────────────── */
+.page{padding:80px 48px 60px;max-width:1400px;margin:0 auto;}
+
+/* ── HERO STRIP ──────────────────────────────────────── */
+.hero{
+  display:flex;align-items:flex-end;justify-content:space-between;
+  padding:48px 0 40px;border-bottom:1px solid var(--border);
+  flex-wrap:wrap;gap:24px;
+}
+.hero-left{}
+.hero-eyebrow{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:4px;
+  text-transform:uppercase;color:var(--accent);margin-bottom:16px;display:block;}
+.hero-title{font-family:'Bebas Neue',sans-serif;font-size:clamp(48px,6vw,88px);
+  line-height:.92;color:var(--white);}
+.hero-title em{color:var(--accent);font-style:normal;}
+.hero-sub{margin-top:14px;font-size:14px;color:var(--muted);max-width:520px;line-height:1.8;}
+.hero-right{display:flex;gap:2px;flex-shrink:0;}
+.hero-stat{background:var(--panel);border:1px solid var(--border);padding:20px 28px;min-width:140px;}
+.hero-stat-label{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:3px;
+  text-transform:uppercase;color:var(--muted);margin-bottom:8px;}
+.hero-stat-val{font-family:'Bebas Neue',sans-serif;font-size:36px;color:var(--white);line-height:1;}
+.hero-stat-val.up{color:var(--gold);}
+.hero-stat-val.down{color:var(--accent);}
+.hero-stat-val.warn{color:var(--red);}
+.hero-stat-sub{font-family:'DM Mono',monospace;font-size:9px;color:var(--muted);
+  letter-spacing:1px;margin-top:4px;}
+
+/* ── GRID LAYOUT ─────────────────────────────────────── */
+.grid-main{display:grid;grid-template-columns:1fr 340px;gap:2px;margin-top:2px;}
+.grid-wide{display:grid;grid-template-columns:1fr;margin-top:2px;}
+.grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:2px;margin-top:2px;}
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:2px;margin-top:2px;}
+
+/* ── PANELS ──────────────────────────────────────────── */
+.panel{background:var(--panel);border:1px solid var(--border);padding:28px;}
+.panel-title{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:3px;
+  text-transform:uppercase;color:var(--muted);margin-bottom:20px;
+  display:flex;align-items:center;justify-content:space-between;}
+.panel-title span{color:var(--accent);}
+
+/* ── CHART WRAPPER ───────────────────────────────────── */
+.chart-wrap{position:relative;width:100%;}
+.chart-wrap canvas{width:100%!important;}
+
+/* ── COUNTRY BARS ────────────────────────────────────── */
+.country-list{display:flex;flex-direction:column;gap:12px;}
+.country-row{display:grid;grid-template-columns:110px 1fr 52px;gap:10px;align-items:center;}
+.country-name{font-family:'DM Mono',monospace;font-size:10px;color:var(--text);
+  letter-spacing:.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.country-track{height:4px;background:rgba(30,45,61,.8);position:relative;}
+.country-fill{height:100%;transition:width 1.2s ease;position:relative;}
+.country-fill::after{content:'';position:absolute;right:0;top:-2px;
+  width:1px;height:8px;background:inherit;opacity:.5;}
+.country-pct{font-family:'DM Mono',monospace;font-size:10px;text-align:right;}
+
+/* ── YoY CARDS ───────────────────────────────────────── */
+.yoy-cards{display:flex;flex-direction:column;gap:2px;}
+.yoy-card{background:rgba(15,24,35,.5);border:1px solid var(--border);
+  padding:16px 20px;display:flex;align-items:center;justify-content:space-between;}
+.yoy-year{font-family:'Bebas Neue',sans-serif;font-size:22px;color:var(--muted);}
+.yoy-year.current{color:var(--white);}
+.yoy-val{font-family:'DM Mono',monospace;font-size:12px;}
+.yoy-bar-wrap{flex:1;margin:0 16px;height:3px;background:rgba(30,45,61,.8);}
+.yoy-bar{height:100%;transition:width 1.2s ease;}
+
+/* ── SIGNAL BADGE ────────────────────────────────────── */
+.signal-badge{
+  display:inline-flex;align-items:center;gap:8px;
+  font-family:'DM Mono',monospace;font-size:10px;letter-spacing:2px;
+  text-transform:uppercase;padding:6px 14px;
+  border:1px solid;
+}
+.signal-badge.green{border-color:var(--green);color:var(--green);background:rgba(26,158,92,.06);}
+.signal-badge.amber{border-color:var(--gold);color:var(--gold);background:rgba(212,151,10,.06);}
+.signal-badge.red{border-color:var(--red);color:var(--red);background:rgba(232,58,58,.06);}
+.signal-badge::before{content:'';width:5px;height:5px;border-radius:50%;background:currentColor;}
+
+/* ── UPDATED STAMP ───────────────────────────────────── */
+.updated{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:2px;
+  color:var(--muted);text-transform:uppercase;}
+
+/* ── TABLE ───────────────────────────────────────────── */
+.data-table{width:100%;border-collapse:collapse;font-family:'DM Mono',monospace;font-size:11px;}
+.data-table th{text-align:left;color:var(--muted);font-size:9px;letter-spacing:2px;
+  text-transform:uppercase;padding:8px 0;border-bottom:1px solid var(--border);}
+.data-table td{padding:9px 0;border-bottom:1px solid rgba(26,42,58,.4);color:var(--text);}
+.data-table td.accent{color:var(--accent);}
+.data-table td.up{color:var(--gold);}
+.data-table td.down{color:var(--red);}
+.data-table td.green{color:var(--green);}
+
+/* ── SECTION LABEL ───────────────────────────────────── */
+.section-label{
+  font-family:'DM Mono',monospace;font-size:9px;letter-spacing:4px;
+  text-transform:uppercase;color:var(--muted);
+  padding:20px 0 14px;margin-top:32px;
+  border-top:1px solid var(--border);
+  display:flex;align-items:center;gap:12px;
+}
+.section-label::after{content:'';flex:1;height:1px;background:var(--border);}
+
+/* ── LOADING / ERROR ─────────────────────────────────── */
+.loading{
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  min-height:400px;gap:16px;
+}
+.loading-spinner{
+  width:32px;height:32px;border:2px solid var(--border);
+  border-top-color:var(--accent);border-radius:50%;
+  animation:spin .8s linear infinite;
+}
+@keyframes spin{to{transform:rotate(360deg)}}
+.loading-text{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:3px;
+  text-transform:uppercase;color:var(--muted);}
+
+/* ── FOOTER ──────────────────────────────────────────── */
+footer{
+  border-top:1px solid var(--border);
+  padding:32px 48px;
+  display:flex;align-items:center;justify-content:space-between;
+  flex-wrap:wrap;gap:16px;
+  max-width:1400px;margin:40px auto 0;
+}
+.footer-logo{font-family:'Bebas Neue',sans-serif;font-size:18px;letter-spacing:4px;color:var(--muted);}
+.footer-logo em{color:var(--accent);font-style:normal;}
+.footer-text{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:2px;
+  color:var(--muted);text-transform:uppercase;line-height:2;}
+.footer-link{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:2px;
+  text-transform:uppercase;color:var(--muted);text-decoration:none;
+  border:1px solid var(--border);padding:8px 16px;transition:all .2s;}
+.footer-link:hover{border-color:var(--accent);color:var(--accent);}
+
+/* ── REVEAL ──────────────────────────────────────────── */
+.reveal{opacity:0;transform:translateY(16px);transition:opacity .6s ease,transform .6s ease;}
+.reveal.on{opacity:1;transform:translateY(0);}
+
+/* ── RESPONSIVE ──────────────────────────────────────── */
+@media(max-width:960px){
+  .page{padding:72px 20px 40px;}
+  nav{padding:0 20px;}
+  .grid-main,.grid-3,.grid-2{grid-template-columns:1fr;}
+  .hero{flex-direction:column;align-items:flex-start;}
+  .hero-right{flex-wrap:wrap;}
+}
+</style>
+</head>
+<body>
+
+<!-- ── NAV ───────────────────────────────────────────── -->
+<nav>
+  <a class="nav-logo" href="https://oilradar.io">Oil<em>Radar</em></a>
+  <ul class="nav-links">
+    <li><a href="https://oilradar.io/monitor">Kharg Monitor</a></li>
+    <li><a href="#" class="active">Gas Storage</a></li>
+    <li><a href="https://calendly.com/bachevsky/60min" target="_blank">Get Access</a></li>
+  </ul>
+  <div class="nav-live" id="liveStamp">Updating daily</div>
+</nav>
+
+<!-- ── PAGE ──────────────────────────────────────────── -->
+<div class="page">
+
+  <!-- HERO -->
+  <div class="hero">
+    <div class="hero-left">
+      <span class="hero-eyebrow">Europe Gas Storage Monitor</span>
+      <div class="hero-title">European<br><em>Gas Storage</em></div>
+      <p class="hero-sub">
+        Underground storage levels across 10 countries — the primary leading indicator
+        for TTF pricing, winter supply risk, and LNG import demand.
+      </p>
+    </div>
+    <div class="hero-right" id="heroStats">
+      <div class="hero-stat">
+        <div class="hero-stat-label">EU Aggregate</div>
+        <div class="hero-stat-val" id="statEU">—</div>
+        <div class="hero-stat-sub">% full</div>
+      </div>
+      <div class="hero-stat">
+        <div class="hero-stat-label">vs Last Year</div>
+        <div class="hero-stat-val" id="statYoY">—</div>
+        <div class="hero-stat-sub">pp difference</div>
+      </div>
+      <div class="hero-stat">
+        <div class="hero-stat-label">Signal</div>
+        <div class="hero-stat-val" id="statSignal" style="font-size:18px;padding-top:8px;">—</div>
+        <div class="hero-stat-sub" id="statUpdated">—</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- LOADING STATE -->
+  <div class="loading" id="loadingState">
+    <div class="loading-spinner"></div>
+    <div class="loading-text">Loading GIE data</div>
+  </div>
+
+  <!-- MAIN CONTENT (hidden until loaded) -->
+  <div id="mainContent" style="display:none;">
+
+    <!-- ROW 1: main chart + country bars -->
+    <div class="section-label">Storage Level — EU Aggregate</div>
+    <div class="grid-main reveal">
+
+      <!-- Main chart -->
+      <div class="panel">
+        <div class="panel-title">
+          EU Aggregate Storage (% Full)
+          <span id="chartUpdated">—</span>
+        </div>
+        <div class="chart-wrap" style="height:280px;">
+          <canvas id="chartMain"></canvas>
+        </div>
+      </div>
+
+      <!-- Country bars -->
+      <div class="panel">
+        <div class="panel-title">Countries — Current Level</div>
+        <div class="country-list" id="countryBars"></div>
+      </div>
+
+    </div>
+
+    <!-- ROW 2: YoY + seasonal -->
+    <div class="section-label">Year-on-Year Comparison</div>
+    <div class="grid-2 reveal">
+
+      <div class="panel">
+        <div class="panel-title">EU Storage — Current Year vs Prior Years</div>
+        <div class="chart-wrap" style="height:240px;">
+          <canvas id="chartYoY"></canvas>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-title">Seasonal Pattern — Monthly Average</div>
+        <div class="chart-wrap" style="height:240px;">
+          <canvas id="chartSeasonal"></canvas>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ROW 3: country detail charts -->
+    <div class="section-label">Country Detail</div>
+    <div class="grid-3 reveal" id="countryCharts"></div>
+
+    <!-- ROW 4: data table -->
+    <div class="section-label">Latest Readings — All Countries</div>
+    <div class="panel reveal">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Country</th>
+            <th>Latest Date</th>
+            <th>% Full</th>
+            <th>Gas in Storage (TWh)</th>
+            <th>WoW Change</th>
+            <th>Trend</th>
+            <th>Signal</th>
+          </tr>
+        </thead>
+        <tbody id="dataTableBody"></tbody>
+      </table>
+    </div>
+
+  </div><!-- /mainContent -->
+
+</div><!-- /page -->
+
+<footer>
+  <div class="footer-logo">Oil<em>Radar</em></div>
+  <div class="footer-text">
+    Data source: GIE AGSI+ · Updated daily at 08:00 UTC<br>
+    Europe Gas Storage Monitor · oilradar.io/gas-storage
+  </div>
+  <a class="footer-link" href="https://calendly.com/bachevsky/60min" target="_blank">Get Full Access</a>
+</footer>
+
+<script>
+// ══════════════════════════════════════════════════════
+// CONFIG
+// ══════════════════════════════════════════════════════
+const DATA_URL = "lng_data.json";
+
+const C = {
+  accent:  "#2d7ff9",
+  red:     "#e83a3a",
+  gold:    "#d4970a",
+  green:   "#1a9e5c",
+  muted:   "#4a6678",
+  text:    "#b8cad8",
+  white:   "#eef2f7",
+  panel:   "#0f1823",
+  border:  "#1a2a3a",
+};
+
+const COUNTRY_COLORS = [
+  "#2d7ff9","#d4970a","#1a9e5c","#e83a3a",
+  "#8b5cf6","#06b6d4","#f97316","#84cc16","#ec4899","#6b7280"
+];
+
+const MONTH_LABELS = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+
+// ══════════════════════════════════════════════════════
+// CHART DEFAULTS
+// ══════════════════════════════════════════════════════
+Chart.defaults.color          = C.muted;
+Chart.defaults.borderColor    = C.border;
+Chart.defaults.font.family    = "'DM Mono', monospace";
+Chart.defaults.font.size      = 10;
+Chart.defaults.plugins.legend.labels.boxWidth = 12;
+Chart.defaults.plugins.legend.labels.padding  = 16;
+
+function baseScales(yLabel="% Full") {
+  return {
+    x: {
+      grid:  { color: "rgba(26,42,58,.4)", drawBorder: false },
+      ticks: { color: C.muted, maxTicksLimit: 8 },
+    },
+    y: {
+      min: 0, max: 100,
+      grid:  { color: "rgba(26,42,58,.4)", drawBorder: false },
+      ticks: { color: C.muted, callback: v => v + "%" },
+      title: { display: false },
+    }
+  };
+}
+
+// ══════════════════════════════════════════════════════
+// UTILITIES
+// ══════════════════════════════════════════════════════
+function parseDate(str) { return new Date(str); }
+function fmt(d)         { return new Date(d).toLocaleDateString("en-GB",{day:"numeric",month:"short",year:"numeric"}); }
+function fmtShort(d)    { return new Date(d).toLocaleDateString("en-GB",{day:"numeric",month:"short"}); }
+
+function colorFill(pct) {
+  if (pct === null || isNaN(pct)) return C.muted;
+  if (pct < 40) return C.red;
+  if (pct < 70) return C.gold;
+  return C.green;
+}
+
+function signalText(pct, yoy) {
+  if (pct === null) return ["—", ""];
+  if (pct > 85 && yoy >= 0)  return ["OVERSUPPLIED", "green"];
+  if (pct > 70)               return ["COMFORTABLE", "green"];
+  if (pct > 50 && yoy >= 0)  return ["NEUTRAL", "amber"];
+  if (pct > 50 && yoy < 0)   return ["WATCH", "amber"];
+  if (pct > 30)               return ["TIGHT", "amber"];
+  return ["CRITICAL", "red"];
+}
+
+// ══════════════════════════════════════════════════════
+// MAIN
+// ══════════════════════════════════════════════════════
+async function init() {
+  let raw;
+  try {
+    const r = await fetch(DATA_URL);
+    if (!r.ok) throw new Error(r.status);
+    raw = await r.json();
+  } catch(e) {
+    document.getElementById("loadingState").innerHTML =
+      `<div class="loading-text" style="color:var(--red)">Failed to load data · ${e.message}</div>`;
+    return;
+  }
+
+  document.getElementById("loadingState").style.display = "none";
+  document.getElementById("mainContent").style.display  = "block";
+
+  const countries = raw.countries;
+  const countryKeys = Object.keys(countries);
+
+  // ── Parse all data ─────────────────────────────────
+  const parsed = {};
+  countryKeys.forEach(code => {
+    parsed[code] = {
+      name: countries[code].name,
+      data: countries[code].data.map(d => ({
+        date:         new Date(d.date),
+        full:         d.full,
+        gasInStorage: d.gasInStorage,
+        injection:    d.injection,
+        withdrawal:   d.withdrawal,
+        trend:        d.trend,
+      })).filter(d => d.full !== null)
+    };
+  });
+
+  // ── EU latest ──────────────────────────────────────
+  const eu   = parsed["EU"];
+  const euLast  = eu.data[eu.data.length - 1];
+  const euPrev  = eu.data[eu.data.length - 2];
+  const euWoW   = euPrev ? (euLast.full - euPrev.full).toFixed(1) : null;
+
+  // YoY: same day-of-year last year
+  const oneYearAgo = new Date(euLast.date);
+  oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1);
+  const euYoY = eu.data.reduce((closest, d) => {
+    return Math.abs(d.date - oneYearAgo) < Math.abs(closest.date - oneYearAgo) ? d : closest;
+  });
+  const yoyDiff = (euLast.full - euYoY.full).toFixed(1);
+
+  // ── Hero stats ─────────────────────────────────────
+  document.getElementById("statEU").textContent = euLast.full.toFixed(1) + "%";
+  document.getElementById("statEU").className   = "hero-stat-val " + (euLast.full < 40 ? "warn" : euLast.full < 70 ? "up" : "down");
+
+  const yoyEl = document.getElementById("statYoY");
+  yoyEl.textContent = (yoyDiff > 0 ? "+" : "") + yoyDiff + "pp";
+  yoyEl.className   = "hero-stat-val " + (yoyDiff >= 0 ? "down" : "warn");
+
+  const [sigText, sigClass] = signalText(euLast.full, parseFloat(yoyDiff));
+  const sigEl = document.getElementById("statSignal");
+  sigEl.innerHTML = `<span class="signal-badge ${sigClass}">${sigText}</span>`;
+
+  document.getElementById("statUpdated").textContent = fmt(euLast.date);
+  document.getElementById("chartUpdated").textContent = fmt(euLast.date);
+  document.getElementById("liveStamp").textContent = "Updated " + fmt(raw.updated_at || euLast.date);
+
+  // ══ CHART 1: EU main line ═══════════════════════════
+  const euRecent = eu.data.slice(-365);
+  new Chart(document.getElementById("chartMain"), {
+    type: "line",
+    data: {
+      labels: euRecent.map(d => fmtShort(d.date)),
+      datasets: [{
+        label: "EU Storage %",
+        data:  euRecent.map(d => d.full),
+        borderColor: C.accent,
+        borderWidth: 2,
+        backgroundColor: "rgba(45,127,249,0.06)",
+        fill: true,
+        pointRadius: 0,
+        tension: 0.3,
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      interaction: { mode:"index", intersect:false },
+      scales: {
+        ...baseScales(),
+        y: {
+          ...baseScales().y,
+          min: 0, max: 105,
+          ticks: { color: C.muted, callback: v => v + "%" },
+        }
+      },
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          backgroundColor: "#0a0f14",
+          borderColor: C.border, borderWidth: 1,
+          titleColor: C.muted, bodyColor: C.accent,
+          callbacks: { label: ctx => " " + ctx.parsed.y.toFixed(1) + "%" }
+        },
+        annotation: undefined,
+      }
+    }
+  });
+
+  // ══ COUNTRY BARS ═══════════════════════════════════
+  const barContainer = document.getElementById("countryBars");
+  const countryLatest = countryKeys
+    .filter(c => c !== "EU")
+    .map(c => {
+      const d = parsed[c];
+      const last = d.data[d.data.length - 1];
+      return { code: c, name: d.name, full: last ? last.full : null };
+    })
+    .sort((a,b) => (b.full||0) - (a.full||0));
+
+  countryLatest.forEach(({ name, full }) => {
+    const pct = full !== null ? full.toFixed(1) : "—";
+    const col = colorFill(full);
+    const row = document.createElement("div");
+    row.className = "country-row";
+    row.innerHTML = `
+      <div class="country-name">${name}</div>
+      <div class="country-track">
+        <div class="country-fill" style="width:0%;background:${col}" data-target="${full||0}"></div>
+      </div>
+      <div class="country-pct" style="color:${col}">${pct}%</div>
+    `;
+    barContainer.appendChild(row);
+  });
+
+  // animate bars
+  setTimeout(() => {
+    document.querySelectorAll(".country-fill").forEach(el => {
+      el.style.width = Math.min(el.dataset.target, 100) + "%";
+    });
+  }, 300);
+
+  // ══ CHART 2: YoY ═══════════════════════════════════
+  const euByYear = {};
+  eu.data.forEach(d => {
+    const yr = d.date.getFullYear();
+    const doy = Math.floor((d.date - new Date(yr, 0, 0)) / 86400000);
+    if (!euByYear[yr]) euByYear[yr] = [];
+    euByYear[yr].push({ doy, full: d.full });
+  });
+
+  const yoyYears = Object.keys(euByYear).map(Number).sort().slice(-4);
+  const yoyColors = ["#1a2a3a", C.muted, "#5a7a94", C.accent];
+  const yoyDatasets = yoyYears.map((yr, i) => ({
+    label: String(yr),
+    data:  euByYear[yr].sort((a,b) => a.doy - b.doy).map(d => ({ x: d.doy, y: d.full })),
+    borderColor: yoyColors[i],
+    borderWidth: yr === new Date().getFullYear() ? 2.5 : 1,
+    pointRadius: 0,
+    tension: 0.3,
+    fill: false,
+  }));
+
+  new Chart(document.getElementById("chartYoY"), {
+    type: "line",
+    data: { datasets: yoyDatasets },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      interaction: { mode:"index", intersect:false },
+      scales: {
+        x: {
+          type: "linear",
+          min: 1, max: 366,
+          grid:  { color:"rgba(26,42,58,.4)", drawBorder:false },
+          ticks: {
+            color: C.muted, maxTicksLimit: 12,
+            callback: v => {
+              const d = new Date(2024, 0, 0);
+              d.setDate(d.getDate() + v);
+              return MONTH_LABELS[d.getMonth()];
+            }
+          }
+        },
+        y: { ...baseScales().y, min:0, max:105, ticks:{color:C.muted,callback:v=>v+"%"} }
+      },
+      plugins: {
+        legend: { labels:{ color:C.muted } },
+        tooltip: {
+          backgroundColor:"#0a0f14", borderColor:C.border, borderWidth:1,
+          titleColor:C.muted, bodyColor:C.text,
+        }
+      }
+    }
+  });
+
+  // ══ CHART 3: Seasonal ══════════════════════════════
+  const euMonthly = {};
+  eu.data.forEach(d => {
+    const key = `${d.date.getFullYear()}-${d.date.getMonth()}`;
+    if (!euMonthly[key]) euMonthly[key] = { yr: d.date.getFullYear(), mo: d.date.getMonth(), vals: [] };
+    euMonthly[key].vals.push(d.full);
+  });
+
+  const seasonByYr = {};
+  Object.values(euMonthly).forEach(({ yr, mo, vals }) => {
+    if (!seasonByYr[yr]) seasonByYr[yr] = new Array(12).fill(null);
+    seasonByYr[yr][mo] = vals.reduce((a,b) => a+b, 0) / vals.length;
+  });
+
+  const seasonYears = Object.keys(seasonByYr).map(Number).sort().slice(-4);
+  const seasonColors = ["#1a2a3a", C.muted, "#5a7a94", C.accent];
+
+  new Chart(document.getElementById("chartSeasonal"), {
+    type: "line",
+    data: {
+      labels: MONTH_LABELS,
+      datasets: seasonYears.map((yr,i) => ({
+        label: String(yr),
+        data:  seasonByYr[yr],
+        borderColor: seasonColors[i],
+        borderWidth: yr === new Date().getFullYear() ? 2.5 : 1,
+        pointRadius: 3,
+        pointBackgroundColor: seasonColors[i],
+        tension: 0.3, fill: false,
+      }))
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      scales: {
+        x: { grid:{color:"rgba(26,42,58,.4)",drawBorder:false}, ticks:{color:C.muted} },
+        y: { ...baseScales().y, min:0, max:105, ticks:{color:C.muted,callback:v=>v+"%"} }
+      },
+      plugins: {
+        legend:{ labels:{ color:C.muted } },
+        tooltip:{ backgroundColor:"#0a0f14", borderColor:C.border, borderWidth:1 }
+      }
+    }
+  });
+
+  // ══ COUNTRY MINI CHARTS ════════════════════════════
+  const grid = document.getElementById("countryCharts");
+  countryKeys.filter(c => c !== "EU").forEach((code, i) => {
+    const d = parsed[code];
+    const recent = d.data.slice(-180);
+    const last   = d.data[d.data.length - 1];
+    const col    = COUNTRY_COLORS[i % COUNTRY_COLORS.length];
+
+    const div = document.createElement("div");
+    div.className = "panel";
+    div.innerHTML = `
+      <div class="panel-title">
+        ${d.name}
+        <span style="color:${colorFill(last?.full)}">${last?.full?.toFixed(1) ?? "—"}%</span>
+      </div>
+      <div class="chart-wrap" style="height:130px;">
+        <canvas id="mini_${code}"></canvas>
+      </div>
+    `;
+    grid.appendChild(div);
+
+    new Chart(document.getElementById(`mini_${code}`), {
+      type: "line",
+      data: {
+        labels: recent.map(d => fmtShort(d.date)),
+        datasets: [{
+          data:  recent.map(d => d.full),
+          borderColor: col,
+          borderWidth: 1.5,
+          backgroundColor: col.replace(")", ",.06)").replace("rgb","rgba"),
+          fill: true, pointRadius: 0, tension: 0.3,
+        }]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        scales: {
+          x: { display:false },
+          y: { min:0, max:105, grid:{color:"rgba(26,42,58,.3)",drawBorder:false},
+               ticks:{color:C.muted,maxTicksLimit:4,callback:v=>v+"%"} }
+        },
+        plugins: { legend:{display:false}, tooltip:{
+          backgroundColor:"#0a0f14", borderColor:C.border, borderWidth:1,
+          callbacks:{ label: ctx => " "+ctx.parsed.y.toFixed(1)+"%" }
+        }}
+      }
+    });
+  });
+
+  // ══ DATA TABLE ═════════════════════════════════════
+  const tbody = document.getElementById("dataTableBody");
+  countryKeys.forEach(code => {
+    const d   = parsed[code];
+    const arr = d.data;
+    if (!arr.length) return;
+    const last = arr[arr.length - 1];
+    const prev = arr[arr.length - 2];
+    const wow  = prev && last.full !== null && prev.full !== null
+      ? (last.full - prev.full).toFixed(1) : null;
+
+    const [sig, sigCls] = signalText(last.full, wow ? parseFloat(wow) : 0);
+    const wowStr = wow !== null
+      ? `<td class="${parseFloat(wow)>=0?"up":"down"}">${parseFloat(wow)>=0?"+":""}${wow}pp</td>`
+      : `<td class="accent">—</td>`;
+
+    tbody.innerHTML += `
+      <tr>
+        <td class="accent">${d.name}</td>
+        <td>${fmt(last.date)}</td>
+        <td style="color:${colorFill(last.full)}">${last.full?.toFixed(1) ?? "—"}%</td>
+        <td>${last.gasInStorage?.toFixed(0) ?? "—"} TWh</td>
+        ${wowStr}
+        <td>${last.trend || "—"}</td>
+        <td><span class="signal-badge ${sigCls}" style="font-size:9px;padding:3px 8px;">${sig}</span></td>
+      </tr>
+    `;
+  });
+
+  // ══ REVEAL ═════════════════════════════════════════
+  const obs = new IntersectionObserver(entries => {
+    entries.forEach(e => { if(e.isIntersecting) e.target.classList.add("on"); });
+  }, { threshold: 0.08 });
+  document.querySelectorAll(".reveal").forEach(el => obs.observe(el));
+}
+
+init();
+</script>
+</body>
+</html>
