@@ -435,9 +435,40 @@ async function init() {
         injection:    d.injection,
         withdrawal:   d.withdrawal,
         trend:        d.trend,
-      })).filter(d => d.full !== null)
+      })).filter(d => d.full !== null && !isNaN(new Date(d.date).getTime()))
     };
   });
+
+  // ── Compute EU aggregate if API returned empty ──────
+  if (!parsed["EU"] || parsed["EU"].data.length === 0) {
+    // Collect all dates across non-EU countries
+    const nonEU = countryKeys.filter(c => c !== "EU" && parsed[c].data.length > 0);
+    const dateMap = {};
+    nonEU.forEach(code => {
+      parsed[code].data.forEach(d => {
+        const key = d.date.toISOString().slice(0,10);
+        if (!dateMap[key]) dateMap[key] = { date: d.date, totalGas: 0, totalCapacity: 0 };
+        // capacity = gasInStorage / (full/100)
+        if (d.full > 0 && d.gasInStorage != null) {
+          const capacity = d.gasInStorage / (d.full / 100);
+          dateMap[key].totalGas      += d.gasInStorage;
+          dateMap[key].totalCapacity += capacity;
+        }
+      });
+    });
+    const euData = Object.values(dateMap)
+      .filter(d => d.totalCapacity > 0)
+      .map(d => ({
+        date:         d.date,
+        full:         parseFloat(((d.totalGas / d.totalCapacity) * 100).toFixed(2)),
+        gasInStorage: parseFloat(d.totalGas.toFixed(4)),
+        injection:    0,
+        withdrawal:   0,
+        trend:        "0",
+      }))
+      .sort((a, b) => a.date - b.date);
+    parsed["EU"] = { name: "Europe (aggregate)", data: euData };
+  }
 
   // ── EU latest ──────────────────────────────────────
   const eu   = parsed["EU"];
