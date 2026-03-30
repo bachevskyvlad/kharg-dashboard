@@ -152,7 +152,10 @@
 
   footer { background:var(--panel); border-top:1px solid var(--border); padding:48px; display:flex; align-items:center; justify-content:space-between; }
   .footer-logo { font-family:'Bebas Neue',sans-serif; font-size:28px; letter-spacing:6px; color:var(--accent); }
+  .footer-center { display:flex; align-items:center; gap:32px; }
   .footer-text { font-family:'DM Mono',monospace; font-size:10px; letter-spacing:2px; color:var(--muted); text-align:center; line-height:2; }
+  .footer-nav { font-family:'DM Mono',monospace; font-size:10px; letter-spacing:2px; text-transform:uppercase; color:var(--muted); text-decoration:none; transition:color .2s; }
+  .footer-nav:hover { color:var(--accent); }
   .footer-cta { font-family:'DM Mono',monospace; font-size:11px; letter-spacing:3px; text-transform:uppercase; background:var(--accent); color:var(--white); padding:14px 28px; border:none; cursor:pointer; transition:opacity .2s; }
   .footer-cta:hover { opacity:.85; }
 
@@ -165,6 +168,8 @@
     .lag-row{grid-template-columns:120px 1fr 60px}
     nav{padding:16px 24px}
     section{padding:100px 24px 60px}
+    footer{flex-direction:column;gap:24px;text-align:center}
+    .footer-center{flex-direction:column;gap:16px}
   }
 </style>
 </head>
@@ -178,6 +183,7 @@
     <li><a onclick="goTo('signal')">Signal</a></li>
     <li><a onclick="goTo('insights')">Edge</a></li>
     <li><a onclick="goTo('offer')">Offer</a></li>
+    <li><a href="/team">Team</a></li>
   </ul>
   <button class="nav-cta" onclick="goTo('offer')">Get Access</button>
 </nav>
@@ -391,7 +397,10 @@
 
 <footer>
   <div class="footer-logo">OilRadar</div>
-  <div class="footer-text">Satellite Intelligence for Physical Oil Markets<br>Early Signal on Supply Before the Market Sees It</div>
+  <div class="footer-center">
+    <a href="/team" class="footer-nav">Team</a>
+    <div class="footer-text">Satellite Intelligence for Physical Oil Markets<br>Early Signal on Supply Before the Market Sees It</div>
+  </div>
   <button class="footer-cta" onclick="window.open('https://calendly.com/bachevsky/60min', '_blank')">Request Data Access</button>
 </footer>
 
