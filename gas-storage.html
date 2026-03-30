@@ -174,8 +174,12 @@ footer{
 }
 .footer-logo{font-family:'Bebas Neue',sans-serif;font-size:18px;letter-spacing:4px;color:var(--muted);}
 .footer-logo em{color:var(--accent);font-style:normal;}
+.footer-center{display:flex;align-items:center;gap:24px;}
 .footer-text{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:2px;
   color:var(--muted);text-transform:uppercase;line-height:2;}
+.footer-nav{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:2px;
+  text-transform:uppercase;color:var(--muted);text-decoration:none;transition:color .2s;}
+.footer-nav:hover{color:var(--accent);}
 .footer-link{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:2px;
   text-transform:uppercase;color:var(--muted);text-decoration:none;
   border:1px solid var(--border);padding:8px 16px;transition:all .2s;}
@@ -192,6 +196,8 @@ footer{
   .grid-main,.grid-3,.grid-2{grid-template-columns:1fr;}
   .hero{flex-direction:column;align-items:flex-start;}
   .hero-right{flex-wrap:wrap;}
+  footer{flex-direction:column;text-align:center;}
+  .footer-center{flex-direction:column;gap:12px;}
 }
 </style>
 </head>
@@ -203,6 +209,7 @@ footer{
   <ul class="nav-links">
     <li><a href="https://oilradar.io/monitor">Kharg Monitor</a></li>
     <li><a href="#" class="active">Gas Storage</a></li>
+    <li><a href="/team">Team</a></li>
     <li><a href="https://calendly.com/bachevsky/60min" target="_blank">Get Access</a></li>
   </ul>
   <div class="nav-live" id="liveStamp">Updating daily</div>
@@ -305,9 +312,12 @@ footer{
 
 <footer>
   <div class="footer-logo">Oil<em>Radar</em></div>
-  <div class="footer-text">
-    Data source: GIE AGSI+ · Updated daily at 08:00 UTC<br>
-    Europe Gas Storage Monitor · oilradar.io/gas-storage
+  <div class="footer-center">
+    <a href="/team" class="footer-nav">Team</a>
+    <div class="footer-text">
+      Data source: GIE AGSI+ · Updated daily at 08:00 UTC<br>
+      Europe Gas Storage Monitor · oilradar.io/gas-storage
+    </div>
   </div>
   <a class="footer-link" href="https://calendly.com/bachevsky/60min" target="_blank">Get Full Access</a>
 </footer>
