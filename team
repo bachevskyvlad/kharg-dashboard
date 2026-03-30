@@ -116,7 +116,7 @@
     <!-- VLAD -->
     <div class="team-card">
       <div class="team-photo">
-        <img src="/images/vlad.jpg" alt="Vlad" style="object-position: 80% center;">
+        <img src="vlad.jpeg" alt="Vlad" style="object-position: 80% center;">
       </div>
       <div class="team-name">Vlad</div>
       <div class="team-role">Founder & Lead Analyst</div>
@@ -138,7 +138,7 @@
     <!-- ARTEM -->
     <div class="team-card">
       <div class="team-photo">
-        <img src="/images/artem.jpg" alt="Artem">
+        <img src="artem.jpg" alt="Artem">
       </div>
       <div class="team-name">Artem</div>
       <div class="team-role">CTO & Lead Developer</div>
@@ -163,7 +163,7 @@
   <div class="bottom-section">
     <h3>Want Custom Intelligence?</h3>
     <p>We provide tailored monitoring solutions for specific terminals, regions, or commodities. Reach out to discuss your requirements.</p>
-    <a href="https://www.linkedin.com/in/bachevsky/" target="_blank" class="bottom-cta">Get in Touch</a>
+    <a href="https://calendly.com/bachevsky/60min" target="_blank" class="bottom-cta">Get in Touch</a>
   </div>
 
 </main>
