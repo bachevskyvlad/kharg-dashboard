@@ -116,7 +116,7 @@
     <!-- VLAD -->
     <div class="team-card">
       <div class="team-photo">
-        <img src="vlad.jpeg" alt="Vlad" style="object-position: 80% center;">
+        <img src="vlad.jpeg" alt="Vlad">
       </div>
       <div class="team-name">Vlad</div>
       <div class="team-role">Founder & Lead Analyst</div>
