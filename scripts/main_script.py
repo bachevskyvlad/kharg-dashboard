@@ -36,7 +36,7 @@ S1_CDSE = DataCollection.SENTINEL1_IW.define_from(
 )
 
 START_DATE     = datetime.strptime("2025-01-01", "%Y-%m-%d")
-END_DATE       = datetime.strptime("2026-06-01", "%Y-%m-%d")
+END_DATE       = datetime.utcnow()
 RESOLUTION     = 5
 BUFFER_METERS  = 300
 BARREL_PER_M3  = 6.2898
