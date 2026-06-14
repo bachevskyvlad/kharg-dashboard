@@ -70,11 +70,19 @@ jobs:
           BEFORE=${{ steps.before.outputs.count }}
           AFTER=${{ steps.after.outputs.count }}
           DIFF=$((AFTER - BEFORE))
-          if [ "$DIFF" -gt 0 ]; then STATUS="New data: +${DIFF} date(s)"; else STATUS="No new data (${AFTER} dates total)"; fi
+          if [ "$DIFF" -gt 0 ]; then
+            STATUS="&#128195; <b>New data added:</b> +${DIFF} date(s)"
+          else
+            STATUS="&#128564; No new data (still ${AFTER} dates)"
+          fi
           curl -s -X POST "https://api.telegram.org/bot7745904293:AAHV2qN_5_XNxpg6Ir3iV3XmEKpokthi308/sendMessage" \
             -d chat_id="204715787" \
             -d parse_mode="HTML" \
-            -d text="SUCCESS Kharg SAR&#10;${STATUS}&#10;$(date -u +'%Y-%m-%d %H:%M UTC')"
+            --data-urlencode text="&#9989; <b>Kharg SAR &#8212; SUCCESS</b>
+          ${STATUS}
+          &#128225; Cached dates total: <code>${AFTER}</code>
+          &#128197; <code>$(date -u +'%Y-%m-%d %H:%M UTC')</code>
+          &#128279; <a href='https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}'>Run #${{ github.run_number }}</a>"
 
       - name: Telegram - Kharg FAILED
         if: failure()
@@ -82,7 +90,9 @@ jobs:
           curl -s -X POST "https://api.telegram.org/bot7745904293:AAHV2qN_5_XNxpg6Ir3iV3XmEKpokthi308/sendMessage" \
             -d chat_id="204715787" \
             -d parse_mode="HTML" \
-            -d text="FAILED Kharg SAR&#10;$(date -u +'%Y-%m-%d %H:%M UTC')&#10;https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+            --data-urlencode text="&#10060; <b>Kharg SAR &#8212; FAILED</b>
+          &#128197; <code>$(date -u +'%Y-%m-%d %H:%M UTC')</code>
+          &#128279; <a href='https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}'>Open logs</a>"
 
   lng:
     runs-on: ubuntu-latest
@@ -111,7 +121,9 @@ jobs:
           curl -s -X POST "https://api.telegram.org/bot7745904293:AAHV2qN_5_XNxpg6Ir3iV3XmEKpokthi308/sendMessage" \
             -d chat_id="204715787" \
             -d parse_mode="HTML" \
-            -d text="SUCCESS GIE LNG&#10;$(date -u +'%Y-%m-%d %H:%M UTC')"
+            --data-urlencode text="&#9989; <b>GIE LNG &#8212; SUCCESS</b>
+          &#128197; <code>$(date -u +'%Y-%m-%d %H:%M UTC')</code>
+          &#128279; <a href='https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}'>Run #${{ github.run_number }}</a>"
 
       - name: Telegram - LNG FAILED
         if: failure()
@@ -119,7 +131,9 @@ jobs:
           curl -s -X POST "https://api.telegram.org/bot7745904293:AAHV2qN_5_XNxpg6Ir3iV3XmEKpokthi308/sendMessage" \
             -d chat_id="204715787" \
             -d parse_mode="HTML" \
-            -d text="FAILED GIE LNG&#10;$(date -u +'%Y-%m-%d %H:%M UTC')&#10;https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+            --data-urlencode text="&#10060; <b>GIE LNG &#8212; FAILED</b>
+          &#128197; <code>$(date -u +'%Y-%m-%d %H:%M UTC')</code>
+          &#128279; <a href='https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}'>Open logs</a>"
 
   commit_data:
     runs-on: ubuntu-latest
@@ -158,13 +172,15 @@ jobs:
           git pull --rebase --autostash origin main
           git push
 
-      - name: Telegram - Commit SUCCESS
+      - name: Telegram - Dashboard pushed
         if: success()
         run: |
           curl -s -X POST "https://api.telegram.org/bot7745904293:AAHV2qN_5_XNxpg6Ir3iV3XmEKpokthi308/sendMessage" \
             -d chat_id="204715787" \
             -d parse_mode="HTML" \
-            -d text="Dashboard updated&#10;$(date -u +'%Y-%m-%d %H:%M UTC')"
+            --data-urlencode text="&#128640; <b>Dashboard updated</b>
+          &#128197; <code>$(date -u +'%Y-%m-%d %H:%M UTC')</code>
+          &#128279; <a href='https://kharg-dashboard.pages.dev'>Open dashboard</a>"
 
       - name: Telegram - Commit FAILED
         if: failure()
@@ -172,4 +188,6 @@ jobs:
           curl -s -X POST "https://api.telegram.org/bot7745904293:AAHV2qN_5_XNxpg6Ir3iV3XmEKpokthi308/sendMessage" \
             -d chat_id="204715787" \
             -d parse_mode="HTML" \
-            -d text="FAILED dashboard commit&#10;$(date -u +'%Y-%m-%d %H:%M UTC')&#10;https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+            --data-urlencode text="&#10060; <b>Dashboard commit &#8212; FAILED</b>
+          &#128197; <code>$(date -u +'%Y-%m-%d %H:%M UTC')</code>
+          &#128279; <a href='https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}'>Open logs</a>"
