@@ -34,11 +34,7 @@ jobs:
         id: before
         run: |
           if [ -f public/data_raw_cache.json ]; then
-            COUNT=$(python3 -c "
-import json
-d=json.load(open('public/data_raw_cache.json'))
-print(len(set(r['date'] for r in d)))
-")
+            COUNT=$(python3 -c "import json; d=json.load(open('public/data_raw_cache.json')); print(len(set(r['date'] for r in d)))")
           else
             COUNT=0
           fi
@@ -50,11 +46,7 @@ print(len(set(r['date'] for r in d)))
       - name: Count dates AFTER run
         id: after
         run: |
-          COUNT=$(python3 -c "
-import json
-d=json.load(open('public/data_raw_cache.json'))
-print(len(set(r['date'] for r in d)))
-")
+          COUNT=$(python3 -c "import json; d=json.load(open('public/data_raw_cache.json')); print(len(set(r['date'] for r in d)))")
           echo "count=$COUNT" >> $GITHUB_OUTPUT
 
       - name: Upload raw cache
@@ -78,11 +70,7 @@ print(len(set(r['date'] for r in d)))
           BEFORE=${{ steps.before.outputs.count }}
           AFTER=${{ steps.after.outputs.count }}
           DIFF=$((AFTER - BEFORE))
-          if [ "$DIFF" -gt 0 ]; then
-            STATUS="New data: +${DIFF} date(s)"
-          else
-            STATUS="No new data (${AFTER} dates total)"
-          fi
+          if [ "$DIFF" -gt 0 ]; then STATUS="New data: +${DIFF} date(s)"; else STATUS="No new data (${AFTER} dates total)"; fi
           curl -s -X POST "https://api.telegram.org/bot7745904293:AAHV2qN_5_XNxpg6Ir3iV3XmEKpokthi308/sendMessage" \
             -d chat_id="204715787" \
             -d parse_mode="HTML" \
