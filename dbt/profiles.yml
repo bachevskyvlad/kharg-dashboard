@@ -1,0 +1,14 @@
+oilradar:
+  target: prod
+  outputs:
+    prod:
+      type: postgres
+      host: db.yoekhkczwdeyauwarsyy.supabase.co
+      user: postgres
+      password: "{{ env_var('SUPABASE_DB_PASSWORD') }}"
+      port: 5432
+      dbname: postgres
+      schema: public
+      threads: 1
+      connect_timeout: 10
+      sslmode: require

@@ -1,0 +1,42 @@
+version: 2
+
+models:
+  - name: kharg_daily
+    description: |
+      Daily Kharg Island storage volume with signals.
+      Includes 5-day moving average, day change, BUILD/DRAWDOWN signal,
+      and 30-day percent change.
+    columns:
+      - name: date
+        tests: [not_null, unique]
+      - name: vol_mn_bbl
+        tests: [not_null]
+      - name: signal
+        tests:
+          - accepted_values:
+              values: ['BUILD', 'DRAWDOWN', 'FLAT']
+
+  - name: kharg_signals
+    description: |
+      Streak analysis — consecutive BUILD or DRAWDOWN periods.
+      Each row shows how many days into a streak, total streak length,
+      and cumulative volume change over the streak.
+    columns:
+      - name: date
+        tests: [not_null, unique]
+      - name: signal
+        tests:
+          - accepted_values:
+              values: ['BUILD', 'DRAWDOWN']
+
+  - name: lng_summary
+    description: |
+      Latest gas storage reading per European country
+      with YoY comparison and supply signal.
+    columns:
+      - name: country_code
+        tests: [not_null, unique]
+      - name: signal
+        tests:
+          - accepted_values:
+              values: ['OVERSUPPLIED', 'COMFORTABLE', 'NEUTRAL', 'WATCH', 'TIGHT', 'CRITICAL']

@@ -1,0 +1,30 @@
+version: 2
+
+models:
+  - name: stg_kharg_raw
+    description: Cleaned SAR backscatter readings from Sentinel-1 per tank per date
+    columns:
+      - name: date
+        tests: [not_null]
+      - name: tank_id
+        tests: [not_null]
+      - name: db_mean
+        tests: [not_null]
+
+  - name: stg_lng_raw
+    description: Cleaned GIE AGSI+ gas storage readings
+    columns:
+      - name: date
+        tests: [not_null]
+      - name: country_code
+        tests: [not_null]
+      - name: full_pct
+        tests: [not_null]
+
+  - name: stg_kharg_daily
+    description: Daily volume timeseries from Supabase
+    columns:
+      - name: date
+        tests: [not_null]
+      - name: vol_mn_bbl
+        tests: [not_null]

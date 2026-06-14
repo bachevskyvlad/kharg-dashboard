@@ -192,3 +192,51 @@ jobs:
             --data-urlencode text="&#10060; <b>Dashboard commit &#8212; FAILED</b>
           &#128197; <code>$(date -u +'%Y-%m-%d %H:%M UTC')</code>
           &#128279; <a href='https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}'>Open logs</a>"
+
+  dbt:
+    runs-on: ubuntu-latest
+    needs: [kharg, lng]
+    if: always()
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dbt
+        run: pip install dbt-postgres
+
+      - name: dbt run
+        env:
+          SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
+        run: |
+          cd dbt
+          dbt run --profiles-dir .
+
+      - name: dbt test
+        env:
+          SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
+        run: |
+          cd dbt
+          dbt test --profiles-dir .
+
+      - name: Telegram - dbt SUCCESS
+        if: success()
+        run: |
+          curl -s -X POST "https://api.telegram.org/bot7745904293:AAHV2qN_5_XNxpg6Ir3iV3XmEKpokthi308/sendMessage" \
+            -d chat_id="204715787" \
+            -d parse_mode="HTML" \
+            --data-urlencode text="&#9989; <b>dbt &#8212; SUCCESS</b>
+          Models: kharg_daily, kharg_signals, lng_summary
+          &#128197; <code>$(date -u +'%Y-%m-%d %H:%M UTC')</code>"
+
+      - name: Telegram - dbt FAILED
+        if: failure()
+        run: |
+          curl -s -X POST "https://api.telegram.org/bot7745904293:AAHV2qN_5_XNxpg6Ir3iV3XmEKpokthi308/sendMessage" \
+            -d chat_id="204715787" \
+            -d parse_mode="HTML" \
+            --data-urlencode text="&#10060; <b>dbt &#8212; FAILED</b>
+          &#128197; <code>$(date -u +'%Y-%m-%d %H:%M UTC')</code>
+          &#128279; <a href='https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}'>Open logs</a>"

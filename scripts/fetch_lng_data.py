@@ -1,11 +1,8 @@
 """
 fetch_lng_data.py
 ─────────────────
-Тянет данные уровня ПХГ Европы с GIE AGSI+
-и сохраняет в public/lng_data.json
-
-Запускается GitHub Actions каждый день в 08:00 UTC
-API_KEY берётся из GitHub Secrets → GIE_API_KEY
+Tянет данные уровня ПХГ Европы с GIE AGSI+
+и сохраняет в public/lng_data.json + Supabase lng_raw
 """
 
 import os
@@ -13,10 +10,14 @@ import json
 import requests
 from datetime import datetime, timedelta
 from pathlib import Path
+from supabase import create_client
 
 API_KEY  = "d8821dab5251273a95455e0228842254"
 BASE_URL = "https://agsi.gie.eu/api"
 HEADERS  = {"x-key": API_KEY}
+
+SUPABASE_URL = "https://yoekhkczwdeyauwarsyy.supabase.co"
+SUPABASE_KEY = "sb_publishable_7j07_zzdqTGM1LXf7-o9Tg_JJRbJQSM"
 
 COUNTRIES = {
     "EU": "Europe (aggregate)",
@@ -63,12 +64,12 @@ def fetch_country(country_code: str, days_back: int = 1095) -> list:
 
         for item in items:
             all_rows.append({
-                "date":         item.get("gasDayStart", ""),
-                "full":         _num(item.get("full")),
-                "gasInStorage": _num(item.get("gasInStorage")),
-                "injection":    _num(item.get("injection")),
-                "withdrawal":   _num(item.get("withdrawal")),
-                "trend":        item.get("trend", ""),
+                "date":              item.get("gasDayStart", ""),
+                "full":              _num(item.get("full")),
+                "gasInStorage":      _num(item.get("gasInStorage")),
+                "injection":         _num(item.get("injection")),
+                "withdrawal":        _num(item.get("withdrawal")),
+                "trend":             item.get("trend", ""),
             })
 
         last_page = int(data.get("last_page", 1))
@@ -76,13 +77,11 @@ def fetch_country(country_code: str, days_back: int = 1095) -> list:
             break
         page += 1
 
-    # сортируем по дате
     all_rows.sort(key=lambda x: x["date"])
     return all_rows
 
 
 def _num(val):
-    """Безопасный перевод в float."""
     try:
         return round(float(val), 4) if val not in (None, "", "n/a", "-") else None
     except (ValueError, TypeError):
@@ -90,10 +89,7 @@ def _num(val):
 
 
 def main():
-    if not API_KEY:
-        raise ValueError("GIE_API_KEY не задан — добавь в GitHub Secrets")
-
-    print(f"🔄  Загружаю данные GIE AGSI+  ({datetime.today().strftime('%Y-%m-%d')})")
+    print(f"🔄  Loading GIE AGSI+  ({datetime.today().strftime('%Y-%m-%d')})")
 
     result = {
         "updated_at": datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ"),
@@ -108,14 +104,42 @@ def main():
             "name": name,
             "data": rows,
         }
-        print(f"     {len(rows)} записей")
+        print(f"     {len(rows)} records")
 
     OUTPUT_PATH.parent.mkdir(parents=True, exist_ok=True)
     with open(OUTPUT_PATH, "w", encoding="utf-8") as f:
         json.dump(result, f, ensure_ascii=False, separators=(",", ":"))
 
     size_kb = OUTPUT_PATH.stat().st_size / 1024
-    print(f"\n✅  Сохранено: {OUTPUT_PATH}  ({size_kb:.1f} KB)")
+    print(f"\n✅  Saved: {OUTPUT_PATH}  ({size_kb:.1f} KB)")
+
+    # Write to Supabase lng_raw
+    try:
+        sb = create_client(SUPABASE_URL, SUPABASE_KEY)
+        supabase_rows = []
+        for code, name in COUNTRIES.items():
+            for row in result["countries"][code]["data"]:
+                if row["date"] and row["full"] is not None:
+                    supabase_rows.append({
+                        "date":               row["date"],
+                        "country_code":       code,
+                        "country_name":       name,
+                        "full_pct":           row["full"],
+                        "gas_in_storage_twh": row["gasInStorage"],
+                        "injection_twh":      row["injection"],
+                        "withdrawal_twh":     row["withdrawal"],
+                        "trend":              row["trend"],
+                    })
+
+        # upsert in batches of 500
+        batch_size = 500
+        for i in range(0, len(supabase_rows), batch_size):
+            batch = supabase_rows[i:i + batch_size]
+            sb.table("lng_raw").upsert(batch, on_conflict="date,country_code").execute()
+
+        print(f"  Supabase lng_raw: {len(supabase_rows)} rows upserted")
+    except Exception as e:
+        print(f"  [!] Supabase write failed (JSON still saved): {e}")
 
 
 if __name__ == "__main__":
