@@ -20,8 +20,8 @@ from supabase import create_client
 
 # ================= CONFIG =================
 config = SHConfig()
-config.sh_client_id     = "e982f1d2-cd95-418b-b681-b22f17e80387"
-config.sh_client_secret = "VnE3VIhjzEQvjQyp6j2LeZgvAmmFTcHK"
+config.sh_client_id     = "sh-4a504e67-3704-4c78-bfbc-e5b92cb1d5b4"
+config.sh_client_secret = "U1W6BcqS4bFEIJy2u9xXdlBMZPxtQMBU"
 config.sh_token_url     = "https://identity.dataspace.copernicus.eu/auth/realms/CDSE/protocol/openid-connect/token"
 config.sh_base_url      = "https://sh.dataspace.copernicus.eu"
 
@@ -109,7 +109,7 @@ if os.path.exists(RAW_CACHE_PATH):
     cached_dates = {pd.to_datetime(r["date"]).normalize() for r in cached_records}
     print(f"Loaded {len(cached_records)} cached raw records covering {len(cached_dates)} dates.")
 else:
-    print("No raw cache found — full download will run.")
+    print("No raw cache found - full download will run.")
 
 try:
     catalog = SentinelHubCatalog(config=config)
@@ -156,10 +156,10 @@ if new_dates:
         tanks_data.append({"id": tank["id"], "radius_m": radius_m, "diameter": tank["diameter"], "h_max": tank["h_max"], "crescent": crescent})
 
     evalscript = """
-    //VERSION=3
-    function setup() { return { input: [{ bands: ["VV"] }], output: { bands: 1, sampleType: "FLOAT32" } }; }
-    function evaluatePixel(sample) { return [sample.VV]; }
-    """
+//VERSION=3
+function setup() { return { input: [{ bands: ["VV"] }], output: { bands: 1, sampleType: "FLOAT32" } }; }
+function evaluatePixel(sample) { return [sample.VV]; }
+"""
 
     new_records = []
     for d in new_dates:
