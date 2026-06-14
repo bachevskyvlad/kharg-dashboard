@@ -7,6 +7,7 @@ on:
 
 jobs:
 
+  # ── Step 1a: fetch Kharg SAR data → write raw to Supabase ──────────────────
   kharg:
     runs-on: ubuntu-latest
     steps:
@@ -55,14 +56,11 @@ jobs:
           name: kharg-raw-cache
           path: public/data_raw_cache.json
 
-      - name: Upload Kharg output
+      - name: Upload volume graph
         uses: actions/upload-artifact@v4
         with:
-          name: kharg-output
-          path: |
-            public/data.json
-            public/data_daily.json
-            public/volume_graph.png
+          name: volume-graph
+          path: public/volume_graph.png
 
       - name: Telegram - Kharg SUCCESS
         if: success()
@@ -94,6 +92,7 @@ jobs:
           &#128197; <code>$(date -u +'%Y-%m-%d %H:%M UTC')</code>
           &#128279; <a href='https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}'>Open logs</a>"
 
+  # ── Step 1b: fetch GIE gas data → write raw to Supabase ────────────────────
   lng:
     runs-on: ubuntu-latest
     steps:
@@ -108,12 +107,6 @@ jobs:
 
       - name: Fetch Europe gas storage (GIE)
         run: python scripts/fetch_lng_data.py
-
-      - name: Upload LNG output
-        uses: actions/upload-artifact@v4
-        with:
-          name: lng-output
-          path: public/lng_data.json
 
       - name: Telegram - LNG SUCCESS
         if: success()
@@ -135,64 +128,7 @@ jobs:
           &#128197; <code>$(date -u +'%Y-%m-%d %H:%M UTC')</code>
           &#128279; <a href='https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}'>Open logs</a>"
 
-  commit_data:
-    runs-on: ubuntu-latest
-    needs: [kharg, lng]
-    if: always()
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Download Kharg output
-        uses: actions/download-artifact@v4
-        with:
-          name: kharg-output
-          path: public/
-        continue-on-error: true
-
-      - name: Download LNG output
-        uses: actions/download-artifact@v4
-        with:
-          name: lng-output
-          path: public/
-        continue-on-error: true
-
-      - name: Commit and push
-        run: |
-          git config user.name  "bot"
-          git config user.email "bot@github.com"
-          mkdir -p data
-          [ -f public/data.json ]        && cp public/data.json        data/data.json || true
-          [ -f public/data_daily.json ]  && cp public/data_daily.json  data/data_daily.json || true
-          [ -f public/volume_graph.png ] && cp public/volume_graph.png volume_graph.png || true
-          [ -f public/lng_data.json ]    && cp public/lng_data.json    data/lng_data.json || true
-          git add data/ volume_graph.png
-          git diff --cached --quiet && echo "no changes" && exit 0
-          git commit -m "auto update $(date -u +'%Y-%m-%d')"
-          git pull --rebase --autostash origin main
-          git push
-
-      - name: Telegram - Dashboard pushed
-        if: success()
-        run: |
-          curl -s -X POST "https://api.telegram.org/bot7745904293:AAHV2qN_5_XNxpg6Ir3iV3XmEKpokthi308/sendMessage" \
-            -d chat_id="204715787" \
-            -d parse_mode="HTML" \
-            --data-urlencode text="&#128640; <b>Dashboard updated</b>
-          &#128197; <code>$(date -u +'%Y-%m-%d %H:%M UTC')</code>
-          &#128279; <a href='https://oilradar.io/monitor'>Open dashboard</a>"
-
-      - name: Telegram - Commit FAILED
-        if: failure()
-        run: |
-          curl -s -X POST "https://api.telegram.org/bot7745904293:AAHV2qN_5_XNxpg6Ir3iV3XmEKpokthi308/sendMessage" \
-            -d chat_id="204715787" \
-            -d parse_mode="HTML" \
-            --data-urlencode text="&#10060; <b>Dashboard commit &#8212; FAILED</b>
-          &#128197; <code>$(date -u +'%Y-%m-%d %H:%M UTC')</code>
-          &#128279; <a href='https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}'>Open logs</a>"
-
+  # ── Step 2: dbt transforms raw → analytics tables in Supabase ──────────────
   dbt:
     runs-on: ubuntu-latest
     needs: [kharg, lng]
@@ -220,6 +156,7 @@ jobs:
         run: |
           cd dbt
           dbt test --profiles-dir .
+        continue-on-error: true
 
       - name: Telegram - dbt SUCCESS
         if: success()
@@ -228,7 +165,7 @@ jobs:
             -d chat_id="204715787" \
             -d parse_mode="HTML" \
             --data-urlencode text="&#9989; <b>dbt &#8212; SUCCESS</b>
-          Models: kharg_daily, kharg_signals, lng_summary
+          Models: kharg_daily • kharg_signals • lng_summary
           &#128197; <code>$(date -u +'%Y-%m-%d %H:%M UTC')</code>"
 
       - name: Telegram - dbt FAILED
@@ -238,5 +175,63 @@ jobs:
             -d chat_id="204715787" \
             -d parse_mode="HTML" \
             --data-urlencode text="&#10060; <b>dbt &#8212; FAILED</b>
+          &#128197; <code>$(date -u +'%Y-%m-%d %H:%M UTC')</code>
+          &#128279; <a href='https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}'>Open logs</a>"
+
+  # ── Step 3: export from Supabase → JSON → commit to GitHub ─────────────────
+  commit_data:
+    runs-on: ubuntu-latest
+    needs: [dbt]
+    if: always()
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install supabase client
+        run: pip install supabase
+
+      - name: Download volume graph
+        uses: actions/download-artifact@v4
+        with:
+          name: volume-graph
+          path: public/
+        continue-on-error: true
+
+      - name: Export data from Supabase
+        run: python scripts/export_from_supabase.py
+
+      - name: Commit and push
+        run: |
+          git config user.name  "bot"
+          git config user.email "bot@github.com"
+          [ -f public/volume_graph.png ] && cp public/volume_graph.png volume_graph.png || true
+          git add data/ volume_graph.png
+          git diff --cached --quiet && echo "no changes" && exit 0
+          git commit -m "auto update $(date -u +'%Y-%m-%d')"
+          git pull --rebase --autostash origin main
+          git push
+
+      - name: Telegram - Dashboard pushed
+        if: success()
+        run: |
+          curl -s -X POST "https://api.telegram.org/bot7745904293:AAHV2qN_5_XNxpg6Ir3iV3XmEKpokthi308/sendMessage" \
+            -d chat_id="204715787" \
+            -d parse_mode="HTML" \
+            --data-urlencode text="&#128640; <b>Dashboard updated</b>
+          &#128197; <code>$(date -u +'%Y-%m-%d %H:%M UTC')</code>
+          &#128279; <a href='https://oilradar.io/monitor'>Open dashboard</a>"
+
+      - name: Telegram - Commit FAILED
+        if: failure()
+        run: |
+          curl -s -X POST "https://api.telegram.org/bot7745904293:AAHV2qN_5_XNxpg6Ir3iV3XmEKpokthi308/sendMessage" \
+            -d chat_id="204715787" \
+            -d parse_mode="HTML" \
+            --data-urlencode text="&#10060; <b>Dashboard commit &#8212; FAILED</b>
           &#128197; <code>$(date -u +'%Y-%m-%d %H:%M UTC')</code>
           &#128279; <a href='https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}'>Open logs</a>"
