@@ -20,8 +20,8 @@ from supabase import create_client
 
 # ================= CONFIG =================
 config = SHConfig()
-config.sh_client_id     = "sh-0ebad36f-b87f-419a-bb0a-7c1b1aec203c"
-config.sh_client_secret = "Xr591lJqxer8R1l9jmvYiNBjyYMP14U0"
+config.sh_client_id     = "e982f1d2-cd95-418b-b681-b22f17e80387"
+config.sh_client_secret = "VnE3VIhjzEQvjQyp6j2LeZgvAmmFTcHK"
 config.sh_token_url     = "https://identity.dataspace.copernicus.eu/auth/realms/CDSE/protocol/openid-connect/token"
 config.sh_base_url      = "https://sh.dataspace.copernicus.eu"
 
@@ -193,7 +193,7 @@ if new_dates:
             json.dump(cached_records, f)
         try:
             sb.table("raw_observations").upsert(new_records, on_conflict="date,tank_id").execute()
-            print(f"  ✓ Supabase raw_observations: {len(new_records)} records saved")
+            print(f"  Supabase raw_observations: {len(new_records)} records saved")
         except Exception as e:
             print(f"  [!] Supabase write failed (GitHub still updated): {e}")
 
@@ -233,7 +233,7 @@ with open(DAILY_PATH, "w") as f:
 try:
     daily_rows = [{"date": date, "vol_mn_bbl": val, "aggregation": "daily", "smoothed": False} for date, val in zip(result_daily["dates"], result_daily["values"])]
     sb.table("volume_timeseries").upsert(daily_rows, on_conflict="date,aggregation,smoothed").execute()
-    print(f"  ✓ Supabase volume_timeseries daily: {len(daily_rows)} rows")
+    print(f"  Supabase volume_timeseries daily: {len(daily_rows)} rows")
 except Exception as e:
     print(f"  [!] Supabase daily write failed: {e}")
 
@@ -255,7 +255,7 @@ with open(WEEKLY_PATH, "w") as f:
 try:
     weekly_rows = [{"date": date, "vol_mn_bbl": val, "aggregation": "weekly", "smoothed": True} for date, val in zip(result_weekly["dates"], result_weekly["values"])]
     sb.table("volume_timeseries").upsert(weekly_rows, on_conflict="date,aggregation,smoothed").execute()
-    print(f"  ✓ Supabase volume_timeseries weekly: {len(weekly_rows)} rows")
+    print(f"  Supabase volume_timeseries weekly: {len(weekly_rows)} rows")
 except Exception as e:
     print(f"  [!] Supabase weekly write failed: {e}")
 
