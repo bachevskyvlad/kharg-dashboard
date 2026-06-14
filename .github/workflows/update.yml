@@ -144,21 +144,18 @@ jobs:
           path: public/
         continue-on-error: true
 
-      - name: Copy outputs to repo folders
+      - name: Commit and push
         run: |
+          git config user.name  "bot"
+          git config user.email "bot@github.com"
           mkdir -p data
           [ -f public/data.json ]        && cp public/data.json        data/data.json || true
           [ -f public/data_daily.json ]  && cp public/data_daily.json  data/data_daily.json || true
           [ -f public/volume_graph.png ] && cp public/volume_graph.png volume_graph.png || true
           [ -f public/lng_data.json ]    && cp public/lng_data.json    lng_data.json || true
-
-      - name: Commit and push
-        run: |
-          git config user.name  "bot"
-          git config user.email "bot@github.com"
-          git pull --rebase origin main
           git add data/ volume_graph.png lng_data.json
-          git commit -m "auto update $(date -u +'%Y-%m-%d')" || echo "no changes"
+          git diff --cached --quiet && echo "no changes" && exit 0
+          git pull --rebase --autostash origin main
           git push
 
       - name: Telegram - Commit SUCCESS
