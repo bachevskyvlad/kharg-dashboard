@@ -7,13 +7,8 @@ on:
 
 jobs:
 
-  # ════════════════════════════════════════════
-  # ДЖОБА 1 — Kharg SAR
-  # ════════════════════════════════════════════
   kharg:
     runs-on: ubuntu-latest
-    env:
-      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
     steps:
       - uses: actions/checkout@v4
 
@@ -24,7 +19,7 @@ jobs:
       - name: Install dependencies
         run: pip install -r scripts/requirements.txt
 
-      - name: Restore previous Kharg cache
+      - name: Restore previous cache
         uses: dawidd6/action-download-artifact@v6
         with:
           name: kharg-raw-cache
@@ -65,13 +60,13 @@ print(len(set(r['date'] for r in d)))
 ")
           echo "count=$COUNT" >> $GITHUB_OUTPUT
 
-      - name: Upload raw cache artifact
+      - name: Upload raw cache
         uses: actions/upload-artifact@v4
         with:
           name: kharg-raw-cache
           path: public/data_raw_cache.json
 
-      - name: Upload Kharg output artifact
+      - name: Upload Kharg output
         uses: actions/upload-artifact@v4
         with:
           name: kharg-output
@@ -80,43 +75,32 @@ print(len(set(r['date'] for r in d)))
             public/data_daily.json
             public/volume_graph.png
 
-      - name: Telegram — Kharg SUCCESS
+      - name: Telegram - Kharg SUCCESS
         if: success()
         run: |
           BEFORE=${{ steps.before.outputs.count }}
           AFTER=${{ steps.after.outputs.count }}
           DIFF=$((AFTER - BEFORE))
           if [ "$DIFF" -gt 0 ]; then
-            STATUS="🆕 <b>New data added:</b> +${DIFF} date(s)"
+            STATUS="New data: +${DIFF} date(s)"
           else
-            STATUS="💤 No new data (still ${AFTER} dates)"
+            STATUS="No new data (${AFTER} dates total)"
           fi
           curl -s -X POST "https://api.telegram.org/bot${{ secrets.TELEGRAM_TOKEN }}/sendMessage" \
             -d chat_id="${{ secrets.TELEGRAM_CHAT_ID }}" \
             -d parse_mode="HTML" \
-            -d text="✅ <b>Kharg SAR — SUCCESS</b>
-          ${STATUS}
-          📡 Cached dates total: <code>${AFTER}</code>
-          📅 <code>$(date -u +'%Y-%m-%d %H:%M UTC')</code>
-          🔗 <a href='https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}'>Run #${{ github.run_id }}</a>"
+            -d text="SUCCESS Kharg SAR&#10;${STATUS}&#10;$(date -u +'%Y-%m-%d %H:%M UTC')"
 
-      - name: Telegram — Kharg FAILED
+      - name: Telegram - Kharg FAILED
         if: failure()
         run: |
           curl -s -X POST "https://api.telegram.org/bot${{ secrets.TELEGRAM_TOKEN }}/sendMessage" \
             -d chat_id="${{ secrets.TELEGRAM_CHAT_ID }}" \
             -d parse_mode="HTML" \
-            -d text="❌ <b>Kharg SAR — FAILED</b>
-          📅 <code>$(date -u +'%Y-%m-%d %H:%M UTC')</code>
-          🔗 <a href='https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}'>Открыть логи</a>"
+            -d text="FAILED Kharg SAR&#10;$(date -u +'%Y-%m-%d %H:%M UTC')&#10;https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
 
-  # ════════════════════════════════════════════
-  # ДЖОБА 2 — GIE LNG
-  # ════════════════════════════════════════════
   lng:
     runs-on: ubuntu-latest
-    env:
-      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
     steps:
       - uses: actions/checkout@v4
 
@@ -130,41 +114,32 @@ print(len(set(r['date'] for r in d)))
       - name: Fetch Europe gas storage (GIE)
         run: python scripts/fetch_lng_data.py
 
-      - name: Upload LNG artifact
+      - name: Upload LNG output
         uses: actions/upload-artifact@v4
         with:
           name: lng-output
           path: public/lng_data.json
 
-      - name: Telegram — LNG SUCCESS
+      - name: Telegram - LNG SUCCESS
         if: success()
         run: |
           curl -s -X POST "https://api.telegram.org/bot${{ secrets.TELEGRAM_TOKEN }}/sendMessage" \
             -d chat_id="${{ secrets.TELEGRAM_CHAT_ID }}" \
             -d parse_mode="HTML" \
-            -d text="✅ <b>GIE LNG — SUCCESS</b>
-          📅 <code>$(date -u +'%Y-%m-%d %H:%M UTC')</code>
-          🔗 <a href='https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}'>Run #${{ github.run_id }}</a>"
+            -d text="SUCCESS GIE LNG&#10;$(date -u +'%Y-%m-%d %H:%M UTC')"
 
-      - name: Telegram — LNG FAILED
+      - name: Telegram - LNG FAILED
         if: failure()
         run: |
           curl -s -X POST "https://api.telegram.org/bot${{ secrets.TELEGRAM_TOKEN }}/sendMessage" \
             -d chat_id="${{ secrets.TELEGRAM_CHAT_ID }}" \
             -d parse_mode="HTML" \
-            -d text="❌ <b>GIE LNG — FAILED</b>
-          📅 <code>$(date -u +'%Y-%m-%d %H:%M UTC')</code>
-          🔗 <a href='https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}'>Открыть логи</a>"
+            -d text="FAILED GIE LNG&#10;$(date -u +'%Y-%m-%d %H:%M UTC')&#10;https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
 
-  # ════════════════════════════════════════════
-  # ДЖОБА 3 — Commit data back to this repo
-  # ════════════════════════════════════════════
   commit_data:
     runs-on: ubuntu-latest
     needs: [kharg, lng]
     if: always()
-    env:
-      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
     steps:
       - uses: actions/checkout@v4
         with:
@@ -200,22 +175,18 @@ print(len(set(r['date'] for r in d)))
           git commit -m "auto update $(date -u +'%Y-%m-%d')" || echo "no changes"
           git push
 
-      - name: Telegram — Commit SUCCESS
+      - name: Telegram - Commit SUCCESS
         if: success()
         run: |
           curl -s -X POST "https://api.telegram.org/bot${{ secrets.TELEGRAM_TOKEN }}/sendMessage" \
             -d chat_id="${{ secrets.TELEGRAM_CHAT_ID }}" \
             -d parse_mode="HTML" \
-            -d text="🚀 <b>Dashboard updated</b>
-          📅 <code>$(date -u +'%Y-%m-%d %H:%M UTC')</code>
-          🔗 <a href='https://github.com/${{ github.repository }}'>kharg-dashboard</a>"
+            -d text="Dashboard updated&#10;$(date -u +'%Y-%m-%d %H:%M UTC')"
 
-      - name: Telegram — Commit FAILED
+      - name: Telegram - Commit FAILED
         if: failure()
         run: |
           curl -s -X POST "https://api.telegram.org/bot${{ secrets.TELEGRAM_TOKEN }}/sendMessage" \
             -d chat_id="${{ secrets.TELEGRAM_CHAT_ID }}" \
             -d parse_mode="HTML" \
-            -d text="❌ <b>Dashboard commit — FAILED</b>
-          📅 <code>$(date -u +'%Y-%m-%d %H:%M UTC')</code>
-          🔗 <a href='https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}'>Открыть логи</a>"
+            -d text="FAILED dashboard commit&#10;$(date -u +'%Y-%m-%d %H:%M UTC')&#10;https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
