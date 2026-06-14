@@ -1,0 +1,7 @@
+sentinelhub
+numpy
+pandas
+scipy
+matplotlib
+requests
+supabase
