@@ -1,0 +1,210 @@
+name: Update Data
+
+on:
+  schedule:
+    - cron: "0 3 * * *"
+  workflow_dispatch:
+
+jobs:
+
+  kharg:
+    runs-on: ubuntu-latest
+    env:
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: pip install -r scripts/requirements.txt
+
+      - name: Restore previous Kharg cache
+        uses: dawidd6/action-download-artifact@v6
+        with:
+          name: kharg-data
+          path: public/
+          workflow: update.yml
+          workflow_conclusion: ""
+          if_no_artifact_found: warn
+          search_artifacts: true
+        continue-on-error: true
+
+      - name: Count dates BEFORE run
+        id: before
+        run: |
+          if [ -f public/data_raw_cache.json ]; then
+            COUNT=$(python3 -c "
+import json
+d=json.load(open('public/data_raw_cache.json'))
+print(len(set(r['date'] for r in d)))
+")
+          else
+            COUNT=0
+          fi
+          echo "count=$COUNT" >> $GITHUB_OUTPUT
+
+      - name: Run Kharg SAR script
+        run: python scripts/main_script.py
+        env:
+          CLIENT_ID: ${{ secrets.CLIENT_ID }}
+          CLIENT_SECRET: ${{ secrets.CLIENT_SECRET }}
+
+      - name: Count dates AFTER run
+        id: after
+        run: |
+          COUNT=$(python3 -c "
+import json
+d=json.load(open('public/data_raw_cache.json'))
+print(len(set(r['date'] for r in d)))
+")
+          echo "count=$COUNT" >> $GITHUB_OUTPUT
+
+      - name: Upload Kharg artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: kharg-data
+          path: public/
+
+      - name: Telegram — Kharg SUCCESS
+        if: success()
+        run: |
+          BEFORE=${{ steps.before.outputs.count }}
+          AFTER=${{ steps.after.outputs.count }}
+          DIFF=$((AFTER - BEFORE))
+
+          if [ "$DIFF" -gt 0 ]; then
+            STATUS="🆕 <b>New data added:</b> +${DIFF} date(s)"
+          else
+            STATUS="💤 No new data (still ${AFTER} dates)"
+          fi
+
+          curl -s -X POST "https://api.telegram.org/bot${{ secrets.TELEGRAM_TOKEN }}/sendMessage" \
+            -d chat_id="${{ secrets.TELEGRAM_CHAT_ID }}" \
+            -d parse_mode="HTML" \
+            -d text="✅ <b>Kharg SAR — SUCCESS</b>
+          ${STATUS}
+          📡 Cached dates total: <code>${AFTER}</code>
+          📅 <code>$(date -u +'%Y-%m-%d %H:%M UTC')</code>
+          🔗 <a href='https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}'>Run #${{ github.run_id }}</a>"
+
+      - name: Telegram — Kharg FAILED
+        if: failure()
+        run: |
+          curl -s -X POST "https://api.telegram.org/bot${{ secrets.TELEGRAM_TOKEN }}/sendMessage" \
+            -d chat_id="${{ secrets.TELEGRAM_CHAT_ID }}" \
+            -d parse_mode="HTML" \
+            -d text="❌ <b>Kharg SAR — FAILED</b>
+          📅 <code>$(date -u +'%Y-%m-%d %H:%M UTC')</code>
+          🔗 <a href='https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}'>Открыть логи</a>"
+
+  lng:
+    runs-on: ubuntu-latest
+    env:
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: pip install -r scripts/requirements.txt
+
+      - name: Fetch Europe gas storage (GIE)
+        run: python scripts/fetch_lng_data.py
+
+      - name: Upload LNG artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: lng-data
+          path: public/
+
+      - name: Telegram — LNG SUCCESS
+        if: success()
+        run: |
+          curl -s -X POST "https://api.telegram.org/bot${{ secrets.TELEGRAM_TOKEN }}/sendMessage" \
+            -d chat_id="${{ secrets.TELEGRAM_CHAT_ID }}" \
+            -d parse_mode="HTML" \
+            -d text="✅ <b>GIE LNG — SUCCESS</b>
+          📅 <code>$(date -u +'%Y-%m-%d %H:%M UTC')</code>
+          🔗 <a href='https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}'>Run #${{ github.run_id }}</a>"
+
+      - name: Telegram — LNG FAILED
+        if: failure()
+        run: |
+          curl -s -X POST "https://api.telegram.org/bot${{ secrets.TELEGRAM_TOKEN }}/sendMessage" \
+            -d chat_id="${{ secrets.TELEGRAM_CHAT_ID }}" \
+            -d parse_mode="HTML" \
+            -d text="❌ <b>GIE LNG — FAILED</b>
+          📅 <code>$(date -u +'%Y-%m-%d %H:%M UTC')</code>
+          🔗 <a href='https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}'>Открыть логи</a>"
+
+  push_dashboard:
+    runs-on: ubuntu-latest
+    needs: [kharg, lng]
+    if: always()
+    env:
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download Kharg artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: kharg-data
+          path: public/
+        continue-on-error: true
+
+      - name: Download LNG artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: lng-data
+          path: public/
+        continue-on-error: true
+
+      - name: Push to public dashboard repo
+        run: |
+          git clone https://$DASHBOARD_TOKEN@github.com/bachevskyvlad/kharg-dashboard.git dashboard
+
+          mkdir -p dashboard/data
+
+          [ -f public/data.json ]        && cp public/data.json        dashboard/data/data.json || true
+          [ -f public/data_daily.json ]  && cp public/data_daily.json  dashboard/data/data_daily.json || true
+          [ -f public/volume_graph.png ] && cp public/volume_graph.png dashboard/volume_graph.png || true
+
+          [ -f index.html ]              && cp index.html              dashboard/index.html || true
+          [ -f monitor.html ]            && cp monitor.html            dashboard/monitor.html || true
+          [ -f public/lng_data.json ]    && cp public/lng_data.json    dashboard/lng_data.json || true
+
+          cd dashboard
+          git config user.name  "bot"
+          git config user.email "bot@github.com"
+          git add .
+          git commit -m "auto update $(date -u +'%Y-%m-%d')" || echo "no changes"
+          git push
+        env:
+          DASHBOARD_TOKEN: ${{ secrets.DASHBOARD_TOKEN }}
+
+      - name: Telegram — Dashboard push SUCCESS
+        if: success()
+        run: |
+          curl -s -X POST "https://api.telegram.org/bot${{ secrets.TELEGRAM_TOKEN }}/sendMessage" \
+            -d chat_id="${{ secrets.TELEGRAM_CHAT_ID }}" \
+            -d parse_mode="HTML" \
+            -d text="🚀 <b>Dashboard pushed</b>
+          📅 <code>$(date -u +'%Y-%m-%d %H:%M UTC')</code>
+          🔗 <a href='https://bachevskyvlad.github.io/kharg-dashboard'>Open dashboard</a>"
+
+      - name: Telegram — Dashboard push FAILED
+        if: failure()
+        run: |
+          curl -s -X POST "https://api.telegram.org/bot${{ secrets.TELEGRAM_TOKEN }}/sendMessage" \
+            -d chat_id="${{ secrets.TELEGRAM_CHAT_ID }}" \
+            -d parse_mode="HTML" \
+            -d text="❌ <b>Dashboard push — FAILED</b>
+          📅 <code>$(date -u +'%Y-%m-%d %H:%M UTC')</code>
+          🔗 <a href='https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}'>Открыть логи</a>"
