@@ -166,8 +166,8 @@ jobs:
           [ -f public/data.json ]        && cp public/data.json        data/data.json || true
           [ -f public/data_daily.json ]  && cp public/data_daily.json  data/data_daily.json || true
           [ -f public/volume_graph.png ] && cp public/volume_graph.png volume_graph.png || true
-          [ -f public/lng_data.json ]    && cp public/lng_data.json    lng_data.json || true
-          git add data/ volume_graph.png lng_data.json
+          [ -f public/lng_data.json ]    && cp public/lng_data.json    data/lng_data.json || true
+          git add data/ volume_graph.png
           git diff --cached --quiet && echo "no changes" && exit 0
           git commit -m "auto update $(date -u +'%Y-%m-%d')"
           git pull --rebase --autostash origin main
