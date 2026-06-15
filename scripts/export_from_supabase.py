@@ -46,12 +46,22 @@ def main():
                    "values": [r["vol_mn_bbl"] for r in rows]}, f)
     print(f"data.json: {len(rows)} rows")
 
-    # ── 2. data_daily.json ── from dbt khark_daily mart (monitor page chart)
-    rows = fetch_all(sb, "kharg_daily", select="date,vol_mn_bbl")
+    # ── 2. data_daily.json ── from dbt kharg_daily mart (monitor page chart)
+    # Falls back to volume_timeseries daily if kharg_daily doesn't exist yet
+    try:
+        rows = fetch_all(sb, "kharg_daily", select="date,vol_mn_bbl")
+        if not rows:
+            raise ValueError("kharg_daily is empty")
+        print(f"data_daily.json: {len(rows)} rows (from kharg_daily)")
+    except Exception as e:
+        print(f"kharg_daily not available ({e}), falling back to volume_timeseries daily")
+        rows = fetch_all(sb, "volume_timeseries",
+                         select="date,vol_mn_bbl",
+                         filters={"aggregation": "daily", "smoothed": False})
+        print(f"data_daily.json: {len(rows)} rows (fallback)")
     with open(DATA_DIR / "data_daily.json", "w") as f:
         json.dump({"dates": [r["date"] for r in rows],
                    "values": [r["vol_mn_bbl"] for r in rows]}, f)
-    print(f"data_daily.json: {len(rows)} rows")
 
     # ── 3. lng_data.json ── full history from lng_raw (gas-storage page)
     rows = fetch_all(sb, "lng_raw")
@@ -67,7 +77,6 @@ def main():
             "withdrawal":   r["withdrawal_twh"],
             "trend":        r["trend"],
         })
-    # sort each country's data by date
     for code in countries:
         countries[code]["data"].sort(key=lambda x: x["date"])
 

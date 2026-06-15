@@ -43,6 +43,9 @@ jobs:
 
       - name: Run Kharg SAR script
         run: python scripts/main_script.py
+        env:
+          CLIENT_ID: ${{ secrets.CLIENT_ID }}
+          CLIENT_SECRET: ${{ secrets.CLIENT_SECRET }}
 
       - name: Count dates AFTER run
         id: after
@@ -141,7 +144,7 @@ jobs:
           python-version: "3.11"
 
       - name: Install dbt
-        run: pip install dbt-postgres
+        run: pip install "dbt-postgres>=1.8,<2.0"
 
       - name: dbt run
         env:
@@ -165,7 +168,7 @@ jobs:
             -d chat_id="204715787" \
             -d parse_mode="HTML" \
             --data-urlencode text="&#9989; <b>dbt &#8212; SUCCESS</b>
-          Models: kharg_daily • kharg_signals • lng_summary
+          Models: kharg_daily &#8226; kharg_signals &#8226; lng_summary
           &#128197; <code>$(date -u +'%Y-%m-%d %H:%M UTC')</code>"
 
       - name: Telegram - dbt FAILED
