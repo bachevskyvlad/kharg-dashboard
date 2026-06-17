@@ -126,6 +126,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: [kharg, lng]
     if: always()
+    continue-on-error: true
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5

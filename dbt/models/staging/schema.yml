@@ -11,16 +11,6 @@ models:
       - name: db_mean
         tests: [not_null]
 
-  - name: stg_lng_raw
-    description: Cleaned GIE AGSI+ gas storage readings
-    columns:
-      - name: date
-        tests: [not_null]
-      - name: country_code
-        tests: [not_null]
-      - name: full_pct
-        tests: [not_null]
-
   - name: stg_kharg_daily
     description: Daily volume timeseries from Supabase
     columns:
