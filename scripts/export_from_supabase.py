@@ -46,8 +46,7 @@ def main():
                    "values": [r["vol_mn_bbl"] for r in rows]}, f)
     print(f"data.json: {len(rows)} rows")
 
-    # ── 2. data_daily.json ── from dbt kharg_daily mart (monitor page chart)
-    # Falls back to volume_timeseries daily if kharg_daily doesn't exist yet
+    # ── 2. data_daily.json ── from dbt kharg_daily mart, fallback to volume_timeseries
     try:
         rows = fetch_all(sb, "kharg_daily", select="date,vol_mn_bbl")
         if not rows:
@@ -63,22 +62,29 @@ def main():
         json.dump({"dates": [r["date"] for r in rows],
                    "values": [r["vol_mn_bbl"] for r in rows]}, f)
 
-    # ── 3. lng_data.json ── full history from lng_raw (gas-storage page)
-    rows = fetch_all(sb, "lng_raw")
-    countries = defaultdict(lambda: {"name": "", "data": []})
-    for r in rows:
-        code = r["country_code"]
-        countries[code]["name"] = r["country_name"] or code
-        countries[code]["data"].append({
-            "date":         r["date"],
-            "full":         r["full_pct"],
-            "gasInStorage": r["gas_in_storage_twh"],
-            "injection":    r["injection_twh"],
-            "withdrawal":   r["withdrawal_twh"],
-            "trend":        r["trend"],
-        })
-    for code in countries:
-        countries[code]["data"].sort(key=lambda x: x["date"])
+    # ── 3. lng_data.json ── full history from lng_raw, fallback to empty
+    try:
+        rows = fetch_all(sb, "lng_raw")
+        if not rows:
+            raise ValueError("lng_raw is empty")
+        countries = defaultdict(lambda: {"name": "", "data": []})
+        for r in rows:
+            code = r["country_code"]
+            countries[code]["name"] = r["country_name"] or code
+            countries[code]["data"].append({
+                "date":         r["date"],
+                "full":         r["full_pct"],
+                "gasInStorage": r["gas_in_storage_twh"],
+                "injection":    r["injection_twh"],
+                "withdrawal":   r["withdrawal_twh"],
+                "trend":        r["trend"],
+            })
+        for code in countries:
+            countries[code]["data"].sort(key=lambda x: x["date"])
+        print(f"lng_data.json: {len(rows)} rows across {len(countries)} countries")
+    except Exception as e:
+        print(f"lng_raw not available ({e}), writing empty lng_data.json")
+        countries = {}
 
     with open(DATA_DIR / "lng_data.json", "w") as f:
         json.dump({
@@ -86,7 +92,6 @@ def main():
             "source":     "GIE AGSI+  https://agsi.gie.eu",
             "countries":  dict(countries),
         }, f, ensure_ascii=False, separators=(",", ":"))
-    print(f"lng_data.json: {len(rows)} rows across {len(countries)} countries")
 
     print("\nExport complete.")
 
