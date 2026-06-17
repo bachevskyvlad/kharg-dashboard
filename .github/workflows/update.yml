@@ -143,22 +143,58 @@ jobs:
         with:
           python-version: "3.11"
 
-      - name: Install dbt
-        run: pip install "dbt-postgres>=1.8,<2.0"
+      - name: Install dbt and psycopg2
+        run: pip install "dbt-postgres>=1.8,<2.0" psycopg2-binary
 
-      - name: Resolve DB host to IPv4
+      - name: Diagnose pooler connection
+        env:
+          SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
         run: |
-          IPV4=$(dig +short A db.yoekhkczwdeyauwarsyy.supabase.co | head -1)
-          echo "Resolved IPv4: $IPV4"
-          if [ -z "$IPV4" ]; then
-            echo "ERROR: could not resolve IPv4 for Supabase DB host"
-            exit 1
-          fi
-          echo "SUPABASE_DB_HOST=$IPV4" >> $GITHUB_ENV
+          python3 - <<'EOF'
+          import socket
+          import psycopg2
+
+          host = "aws-0-ap-south-1.pooler.supabase.com"
+          print(f"=== DNS for {host} ===")
+          try:
+              infos = socket.getaddrinfo(host, 5432)
+              for info in infos:
+                  print(f"  {info[0].name}: {info[4][0]}")
+          except Exception as e:
+              print(f"  DNS error: {e}")
+
+          import os
+          password = os.environ["SUPABASE_DB_PASSWORD"]
+          print(f"\n=== Trying session pooler port 5432 ===")
+          try:
+              conn = psycopg2.connect(
+                  host=host, port=5432, dbname="postgres",
+                  user="postgres.yoekhkczwdeyauwarsyy", password=password,
+                  connect_timeout=10, sslmode="require"
+              )
+              print("  SUCCESS")
+              conn.close()
+          except Exception as e:
+              print(f"  FAILED: {e}")
+
+          print(f"\n=== Trying transaction pooler port 6543 ===")
+          try:
+              conn = psycopg2.connect(
+                  host=host, port=6543, dbname="postgres",
+                  user="postgres.yoekhkczwdeyauwarsyy", password=password,
+                  connect_timeout=10, sslmode="require"
+              )
+              print("  SUCCESS")
+              conn.close()
+          except Exception as e:
+              print(f"  FAILED: {e}")
+          EOF
+        continue-on-error: true
 
       - name: dbt run
         env:
           SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
+          SUPABASE_DB_HOST: aws-0-ap-south-1.pooler.supabase.com
         run: |
           cd dbt
           dbt run --profiles-dir .
@@ -166,6 +202,7 @@ jobs:
       - name: dbt test
         env:
           SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
+          SUPABASE_DB_HOST: aws-0-ap-south-1.pooler.supabase.com
         run: |
           cd dbt
           dbt test --profiles-dir .
