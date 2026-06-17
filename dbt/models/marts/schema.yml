@@ -14,7 +14,8 @@ models:
       - name: signal
         tests:
           - accepted_values:
-              values: ['BUILD', 'DRAWDOWN', 'FLAT']
+              arguments:
+                values: ['BUILD', 'DRAWDOWN', 'FLAT']
 
   - name: kharg_signals
     description: |
@@ -27,7 +28,8 @@ models:
       - name: signal
         tests:
           - accepted_values:
-              values: ['BUILD', 'DRAWDOWN']
+              arguments:
+                values: ['BUILD', 'DRAWDOWN']
 
   - name: lng_summary
     description: |
@@ -39,4 +41,5 @@ models:
       - name: signal
         tests:
           - accepted_values:
-              values: ['OVERSUPPLIED', 'COMFORTABLE', 'NEUTRAL', 'WATCH', 'TIGHT', 'CRITICAL']
+              arguments:
+                values: ['OVERSUPPLIED', 'COMFORTABLE', 'NEUTRAL', 'WATCH', 'TIGHT', 'CRITICAL']
