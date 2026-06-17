@@ -148,8 +148,12 @@ jobs:
 
       - name: Resolve DB host to IPv4
         run: |
-          IPV4=$(getent ahosts db.yoekhkczwdeyauwarsyy.supabase.co | grep STREAM | grep -v ':' | awk '{print $1}' | head -1)
-          echo "Resolved to: $IPV4"
+          IPV4=$(dig +short A db.yoekhkczwdeyauwarsyy.supabase.co | head -1)
+          echo "Resolved IPv4: $IPV4"
+          if [ -z "$IPV4" ]; then
+            echo "ERROR: could not resolve IPv4 for Supabase DB host"
+            exit 1
+          fi
           echo "SUPABASE_DB_HOST=$IPV4" >> $GITHUB_ENV
 
       - name: dbt run
