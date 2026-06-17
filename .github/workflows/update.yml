@@ -146,6 +146,12 @@ jobs:
       - name: Install dbt
         run: pip install "dbt-postgres>=1.8,<2.0"
 
+      - name: Resolve DB host to IPv4
+        run: |
+          IPV4=$(getent ahosts db.yoekhkczwdeyauwarsyy.supabase.co | grep STREAM | grep -v ':' | awk '{print $1}' | head -1)
+          echo "Resolved to: $IPV4"
+          echo "SUPABASE_DB_HOST=$IPV4" >> $GITHUB_ENV
+
       - name: dbt run
         env:
           SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
