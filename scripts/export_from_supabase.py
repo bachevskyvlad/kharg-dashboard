@@ -1,12 +1,11 @@
 """
 export_from_supabase.py
-Reads dbt output tables + raw history from Supabase,
-writes data/data.json, data/data_daily.json, data/lng_data.json
+Reads dbt output tables from Supabase,
+writes data/data.json and data/data_daily.json
+(lng_data.json is written directly by fetch_lng_data.py)
 """
 import json
 from pathlib import Path
-from collections import defaultdict
-from datetime import datetime
 from supabase import create_client
 
 SUPABASE_URL = "https://yoekhkczwdeyauwarsyy.supabase.co"
@@ -16,7 +15,6 @@ DATA_DIR = Path(__file__).parent.parent / "data"
 
 
 def fetch_all(sb, table, select="*", filters=None, order="date"):
-    """Fetch all rows with pagination (Supabase default limit is 1000)."""
     all_rows = []
     page_size = 1000
     offset = 0
@@ -37,7 +35,7 @@ def main():
     sb = create_client(SUPABASE_URL, SUPABASE_KEY)
     DATA_DIR.mkdir(parents=True, exist_ok=True)
 
-    # ── 1. data.json ── weekly smoothed Kharg volumes (index page chart)
+    # ── 1. data.json ── weekly smoothed Kharg volumes
     rows = fetch_all(sb, "volume_timeseries",
                      select="date,vol_mn_bbl",
                      filters={"aggregation": "weekly", "smoothed": True})
@@ -61,37 +59,6 @@ def main():
     with open(DATA_DIR / "data_daily.json", "w") as f:
         json.dump({"dates": [r["date"] for r in rows],
                    "values": [r["vol_mn_bbl"] for r in rows]}, f)
-
-    # ── 3. lng_data.json ── full history from lng_raw, fallback to empty
-    try:
-        rows = fetch_all(sb, "lng_raw")
-        if not rows:
-            raise ValueError("lng_raw is empty")
-        countries = defaultdict(lambda: {"name": "", "data": []})
-        for r in rows:
-            code = r["country_code"]
-            countries[code]["name"] = r["country_name"] or code
-            countries[code]["data"].append({
-                "date":         r["date"],
-                "full":         r["full_pct"],
-                "gasInStorage": r["gas_in_storage_twh"],
-                "injection":    r["injection_twh"],
-                "withdrawal":   r["withdrawal_twh"],
-                "trend":        r["trend"],
-            })
-        for code in countries:
-            countries[code]["data"].sort(key=lambda x: x["date"])
-        print(f"lng_data.json: {len(rows)} rows across {len(countries)} countries")
-    except Exception as e:
-        print(f"lng_raw not available ({e}), writing empty lng_data.json")
-        countries = {}
-
-    with open(DATA_DIR / "lng_data.json", "w") as f:
-        json.dump({
-            "updated_at": datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ"),
-            "source":     "GIE AGSI+  https://agsi.gie.eu",
-            "countries":  dict(countries),
-        }, f, ensure_ascii=False, separators=(",", ":"))
 
     print("\nExport complete.")
 

@@ -7,36 +7,5 @@ sources:
     tables:
       - name: raw_observations
         description: SAR backscatter per tank per date from Sentinel-1
-        columns:
-          - name: date
-            description: Observation date
-          - name: tank_id
-            description: Tank identifier
-          - name: db_mean
-            description: Mean VV backscatter in dB for the crescent mask
-          - name: radius_m
-            description: Tank radius in meters
-          - name: diameter
-            description: Tank diameter in meters
-          - name: h_max
-            description: Max tank height in meters
-
       - name: volume_timeseries
         description: Processed volume estimates (daily and weekly smoothed)
-        columns:
-          - name: date
-          - name: vol_mn_bbl
-          - name: aggregation
-          - name: smoothed
-
-      - name: lng_raw
-        description: GIE AGSI+ gas storage readings per country per date
-        columns:
-          - name: date
-          - name: country_code
-          - name: country_name
-          - name: full_pct
-          - name: gas_in_storage_twh
-          - name: injection_twh
-          - name: withdrawal_twh
-          - name: trend
