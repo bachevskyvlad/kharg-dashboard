@@ -288,7 +288,8 @@ new IntersectionObserver(e => {
   }
 },{threshold:0.3}).observe(document.getElementById('insights'));
 async function loadMonitor() {
-  const res = await fetch('/data/data.json');
+  const v = Date.now();
+  const res = await fetch(`/data/data.json?v=${v}`);
   const d = await res.json();
   const dates = d.dates;
   const values = d.values;

@@ -99,7 +99,8 @@
 <script>
 async function loadDailyMonitor() {
   try {
-    const res = await fetch('/data/data_daily.json');
+    const v = Date.now();
+    const res = await fetch(`/data/data_daily.json?v=${v}`);
     const d = await res.json();
     const last90Dates = d.dates.slice(-90);
     const last90Values = d.values.slice(-90);
