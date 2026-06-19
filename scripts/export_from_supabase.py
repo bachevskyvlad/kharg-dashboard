@@ -35,14 +35,25 @@ def main():
     sb = create_client(SUPABASE_URL, SUPABASE_KEY)
     DATA_DIR.mkdir(parents=True, exist_ok=True)
 
-    # ── 1. data.json ── weekly smoothed Kharg volumes
-    rows = fetch_all(sb, "volume_timeseries",
-                     select="date,vol_mn_bbl",
-                     filters={"aggregation": "weekly", "smoothed": True})
+    # ── 1. data.json ── weekly smoothed + any newer daily obs (fills gap when dbt is down)
+    weekly_rows = fetch_all(sb, "volume_timeseries",
+                            select="date,vol_mn_bbl",
+                            filters={"aggregation": "weekly", "smoothed": True})
+    last_weekly_date = weekly_rows[-1]["date"] if weekly_rows else "1900-01-01"
+
+    # fetch daily raw observations newer than the last weekly point
+    daily_rows = fetch_all(sb, "volume_timeseries",
+                           select="date,vol_mn_bbl",
+                           filters={"aggregation": "daily", "smoothed": False})
+    newer_daily = [r for r in daily_rows if r["date"] > last_weekly_date]
+
+    combined = weekly_rows + newer_daily
+    combined.sort(key=lambda r: r["date"])
+
     with open(DATA_DIR / "data.json", "w") as f:
-        json.dump({"dates": [r["date"] for r in rows],
-                   "values": [r["vol_mn_bbl"] for r in rows]}, f)
-    print(f"data.json: {len(rows)} rows")
+        json.dump({"dates": [r["date"] for r in combined],
+                   "values": [r["vol_mn_bbl"] for r in combined]}, f)
+    print(f"data.json: {len(weekly_rows)} weekly + {len(newer_daily)} newer daily = {len(combined)} rows")
 
     # ── 2. data_daily.json ── from dbt kharg_daily mart, fallback to volume_timeseries
     try:
