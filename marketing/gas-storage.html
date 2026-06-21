@@ -3,7 +3,44 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>OilRadar — Europe Gas Storage Monitor</title>
+<title>Europe Gas Storage Monitor — Live GIE Data | OilRadar</title>
+<meta name="description" content="Real-time European underground gas storage levels across 10 countries. Track TTF price drivers, winter supply risk, and LNG import demand. Updated daily from GIE AGSI+.">
+<meta name="robots" content="index, follow">
+<link rel="canonical" href="https://oilradar.io/gas-storage">
+<!-- Open Graph -->
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://oilradar.io/gas-storage">
+<meta property="og:title" content="Europe Gas Storage Monitor — Live GIE Data | OilRadar">
+<meta property="og:description" content="Real-time European underground gas storage levels. Track TTF price drivers and winter supply risk across 10 countries. Updated daily from GIE AGSI+.">
+<meta property="og:image" content="https://oilradar.io/assets/og-image.png">
+<meta property="og:site_name" content="OilRadar">
+<!-- Twitter Card -->
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Europe Gas Storage Monitor | OilRadar">
+<meta name="twitter:description" content="Real-time European gas storage levels across 10 countries. Track TTF drivers and winter supply risk. Updated daily.">
+<meta name="twitter:image" content="https://oilradar.io/assets/og-image.png">
+<!-- JSON-LD -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "Dataset",
+  "name": "Europe Underground Gas Storage Monitor",
+  "description": "Daily European underground gas storage levels across 10 countries sourced from GIE AGSI+. Key leading indicator for TTF natural gas prices and winter supply risk.",
+  "url": "https://oilradar.io/gas-storage",
+  "creator": {
+    "@type": "Organization",
+    "name": "OilRadar",
+    "url": "https://oilradar.io"
+  },
+  "temporalCoverage": "2021/..",
+  "spatialCoverage": {
+    "@type": "Place",
+    "name": "Europe"
+  },
+  "measurementTechnique": "GIE AGSI+ official storage data",
+  "variableMeasured": "Gas storage fill level (% capacity)"
+}
+</script>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@300;400;500&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <style>
@@ -26,23 +63,12 @@ nav{position:fixed;top:0;left:0;right:0;z-index:200;display:flex;align-items:cen
 .hero-title{font-family:'Bebas Neue',sans-serif;font-size:clamp(48px,6vw,88px);line-height:.92;color:var(--white);}
 .hero-title em{color:var(--accent);font-style:normal;}
 .hero-sub{margin-top:14px;font-size:14px;color:var(--muted);max-width:520px;line-height:1.8;}
-.hero-right{display:flex;gap:2px;flex-shrink:0;flex-wrap:wrap;}
+.hero-right{display:flex;gap:2px;flex-shrink:0;}
 .hero-stat{background:var(--panel);border:1px solid var(--border);padding:20px 28px;min-width:140px;}
 .hero-stat-label{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:3px;text-transform:uppercase;color:var(--muted);margin-bottom:8px;}
 .hero-stat-val{font-family:'Bebas Neue',sans-serif;font-size:36px;color:var(--white);line-height:1;}
-.hero-stat-val.up{color:var(--gold);}.hero-stat-val.down{color:var(--accent);}.hero-stat-val.warn{color:var(--red);}.hero-stat-val.green{color:var(--green);}
+.hero-stat-val.up{color:var(--gold);}.hero-stat-val.down{color:var(--accent);}.hero-stat-val.warn{color:var(--red);}
 .hero-stat-sub{font-family:'DM Mono',monospace;font-size:9px;color:var(--muted);letter-spacing:1px;margin-top:4px;}
-.readiness-block{background:var(--panel);border:1px solid var(--border);padding:20px 28px;min-width:200px;position:relative;overflow:hidden;}
-.readiness-block::before{content:'';position:absolute;inset:0;opacity:0;transition:opacity .4s;}
-.readiness-block.ahead::before{background:linear-gradient(135deg,rgba(26,158,92,.06),transparent);opacity:1;border-color:var(--green);}
-.readiness-block.behind::before{background:linear-gradient(135deg,rgba(232,58,58,.06),transparent);opacity:1;}
-.readiness-label{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:3px;text-transform:uppercase;color:var(--muted);margin-bottom:8px;}
-.readiness-val{font-family:'Bebas Neue',sans-serif;font-size:36px;line-height:1;}
-.readiness-badge{display:inline-flex;align-items:center;gap:6px;font-family:'DM Mono',monospace;font-size:9px;letter-spacing:2px;text-transform:uppercase;padding:4px 10px;border:1px solid;margin-top:6px;}
-.readiness-badge.ahead{border-color:var(--green);color:var(--green);}
-.readiness-badge.behind{border-color:var(--red);color:var(--red);}
-.readiness-badge::before{content:'';width:4px;height:4px;border-radius:50%;background:currentColor;}
-.readiness-avg{font-family:'DM Mono',monospace;font-size:9px;color:var(--muted);letter-spacing:1px;margin-top:4px;}
 .grid-main{display:grid;grid-template-columns:1fr 340px;gap:2px;margin-top:2px;}
 .grid-wide{display:grid;grid-template-columns:1fr;margin-top:2px;}
 .grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:2px;margin-top:2px;}
@@ -72,9 +98,6 @@ nav{position:fixed;top:0;left:0;right:0;z-index:200;display:flex;align-items:cen
 .data-table th{text-align:left;color:var(--muted);font-size:9px;letter-spacing:2px;text-transform:uppercase;padding:8px 0;border-bottom:1px solid var(--border);}
 .data-table td{padding:9px 0;border-bottom:1px solid rgba(26,42,58,.4);color:var(--text);}
 .data-table td.accent{color:var(--accent);}.data-table td.up{color:var(--gold);}.data-table td.down{color:var(--red);}.data-table td.green{color:var(--green);}
-.wr-delta-bar{display:flex;align-items:center;gap:8px;}
-.wr-delta-track{flex:1;height:3px;background:rgba(30,45,61,.8);position:relative;max-width:80px;}
-.wr-delta-fill{height:100%;position:absolute;top:0;}
 footer{border-top:1px solid var(--border);padding:32px 48px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:16px;max-width:1400px;margin:40px auto 0;}
 .footer-logo{font-family:'Bebas Neue',sans-serif;font-size:18px;letter-spacing:4px;color:var(--muted);}
 .footer-logo em{color:var(--accent);font-style:normal;}
@@ -104,19 +127,13 @@ footer{border-top:1px solid var(--border);padding:32px 48px;display:flex;align-i
   <div class="hero">
     <div class="hero-left">
       <span class="hero-eyebrow">Europe Gas Storage Monitor</span>
-      <div class="hero-title">European<br><em>Gas Storage</em></div>
+      <h1 class="hero-title">European<br><em>Gas Storage</em></h1>
       <p class="hero-sub">Underground storage levels across 10 countries — the primary leading indicator for TTF pricing, winter supply risk, and LNG import demand.</p>
     </div>
     <div class="hero-right" id="heroStats">
       <div class="hero-stat"><div class="hero-stat-label">EU Aggregate</div><div class="hero-stat-val" id="statEU">—</div><div class="hero-stat-sub">% full</div></div>
       <div class="hero-stat"><div class="hero-stat-label">vs Last Year</div><div class="hero-stat-val" id="statYoY">—</div><div class="hero-stat-sub">pp difference</div></div>
       <div class="hero-stat"><div class="hero-stat-label">Signal</div><div class="hero-stat-val" id="statSignal" style="font-size:18px;padding-top:8px;">—</div><div class="hero-stat-sub" id="statUpdated">—</div></div>
-      <div class="readiness-block" id="readinessBlock">
-        <div class="readiness-label">Winter Readiness</div>
-        <div class="readiness-val" id="readinessVal">—</div>
-        <div id="readinessBadge"></div>
-        <div class="readiness-avg" id="readinessAvg">—</div>
-      </div>
     </div>
   </div>
   <div class="loading" id="loadingState"><div class="loading-spinner"></div><div class="loading-text">Loading GIE data</div></div>
@@ -125,14 +142,6 @@ footer{border-top:1px solid var(--border);padding:32px 48px;display:flex;align-i
     <div class="grid-main reveal">
       <div class="panel"><div class="panel-title">EU Aggregate Storage (% Full)<span id="chartUpdated">—</span></div><div class="chart-wrap" style="height:280px;"><canvas id="chartMain"></canvas></div></div>
       <div class="panel"><div class="panel-title">Countries — Current Level</div><div class="country-list" id="countryBars"></div></div>
-    </div>
-    <div class="section-label">Winter Readiness — By Country</div>
-    <div class="panel reveal">
-      <div class="panel-title">3-Year Seasonal Average Comparison<span id="wrYears">—</span></div>
-      <table class="data-table">
-        <thead><tr><th>Country</th><th>Current %</th><th>3Y Avg %</th><th>Delta vs Avg</th><th>Trend</th><th>Status</th></tr></thead>
-        <tbody id="wrTableBody"></tbody>
-      </table>
     </div>
     <div class="section-label">All Countries — Storage Level</div>
     <div class="panel reveal"><div class="chart-wrap" style="height:380px;"><canvas id="chartAllCountries"></canvas></div></div>
@@ -154,7 +163,7 @@ footer{border-top:1px solid var(--border);padding:32px 48px;display:flex;align-i
   <a class="footer-link" href="https://calendly.com/bachevsky/60min" target="_blank">Get Full Access</a>
 </footer>
 <script>
-const DATA_URL = "/data/gas_storage.json";
+const DATA_URL = "/data/lng_data.json";
 const C={accent:"#2d7ff9",red:"#e83a3a",gold:"#d4970a",green:"#1a9e5c",muted:"#4a6678",text:"#b8cad8",white:"#eef2f7",panel:"#0f1823",border:"#1a2a3a"};
 const COUNTRY_COLORS=["#2d7ff9","#d4970a","#1a9e5c","#e83a3a","#8b5cf6","#06b6d4","#f97316","#84cc16","#ec4899","#6b7280"];
 Chart.defaults.color=C.muted;Chart.defaults.borderColor=C.border;Chart.defaults.font.family="'DM Mono', monospace";Chart.defaults.font.size=10;Chart.defaults.plugins.legend.labels.boxWidth=12;Chart.defaults.plugins.legend.labels.padding=16;
@@ -163,34 +172,6 @@ function fmt(d){return new Date(d).toLocaleDateString("en-GB",{day:"numeric",mon
 function fmtShort(d){return new Date(d).toLocaleDateString("en-GB",{day:"numeric",month:"short"});}
 function colorFill(pct){if(pct===null||isNaN(pct))return C.muted;if(pct<40)return C.red;if(pct<70)return C.gold;return C.green;}
 function signalText(pct,yoy){if(pct===null)return["—",""];if(pct>85&&yoy>=0)return["OVERSUPPLIED","green"];if(pct>70)return["COMFORTABLE","green"];if(pct>50&&yoy>=0)return["NEUTRAL","amber"];if(pct>50&&yoy<0)return["WATCH","amber"];if(pct>30)return["TIGHT","amber"];return["CRITICAL","red"];}
-
-function calcWinterReadiness(data) {
-  if (!data || data.length < 10) return null;
-  const last = data[data.length - 1];
-  const current = last.full;
-  if (current === null || isNaN(current)) return null;
-  const today = new Date(last.date);
-  const mmdd = (today.getMonth()+1).toString().padStart(2,'0') + '-' + today.getDate().toString().padStart(2,'0');
-  const byDate = {};
-  data.forEach(d => { byDate[d.date.toISOString().slice(0,10)] = d.full; });
-  const yearSamples = [];
-  for (let offset = 1; offset <= 3; offset++) {
-    const yr = today.getFullYear() - offset;
-    const target = new Date(yr + '-' + mmdd);
-    const candidates = Object.keys(byDate).filter(d => d.startsWith(yr.toString()));
-    if (!candidates.length) continue;
-    const closest = candidates.reduce((a, b) =>
-      Math.abs(new Date(a) - target) < Math.abs(new Date(b) - target) ? a : b
-    );
-    if (closest && byDate[closest] !== null) yearSamples.push({ year: yr, date: closest, val: byDate[closest] });
-  }
-  if (!yearSamples.length) return null;
-  const avg3y = yearSamples.reduce((s, x) => s + x.val, 0) / yearSamples.length;
-  const delta = current - avg3y;
-  const years = yearSamples.map(x => x.year).join('/');
-  return { current, avg3y, delta, years, samples: yearSamples };
-}
-
 async function init(){
   let raw;
   try{const r=await fetch(DATA_URL);if(!r.ok)throw new Error(r.status);raw=await r.json();}catch(e){document.getElementById("loadingState").innerHTML=`<div class="loading-text" style="color:var(--red)">Failed to load data · ${e.message}</div>`;return;}
@@ -215,71 +196,15 @@ async function init(){
   document.getElementById("statUpdated").textContent=fmt(euLast.date);
   document.getElementById("chartUpdated").textContent=fmt(euLast.date);
   document.getElementById("liveStamp").textContent="Updated "+fmt(raw.updated_at||euLast.date);
-
-  const wr = calcWinterReadiness(eu.data);
-  if (wr) {
-    const ahead = wr.delta >= 0;
-    const block = document.getElementById("readinessBlock");
-    block.classList.add(ahead ? "ahead" : "behind");
-    const valEl = document.getElementById("readinessVal");
-    valEl.textContent = (wr.delta >= 0 ? "+" : "") + wr.delta.toFixed(1) + "%";
-    valEl.style.color = ahead ? "var(--green)" : "var(--red)";
-    document.getElementById("readinessBadge").innerHTML =
-      `<span class="readiness-badge ${ahead ? 'ahead' : 'behind'}">${ahead ? 'AHEAD OF SEASON' : 'BELOW AVERAGE'}</span>`;
-    document.getElementById("readinessAvg").textContent =
-      `3Y avg (${wr.years}): ${wr.avg3y.toFixed(1)}%`;
-  }
-
-  const wrRows = countryKeys
-    .filter(c => c !== "EU" && parsed[c] && parsed[c].data.length >= 10)
-    .map(code => {
-      const d = parsed[code];
-      const cwr = calcWinterReadiness(d.data);
-      return cwr ? { code, name: d.name, wr: cwr } : null;
-    })
-    .filter(Boolean)
-    .sort((a, b) => b.wr.delta - a.wr.delta);
-
-  if (wrRows.length) {
-    document.getElementById("wrYears").textContent = wrRows[0].wr.years;
-    const maxAbs = Math.max(...wrRows.map(r => Math.abs(r.wr.delta)));
-    const wrBody = document.getElementById("wrTableBody");
-    wrRows.forEach(({ name, wr: cwr }) => {
-      const ahead = cwr.delta >= 0;
-      const deltaCol = ahead ? "green" : "red";
-      const barColor = ahead ? "var(--green)" : "var(--red)";
-      const barPct = maxAbs > 0 ? Math.round(Math.abs(cwr.delta) / maxAbs * 100) : 0;
-      const arrow = ahead ? "&#9650;" : "&#9660;";
-      const status = ahead ? "AHEAD" : "BELOW";
-      const badgeCls = ahead ? "green" : "red";
-      wrBody.innerHTML += `<tr>
-        <td class="accent">${name}</td>
-        <td>${cwr.current.toFixed(1)}%</td>
-        <td style="color:var(--muted)">${cwr.avg3y.toFixed(1)}%</td>
-        <td>
-          <div class="wr-delta-bar">
-            <span style="color:var(--${deltaCol});font-family:'DM Mono',monospace;font-size:11px;min-width:52px">${ahead?"+":""}${cwr.delta.toFixed(1)}%</span>
-            <div class="wr-delta-track" style="position:relative;height:3px;flex:1;max-width:80px;background:rgba(30,45,61,.8)">
-              <div style="position:absolute;top:0;height:100%;background:${barColor};left:${ahead?'50%':'calc(50% - '+barPct/2+'%)'};width:${barPct/2}%"></div>
-              <div style="position:absolute;top:-2px;left:50%;width:1px;height:7px;background:var(--muted)"></div>
-            </div>
-          </div>
-        </td>
-        <td style="color:var(--${deltaCol})">${arrow}</td>
-        <td><span class="signal-badge ${badgeCls}" style="font-size:9px;padding:3px 8px;">${status} OF SEASON</span></td>
-      </tr>`;
-    });
-  }
-
   const euRecent=eu.data.slice(-365);
-  new Chart(document.getElementById("chartMain"),{type:"line",data:{labels:euRecent.map(d=>fmtShort(d.date)),datasets:[{label:"EU Storage %",data:euRecent.map(d=>d.full),borderColor:C.accent,borderWidth:2,backgroundColor:"rgba(45,127,249,0.06)",fill:true,pointRadius:0,tension:0.3}]},options:{responsive:true,maintainAspectRatio:false,interaction:{mode:"index",intersect:false},scales:{...baseScales(),y:{...baseScales().y,min:0,max:105,ticks:{color:C.muted,callback:v=>v+"%"}}},plugins:{legend:{display:false},tooltip:{backgroundColor:"#0a0f14",borderColor:C.border,borderWidth:1,titleColor:C.muted,bodyColor:C.accent,callbacks:{label:ctx=>" "+ctx.parsed.y.toFixed(1)+"%"}}}}})
+  new Chart(document.getElementById("chartMain"),{type:"line",data:{labels:euRecent.map(d=>fmtShort(d.date)),datasets:[{label:"EU Storage %",data:euRecent.map(d=>d.full),borderColor:C.accent,borderWidth:2,backgroundColor:"rgba(45,127,249,0.06)",fill:true,pointRadius:0,tension:0.3}]},options:{responsive:true,maintainAspectRatio:false,interaction:{mode:"index",intersect:false},scales:{...baseScales(),y:{...baseScales().y,min:0,max:105,ticks:{color:C.muted,callback:v=>v+"%"}}},plugins:{legend:{display:false},tooltip:{backgroundColor:"#0a0f14",borderColor:C.border,borderWidth:1,titleColor:C.muted,bodyColor:C.accent,callbacks:{label:ctx=>" "+ctx.parsed.y.toFixed(1)+"%"}}}}});
   const barContainer=document.getElementById("countryBars");
   countryKeys.filter(c=>c!=="EU").map(c=>{const d=parsed[c];const last=d.data[d.data.length-1];return{code:c,name:d.name,full:last?last.full:null};}).sort((a,b)=>(b.full||0)-(a.full||0)).forEach(({name,full})=>{const pct=full!==null?full.toFixed(1):"—";const col=colorFill(full);const row=document.createElement("div");row.className="country-row";row.innerHTML=`<div class="country-name">${name}</div><div class="country-track"><div class="country-fill" style="width:0%;background:${col}" data-target="${full||0}"></div></div><div class="country-pct" style="color:${col}">${pct}%</div>`;barContainer.appendChild(row);});
   setTimeout(()=>{document.querySelectorAll(".country-fill").forEach(el=>{el.style.width=Math.min(el.dataset.target,100)+"%";});},300);
   const nonEUKeys=countryKeys.filter(c=>c!=="EU"&&parsed[c].data.length>0);
-  new Chart(document.getElementById("chartAllCountries"),{type:"line",data:{datasets:nonEUKeys.map((code,i)=>{const d=parsed[code];const recent=d.data.slice(-365);const col=COUNTRY_COLORS[i%COUNTRY_COLORS.length];return{label:d.name,data:recent.map(r=>({x:fmtShort(r.date),y:r.full})),borderColor:col,borderWidth:1.5,pointRadius:0,tension:0.3,fill:false};})},options:{responsive:true,maintainAspectRatio:false,interaction:{mode:"index",intersect:false},scales:{x:{type:"category",grid:{color:"rgba(26,42,58,.4)",drawBorder:false},ticks:{color:C.muted,maxTicksLimit:12,maxRotation:0}},y:{...baseScales().y,min:0,max:105,ticks:{color:C.muted,callback:v=>v+"%"}}},plugins:{legend:{labels:{color:C.muted,boxWidth:12,padding:14,font:{size:11}}},tooltip:{backgroundColor:"#0a0f14",borderColor:C.border,borderWidth:1,titleColor:C.muted,bodyColor:C.text,callbacks:{label:ctx=>" "+ctx.dataset.label+": "+ctx.parsed.y.toFixed(1)+"%"}}}}});
+  new Chart(document.getElementById("chartAllCountries"),{type:"line",data:{datasets:nonEUKeys.map((code,i)=>{const d=parsed[code];const recent=d.data.slice(-365);const col=COUNTRY_COLORS[i%COUNTRY_COLORS.length];return{label:d.name,data:recent.map(r=>({x:fmtShort(r.date),y:r.full})),borderColor:col,borderWidth:1.5,pointRadius:0,tension:0.3,fill:false};})},options:{responsive:true,maintainAspectRatio:false,interaction:{mode:"index",intersect:false},scales:{x:{type:"category",grid:{color:"rgba(26,42,58,.4)",drawBorder:false},ticks:{color:C.muted,maxTicksLimit:12,maxRotation:0}},y:{...baseScales().y,min:0,max:105,ticks:{color:C.muted,callback:v=>v+"%"}}},plugins:{legend:{labels:{color:C.muted,boxWidth:12,padding:14,font:{size:11}}},tooltip:{backgroundColor:"#0a0f14",borderColor:C.border,borderWidth:1,titleColor:C.muted,bodyColor:C.text,callbacks:{label:ctx=>" "+ctx.dataset.label+": "+ctx.parsed.y.toFixed(1)+"%"}}}}})
   const tbody=document.getElementById("dataTableBody");
-  countryKeys.forEach(code=>{const d=parsed[code];const arr=d.data;if(!arr.length)return;const last=arr[arr.length-1];const prev=arr[arr.length-2];const wow=prev&&last.full!==null&&prev.full!==null?(last.full-prev.full).toFixed(1):null;const[sig,sigCls]=signalText(last.full,wow?parseFloat(wow):0);const wowStr=wow!==null?`<td class="${parseFloat(wow)>=0?"up":"down'}">${parseFloat(wow)>=0?"+":""}${wow}pp</td>`:`<td class="accent">—</td>`;tbody.innerHTML+=`<tr><td class="accent">${d.name}</td><td>${fmt(last.date)}</td><td style="color:${colorFill(last.full)}">${last.full?.toFixed(1)??"—"}%</td><td>${last.gasInStorage?.toFixed(0)??"—"} TWh</td>${wowStr}<td>${last.trend||"—"}</td><td><span class="signal-badge ${sigCls}" style="font-size:9px;padding:3px 8px;">${sig}</span></td></tr>`;});
+  countryKeys.forEach(code=>{const d=parsed[code];const arr=d.data;if(!arr.length)return;const last=arr[arr.length-1];const prev=arr[arr.length-2];const wow=prev&&last.full!==null&&prev.full!==null?(last.full-prev.full).toFixed(1):null;const[sig,sigCls]=signalText(last.full,wow?parseFloat(wow):0);const wowStr=wow!==null?`<td class="${parseFloat(wow)>=0?"up":"down"}">${parseFloat(wow)>=0?"+":""}${wow}pp</td>`:`<td class="accent">—</td>`;tbody.innerHTML+=`<tr><td class="accent">${d.name}</td><td>${fmt(last.date)}</td><td style="color:${colorFill(last.full)}">${last.full?.toFixed(1)??"—"}%</td><td>${last.gasInStorage?.toFixed(0)??"—"} TWh</td>${wowStr}<td>${last.trend||"—"}</td><td><span class="signal-badge ${sigCls}" style="font-size:9px;padding:3px 8px;">${sig}</span></td></tr>`;});
   const obs=new IntersectionObserver(entries=>{entries.forEach(e=>{if(e.isIntersecting)e.target.classList.add("on");});},{threshold:0.08});
   document.querySelectorAll(".reveal").forEach(el=>obs.observe(el));
 }
