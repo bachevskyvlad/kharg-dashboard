@@ -26,12 +26,23 @@ nav{position:fixed;top:0;left:0;right:0;z-index:200;display:flex;align-items:cen
 .hero-title{font-family:'Bebas Neue',sans-serif;font-size:clamp(48px,6vw,88px);line-height:.92;color:var(--white);}
 .hero-title em{color:var(--accent);font-style:normal;}
 .hero-sub{margin-top:14px;font-size:14px;color:var(--muted);max-width:520px;line-height:1.8;}
-.hero-right{display:flex;gap:2px;flex-shrink:0;}
+.hero-right{display:flex;gap:2px;flex-shrink:0;flex-wrap:wrap;}
 .hero-stat{background:var(--panel);border:1px solid var(--border);padding:20px 28px;min-width:140px;}
 .hero-stat-label{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:3px;text-transform:uppercase;color:var(--muted);margin-bottom:8px;}
 .hero-stat-val{font-family:'Bebas Neue',sans-serif;font-size:36px;color:var(--white);line-height:1;}
-.hero-stat-val.up{color:var(--gold);}.hero-stat-val.down{color:var(--accent);}.hero-stat-val.warn{color:var(--red);}
+.hero-stat-val.up{color:var(--gold);}.hero-stat-val.down{color:var(--accent);}.hero-stat-val.warn{color:var(--red);}.hero-stat-val.green{color:var(--green);}
 .hero-stat-sub{font-family:'DM Mono',monospace;font-size:9px;color:var(--muted);letter-spacing:1px;margin-top:4px;}
+.readiness-block{background:var(--panel);border:1px solid var(--border);padding:20px 28px;min-width:200px;position:relative;overflow:hidden;}
+.readiness-block::before{content:'';position:absolute;inset:0;opacity:0;transition:opacity .4s;}
+.readiness-block.ahead::before{background:linear-gradient(135deg,rgba(26,158,92,.06),transparent);opacity:1;border-color:var(--green);}
+.readiness-block.behind::before{background:linear-gradient(135deg,rgba(232,58,58,.06),transparent);opacity:1;}
+.readiness-label{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:3px;text-transform:uppercase;color:var(--muted);margin-bottom:8px;}
+.readiness-val{font-family:'Bebas Neue',sans-serif;font-size:36px;line-height:1;}
+.readiness-badge{display:inline-flex;align-items:center;gap:6px;font-family:'DM Mono',monospace;font-size:9px;letter-spacing:2px;text-transform:uppercase;padding:4px 10px;border:1px solid;margin-top:6px;}
+.readiness-badge.ahead{border-color:var(--green);color:var(--green);}
+.readiness-badge.behind{border-color:var(--red);color:var(--red);}
+.readiness-badge::before{content:'';width:4px;height:4px;border-radius:50%;background:currentColor;}
+.readiness-avg{font-family:'DM Mono',monospace;font-size:9px;color:var(--muted);letter-spacing:1px;margin-top:4px;}
 .grid-main{display:grid;grid-template-columns:1fr 340px;gap:2px;margin-top:2px;}
 .grid-wide{display:grid;grid-template-columns:1fr;margin-top:2px;}
 .grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:2px;margin-top:2px;}
@@ -97,6 +108,12 @@ footer{border-top:1px solid var(--border);padding:32px 48px;display:flex;align-i
       <div class="hero-stat"><div class="hero-stat-label">EU Aggregate</div><div class="hero-stat-val" id="statEU">—</div><div class="hero-stat-sub">% full</div></div>
       <div class="hero-stat"><div class="hero-stat-label">vs Last Year</div><div class="hero-stat-val" id="statYoY">—</div><div class="hero-stat-sub">pp difference</div></div>
       <div class="hero-stat"><div class="hero-stat-label">Signal</div><div class="hero-stat-val" id="statSignal" style="font-size:18px;padding-top:8px;">—</div><div class="hero-stat-sub" id="statUpdated">—</div></div>
+      <div class="readiness-block" id="readinessBlock">
+        <div class="readiness-label">Winter Readiness</div>
+        <div class="readiness-val" id="readinessVal">—</div>
+        <div id="readinessBadge"></div>
+        <div class="readiness-avg" id="readinessAvg">—</div>
+      </div>
     </div>
   </div>
   <div class="loading" id="loadingState"><div class="loading-spinner"></div><div class="loading-text">Loading GIE data</div></div>
@@ -135,6 +152,32 @@ function fmt(d){return new Date(d).toLocaleDateString("en-GB",{day:"numeric",mon
 function fmtShort(d){return new Date(d).toLocaleDateString("en-GB",{day:"numeric",month:"short"});}
 function colorFill(pct){if(pct===null||isNaN(pct))return C.muted;if(pct<40)return C.red;if(pct<70)return C.gold;return C.green;}
 function signalText(pct,yoy){if(pct===null)return["—",""];if(pct>85&&yoy>=0)return["OVERSUPPLIED","green"];if(pct>70)return["COMFORTABLE","green"];if(pct>50&&yoy>=0)return["NEUTRAL","amber"];if(pct>50&&yoy<0)return["WATCH","amber"];if(pct>30)return["TIGHT","amber"];return["CRITICAL","red"];}
+
+function calcWinterReadiness(euData) {
+  const last = euData[euData.length - 1];
+  const current = last.full;
+  const today = new Date(last.date);
+  const mmdd = (today.getMonth()+1).toString().padStart(2,'0') + '-' + today.getDate().toString().padStart(2,'0');
+  const byDate = {};
+  euData.forEach(d => { byDate[d.date.toISOString().slice(0,10)] = d.full; });
+  const yearSamples = [];
+  for (let offset = 1; offset <= 3; offset++) {
+    const yr = today.getFullYear() - offset;
+    const target = new Date(`${yr}-${mmdd}`);
+    const candidates = Object.keys(byDate).filter(d => d.startsWith(yr.toString()));
+    if (!candidates.length) continue;
+    const closest = candidates.reduce((a, b) =>
+      Math.abs(new Date(a) - target) < Math.abs(new Date(b) - target) ? a : b
+    );
+    if (closest) yearSamples.push({ year: yr, date: closest, val: byDate[closest] });
+  }
+  if (!yearSamples.length) return null;
+  const avg3y = yearSamples.reduce((s, x) => s + x.val, 0) / yearSamples.length;
+  const delta = current - avg3y;
+  const years = yearSamples.map(x => x.year).join('/');
+  return { current, avg3y, delta, years, samples: yearSamples };
+}
+
 async function init(){
   let raw;
   try{const r=await fetch(DATA_URL);if(!r.ok)throw new Error(r.status);raw=await r.json();}catch(e){document.getElementById("loadingState").innerHTML=`<div class="loading-text" style="color:var(--red)">Failed to load data · ${e.message}</div>`;return;}
@@ -159,6 +202,22 @@ async function init(){
   document.getElementById("statUpdated").textContent=fmt(euLast.date);
   document.getElementById("chartUpdated").textContent=fmt(euLast.date);
   document.getElementById("liveStamp").textContent="Updated "+fmt(raw.updated_at||euLast.date);
+
+  // Winter Readiness metric
+  const wr = calcWinterReadiness(eu.data);
+  if (wr) {
+    const ahead = wr.delta >= 0;
+    const block = document.getElementById("readinessBlock");
+    block.classList.add(ahead ? "ahead" : "behind");
+    const valEl = document.getElementById("readinessVal");
+    valEl.textContent = (wr.delta >= 0 ? "+" : "") + wr.delta.toFixed(1) + "pp";
+    valEl.style.color = ahead ? "var(--green)" : "var(--red)";
+    document.getElementById("readinessBadge").innerHTML =
+      `<span class="readiness-badge ${ahead ? 'ahead' : 'behind'}">${ahead ? 'AHEAD OF SEASON' : 'BELOW AVERAGE'}</span>`;
+    document.getElementById("readinessAvg").textContent =
+      `3Y avg (${wr.years}): ${wr.avg3y.toFixed(1)}%`;
+  }
+
   const euRecent=eu.data.slice(-365);
   new Chart(document.getElementById("chartMain"),{type:"line",data:{labels:euRecent.map(d=>fmtShort(d.date)),datasets:[{label:"EU Storage %",data:euRecent.map(d=>d.full),borderColor:C.accent,borderWidth:2,backgroundColor:"rgba(45,127,249,0.06)",fill:true,pointRadius:0,tension:0.3}]},options:{responsive:true,maintainAspectRatio:false,interaction:{mode:"index",intersect:false},scales:{...baseScales(),y:{...baseScales().y,min:0,max:105,ticks:{color:C.muted,callback:v=>v+"%"}}},plugins:{legend:{display:false},tooltip:{backgroundColor:"#0a0f14",borderColor:C.border,borderWidth:1,titleColor:C.muted,bodyColor:C.accent,callbacks:{label:ctx=>" "+ctx.parsed.y.toFixed(1)+"%"}}}}});
   const barContainer=document.getElementById("countryBars");
