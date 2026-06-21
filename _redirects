@@ -1,4 +1,7 @@
-/ /html/index.html 200
-/monitor /html/monitor.html 200
-/gas-storage /html/gas-storage.html 200
-/team /html/team.html 200
+/ /tool/index.html 200
+/monitor /tool/monitor.html 200
+/gas-storage /tool/gas-storage.html 200
+/team /tool/team.html 200
+/app /html/index.html 200
+/dashboard /html/dashboard.html 200
+/dashboard.html /html/dashboard.html 200
