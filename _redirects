@@ -1,7 +1,7 @@
-/ /tool/index.html 200
-/monitor /tool/monitor.html 200
-/gas-storage /tool/gas-storage.html 200
-/team /tool/team.html 200
-/app /html/index.html 200
-/dashboard /html/dashboard.html 200
-/dashboard.html /html/dashboard.html 200
+/ /marketing/index.html 200
+/monitor /marketing/monitor.html 200
+/gas-storage /marketing/gas-storage.html 200
+/team /marketing/team.html 200
+/app /product/index.html 200
+/dashboard /product/dashboard.html 200
+/dashboard.html /product/dashboard.html 200
