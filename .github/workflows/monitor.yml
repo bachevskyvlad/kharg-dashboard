@@ -17,7 +17,7 @@ jobs:
       - name: Install dependencies
         run: pip install -r scripts/requirements.txt
       - name: Restore previous cache
-        uses: dawiwd6/action-download-artifact@v6
+        uses: dawiid6/action-download-artifact@v6
         with:
           name: kharg-raw-cache
           path: public/

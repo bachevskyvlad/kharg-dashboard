@@ -3,8 +3,8 @@ oilradar:
   outputs:
     prod:
       type: postgres
-      host: db.yoekhkczwdeyauwarsyy.supabase.co
-      user: postgres
+      host: "{{ env_var('SUPABASE_DB_HOST', 'aws-0-ap-south-1.pooler.supabase.com') }}"
+      user: postgres.yoekhkczwdeyauwarsyy
       password: "{{ env_var('SUPABASE_DB_PASSWORD') }}"
       port: 5432
       dbname: postgres
