@@ -337,10 +337,10 @@ def build_output(pivot_w, pivot_m, price_w, price_m):
     def process_period(pivot, price_df):
         result = pivot.copy()
         result['total'] = result[countries].sum(axis=1)
-        result['date'] = pd.to_datetime(result['date'])
+        result['date'] = pd.to_datetime(result['date']).astype('datetime64[s]')
         if price_df is not None:
             price_df = price_df.copy()
-            price_df['date'] = pd.to_datetime(price_df['date'])
+            price_df['date'] = pd.to_datetime(price_df['date']).astype('datetime64[s]')
             result = pd.merge_asof(result.sort_values('date'), price_df.sort_values('date'), on='date', direction='nearest')
         result['utilization'] = (result['total'] / TOTAL_CAPACITY * 100).clip(0, 100)
         result['fragility'] = calculate_fragility(result['total'])
