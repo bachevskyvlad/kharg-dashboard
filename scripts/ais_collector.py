@@ -21,11 +21,12 @@ SUPABASE_KEY = "sb_publishable_7j07_zzdqTGM1LXf7-o9Tg_JJRbJQSM"
 
 RUN_DURATION = int(os.environ.get("AIS_RUN_DURATION", "300"))  # seconds
 
+# 2° bounding boxes (center ± 1°) for broader vessel detection
 TERMINALS = {
-    "Kharg_Island":  [29.00, 50.10, 29.50, 50.60],
-    "Ras_Tanura":    [26.40, 49.90, 26.90, 50.40],
-    "Fujairah":      [25.00, 56.10, 25.50, 56.70],
-    "Mina_Ahmadi":   [28.80, 47.80, 29.30, 48.40],
+    "Kharg_Island":  [28.25, 49.35, 30.25, 51.35],
+    "Ras_Tanura":    [25.65, 49.15, 27.65, 51.15],
+    "Fujairah":      [24.25, 55.40, 26.25, 57.40],
+    "Mina_Ahmadi":   [28.05, 47.10, 30.05, 49.10],
 }
 
 TANKER_TYPES = set(range(80, 90))
