@@ -2,7 +2,7 @@
 AIS Vessel Collector — Gulf Oil Terminals
 Connects to aisstream.io WebSocket, collects vessel positions
 near Kharg, Ras Tanura, Fujairah, Mina Ahmadi, saves to Supabase.
-Designed to run for RUN_DURATION seconds then exit (cron-friendly).
+Runs for RUN_DURATION seconds then exits (cron-friendly).
 """
 
 import asyncio
@@ -14,22 +14,20 @@ from datetime import datetime, timezone
 import websockets
 from supabase import create_client
 
-AIS_API_KEY = os.environ.get("AIS_API_KEY", "bced5e2b20ddeeb7107957a2bdc90ca3866ed6a0")
+AIS_API_KEY = "bced5e2b20ddeeb7107957a2bdc90ca3866ed6a0"
 
 SUPABASE_URL = "https://yoekhkczwdeyauwarsyy.supabase.co"
-SUPABASE_KEY = os.environ.get("SUPABASE_KEY", "sb_publishable_7j07_zzdqTGM1LXf7-o9Tg_JJRbJQSM")
+SUPABASE_KEY = "sb_publishable_7j07_zzdqTGM1LXf7-o9Tg_JJRbJQSM"
 
 RUN_DURATION = int(os.environ.get("AIS_RUN_DURATION", "300"))  # seconds
 
-# Bounding boxes [min_lat, min_lon, max_lat, max_lon] per terminal
 TERMINALS = {
-    "Kharg_Island":   [29.00, 50.10, 29.50, 50.60],
-    "Ras_Tanura":     [26.40, 49.90, 26.90, 50.40],
-    "Fujairah":       [25.00, 56.10, 25.50, 56.70],
-    "Mina_Ahmadi":    [28.80, 47.80, 29.30, 48.40],
+    "Kharg_Island":  [29.00, 50.10, 29.50, 50.60],
+    "Ras_Tanura":    [26.40, 49.90, 26.90, 50.40],
+    "Fujairah":      [25.00, 56.10, 25.50, 56.70],
+    "Mina_Ahmadi":   [28.80, 47.80, 29.30, 48.40],
 }
 
-# Tanker vessel type codes (AIS)
 TANKER_TYPES = set(range(80, 90))
 
 
@@ -43,7 +41,7 @@ def terminal_for_pos(lat, lon):
 async def collect():
     sb = create_client(SUPABASE_URL, SUPABASE_KEY)
     records = []
-    seen = set()  # deduplicate mmsi within run
+    seen = set()
 
     bboxes = [[min_lat, min_lon, max_lat, max_lon]
                for min_lat, min_lon, max_lat, max_lon in TERMINALS.values()]
@@ -95,10 +93,9 @@ async def collect():
                 draught = pos.get("Draught", 0)
                 name = meta.get("ShipName", "").strip()
                 flag = meta.get("ShipType", "")
-
                 ts = meta.get("time_utc") or datetime.now(timezone.utc).isoformat()
 
-                key = f"{mmsi}_{terminal}_{ts[:13]}"  # dedupe per hour
+                key = f"{mmsi}_{terminal}_{ts[:13]}"
                 if key in seen:
                     continue
                 seen.add(key)
@@ -118,8 +115,8 @@ async def collect():
                     "timestamp": ts if isinstance(ts, str) else ts.isoformat(),
                 }
                 records.append(record)
-                is_tanker_str = " [TANKER]" if vessel_type in TANKER_TYPES else ""
-                print(f"  {terminal} | {name or mmsi}{is_tanker_str} | spd={speed:.1f}kn draught={draught:.1f}m")
+                tanker_str = " [TANKER]" if vessel_type in TANKER_TYPES else ""
+                print(f"  {terminal} | {name or mmsi}{tanker_str} | spd={speed:.1f}kn draught={draught:.1f}m")
 
     except Exception as e:
         print(f"WebSocket error: {e}")
