@@ -1,0 +1,124 @@
+name: Gulf — Fragility + AIS
+
+on:
+  schedule:
+    - cron: "0 3 * * *"
+  workflow_dispatch:
+
+jobs:
+
+  gulf:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install dependencies
+        run: pip install -r scripts/requirements.txt
+      - name: Restore Gulf raw cache
+        uses: dawidd6/action-download-artifact@v6
+        with:
+          name: gulf-raw-cache
+          path: data/
+          workflow: gulf.yml
+          workflow_conclusion: ""
+          if_no_artifact_found: warn
+          search_artifacts: true
+        continue-on-error: true
+      - name: Run Gulf fragility pipeline
+        run: python scripts/gulf_fragility_pipeline.py
+      - name: Upload Gulf raw cache
+        uses: actions/upload-artifact@v4
+        with:
+          name: gulf-raw-cache
+          path: data/gulf_raw_cache.json
+        continue-on-error: true
+      - name: Upload fragility data
+        uses: actions/upload-artifact@v4
+        with:
+          name: fragility-data
+          path: data/fragility.json
+      - name: Telegram - Gulf SUCCESS
+        if: success()
+        run: |
+          curl -s -X POST "https://api.telegram.org/bot7745904293:AAHV2qN_5_XNxpg6Ir3iV3XmEKpokthi308/sendMessage" \
+            -d chat_id="204715787" \
+            -d parse_mode="HTML" \
+            --data-urlencode text="&#9989; <b>Gulf Fragility &#8212; SUCCESS</b>
+          &#128197; <code>$(date -u +'%Y-%m-%d %H:%M UTC')</code>
+          &#128279; <a href='https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}'>Run #${{ github.run_number }}</a>"
+      - name: Telegram - Gulf FAILED
+        if: failure()
+        run: |
+          curl -s -X POST "https://api.telegram.org/bot7745904293:AAHV2qN_5_XNxpg6Ir3iV3XmEKpokthi308/sendMessage" \
+            -d chat_id="204715787" \
+            -d parse_mode="HTML" \
+            --data-urlencode text="&#10060; <b>Gulf Fragility &#8212; FAILED</b>
+          &#128197; <code>$(date -u +'%Y-%m-%d %H:%M UTC')</code>
+          &#128279; <a href='https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}'>Open logs</a>"
+
+  ais:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install dependencies
+        run: pip install supabase websockets
+      - name: Run AIS collector (5 min)
+        run: python scripts/ais_collector.py
+        env:
+          AIS_RUN_DURATION: "300"
+      - name: Telegram - AIS SUCCESS
+        if: success()
+        run: |
+          curl -s -X POST "https://api.telegram.org/bot7745904293:AAHV2qN_5_XNxpg6Ir3iV3XmEKpokthi308/sendMessage" \
+            -d chat_id="204715787" \
+            -d parse_mode="HTML" \
+            --data-urlencode text="&#9989; <b>AIS Collector &#8212; SUCCESS</b>
+          &#128197; <code>$(date -u +'%Y-%m-%d %H:%M UTC')</code>
+          &#128279; <a href='https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}'>Run #${{ github.run_number }}</a>"
+      - name: Telegram - AIS FAILED
+        if: failure()
+        run: |
+          curl -s -X POST "https://api.telegram.org/bot7745904293:AAHV2qN_5_XNxpg6Ir3iV3XmEKpokthi308/sendMessage" \
+            -d chat_id="204715787" \
+            -d parse_mode="HTML" \
+            --data-urlencode text="&#10060; <b>AIS Collector &#8212; FAILED</b>
+          &#128197; <code>$(date -u +'%Y-%m-%d %H:%M UTC')</code>
+          &#128279; <a href='https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}'>Open logs</a>"
+
+  commit_data:
+    runs-on: ubuntu-latest
+    needs: [gulf]
+    if: always()
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Download fragility data
+        uses: actions/download-artifact@v4
+        with:
+          name: fragility-data
+          path: data/
+        continue-on-error: true
+      - name: Commit and push
+        run: |
+          git config user.name  "bot"
+          git config user.email "bot@github.com"
+          git add data/fragility.json data/gulf_raw_cache.json
+          git diff --cached --quiet && echo "no changes" && exit 0
+          git commit -m "auto update gulf $(date -u +'%Y-%m-%d')"
+          git pull --rebase --autostash origin main
+          git push
+      - name: Telegram - Gulf data pushed
+        if: success()
+        run: |
+          curl -s -X POST "https://api.telegram.org/bot7745904293:AAHV2qN_5_XNxpg6Ir3iV3XmEKpokthi308/sendMessage" \
+            -d chat_id="204715787" \
+            -d parse_mode="HTML" \
+            --data-urlencode text="&#128640; <b>Gulf data updated</b>
+          &#128197; <code>$(date -u +'%Y-%m-%d %H:%M UTC')</code>
+          &#128279; <a href='https://app.oilradar.io/dashboard'>app.oilradar.io/dashboard</a>"
