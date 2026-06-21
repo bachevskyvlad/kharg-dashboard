@@ -1,4 +1,4 @@
-# DISABLED — split into monitor.yml, gulf.yml, gas-storage.yml
+# Disabled — functionality split into monitor.yml, gulf.yml, gas-storage.yml, ais.yml
 name: Update Data (disabled)
 
 on:
@@ -8,4 +8,4 @@ jobs:
   noop:
     runs-on: ubuntu-latest
     steps:
-      - run: echo "This workflow is disabled. Use monitor.yml, gulf.yml, gas-storage.yml instead."
+      - run: echo "This workflow is disabled. Use monitor.yml, gulf.yml, gas-storage.yml, ais.yml instead."
