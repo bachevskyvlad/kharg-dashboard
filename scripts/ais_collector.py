@@ -55,6 +55,12 @@ async def collect():
 
     url = "wss://stream.aisstream.io/v0/stream"
     print(f"Connecting to {url}, will collect for {RUN_DURATION}s ...")
+    print(f"Subscription: {json.dumps(subscription, indent=2)}")
+
+    total_msgs = 0
+    filtered_no_pos = 0
+    filtered_no_terminal = 0
+    filtered_duplicate = 0
 
     try:
         async with websockets.connect(url, ping_interval=20) as ws:
@@ -67,9 +73,17 @@ async def collect():
                 try:
                     raw = await asyncio.wait_for(ws.recv(), timeout=10)
                 except asyncio.TimeoutError:
+                    elapsed = RUN_DURATION - (deadline - asyncio.get_event_loop().time())
+                    print(f"  [timeout] {elapsed:.0f}s elapsed, {total_msgs} msgs so far")
                     continue
 
+                total_msgs += 1
                 msg = json.loads(raw)
+
+                # Log first few raw messages for debugging
+                if total_msgs <= 3:
+                    print(f"  [RAW MSG #{total_msgs}]: {json.dumps(msg)[:500]}")
+
                 msg_type = msg.get("MessageType", "")
                 if msg_type not in ("PositionReport", "StandardClassBPositionReport"):
                     continue
@@ -82,10 +96,16 @@ async def collect():
                 lon = meta.get("longitude") or pos.get("Longitude")
 
                 if not mmsi or lat is None or lon is None:
+                    filtered_no_pos += 1
+                    if filtered_no_pos <= 3:
+                        print(f"  [SKIP no-pos] mmsi={mmsi} lat={lat} lon={lon}")
                     continue
 
-                terminal = terminal_for_pos(lat, lon)
+                terminal = terminal_for_pos(float(lat), float(lon))
                 if not terminal:
+                    filtered_no_terminal += 1
+                    if filtered_no_terminal <= 5:
+                        print(f"  [SKIP no-terminal] lat={lat:.3f} lon={lon:.3f}")
                     continue
 
                 vessel_type = pos.get("Type", 0) or 0
@@ -98,6 +118,7 @@ async def collect():
 
                 key = f"{mmsi}_{terminal}_{ts[:13]}"
                 if key in seen:
+                    filtered_duplicate += 1
                     continue
                 seen.add(key)
 
@@ -124,7 +145,14 @@ async def collect():
         if not records:
             sys.exit(1)
 
-    print(f"\nCollected {len(records)} positions. Saving to Supabase...")
+    print(f"\n=== STATS ===")
+    print(f"Total messages received: {total_msgs}")
+    print(f"Filtered (no lat/lon):   {filtered_no_pos}")
+    print(f"Filtered (outside bbox): {filtered_no_terminal}")
+    print(f"Filtered (duplicate):    {filtered_duplicate}")
+    print(f"Collected:               {len(records)}")
+
+    print(f"\nSaving to Supabase...")
     if records:
         try:
             sb.table("ais_positions").upsert(records, on_conflict="mmsi,timestamp").execute()
