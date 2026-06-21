@@ -44,12 +44,13 @@ async def collect():
     records = []
     seen = set()
 
-    bboxes = [[min_lat, min_lon, max_lat, max_lon]
+    # Each bbox in its own group so they are ORed (not ANDed)
+    bboxes = [[[min_lat, min_lon, max_lat, max_lon]]
                for min_lat, min_lon, max_lat, max_lon in TERMINALS.values()]
 
     subscription = {
         "APIKey": AIS_API_KEY,
-        "BoundingBoxes": [bboxes],
+        "BoundingBoxes": bboxes,
         "FilterMessageTypes": ["PositionReport", "StandardClassBPositionReport"]
     }
 
