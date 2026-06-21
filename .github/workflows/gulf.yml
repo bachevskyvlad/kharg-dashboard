@@ -17,14 +17,16 @@ jobs:
       - name: Install dependencies
         run: pip install -r scripts/requirements.txt
       - name: Restore Gulf raw cache
-        uses: dawiwd6/action-download-artifact@v6
-        with:
-          name: gulf-raw-cache
-          path: data/
-          workflow: gulf.yml
-          workflow_conclusion: ""
-          if_no_artifact_found: warn
-          search_artifacts: true
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          LATEST=$(gh run list --repo ${{ github.repository }} --workflow gulf.yml \
+            --status success --limit 1 --json databaseId -q '.[0].databaseId' 2>/dev/null || echo "")
+          if [ -n "$LATEST" ]; then
+            gh run download "$LATEST" -n gulf-raw-cache --dir data/ 2>/dev/null || echo "No cache in run $LATEST"
+          else
+            echo "No previous successful run found"
+          fi
         continue-on-error: true
       - name: Run Gulf fragility pipeline
         run: python scripts/gulf_fragility_pipeline.py
@@ -108,7 +110,8 @@ jobs:
         run: |
           git config user.name  "bot"
           git config user.email "bot@github.com"
-          git add data/fragility.json data/gulf_raw_cache.json
+          git add data/fragility.json 2>/dev/null || true
+          git add data/gulf_raw_cache.json 2>/dev/null || true
           git diff --cached --quiet && echo "no changes" && exit 0
           git commit -m "auto update gulf $(date -u +'%Y-%m-%d')"
           git pull --rebase --autostash origin main

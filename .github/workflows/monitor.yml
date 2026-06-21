@@ -17,14 +17,16 @@ jobs:
       - name: Install dependencies
         run: pip install -r scripts/requirements.txt
       - name: Restore previous cache
-        uses: dawiid6/action-download-artifact@v6
-        with:
-          name: kharg-raw-cache
-          path: public/
-          workflow: monitor.yml
-          workflow_conclusion: ""
-          if_no_artifact_found: warn
-          search_artifacts: true
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          LATEST=$(gh run list --repo ${{ github.repository }} --workflow monitor.yml \
+            --status success --limit 1 --json databaseId -q '.[0].databaseId' 2>/dev/null || echo "")
+          if [ -n "$LATEST" ]; then
+            gh run download "$LATEST" -n kharg-raw-cache --dir public/ 2>/dev/null || echo "No cache in run $LATEST"
+          else
+            echo "No previous successful run found"
+          fi
         continue-on-error: true
       - name: Count dates BEFORE run
         id: before
