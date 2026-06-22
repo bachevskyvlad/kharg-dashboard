@@ -16,24 +16,30 @@ jobs:
       - name: Install dependencies
         run: pip install supabase websockets
       - name: Run AIS collector (5 min)
-        run: python scripts/ais_collector.py
+        run: |
+          python scripts/ais_collector.py 2>&1 | tee /tmp/ais_output.txt
+          exit ${PIPESTATUS[0]}
         env:
           AIS_RUN_DURATION: "300"
       - name: Telegram - AIS SUCCESS
         if: success()
         run: |
+          MSGS=$(grep -oP 'Total messages: \K\d+' /tmp/ais_output.txt 2>/dev/null || echo "?")
           curl -s -X POST "https://api.telegram.org/bot7745904293:AAHV2qN_5_XNxpg6Ir3iV3XmEKpokthi308/sendMessage" \
             -d chat_id="204715787" \
             -d parse_mode="HTML" \
             --data-urlencode text="&#9989; <b>AIS Collector &#8212; SUCCESS</b>
           &#128197; <code>$(date -u +'%Y-%m-%d %H:%M UTC')</code>
+          &#128225; Messages received: <b>${MSGS}</b>
           &#128279; <a href='https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}'>Run #${{ github.run_number }}</a>"
       - name: Telegram - AIS FAILED
         if: failure()
         run: |
+          MSGS=$(grep -oP 'Total messages: \K\d+' /tmp/ais_output.txt 2>/dev/null || echo "0")
           curl -s -X POST "https://api.telegram.org/bot7745904293:AAHV2qN_5_XNxpg6Ir3iV3XmEKpokthi308/sendMessage" \
             -d chat_id="204715787" \
             -d parse_mode="HTML" \
             --data-urlencode text="&#10060; <b>AIS Collector &#8212; FAILED</b>
           &#128197; <code>$(date -u +'%Y-%m-%d %H:%M UTC')</code>
+          &#128225; Messages received: <b>${MSGS}</b>
           &#128279; <a href='https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}'>Open logs</a>"
