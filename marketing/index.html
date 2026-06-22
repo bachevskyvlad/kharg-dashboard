@@ -33,6 +33,62 @@
   "description": "Satellite intelligence for physical oil supply. Track crude oil exports from major Persian Gulf terminals using SAR imagery."
 }
 </script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "What is OilRadar?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "OilRadar is a satellite intelligence platform that tracks crude oil storage at Kharg Island and major Persian Gulf export terminals using Sentinel-1 SAR imagery. It delivers a 4–7 week lead time over official EIA, JODI, and IEA reports, giving commodity traders and macro funds early visibility into physical oil supply before the market consensus forms."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "How does OilRadar track oil storage using satellites?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "OilRadar processes Sentinel-1 C-band SAR (Synthetic Aperture Radar) satellite imagery. Floating-roof oil storage tanks cast measurable radar shadows — the shadow geometry directly reveals whether each tank roof is up (full) or down (near empty). Known tank diameter multiplied by fill ratio gives the approximate crude volume in million barrels. The satellite passes over the terminal 2–3 times per week."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "How much lead time does OilRadar provide over official oil reports?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "OilRadar provides a 4–7 week lead time over official EIA, JODI, and IEA reports. OilRadar updates 2–3 times per week directly from satellite imagery, while EIA data is published 4–8 weeks after the fact, IEA reports lag 6–10 weeks, and even AIS vessel trackers lag 1–2 weeks behind physical reality."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "What is Kharg Island and why does it matter for global oil markets?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Kharg Island is Iran's primary crude oil export terminal, handling approximately 90% of Iranian crude exports. It is the single most important choke point for Iranian physical supply. Storage builds at Kharg indicate export friction or tanker queuing; storage drawdowns indicate active loading and supply entering the global market. Monitoring Kharg Island gives 4–7 weeks of advance warning before the supply change appears in official statistics."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Why is SAR satellite data better than AIS vessel tracking for oil supply intelligence?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "AIS vessel tracking can be spoofed, and shadow fleet tankers frequently disable their transponders and go dark. SAR satellite imagery reads the tanks directly at the export source — before any tanker moves. This gives a signal 4–7 weeks earlier than AIS-based flow data and is immune to transponder manipulation. SAR also sees through clouds and works at night, providing consistent coverage."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "What is the accuracy of OilRadar's export bottleneck predictions?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "OilRadar achieves an 86% hit rate on export bottleneck prediction: when pre-event storage at Kharg Island was rising, a subsequent geopolitical shock caused a confirmed export bottleneck in 86% of observed cases. Insurance premium spikes result in an average +0.41 million barrel storage accumulation within 5 weeks. Shadow fleet sanctions take approximately 7 weeks to reach the exporter's berths in the observed data."
+      }
+    }
+  ]
+}
+</script>
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-TZQ5VH3GPY"></script>
 <script>
   window.dataLayer = window.dataLayer || [];
