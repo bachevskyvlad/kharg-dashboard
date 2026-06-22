@@ -1,0 +1,67 @@
+# OilRadar
+
+> Satellite intelligence for physical crude oil supply. OilRadar tracks oil storage at Kharg Island and major Persian Gulf export terminals using Sentinel-1 SAR imagery, providing 4–7 weeks of lead time over official EIA and JODI reports.
+
+OilRadar is a data intelligence product for commodity traders, macro hedge funds, and energy analysts who need early signals on physical crude oil supply before official data is published.
+
+## What OilRadar Does
+
+OilRadar processes Sentinel-1 SAR (Synthetic Aperture Radar) satellite imagery to measure the fill level of floating-roof oil storage tanks at major export terminals. Unlike AIS vessel tracking or official government statistics, SAR imagery directly observes physical oil inventories at the source — before any tanker moves.
+
+## Key Facts
+
+- **Lead time:** 4–7 weeks ahead of EIA, JODI, and IEA reports
+- **Update frequency:** 2–3 times per week (Sentinel-1 pass schedule)
+- **Primary coverage:** Kharg Island export terminal, Iran (operational since March 2023)
+- **Expanding coverage:** Saudi Arabia, Iraq (Basra), Kuwait, UAE (Fujairah), Qatar
+- **Methodology:** Floating roof tank shadow analysis via C-band SAR backscatter
+- **Hit rate:** 86% accuracy on export bottleneck prediction when pre-event storage was rising
+- **Insurance shock impact:** Average +0.41M bbl storage accumulation within 5 weeks of insurance premium spike
+- **Sanctions lag:** Shadow fleet sanctions take 7 weeks to reach the exporter's berths in observed data
+
+## How It Works
+
+1. Sentinel-1 C-band radar images the terminal 2–3 times per week, penetrating clouds and darkness
+2. Floating roof tanks cast measurable radar shadows — shadow geometry reveals whether each roof is up (full) or down (near empty)
+3. Known tank diameter × fill ratio = approximate crude volume in million barrels
+4. Storage dynamics (build vs. drawdown) reveal the export signal 4–7 weeks before market consensus
+
+## Why Kharg Island
+
+Kharg Island (Iran) handles approximately 90% of Iranian crude oil exports. It is the single most important choke point for Iranian supply. Storage builds at Kharg indicate export friction or tanker queuing; storage draws indicate active loading and supply entering the global market.
+
+## Information Lag Comparison
+
+| Source | Lag to market-moving signal |
+|---|---|
+| OilRadar (SAR) | 2–3 updates per week |
+| AIS trackers | 1–2 weeks |
+| Shipping agents | 2–4 weeks |
+| EIA / JODI | 4–8 weeks |
+| IEA Reports | 6–10 weeks |
+
+## Products
+
+- **Kharg Monitor** (`https://oilradar.io/monitor`): Live storage level dashboard updated 2–3x per week via Sentinel-1 SAR
+- **Europe Gas Storage Monitor** (`https://oilradar.io/gas-storage`): Real-time GIE AGSI+ data across 10 European countries — primary leading indicator for TTF pricing and winter supply risk
+- **Full Persian Gulf Dataset** (bespoke): All 6 major exporters (Saudi Arabia, Iran, Iraq, Kuwait, UAE, Qatar) at per-terminal, per-tank resolution
+
+## Team
+
+- **Vladislav Bachevsky** — Founder & Lead Analyst. Deep background in SAR satellite imagery intelligence, OSINT, and oil markets data analysis. LinkedIn: https://www.linkedin.com/in/bachevsky/ | X/Twitter: https://x.com/IberianLobos | Medium: https://medium.com/@somewho
+- **Artem Bachevsky** — CTO & Lead Developer. Expertise in data pipelines, security, OSINT tooling, and infrastructure.
+
+## Contact & Links
+
+- Website: https://oilradar.io
+- Book a call: https://calendly.com/bachevsky/60min
+- X / Twitter: https://x.com/IberianLobos
+- Medium: https://medium.com/@somewho
+- LinkedIn: https://www.linkedin.com/in/bachevsky/
+
+## Pages
+
+- [Home](https://oilradar.io/): Main landing — methodology, signal vs. EIA comparison, coverage, pricing tiers
+- [Kharg Island Storage Monitor](https://oilradar.io/monitor): Live SAR crude oil storage dashboard for Iran's primary export terminal
+- [Europe Gas Storage Monitor](https://oilradar.io/gas-storage): European underground gas storage levels across 10 countries with winter readiness signal
+- [Team](https://oilradar.io/team): About the OilRadar team
