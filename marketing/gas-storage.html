@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Europe Gas Storage Monitor — Live GIE Data | OilRadar</title>
 <meta name="description" content="Real-time European underground gas storage levels across 10 countries. Track TTF price drivers, winter supply risk, and LNG import demand.">
-<meta name="keywords" content="Europe gas storage, TTF gas price indicator, GIE AGSI gas data, European underground gas storage, winter gas supply risk, gas storage monitor, LNG demand tracker">
+<meta name="keywords" content="Europe gas storage, TTF gas price indicator, GIE AGSI gas data, European underground gas storage, winter gas supply risk, gas storage monitor, LNG demand tracker, EU gas storage levels, European natural gas storage 2024, TTF price leading indicator, gas storage by country Europe, winter gas supply forecast, GIE AGSI+ data, underground gas storage Europe, gas storage capacity Europe, LNG import demand Europe, gas storage Germany France Italy, natural gas market intelligence">
 <meta name="robots" content="index, follow">
 <link rel="canonical" href="https://oilradar.io/gas-storage">
 <link rel="icon" type="image/x-icon" href="/assets/images/favicon.ico">
@@ -37,7 +37,9 @@
 </script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@300;400;500&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
+<link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@300;400;500&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@300;400;500&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+<noscript><link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@300;400;500&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet"></noscript>
 <style>
 :root{--black:#060809;--deep:#0a0f14;--panel:#0f1823;--border:#1a2a3a;--accent:#2d7ff9;--accent-glow:rgba(45,127,249,0.10);--red:#e83a3a;--gold:#d4970a;--green:#1a9e5c;--text:#b8cad8;--muted:#4a6678;--white:#eef2f7;}
 *{margin:0;padding:0;box-sizing:border-box;}html{scroll-behavior:smooth;}
@@ -126,6 +128,25 @@ footer{border-top:1px solid var(--border);padding:32px 48px;display:flex;align-i
   </ul>
   <div class="nav-live" id="liveStamp">Updating daily</div>
 </nav>
+<noscript>
+<div style="padding:32px;background:#0f1823;color:#b8cad8;font-family:monospace;font-size:13px;line-height:2;border:1px solid #1a2a3a;margin:80px 48px 0;">
+  <h1 style="font-size:24px;color:#eef2f7;margin-bottom:16px;">Europe Gas Storage Monitor — OilRadar</h1>
+  <p>OilRadar tracks European underground natural gas storage levels across 10 countries using official GIE AGSI+ data, updated daily. This monitor is a leading indicator for TTF natural gas prices, winter supply risk, and LNG import demand.</p>
+  <h2 style="font-size:16px;color:#2d7ff9;margin:16px 0 8px;">Countries Covered</h2>
+  <p>Germany, France, Italy, Netherlands, Austria, Poland, Hungary, Spain, Ukraine, and aggregate EU level.</p>
+  <h2 style="font-size:16px;color:#2d7ff9;margin:16px 0 8px;">What This Monitor Shows</h2>
+  <ul style="margin-left:20px;">
+    <li><strong>EU Aggregate storage %</strong> — total European underground gas inventory as a percentage of capacity</li>
+    <li><strong>Year-over-year comparison</strong> — current level vs same period last year (pp difference)</li>
+    <li><strong>Winter Readiness</strong> — current fill vs 3-year seasonal average, signalling AHEAD or BELOW average</li>
+    <li><strong>Per-country breakdown</strong> — storage % and week-on-week change for each country</li>
+    <li><strong>TTF signal</strong> — OVERSUPPLIED / COMFORTABLE / NEUTRAL / TIGHT / CRITICAL</li>
+  </ul>
+  <h2 style="font-size:16px;color:#2d7ff9;margin:16px 0 8px;">Why It Matters</h2>
+  <p>European gas storage is the primary driver of TTF gas prices. Storage below 40% capacity is historically associated with supply stress. Storage above 85% with positive YoY delta typically signals TTF price suppression. Data source: GIE AGSI+ (Gas Infrastructure Europe).</p>
+  <p style="margin-top:16px;">For bespoke commodity intelligence: <a href="https://calendly.com/bachevsky/60min" style="color:#2d7ff9;">schedule a call</a>.</p>
+</div>
+</noscript>
 <div class="page">
   <div class="hero">
     <div class="hero-left">
@@ -171,7 +192,7 @@ footer{border-top:1px solid var(--border);padding:32px 48px;display:flex;align-i
   </div>
   <a class="footer-link" href="https://calendly.com/bachevsky/60min" target="_blank">Get Full Access</a>
 </footer>
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js" defer></script>
 <script>
 const DATA_URL="/data/gas_storage.json";
 const C={accent:"#2d7ff9",red:"#e83a3a",gold:"#d4970a",green:"#1a9e5c",muted:"#4a6678",text:"#b8cad8",white:"#eef2f7",panel:"#0f1823",border:"#1a2a3a"};

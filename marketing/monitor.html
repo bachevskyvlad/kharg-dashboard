@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Kharg Island Storage Monitor — Live SAR Oil Data | OilRadar</title>
 <meta name="description" content="Live satellite monitoring of crude oil storage at Kharg Island export terminal, Iran. Updated 2-3x per week via Sentinel-1 SAR imagery. Track storage builds and drawdowns before tankers move.">
-<meta name="keywords" content="Kharg Island oil storage monitor, SAR satellite oil data, Iran crude oil terminal, floating roof tank analysis, Sentinel-1 oil storage, oil export signal, Iranian crude exports live">
+<meta name="keywords" content="Kharg Island oil storage monitor, SAR satellite oil data, Iran crude oil terminal, floating roof tank analysis, Sentinel-1 oil storage, oil export signal, Iranian crude exports live, Kharg Island storage levels, Iran crude oil exports satellite, Persian Gulf oil terminal monitor, SAR radar oil storage, oil supply intelligence, crude oil export bottleneck, Iranian oil production tracker, oil market leading indicator, satellite oil data feed, physical oil supply tracker">
 <meta name="robots" content="index, follow">
 <link rel="canonical" href="https://oilradar.io/monitor">
 <link rel="icon" type="image/x-icon" href="/assets/images/favicon.ico">
@@ -52,7 +52,9 @@
 <script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','G-TZQ5VH3GPY');</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@300;400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@300;400;500&family=DM+Sans:wght@300;400;500&display=swap">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@300;400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+<noscript><link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@300;400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"></noscript>
 <style>
   :root{--black:#080a0d;--deep:#0d1117;--panel:#111820;--border:#1e2d3d;--accent:#3b82f6;--accent2:#ff4757;--gold:#f0a500;--text:#c8d6e5;--muted:#5a7a94;--white:#f0f4f8;}
   *{margin:0;padding:0;box-sizing:border-box;}
@@ -97,6 +99,25 @@
   <a href="/" class="logo">OilRadar</a>
   <div class="nav-links"><a href="/team" class="nav-link">Team</a><a href="/" class="nav-cta">← Back to Main</a></div>
 </nav>
+<noscript>
+<div style="padding:32px;background:#111820;color:#c8d6e5;font-family:monospace;font-size:13px;line-height:2;border:1px solid #1e2d3d;margin:80px 48px 0;">
+  <h1 style="font-size:24px;color:#f0f4f8;margin-bottom:16px;">Kharg Island Crude Oil Storage Monitor — OilRadar</h1>
+  <p>OilRadar tracks physical crude oil storage at Kharg Island, Iran's primary export terminal responsible for approximately 90% of Iranian crude exports. Data is derived from Sentinel-1 SAR satellite imagery updated 2–3 times per week.</p>
+  <h2 style="font-size:16px;color:#3b82f6;margin:16px 0 8px;">What This Monitor Shows</h2>
+  <p><strong>Storage Build (Rising Volume):</strong> Crude oil is accumulating at the terminal. Tankers are queuing, loading is slower than production, or exports face geopolitical friction. This signal typically precedes a confirmed export bottleneck by 4–7 weeks.</p>
+  <p><strong>Storage Drawdown (Falling Volume):</strong> Tankers are actively loading and draining the terminal. Physical crude is flowing into the global market. This supply signal reaches EIA and JODI reports 4–8 weeks later.</p>
+  <h2 style="font-size:16px;color:#3b82f6;margin:16px 0 8px;">Key Facts</h2>
+  <ul style="margin-left:20px;">
+    <li>Data available since March 2023</li>
+    <li>Satellite passes: 2–3 times per week on average</li>
+    <li>Measurement method: floating roof tank radar shadow geometry (Sentinel-1 C-band SAR)</li>
+    <li>86% hit rate on export bottleneck prediction when pre-event storage was rising</li>
+    <li>Lead time over EIA/JODI: 4–7 weeks</li>
+    <li>Lead time over AIS vessel tracking: 1–3 weeks</li>
+  </ul>
+  <p style="margin-top:16px;">For full data access: <a href="https://calendly.com/bachevsky/60min" style="color:#3b82f6;">schedule a call</a> or visit <a href="https://oilradar.io" style="color:#3b82f6;">oilradar.io</a>.</p>
+</div>
+</noscript>
 <main>
   <div class="section-label">Data Feed (Last 3 Months)</div>
   <h1 class="section-title">Kharg Island Storage Monitor</h1>
@@ -114,7 +135,7 @@
   <div class="footer-logo">OilRadar</div>
   <div class="footer-right"><a href="/team" class="footer-link">Team</a><div class="footer-text">Satellite Intelligence for Physical Oil Markets</div></div>
 </footer>
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js" defer></script>
 <script>
 async function loadDailyMonitor(){
   try{
