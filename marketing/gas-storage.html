@@ -3,7 +3,22 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>OilRadar — Europe Gas Storage Monitor</title>
+<title>Europe Gas Storage Monitor — Live GIE Data | OilRadar</title>
+<meta name="description" content="Real-time European underground gas storage levels across 10 countries. Track TTF price drivers, winter supply risk, and LNG import demand.">
+<meta name="robots" content="index, follow">
+<link rel="canonical" href="https://oilradar.io/gas-storage">
+<link rel="icon" type="image/png" href="/assets/images/favicon.png">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://oilradar.io/gas-storage">
+<meta property="og:title" content="Europe Gas Storage Monitor — Live GIE Data | OilRadar">
+<meta property="og:description" content="Real-time European underground gas storage levels across 10 countries. Track TTF price drivers, winter supply risk, and LNG import demand.">
+<meta property="og:image" content="https://oilradar.io/assets/images/og-image.png">
+<meta property="og:site_name" content="OilRadar">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Europe Gas Storage Monitor — Live GIE Data | OilRadar">
+<meta name="twitter:description" content="Real-time European underground gas storage levels across 10 countries. Track TTF price drivers, winter supply risk, and LNG import demand.">
+<meta name="twitter:image" content="https://oilradar.io/assets/images/og-image.png">
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"Dataset","name":"Europe Gas Storage Monitor","description":"Real-time European underground gas storage levels across 10 countries, updated daily from GIE AGSI+.","url":"https://oilradar.io/gas-storage","provider":{"@type":"Organization","name":"OilRadar","url":"https://oilradar.io"},"spatialCoverage":{"@type":"Place","name":"Europe"},"temporalCoverage":"2020/..","updateFrequency":"Daily"}</script>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@300;400;500&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <style>
@@ -31,7 +46,6 @@ nav{position:fixed;top:0;left:0;right:0;z-index:200;display:flex;align-items:cen
 .hero-stat-label{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:3px;text-transform:uppercase;color:var(--muted);margin-bottom:8px;}
 .hero-stat-val{font-family:'Bebas Neue',sans-serif;font-size:36px;color:var(--white);line-height:1;}
 .hero-stat-val.up{color:var(--gold);}.hero-stat-val.down{color:var(--accent);}.hero-stat-val.warn{color:var(--red);}.hero-stat-val.green{color:var(--green);}
-.hero-stat-sub{font-family:'DM Mono',monospace;font-size:9px;color:var(--muted);letter-spacing:1px;margin-top:4px;}
 .readiness-block{background:var(--panel);border:1px solid var(--border);padding:20px 28px;min-width:200px;position:relative;overflow:hidden;}
 .readiness-block::before{content:'';position:absolute;inset:0;opacity:0;transition:opacity .4s;}
 .readiness-block.ahead::before{background:linear-gradient(135deg,rgba(26,158,92,.06),transparent);opacity:1;border-color:var(--green);}
@@ -277,9 +291,9 @@ async function init(){
   countryKeys.filter(c=>c!=="EU").map(c=>{const d=parsed[c];const last=d.data[d.data.length-1];return{code:c,name:d.name,full:last?last.full:null};}).sort((a,b)=>(b.full||0)-(a.full||0)).forEach(({name,full})=>{const pct=full!==null?full.toFixed(1):"—";const col=colorFill(full);const row=document.createElement("div");row.className="country-row";row.innerHTML=`<div class="country-name">${name}</div><div class="country-track"><div class="country-fill" style="width:0%;background:${col}" data-target="${full||0}"></div></div><div class="country-pct" style="color:${col}">${pct}%</div>`;barContainer.appendChild(row);});
   setTimeout(()=>{document.querySelectorAll(".country-fill").forEach(el=>{el.style.width=Math.min(el.dataset.target,100)+"%";});},300);
   const nonEUKeys=countryKeys.filter(c=>c!=="EU"&&parsed[c].data.length>0);
-  new Chart(document.getElementById("chartAllCountries"),{type:"line",data:{datasets:nonEUKeys.map((code,i)=>{const d=parsed[code];const recent=d.data.slice(-365);const col=COUNTRY_COLORS[i%COUNTRY_COLORS.length];return{label:d.name,data:recent.map(r=>({x:fmtShort(r.date),y:r.full})),borderColor:col,borderWidth:1.5,pointRadius:0,tension:0.3,fill:false};})},options:{responsive:true,maintainAspectRatio:false,interaction:{mode:"index",intersect:false},scales:{x:{type:"category",grid:{color:"rgba(26,42,58,.4)",drawBorder:false},ticks:{color:C.muted,maxTicksLimit:12,maxRotation:0}},y:{...baseScales().y,min:0,max:105,ticks:{color:C.muted,callback:v=>v+"%"}}},plugins:{legend:{labels:{color:C.muted,boxWidth:12,padding:14,font:{size:11}}},tooltip:{backgroundColor:"#0a0f14",borderColor:C.border,borderWidth:1,titleColor:C.muted,bodyColor:C.text,callbacks:{label:ctx=>" "+ctx.dataset.label+": "+ctx.parsed.y.toFixed(1)+"%"}}}}});
+  new Chart(document.getElementById("chartAllCountries"),{type:"line",data:{datasets:nonEUKeys.map((code,i)=>{const d=parsed[code];const recent=d.data.slice(-365);const col=COUNTRY_COLORS[i%COUNTRY_COLORS.length];return{label:d.name,data:recent.map(r=>({x:fmtShort(r.date),y:r.full})),borderColor:col,borderWidth:1.5,pointRadius:0,tension:0.3,fill:false};})},options:{responsive:true,maintainAspectRatio:false,interaction:{mode:"index",intersect:false},scales:{x:{type:"category",grid:{color:"rgba(26,42,58,.4)",drawBorder:false},ticks:{color:C.muted,maxTicksLimit:12,maxRotation:0}},y:{...baseScales().y,min:0,max:105,ticks:{color:C.muted,callback:v=>v+"%"}}},plugins:{legend:{labels:{color:C.muted,boxWidth:12,padding:14,font:{size:11}}},tooltip:{backgroundColor:"#0a0f14",borderColor:C.border,borderWidth:1,titleColor:C.muted,bodyColor:C.text,callbacks:{label:ctx=>" "+ctx.dataset.label+": "+ctx.parsed.y.toFixed(1)+"%"}}}}})
   const tbody=document.getElementById("dataTableBody");
-  countryKeys.forEach(code=>{const d=parsed[code];const arr=d.data;if(!arr.length)return;const last=arr[arr.length-1];const prev=arr[arr.length-2];const wow=prev&&last.full!==null&&prev.full!==null?(last.full-prev.full).toFixed(1):null;const[sig,sigCls]=signalText(last.full,wow?parseFloat(wow):0);const wowStr=wow!==null?`<td class="${parseFloat(wow)>=0?"up":"down"}">${parseFloat(wow)>=0?"+":""}${wow}pp</td>`:`<td class="accent">—</td>`;tbody.innerHTML+=`<tr><td class="accent">${d.name}</td><td>${fmt(last.date)}</td><td style="color:${colorFill(last.full)}">${last.full?.toFixed(1)??"—"}%</td><td>${last.gasInStorage?.toFixed(0)??"—"} TWh</td>${wowStr}<td>${last.trend||"—"}</td><td><span class="signal-badge ${sigCls}" style="font-size:9px;padding:3px 8px;">${sig}</span></td></tr>`;});
+  countryKeys.forEach(code=>{const d=parsed[code];const arr=d.data;if(!arr.length)return;const last=arr[arr.length-1];const prev=arr[arr.length-2];const wow=prev&&last.full!==null&&prev.full!==null?(last.full-prev.full).toFixed(1):null;const[sig,sigCls]=signalText(last.full,wow?parseFloat(wow):0);const wowStr=wow!==null?`<td class="${parseFloat(wow)>=0?"up":"down"}">${parseFloat(wow)>=0?"+":""}${wow}pp</td>`:`<td class="accent">—</td>`;tbody.innerHTML+=`<tr><td class="accent">${d.name}</td><td>${fmt(last.date)}</td><td style="color:${colorFill(last.full)}">${last.full?.toFixed(1)??"-"}--%</td><td>${last.gasInStorage?.toFixed(0)??"—"} TWh</td>${wowStr}<td>${last.trend||"—"}</td><td><span class="signal-badge ${sigCls}" style="font-size:9px;padding:3px 8px;">${sig}</span></td></tr>`;});
   const obs=new IntersectionObserver(entries=>{entries.forEach(e=>{if(e.isIntersecting)e.target.classList.add("on");});},{threshold:0.08});
   document.querySelectorAll(".reveal").forEach(el=>obs.observe(el));
 }
