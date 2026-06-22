@@ -51,5 +51,4 @@ AIS vessel tracking can be spoofed. Shadow fleet tankers frequently disable tran
 - Homepage: https://oilradar.io/
 - Kharg Island Monitor: https://oilradar.io/monitor
 - Europe Gas Storage: https://oilradar.io/gas-storage
-- Methodology: https://oilradar.io/methodology
 - Team: https://oilradar.io/team
