@@ -5560,7 +5560,7 @@
       97.11,
       99.9,
       101.49,
-      86.81
+      87.4
     ],
     "storage_by_country": {
       "Iran": [
@@ -6313,7 +6313,7 @@
     }
   },
   "meta": {
-    "updated": "2026-06-21 18:48 UTC",
+    "updated": "2026-06-22 08:47 UTC",
     "tanks_count": 85,
     "terminals": [
       "Kharg_Island",
