@@ -36,6 +36,40 @@
 <script type="application/ld+json">
 {
   "@context": "https://schema.org",
+  "@type": "HowTo",
+  "name": "How OilRadar Tracks Crude Oil Exports Using SAR Satellite Imagery",
+  "description": "OilRadar uses Sentinel-1 SAR satellite imagery to measure crude oil storage levels at Kharg Island and major Persian Gulf terminals, providing a 4–7 week lead over official EIA and JODI reports.",
+  "step": [
+    {
+      "@type": "HowToStep",
+      "position": 1,
+      "name": "SAR Satellite Acquisition",
+      "text": "Sentinel-1 C-band radar satellite images the oil export terminal 2–3 times per week on average, penetrating clouds and darkness. The radar signal bounces off tank surfaces and returns to the satellite."
+    },
+    {
+      "@type": "HowToStep",
+      "position": 2,
+      "name": "Floating Roof Detection",
+      "text": "Floating roof tanks cast measurable radar shadows. The geometry of these shadows reveals whether each tank roof is up (tank is full) or down (tank is near empty). This is a direct physical measurement, not an estimate."
+    },
+    {
+      "@type": "HowToStep",
+      "position": 3,
+      "name": "Volume Calculation",
+      "text": "Known tank diameter multiplied by fill ratio gives the approximate crude oil volume in million barrels. Individual tank readings are aggregated across the full terminal to produce the total storage level."
+    },
+    {
+      "@type": "HowToStep",
+      "position": 4,
+      "name": "Export Signal Generation",
+      "text": "Storage dynamics reveal the export signal: a storage build indicates export friction or tanker queuing; a storage drawdown indicates active loading with oil flowing to market. This signal appears 4–7 weeks before the supply change shows up in official EIA, JODI, or IEA reports."
+    }
+  ]
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
   "@type": "FAQPage",
   "mainEntity": [
     {
@@ -87,6 +121,13 @@
       }
     }
   ]
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "Speakable",
+  "cssSelector": [".hero-sub", ".monitor-note", ".section-label"]
 }
 </script>
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-TZQ5VH3GPY"></script>
