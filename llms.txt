@@ -46,6 +46,10 @@ Kharg Island (Iran) handles approximately 90% of Iranian crude oil exports. It i
 - **Europe Gas Storage Monitor** (`https://oilradar.io/gas-storage`): Real-time GIE AGSI+ data across 10 European countries — primary leading indicator for TTF pricing and winter supply risk
 - **Full Persian Gulf Dataset** (bespoke): All 6 major exporters (Saudi Arabia, Iran, Iraq, Kuwait, UAE, Qatar) at per-terminal, per-tank resolution
 
+## Articles
+
+- [How We Track Iranian Crude Oil Exports Using Sentinel-1 SAR Satellite Imagery](https://medium.com/p/2e550a114d90) — Full methodology: SAR data collection, floating roof tank analysis, calibration against EIA/JODI, and lead time validation. Published June 2026.
+
 ## Team
 
 - **Vladislav Bachevsky** — Founder & Lead Analyst. Deep background in SAR satellite imagery intelligence, OSINT, and oil markets data analysis. LinkedIn: https://www.linkedin.com/in/bachevsky/ | X/Twitter: https://x.com/IberianLobos | Medium: https://medium.com/@somewho
