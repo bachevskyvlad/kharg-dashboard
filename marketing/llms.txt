@@ -45,6 +45,8 @@ AIS vessel tracking can be spoofed. Shadow fleet tankers frequently disable tran
 - Website: https://oilradar.io
 - Scheduling: https://calendly.com/bachevsky/60min
 - Twitter/X: @IberianLobos
+- Medium: https://medium.com/@somewho
+- Article: https://medium.com/@somewho/how-we-track-iranian-crude-oil-exports-using-sentinel-1-sar-satellite-imagery-2e550a114d90
 
 ## Pages
 
