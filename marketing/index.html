@@ -30,7 +30,62 @@
   "@type": "WebSite",
   "name": "OilRadar",
   "url": "https://oilradar.io",
-  "description": "Satellite intelligence for physical oil supply. Track crude oil exports from major Persian Gulf terminals using SAR imagery."
+  "description": "Satellite intelligence for physical oil supply. Track crude oil exports from major Persian Gulf terminals using SAR imagery.",
+  "potentialAction": {
+    "@type": "SearchAction",
+    "target": "https://oilradar.io/monitor",
+    "query-input": "required name=search_term_string"
+  }
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "Organization",
+  "name": "OilRadar",
+  "url": "https://oilradar.io",
+  "logo": "https://oilradar.io/assets/images/og-image.png",
+  "description": "Satellite intelligence platform tracking physical crude oil exports from Kharg Island and Persian Gulf terminals using SAR imagery. Delivers 4–7 week lead time over official EIA, JODI, and IEA reports.",
+  "sameAs": ["https://x.com/IberianLobos", "https://www.linkedin.com/in/bachevsky/"],
+  "contactPoint": {
+    "@type": "ContactPoint",
+    "contactType": "sales",
+    "url": "https://calendly.com/bachevsky/60min"
+  },
+  "areaServed": "Worldwide",
+  "founders": [
+    {"@type": "Person", "name": "Vladislav Bachevsky", "jobTitle": "Founder & Lead Analyst", "sameAs": "https://www.linkedin.com/in/bachevsky/"}
+  ]
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  "name": "OilRadar",
+  "applicationCategory": "BusinessApplication",
+  "operatingSystem": "Web",
+  "url": "https://oilradar.io",
+  "description": "SAR satellite intelligence platform providing 4–7 week lead time over official oil supply reports. Tracks crude oil storage and exports at Kharg Island, Iran and major Persian Gulf terminals.",
+  "offers": [
+    {
+      "@type": "Offer",
+      "name": "Kharg Island Monitor",
+      "description": "Storage level updates 2–3 times per week for Kharg Island terminal. Export bottleneck signal with geopolitical event overlay."
+    },
+    {
+      "@type": "Offer",
+      "name": "Full Persian Gulf Dataset",
+      "description": "Per-terminal, per-tank resolution across all 6 major Gulf exporters: Saudi Arabia, Iran, Iraq, Kuwait, UAE, Qatar."
+    }
+  ],
+  "featureList": [
+    "Sentinel-1 SAR satellite imagery processing",
+    "Floating roof tank volume estimation",
+    "4–7 week lead over EIA and JODI reports",
+    "Export bottleneck signal generation",
+    "Geopolitical event overlay"
+  ]
 }
 </script>
 <script type="application/ld+json">

@@ -1,0 +1,54 @@
+# OilRadar — Satellite Intelligence for Physical Oil Supply
+
+## What is OilRadar?
+
+OilRadar is a satellite-based intelligence platform that tracks physical crude oil storage and exports from Kharg Island (Iran) and major Persian Gulf export terminals using Sentinel-1 SAR (Synthetic Aperture Radar) imagery.
+
+The platform delivers a **4–7 week lead time** over official EIA, JODI, and IEA oil supply reports — enabling commodity traders and macro funds to see supply dynamics before they appear in market consensus.
+
+## Core Product
+
+- **Kharg Island Storage Monitor** (`/monitor`): Live storage level estimates updated 2–3 times per week directly from SAR satellite passes. Available since March 2023.
+- **Europe Gas Storage Monitor** (`/gas-storage`): Real-time European underground gas storage across 10 countries, sourced from GIE AGSI+. Key TTF price leading indicator.
+- **Full Persian Gulf Dataset** (bespoke): Per-terminal, per-tank resolution across all 6 major Gulf exporters — Saudi Arabia, Iran, Iraq, Kuwait, UAE, Qatar.
+
+## Methodology
+
+1. Sentinel-1 C-band SAR satellite images Kharg Island terminal 2–3 times per week.
+2. Floating-roof oil tanks cast measurable radar shadows. Shadow geometry reveals whether each tank roof is up (full) or down (near empty) — a direct physical measurement.
+3. Known tank diameter × fill ratio = crude oil volume in million barrels.
+4. Storage dynamics signal exports: a storage build means tankers are queuing or exports are slowing; a storage drawdown means active loading, oil is flowing to market.
+
+## Key Statistics
+
+- **86%** hit rate on export bottleneck prediction when pre-event storage at Kharg Island was rising.
+- **+0.41M bbl** average storage accumulation within 5 weeks of an insurance premium shock.
+- **7 weeks** lag from shadow fleet sanctions to physical impact at the exporter's berths.
+- OilRadar updates: 2–3 times per week. AIS trackers: 1–2 week lag. EIA: 4–8 week lag. IEA: 6–10 week lag.
+
+## Why SAR vs AIS?
+
+AIS vessel tracking can be spoofed. Shadow fleet tankers frequently disable transponders. SAR reads tanks directly at the source — before any tanker moves. SAR also penetrates clouds and works at night.
+
+## Coverage
+
+**Live:** Iran (Kharg Island), Saudi Arabia, Iraq (Basra), Kuwait, UAE (Fujairah), Qatar
+**Roadmap:** Russia (Primorsk), Venezuela, Libya, Nigeria
+
+## Team
+
+- **Vladislav Bachevsky** — Founder & Lead Analyst. Expert in SAR satellite imagery intelligence and OSINT. LinkedIn: https://linkedin.com/in/bachevsky
+- **Artem Bachevsky** — CTO & Lead Developer. Data engineering, security, infrastructure.
+
+## Contact
+
+- Website: https://oilradar.io
+- Scheduling: https://calendly.com/bachevsky/60min
+- Twitter/X: @IberianLobos
+
+## Pages
+
+- Homepage: https://oilradar.io/
+- Kharg Island Monitor: https://oilradar.io/monitor
+- Europe Gas Storage: https://oilradar.io/gas-storage
+- Team: https://oilradar.io/team
