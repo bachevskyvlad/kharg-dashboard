@@ -28,7 +28,6 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@300;400;500&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <style>
 :root{--black:#060809;--deep:#0a0f14;--panel:#0f1823;--border:#1a2a3a;--accent:#2d7ff9;--accent-glow:rgba(45,127,249,0.10);--red:#e83a3a;--gold:#d4970a;--green:#1a9e5c;--text:#b8cad8;--muted:#4a6678;--white:#eef2f7;}
 *{margin:0;padding:0;box-sizing:border-box;}html{scroll-behavior:smooth;}
@@ -162,6 +161,7 @@ footer{border-top:1px solid var(--border);padding:32px 48px;display:flex;align-i
   </div>
   <a class="footer-link" href="https://calendly.com/bachevsky/60min" target="_blank">Get Full Access</a>
 </footer>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <script>
 const DATA_URL="/data/gas_storage.json";
 const C={accent:"#2d7ff9",red:"#e83a3a",gold:"#d4970a",green:"#1a9e5c",muted:"#4a6678",text:"#b8cad8",white:"#eef2f7",panel:"#0f1823",border:"#1a2a3a"};
@@ -203,7 +203,7 @@ const barContainer=document.getElementById("countryBars");
 countryKeys.filter(c=>c!=="EU").map(c=>{const d=parsed[c];const last=d.data[d.data.length-1];return{code:c,name:d.name,full:last?last.full:null};}).sort((a,b)=>(b.full||0)-(a.full||0)).forEach(({name,full})=>{const pct=full!==null?full.toFixed(1):"—";const col=colorFill(full);const row=document.createElement("div");row.className="country-row";row.innerHTML=`<div class="country-name">${name}</div><div class="country-track"><div class="country-fill" style="width:0%;background:${col}" data-target="${full||0}"></div></div><div class="country-pct" style="color:${col}">${pct}%</div>`;barContainer.appendChild(row);});
 setTimeout(()=>{document.querySelectorAll(".country-fill").forEach(el=>{el.style.width=Math.min(el.dataset.target,100)+"%";});},300);
 const nonEUKeys=countryKeys.filter(c=>c!=="EU"&&parsed[c].data.length>0);
-new Chart(document.getElementById("chartAllCountries"),{type:"line",data:{datasets:nonEUKeys.map((code,i)=>{const d=parsed[code];const recent=d.data.slice(-365);const col=COUNTRY_COLORS[i%COUNTRY_COLORS.length];return{label:d.name,data:recent.map(r=>({x:fmtShort(r.date),y:r.full})),borderColor:col,borderWidth:1.5,pointRadius:0,tension:0.3,fill:false};})},options:{responsive:true,maintainAspectRatio:false,interaction:{mode:"index",intersect:false},scales:{x:{type:"category",grid:{color:"rgba(26,42,58,.4)",drawBorder:false},ticks:{color:C.muted,maxTicksLimit:12,maxRotation:0}},y:{...baseScales().y,min:0,max:105,ticks:{color:C.muted,callback:v=>v+"%"}}},plugins:{legend:{labels:{color:C.muted,boxWidth:12,padding:14,font:{size:11}}},tooltip:{backgroundColor:"#0a0f14",borderColor:C.border,borderWidth:1,titleColor:C.muted,bodyColor:C.text,callbacks:{label:ctx=>" "+ctx.dataset.label+": "+ctx.parsed.y.toFixed(1)+"%"}}}}})
+new Chart(document.getElementById("chartAllCountries"),{type:"line",data:{datasets:nonEUKeys.map((code,i)=>{const d=parsed[code];const recent=d.data.slice(-365);const col=COUNTRY_COLORS[i%COUNTRY_COLORS.length];return{label:d.name,data:recent.map(r=>({x:fmtShort(r.date),y:r.full})),borderColor:col,borderWidth:1.5,pointRadius:0,tension:0.3,fill:false};})},options:{responsive:true,maintainAspectRatio:false,interaction:{mode:"index",intersect:false},scales:{x:{type:"category",grid:{color:"rgba(26,42,58,.4)",drawBorder:false},ticks:{color:C.muted,maxTicksLimit:12,maxRotation:0}},y:{...baseScales().y,min:0,max:105,ticks:{color:C.muted,callback:v=>v+"%"}}},pointers:{legend:{labels:{color:C.muted,boxWidth:12,padding:14,font:{size:11}}},tooltip:{backgroundColor:"#0a0f14",borderColor:C.border,borderWidth:1,titleColor:C.muted,bodyColor:C.text,callbacks:{label:ctx=>" "+ctx.dataset.label+": "+ctx.parsed.y.toFixed(1)+"%"}}}}})
 const tbody=document.getElementById("dataTableBody");
 countryKeys.forEach(code=>{const d=parsed[code];const arr=d.data;if(!arr.length)return;const last=arr[arr.length-1];const prev=arr[arr.length-2];const wow=prev&&last.full!==null&&prev.full!==null?(last.full-prev.full).toFixed(1):null;const[sig,sigCls]=signalText(last.full,wow?parseFloat(wow):0);const wowStr=wow!==null?`<td class="${parseFloat(wow)>=0?"up":"down"}">${parseFloat(wow)>=0?"+":""}${wow}pp</td>`:`<td class="accent">—</td>`;tbody.innerHTML+=`<tr><td class="accent">${d.name}</td><td>${fmt(last.date)}</td><td style="color:${colorFill(last.full)}">${last.full?.toFixed(1)??"—"}%</td><td>${last.gasInStorage?.toFixed(0)??"—"} TWh</td>${wowStr}<td>${last.trend||"—"}</td><td><span class="signal-badge ${sigCls}" style="font-size:9px;padding:3px 8px;">${sig}</span></td></tr>`;});
 const obs=new IntersectionObserver(entries=>{entries.forEach(e=>{if(e.isIntersecting)e.target.classList.add("on");});},{threshold:0.08});
