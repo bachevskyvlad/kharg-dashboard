@@ -35,6 +35,8 @@
   ]
 }
 </script>
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-TZQ5VH3GPY"></script>
+<script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','G-TZQ5VH3GPY');</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@300;400;500&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap">
@@ -223,7 +225,7 @@ setTimeout(()=>{document.querySelectorAll(".country-fill").forEach(el=>{el.style
 const nonEUKeys=countryKeys.filter(c=>c!=="EU"&&parsed[c].data.length>0);
 new Chart(document.getElementById("chartAllCountries"),{type:"line",data:{datasets:nonEUKeys.map((code,i)=>{const d=parsed[code];const recent=d.data.slice(-365);const col=COUNTRY_COLORS[i%COUNTRY_COLORS.length];return{label:d.name,data:recent.map(r=>({x:fmtShort(r.date),y:r.full})),borderColor:col,borderWidth:1.5,pointRadius:0,tension:0.3,fill:false};})},options:{responsive:true,maintainAspectRatio:false,interaction:{mode:"index",intersect:false},scales:{x:{type:"category",grid:{color:"rgba(26,42,58,.4)",drawBorder:false},ticks:{color:C.muted,maxTicksLimit:12,maxRotation:0}},y:{...baseScales().y,min:0,max:105,ticks:{color:C.muted,callback:v=>v+"%"}}},plugins:{legend:{labels:{color:C.muted,boxWidth:12,padding:14,font:{size:11}}},tooltip:{backgroundColor:"#0a0f14",borderColor:C.border,borderWidth:1,titleColor:C.muted,bodyColor:C.text,callbacks:{label:ctx=>" "+ctx.dataset.label+": "+ctx.parsed.y.toFixed(1)+"%"}}}}});
 const tbody=document.getElementById("dataTableBody");
-countryKeys.forEach(code=>{const d=parsed[code];const arr=d.data;if(!arr.length)return;const last=arr[arr.length-1];const prev=arr[arr.length-2];const wow=prev&&last.full!==null&&prev.full!==null?(last.full-prev.full).toFixed(1):null;const[sig,sigCls]=signalText(last.full,wow?parseFloat(wow):0);const wowStr=wow!==null?`<td class="${parseFloat(wow)>=0?"up":"down"}">${parseFloat(wow)>=0?"+":""}${wow}%</td>`:`<td class="accent">—</td>`;tbody.innerHTML+=`<tr><td class="accent">${d.name}</td><td>${fmt(last.date)}</td><td style="color:${colorFill(last.full)}">${last.full?.toFixed(1)??"—"}%</td><td>${last.gasInStorage?.toFixed(0)??"—"} TWh</td>${wowStr}<td>${last.trend||"—"}</td><td><span class="signal-badge ${sigCls}" style="font-size:9px;padding:3px 8px;">${sig}</span></td></tr>`;});
+countryKeys.forEach(code=>{const d=parsed[code];const arr=d.data;if(!arr.length)return;const last=arr[arr.length-1];const prev=arr[arr.length-2];const wow=prev&&last.full!==null&&prev.full!==null?(last.full-prev.full).toFixed(1):null;const[sig,sigCls]=signalText(last.full,wow?parseFloat(wow):0);const wowStr=wow!==null?`<td class="${parseFloat(wow)>=0?"up":"down'}">${parseFloat(wow)>=0?"+":""}${wow}%</td>`:`<td class="accent">—</td>`;tbody.innerHTML+=`<tr><td class="accent">${d.name}</td><td>${fmt(last.date)}</td><td style="color:${colorFill(last.full)}">${last.full?.toFixed(1)??"—"}%</td><td>${last.gasInStorage?.toFixed(0)??"—"} TWh</td>${wowStr}<td>${last.trend||"—"}</td><td><span class="signal-badge ${sigCls}" style="font-size:9px;padding:3px 8px;">${sig}</span></td></tr>`;});
 const obs=new IntersectionObserver(entries=>{entries.forEach(e=>{if(e.isIntersecting)e.target.classList.add("on");});},{threshold:0.08});
 document.querySelectorAll(".reveal").forEach(el=>obs.observe(el));
 }
