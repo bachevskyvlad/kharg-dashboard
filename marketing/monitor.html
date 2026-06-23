@@ -128,7 +128,7 @@
 <body>
 <nav>
   <a href="/" class="logo">OilRadar</a>
-  <div class="nav-links"><a href="/team" class="nav-link">Team</a><a href="/" class="nav-cta">← Back to Main</a></div>
+  <div class="nav-links"><a href="/team" class="nav-link">Team</a><a href="/" class="nav-cta">&larr; Back to Main</a></div>
 </nav>
 <main>
   <div class="section-label">Last 6 Months</div>
@@ -138,7 +138,7 @@
     <div class="monitor-header"><div class="monitor-title">Storage Volume — SAR Extraction</div></div>
     <div class="monitor-stat" id="latestStat">Loading data...</div>
     <div class="chart-wrapper"><canvas id="dailyChart"></canvas></div>
-    <div class="chart-section-label">Terminal Utilization — % of Observed Peak</div>
+    <div class="chart-section-label">Terminal Utilization — % of Nameplate Capacity</div>
     <div class="chart-wrapper util"><canvas id="utilChart"></canvas></div>
     <div class="explanation-grid">
       <div class="explain-card"><h4>🛰️ How The Radar Works</h4><p>Oil storage tanks on Kharg Island use <strong>floating roofs</strong> that lower as oil is pumped out and rise as tanks fill. Sentinel-1 SAR signals bounce off the internal walls. A low roof returns a brighter radar reflection. We invert this radiometric signal to calculate the physical volume in millions of barrels.</p><p class="muted">On average, the satellite passes over the region twice a week.</p></div>
@@ -149,10 +149,10 @@
   <div class="section-label" style="margin-top:48px;">Per-Tank View</div>
   <div class="map-wrap">
     <div class="map-header">
-      <span class="map-title">KHARG ISLAND EXPORT TERMINAL · FLOATING ROOF TANKS · FILL LEVEL</span>
+      <span class="map-title">KHARG ISLAND EXPORT TERMINAL &middot; FLOATING ROOF TANKS &middot; FILL LEVEL</span>
       <span style="font-family:'DM Mono',monospace;font-size:9px;color:var(--muted);">Satellite: ESRI World Imagery</span>
     </div>
-    <div id="map"><div class="loading-msg" id="mapLoadingMsg">Loading satellite data…</div></div>
+    <div id="map"><div class="loading-msg" id="mapLoadingMsg">Loading satellite data&hellip;</div></div>
   </div>
   <div class="controls-wrap">
     <button id="playBtn">&#9654; PLAY</button>
@@ -174,7 +174,7 @@
   <div class="footer-right">
     <a href="/gas-storage" class="footer-link">Gas Storage</a>
     <a href="/team" class="footer-link">Team</a>
-    <div class="footer-text">Kharg Oil Terminal · Kharg Island Crude · Kharg Oil Capacity<br>Satellite Intelligence for Physical Oil Markets</div>
+    <div class="footer-text">Kharg Oil Terminal &middot; Kharg Island Crude &middot; Kharg Oil Capacity<br>Satellite Intelligence for Physical Oil Markets</div>
   </div>
 </footer>
 
@@ -236,12 +236,12 @@ const TANKS={
   't25_46':{lat:29.2248181,lon:50.3160634,r:8,rm:25,hm:12},
 };
 
-function getColor(ratio){
-  if(ratio===null||ratio===undefined)return'#1e2d3d';
-  ratio=Math.max(0,Math.min(1,ratio));
-  if(ratio<0.5){const t=ratio*2;return`rgb(${Math.round(255+(240-255)*t)},${Math.round(71+(165-71)*t)},${Math.round(87+(0-87)*t)})`; }
-  else{const t=(ratio-0.5)*2;return`rgb(${Math.round(240+(59-240)*t)},${Math.round(165+(130-165)*t)},${Math.round(0+246*t)})`; }
-}
+// Nameplate capacity: sum of π·r²·h_max for all 47 tanks, converted to MMbbl
+const NAMEPLATE_MMBBL = Object.values(TANKS).reduce(
+  (sum, t) => sum + Math.PI * t.rm * t.rm * t.hm, 0
+) * BARREL_PER_M3 / 1e6;
+
+function getColor(ratio){if(ratio===null||ratio===undefined)return'#1e2d3d';ratio=Math.max(0,Math.min(1,ratio));if(ratio<0.5){const t=ratio*2;return`rgb(${Math.round(255+(240-255)*t)},${Math.round(71+(165-71)*t)},${Math.round(87+(0-87)*t)})`;}else{const t=(ratio-0.5)*2;return`rgb(${Math.round(240+(59-240)*t)},${Math.round(165+(130-165)*t)},${Math.round(0+246*t)})`;} }
 function calcFillRatio(dbMean,p5,p95){if(p95===p5)return 0.5;return Math.max(0,Math.min(1,(p95-dbMean)/(p95-p5)));}
 function calcMnBbl(ratio,r_m,h_max){const h=H_MIN+ratio*(h_max-H_MIN);return Math.PI*r_m*r_m*h*BARREL_PER_M3/1e6;}
 function percentile(arr,p){if(!arr.length)return 0;const sorted=[...arr].sort((a,b)=>a-b);const idx=(p/100)*(sorted.length-1);const lo=Math.floor(idx),hi=Math.ceil(idx);return sorted[lo]+(sorted[hi]-sorted[lo])*(idx-lo);}
@@ -369,14 +369,13 @@ async function loadCharts(){
     const diff=(latestVal-prevVal).toFixed(2);
     const sign=diff>0?'+':'';
     const trend=diff>0?'<span style="color:#f0a500">▲ BUILDING</span>':'<span style="color:#3b82f6">▼ DRAWDOWN</span>';
-    const peakAll=Math.max(...d.values);
-    const utilValues=values6m.map(v=>+(v/peakAll*100).toFixed(1));
-    const latestUtil=(latestVal/peakAll*100).toFixed(1);
+    const latestUtil=(latestVal/NAMEPLATE_MMBBL*100).toFixed(1);
+    const utilValues=values6m.map(v=>+(v/NAMEPLATE_MMBBL*100).toFixed(1));
 
     document.getElementById('latestStat').innerHTML=
       `<div>Latest: <strong style="color:#3b82f6;">${latestVal.toFixed(2)} MMbbl</strong></div>`+
       `<div>Day-over-Day: <strong style="color:${diff>0?'#f0a500':'#3b82f6'}">${sign}${diff} MMbbl</strong></div>`+
-      `<div>Utilization: <strong style="color:#f0a500;">${latestUtil}% of peak</strong></div>`+
+      `<div>Utilization: <strong style="color:#f0a500;">${latestUtil}% of capacity</strong></div>`+
       `<div>Status: <strong>${trend}</strong></div>`;
 
     const gridColor='rgba(30,45,61,0.5)';
@@ -385,7 +384,7 @@ async function loadCharts(){
 
     new Chart(document.getElementById('dailyChart'),{type:'line',data:{labels:dates6m,datasets:[{label:'Storage (MMbbl)',data:values6m,borderColor:'#3b82f6',borderWidth:2,backgroundColor:'rgba(59,130,246,0.1)',fill:true,pointRadius:2,pointBackgroundColor:'#111820',pointBorderColor:'#3b82f6',tension:0.1}]},options:{responsive:true,maintainAspectRatio:false,interaction:{intersect:false,mode:'index'},scales:{x:{ticks:{...tickOpts},grid:{color:gridColor}},y:{ticks:{color:'#5a7a94',font:{family:'DM Mono, monospace',size:11},callback:v=>v.toFixed(1)+' MM'},grid:{color:gridColor}}},plugins:{legend:{display:false},tooltip:{backgroundColor:'#111820',borderColor:'#1e2d3d',borderWidth:1,titleColor:'#5a7a94',bodyColor:'#3b82f6',callbacks:{label:ctx=>` ${ctx.parsed.y.toFixed(2)} MMbbl`}}}}});
 
-    new Chart(document.getElementById('utilChart'),{type:'line',data:{labels:dates6m,datasets:[{label:'Utilization (%)',data:utilValues,borderColor:'#f0a500',borderWidth:2,backgroundColor:'rgba(240,165,0,0.06)',fill:true,pointRadius:2,pointBackgroundColor:'#f0a500',pointBorderColor:'#f0a500',tension:0.2}]},options:{responsive:true,maintainAspectRatio:false,interaction:{intersect:false,mode:'index'},scales:{x:{ticks:{...tickOpts},grid:{color:gridColor}},y:{ticks:{color:'#5a7a94',font:{family:'DM Mono, monospace',size:11},callback:v=>v+'%'},grid:{color:gridColor}}},plugins:{legend:{display:false},tooltip:{backgroundColor:'#111820',borderColor:'#1e2d3d',borderWidth:1,titleColor:'#5a7a94',bodyColor:'#f0a500',callbacks:{label:ctx=>` ${ctx.parsed.y.toFixed(1)}% of peak`}}}}});
+    new Chart(document.getElementById('utilChart'),{type:'line',data:{labels:dates6m,datasets:[{label:'Utilization (%)',data:utilValues,borderColor:'#f0a500',borderWidth:2,backgroundColor:'rgba(240,165,0,0.06)',fill:true,pointRadius:2,pointBackgroundColor:'#f0a500',pointBorderColor:'#f0a500',tension:0.2}]},options:{responsive:true,maintainAspectRatio:false,interaction:{intersect:false,mode:'index'},scales:{x:{ticks:{...tickOpts},grid:{color:gridColor}},y:{ticks:{color:'#5a7a94',font:{family:'DM Mono, monospace',size:11},callback:v=>v+'%'},grid:{color:gridColor}}},plugins:{legend:{display:false},tooltip:{backgroundColor:'#111820',borderColor:'#1e2d3d',borderWidth:1,titleColor:'#5a7a94',bodyColor:'#f0a500',callbacks:{label:ctx=>` ${ctx.parsed.y.toFixed(1)}% of capacity`}}}}});
 
   }catch(e){
     document.getElementById('latestStat').innerHTML='<span style="color:#ff4757">Error loading data.</span>';
