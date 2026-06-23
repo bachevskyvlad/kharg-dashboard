@@ -131,14 +131,14 @@
   <div class="nav-links"><a href="/team" class="nav-link">Team</a><a href="/" class="nav-cta">← Back to Main</a></div>
 </nav>
 <main>
-  <div class="section-label">Data Feed (Last 3 Months)</div>
+  <div class="section-label">Last 6 Months</div>
   <h1 class="section-title">Kharg Island Storage Monitor</h1>
 
   <div class="monitor-wrap">
     <div class="monitor-header"><div class="monitor-title">Storage Volume — SAR Extraction</div></div>
     <div class="monitor-stat" id="latestStat">Loading data...</div>
     <div class="chart-wrapper"><canvas id="dailyChart"></canvas></div>
-    <div class="chart-section-label">Terminal Utilization — % of Observed Peak (Last 30 observations)</div>
+    <div class="chart-section-label">Terminal Utilization — % of Observed Peak</div>
     <div class="chart-wrapper util"><canvas id="utilChart"></canvas></div>
     <div class="explanation-grid">
       <div class="explain-card"><h4>🛰️ How The Radar Works</h4><p>Oil storage tanks on Kharg Island use <strong>floating roofs</strong> that lower as oil is pumped out and rise as tanks fill. Sentinel-1 SAR signals bounce off the internal walls. A low roof returns a brighter radar reflection. We invert this radiometric signal to calculate the physical volume in millions of barrels.</p><p class="muted">On average, the satellite passes over the region twice a week.</p></div>
@@ -354,27 +354,39 @@ async function loadCharts(){
     const v=Date.now();
     const res=await fetch(`/data/data_daily.json?v=${v}`);
     const d=await res.json();
-    const last90Dates=d.dates.slice(-90);
-    const last90Values=d.values.slice(-90);
-    const last30Dates=d.dates.slice(-30);
-    const last30Values=d.values.slice(-30);
-    const latest=last90Values[last90Values.length-1];
-    const prev=last90Values[last90Values.length-2];
-    const diff=(latest-prev).toFixed(2);
+
+    // last 6 months by date
+    const latest=d.dates[d.dates.length-1];
+    const cutoff=new Date(latest);
+    cutoff.setMonth(cutoff.getMonth()-6);
+    const cutoffStr=cutoff.toISOString().slice(0,10);
+    const startIdx=d.dates.findIndex(dt=>dt>=cutoffStr);
+    const dates6m=d.dates.slice(startIdx);
+    const values6m=d.values.slice(startIdx);
+
+    const latestVal=values6m[values6m.length-1];
+    const prevVal=values6m[values6m.length-2];
+    const diff=(latestVal-prevVal).toFixed(2);
     const sign=diff>0?'+':'';
     const trend=diff>0?'<span style="color:#f0a500">▲ BUILDING</span>':'<span style="color:#3b82f6">▼ DRAWDOWN</span>';
     const peakAll=Math.max(...d.values);
-    const utilValues=last30Values.map(v=>+(v/peakAll*100).toFixed(1));
-    const latestUtil=(latest/peakAll*100).toFixed(1);
+    const utilValues=values6m.map(v=>+(v/peakAll*100).toFixed(1));
+    const latestUtil=(latestVal/peakAll*100).toFixed(1);
+
     document.getElementById('latestStat').innerHTML=
-      `<div>Latest: <strong style="color:#3b82f6;">${latest.toFixed(2)} MMbbl</strong></div>`+
+      `<div>Latest: <strong style="color:#3b82f6;">${latestVal.toFixed(2)} MMbbl</strong></div>`+
       `<div>Day-over-Day: <strong style="color:${diff>0?'#f0a500':'#3b82f6'}">${sign}${diff} MMbbl</strong></div>`+
       `<div>Utilization: <strong style="color:#f0a500;">${latestUtil}% of peak</strong></div>`+
       `<div>Status: <strong>${trend}</strong></div>`;
+
     const gridColor='rgba(30,45,61,0.5)';
     const tickFont={family:'DM Mono, monospace',size:10};
-    new Chart(document.getElementById('dailyChart'),{type:'line',data:{labels:last90Dates,datasets:[{label:'Storage (MMbbl)',data:last90Values,borderColor:'#3b82f6',borderWidth:2,backgroundColor:'rgba(59,130,246,0.1)',fill:true,pointRadius:2,pointBackgroundColor:'#111820',pointBorderColor:'#3b82f6',tension:0.1}]},options:{responsive:true,maintainAspectRatio:false,interaction:{intersect:false,mode:'index'},scales:{x:{ticks:{color:'#5a7a94',font:tickFont,maxTicksLimit:12},grid:{color:gridColor}},y:{ticks:{color:'#5a7a94',font:{family:'DM Mono, monospace',size:11},callback:v=>v.toFixed(1)+' MM'},grid:{color:gridColor}}},plugins:{legend:{display:false},tooltip:{backgroundColor:'#111820',borderColor:'#1e2d3d',borderWidth:1,titleColor:'#5a7a94',bodyColor:'#3b82f6',callbacks:{label:ctx=>` ${ctx.parsed.y.toFixed(2)} MMbbl`}}}}});
-    new Chart(document.getElementById('utilChart'),{type:'line',data:{labels:last30Dates,datasets:[{label:'Utilization (%)',data:utilValues,borderColor:'#f0a500',borderWidth:2,backgroundColor:'rgba(240,165,0,0.06)',fill:true,pointRadius:3,pointBackgroundColor:'#f0a500',pointBorderColor:'#f0a500',tension:0.2}]},options:{responsive:true,maintainAspectRatio:false,interaction:{intersect:false,mode:'index'},scales:{x:{ticks:{color:'#5a7a94',font:tickFont,maxTicksLimit:10},grid:{color:gridColor}},y:{ticks:{color:'#5a7a94',font:{family:'DM Mono, monospace',size:11},callback:v=>v+'%'},grid:{color:gridColor}}},plugins:{legend:{display:false},tooltip:{backgroundColor:'#111820',borderColor:'#1e2d3d',borderWidth:1,titleColor:'#5a7a94',bodyColor:'#f0a500',callbacks:{label:ctx=>` ${ctx.parsed.y.toFixed(1)}% of peak`}}}}});
+    const tickOpts={color:'#5a7a94',font:tickFont,maxTicksLimit:8};
+
+    new Chart(document.getElementById('dailyChart'),{type:'line',data:{labels:dates6m,datasets:[{label:'Storage (MMbbl)',data:values6m,borderColor:'#3b82f6',borderWidth:2,backgroundColor:'rgba(59,130,246,0.1)',fill:true,pointRadius:2,pointBackgroundColor:'#111820',pointBorderColor:'#3b82f6',tension:0.1}]},options:{responsive:true,maintainAspectRatio:false,interaction:{intersect:false,mode:'index'},scales:{x:{ticks:{...tickOpts},grid:{color:gridColor}},y:{ticks:{color:'#5a7a94',font:{family:'DM Mono, monospace',size:11},callback:v=>v.toFixed(1)+' MM'},grid:{color:gridColor}}},plugins:{legend:{display:false},tooltip:{backgroundColor:'#111820',borderColor:'#1e2d3d',borderWidth:1,titleColor:'#5a7a94',bodyColor:'#3b82f6',callbacks:{label:ctx=>` ${ctx.parsed.y.toFixed(2)} MMbbl`}}}}});
+
+    new Chart(document.getElementById('utilChart'),{type:'line',data:{labels:dates6m,datasets:[{label:'Utilization (%)',data:utilValues,borderColor:'#f0a500',borderWidth:2,backgroundColor:'rgba(240,165,0,0.06)',fill:true,pointRadius:2,pointBackgroundColor:'#f0a500',pointBorderColor:'#f0a500',tension:0.2}]},options:{responsive:true,maintainAspectRatio:false,interaction:{intersect:false,mode:'index'},scales:{x:{ticks:{...tickOpts},grid:{color:gridColor}},y:{ticks:{color:'#5a7a94',font:{family:'DM Mono, monospace',size:11},callback:v=>v+'%'},grid:{color:gridColor}}},plugins:{legend:{display:false},tooltip:{backgroundColor:'#111820',borderColor:'#1e2d3d',borderWidth:1,titleColor:'#5a7a94',bodyColor:'#f0a500',callbacks:{label:ctx=>` ${ctx.parsed.y.toFixed(1)}% of peak`}}}}});
+
   }catch(e){
     document.getElementById('latestStat').innerHTML='<span style="color:#ff4757">Error loading data.</span>';
     console.error(e);
