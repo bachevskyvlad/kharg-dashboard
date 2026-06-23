@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Kharg Island Per-Tank Storage Dynamics | OilRadar</title>
-<meta name="description" content="Per-tank storage level dynamics at Kharg Island oil export terminal. SAR satellite data for all 31 floating-roof tanks.">
+<meta name="description" content="Per-tank storage level dynamics at Kharg Island oil export terminal. SAR satellite data for all 47 floating-roof tanks.">
 <meta name="robots" content="index, follow">
 <link rel="canonical" href="https://oilradar.io/tanks">
 <link rel="icon" type="image/x-icon" href="/assets/images/favicon.ico">
@@ -58,15 +58,12 @@
   .footer-links{display:flex;gap:24px;}
   .footer-link{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);text-decoration:none;transition:color .2s;}
   .footer-link:hover{color:var(--accent);}
-  /* leaflet overrides */
   .leaflet-container{background:#060a0e;}
   .leaflet-control-attribution{background:rgba(8,10,13,0.7)!important;color:#2a3d54!important;font-size:9px!important;}
   .leaflet-control-attribution a{color:#2a3d54!important;}
   .leaflet-control-zoom a{background:var(--panel)!important;color:var(--accent)!important;border-color:var(--border)!important;}
-  /* custom tank icons */
   .tank-div-icon{pointer-events:auto;}
   .tank-div-icon:hover{z-index:1000!important;}
-  /* tooltip */
   .tank-popup .leaflet-popup-content-wrapper{background:var(--panel);border:1px solid var(--border);border-radius:0;box-shadow:0 4px 20px rgba(0,0,0,0.5);color:var(--text);}
   .tank-popup .leaflet-popup-tip{background:var(--panel);}
   .tank-popup .leaflet-popup-content{font-family:'DM Mono',monospace;font-size:11px;margin:10px 14px;}
@@ -141,41 +138,55 @@ const SUPABASE_KEY = 'sb_publishable_7j07_zzdqTGM1LXf7-o9Tg_JJRbJQSM';
 const H_MIN = 2;
 const BARREL_PER_M3 = 6.2898;
 
-// Real geocoordinates derived from pipeline lat/lon projection
-// Projection: x=(lon-50.306814)/0.009734*800+60, y=(29.239068-lat)/0.01743*590+60
-// Reversed: lon=(x-60)/800*0.009734+50.306814, lat=29.239068-(y-60)/590*0.01743
+// r = display pixel radius, rm = actual tank radius in meters
 const TANKS = {
-  't60_0': {lat:29.2217, lon:50.3163, r:20, d:60},
-  't60_1': {lat:29.2216, lon:50.3148, r:20, d:60},
-  't60_2': {lat:29.2218, lon:50.3133, r:20, d:60},
-  't60_3': {lat:29.2232, lon:50.3156, r:20, d:60},
-  't60_4': {lat:29.2229, lon:50.3142, r:20, d:60},
-  't55_5': {lat:29.2361, lon:50.3125, r:16, d:55},
-  't55_6': {lat:29.2365, lon:50.3108, r:16, d:55},
-  't55_7': {lat:29.2380, lon:50.3107, r:16, d:55},
-  't55_8': {lat:29.2391, lon:50.3096, r:16, d:55},
-  't55_9': {lat:29.2389, lon:50.3068, r:16, d:55},
-  't55_10':{lat:29.2376, lon:50.3073, r:16, d:55},
-  't55_11':{lat:29.2363, lon:50.3077, r:16, d:55},
-  't55_12':{lat:29.2364, lon:50.3092, r:16, d:55},
-  't55_13':{lat:29.2350, lon:50.3082, r:16, d:55},
-  't55_14':{lat:29.2351, lon:50.3098, r:16, d:55},
-  't55_15':{lat:29.2337, lon:50.3086, r:16, d:55},
-  't55_16':{lat:29.2339, lon:50.3102, r:16, d:55},
-  't55_17':{lat:29.2315, lon:50.3087, r:16, d:55},
-  't55_18':{lat:29.2318, lon:50.3103, r:16, d:55},
-  't55_19':{lat:29.2321, lon:50.3121, r:16, d:55},
-  't55_20':{lat:29.2303, lon:50.3101, r:16, d:55},
-  't55_21':{lat:29.2289, lon:50.3099, r:16, d:55},
-  't40_22':{lat:29.2296, lon:50.3121, r:12, d:40},
-  't40_23':{lat:29.2298, lon:50.3134, r:12, d:40},
-  't40_24':{lat:29.2301, lon:50.3146, r:12, d:40},
-  't40_25':{lat:29.2285, lon:50.3123, r:12, d:40},
-  't40_26':{lat:29.2287, lon:50.3136, r:12, d:40},
-  't40_27':{lat:29.2289, lon:50.3148, r:12, d:40},
-  't40_28':{lat:29.2273, lon:50.3126, r:12, d:40},
-  't40_29':{lat:29.2275, lon:50.3138, r:12, d:40},
-  't40_30':{lat:29.2278, lon:50.3151, r:12, d:40},
+  't60_0': {lat:29.2217338,  lon:50.3165482, r:20, rm:60},
+  't60_1': {lat:29.2216388,  lon:50.3150432, r:20, rm:60},
+  't60_2': {lat:29.2218405,  lon:50.3135291, r:20, rm:60},
+  't60_3': {lat:29.2231568,  lon:50.3158490, r:20, rm:60},
+  't60_4': {lat:29.2228980,  lon:50.3144195, r:20, rm:60},
+  't55_5': {lat:29.2359691,  lon:50.3126204, r:16, rm:55},
+  't55_6': {lat:29.2364507,  lon:50.3109394, r:16, rm:55},
+  't55_7': {lat:29.2379533,  lon:50.3108495, r:16, rm:55},
+  't55_8': {lat:29.2390690,  lon:50.3096822, r:16, rm:55},
+  't55_9': {lat:29.2389264,  lon:50.3068140, r:16, rm:55},
+  't55_10':{lat:29.2376082,  lon:50.3072679, r:16, rm:55},
+  't55_11':{lat:29.2362776,  lon:50.3077246, r:16, rm:55},
+  't55_12':{lat:29.2363283,  lon:50.3093038, r:16, rm:55},
+  't55_13':{lat:29.2349727,  lon:50.3081865, r:16, rm:55},
+  't55_14':{lat:29.2351137,  lon:50.3098199, r:16, rm:55},
+  't55_15':{lat:29.2336438,  lon:50.3086380, r:16, rm:55},
+  't55_16':{lat:29.2338308,  lon:50.3102809, r:16, rm:55},
+  't55_17':{lat:29.2314405,  lon:50.3087404, r:16, rm:55},
+  't55_18':{lat:29.2317836,  lon:50.3103855, r:16, rm:55},
+  't55_19':{lat:29.2320764,  lon:50.3122342, r:16, rm:55},
+  't55_20':{lat:29.2302153,  lon:50.3101615, r:16, rm:55},
+  't55_21':{lat:29.2288712,  lon:50.3099660, r:16, rm:55},
+  't40_22':{lat:29.2295289,  lon:50.3121871, r:12, rm:40},
+  't40_23':{lat:29.2297632,  lon:50.3135015, r:12, rm:40},
+  't40_24':{lat:29.2299639,  lon:50.3148147, r:12, rm:40},
+  't40_25':{lat:29.2284236,  lon:50.3124414, r:12, rm:40},
+  't40_26':{lat:29.2286165,  lon:50.3137337, r:12, rm:40},
+  't40_27':{lat:29.2288114,  lon:50.3150200, r:12, rm:40},
+  't40_28':{lat:29.2272092,  lon:50.3126984, r:12, rm:40},
+  't40_29':{lat:29.2274357,  lon:50.3139937, r:12, rm:40},
+  't40_30':{lat:29.2276408,  lon:50.3152672, r:12, rm:40},
+  't55_31':{lat:29.2323461,  lon:50.3137663, r:16, rm:55},
+  't40_32':{lat:29.2307178,  lon:50.3119291, r:12, rm:40},
+  't40_33':{lat:29.2309474,  lon:50.3132419, r:12, rm:40},
+  't40_34':{lat:29.2311351,  lon:50.3145438, r:12, rm:40},
+  't25_35':{lat:29.2262112,  lon:50.3128809, r:8,  rm:25},
+  't25_36':{lat:29.2263835,  lon:50.3138099, r:8,  rm:25},
+  't25_37':{lat:29.2265429,  lon:50.3147481, r:8,  rm:25},
+  't25_38':{lat:29.2266891,  lon:50.3156504, r:8,  rm:25},
+  't25_39':{lat:29.2251564,  lon:50.3131064, r:8,  rm:25},
+  't25_40':{lat:29.2253231,  lon:50.3140568, r:8,  rm:25},
+  't25_41':{lat:29.2254742,  lon:50.3149628, r:8,  rm:25},
+  't25_42':{lat:29.2256154,  lon:50.3158865, r:8,  rm:25},
+  't25_43':{lat:29.2243535,  lon:50.3132813, r:8,  rm:25},
+  't25_44':{lat:29.2245129,  lon:50.3142241, r:8,  rm:25},
+  't25_45':{lat:29.2246562,  lon:50.3151350, r:8,  rm:25},
+  't25_46':{lat:29.2248181,  lon:50.3160634, r:8,  rm:25},
 };
 
 function getColor(ratio) {
@@ -241,7 +252,7 @@ async function fetchData() {
   const headers = {'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}`};
   let all = [], offset = 0;
   while (true) {
-    const url = `${SUPABASE_URL}/rest/v1/raw_observations?select=date,tank_id,radius_m,h_max,db_mean&order=date&limit=1000&offset=${offset}`;
+    const url = `${SUPABASE_URL}/rest/v1/raw_observations?select=date,tank_id,h_max,db_mean&order=date&limit=1000&offset=${offset}`;
     const res = await fetch(url, {headers});
     if (!res.ok) throw new Error(`Supabase ${res.status}`);
     const batch = await res.json();
@@ -253,7 +264,6 @@ async function fetchData() {
 }
 
 async function init() {
-  // Init Leaflet map
   const map = L.map('map', {
     center: [29.230, 50.311],
     zoom: 15,
@@ -266,12 +276,11 @@ async function init() {
     maxZoom: 19
   }).addTo(map);
 
-  // Create markers for all tanks (empty state)
   const markers = {};
   Object.entries(TANKS).forEach(([id, info]) => {
     const marker = L.marker([info.lat, info.lon], {
       icon: makeTankIcon(id, info, null),
-      zIndexOffset: info.d  // bigger tanks on top
+      zIndexOffset: info.rm
     });
 
     marker.bindPopup('', {className: 'tank-popup', maxWidth: 200, offset: [0, -(info.r+4)]});
@@ -279,7 +288,7 @@ async function init() {
       const state = window._tankState && window._tankState[id];
       const content = state
         ? `<div class="tp-id">${id}</div>
-           <div class="tp-row">Diameter: <span>${info.d}m</span></div>
+           <div class="tp-row">Radius: <span>${info.rm}m</span></div>
            <div class="tp-row">Fill: <span>${state.ratio !== null ? (state.ratio*100).toFixed(1)+'%' : 'N/A'}</span></div>
            <div class="tp-row">Volume: <span>${state.mnBbl !== null ? state.mnBbl.toFixed(3)+' Mn Bbl' : 'N/A'}</span></div>
            <div class="tp-row">SAR dB: <span>${state.dbMean !== null ? state.dbMean.toFixed(2) : 'N/A'}</span></div>`
@@ -291,7 +300,6 @@ async function init() {
     markers[id] = marker;
   });
 
-  // Load data
   let raw;
   try {
     raw = await fetchData();
@@ -309,7 +317,6 @@ async function init() {
     return;
   }
 
-  // Calibration p5/p95 per tank
   const dbByTank = {};
   data.forEach(r => {
     if (!dbByTank[r.tank_id]) dbByTank[r.tank_id] = [];
@@ -320,7 +327,6 @@ async function init() {
     calibration[id] = {p5: percentile(vals, 5), p95: percentile(vals, 95)};
   });
 
-  // Group by date
   const byDate = {};
   data.forEach(r => {
     if (!byDate[r.date]) byDate[r.date] = {};
@@ -340,7 +346,8 @@ async function init() {
       if (obs && calibration[id]) {
         const {p5, p95} = calibration[id];
         ratio = calcFillRatio(obs.db_mean, p5, p95);
-        mnBbl = calcMnBbl(ratio, obs.radius_m, obs.h_max);
+        // Use hardcoded radius (rm) so volume is correct regardless of what's stored in Supabase
+        mnBbl = calcMnBbl(ratio, info.rm, obs.h_max);
         dbMean = obs.db_mean;
         totalVol += mnBbl;
         totalFill += ratio;

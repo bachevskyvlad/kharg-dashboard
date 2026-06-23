@@ -53,6 +53,7 @@ WEEKLY_PATH    = "public/data.json"
 PLOT_PATH      = "public/volume_graph.png"
 
 # ================= TANKS DATA =================
+# All radius values are actual tank radii in meters
 raw_tanks = []
 
 for lat, lon in [
@@ -60,7 +61,7 @@ for lat, lon in [
     (29.221840470329855,50.31352911803618), (29.223156804822317,50.315849029771684),
     (29.222897954869325,50.3144195158663)
 ]:
-    raw_tanks.append({"id": f"t60_{len(raw_tanks)}", "lat": lat, "lon": lon, "diameter": 60, "h_max": 23})
+    raw_tanks.append({"id": f"t60_{len(raw_tanks)}", "lat": lat, "lon": lon, "radius": 60, "h_max": 23})
 
 for lat, lon in [
     (29.23596908236423,50.31262041733899), (29.236450714039865,50.31093940154909),
@@ -73,7 +74,7 @@ for lat, lon in [
     (29.232076421746672,50.312234207587345), (29.23021527314446,50.3101614506557),
     (29.228871179764596,50.309966015820464)
 ]:
-    raw_tanks.append({"id": f"t55_{len(raw_tanks)}", "lat": lat, "lon": lon, "diameter": 55, "h_max": 23})
+    raw_tanks.append({"id": f"t55_{len(raw_tanks)}", "lat": lat, "lon": lon, "radius": 55, "h_max": 23})
 
 for lat, lon in [
     (29.22952889859548,50.312187062458655), (29.22976318244905,50.313501526357314),
@@ -82,7 +83,33 @@ for lat, lon in [
     (29.22720915866873,50.312698386632235), (29.227435720069668,50.31399368455909),
     (29.227640813983122,50.31526721678495)
 ]:
-    raw_tanks.append({"id": f"t40_{len(raw_tanks)}", "lat": lat, "lon": lon, "diameter": 40, "h_max": 23})
+    raw_tanks.append({"id": f"t40_{len(raw_tanks)}", "lat": lat, "lon": lon, "radius": 40, "h_max": 23})
+
+# New tanks added
+raw_tanks.append({"id": "t55_31", "lat": 29.232346117474552, "lon": 50.313766336270064, "radius": 55, "h_max": 23})
+
+for lat, lon in [
+    (29.230717804109947, 50.31192906218232),
+    (29.230947410364493, 50.31324186520479),
+    (29.231135117157258, 50.31454377331308),
+]:
+    raw_tanks.append({"id": f"t40_{len(raw_tanks)}", "lat": lat, "lon": lon, "radius": 40, "h_max": 23})
+
+for lat, lon in [
+    (29.226211162396392, 50.31288089406942),
+    (29.226383532289553, 50.313809940357444),
+    (29.226542892768347, 50.31474811903658),
+    (29.226689095834363, 50.31565041182445),
+    (29.22515641565613,  50.31310639099006),
+    (29.22532307473051,  50.31405678957588),
+    (29.225474230400657, 50.31496277701283),
+    (29.22561536435356,  50.315886541434466),
+    (29.22435349448338,  50.313281303050275),
+    (29.224512933127766, 50.31422412891253),
+    (29.224656215116465, 50.31513496008376),
+    (29.22481810164328,  50.316063441149545),
+]:
+    raw_tanks.append({"id": f"t25_{len(raw_tanks)}", "lat": lat, "lon": lon, "radius": 25, "h_max": 23})
 
 print(f"Loaded {len(raw_tanks)} tanks.")
 
@@ -145,7 +172,7 @@ if new_dates:
 
     tanks_data = []
     for tank in raw_tanks:
-        radius_m = tank["diameter"] / 2.0
+        radius_m = tank["radius"]
         cx, cy = lonlat_to_pix(tank["lon"], tank["lat"], super_bbox, img_width, img_height)
         dist_sq = (X_grid - cx)**2 + (Y_grid - cy)**2
         dot_product = (X_grid - cx) * dx + (Y_grid - cy) * dy
@@ -153,7 +180,7 @@ if new_dates:
         r_inner = max(0, (radius_m - WIDTH_WIDE)) / RESOLUTION
         mask_ring = (dist_sq <= (radius_m/RESOLUTION)**2) & (dist_sq >= r_inner**2)
         crescent = mask_ring & mask_far_side
-        tanks_data.append({"id": tank["id"], "radius_m": radius_m, "diameter": tank["diameter"], "h_max": tank["h_max"], "crescent": crescent})
+        tanks_data.append({"id": tank["id"], "radius_m": radius_m, "h_max": tank["h_max"], "crescent": crescent})
 
     evalscript = """
 //VERSION=3
@@ -183,7 +210,7 @@ function evaluatePixel(sample) { return [sample.VV]; }
                 if pixels.size > 0:
                     mean_linear = np.mean(pixels)
                     db_mean = 10 * np.log10(np.clip(mean_linear, 1e-10, None))
-                    new_records.append({"date": d_str, "tank_id": tank["id"], "radius_m": float(tank["radius_m"]), "diameter": float(tank["diameter"]), "h_max": float(tank["h_max"]), "db_mean": float(db_mean)})
+                    new_records.append({"date": d_str, "tank_id": tank["id"], "radius_m": float(tank["radius_m"]), "h_max": float(tank["h_max"]), "db_mean": float(db_mean)})
         except Exception as e:
             print(f"  [!] Skip {d_str}: {e}")
 
@@ -264,11 +291,11 @@ print(f"\nPipeline complete!")
 plt.figure(figsize=(14, 7))
 plt.plot(weekly_total["week_start"], weekly_total["vol_mn_bbl"], marker='.', linestyle='', color='gray', alpha=0.4, label="Raw Weekly Extractions")
 plt.plot(weekly_total["week_start"], weekly_total["smoothed_vol"], marker='s', linestyle='-', color='indigo', linewidth=3, label=f"Inverse Production Model (SMA-{SMA_WINDOW})")
-plt.title(f"Production Output: Kharg Island Storage (31 Tanks)\nInverse Crescent Radiometry (SMA-{SMA_WINDOW})", fontsize=16)
+plt.title(f"Production Output: Kharg Island Storage ({len(raw_tanks)} Tanks)\nInverse Crescent Radiometry (SMA-{SMA_WINDOW})", fontsize=16)
 plt.xlabel("Date", fontsize=13)
 plt.ylabel("Total Active Volume (Mn. Barrels)", fontsize=13)
 plt.grid(True, linestyle='--', alpha=0.5)
-max_cap = sum([np.pi*(t["diameter"]/2)**2 * t["h_max"] * BARREL_PER_M3 for t in raw_tanks]) / 1_000_000
+max_cap = sum([np.pi * t["radius"]**2 * t["h_max"] * BARREL_PER_M3 for t in raw_tanks]) / 1_000_000
 plt.axhline(y=max_cap, color='r', linestyle='--', linewidth=1, label=f"Max Capacity (~{max_cap:.1f} M)")
 plt.legend(fontsize=12, loc="upper right")
 plt.tight_layout()
