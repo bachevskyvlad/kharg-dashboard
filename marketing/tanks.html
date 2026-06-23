@@ -69,42 +69,77 @@
   <div class="nav-links">
     <a href="/monitor" class="nav-link">Monitor</a>
     <a href="/gas-storage" class="nav-link">Gas Storage</a>
-    <a href="/" class="nav-cta">← Home</a>
+    <a href="/" class="nav-cta">&larr; Home</a>
   </div>
 </nav>
 <main>
-  <div class="section-label">SAR Satellite · Kharg Island · Per-Tank Analysis</div>
+  <div class="section-label">SAR Satellite &middot; Kharg Island &middot; Per-Tank Analysis</div>
   <h1 class="section-title">Tank Storage <span>Map</span></h1>
 
   <div class="stats-bar">
-    <div class="stat-item"><div class="stat-label">Date</div><div class="stat-value accent" id="statDate">—</div></div>
-    <div class="stat-item"><div class="stat-label">Total Volume</div><div class="stat-value" id="statTotal">—</div></div>
-    <div class="stat-item"><div class="stat-label">Avg Fill Level</div><div class="stat-value" id="statFill">—</div></div>
-    <div class="stat-item"><div class="stat-label">Tanks Reporting</div><div class="stat-value" id="statCount">—</div></div>
+    <div class="stat-item"><div class="stat-label">Date</div><div class="stat-value accent" id="statDate">&mdash;</div></div>
+    <div class="stat-item"><div class="stat-label">Total Volume</div><div class="stat-value" id="statTotal">&mdash;</div></div>
+    <div class="stat-item"><div class="stat-label">Avg Fill Level</div><div class="stat-value" id="statFill">&mdash;</div></div>
+    <div class="stat-item"><div class="stat-label">Tanks Reporting</div><div class="stat-value" id="statCount">&mdash;</div></div>
   </div>
 
   <div class="viz-wrap">
     <div class="viz-title">
-      <span>KHARG ISLAND EXPORT TERMINAL · FLOATING ROOF TANKS · FILL LEVEL</span>
-      <span style="color:var(--muted);font-size:9px;">N ↑ geographic orientation</span>
+      <span>KHARG ISLAND EXPORT TERMINAL &middot; FLOATING ROOF TANKS &middot; FILL LEVEL</span>
+      <span style="color:var(--muted);font-size:9px;">N &uarr; geographic orientation</span>
     </div>
     <div id="loadingMsg" class="loading-msg">Loading satellite data from Supabase...</div>
     <svg id="tankSvg" viewBox="0 0 920 710" xmlns="http://www.w3.org/2000/svg" style="display:none">
       <defs id="clipDefs"></defs>
+
+      <!-- water background -->
+      <rect x="0" y="0" width="920" height="710" fill="#060d14"/>
+
+      <!-- land / terminal area polygon (approximated from tank cluster bounds) -->
+      <!-- main terminal land mass -->
+      <polygon points="0,130 80,80 200,55 340,50 480,55 560,90 620,120 680,160 760,200 860,260 920,310 920,710 0,710"
+        fill="#0b1520" stroke="none"/>
+      <!-- northern peninsula where 55m tanks cluster -->
+      <polygon points="0,130 80,80 200,55 340,50 480,55 560,90 580,60 560,30 480,20 320,15 180,25 60,50 0,80"
+        fill="#0d1825" stroke="none"/>
+
+      <!-- terminal hardstanding zones (subtle) -->
+      <!-- Zone A: 60m tanks area, bottom-right -->
+      <rect x="560" y="560" width="340" height="120" rx="4" fill="#0f1f2e" opacity="0.7"/>
+      <!-- Zone B: 55m tanks north cluster -->
+      <rect x="50" y="55" width="520" height="310" rx="4" fill="#0f1f2e" opacity="0.5"/>
+      <!-- Zone D: 40m tanks middle -->
+      <rect x="470" y="345" width="300" height="135" rx="4" fill="#0f1f2e" opacity="0.6"/>
+
+      <!-- terminal roads / grid lines (very subtle) -->
+      <line x1="460" y1="50" x2="460" y2="710" stroke="#111e2c" stroke-width="1" stroke-dasharray="4,8"/>
+      <line x1="0" y1="340" x2="920" y2="340" stroke="#111e2c" stroke-width="1" stroke-dasharray="4,8"/>
+      <line x1="0" y1="550" x2="920" y2="550" stroke="#111e2c" stroke-width="1" stroke-dasharray="4,8"/>
+
+      <!-- coastline highlight -->
+      <polyline points="0,130 80,80 200,55 340,50 480,55 560,90 620,120 680,160 760,200 860,260 920,310"
+        fill="none" stroke="#152536" stroke-width="1.5"/>
+
       <!-- compass rose -->
-      <text x="870" y="80" font-family="DM Mono, monospace" font-size="11" fill="#5a7a94" text-anchor="middle">N</text>
-      <line x1="870" y1="85" x2="870" y2="108" stroke="#5a7a94" stroke-width="1.5"/>
-      <polygon points="870,85 866,98 870,95 874,98" fill="#5a7a94"/>
+      <text x="875" y="78" font-family="DM Mono, monospace" font-size="11" fill="#5a7a94" text-anchor="middle">N</text>
+      <line x1="875" y1="83" x2="875" y2="106" stroke="#5a7a94" stroke-width="1.5"/>
+      <polygon points="875,83 871,96 875,93 879,96" fill="#5a7a94"/>
+
       <!-- scale bar -->
       <line x1="50" y1="670" x2="130" y2="670" stroke="#1e2d3d" stroke-width="2"/>
       <line x1="50" y1="665" x2="50" y2="675" stroke="#1e2d3d" stroke-width="1.5"/>
       <line x1="130" y1="665" x2="130" y2="675" stroke="#1e2d3d" stroke-width="1.5"/>
       <text x="90" y="685" font-family="DM Mono, monospace" font-size="9" fill="#5a7a94" text-anchor="middle">~800m</text>
-      <!-- group labels -->
-      <text x="710" y="570" font-family="DM Mono, monospace" font-size="9" fill="#1e2d3d" text-anchor="middle">GROUP A · 60m</text>
-      <text x="200" y="45" font-family="DM Mono, monospace" font-size="9" fill="#1e2d3d" text-anchor="middle">GROUP B · 55m NORTH</text>
-      <text x="350" y="380" font-family="DM Mono, monospace" font-size="9" fill="#1e2d3d" text-anchor="middle">GROUP C · 55m SOUTH</text>
-      <text x="615" y="490" font-family="DM Mono, monospace" font-size="9" fill="#1e2d3d" text-anchor="middle">GROUP D · 40m</text>
+
+      <!-- zone labels -->
+      <text x="730" y="578" font-family="DM Mono, monospace" font-size="9" fill="#1e3350" text-anchor="middle">ZONE A &middot; 60m</text>
+      <text x="200" y="44" font-family="DM Mono, monospace" font-size="9" fill="#1e3350" text-anchor="middle">ZONE B &middot; 55m NORTH</text>
+      <text x="350" y="378" font-family="DM Mono, monospace" font-size="9" fill="#1e3350" text-anchor="middle">ZONE C &middot; 55m SOUTH</text>
+      <text x="615" y="362" font-family="DM Mono, monospace" font-size="9" fill="#1e3350" text-anchor="middle">ZONE D &middot; 40m</text>
+
+      <!-- Persian Gulf label -->
+      <text x="820" y="160" font-family="DM Mono, monospace" font-size="10" fill="#0f2238" text-anchor="middle" transform="rotate(-20,820,160)">PERSIAN GULF</text>
+
       <g id="tankGroup"></g>
     </svg>
     <div id="tooltip" class="tooltip">
@@ -117,15 +152,15 @@
   </div>
 
   <div class="controls-wrap">
-    <button id="playBtn">▶ PLAY</button>
+    <button id="playBtn">&#9654; PLAY</button>
     <div class="slider-wrap">
       <input type="range" id="dateSlider" min="0" value="0" step="1">
       <div class="slider-dates">
-        <span id="sliderStart">—</span>
-        <span id="sliderEnd">—</span>
+        <span id="sliderStart">&mdash;</span>
+        <span id="sliderEnd">&mdash;</span>
       </div>
     </div>
-    <div class="cur-date-label" id="curDateLabel">—</div>
+    <div class="cur-date-label" id="curDateLabel">&mdash;</div>
   </div>
 
   <div class="legend-wrap">
@@ -143,7 +178,6 @@
     <a href="/team" class="footer-link">Team</a>
   </div>
 </footer>
-<div id="tooltip" class="tooltip"></div>
 
 <script>
 const SUPABASE_URL = 'https://yoekhkczwdeyauwarsyy.supabase.co';
@@ -151,8 +185,6 @@ const SUPABASE_KEY = 'sb_publishable_7j07_zzdqTGM1LXf7-o9Tg_JJRbJQSM';
 const H_MIN = 2;
 const BARREL_PER_M3 = 6.2898;
 
-// Tank SVG positions precomputed from lat/lon (pipeline coords → 920×710 SVG, PAD=60)
-// Projection: x=(lon-50.306814)/0.009734*800+60, y=(29.239068-lat)/0.01743*590+60
 const TANKS = {
   't60_0':{x:840,y:649,r:28,d:60},
   't60_1':{x:717,y:651,r:28,d:60},
@@ -237,7 +269,6 @@ async function fetchData() {
 function buildSVG() {
   const defs = document.getElementById('clipDefs');
   const group = document.getElementById('tankGroup');
-  const svg = document.getElementById('tankSvg');
 
   Object.entries(TANKS).forEach(([id, info]) => {
     const {x, y, r, d} = info;
@@ -281,7 +312,7 @@ function buildSVG() {
 
     g.appendChild(bg); g.appendChild(fill); g.appendChild(border); g.appendChild(lbl);
 
-    g.addEventListener('mouseenter', (e) => {
+    g.addEventListener('mouseenter', () => {
       window._hoverId = id;
       document.getElementById('tooltip').style.display = 'block';
     });
@@ -358,8 +389,6 @@ function renderDate(dateStr, byDate, calibration) {
 async function init() {
   try {
     const raw = await fetchData();
-
-    // Filter to known Kharg tanks only
     const data = raw.filter(r => TANKS[r.tank_id]);
 
     if (!data.length) {
@@ -367,7 +396,6 @@ async function init() {
       return;
     }
 
-    // Calibration: p5/p95 per tank from all data
     const dbByTank = {};
     data.forEach(r => {
       if (!dbByTank[r.tank_id]) dbByTank[r.tank_id] = [];
@@ -378,7 +406,6 @@ async function init() {
       calibration[id] = {p5: percentile(vals,5), p95: percentile(vals,95)};
     });
 
-    // Group by date
     const byDate = {};
     data.forEach(r => {
       if (!byDate[r.date]) byDate[r.date] = {};
