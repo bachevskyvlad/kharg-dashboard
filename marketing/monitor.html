@@ -75,7 +75,7 @@
   .monitor-title{font-family:'DM Mono',monospace;font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--accent);}
   .monitor-stat{font-family:'DM Mono',monospace;font-size:14px;color:var(--white);margin-bottom:24px;padding:12px 16px;background:rgba(59,130,246,0.06);border-left:2px solid var(--accent);display:flex;gap:24px;flex-wrap:wrap;}
   .chart-wrapper{height:320px;width:100%;position:relative;}
-  .chart-wrapper.util{height:220px;margin-top:32px;}
+  .chart-wrapper.util{height:200px;margin-top:32px;}
   .chart-section-label{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:3px;text-transform:uppercase;color:var(--muted);margin-top:32px;margin-bottom:12px;padding-top:24px;border-top:1px solid var(--border);}
   .explanation-grid{display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-top:32px;}
   .explain-card{border:1px solid rgba(59,130,246,0.2);padding:24px;}
@@ -88,7 +88,6 @@
   .linkedin-block{margin-top:20px;padding-top:20px;border-top:1px solid rgba(255,71,87,0.2);}
   .linkedin-block p{font-size:12px;color:var(--muted);}
   .linkedin-link{color:var(--accent);text-decoration:none;border-bottom:1px dashed var(--accent);}
-  /* tank map */
   .map-wrap{border:1px solid var(--border);margin-bottom:16px;position:relative;overflow:hidden;}
   .map-header{background:var(--panel);padding:12px 20px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--border);}
   .map-title{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:3px;text-transform:uppercase;color:var(--muted);}
@@ -135,12 +134,11 @@
   <div class="section-label">Data Feed (Last 3 Months)</div>
   <h1 class="section-title">Kharg Island Storage Monitor</h1>
 
-  <!-- Storage charts -->
   <div class="monitor-wrap">
     <div class="monitor-header"><div class="monitor-title">Storage Volume — SAR Extraction</div></div>
     <div class="monitor-stat" id="latestStat">Loading data...</div>
     <div class="chart-wrapper"><canvas id="dailyChart"></canvas></div>
-    <div class="chart-section-label">Terminal Utilization — % of Observed Peak</div>
+    <div class="chart-section-label">Terminal Utilization — % of Observed Peak (Last 30 observations)</div>
     <div class="chart-wrapper util"><canvas id="utilChart"></canvas></div>
     <div class="explanation-grid">
       <div class="explain-card"><h4>🛰️ How The Radar Works</h4><p>Oil storage tanks on Kharg Island use <strong>floating roofs</strong> that lower as oil is pumped out and rise as tanks fill. Sentinel-1 SAR signals bounce off the internal walls. A low roof returns a brighter radar reflection. We invert this radiometric signal to calculate the physical volume in millions of barrels.</p><p class="muted">On average, the satellite passes over the region twice a week.</p></div>
@@ -148,7 +146,6 @@
     </div>
   </div>
 
-  <!-- Per-tank map -->
   <div class="section-label" style="margin-top:48px;">Per-Tank View</div>
   <div class="map-wrap">
     <div class="map-header">
@@ -242,7 +239,7 @@ const TANKS={
 function getColor(ratio){
   if(ratio===null||ratio===undefined)return'#1e2d3d';
   ratio=Math.max(0,Math.min(1,ratio));
-  if(ratio<0.5){const t=ratio*2;return`rgb(${Math.round(255+(240-255)*t)},${Math.round(71+(165-71)*t)},${Math.round(87+(0-87)*t)})`;}
+  if(ratio<0.5){const t=ratio*2;return`rgb(${Math.round(255+(240-255)*t)},${Math.round(71+(165-71)*t)},${Math.round(87+(0-87)*t)})`; }
   else{const t=(ratio-0.5)*2;return`rgb(${Math.round(240+(59-240)*t)},${Math.round(165+(130-165)*t)},${Math.round(0+246*t)})`; }
 }
 function calcFillRatio(dbMean,p5,p95){if(p95===p5)return 0.5;return Math.max(0,Math.min(1,(p95-dbMean)/(p95-p5)));}
@@ -286,7 +283,6 @@ async function initMap(){
   const map=L.map('map',{center:[29.230,50.311],zoom:15,zoomControl:true,attributionControl:true});
   L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',{attribution:'Tiles &copy; Esri',maxZoom:19}).addTo(map);
   map.attributionControl.setPrefix('<a href="https://leafletjs.com" target="_blank">Leaflet</a>');
-
   const markers={};
   Object.entries(TANKS).forEach(([id,info])=>{
     const marker=L.marker([info.lat,info.lon],{icon:makeTankIcon(id,info,null),zIndexOffset:info.rm});
@@ -306,22 +302,18 @@ async function initMap(){
     marker.addTo(map);
     markers[id]=marker;
   });
-
   let raw;
   try{raw=await fetchTankData();}
   catch(e){document.getElementById('mapLoadingMsg').innerHTML=`<span style="color:#ff4757">Error: ${e.message}</span>`;return;}
   document.getElementById('mapLoadingMsg').style.display='none';
-
   const data=raw.filter(r=>TANKS[r.tank_id]);
   const dbByTank={};
   data.forEach(r=>{if(!dbByTank[r.tank_id])dbByTank[r.tank_id]=[];dbByTank[r.tank_id].push(r.db_mean);});
   const calibration={};
   Object.entries(dbByTank).forEach(([id,vals])=>{calibration[id]={p5:percentile(vals,5),p95:percentile(vals,95)};});
-
   const byDate={};
   data.forEach(r=>{if(!byDate[r.date])byDate[r.date]={};byDate[r.date][r.tank_id]=r;});
   const dates=Object.keys(byDate).sort();
-
   function renderDate(dateStr){
     const dateData=byDate[dateStr]||{};
     window._tankState={};
@@ -334,7 +326,6 @@ async function initMap(){
     });
     document.getElementById('curDateLabel').textContent=dateStr;
   }
-
   const slider=document.getElementById('dateSlider');
   slider.max=dates.length-1;
   slider.value=dates.length-1;
@@ -342,7 +333,6 @@ async function initMap(){
   document.getElementById('sliderEnd').textContent=dates[dates.length-1];
   renderDate(dates[dates.length-1]);
   slider.addEventListener('input',()=>renderDate(dates[+slider.value]));
-
   let playing=false,playTimer=null;
   const playBtn=document.getElementById('playBtn');
   playBtn.addEventListener('click',()=>{
@@ -366,13 +356,15 @@ async function loadCharts(){
     const d=await res.json();
     const last90Dates=d.dates.slice(-90);
     const last90Values=d.values.slice(-90);
+    const last30Dates=d.dates.slice(-30);
+    const last30Values=d.values.slice(-30);
     const latest=last90Values[last90Values.length-1];
     const prev=last90Values[last90Values.length-2];
     const diff=(latest-prev).toFixed(2);
     const sign=diff>0?'+':'';
     const trend=diff>0?'<span style="color:#f0a500">▲ BUILDING</span>':'<span style="color:#3b82f6">▼ DRAWDOWN</span>';
     const peakAll=Math.max(...d.values);
-    const utilValues=last90Values.map(v=>+(v/peakAll*100).toFixed(1));
+    const utilValues=last30Values.map(v=>+(v/peakAll*100).toFixed(1));
     const latestUtil=(latest/peakAll*100).toFixed(1);
     document.getElementById('latestStat').innerHTML=
       `<div>Latest: <strong style="color:#3b82f6;">${latest.toFixed(2)} MMbbl</strong></div>`+
@@ -382,7 +374,7 @@ async function loadCharts(){
     const gridColor='rgba(30,45,61,0.5)';
     const tickFont={family:'DM Mono, monospace',size:10};
     new Chart(document.getElementById('dailyChart'),{type:'line',data:{labels:last90Dates,datasets:[{label:'Storage (MMbbl)',data:last90Values,borderColor:'#3b82f6',borderWidth:2,backgroundColor:'rgba(59,130,246,0.1)',fill:true,pointRadius:2,pointBackgroundColor:'#111820',pointBorderColor:'#3b82f6',tension:0.1}]},options:{responsive:true,maintainAspectRatio:false,interaction:{intersect:false,mode:'index'},scales:{x:{ticks:{color:'#5a7a94',font:tickFont,maxTicksLimit:12},grid:{color:gridColor}},y:{ticks:{color:'#5a7a94',font:{family:'DM Mono, monospace',size:11},callback:v=>v.toFixed(1)+' MM'},grid:{color:gridColor}}},plugins:{legend:{display:false},tooltip:{backgroundColor:'#111820',borderColor:'#1e2d3d',borderWidth:1,titleColor:'#5a7a94',bodyColor:'#3b82f6',callbacks:{label:ctx=>` ${ctx.parsed.y.toFixed(2)} MMbbl`}}}}});
-    new Chart(document.getElementById('utilChart'),{type:'line',data:{labels:last90Dates,datasets:[{label:'Utilization (%)',data:utilValues,borderColor:'#f0a500',borderWidth:2,backgroundColor:'rgba(240,165,0,0.08)',fill:true,pointRadius:2,pointBackgroundColor:'#111820',pointBorderColor:'#f0a500',tension:0.1}]},options:{responsive:true,maintainAspectRatio:false,interaction:{intersect:false,mode:'index'},scales:{x:{ticks:{color:'#5a7a94',font:tickFont,maxTicksLimit:12},grid:{color:gridColor}},y:{min:0,max:100,ticks:{color:'#5a7a94',font:{family:'DM Mono, monospace',size:11},callback:v=>v+'%'},grid:{color:gridColor}}},plugins:{legend:{display:false},tooltip:{backgroundColor:'#111820',borderColor:'#1e2d3d',borderWidth:1,titleColor:'#5a7a94',bodyColor:'#f0a500',callbacks:{label:ctx=>` ${ctx.parsed.y.toFixed(1)}% of peak`}}}}});
+    new Chart(document.getElementById('utilChart'),{type:'line',data:{labels:last30Dates,datasets:[{label:'Utilization (%)',data:utilValues,borderColor:'#f0a500',borderWidth:2,backgroundColor:'rgba(240,165,0,0.06)',fill:true,pointRadius:3,pointBackgroundColor:'#f0a500',pointBorderColor:'#f0a500',tension:0}]},options:{responsive:true,maintainAspectRatio:false,interaction:{intersect:false,mode:'index'},scales:{x:{ticks:{color:'#5a7a94',font:tickFont,maxTicksLimit:10},grid:{color:gridColor}},y:{min:0,max:100,ticks:{color:'#5a7a94',font:{family:'DM Mono, monospace',size:11},callback:v=>v+'%'},grid:{color:gridColor}}},plugins:{legend:{display:false},tooltip:{backgroundColor:'#111820',borderColor:'#1e2d3d',borderWidth:1,titleColor:'#5a7a94',bodyColor:'#f0a500',callbacks:{label:ctx=>` ${ctx.parsed.y.toFixed(1)}% of peak`}}}}});
   }catch(e){
     document.getElementById('latestStat').innerHTML='<span style="color:#ff4757">Error loading data.</span>';
     console.error(e);
