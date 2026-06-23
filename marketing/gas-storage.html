@@ -131,20 +131,7 @@ footer{border-top:1px solid var(--border);padding:32px 48px;display:flex;align-i
 <noscript>
 <div style="padding:32px;background:#0f1823;color:#b8cad8;font-family:monospace;font-size:13px;line-height:2;border:1px solid #1a2a3a;margin:80px 48px 0;">
   <h1 style="font-size:24px;color:#eef2f7;margin-bottom:16px;">Europe Gas Storage Monitor — OilRadar</h1>
-  <p>OilRadar tracks European underground natural gas storage levels across 10 countries using official GIE AGSI+ data, updated daily. This monitor is a leading indicator for TTF natural gas prices, winter supply risk, and LNG import demand.</p>
-  <h2 style="font-size:16px;color:#2d7ff9;margin:16px 0 8px;">Countries Covered</h2>
-  <p>Germany, France, Italy, Netherlands, Austria, Poland, Hungary, Spain, Ukraine, and aggregate EU level.</p>
-  <h2 style="font-size:16px;color:#2d7ff9;margin:16px 0 8px;">What This Monitor Shows</h2>
-  <ul style="margin-left:20px;">
-    <li><strong>EU Aggregate storage %</strong> — total European underground gas inventory as a percentage of capacity</li>
-    <li><strong>Year-over-year comparison</strong> — current level vs same period last year (pp difference)</li>
-    <li><strong>Winter Readiness</strong> — current fill vs 3-year seasonal average, signalling AHEAD or BELOW average</li>
-    <li><strong>Per-country breakdown</strong> — storage % and week-on-week change for each country</li>
-    <li><strong>TTF signal</strong> — OVERSUPPLIED / COMFORTABLE / NEUTRAL / TIGHT / CRITICAL</li>
-  </ul>
-  <h2 style="font-size:16px;color:#2d7ff9;margin:16px 0 8px;">Why It Matters</h2>
-  <p>European gas storage is the primary driver of TTF gas prices. Storage below 40% capacity is historically associated with supply stress. Storage above 85% with positive YoY delta typically signals TTF price suppression. Data source: GIE AGSI+ (Gas Infrastructure Europe).</p>
-  <p style="margin-top:16px;">For bespoke commodity intelligence: <a href="https://calendly.com/bachevsky/60min" style="color:#2d7ff9;">schedule a call</a>.</p>
+  <p>OilRadar tracks European underground natural gas storage levels across 10 countries using official GIE AGSI+ data, updated daily.</p>
 </div>
 </noscript>
 <div class="page">
@@ -156,7 +143,7 @@ footer{border-top:1px solid var(--border);padding:32px 48px;display:flex;align-i
     </div>
     <div class="hero-right" id="heroStats">
       <div class="hero-stat"><div class="hero-stat-label">EU Aggregate</div><div class="hero-stat-val" id="statEU">—</div><div class="hero-stat-sub">% full</div></div>
-      <div class="hero-stat"><div class="hero-stat-label">vs Last Year</div><div class="hero-stat-val" id="statYoY">—</div><div class="hero-stat-sub">pp difference</div></div>
+      <div class="hero-stat"><div class="hero-stat-label">vs Last Year</div><div class="hero-stat-val" id="statYoY">—</div><div class="hero-stat-sub">% difference</div></div>
       <div class="hero-stat"><div class="hero-stat-label">Signal</div><div class="hero-stat-val" id="statSignal" style="font-size:18px;padding-top:8px;">—</div><div class="hero-stat-sub" id="statUpdated">—</div></div>
       <div class="readiness-block" id="readinessBlock">
         <div class="readiness-label">Winter Readiness</div>
@@ -218,7 +205,7 @@ const euYoY=eu.data.reduce((closest,d)=>Math.abs(d.date-oneYearAgo)<Math.abs(clo
 const yoyDiff=(euLast.full-euYoY.full).toFixed(1);
 document.getElementById("statEU").textContent=euLast.full.toFixed(1)+"%";
 document.getElementById("statEU").className="hero-stat-val "+(euLast.full<40?"warn":euLast.full<70?"up":"down");
-const yoyEl=document.getElementById("statYoY");yoyEl.textContent=(yoyDiff>0?"+":"")+yoyDiff+"pp";yoyEl.className="hero-stat-val "+(yoyDiff>=0?"down":"warn");
+const yoyEl=document.getElementById("statYoY");yoyEl.textContent=(yoyDiff>0?"+":"")+yoyDiff+"%";yoyEl.className="hero-stat-val "+(yoyDiff>=0?"down":"warn");
 const[sigText,sigClass]=signalText(euLast.full,parseFloat(yoyDiff));
 document.getElementById("statSignal").innerHTML=`<span class="signal-badge ${sigClass}">${sigText}</span>`;
 document.getElementById("statUpdated").textContent=fmt(euLast.date);
@@ -227,7 +214,7 @@ document.getElementById("liveStamp").textContent="Updated "+fmt(raw.updated_at||
 const wr=calcWinterReadiness(eu.data);
 if(wr){const ahead=wr.delta>=0;const block=document.getElementById("readinessBlock");block.classList.add(ahead?"ahead":"behind");const valEl=document.getElementById("readinessVal");valEl.textContent=(wr.delta>=0?"+":"")+wr.delta.toFixed(1)+"%";valEl.style.color=ahead?"var(--green)":"var(--red)";document.getElementById("readinessBadge").innerHTML=`<span class="readiness-badge ${ahead?'ahead':'behind'}">${ahead?'AHEAD OF SEASON':'BELOW AVERAGE'}</span>`;document.getElementById("readinessAvg").textContent=`3Y avg (${wr.years}): ${wr.avg3y.toFixed(1)}%`;}
 const wrRows=countryKeys.filter(c=>c!=="EU"&&parsed[c]&&parsed[c].data.length>=10).map(code=>{const d=parsed[code];const cwr=calcWinterReadiness(d.data);return cwr?{code,name:d.name,wr:cwr}:null;}).filter(Boolean).sort((a,b)=>b.wr.delta-a.wr.delta);
-if(wrRows.length){document.getElementById("wrYears").textContent=wrRows[0].wr.years;const maxAbs=Math.max(...wrRows.map(r=>Math.abs(r.wr.delta)));const wrBody=document.getElementById("wrTableBody");wrRows.forEach(({name,wr:cwr})=>{const ahead=cwr.delta>=0;const deltaCol=ahead?"green":"red";const barColor=ahead?"var(--green)":"var(--red)";const barPct=maxAbs>0?Math.round(Math.abs(cwr.delta)/maxAbs*100):0;const arrow=ahead?"&#9650;":"&#9660;";const status=ahead?"AHEAD":"BELOW";const badgeCls=ahead?"green":"red";wrBody.innerHTML+=`<tr><td class="accent">${name}</td><td>${cwr.current.toFixed(1)}%</td><td style="color:var(--muted)">${cwr.avg3y.toFixed(1)}%</td><td><div class="wr-delta-bar"><span style="color:var(--${deltaCol});font-family:'DM Mono',monospace;font-size:11px;min-width:52px">${ahead?"+":""}${cwr.delta.toFixed(1)}%</span></div></td><td style="color:var(--${deltaCol})">${arrow}</td><td><span class="signal-badge ${badgeCls}" style="font-size:9px;padding:3px 8px;">${status} OF SEASON</span></td></tr>`;});}
+if(wrRows.length){document.getElementById("wrYears").textContent=wrRows[0].wr.years;const maxAbs=Math.max(...wrRows.map(r=>Math.abs(r.wr.delta)));const wrBody=document.getElementById("wrTableBody");wrRows.forEach(({name,wr:cwr})=>{const ahead=cwr.delta>=0;const deltaCol=ahead?"green":"red";const arrow=ahead?"&#9650;":"&#9660;";const status=ahead?"AHEAD":"BELOW";const badgeCls=ahead?"green":"red";wrBody.innerHTML+=`<tr><td class="accent">${name}</td><td>${cwr.current.toFixed(1)}%</td><td style="color:var(--muted)">${cwr.avg3y.toFixed(1)}%</td><td><div class="wr-delta-bar"><span style="color:var(--${deltaCol});font-family:'DM Mono',monospace;font-size:11px;min-width:52px">${ahead?"+":""}${cwr.delta.toFixed(1)}%</span></div></td><td style="color:var(--${deltaCol})">${arrow}</td><td><span class="signal-badge ${badgeCls}" style="font-size:9px;padding:3px 8px;">${status} OF SEASON</span></td></tr>`;});}
 const euRecent=eu.data.slice(-365);
 new Chart(document.getElementById("chartMain"),{type:"line",data:{labels:euRecent.map(d=>fmtShort(d.date)),datasets:[{label:"EU Storage %",data:euRecent.map(d=>d.full),borderColor:C.accent,borderWidth:2,backgroundColor:"rgba(45,127,249,0.06)",fill:true,pointRadius:0,tension:0.3}]},options:{responsive:true,maintainAspectRatio:false,interaction:{mode:"index",intersect:false},scales:{...baseScales(),y:{...baseScales().y,min:0,max:105,ticks:{color:C.muted,callback:v=>v+"%"}}},plugins:{legend:{display:false},tooltip:{backgroundColor:"#0a0f14",borderColor:C.border,borderWidth:1,titleColor:C.muted,bodyColor:C.accent,callbacks:{label:ctx=>" "+ctx.parsed.y.toFixed(1)+"%"}}}}});
 const barContainer=document.getElementById("countryBars");
@@ -236,7 +223,7 @@ setTimeout(()=>{document.querySelectorAll(".country-fill").forEach(el=>{el.style
 const nonEUKeys=countryKeys.filter(c=>c!=="EU"&&parsed[c].data.length>0);
 new Chart(document.getElementById("chartAllCountries"),{type:"line",data:{datasets:nonEUKeys.map((code,i)=>{const d=parsed[code];const recent=d.data.slice(-365);const col=COUNTRY_COLORS[i%COUNTRY_COLORS.length];return{label:d.name,data:recent.map(r=>({x:fmtShort(r.date),y:r.full})),borderColor:col,borderWidth:1.5,pointRadius:0,tension:0.3,fill:false};})},options:{responsive:true,maintainAspectRatio:false,interaction:{mode:"index",intersect:false},scales:{x:{type:"category",grid:{color:"rgba(26,42,58,.4)",drawBorder:false},ticks:{color:C.muted,maxTicksLimit:12,maxRotation:0}},y:{...baseScales().y,min:0,max:105,ticks:{color:C.muted,callback:v=>v+"%"}}},plugins:{legend:{labels:{color:C.muted,boxWidth:12,padding:14,font:{size:11}}},tooltip:{backgroundColor:"#0a0f14",borderColor:C.border,borderWidth:1,titleColor:C.muted,bodyColor:C.text,callbacks:{label:ctx=>" "+ctx.dataset.label+": "+ctx.parsed.y.toFixed(1)+"%"}}}}});
 const tbody=document.getElementById("dataTableBody");
-countryKeys.forEach(code=>{const d=parsed[code];const arr=d.data;if(!arr.length)return;const last=arr[arr.length-1];const prev=arr[arr.length-2];const wow=prev&&last.full!==null&&prev.full!==null?(last.full-prev.full).toFixed(1):null;const[sig,sigCls]=signalText(last.full,wow?parseFloat(wow):0);const wowStr=wow!==null?`<td class="${parseFloat(wow)>=0?"up":"down"}">${parseFloat(wow)>=0?"+":""}${wow}pp</td>`:`<td class="accent">—</td>`;tbody.innerHTML+=`<tr><td class="accent">${d.name}</td><td>${fmt(last.date)}</td><td style="color:${colorFill(last.full)}">${last.full?.toFixed(1)??"—"}%</td><td>${last.gasInStorage?.toFixed(0)??"—"} TWh</td>${wowStr}<td>${last.trend||"—"}</td><td><span class="signal-badge ${sigCls}" style="font-size:9px;padding:3px 8px;">${sig}</span></td></tr>`;});
+countryKeys.forEach(code=>{const d=parsed[code];const arr=d.data;if(!arr.length)return;const last=arr[arr.length-1];const prev=arr[arr.length-2];const wow=prev&&last.full!==null&&prev.full!==null?(last.full-prev.full).toFixed(1):null;const[sig,sigCls]=signalText(last.full,wow?parseFloat(wow):0);const wowStr=wow!==null?`<td class="${parseFloat(wow)>=0?"up":"down"}">${parseFloat(wow)>=0?"+":""}${wow}%</td>`:`<td class="accent">—</td>`;tbody.innerHTML+=`<tr><td class="accent">${d.name}</td><td>${fmt(last.date)}</td><td style="color:${colorFill(last.full)}">${last.full?.toFixed(1)??"—"}%</td><td>${last.gasInStorage?.toFixed(0)??"—"} TWh</td>${wowStr}<td>${last.trend||"—"}</td><td><span class="signal-badge ${sigCls}" style="font-size:9px;padding:3px 8px;">${sig}</span></td></tr>`;});
 const obs=new IntersectionObserver(entries=>{entries.forEach(e=>{if(e.isIntersecting)e.target.classList.add("on");});},{threshold:0.08});
 document.querySelectorAll(".reveal").forEach(el=>obs.observe(el));
 }
