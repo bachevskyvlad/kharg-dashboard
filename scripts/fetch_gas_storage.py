@@ -15,7 +15,6 @@ BASE_URL = "https://agsi.gie.eu/api"
 HEADERS  = {"x-key": API_KEY}
 
 COUNTRIES = {
-    "EU": "Europe (aggregate)",
     "DE": "Germany",
     "IT": "Italy",
     "FR": "France",
@@ -26,6 +25,8 @@ COUNTRIES = {
     "ES": "Spain",
     "UA": "Ukraine",
 }
+
+AGGREGATE_KEYS = ["IT", "FR", "NL", "AT", "PL", "HU", "ES", "UA"]
 
 OUTPUT_PATH = Path(__file__).parent.parent / "data" / "gas_storage.json"
 
@@ -127,12 +128,44 @@ def main():
         result["countries"][code] = {"name": name, "data": merged}
         print(f"     {len(merged)} records total (+{len(new_rows)} fetched)")
 
+    # Compute EU aggregate from individual countries
+    date_map = {}
+    for code in AGGREGATE_KEYS:
+        country_data = result["countries"].get(code, {}).get("data", [])
+        for row in country_data:
+            d = row["date"]
+            if d not in date_map:
+                date_map[d] = {"total_gas": 0.0, "total_cap": 0.0, "count": 0}
+            if row["full"] and row["full"] > 0 and row["gasInStorage"] is not None:
+                cap = row["gasInStorage"] / (row["full"] / 100)
+                date_map[d]["total_gas"] += row["gasInStorage"]
+                date_map[d]["total_cap"] += cap
+                date_map[d]["count"] += 1
+
+    eu_rows = []
+    for date, v in sorted(date_map.items()):
+        if v["total_cap"] > 0 and v["count"] >= 3:
+            full = round(v["total_gas"] / v["total_cap"] * 100, 2)
+            eu_rows.append({
+                "date": date,
+                "full": full,
+                "gasInStorage": round(v["total_gas"], 4),
+                "injection": None,
+                "withdrawal": None,
+                "trend": "",
+            })
+
+    result["countries"]["EU"] = {"name": "Europe (aggregate)", "data": eu_rows}
+    print(f"  → Europe (aggregate) EU: {len(eu_rows)} records computed")
+
     OUTPUT_PATH.parent.mkdir(parents=True, exist_ok=True)
     with open(OUTPUT_PATH, "w", encoding="utf-8") as f:
         json.dump(result, f, ensure_ascii=False, separators=(",", ":"))
 
     size_kb = OUTPUT_PATH.stat().st_size / 1024
+    eu_last = eu_rows[-1] if eu_rows else {}
     print(f"\n✅  Saved: {OUTPUT_PATH}  ({size_kb:.1f} KB)")
+    print(f"   EU latest: {eu_last.get('date')} — {eu_last.get('full')}% full")
 
 
 if __name__ == "__main__":
