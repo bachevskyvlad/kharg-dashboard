@@ -276,6 +276,8 @@ async function init() {
     maxZoom: 19
   }).addTo(map);
 
+  map.attributionControl.setPrefix('<a href="https://leafletjs.com" target="_blank">Leaflet</a>');
+
   const markers = {};
   Object.entries(TANKS).forEach(([id, info]) => {
     const marker = L.marker([info.lat, info.lon], {
