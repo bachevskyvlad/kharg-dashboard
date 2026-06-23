@@ -70,11 +70,13 @@
   main{flex:1;padding:120px 48px 80px;max-width:1400px;margin:0 auto;width:100%;}
   .section-label{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:4px;text-transform:uppercase;color:var(--accent);margin-bottom:16px;}
   .section-title{font-family:'Bebas Neue',sans-serif;font-size:clamp(40px,5vw,60px);line-height:1;color:var(--white);margin-bottom:48px;}
-  .monitor-wrap{background:var(--panel);border:1px solid var(--border);padding:32px;box-shadow:0 20px 40px rgba(0,0,0,0.5);}
+  .monitor-wrap{background:var(--panel);border:1px solid var(--border);padding:32px;box-shadow:0 20px 40px rgba(0,0,0,0.5);margin-bottom:24px;}
   .monitor-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;}
   .monitor-title{font-family:'DM Mono',monospace;font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--accent);}
-  .monitor-stat{font-family:'DM Mono',monospace;font-size:14px;color:var(--white);margin-bottom:24px;padding:12px 16px;background:rgba(59,130,246,0.06);border-left:2px solid var(--accent);display:flex;gap:24px;}
-  .chart-wrapper{height:400px;width:100%;position:relative;}
+  .monitor-stat{font-family:'DM Mono',monospace;font-size:14px;color:var(--white);margin-bottom:24px;padding:12px 16px;background:rgba(59,130,246,0.06);border-left:2px solid var(--accent);display:flex;gap:24px;flex-wrap:wrap;}
+  .chart-wrapper{height:320px;width:100%;position:relative;}
+  .chart-wrapper.util{height:220px;margin-top:32px;}
+  .chart-section-label{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:3px;text-transform:uppercase;color:var(--muted);margin-top:32px;margin-bottom:12px;padding-top:24px;border-top:1px solid var(--border);}
   .explanation-grid{display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-top:32px;}
   .explain-card{border:1px solid rgba(59,130,246,0.2);padding:24px;}
   .explain-card.alert{border-color:rgba(255,71,87,0.3);background:rgba(255,71,87,0.02);}
@@ -102,7 +104,7 @@
 <noscript>
 <div style="padding:32px;background:#111820;color:#c8d6e5;font-family:monospace;font-size:13px;line-height:2;border:1px solid #1e2d3d;margin:80px 48px 0;">
   <h1 style="font-size:24px;color:#f0f4f8;margin-bottom:16px;">Kharg Island Crude Oil Storage Monitor — OilRadar</h1>
-  <p>OilRadar tracks physical crude oil storage at Kharg Island, Iran's primary export terminal responsible for approximately 90% of Iranian crude exports. Data is derived from Sentinel-1 SAR satellite imagery updated 2–3 times per week.</p>
+  <p>OilRadar tracks physical crude oil storage at Kharg Island, Iran’s primary export terminal responsible for approximately 90% of Iranian crude exports. Data is derived from Sentinel-1 SAR satellite imagery updated 2–3 times per week.</p>
   <h2 style="font-size:16px;color:#3b82f6;margin:16px 0 8px;">What This Monitor Shows</h2>
   <p><strong>Storage Build (Rising Volume):</strong> Crude oil is accumulating at the terminal. Tankers are queuing, loading is slower than production, or exports face geopolitical friction. This signal typically precedes a confirmed export bottleneck by 4–7 weeks.</p>
   <p><strong>Storage Drawdown (Falling Volume):</strong> Tankers are actively loading and draining the terminal. Physical crude is flowing into the global market. This supply signal reaches EIA and JODI reports 4–8 weeks later.</p>
@@ -111,7 +113,6 @@
     <li>Data available since March 2023</li>
     <li>Satellite passes: 2–3 times per week on average</li>
     <li>Measurement method: floating roof tank radar shadow geometry (Sentinel-1 C-band SAR)</li>
-    <li>86% hit rate on export bottleneck prediction when pre-event storage was rising</li>
     <li>Lead time over EIA/JODI: 4–7 weeks</li>
     <li>Lead time over AIS vessel tracking: 1–3 weeks</li>
   </ul>
@@ -122,9 +123,13 @@
   <div class="section-label">Data Feed (Last 3 Months)</div>
   <h1 class="section-title">Kharg Island Storage Monitor</h1>
   <div class="monitor-wrap">
-    <div class="monitor-header"><div class="monitor-title">Daily Storage Dynamics — SAR Extraction</div></div>
+    <div class="monitor-header"><div class="monitor-title">Storage Volume — SAR Extraction</div></div>
     <div class="monitor-stat" id="latestStat">Loading data...</div>
     <div class="chart-wrapper"><canvas id="dailyChart"></canvas></div>
+
+    <div class="chart-section-label">Terminal Utilization — % of Observed Peak</div>
+    <div class="chart-wrapper util"><canvas id="utilChart"></canvas></div>
+
     <div class="explanation-grid">
       <div class="explain-card"><h4>🛰️ How The Radar Works</h4><p>Oil storage tanks on Kharg Island use <strong>floating roofs</strong> that lower as oil is pumped out and rise as tanks fill. Sentinel-1 SAR signals bounce off the internal walls. A low roof returns a brighter radar reflection. We invert this radiometric signal to calculate the physical volume in millions of barrels.</p><p class="muted">On average, the satellite passes over the region twice a week.</p></div>
       <div class="explain-card alert"><h4>📊 Reading The Signal</h4><p><strong>Rising Volume (Build):</strong> Oil is accumulating. Tankers are likely delayed or loading is slower than production.<br><br><strong>Falling Volume (Drawdown):</strong> Tankers are draining the terminal, sending physical supply into the global market.</p><div class="linkedin-block"><p>Custom monitoring requests: <a href="https://www.linkedin.com/in/bachevsky/" target="_blank" class="linkedin-link">LinkedIn</a></p></div></div>
@@ -143,14 +148,110 @@
 <script>
 async function loadDailyMonitor(){
   try{
-    const v=Date.now();const res=await fetch(`/data/data_daily.json?v=${v}`);const d=await res.json();
-    const last90Dates=d.dates.slice(-90);const last90Values=d.values.slice(-90);
-    const latest=last90Values[last90Values.length-1];const prev=last90Values[last90Values.length-2];
-    const diff=(latest-prev).toFixed(2);const sign=diff>0?'+':'';
+    const v=Date.now();
+    const res=await fetch(`/data/data_daily.json?v=${v}`);
+    const d=await res.json();
+    const last90Dates=d.dates.slice(-90);
+    const last90Values=d.values.slice(-90);
+    const latest=last90Values[last90Values.length-1];
+    const prev=last90Values[last90Values.length-2];
+    const diff=(latest-prev).toFixed(2);
+    const sign=diff>0?'+':'';
     const trend=diff>0?'<span style="color:#f0a500">▲ BUILDING</span>':'<span style="color:#3b82f6">▼ DRAWDOWN</span>';
-    document.getElementById('latestStat').innerHTML=`<div>Latest Reading: <strong style="color:#3b82f6;">${latest.toFixed(2)} Mn Bbl</strong></div><div>Day-over-Day: <strong style="color:${diff>0?'#f0a500':'#3b82f6'}">${sign}${diff} Mn Bbl</strong></div><div>Status: <strong>${trend}</strong></div>`;
-    new Chart(document.getElementById('dailyChart'),{type:'line',data:{labels:last90Dates,datasets:[{label:'Daily Est. Storage (Mn Bbl)',data:last90Values,borderColor:'#3b82f6',borderWidth:2,backgroundColor:'rgba(59,130,246,0.1)',fill:true,pointRadius:2,pointBackgroundColor:'#111820',pointBorderColor:'#3b82f6',tension:0.1}]},options:{responsive:true,maintainAspectRatio:false,interaction:{intersect:false,mode:'index'},scales:{x:{ticks:{color:'#5a7a94',font:{family:'DM Mono, monospace',size:10},maxTicksLimit:12},grid:{color:'rgba(30,45,61,0.5)'}},y:{ticks:{color:'#5a7a94',font:{family:'DM Mono, monospace',size:11},callback:v=>v.toFixed(1)+' Mn'},grid:{color:'rgba(30,45,61,0.5)'}}},plugins:{legend:{display:false},tooltip:{backgroundColor:'#111820',borderColor:'#1e2d3d',borderWidth:1,titleColor:'#5a7a94',bodyColor:'#3b82f6',callbacks:{label:ctx=>` Vol: ${ctx.parsed.y.toFixed(2)} Mn Bbl`}}}}});
-  }catch(e){document.getElementById('latestStat').innerHTML='<span style="color:#ff4757">Error loading data.</span>';console.error(e);}
+
+    const peakAll=Math.max(...d.values);
+    const utilValues=last90Values.map(v=>+(v/peakAll*100).toFixed(1));
+    const latestUtil=(latest/peakAll*100).toFixed(1);
+
+    document.getElementById('latestStat').innerHTML=
+      `<div>Latest: <strong style="color:#3b82f6;">${latest.toFixed(2)} MMbbl</strong></div>`+
+      `<div>Day-over-Day: <strong style="color:${diff>0?'#f0a500':'#3b82f6'}">${sign}${diff} MMbbl</strong></div>`+
+      `<div>Utilization: <strong style="color:#f0a500;">${latestUtil}% of peak</strong></div>`+
+      `<div>Status: <strong>${trend}</strong></div>`;
+
+    const gridColor='rgba(30,45,61,0.5)';
+    const tickFont={family:'DM Mono, monospace',size:10};
+
+    new Chart(document.getElementById('dailyChart'),{
+      type:'line',
+      data:{
+        labels:last90Dates,
+        datasets:[{
+          label:'Storage (MMbbl)',
+          data:last90Values,
+          borderColor:'#3b82f6',
+          borderWidth:2,
+          backgroundColor:'rgba(59,130,246,0.1)',
+          fill:true,
+          pointRadius:2,
+          pointBackgroundColor:'#111820',
+          pointBorderColor:'#3b82f6',
+          tension:0.1
+        }]
+      },
+      options:{
+        responsive:true,
+        maintainAspectRatio:false,
+        interaction:{intersect:false,mode:'index'},
+        scales:{
+          x:{ticks:{color:'#5a7a94',font:tickFont,maxTicksLimit:12},grid:{color:gridColor}},
+          y:{ticks:{color:'#5a7a94',font:{family:'DM Mono, monospace',size:11},callback:v=>v.toFixed(1)+' MM'},grid:{color:gridColor}}
+        },
+        plugins:{
+          legend:{display:false},
+          tooltip:{
+            backgroundColor:'#111820',borderColor:'#1e2d3d',borderWidth:1,
+            titleColor:'#5a7a94',bodyColor:'#3b82f6',
+            callbacks:{label:ctx=>` ${ctx.parsed.y.toFixed(2)} MMbbl`}
+          }
+        }
+      }
+    });
+
+    new Chart(document.getElementById('utilChart'),{
+      type:'line',
+      data:{
+        labels:last90Dates,
+        datasets:[{
+          label:'Utilization (%)',
+          data:utilValues,
+          borderColor:'#f0a500',
+          borderWidth:2,
+          backgroundColor:'rgba(240,165,0,0.08)',
+          fill:true,
+          pointRadius:2,
+          pointBackgroundColor:'#111820',
+          pointBorderColor:'#f0a500',
+          tension:0.1
+        }]
+      },
+      options:{
+        responsive:true,
+        maintainAspectRatio:false,
+        interaction:{intersect:false,mode:'index'},
+        scales:{
+          x:{ticks:{color:'#5a7a94',font:tickFont,maxTicksLimit:12},grid:{color:gridColor}},
+          y:{
+            min:0,max:100,
+            ticks:{color:'#5a7a94',font:{family:'DM Mono, monospace',size:11},callback:v=>v+'%'},
+            grid:{color:gridColor}
+          }
+        },
+        plugins:{
+          legend:{display:false},
+          tooltip:{
+            backgroundColor:'#111820',borderColor:'#1e2d3d',borderWidth:1,
+            titleColor:'#5a7a94',bodyColor:'#f0a500',
+            callbacks:{label:ctx=>` ${ctx.parsed.y.toFixed(1)}% of peak`}
+          }
+        }
+      }
+    });
+
+  }catch(e){
+    document.getElementById('latestStat').innerHTML='<span style="color:#ff4757">Error loading data.</span>';
+    console.error(e);
+  }
 }
 loadDailyMonitor();
 </script>
