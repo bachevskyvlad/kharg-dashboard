@@ -30,9 +30,10 @@ COUNTRIES = {
 OUTPUT_PATH = Path(__file__).parent.parent / "data" / "lng_data.json"
 
 
-def fetch_country(country_code: str, days_back: int = 1095) -> list:
-    date_from = (datetime.today() - timedelta(days=days_back)).strftime("%Y-%m-%d")
-    date_to   = datetime.today().strftime("%Y-%m-%d")
+def fetch_country(country_code: str, date_from: str = None) -> list:
+    if date_from is None:
+        date_from = (datetime.today() - timedelta(days=1095)).strftime("%Y-%m-%d")
+    date_to = datetime.today().strftime("%Y-%m-%d")
 
     all_rows = []
     page = 1
@@ -86,6 +87,13 @@ def _num(val):
 def main():
     print(f"🔄  Loading GIE AGSI+  ({datetime.today().strftime('%Y-%m-%d')})")
 
+    existing = {}
+    if OUTPUT_PATH.exists():
+        with open(OUTPUT_PATH, encoding="utf-8") as f:
+            old = json.load(f)
+        existing = old.get("countries", {})
+        print(f"  Loaded existing data ({OUTPUT_PATH.name})")
+
     result = {
         "updated_at": datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ"),
         "source":     "GIE AGSI+  https://agsi.gie.eu",
@@ -94,9 +102,27 @@ def main():
 
     for code, name in COUNTRIES.items():
         print(f"  → {name} ({code})")
-        rows = fetch_country(code)
-        result["countries"][code] = {"name": name, "data": rows}
-        print(f"     {len(rows)} records")
+        old_rows = existing.get(code, {}).get("data", [])
+
+        if old_rows:
+            last_date = max(r["date"] for r in old_rows)
+            date_from = (datetime.strptime(last_date, "%Y-%m-%d") - timedelta(days=3)).strftime("%Y-%m-%d")
+            print(f"     last stored: {last_date} — fetching from {date_from}")
+        else:
+            date_from = None
+
+        new_rows = fetch_country(code, date_from=date_from)
+
+        if old_rows and new_rows:
+            old_by_date = {r["date"]: r for r in old_rows}
+            for r in new_rows:
+                old_by_date[r["date"]] = r
+            merged = sorted(old_by_date.values(), key=lambda x: x["date"])
+        else:
+            merged = new_rows or old_rows
+
+        result["countries"][code] = {"name": name, "data": merged}
+        print(f"     {len(merged)} records total (+{len(new_rows)} fetched)")
 
     OUTPUT_PATH.parent.mkdir(parents=True, exist_ok=True)
     with open(OUTPUT_PATH, "w", encoding="utf-8") as f:
