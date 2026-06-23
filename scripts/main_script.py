@@ -53,7 +53,8 @@ WEEKLY_PATH    = "public/data.json"
 PLOT_PATH      = "public/volume_graph.png"
 
 # ================= TANKS DATA =================
-# All radius values are actual tank radii in meters
+# radius = actual tank radius in meters
+# h_max derived from typical API 650 floating roof aspect ratios per tank size
 raw_tanks = []
 
 for lat, lon in [
@@ -61,7 +62,7 @@ for lat, lon in [
     (29.221840470329855,50.31352911803618), (29.223156804822317,50.315849029771684),
     (29.222897954869325,50.3144195158663)
 ]:
-    raw_tanks.append({"id": f"t60_{len(raw_tanks)}", "lat": lat, "lon": lon, "radius": 60, "h_max": 23})
+    raw_tanks.append({"id": f"t60_{len(raw_tanks)}", "lat": lat, "lon": lon, "radius": 60, "h_max": 18})
 
 for lat, lon in [
     (29.23596908236423,50.31262041733899), (29.236450714039865,50.31093940154909),
@@ -74,7 +75,7 @@ for lat, lon in [
     (29.232076421746672,50.312234207587345), (29.23021527314446,50.3101614506557),
     (29.228871179764596,50.309966015820464)
 ]:
-    raw_tanks.append({"id": f"t55_{len(raw_tanks)}", "lat": lat, "lon": lon, "radius": 55, "h_max": 23})
+    raw_tanks.append({"id": f"t55_{len(raw_tanks)}", "lat": lat, "lon": lon, "radius": 55, "h_max": 17})
 
 for lat, lon in [
     (29.22952889859548,50.312187062458655), (29.22976318244905,50.313501526357314),
@@ -83,17 +84,17 @@ for lat, lon in [
     (29.22720915866873,50.312698386632235), (29.227435720069668,50.31399368455909),
     (29.227640813983122,50.31526721678495)
 ]:
-    raw_tanks.append({"id": f"t40_{len(raw_tanks)}", "lat": lat, "lon": lon, "radius": 40, "h_max": 23})
+    raw_tanks.append({"id": f"t40_{len(raw_tanks)}", "lat": lat, "lon": lon, "radius": 40, "h_max": 14})
 
-# New tanks added
-raw_tanks.append({"id": "t55_31", "lat": 29.232346117474552, "lon": 50.313766336270064, "radius": 55, "h_max": 23})
+# New tanks
+raw_tanks.append({"id": "t55_31", "lat": 29.232346117474552, "lon": 50.313766336270064, "radius": 55, "h_max": 17})
 
 for lat, lon in [
     (29.230717804109947, 50.31192906218232),
     (29.230947410364493, 50.31324186520479),
     (29.231135117157258, 50.31454377331308),
 ]:
-    raw_tanks.append({"id": f"t40_{len(raw_tanks)}", "lat": lat, "lon": lon, "radius": 40, "h_max": 23})
+    raw_tanks.append({"id": f"t40_{len(raw_tanks)}", "lat": lat, "lon": lon, "radius": 40, "h_max": 14})
 
 for lat, lon in [
     (29.226211162396392, 50.31288089406942),
@@ -109,7 +110,7 @@ for lat, lon in [
     (29.224656215116465, 50.31513496008376),
     (29.22481810164328,  50.316063441149545),
 ]:
-    raw_tanks.append({"id": f"t25_{len(raw_tanks)}", "lat": lat, "lon": lon, "radius": 25, "h_max": 23})
+    raw_tanks.append({"id": f"t25_{len(raw_tanks)}", "lat": lat, "lon": lon, "radius": 25, "h_max": 12})
 
 print(f"Loaded {len(raw_tanks)} tanks.")
 

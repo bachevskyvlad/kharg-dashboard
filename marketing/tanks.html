@@ -138,55 +138,55 @@ const SUPABASE_KEY = 'sb_publishable_7j07_zzdqTGM1LXf7-o9Tg_JJRbJQSM';
 const H_MIN = 2;
 const BARREL_PER_M3 = 6.2898;
 
-// r = display pixel radius, rm = actual tank radius in meters
+// r = display pixel radius, rm = actual tank radius in meters, hm = h_max in meters
 const TANKS = {
-  't60_0': {lat:29.2217338,  lon:50.3165482, r:20, rm:60},
-  't60_1': {lat:29.2216388,  lon:50.3150432, r:20, rm:60},
-  't60_2': {lat:29.2218405,  lon:50.3135291, r:20, rm:60},
-  't60_3': {lat:29.2231568,  lon:50.3158490, r:20, rm:60},
-  't60_4': {lat:29.2228980,  lon:50.3144195, r:20, rm:60},
-  't55_5': {lat:29.2359691,  lon:50.3126204, r:16, rm:55},
-  't55_6': {lat:29.2364507,  lon:50.3109394, r:16, rm:55},
-  't55_7': {lat:29.2379533,  lon:50.3108495, r:16, rm:55},
-  't55_8': {lat:29.2390690,  lon:50.3096822, r:16, rm:55},
-  't55_9': {lat:29.2389264,  lon:50.3068140, r:16, rm:55},
-  't55_10':{lat:29.2376082,  lon:50.3072679, r:16, rm:55},
-  't55_11':{lat:29.2362776,  lon:50.3077246, r:16, rm:55},
-  't55_12':{lat:29.2363283,  lon:50.3093038, r:16, rm:55},
-  't55_13':{lat:29.2349727,  lon:50.3081865, r:16, rm:55},
-  't55_14':{lat:29.2351137,  lon:50.3098199, r:16, rm:55},
-  't55_15':{lat:29.2336438,  lon:50.3086380, r:16, rm:55},
-  't55_16':{lat:29.2338308,  lon:50.3102809, r:16, rm:55},
-  't55_17':{lat:29.2314405,  lon:50.3087404, r:16, rm:55},
-  't55_18':{lat:29.2317836,  lon:50.3103855, r:16, rm:55},
-  't55_19':{lat:29.2320764,  lon:50.3122342, r:16, rm:55},
-  't55_20':{lat:29.2302153,  lon:50.3101615, r:16, rm:55},
-  't55_21':{lat:29.2288712,  lon:50.3099660, r:16, rm:55},
-  't40_22':{lat:29.2295289,  lon:50.3121871, r:12, rm:40},
-  't40_23':{lat:29.2297632,  lon:50.3135015, r:12, rm:40},
-  't40_24':{lat:29.2299639,  lon:50.3148147, r:12, rm:40},
-  't40_25':{lat:29.2284236,  lon:50.3124414, r:12, rm:40},
-  't40_26':{lat:29.2286165,  lon:50.3137337, r:12, rm:40},
-  't40_27':{lat:29.2288114,  lon:50.3150200, r:12, rm:40},
-  't40_28':{lat:29.2272092,  lon:50.3126984, r:12, rm:40},
-  't40_29':{lat:29.2274357,  lon:50.3139937, r:12, rm:40},
-  't40_30':{lat:29.2276408,  lon:50.3152672, r:12, rm:40},
-  't55_31':{lat:29.2323461,  lon:50.3137663, r:16, rm:55},
-  't40_32':{lat:29.2307178,  lon:50.3119291, r:12, rm:40},
-  't40_33':{lat:29.2309474,  lon:50.3132419, r:12, rm:40},
-  't40_34':{lat:29.2311351,  lon:50.3145438, r:12, rm:40},
-  't25_35':{lat:29.2262112,  lon:50.3128809, r:8,  rm:25},
-  't25_36':{lat:29.2263835,  lon:50.3138099, r:8,  rm:25},
-  't25_37':{lat:29.2265429,  lon:50.3147481, r:8,  rm:25},
-  't25_38':{lat:29.2266891,  lon:50.3156504, r:8,  rm:25},
-  't25_39':{lat:29.2251564,  lon:50.3131064, r:8,  rm:25},
-  't25_40':{lat:29.2253231,  lon:50.3140568, r:8,  rm:25},
-  't25_41':{lat:29.2254742,  lon:50.3149628, r:8,  rm:25},
-  't25_42':{lat:29.2256154,  lon:50.3158865, r:8,  rm:25},
-  't25_43':{lat:29.2243535,  lon:50.3132813, r:8,  rm:25},
-  't25_44':{lat:29.2245129,  lon:50.3142241, r:8,  rm:25},
-  't25_45':{lat:29.2246562,  lon:50.3151350, r:8,  rm:25},
-  't25_46':{lat:29.2248181,  lon:50.3160634, r:8,  rm:25},
+  't60_0': {lat:29.2217338, lon:50.3165482, r:20, rm:60, hm:18},
+  't60_1': {lat:29.2216388, lon:50.3150432, r:20, rm:60, hm:18},
+  't60_2': {lat:29.2218405, lon:50.3135291, r:20, rm:60, hm:18},
+  't60_3': {lat:29.2231568, lon:50.3158490, r:20, rm:60, hm:18},
+  't60_4': {lat:29.2228980, lon:50.3144195, r:20, rm:60, hm:18},
+  't55_5': {lat:29.2359691, lon:50.3126204, r:16, rm:55, hm:17},
+  't55_6': {lat:29.2364507, lon:50.3109394, r:16, rm:55, hm:17},
+  't55_7': {lat:29.2379533, lon:50.3108495, r:16, rm:55, hm:17},
+  't55_8': {lat:29.2390690, lon:50.3096822, r:16, rm:55, hm:17},
+  't55_9': {lat:29.2389264, lon:50.3068140, r:16, rm:55, hm:17},
+  't55_10':{lat:29.2376082, lon:50.3072679, r:16, rm:55, hm:17},
+  't55_11':{lat:29.2362776, lon:50.3077246, r:16, rm:55, hm:17},
+  't55_12':{lat:29.2363283, lon:50.3093038, r:16, rm:55, hm:17},
+  't55_13':{lat:29.2349727, lon:50.3081865, r:16, rm:55, hm:17},
+  't55_14':{lat:29.2351137, lon:50.3098199, r:16, rm:55, hm:17},
+  't55_15':{lat:29.2336438, lon:50.3086380, r:16, rm:55, hm:17},
+  't55_16':{lat:29.2338308, lon:50.3102809, r:16, rm:55, hm:17},
+  't55_17':{lat:29.2314405, lon:50.3087404, r:16, rm:55, hm:17},
+  't55_18':{lat:29.2317836, lon:50.3103855, r:16, rm:55, hm:17},
+  't55_19':{lat:29.2320764, lon:50.3122342, r:16, rm:55, hm:17},
+  't55_20':{lat:29.2302153, lon:50.3101615, r:16, rm:55, hm:17},
+  't55_21':{lat:29.2288712, lon:50.3099660, r:16, rm:55, hm:17},
+  't40_22':{lat:29.2295289, lon:50.3121871, r:12, rm:40, hm:14},
+  't40_23':{lat:29.2297632, lon:50.3135015, r:12, rm:40, hm:14},
+  't40_24':{lat:29.2299639, lon:50.3148147, r:12, rm:40, hm:14},
+  't40_25':{lat:29.2284236, lon:50.3124414, r:12, rm:40, hm:14},
+  't40_26':{lat:29.2286165, lon:50.3137337, r:12, rm:40, hm:14},
+  't40_27':{lat:29.2288114, lon:50.3150200, r:12, rm:40, hm:14},
+  't40_28':{lat:29.2272092, lon:50.3126984, r:12, rm:40, hm:14},
+  't40_29':{lat:29.2274357, lon:50.3139937, r:12, rm:40, hm:14},
+  't40_30':{lat:29.2276408, lon:50.3152672, r:12, rm:40, hm:14},
+  't55_31':{lat:29.2323461, lon:50.3137663, r:16, rm:55, hm:17},
+  't40_32':{lat:29.2307178, lon:50.3119291, r:12, rm:40, hm:14},
+  't40_33':{lat:29.2309474, lon:50.3132419, r:12, rm:40, hm:14},
+  't40_34':{lat:29.2311351, lon:50.3145438, r:12, rm:40, hm:14},
+  't25_35':{lat:29.2262112, lon:50.3128809, r:8,  rm:25, hm:12},
+  't25_36':{lat:29.2263835, lon:50.3138099, r:8,  rm:25, hm:12},
+  't25_37':{lat:29.2265429, lon:50.3147481, r:8,  rm:25, hm:12},
+  't25_38':{lat:29.2266891, lon:50.3156504, r:8,  rm:25, hm:12},
+  't25_39':{lat:29.2251564, lon:50.3131064, r:8,  rm:25, hm:12},
+  't25_40':{lat:29.2253231, lon:50.3140568, r:8,  rm:25, hm:12},
+  't25_41':{lat:29.2254742, lon:50.3149628, r:8,  rm:25, hm:12},
+  't25_42':{lat:29.2256154, lon:50.3158865, r:8,  rm:25, hm:12},
+  't25_43':{lat:29.2243535, lon:50.3132813, r:8,  rm:25, hm:12},
+  't25_44':{lat:29.2245129, lon:50.3142241, r:8,  rm:25, hm:12},
+  't25_45':{lat:29.2246562, lon:50.3151350, r:8,  rm:25, hm:12},
+  't25_46':{lat:29.2248181, lon:50.3160634, r:8,  rm:25, hm:12},
 };
 
 function getColor(ratio) {
@@ -252,7 +252,7 @@ async function fetchData() {
   const headers = {'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}`};
   let all = [], offset = 0;
   while (true) {
-    const url = `${SUPABASE_URL}/rest/v1/raw_observations?select=date,tank_id,h_max,db_mean&order=date&limit=1000&offset=${offset}`;
+    const url = `${SUPABASE_URL}/rest/v1/raw_observations?select=date,tank_id,db_mean&order=date&limit=1000&offset=${offset}`;
     const res = await fetch(url, {headers});
     if (!res.ok) throw new Error(`Supabase ${res.status}`);
     const batch = await res.json();
@@ -288,7 +288,8 @@ async function init() {
       const state = window._tankState && window._tankState[id];
       const content = state
         ? `<div class="tp-id">${id}</div>
-           <div class="tp-row">Radius: <span>${info.rm}m</span></div>
+           <div class="tp-row">Diameter: <span>${info.rm * 2}m</span></div>
+           <div class="tp-row">Height max: <span>${info.hm}m</span></div>
            <div class="tp-row">Fill: <span>${state.ratio !== null ? (state.ratio*100).toFixed(1)+'%' : 'N/A'}</span></div>
            <div class="tp-row">Volume: <span>${state.mnBbl !== null ? state.mnBbl.toFixed(3)+' Mn Bbl' : 'N/A'}</span></div>
            <div class="tp-row">SAR dB: <span>${state.dbMean !== null ? state.dbMean.toFixed(2) : 'N/A'}</span></div>`
@@ -346,8 +347,7 @@ async function init() {
       if (obs && calibration[id]) {
         const {p5, p95} = calibration[id];
         ratio = calcFillRatio(obs.db_mean, p5, p95);
-        // Use hardcoded radius (rm) so volume is correct regardless of what's stored in Supabase
-        mnBbl = calcMnBbl(ratio, info.rm, obs.h_max);
+        mnBbl = calcMnBbl(ratio, info.rm, info.hm);
         dbMean = obs.db_mean;
         totalVol += mnBbl;
         totalFill += ratio;
