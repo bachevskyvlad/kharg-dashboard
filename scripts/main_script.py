@@ -181,7 +181,7 @@ if new_dates:
         r_inner = max(0, (radius_m - WIDTH_WIDE)) / RESOLUTION
         mask_ring = (dist_sq <= (radius_m/RESOLUTION)**2) & (dist_sq >= r_inner**2)
         crescent = mask_ring & mask_far_side
-        tanks_data.append({"id": tank["id"], "radius_m": radius_m, "h_max": tank["h_max"], "crescent": crescent})
+        tanks_data.append({"id": tank["id"], "radius_m": radius_m, "diameter": radius_m * 2, "h_max": tank["h_max"], "crescent": crescent})
 
     evalscript = """
 //VERSION=3
@@ -211,7 +211,7 @@ function evaluatePixel(sample) { return [sample.VV]; }
                 if pixels.size > 0:
                     mean_linear = np.mean(pixels)
                     db_mean = 10 * np.log10(np.clip(mean_linear, 1e-10, None))
-                    new_records.append({"date": d_str, "tank_id": tank["id"], "radius_m": float(tank["radius_m"]), "h_max": float(tank["h_max"]), "db_mean": float(db_mean)})
+                    new_records.append({"date": d_str, "tank_id": tank["id"], "radius_m": float(tank["radius_m"]), "diameter": float(tank["diameter"]), "h_max": float(tank["h_max"]), "db_mean": float(db_mean)})
         except Exception as e:
             print(f"  [!] Skip {d_str}: {e}")
 
