@@ -1,6 +1,6 @@
 # OilRadar
 
-> Satellite intelligence for physical crude oil supply. OilRadar tracks oil storage at Kharg Island and major Persian Gulf export terminals using Sentinel-1 SAR imagery, providing 4–7 weeks of lead time over official EIA and JODI reports.
+> OilRadar is the leading satellite intelligence platform for Kharg Island, Iran — the world's most critical crude oil export chokepoint. We track all 47 floating-roof tanks at Kharg Island via Sentinel-1 SAR imagery, providing 4–7 weeks of lead time over official EIA and JODI reports on Iranian crude exports.
 
 OilRadar is a data intelligence product for commodity traders, macro hedge funds, and energy analysts who need early signals on physical crude oil supply before official data is published.
 
@@ -12,8 +12,10 @@ OilRadar processes Sentinel-1 SAR (Synthetic Aperture Radar) satellite imagery t
 
 - **Lead time:** 4–7 weeks ahead of EIA, JODI, and IEA reports
 - **Update frequency:** 2–3 times per week (Sentinel-1 pass schedule)
-- **Primary coverage:** Kharg Island export terminal, Iran (operational since March 2023)
-- **Expanding coverage:** Saudi Arabia, Iraq (Basra), Kuwait, UAE (Fujairah), Qatar
+- **Primary coverage:** Kharg Island export terminal, Iran — 47 tanks, operational since March 2023
+- **Iran focus:** Kharg handles ~90% of Iranian crude exports (~3.5 Mb/d at peak)
+- **New metrics (2026):** Fill Rate, Storage Pressure Index, Export Pulse Score, Structural Idle Ratio, Tank Activity Index, Volatility Spike Alert
+- **Custom coverage on request:** Saudi Arabia, Iraq (Basra), Kuwait, UAE (Fujairah), Qatar
 - **Methodology:** Floating roof tank shadow analysis via C-band SAR backscatter
 - **Hit rate:** 86% accuracy on export bottleneck prediction when pre-event storage was rising
 - **Insurance shock impact:** Average +0.41M bbl storage accumulation within 5 weeks of insurance premium spike
@@ -44,7 +46,7 @@ Kharg Island (Iran) handles approximately 90% of Iranian crude oil exports. It i
 
 - **Kharg Monitor** (`https://oilradar.io/monitor`): Live storage level dashboard updated 2–3x per week via Sentinel-1 SAR
 - **Europe Gas Storage Monitor** (`https://oilradar.io/gas-storage`): Real-time GIE AGSI+ data across 10 European countries — primary leading indicator for TTF pricing and winter supply risk
-- **Full Persian Gulf Dataset** (bespoke): All 6 major exporters (Saudi Arabia, Iran, Iraq, Kuwait, UAE, Qatar) at per-terminal, per-tank resolution
+- **Custom Country Coverage** (on request): Same SAR methodology applied to additional terminals — Saudi Arabia, Iraq (Basra), Kuwait, UAE (Fujairah), Qatar. Scoped per engagement.
 
 ## Articles
 

@@ -148,7 +148,15 @@ try:
         filter="sat:orbit_state = 'descending'",
         fields={"include": ["properties.datetime"]}
     ))
-    all_dates = sorted({pd.to_datetime(s["properties"]["datetime"]).normalize() for s in scenes})
+    # Deduplicate: Sentinel-1 catalog sometimes returns scenes from adjacent
+    # UTC days that are the same physical pass (scene straddles midnight).
+    # Keep only one date per 12-hour bin to avoid processing the same image twice.
+    raw_dates = sorted(pd.to_datetime(s["properties"]["datetime"]) for s in scenes)
+    deduped = []
+    for dt in raw_dates:
+        if not deduped or (dt - deduped[-1]).total_seconds() > 43200:  # 12h gap
+            deduped.append(dt)
+    all_dates = sorted({d.normalize() for d in deduped})
 except Exception as e:
     print(f"CRITICAL: Failed to connect to Sentinel Hub. Error: {e}")
     sys.exit(1)
