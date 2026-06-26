@@ -51,19 +51,22 @@ nav{position:fixed;top:0;left:0;right:0;z-index:200;display:flex;align-items:cen
 @media(max-width:768px){nav{padding:14px 20px;}.nav-right .nav-link{display:none;}}
 
 /* HERO */
-#hero{min-height:100vh;display:flex;align-items:center;padding:120px 64px 80px;background:var(--black);}
-.hero-content{max-width:860px;}
+#hero{min-height:100vh;display:grid;grid-template-columns:1fr 1fr;align-items:center;padding:0;background:var(--black);overflow:hidden;}
+.hero-content{padding:120px 64px 80px;max-width:740px;}
+.hero-img{height:100vh;overflow:hidden;position:relative;}
+.hero-img img{width:100%;height:100%;object-fit:cover;object-position:center;filter:brightness(0.72) saturate(0.9);}
+.hero-img::before{content:'';position:absolute;top:0;left:0;width:40%;height:100%;background:linear-gradient(to right,var(--black),transparent);z-index:1;}
 .hero-label{font-family:'DM Mono',monospace;font-size:11px;letter-spacing:4px;text-transform:uppercase;color:var(--accent);margin-bottom:24px;}
-h1.hero-title{font-family:'Bebas Neue',sans-serif;font-size:clamp(72px,9vw,136px);line-height:.9;color:var(--white);margin-bottom:32px;}
+h1.hero-title{font-family:'Bebas Neue',sans-serif;font-size:clamp(64px,7vw,120px);line-height:.9;color:var(--white);margin-bottom:32px;}
 h1.hero-title span{color:var(--accent);}
-.hero-sub{font-size:18px;font-weight:300;color:var(--muted);max-width:620px;line-height:1.75;margin-bottom:44px;}
+.hero-sub{font-size:17px;font-weight:300;color:var(--muted);max-width:560px;line-height:1.75;margin-bottom:44px;}
 .hero-sub strong{color:var(--text);font-weight:500;}
 .hero-ctas{display:flex;gap:12px;flex-wrap:wrap;}
 .btn-primary{font-family:'DM Mono',monospace;font-size:11px;letter-spacing:3px;text-transform:uppercase;background:var(--accent);color:var(--white);padding:14px 32px;border:none;cursor:pointer;text-decoration:none;display:inline-block;transition:opacity .2s;}
 .btn-primary:hover{opacity:.85;}
 .btn-outline{font-family:'DM Mono',monospace;font-size:11px;letter-spacing:3px;text-transform:uppercase;background:transparent;color:var(--accent);padding:13px 32px;border:1px solid var(--accent);cursor:pointer;text-decoration:none;display:inline-block;transition:all .2s;}
 .btn-outline:hover{background:rgba(59,130,246,0.08);}
-@media(max-width:768px){#hero{padding:100px 24px 60px;}}
+@media(max-width:900px){#hero{grid-template-columns:1fr;}.hero-img{display:none;}.hero-content{padding:100px 24px 60px;}}
 
 /* STATS STRIP */
 .stats-strip{display:grid;grid-template-columns:repeat(3,1fr);background:var(--panel);border-top:1px solid var(--border);border-bottom:1px solid var(--border);}
@@ -158,12 +161,15 @@ footer{background:var(--panel);border-top:1px solid var(--border);padding:40px 6
 <section id="hero">
   <div class="hero-content">
     <div class="hero-label">Kharg Island · Iran · Sentinel-1 SAR</div>
-    <h1 class="hero-title">Iranian Crude<br><span>Oil Intelligence</span></h1>
+    <h1 class="hero-title">See Kharg<br>Oil Movement<br><span>Before The Market</span></h1>
     <p class="hero-sub">We track every crude oil tank at Kharg Island — the terminal that handles <strong>~90% of Iran's exports</strong> — using SAR satellite radar. Storage signals arrive <strong>4–7 weeks before EIA and JODI</strong> report them.</p>
     <div class="hero-ctas">
       <a href="https://calendly.com/bachevsky/60min" target="_blank" class="btn-primary">Request Data Access</a>
       <a href="/monitor" class="btn-outline">View Live Monitor</a>
     </div>
+  </div>
+  <div class="hero-img">
+    <img src="/assets/images/kharg-satellite.jpg" alt="Kharg Island satellite view — floating-roof crude oil storage tanks">
   </div>
 </section>
 
@@ -171,15 +177,15 @@ footer{background:var(--panel);border-top:1px solid var(--border);padding:40px 6
 <div class="stats-strip">
   <div class="stat-item">
     <div class="stat-val">~90%</div>
-    <div class="stat-label">Iran's crude exports<br>flow through Kharg</div>
+    <div class="stat-label">🛢️&nbsp; Iran's crude exports<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;flow through Kharg</div>
   </div>
   <div class="stat-item">
     <div class="stat-val">4–7wk</div>
-    <div class="stat-label">Lead over EIA<br>and JODI reports</div>
+    <div class="stat-label">⚡&nbsp; Lead over EIA<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;and JODI reports</div>
   </div>
   <div class="stat-item">
     <div class="stat-val">47</div>
-    <div class="stat-label">Floating-roof tanks<br>tracked continuously</div>
+    <div class="stat-label">🛰️&nbsp; Floating-roof tanks<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;tracked continuously</div>
   </div>
 </div>
 
@@ -195,11 +201,11 @@ footer{background:var(--panel);border-top:1px solid var(--border);padding:40px 6
     <div class="signal-cards">
       <div class="signal-card build">
         <div class="signal-card-label">▲ Storage Building</div>
-        <p>Oil is accumulating at Kharg. Export logistics are constrained — tankers delayed or loading slowed. Iran is holding inventory. Bearish signal for near-term supply.</p>
+        <p>Iran is holding barrels. Bearish near-term supply signal.</p>
       </div>
       <div class="signal-card draw">
         <div class="signal-card-label">▼ Storage Drawing Down</div>
-        <p>Tankers are loading at berth. Physical Iranian barrels are entering the global market. This precedes AIS vessel tracking by 7–14 days and EIA reporting by 4–7 weeks.</p>
+        <p>Tankers are loading. Iranian crude is entering the market — 4–7 weeks before EIA sees it.</p>
       </div>
     </div>
   </div>
@@ -209,7 +215,7 @@ footer{background:var(--panel);border-top:1px solid var(--border);padding:40px 6
 <section id="products">
   <div class="products-inner">
     <span class="section-label">What You Get</span>
-    <h2 class="section-title">Two Ways In</h2>
+    <h2 class="section-title">Choose Your Access</h2>
     <div class="products-grid">
       <div class="product-card">
         <div class="product-badge">Free · Public</div>
@@ -259,7 +265,7 @@ footer{background:var(--panel);border-top:1px solid var(--border);padding:40px 6
 
 <!-- CTA -->
 <section id="cta">
-  <div class="cta-title">See <span>Kharg</span><br>Before The Market</div>
+  <div class="cta-title">See <span>Kharg</span> Oil Movement<br>Before The Market</div>
   <p class="cta-sub">30-minute call. We walk you through current storage levels, recent export signal, and how to integrate the data into your workflow.</p>
   <a href="https://calendly.com/bachevsky/60min" target="_blank" class="btn-primary">Request Data Access</a>
   <div class="cta-note">Custom coverage available: Saudi Arabia · Iraq Basra · UAE Fujairah · Qatar — same SAR methodology, scoped per engagement.</div>
