@@ -111,9 +111,11 @@ async function loadDailyMonitor() {
     const trend  = diff > 0
       ? '<span style="color:#f0a500">▲ BUILDING</span>'
       : '<span style="color:#3b82f6">▼ DRAWDOWN</span>';
+    const pct = prev !== 0 ? ((latest - prev) / prev * 100) : 0;
+    const pctSign = pct >= 0 ? '+' : '';
     document.getElementById('latestStat').innerHTML =
       `<div>Latest Reading: <strong style="color:#3b82f6;">${latest.toFixed(2)} Mn Bbl</strong></div>
-       <div>Day-over-Day: <strong style="color:${diff > 0 ? '#f0a500' : '#3b82f6'}">${sign}${diff} Mn Bbl</strong></div>
+       <div>Day-over-Day: <strong style="color:${diff > 0 ? '#f0a500' : '#3b82f6'}">${sign}${diff} Mn Bbl &nbsp;(${pctSign}${pct.toFixed(2)}%)</strong></div>
        <div>Status: <strong>${trend}</strong></div>`;
     new Chart(document.getElementById('dailyChart'), {
       type: 'line',
