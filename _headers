@@ -1,3 +1,6 @@
+/*
+  Cache-Control: no-cache, must-revalidate
+
 /data/*
   Cache-Control: no-cache, no-store, must-revalidate
   Pragma: no-cache
