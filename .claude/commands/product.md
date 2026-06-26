@@ -168,3 +168,59 @@ ALERT when rolling_std_30d[date] > threshold
 3. Multi-country code in `product/dashboard.html` is LEGACY — keep commented, never delete
 4. Max capacity is 33.2 Mn bbl — update only if new tanks are mapped and added to raw_tanks
 5. Always deduplicate raw_observations on (date, tank_id) before any aggregation
+
+---
+
+## File Locations
+
+```
+/marketing/index.html       → oilradar.io/           (landing page)
+/marketing/monitor.html     → oilradar.io/monitor     (MAIN public monitor — map + charts)
+/marketing/tanks.html       → oilradar.io/tanks       (per-tank Leaflet slider)
+/marketing/gas-storage.html → oilradar.io/gas-storage
+/marketing/team.html        → oilradar.io/team
+/product/index.html         → oilradar.io/app
+/product/dashboard.html     → oilradar.io/dashboard
+/html/monitor.html          → NOT served publicly (internal/secondary file only)
+/_redirects                 → Cloudflare Pages routing rules
+/_headers                   → Cloudflare cache headers (/data/* = no-cache)
+/data/data_daily.json       → daily volume feed
+/data/data.json             → weekly smoothed volume feed
+/scripts/main_script.py     → main SAR pipeline
+```
+
+**CRITICAL**: `/monitor` ALWAYS routes to `marketing/monitor.html` — never `html/monitor.html`.
+Do not change `_redirects` without confirming this mapping.
+
+---
+
+## Checklist — Before Every Code Change
+
+1. **Google Analytics**: Every HTML page must have GA4 with `G-TZQ5VH3GPY`
+   ```html
+   <script async src="https://www.googletagmanager.com/gtag/js?id=G-TZQ5VH3GPY"></script>
+   <script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','G-TZQ5VH3GPY');</script>
+   ```
+2. **_redirects**: Confirm `/monitor → /marketing/monitor.html` is intact after any routing change
+3. **Units**: All volume figures use **Mn bbl** (not MM bbl, not M bbl, not million barrels)
+4. **Calendly CTA**: Any "Schedule a Call" / "Request Access" button → `https://calendly.com/bachevsky/60min`
+5. **monitor.html layout**: Must always have Leaflet map + volume chart — do not remove either
+6. **SEO**: Title includes "Kharg Island" + "Iran" or "crude oil"; first paragraph mentions both within 50 words
+
+---
+
+## Tone of Voice
+
+- **Analytical, not promotional.** Signal over hype.
+- **Numbers over adjectives.** "−6.35 Mn bbl in 12 days" not "significant drawdown"
+- **Unit format**: always **Mn bbl**
+- **No hyperbole**: never "game-changing", "revolutionary", "unprecedented"
+- **Iran framing**: factual and neutral
+
+---
+
+## Key Links
+
+- **Calendly**: https://calendly.com/bachevsky/60min
+- **Monitor**: https://oilradar.io/monitor
+- **GA4 ID**: G-TZQ5VH3GPY
