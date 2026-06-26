@@ -155,7 +155,7 @@
     <button class="arrow-btn" id="prevBtn">&#8592;</button>
     <div class="slider-wrap">
       <input type="range" id="dateSlider" min="0" value="0" step="1">
-      <div class="slider-dates"><span id="sliderStart">&mdash;</span><span id="sliderEnd">&mdash;</span></div>
+      <div class="slider-dates"><span id="sliderStart">&mdash;</span><span id="sliderEnd">&mdash;</span><span style="font-family:'DM Mono',monospace;font-size:9px;color:var(--muted);margin-left:auto;">🔒 Latest 2 weeks — <a href="https://calendly.com/bachevsky/60min" target="_blank" style="color:var(--accent);">Get Access</a></span></div>
     </div>
     <button class="arrow-btn" id="nextBtn">&#8594;</button>
     <div class="cur-date-label" id="curDateLabel">&mdash;</div>
@@ -321,7 +321,11 @@ async function initMap(){
   Object.entries(dbByTank).forEach(([id,vals])=>{calibration[id]={p5:percentile(vals,5),p95:percentile(vals,95)};});
   const byDate={};
   data.forEach(r=>{if(!byDate[r.date])byDate[r.date]={};byDate[r.date][r.tank_id]=r;});
-  const dates=Object.keys(byDate).sort();
+  const allDates=Object.keys(byDate).sort();
+  const lockCutoff=new Date();lockCutoff.setDate(lockCutoff.getDate()-14);
+  const lockCutoffStr=lockCutoff.toISOString().slice(0,10);
+  const dates=allDates.filter(d=>d<=lockCutoffStr);
+  if(!dates.length){document.getElementById('mapLoadingMsg').innerHTML='<span style="color:#ff4757">No data available.</span>';return;}
   function renderDate(dateStr){
     const dateData=byDate[dateStr]||{};
     window._tankState={};
