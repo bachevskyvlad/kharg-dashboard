@@ -131,8 +131,9 @@
   <div class="nav-links"><a href="/team" class="nav-link">Team</a><a href="/" class="nav-cta">&larr; Back to Main</a></div>
 </nav>
 <main>
-  <div class="section-label">Last 6 Months</div>
-  <h1 class="section-title">Kharg Island Storage Monitor</h1>
+  <div class="section-label">Live Intelligence · Updated 2–3× per week</div>
+  <h1 class="section-title">Iranian Crude Export Dynamics</h1>
+  <p style="font-family:'DM Sans',sans-serif;font-size:15px;line-height:1.7;color:var(--muted);max-width:680px;margin-bottom:36px;margin-top:-24px;">Kharg Island handles roughly 90% of Iran's crude exports. When storage builds, oil is accumulating — exports are constrained. When it draws down, tankers are loading and physical supply is entering the global market.</p>
 
   <div class="monitor-wrap">
     <div class="monitor-header"><div class="monitor-title">Storage Volume — SAR Extraction</div></div>
@@ -140,7 +141,7 @@
     <div class="chart-wrapper"><canvas id="dailyChart"></canvas></div>
   </div>
 
-  <div class="section-label" style="margin-top:48px;">Per-Tank View</div>
+  <div style="margin-top:48px;margin-bottom:16px;font-family:'Bebas Neue',sans-serif;font-size:clamp(28px,3.5vw,44px);line-height:1;color:var(--white);letter-spacing:1px;">Per-Tank Storage View</div>
   <div class="map-wrap">
     <div class="map-header">
       <span class="map-title">KHARG ISLAND EXPORT TERMINAL &middot; FLOATING ROOF TANKS &middot; FILL LEVEL</span>
@@ -164,9 +165,15 @@
     <div class="legend-ticks"><span>0%</span><span>25%</span><span>50%</span><span>75%</span><span>100%</span></div>
   </div>
 
-  <div class="explanation-grid" style="margin-top:32px;">
+  <div class="explanation-grid" style="margin-top:32px;grid-template-columns:1fr 1fr;">
     <div class="explain-card"><h4>🛰️ How The Radar Works</h4><p>Oil storage tanks on Kharg Island use <strong>floating roofs</strong> that lower as oil is pumped out and rise as tanks fill. Sentinel-1 SAR signals bounce off the internal walls. A low roof returns a brighter radar reflection. We invert this radiometric signal to calculate the physical volume in millions of barrels.</p><p class="muted">On average, the satellite passes over the region twice a week.</p></div>
-    <div class="explain-card alert"><h4>📊 Reading The Signal</h4><p><strong>Rising Volume (Build):</strong> Oil is accumulating. Tankers are likely delayed or loading is slower than production.<br><br><strong>Falling Volume (Drawdown):</strong> Tankers are draining the terminal, sending physical supply into the global market.</p><div class="linkedin-block" style="margin-top:20px;padding-top:20px;border-top:1px solid rgba(255,71,87,0.2);"><a href="https://calendly.com/bachevsky/60min" target="_blank" style="font-family:'DM Mono',monospace;font-size:11px;letter-spacing:2px;text-transform:uppercase;background:transparent;border:1px solid var(--accent);color:var(--accent);padding:8px 20px;text-decoration:none;display:inline-block;transition:all .2s;">Request Data Access</a></div></div>
+    <div class="explain-card" style="border-color:rgba(59,130,246,0.2);display:flex;flex-direction:column;justify-content:center;align-items:flex-start;gap:16px;">
+      <div>
+        <div style="font-family:'DM Mono',monospace;font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:12px;">Need custom coverage?</div>
+        <p style="font-size:14px;line-height:1.7;color:var(--text);">Track a specific terminal, get data access, or discuss coverage for other regions — Saudi Arabia, Iraq Basra, UAE Fujairah, and more.</p>
+      </div>
+      <a href="https://calendly.com/bachevsky/60min" target="_blank" style="font-family:'DM Mono',monospace;font-size:12px;letter-spacing:2px;text-transform:uppercase;background:var(--accent);color:var(--white);padding:14px 28px;text-decoration:none;display:inline-block;transition:all .2s;border:none;">Request Data Access</a>
+    </div>
   </div>
 </main>
 
