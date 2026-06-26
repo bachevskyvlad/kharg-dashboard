@@ -147,12 +147,21 @@ The monitor page at oilradar.io/monitor must always contain:
    <script async src="https://www.googletagmanager.com/gtag/js?id=G-TZQ5VH3GPY"></script>
    <script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','G-TZQ5VH3GPY');</script>
    ```
-2. **_redirects**: Confirm `/monitor → /marketing/monitor.html` is intact
-3. **Units**: All volume figures use **Mn bbl** (not MM bbl, not M bbl)
-4. **Calendly CTA**: Any "Schedule a Call" / "Request Access" button → `https://calendly.com/bachevsky/60min`
-5. **SEO**: Title tag includes "Kharg Island" + "Iran" or "crude oil"; first paragraph mentions both within 50 words
-6. **JSON-LD**: Pages should include Dataset or FAQPage schema where relevant
-7. **monitor.html layout**: Map present + volume chart present — do not remove either
+2. **Favicons**: Every HTML page must have the full favicon block in `<head>`:
+   ```html
+   <link rel="icon" type="image/x-icon" href="/assets/images/favicon.ico">
+   <link rel="icon" type="image/png" sizes="32x32" href="/assets/images/favicon-32x32.png">
+   <link rel="icon" type="image/png" sizes="16x16" href="/assets/images/favicon-16x16.png">
+   <link rel="apple-touch-icon" sizes="180x180" href="/assets/images/apple-touch-icon.png">
+   ```
+3. **_redirects**: Confirm `/monitor → /marketing/monitor.html` is intact
+4. **Units**: All volume figures use **Mn bbl** (not MM bbl, not M bbl)
+5. **CTA label**: Use **"Request Data Access"** — not "Schedule a Call", not "Book a Demo"
+6. **Calendly link**: `https://calendly.com/bachevsky/60min`
+7. **SEO**: Title tag includes "Kharg Island" + "Iran" or "crude oil"; first paragraph mentions both within 50 words
+8. **JSON-LD**: Pages should include Dataset or FAQPage schema where relevant
+9. **monitor.html layout**: Map present + volume chart present — do not remove either
+10. **LLM SEO**: Use complete factual sentences with specific numbers; embed "Kharg Island", "Iran crude oil", "Sentinel-1 SAR" naturally in first 100 words of any page
 
 ---
 
@@ -211,7 +220,7 @@ The monitor page at oilradar.io/monitor must always contain:
 
 ### Tier 2 — Custom Coverage (on request)
 - Saudi Arabia, Iraq Basra, Kuwait, UAE Fujairah, Qatar
-- CTA: "Schedule a Call" → https://calendly.com/bachevsky/60min
+- CTA: "Request Data Access" → https://calendly.com/bachevsky/60min
 - Framing: "Custom coverage for your specific exposure"
 - Do NOT promise timelines without a call
 
@@ -234,7 +243,7 @@ Russia Primorsk, Venezuela, Libya, Nigeria — "on roadmap"
 ## Call-to-Action Hierarchy
 
 1. Primary CTA: "Open Monitor" → oilradar.io/monitor
-2. Secondary CTA: "Schedule a Call" → https://calendly.com/bachevsky/60min
+2. Secondary CTA: "Request Data Access" → https://calendly.com/bachevsky/60min
 3. Tertiary: oilradar.io/monitor link (free preview / demo)
 
 **Calendly link**: https://calendly.com/bachevsky/60min
