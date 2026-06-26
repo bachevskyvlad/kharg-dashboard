@@ -70,34 +70,43 @@ h1.hero-title span{color:var(--accent);}
 
 /* STATS STRIP */
 .stats-strip{display:grid;grid-template-columns:repeat(3,1fr);background:var(--panel);border-top:1px solid var(--border);border-bottom:1px solid var(--border);}
-.stat-item{padding:36px 48px;border-right:1px solid var(--border);}
+.stat-item{padding:40px 48px;border-right:1px solid var(--border);text-align:center;}
 .stat-item:last-child{border-right:none;}
-.stat-val{font-family:'Bebas Neue',sans-serif;font-size:52px;color:var(--accent);line-height:1;margin-bottom:8px;}
-.stat-label{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);line-height:1.6;}
-@media(max-width:768px){.stats-strip{grid-template-columns:1fr;}.stat-item{border-right:none;border-bottom:1px solid var(--border);padding:28px 24px;}}
+.stat-emoji{font-size:36px;margin-bottom:14px;display:block;}
+.stat-val{font-family:'Bebas Neue',sans-serif;font-size:56px;color:var(--accent);line-height:1;margin-bottom:10px;}
+.stat-label{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);line-height:1.7;}
+@media(max-width:768px){.stats-strip{grid-template-columns:1fr;}.stat-item{border-right:none;border-bottom:1px solid var(--border);padding:32px 24px;}}
+
+/* SHARED SECTION */
+.section-label{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:4px;text-transform:uppercase;color:var(--accent);margin-bottom:16px;display:block;}
+.section-title{font-family:'Bebas Neue',sans-serif;font-size:clamp(40px,4vw,64px);line-height:1;color:var(--white);margin-bottom:32px;}
 
 /* HOW IT WORKS */
-#how{padding:100px 64px;background:var(--deep);}
-.two-col{display:grid;grid-template-columns:1fr 1fr;gap:64px;align-items:start;max-width:1400px;}
-.section-label{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:4px;text-transform:uppercase;color:var(--accent);margin-bottom:16px;display:block;}
-.section-title{font-family:'Bebas Neue',sans-serif;font-size:clamp(40px,4vw,64px);line-height:1;color:var(--white);margin-bottom:24px;}
-.how-text p{font-size:15px;color:var(--muted);line-height:1.85;margin-bottom:16px;}
-.how-text p strong{color:var(--text);}
-.how-text .sub-note{font-family:'DM Mono',monospace;font-size:11px;color:rgba(90,122,148,0.6);letter-spacing:1px;margin-top:8px;}
-.signal-cards{display:flex;flex-direction:column;gap:16px;}
-.signal-card{padding:24px 28px;border-left:3px solid;}
-.signal-card.build{background:rgba(240,165,0,0.04);border-color:var(--gold);}
-.signal-card.draw{background:rgba(59,130,246,0.04);border-color:var(--accent);}
-.signal-card-label{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:3px;text-transform:uppercase;margin-bottom:10px;}
-.signal-card.build .signal-card-label{color:var(--gold);}
-.signal-card.draw .signal-card-label{color:var(--accent);}
-.signal-card p{font-size:13px;color:var(--muted);line-height:1.8;}
-@media(max-width:900px){#how{padding:70px 24px;}.two-col{grid-template-columns:1fr;gap:40px;}}
+#how{padding:100px 64px;background:var(--deep);text-align:center;}
+.how-inner{max-width:760px;margin:0 auto;}
+.how-steps{display:grid;grid-template-columns:repeat(3,1fr);gap:2px;margin-top:48px;}
+.how-step{background:var(--panel);border:1px solid var(--border);padding:36px 28px;text-align:center;}
+.how-step-icon{font-size:32px;margin-bottom:16px;display:block;}
+.how-step h3{font-family:'DM Mono',monospace;font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--white);margin-bottom:10px;}
+.how-step p{font-size:13px;color:var(--muted);line-height:1.8;}
+@media(max-width:900px){#how{padding:70px 24px;}.how-steps{grid-template-columns:1fr;}}
+
+/* CHART */
+#chart-section{padding:100px 64px;background:var(--black);text-align:center;}
+.chart-section-inner{max-width:1100px;margin:0 auto;}
+.chart-outer{position:relative;margin-top:40px;text-align:left;}
+.chart-canvas-wrap{background:var(--panel);border:1px solid var(--border);padding:28px 32px;position:relative;overflow:hidden;}
+.chart-lock-overlay{position:absolute;top:0;right:0;width:10%;height:100%;background:linear-gradient(to right,transparent,rgba(8,10,13,0.97) 40%);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;z-index:10;}
+.lock-icon{font-size:20px;}
+.lock-label{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);text-align:center;line-height:1.5;}
+.lock-cta-btn{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:2px;text-transform:uppercase;background:var(--accent);color:var(--white);padding:8px 14px;text-decoration:none;display:inline-block;margin-top:4px;white-space:nowrap;}
+#chartStat{font-family:'DM Mono',monospace;font-size:13px;color:var(--white);margin-bottom:20px;padding:12px 16px;background:rgba(59,130,246,0.06);border-left:2px solid var(--accent);display:flex;gap:24px;flex-wrap:wrap;}
+@media(max-width:768px){#chart-section{padding:70px 24px;}.chart-lock-overlay{width:18%;}}
 
 /* PRODUCTS */
-#products{padding:100px 64px;background:var(--black);}
-.products-inner{max-width:1400px;}
-.products-grid{display:grid;grid-template-columns:1fr 1fr;gap:2px;margin-top:48px;}
+#products{padding:100px 64px;background:var(--deep);text-align:center;}
+.products-inner{max-width:1000px;margin:0 auto;}
+.products-grid{display:grid;grid-template-columns:1fr 1fr;gap:2px;margin-top:48px;text-align:left;}
 .product-card{background:var(--panel);border:1px solid var(--border);padding:48px 40px;}
 .product-card.featured{border-color:var(--accent);background:rgba(59,130,246,0.03);}
 .product-badge{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:3px;text-transform:uppercase;color:var(--muted);margin-bottom:16px;}
@@ -108,26 +117,6 @@ h1.hero-title span{color:var(--accent);}
 .product-card ul li{font-family:'DM Mono',monospace;font-size:11px;color:var(--muted);display:flex;gap:10px;}
 .product-card ul li::before{content:'→';color:var(--accent);flex-shrink:0;}
 @media(max-width:768px){#products{padding:70px 24px;}.products-grid{grid-template-columns:1fr;}.product-card{padding:32px 24px;}}
-
-/* CHART */
-#chart-section{padding:100px 64px;background:var(--deep);}
-.chart-section-inner{max-width:1400px;}
-.chart-outer{position:relative;margin-top:40px;}
-.chart-canvas-wrap{background:var(--panel);border:1px solid var(--border);padding:28px 32px;position:relative;overflow:hidden;}
-.chart-lock-overlay{position:absolute;top:0;right:0;width:10%;height:100%;background:linear-gradient(to right,transparent,rgba(8,10,13,0.97) 40%);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;z-index:10;}
-.lock-icon{font-size:20px;}
-.lock-label{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);text-align:center;line-height:1.5;}
-.lock-cta-btn{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:2px;text-transform:uppercase;background:var(--accent);color:var(--white);padding:8px 14px;text-decoration:none;display:inline-block;margin-top:4px;white-space:nowrap;}
-#chartStat{font-family:'DM Mono',monospace;font-size:13px;color:var(--white);margin-bottom:20px;padding:12px 16px;background:rgba(59,130,246,0.06);border-left:2px solid var(--accent);display:flex;gap:24px;flex-wrap:wrap;}
-@media(max-width:768px){#chart-section{padding:70px 24px;}.chart-lock-overlay{width:18%;}}
-
-/* FINAL CTA */
-#cta{padding:120px 64px;background:var(--black);text-align:center;}
-.cta-title{font-family:'Bebas Neue',sans-serif;font-size:clamp(48px,6vw,88px);line-height:.95;color:var(--white);margin-bottom:20px;}
-.cta-title span{color:var(--accent);}
-.cta-sub{font-size:15px;color:var(--muted);margin-bottom:40px;max-width:520px;margin-left:auto;margin-right:auto;line-height:1.75;}
-.cta-note{font-family:'DM Mono',monospace;font-size:10px;color:rgba(90,122,148,0.5);margin-top:20px;letter-spacing:1px;max-width:600px;margin-left:auto;margin-right:auto;}
-@media(max-width:768px){#cta{padding:80px 24px;}}
 
 /* LEGAL */
 #legal{background:var(--black);padding:60px 64px;border-top:1px solid var(--border);}
@@ -176,69 +165,42 @@ footer{background:var(--panel);border-top:1px solid var(--border);padding:40px 6
 <!-- STATS -->
 <div class="stats-strip">
   <div class="stat-item">
+    <span class="stat-emoji">🛢️</span>
     <div class="stat-val">~90%</div>
-    <div class="stat-label">🛢️&nbsp; Iran's crude exports<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;flow through Kharg</div>
+    <div class="stat-label">Iran's crude exports<br>flow through Kharg</div>
   </div>
   <div class="stat-item">
+    <span class="stat-emoji">⚡</span>
     <div class="stat-val">4–7wk</div>
-    <div class="stat-label">⚡&nbsp; Lead over EIA<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;and JODI reports</div>
+    <div class="stat-label">Lead over EIA<br>and JODI reports</div>
   </div>
   <div class="stat-item">
+    <span class="stat-emoji">🛰️</span>
     <div class="stat-val">47</div>
-    <div class="stat-label">🛰️&nbsp; Floating-roof tanks<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;tracked continuously</div>
+    <div class="stat-label">Floating-roof tanks<br>tracked continuously</div>
   </div>
 </div>
 
 <!-- HOW IT WORKS -->
 <section id="how">
-  <div class="two-col">
-    <div class="how-text">
-      <span class="section-label">How It Works</span>
-      <h2 class="section-title">Physical Signal,<br>Not a Model</h2>
-      <p>Sentinel-1 radar bounces off the internal walls of each floating-roof tank. When the roof is low — tank empty — the wall reflection is bright. We invert that signal to calculate fill volume. <strong>No self-reporting. No AIS spoofing. Direct physics.</strong></p>
-      <p>47 tanks across Kharg Island. Each satellite pass processed within hours. Signal updated every 3–4 days.</p>
-    </div>
-    <div class="signal-cards">
-      <div class="signal-card build">
-        <div class="signal-card-label">▲ Storage Building</div>
-        <p>Iran is holding barrels. Bearish near-term supply signal.</p>
+  <div class="how-inner">
+    <span class="section-label">How It Works</span>
+    <h2 class="section-title">SAR Satellite.<br>Direct Physics.</h2>
+    <div class="how-steps">
+      <div class="how-step">
+        <span class="how-step-icon">🛰️</span>
+        <h3>Sentinel-1 Pass</h3>
+        <p>SAR radar images Kharg Island every 3–4 days. Works through clouds, at night, in all weather.</p>
       </div>
-      <div class="signal-card draw">
-        <div class="signal-card-label">▼ Storage Drawing Down</div>
-        <p>Tankers are loading. Iranian crude is entering the market — 4–7 weeks before EIA sees it.</p>
+      <div class="how-step">
+        <span class="how-step-icon">🔍</span>
+        <h3>Tank Analysis</h3>
+        <p>Radar bounces off tank walls. A low roof = more reflection. We invert this to get fill volume across all 47 tanks.</p>
       </div>
-    </div>
-  </div>
-</section>
-
-<!-- PRODUCTS -->
-<section id="products">
-  <div class="products-inner">
-    <span class="section-label">What You Get</span>
-    <h2 class="section-title">Choose Your Access</h2>
-    <div class="products-grid">
-      <div class="product-card">
-        <div class="product-badge">Free · Public</div>
-        <h3>Live Monitor</h3>
-        <p>Live chart of Kharg Island storage dynamics and per-tank fill levels. Updated with each satellite pass. Latest 2 weeks gated to subscribers.</p>
-        <ul>
-          <li>Storage volume chart — last 6 months</li>
-          <li>Per-tank fill level map (47 tanks)</li>
-          <li>Day-over-day change + utilization %</li>
-        </ul>
-        <a href="/monitor" class="btn-outline">View Monitor →</a>
-      </div>
-      <div class="product-card featured">
-        <div class="product-badge">Data Access</div>
-        <h3>Full Intelligence Feed</h3>
-        <p>Complete weekly signal with all 6 intelligence metrics, latest observations, and data export. Custom coverage available for other terminals.</p>
-        <ul>
-          <li>Latest 2-week signal — not gated</li>
-          <li>Fill Rate, Export Pulse, Storage Pressure Index</li>
-          <li>CSV / API data export</li>
-          <li>Custom coverage: Saudi Arabia, Iraq, UAE, Qatar</li>
-        </ul>
-        <a href="https://calendly.com/bachevsky/60min" target="_blank" class="btn-primary">Request Data Access</a>
+      <div class="how-step">
+        <span class="how-step-icon">📡</span>
+        <h3>Signal Delivered</h3>
+        <p>Storage data arrives 4–7 weeks before EIA reports it. No self-reporting. No AIS spoofing.</p>
       </div>
     </div>
   </div>
@@ -263,12 +225,37 @@ footer{background:var(--panel);border-top:1px solid var(--border);padding:40px 6
   </div>
 </section>
 
-<!-- CTA -->
-<section id="cta">
-  <div class="cta-title">See <span>Kharg</span> Oil Movement<br>Before The Market</div>
-  <p class="cta-sub">30-minute call. We walk you through current storage levels, recent export signal, and how to integrate the data into your workflow.</p>
-  <a href="https://calendly.com/bachevsky/60min" target="_blank" class="btn-primary">Request Data Access</a>
-  <div class="cta-note">Custom coverage available: Saudi Arabia · Iraq Basra · UAE Fujairah · Qatar — same SAR methodology, scoped per engagement.</div>
+<!-- PRODUCTS -->
+<section id="products">
+  <div class="products-inner">
+    <span class="section-label">What You Get</span>
+    <h2 class="section-title">Choose Your Access</h2>
+    <div class="products-grid">
+      <div class="product-card">
+        <div class="product-badge">Free · Public</div>
+        <h3>Live Monitor</h3>
+        <p>Kharg Island storage chart and per-tank fill levels. Updated with each satellite pass. Latest 2 weeks gated.</p>
+        <ul>
+          <li>Storage volume chart — last 6 months</li>
+          <li>Per-tank fill level map (47 tanks)</li>
+          <li>Day-over-day change + utilization %</li>
+        </ul>
+        <a href="/monitor" class="btn-outline">View Monitor →</a>
+      </div>
+      <div class="product-card featured">
+        <div class="product-badge">Data Access</div>
+        <h3>Full Intelligence Feed</h3>
+        <p>Complete signal with latest 2-week data, all metrics, and data export. Custom terminal coverage available.</p>
+        <ul>
+          <li>Latest 2-week signal — not gated</li>
+          <li>Fill Rate, Export Pulse, Storage Pressure Index</li>
+          <li>CSV / API data export</li>
+          <li>Custom coverage: Saudi Arabia, Iraq, UAE, Qatar</li>
+        </ul>
+        <a href="https://calendly.com/bachevsky/60min" target="_blank" class="btn-primary">Request Data Access</a>
+      </div>
+    </div>
+  </div>
 </section>
 
 <!-- LEGAL -->
