@@ -46,7 +46,7 @@ delivering a 4–7 week lead over EIA, JODI, and IEA reports.
 - **Expert peer, not salesman.** Speak as one analyst to another.
 - **Friendly but not sycophantic.** Conversational where appropriate, but never fawning.
 - **Numbers over adjectives.** "−6.35 Mn bbl in 12 days" beats "significant drawdown."
-- **Unit format**: always write **Mn bbl** (not MM bbl, not million barrels, not M bbl)
+- **Unit format**: always write **Mb** in UI/charts/social (not MM bbl, not Mn bbl, not million barrels)
 - **No hyperbole**: Never say "the most powerful", "game-changing", "revolutionary", "unprecedented"
 - **Iran framing**: factual and neutral. We are an intelligence product, not a political actor.
 - **Monospace/terminal aesthetic**: fits DM Mono / dark UI design language
@@ -128,15 +128,12 @@ The monitor page at oilradar.io/monitor must always contain:
 - Map height: ~420px
 
 ### 2. Volume Chart (Chart.js)
-- Data source: `data/data_daily.json` (last 90 days by default)
+- Data source: `data/data_daily.json` (last 6 months)
 - Line chart, blue (#3b82f6), filled area
-- Y-axis in Mn bbl
-- Stat bar above chart: Latest volume | Day-over-day change with % | Status (BUILDING / DRAWDOWN)
+- Y-axis in Mb
+- Stat bar above chart: Latest (Mb) | Day-over-Day with % e.g. `−5.26 Mb (−20%)` | Utilization % | Status (BUILDING/DRAWDOWN)
 - BUILDING = gold (#f0a500), DRAWDOWN = blue (#3b82f6)
-
-### 3. Utilization Chart (Chart.js)
-- Shows terminal utilization % over time
-- Max capacity reference line
+- No separate utilization chart — utilization shown in stat bar only
 
 ---
 
@@ -155,7 +152,7 @@ The monitor page at oilradar.io/monitor must always contain:
    <link rel="apple-touch-icon" sizes="180x180" href="/assets/images/apple-touch-icon.png">
    ```
 3. **_redirects**: Confirm `/monitor → /marketing/monitor.html` is intact
-4. **Units**: All volume figures use **Mn bbl** (not MM bbl, not M bbl)
+4. **Units**: All volume figures use **Mb** in UI/charts/social (not MM bbl, not Mn bbl, not M bbl)
 5. **CTA label**: Use **"Request Data Access"** — not "Schedule a Call", not "Book a Demo"
 6. **Calendly link**: `https://calendly.com/bachevsky/60min`
 7. **SEO**: Title tag includes "Kharg Island" + "Iran" or "crude oil"; first paragraph mentions both within 50 words
