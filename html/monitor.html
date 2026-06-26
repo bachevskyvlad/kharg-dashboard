@@ -12,12 +12,14 @@
   gtag('config', 'G-TZQ5VH3GPY');
 </script>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@300;400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <style>
   :root { --black:#080a0d;--deep:#0d1117;--panel:#111820;--border:#1e2d3d;--accent:#3b82f6;--accent-glow:rgba(59,130,246,0.12);--accent2:#ff4757;--gold:#f0a500;--text:#c8d6e5;--muted:#5a7a94;--white:#f0f4f8; }
   *{margin:0;padding:0;box-sizing:border-box;}
   body{background:var(--black);color:var(--text);font-family:'DM Sans',sans-serif;overflow-x:hidden;min-height:100vh;display:flex;flex-direction:column;}
-  body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:999;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(59,130,246,0.012) 2px,rgba(59,130,246,0.012) 4px);}
+  body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(59,130,246,0.012) 2px,rgba(59,130,246,0.012) 4px);}
   nav{position:fixed;top:0;left:0;right:0;z-index:100;display:flex;align-items:center;justify-content:space-between;padding:16px 48px;background:rgba(8,10,13,0.92);backdrop-filter:blur(12px);border-bottom:1px solid var(--border);}
   .logo{font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:4px;color:var(--accent);text-decoration:none;}
   .nav-links{display:flex;align-items:center;gap:24px;}
@@ -25,15 +27,21 @@
   .nav-link:hover{color:var(--accent);}
   .nav-cta{font-family:'DM Mono',monospace;font-size:11px;letter-spacing:2px;text-transform:uppercase;background:transparent;border:1px solid var(--accent);color:var(--accent);padding:8px 20px;cursor:pointer;transition:all .2s;text-decoration:none;}
   .nav-cta:hover{background:var(--accent);color:var(--white);}
-  main{flex:1;padding:120px 48px 80px;max-width:1400px;margin:0 auto;width:100%;}
+  main{flex:1;padding:120px 48px 80px;max-width:1400px;margin:0 auto;width:100%;position:relative;z-index:1;}
   .section-label{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:4px;text-transform:uppercase;color:var(--accent);margin-bottom:16px;}
   .section-title{font-family:'Bebas Neue',sans-serif;font-size:clamp(40px,5vw,60px);line-height:1;color:var(--white);margin-bottom:48px;}
   .monitor-container{display:grid;grid-template-columns:1fr;gap:32px;}
   .monitor-wrap{background:var(--panel);border:1px solid var(--border);padding:32px;box-shadow:0 20px 40px rgba(0,0,0,0.5);}
   .monitor-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;}
   .monitor-title{font-family:'DM Mono',monospace;font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--accent);}
-  .monitor-stat{font-family:'DM Mono',monospace;font-size:14px;color:var(--white);margin-bottom:24px;padding:12px 16px;background:rgba(59,130,246,0.06);border-left:2px solid var(--accent);display:flex;gap:24px;}
+  .monitor-stat{font-family:'DM Mono',monospace;font-size:14px;color:var(--white);margin-bottom:24px;padding:12px 16px;background:rgba(59,130,246,0.06);border-left:2px solid var(--accent);display:flex;gap:24px;flex-wrap:wrap;}
   .chart-wrapper{height:400px;width:100%;position:relative;}
+  .chart-wrapper.short{height:260px;}
+  /* Map */
+  #kharg-map{height:380px;width:100%;border:1px solid var(--border);}
+  .map-wrap{background:var(--panel);border:1px solid var(--border);padding:32px;box-shadow:0 20px 40px rgba(0,0,0,0.5);}
+  .map-header{margin-bottom:20px;}
+  /* Explanation cards */
   .explanation-grid{display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-top:32px;}
   .explain-card{background:transparent;border:1px solid rgba(59,130,246,0.2);padding:24px;position:relative;}
   .explain-card.alert{border-color:rgba(255,71,87,0.3);background:rgba(255,71,87,0.02);}
@@ -42,11 +50,11 @@
   .explain-card p{font-size:13px;line-height:1.7;color:var(--text);}
   .explain-card p.muted{color:var(--muted);font-size:12px;margin-top:12px;}
   .explain-card strong{color:var(--white);font-weight:500;}
-  .linkedin-block{margin-top:20px;padding-top:20px;border-top:1px solid rgba(255,71,87,0.2);}
-  .linkedin-block p{font-size:12px;color:var(--muted);}
-  .linkedin-link{color:var(--accent);text-decoration:none;border-bottom:1px dashed var(--accent);transition:color .2s;}
-  .linkedin-link:hover{color:var(--white);border-color:var(--white);}
-  footer{background:var(--panel);border-top:1px solid var(--border);padding:32px 48px;display:flex;align-items:center;justify-content:space-between;margin-top:auto;}
+  .cta-block{margin-top:20px;padding-top:20px;border-top:1px solid rgba(255,71,87,0.2);}
+  .cta-block p{font-size:12px;color:var(--muted);margin-bottom:12px;}
+  .cta-btn{display:inline-block;font-family:'DM Mono',monospace;font-size:10px;letter-spacing:2px;text-transform:uppercase;background:transparent;border:1px solid var(--accent);color:var(--accent);padding:10px 20px;text-decoration:none;transition:all .2s;}
+  .cta-btn:hover{background:var(--accent);color:var(--white);}
+  footer{background:var(--panel);border-top:1px solid var(--border);padding:32px 48px;display:flex;align-items:center;justify-content:space-between;margin-top:auto;position:relative;z-index:1;}
   .footer-logo{font-family:'Bebas Neue',sans-serif;font-size:24px;letter-spacing:6px;color:var(--accent);}
   .footer-right{display:flex;align-items:center;gap:32px;}
   .footer-link{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);text-decoration:none;transition:color .2s;}
@@ -67,27 +75,47 @@
   <div class="section-label">Data Feed (Last 3 Months)</div>
   <h1 class="section-title">Kharg Island Storage Monitor</h1>
   <div class="monitor-container">
+
+    <!-- Chart 1: Daily Storage -->
     <div class="monitor-wrap">
       <div class="monitor-header"><div class="monitor-title">Daily Storage Dynamics — SAR Extraction</div></div>
       <div class="monitor-stat" id="latestStat">Loading data...</div>
       <div class="chart-wrapper"><canvas id="dailyChart"></canvas></div>
     </div>
-  </div>
-  <div class="explanation-grid" style="margin-top:32px;">
-    <div class="explain-card">
-      <h4>🛰️ How The Radar Works</h4>
-      <p>Oil storage tanks on Kharg Island use <strong>floating roofs</strong> that lower as oil is pumped out and rise as tanks fill. Sentinel-1 SAR signals bounce off the internal walls of the tank. A low roof creates a deep cavity, returning a brighter radar reflection. We invert this radiometric signal to calculate the physical volume in millions of barrels.</p>
-      <p class="muted">On average, the satellite passes over the region twice a week, meaning we receive a fresh signal twice a week.</p>
+
+    <!-- Chart 2: Storage Utilisation -->
+    <div class="monitor-wrap">
+      <div class="monitor-header"><div class="monitor-title">Storage Utilisation — % of Max Capacity (33.2 M bbl)</div></div>
+      <div class="chart-wrapper short"><canvas id="utilChart"></canvas></div>
     </div>
-    <div class="explain-card alert">
-      <h4>📊 Reading The Signal</h4>
-      <p><strong>Rising Volume (Build):</strong> Oil is accumulating. This indicates a disruption or bottleneck in export logistics. Tankers are likely delayed or loading is slower than production.<br><br>
-      <strong>Falling Volume (Drawdown):</strong> Tankers are draining the terminal, sending physical supply into the global market.</p>
-      <div class="linkedin-block">
-        <p>For custom monitoring or data access requests for other regions:</p>
-        <a href="https://calendly.com/bachevsky/60min" target="_blank" style="display:inline-block;margin-top:12px;font-family:'DM Mono',monospace;font-size:10px;letter-spacing:2px;text-transform:uppercase;background:transparent;border:1px solid var(--accent);color:var(--accent);padding:10px 20px;text-decoration:none;transition:all .2s;" onmouseover="this.style.background='var(--accent)';this.style.color='var(--white)'" onmouseout="this.style.background='transparent';this.style.color='var(--accent)'">Request Full Data Access</a>
+
+    <!-- Map -->
+    <div class="map-wrap">
+      <div class="map-header">
+        <div class="section-label">Terminal Location</div>
+        <div class="monitor-title" style="color:var(--white);font-family:'DM Sans',sans-serif;font-size:14px;margin-top:4px;">Kharg Island · 29.23°N 50.32°E · Persian Gulf</div>
+      </div>
+      <div id="kharg-map"></div>
+    </div>
+
+    <!-- Explanation cards -->
+    <div class="explanation-grid">
+      <div class="explain-card">
+        <h4>🛰️ How The Radar Works</h4>
+        <p>Oil storage tanks on Kharg Island use <strong>floating roofs</strong> that lower as oil is pumped out and rise as tanks fill. Sentinel-1 SAR signals bounce off the internal walls of the tank. A low roof creates a deep cavity, returning a brighter radar reflection. We invert this radiometric signal to calculate the physical volume in millions of barrels.</p>
+        <p class="muted">The satellite passes over the region 2–3 times per week, meaning we receive a fresh signal 2–3 times per week.</p>
+      </div>
+      <div class="explain-card alert">
+        <h4>📊 Reading The Signal</h4>
+        <p><strong>Rising Volume (Build):</strong> Oil is accumulating. This indicates a disruption or bottleneck in export logistics. Tankers are likely delayed or loading is slower than production.<br><br>
+        <strong>Falling Volume (Drawdown):</strong> Tankers are draining the terminal, sending physical supply into the global market.</p>
+        <div class="cta-block">
+          <p>For custom monitoring or data access requests for other regions:</p>
+          <a href="https://calendly.com/bachevsky/60min" target="_blank" class="cta-btn">Request Full Data Access</a>
+        </div>
       </div>
     </div>
+
   </div>
 </main>
 <footer>
@@ -98,32 +126,41 @@
   </div>
 </footer>
 <script>
+const MAX_CAP = 33.2;
+
+function fmtVol(v) {
+  // Remove trailing zeros: 2.00 → 2, 2.50 → 2.5, 2.34 → 2.34
+  return parseFloat(v.toFixed(2)).toString();
+}
+
 async function loadDailyMonitor() {
   try {
-    const v = Date.now();
-    const res = await fetch(`/data/data_daily.json?v=${v}`);
+    const res = await fetch(`/data/data_daily.json?v=${Date.now()}`);
     const d = await res.json();
     const last90Dates = d.dates.slice(-90);
     const last90Values = d.values.slice(-90);
-    const latest = last90Values[last90Values.length-1];
-    const prev   = last90Values[last90Values.length-2];
-    const diff   = (latest - prev).toFixed(2);
+    const latest = last90Values[last90Values.length - 1];
+    const prev   = last90Values[last90Values.length - 2];
+    const diff   = latest - prev;
     const sign   = diff > 0 ? '+' : '';
     const trend  = diff > 0
       ? '<span style="color:#f0a500">▲ BUILDING</span>'
       : '<span style="color:#3b82f6">▼ DRAWDOWN</span>';
     const pct = prev !== 0 ? ((latest - prev) / prev * 100) : 0;
     const pctSign = pct >= 0 ? '+' : '';
+
     document.getElementById('latestStat').innerHTML =
-      `<div>Latest Reading: <strong style="color:#3b82f6;">${latest.toFixed(2)} Mn Bbl</strong></div>
-       <div>Day-over-Day: <strong style="color:${diff > 0 ? '#f0a500' : '#3b82f6'}">${sign}${diff} Mn Bbl &nbsp;(${pctSign}${pct.toFixed(2)}%)</strong></div>
+      `<div>Latest: <strong style="color:#3b82f6;">${fmtVol(latest)} M bbl</strong></div>
+       <div>Change: <strong style="color:${diff > 0 ? '#f0a500' : '#3b82f6'}">${sign}${fmtVol(diff)} M bbl (${pctSign}${pct.toFixed(1)}%)</strong></div>
        <div>Status: <strong>${trend}</strong></div>`;
+
+    // Chart 1 — storage
     new Chart(document.getElementById('dailyChart'), {
       type: 'line',
       data: {
         labels: last90Dates,
         datasets: [{
-          label: 'Daily Est. Storage (Mn Bbl)',
+          label: 'Storage (M bbl)',
           data: last90Values,
           borderColor: '#3b82f6',
           borderWidth: 2,
@@ -140,21 +177,100 @@ async function loadDailyMonitor() {
         maintainAspectRatio: false,
         interaction: {intersect:false, mode:'index'},
         scales: {
-          x: { ticks: { color:'#5a7a94', font:{family:'DM Mono, monospace',size:10}, maxTicksLimit: 12 }, grid: { color:'rgba(30,45,61,0.5)' } },
-          y: { ticks: { color:'#5a7a94', font:{family:'DM Mono, monospace',size:11}, callback: v => v.toFixed(1)+' Mn' }, grid: { color:'rgba(30,45,61,0.5)' } }
+          x: { ticks: { color:'#5a7a94', font:{family:'DM Mono, monospace',size:10}, maxTicksLimit:12 }, grid: { color:'rgba(30,45,61,0.5)' } },
+          y: { ticks: { color:'#5a7a94', font:{family:'DM Mono, monospace',size:11}, callback: v => fmtVol(v) + ' M' }, grid: { color:'rgba(30,45,61,0.5)' } }
         },
         plugins: {
           legend: { display: false },
-          tooltip: { backgroundColor:'#111820', borderColor:'#1e2d3d', borderWidth:1, titleColor:'#5a7a94', bodyColor:'#3b82f6', titleFont:{family:'DM Mono, monospace',size:11}, bodyFont:{family:'DM Mono, monospace',size:14}, callbacks: { label: ctx => ` Vol: ${ctx.parsed.y.toFixed(2)} Mn Bbl` } }
+          tooltip: {
+            backgroundColor:'#111820', borderColor:'#1e2d3d', borderWidth:1,
+            titleColor:'#5a7a94', bodyColor:'#3b82f6',
+            titleFont:{family:'DM Mono, monospace',size:11}, bodyFont:{family:'DM Mono, monospace',size:14},
+            callbacks: { label: ctx => ` ${fmtVol(ctx.parsed.y)} M bbl` }
+          }
         }
       }
     });
+
+    // Chart 2 — utilisation %
+    const utilValues = last90Values.map(v => +((v / MAX_CAP) * 100).toFixed(1));
+    new Chart(document.getElementById('utilChart'), {
+      type: 'line',
+      data: {
+        labels: last90Dates,
+        datasets: [{
+          label: 'Utilisation (%)',
+          data: utilValues,
+          borderColor: '#f0a500',
+          borderWidth: 2,
+          backgroundColor: 'rgba(240,165,0,0.08)',
+          fill: true,
+          pointRadius: 0,
+          tension: 0.1,
+        }, {
+          label: '85% Alert',
+          data: last90Dates.map(() => 85),
+          borderColor: 'rgba(255,71,87,0.5)',
+          borderWidth: 1,
+          borderDash: [6, 4],
+          pointRadius: 0,
+          fill: false,
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        interaction: {intersect:false, mode:'index'},
+        scales: {
+          x: { ticks: { color:'#5a7a94', font:{family:'DM Mono, monospace',size:10}, maxTicksLimit:12 }, grid: { color:'rgba(30,45,61,0.5)' } },
+          y: { min: 0, max: 100, ticks: { color:'#5a7a94', font:{family:'DM Mono, monospace',size:11}, callback: v => v + '%' }, grid: { color:'rgba(30,45,61,0.5)' } }
+        },
+        plugins: {
+          legend: { labels: { color:'#5a7a94', font:{family:'DM Mono, monospace',size:10}, boxWidth:12 } },
+          tooltip: {
+            backgroundColor:'#111820', borderColor:'#1e2d3d', borderWidth:1,
+            titleColor:'#5a7a94', bodyColor:'#f0a500',
+            callbacks: { label: ctx => ctx.datasetIndex === 0 ? ` Utilisation: ${ctx.parsed.y}%` : ` 85% threshold` }
+          }
+        }
+      }
+    });
+
   } catch(e) {
     document.getElementById('latestStat').innerHTML = '<span style="color:#ff4757">Error loading data.</span>';
     console.error(e);
   }
 }
+
+// Leaflet map
+function initMap() {
+  const map = L.map('kharg-map', { center:[29.235,50.32], zoom:11, scrollWheelZoom:false });
+  L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+    attribution:'© OpenStreetMap contributors © CARTO',
+    subdomains:'abcd', maxZoom:16
+  }).addTo(map);
+
+  const termIcon = L.divIcon({
+    html:`<div style="background:#3b82f6;width:14px;height:14px;border-radius:50%;border:2px solid #fff;box-shadow:0 0 12px rgba(59,130,246,0.8);"></div>`,
+    iconSize:[14,14], iconAnchor:[7,7]
+  });
+  L.marker([29.235,50.315],{icon:termIcon}).addTo(map)
+    .bindPopup(`<b style="font-family:monospace;color:#3b82f6">KHARG ISLAND TERMINAL</b><br><span style="font-family:monospace;font-size:11px;color:#888">47 tanks · ~90% Iran crude exports<br>29.235°N 50.315°E</span>`)
+    .openPopup();
+
+  const hormuzIcon = L.divIcon({
+    html:`<div style="background:#ff4757;width:8px;height:8px;border-radius:50%;border:1px solid rgba(255,255,255,0.5);"></div>`,
+    iconSize:[8,8], iconAnchor:[4,4]
+  });
+  L.marker([26.6,56.3],{icon:hormuzIcon}).addTo(map)
+    .bindPopup(`<b style="font-family:monospace;font-size:11px">Strait of Hormuz</b><br><span style="font-family:monospace;font-size:10px;color:#888">~180km from Kharg</span>`);
+
+  L.circle([29.235,50.315],{color:'#3b82f6',fillColor:'rgba(59,130,246,0.1)',fillOpacity:0.15,weight:1,radius:4000}).addTo(map);
+  L.polyline([[29.235,50.315],[27.5,53.5],[26.6,56.3]],{color:'rgba(59,130,246,0.3)',weight:1.5,dashArray:'6 4'}).addTo(map);
+}
+
 loadDailyMonitor();
+initMap();
 </script>
 </body>
 </html>
