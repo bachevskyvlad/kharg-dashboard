@@ -153,6 +153,15 @@ ALERT when rolling_std_30d[date] > threshold
 - **Data pipeline**: `scripts/main_script.py` (Sentinel Hub → Supabase → JSON files)
 - **dbt**: `dbt/` folder — staging + marts on top of raw_observations
 
+### dashboard.html — Per-Tank Map
+- Leaflet 1.9.4 (`unpkg.com/leaflet@1.9.4`)
+- ESRI World Imagery tiles
+- SVG `L.divIcon` markers, same rendering as monitor.html but **no date restriction**
+- Supabase credentials: `SUPABASE_URL`, `SUPABASE_KEY` (publishable key, same as monitor.html)
+- TANKS coordinates: identical to `marketing/monitor.html` — keep in sync if adding new tanks
+- Slider shows all dates including latest 2 weeks — this is the paid product feature
+- Map section labelled "Per-Tank Storage Map — Full Access"
+
 ## Deployment
 
 - Cloudflare Pages → wrangler.jsonc
@@ -202,7 +211,7 @@ Do not change `_redirects` without confirming this mapping.
    <script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','G-TZQ5VH3GPY');</script>
    ```
 2. **_redirects**: Confirm `/monitor → /marketing/monitor.html` is intact after any routing change
-3. **Units**: All volume figures use **Mn bbl** (not MM bbl, not M bbl, not million barrels)
+3. **Units**: All volume figures use **Mb** in UI/charts (not MM bbl, not Mn bbl, not M bbl)
 4. **Calendly CTA**: Any "Schedule a Call" / "Request Access" button → `https://calendly.com/bachevsky/60min`
 5. **monitor.html layout**: Must always have Leaflet map + volume chart — do not remove either
 6. **SEO**: Title includes "Kharg Island" + "Iran" or "crude oil"; first paragraph mentions both within 50 words
@@ -213,7 +222,7 @@ Do not change `_redirects` without confirming this mapping.
 
 - **Analytical, not promotional.** Signal over hype.
 - **Numbers over adjectives.** "−6.35 Mn bbl in 12 days" not "significant drawdown"
-- **Unit format**: always **Mn bbl**
+- **Unit format**: always **Mb** in UI/charts/copy
 - **No hyperbole**: never "game-changing", "revolutionary", "unprecedented"
 - **Iran framing**: factual and neutral
 

@@ -118,22 +118,28 @@ Do not change `_redirects` without confirming this mapping.
 The monitor page at oilradar.io/monitor must always contain:
 
 ### 1. Leaflet.js Map
-- Dark tile layer: `https://{s}.basemaps.cartocdn.com/dark_matter/{z}/{x}/{y}{r}.png`
-- Centered on Kharg Island: `[29.232, 50.311]`, zoom 14
-- All 47 tanks rendered as `L.circle` markers with:
-  - Color based on fill level: blue (full) → orange → red (low)
+- ESRI World Imagery tile layer: `https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}`
+- Centered on Kharg Island: `[29.230, 50.311]`, zoom 15
+- All 47 tanks rendered as SVG `L.divIcon` markers with:
+  - Color based on fill level: red (low) → orange → blue (full)
   - Radius proportional to actual tank radius in meters
-  - Popup showing tank ID, fill %, volume in Mn bbl
-- Latest date shown as map subtitle
-- Map height: ~420px
+  - Popup showing tank ID, fill %, volume in Mb
+- ← → nav buttons (`#prevBtn`, `#nextBtn`) for day navigation
+- **DATE RESTRICTION**: map `dates` array is filtered to `<= today − 14 days`. Latest 2 weeks are gated. Slider shows `🔒 Latest 2 weeks — Get Access` notice.
+- Map height: ~480px
 
 ### 2. Volume Chart (Chart.js)
 - Data source: `data/data_daily.json` (last 6 months)
+- **DATE RESTRICTION**: chart excludes last 14 days. Grey gradient overlay on right 12% with 🔒 icon + "Get Access" button.
 - Line chart, blue (#3b82f6), filled area
 - Y-axis in Mb
-- Stat bar above chart: Latest (Mb) | Day-over-Day with % e.g. `−5.26 Mb (−20%)` | Utilization % | Status (BUILDING/DRAWDOWN)
+- Stat bar above chart: Latest shown (Mb) | Day-over-Day with % e.g. `−5.26 Mb (−20%)` | Utilization % | Status (BUILDING/DRAWDOWN)
 - BUILDING = gold (#f0a500), DRAWDOWN = blue (#3b82f6)
 - No separate utilization chart — utilization shown in stat bar only
+
+### Access gating rule
+**Public monitor** (`marketing/monitor.html`): latest 14 days hidden on both map AND chart.
+**Product dashboard** (`product/dashboard.html`): NO date restriction — full data including latest.
 
 ---
 
@@ -157,8 +163,9 @@ The monitor page at oilradar.io/monitor must always contain:
 6. **Calendly link**: `https://calendly.com/bachevsky/60min`
 7. **SEO**: Title tag includes "Kharg Island" + "Iran" or "crude oil"; first paragraph mentions both within 50 words
 8. **JSON-LD**: Pages should include Dataset or FAQPage schema where relevant
-9. **monitor.html layout**: Map present + volume chart present — do not remove either
+9. **monitor.html layout**: Map present + volume chart present — do not remove either. Both gated to -14 days.
 10. **LLM SEO**: Use complete factual sentences with specific numbers; embed "Kharg Island", "Iran crude oil", "Sentinel-1 SAR" naturally in first 100 words of any page
+11. **Landing page structure** (marketing/index.html): Hero (split 50/50, satellite photo right) → Stats strip (big emoji) → How It Works (3-step cards) → Chart (gated -14 days) → Choose Your Access (2 product cards) → Legal/Footer. Do NOT add a duplicate CTA section at the bottom.
 
 ---
 
