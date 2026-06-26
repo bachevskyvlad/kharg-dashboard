@@ -105,7 +105,6 @@
 
   <div class="controls-wrap">
     <button id="playBtn">&#9654; PLAY</button>
-    <button id="prevBtn" style="font-family:'DM Mono',monospace;font-size:16px;background:transparent;border:1px solid var(--border);color:var(--text);padding:8px 14px;cursor:pointer;transition:color .2s;" title="Previous date">&#8592;</button>
     <div class="slider-wrap">
       <input type="range" id="dateSlider" min="0" value="0" step="1">
       <div class="slider-dates">
@@ -113,7 +112,6 @@
         <span id="sliderEnd">&mdash;</span>
       </div>
     </div>
-    <button id="nextBtn" style="font-family:'DM Mono',monospace;font-size:16px;background:transparent;border:1px solid var(--border);color:var(--text);padding:8px 14px;cursor:pointer;transition:color .2s;" title="Next date">&#8594;</button>
     <div class="cur-date-label" id="curDateLabel">&mdash;</div>
   </div>
 
@@ -378,17 +376,6 @@ async function init() {
   renderDate(dates[dates.length - 1]);
 
   slider.addEventListener('input', () => renderDate(dates[+slider.value]));
-
-  document.getElementById('prevBtn').addEventListener('click', () => {
-    const v = Math.max(0, +slider.value - 1);
-    slider.value = v;
-    renderDate(dates[v]);
-  });
-  document.getElementById('nextBtn').addEventListener('click', () => {
-    const v = Math.min(dates.length - 1, +slider.value + 1);
-    slider.value = v;
-    renderDate(dates[v]);
-  });
 
   let playing = false, playTimer = null;
   const playBtn = document.getElementById('playBtn');
