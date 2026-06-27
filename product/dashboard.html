@@ -10,7 +10,7 @@
     <link rel="icon" type="image/png" sizes="16x16" href="/assets/images/favicon-16x16.png">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:ital,wght@0,400;0,500;0,600;1,400&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-TZQ5VH3GPY"></script>
     <script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','G-TZQ5VH3GPY');</script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -20,6 +20,7 @@
         * { margin: 0; padding: 0; box-sizing: border-box; }
         :root {
             --bg: #080b12;
+            --sidebar: #0a0d15;
             --surface: #0d1117;
             --border: rgba(255,255,255,0.06);
             --muted: #3d4f63;
@@ -30,306 +31,380 @@
             --red: #f87171;
             --yellow: #fbbf24;
         }
-        body { font-family: 'Inter', sans-serif; background: var(--bg); min-height: 100vh; color: var(--text); }
+        html, body { height: 100%; overflow: hidden; }
+        body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); display: flex; }
 
-        .nav { padding: 1rem 2.5rem; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 100; background: rgba(8,11,18,0.97); backdrop-filter: blur(8px); }
-        .nav-logo { font-family: 'Space Grotesk', sans-serif; font-size: 1rem; font-weight: 700; letter-spacing: 0.2em; color: var(--accent); }
-        .nav-right { display: flex; align-items: center; gap: 1.5rem; }
-        .user-email { color: var(--muted); font-size: 0.78rem; }
-        .logout-btn { background: none; border: 1px solid rgba(239,68,68,0.2); color: var(--red); padding: 0.3rem 0.85rem; border-radius: 4px; font-size: 0.72rem; cursor: pointer; transition: border-color 0.2s; }
-        .logout-btn:hover { border-color: rgba(239,68,68,0.5); }
+        /* ── SIDEBAR ── */
+        .sidebar {
+            width: 200px;
+            min-width: 200px;
+            background: var(--sidebar);
+            border-right: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            position: fixed;
+            top: 0; left: 0;
+            z-index: 200;
+        }
+        .sidebar-logo {
+            padding: 1.5rem 1.25rem 1rem;
+            border-bottom: 1px solid var(--border);
+        }
+        .logo-mark { font-family: 'Space Grotesk', sans-serif; font-size: 0.9rem; font-weight: 700; letter-spacing: 0.2em; color: var(--accent); }
+        .logo-sub { font-size: 0.58rem; color: var(--muted); margin-top: 0.3rem; letter-spacing: 0.04em; line-height: 1.5; }
 
-        .container { max-width: 1280px; margin: 0 auto; padding: 2.5rem 2.5rem 6rem; }
+        .sidebar-nav { flex: 1; padding: 1rem 0; }
+        .nav-item {
+            display: flex; align-items: center; gap: 0.7rem;
+            padding: 0.65rem 1.25rem;
+            font-size: 0.78rem; color: var(--muted);
+            cursor: pointer; transition: all 0.15s;
+            border-left: 2px solid transparent;
+            letter-spacing: 0.02em;
+        }
+        .nav-item:hover { color: var(--text); background: rgba(255,255,255,0.02); }
+        .nav-item.active { color: #e2e8f0; border-left-color: var(--accent); background: rgba(59,130,246,0.06); }
+        .nav-icon { font-size: 0.85rem; opacity: 0.7; }
+
+        .sidebar-footer {
+            padding: 1rem 1.25rem;
+            border-top: 1px solid var(--border);
+        }
+        .user-email { font-size: 0.65rem; color: var(--muted); display: block; margin-bottom: 0.6rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .logout-btn { background: none; border: 1px solid rgba(239,68,68,0.2); color: var(--red); padding: 0.3rem 0.75rem; border-radius: 4px; font-size: 0.68rem; cursor: pointer; width: 100%; font-family: inherit; transition: border-color 0.2s; }
+        .logout-btn:hover { border-color: rgba(239,68,68,0.45); }
+
+        /* ── MAIN ── */
+        .main { margin-left: 200px; flex: 1; height: 100vh; overflow-y: auto; display: flex; flex-direction: column; }
+
+        /* ── STICKY KEY METRICS BAR ── */
+        .kpi-bar {
+            position: sticky; top: 0; z-index: 100;
+            background: rgba(8,11,18,0.97); backdrop-filter: blur(8px);
+            border-bottom: 1px solid var(--border);
+            display: flex; align-items: stretch;
+            padding: 0;
+            min-height: 70px;
+        }
+        .kpi-stat {
+            flex: 1; padding: 0.9rem 1.25rem;
+            border-right: 1px solid var(--border);
+            display: flex; flex-direction: column; justify-content: center;
+        }
+        .kpi-stat:last-child { border-right: none; }
+        .kpi-label { font-size: 0.55rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.12em; font-weight: 600; margin-bottom: 0.35rem; }
+        .kpi-value { font-family: 'Space Grotesk', sans-serif; font-size: 1.4rem; font-weight: 700; line-height: 1; color: #f1f5f9; }
+        .kpi-unit { font-size: 0.7rem; color: var(--muted); font-weight: 400; }
+        .kpi-sub { font-size: 0.62rem; color: var(--dim); margin-top: 0.25rem; }
 
         /* Alert */
-        .alert-banner { border-radius: 6px; padding: 0.7rem 1.25rem; margin-bottom: 2rem; display: none; font-size: 0.8rem; align-items: center; gap: 0.6rem; line-height: 1.5; }
+        .alert-wrap { padding: 0 2rem; }
+        .alert-banner { border-radius: 6px; padding: 0.65rem 1rem; margin: 1.25rem 0 0; display: none; font-size: 0.78rem; align-items: center; gap: 0.6rem; }
         .alert-banner.visible { display: flex; }
         .alert-banner.pulse { background: rgba(52,211,153,0.07); border: 1px solid rgba(52,211,153,0.2); color: #6ee7b7; }
         .alert-banner.critical { background: rgba(239,68,68,0.07); border: 1px solid rgba(239,68,68,0.2); color: #fca5a5; }
 
-        /* Controls */
-        .controls-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 3rem; }
-        .period-group { display: flex; gap: 0.2rem; background: var(--surface); border: 1px solid var(--border); border-radius: 6px; padding: 0.2rem; }
-        .btn { background: transparent; border: none; color: var(--muted); padding: 0.35rem 0.85rem; border-radius: 4px; font-size: 0.74rem; cursor: pointer; transition: all 0.15s; font-family: inherit; }
-        .btn:hover { color: var(--text); }
-        .btn.active { background: rgba(59,130,246,0.15); color: #60a5fa; }
-        .export-btn { background: transparent; border: 1px solid var(--border); color: var(--dim); padding: 0.4rem 1rem; border-radius: 6px; font-size: 0.74rem; cursor: pointer; font-family: inherit; transition: all 0.2s; }
+        /* ── SECTIONS ── */
+        .section { display: none; flex: 1; padding: 2rem; }
+        .section.active { display: block; }
+
+        /* Period + granularity controls */
+        .ctrl-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; gap: 1rem; flex-wrap: wrap; }
+        .ctrl-group { display: flex; gap: 0.5rem; align-items: center; }
+        .ctrl-label { font-size: 0.6rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.1em; }
+        .btn-group { display: flex; background: var(--surface); border: 1px solid var(--border); border-radius: 5px; overflow: hidden; }
+        .tbtn { background: transparent; border: none; border-right: 1px solid var(--border); color: var(--muted); padding: 0.3rem 0.7rem; font-size: 0.72rem; cursor: pointer; font-family: inherit; transition: all 0.15s; }
+        .tbtn:last-child { border-right: none; }
+        .tbtn:hover { color: var(--text); }
+        .tbtn.active { background: rgba(59,130,246,0.15); color: #60a5fa; }
+        .export-btn { background: transparent; border: 1px solid var(--border); color: var(--dim); padding: 0.32rem 0.85rem; border-radius: 5px; font-size: 0.72rem; cursor: pointer; font-family: inherit; transition: all 0.2s; }
         .export-btn:hover { border-color: rgba(255,255,255,0.15); color: var(--text); }
 
-        /* ── VELOCITY HERO ── */
-        .velocity-hero { display: grid; grid-template-columns: auto 1px auto 1px auto 1px auto 1px auto; align-items: center; gap: 0; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 2rem 2.5rem; margin-bottom: 3.5rem; }
-        .vh-divider { width: 1px; height: 3rem; background: var(--border); margin: 0 2.5rem; }
-        .vh-stat { }
-        .vh-label { font-size: 0.6rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.12em; font-weight: 600; margin-bottom: 0.6rem; }
-        .vh-value { font-family: 'Space Grotesk', sans-serif; font-weight: 700; line-height: 1; color: #f1f5f9; }
-        .vh-value.hero { font-size: 3rem; }
-        .vh-value.large { font-size: 2rem; }
-        .vh-value.medium { font-size: 1.5rem; }
-        .vh-unit { font-size: 0.85rem; color: var(--muted); font-weight: 400; margin-left: 0.2rem; }
-        .vh-sub { font-size: 0.7rem; color: var(--dim); margin-top: 0.45rem; }
-        .vh-badge { display: inline-block; padding: 0.18rem 0.55rem; border-radius: 3px; font-size: 0.6rem; font-weight: 700; letter-spacing: 0.07em; margin-top: 0.5rem; text-transform: uppercase; }
-        .badge-green { background: rgba(52,211,153,0.1); color: var(--green); }
-        .badge-yellow { background: rgba(251,191,36,0.1); color: var(--yellow); }
-        .badge-red { background: rgba(239,68,68,0.1); color: var(--red); }
-        .badge-blue { background: rgba(59,130,246,0.1); color: #60a5fa; }
-        .badge-orange { background: rgba(251,146,60,0.1); color: #fb923c; }
-
-        /* ── BLOCKS ── */
-        .block { margin-bottom: 4.5rem; }
-        .block-header { margin-bottom: 1.5rem; }
-        .block-title { font-family: 'Space Grotesk', sans-serif; font-size: 1.1rem; font-weight: 600; color: #e2e8f0; letter-spacing: -0.01em; }
-        .block-signal { font-size: 0.8rem; color: var(--dim); margin-top: 0.45rem; font-style: italic; line-height: 1.6; }
-        .block-signal .hl { color: var(--text); font-style: normal; font-weight: 500; }
-        .block-signal .good { color: var(--green); font-style: normal; font-weight: 600; }
-        .block-signal .warn { color: var(--yellow); font-style: normal; font-weight: 600; }
-        .block-signal .bad { color: var(--red); font-style: normal; font-weight: 600; }
-
         /* Cards */
-        .cards { display: grid; gap: 1rem; margin-bottom: 1.25rem; }
-        .cards-4 { grid-template-columns: repeat(4, 1fr); }
-        .cards-3 { grid-template-columns: repeat(3, 1fr); }
-        .cards-2 { grid-template-columns: repeat(2, 1fr); }
-        @media (max-width: 1100px) { .cards-4 { grid-template-columns: repeat(2, 1fr); } }
-        @media (max-width: 860px) { .cards-3, .cards-4 { grid-template-columns: repeat(2, 1fr); } }
+        .cards { display: grid; gap: 1px; background: var(--border); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; margin-bottom: 1.25rem; }
+        .c4 { grid-template-columns: repeat(4, 1fr); }
+        .c3 { grid-template-columns: repeat(3, 1fr); }
+        .c2 { grid-template-columns: repeat(2, 1fr); }
+        @media (max-width: 1200px) { .c4 { grid-template-columns: repeat(2, 1fr); } }
+        .card { background: var(--surface); padding: 1.4rem 1.6rem; }
+        .card.red { background: #0e0a0a; }
+        .card.green { background: #090d0c; }
+        .card.yellow { background: #0d0c09; }
+        .card.orange { background: #0e0b09; }
+        .card-label { font-size: 0.58rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.12em; margin-bottom: 0.8rem; font-weight: 600; }
+        .card-val { font-family: 'Space Grotesk', sans-serif; font-size: 2rem; font-weight: 700; line-height: 1; color: #f1f5f9; }
+        .card-val.lg { font-size: 1.5rem; letter-spacing: 0.02em; }
+        .cu { font-size: 0.8rem; color: var(--muted); font-weight: 400; margin-left: 0.15rem; }
+        .card-sub { font-size: 0.68rem; color: var(--muted); margin-top: 0.5rem; }
+        .badge { display: inline-block; padding: 0.15rem 0.5rem; border-radius: 3px; font-size: 0.58rem; font-weight: 700; letter-spacing: 0.07em; margin-top: 0.5rem; text-transform: uppercase; }
+        .bg { background: rgba(52,211,153,0.1); color: var(--green); }
+        .by { background: rgba(251,191,36,0.1); color: var(--yellow); }
+        .br { background: rgba(239,68,68,0.1); color: var(--red); }
+        .bb { background: rgba(59,130,246,0.1); color: #60a5fa; }
+        .bo { background: rgba(251,146,60,0.1); color: #fb923c; }
 
-        .card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 1.5rem 1.75rem; }
-        .card.accent-red { border-color: rgba(239,68,68,0.25); }
-        .card.accent-green { border-color: rgba(52,211,153,0.2); }
-        .card.accent-yellow { border-color: rgba(251,191,36,0.2); }
-        .card.accent-orange { border-color: rgba(251,146,60,0.25); }
+        /* Chart cards */
+        .chart-card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 1.4rem 1.6rem; margin-bottom: 1.25rem; }
+        .chart-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.1rem; }
+        .chart-ttl { font-size: 0.65rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.1em; font-weight: 600; }
+        .chart-meta { font-size: 0.58rem; color: #1e2d3d; text-align: right; line-height: 1.7; }
+        .ch { position: relative; }
+        .ch-240 { height: 240px; }
+        .ch-300 { height: 300px; }
 
-        .card-label { font-size: 0.6rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.12em; margin-bottom: 0.85rem; font-weight: 600; }
-        .card-value { font-family: 'Space Grotesk', sans-serif; font-size: 2.2rem; font-weight: 700; line-height: 1; color: #f1f5f9; }
-        .card-value.lg { font-size: 1.7rem; letter-spacing: 0.02em; }
-        .card-unit { font-size: 0.85rem; color: var(--muted); font-weight: 400; margin-left: 0.15rem; }
-        .card-sub { font-size: 0.72rem; color: var(--muted); margin-top: 0.55rem; line-height: 1.5; }
-        .badge { display: inline-block; padding: 0.18rem 0.55rem; border-radius: 3px; font-size: 0.6rem; font-weight: 700; letter-spacing: 0.07em; margin-top: 0.55rem; text-transform: uppercase; }
+        /* Signal line */
+        .signal { font-size: 0.78rem; color: var(--dim); font-style: italic; line-height: 1.65; margin-bottom: 1.5rem; padding: 0.75rem 1rem; background: rgba(255,255,255,0.02); border-left: 2px solid rgba(255,255,255,0.06); border-radius: 0 4px 4px 0; }
+        .signal .hl { color: var(--text); font-style: normal; font-weight: 500; }
+        .signal .good { color: var(--green); font-style: normal; font-weight: 600; }
+        .signal .warn { color: var(--yellow); font-style: normal; font-weight: 600; }
+        .signal .bad { color: var(--red); font-style: normal; font-weight: 600; }
 
-        /* Charts */
-        .chart-box { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 1.5rem 1.75rem; margin-bottom: 1rem; }
-        .chart-head { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1.25rem; }
-        .chart-title { font-size: 0.7rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.1em; font-weight: 600; }
-        .chart-meta { font-size: 0.6rem; color: #1e2d3d; text-align: right; line-height: 1.7; }
-        .ch { position: relative; height: 240px; }
-        .ch-tall { position: relative; height: 300px; }
+        /* Section header */
+        .sec-title { font-family: 'Space Grotesk', sans-serif; font-size: 1.05rem; font-weight: 600; color: #e2e8f0; margin-bottom: 0.5rem; }
 
         /* Pulse log */
-        .pulse-log { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 1.25rem 1.75rem; }
-        .pulse-log-label { font-size: 0.6rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.12em; font-weight: 600; margin-bottom: 1rem; }
-        .pulse-row { display: flex; justify-content: space-between; align-items: center; padding: 0.5rem 0; border-bottom: 1px solid rgba(255,255,255,0.03); }
+        .pulse-log { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 1.25rem 1.6rem; margin-bottom: 1.25rem; }
+        .pulse-log-label { font-size: 0.58rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.12em; font-weight: 600; margin-bottom: 0.9rem; }
+        .pulse-row { display: flex; justify-content: space-between; align-items: center; padding: 0.45rem 0; border-bottom: 1px solid rgba(255,255,255,0.03); }
         .pulse-row:last-child { border-bottom: none; }
-        .pulse-dates { font-family: monospace; font-size: 0.72rem; color: var(--dim); }
-        .pulse-vol { font-family: 'Space Grotesk', sans-serif; font-size: 0.88rem; font-weight: 600; color: var(--green); }
+        .pulse-dates { font-family: monospace; font-size: 0.7rem; color: var(--dim); }
+        .pulse-vol { font-family: 'Space Grotesk', sans-serif; font-size: 0.85rem; font-weight: 600; color: var(--green); }
 
         /* Map */
-        .map-box { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 1.5rem 1.75rem; }
-        #tankMap { height: 540px; border-radius: 7px; }
-        .map-controls { display: flex; align-items: center; gap: 0.75rem; margin-top: 1rem; }
-        .map-date { font-family: monospace; font-size: 0.72rem; color: var(--dim); min-width: 90px; }
+        .map-card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 1.4rem 1.6rem; }
+        #tankMap { height: calc(100vh - 280px); min-height: 400px; border-radius: 7px; }
+        .map-controls { display: flex; align-items: center; gap: 0.75rem; margin-top: 0.9rem; }
+        .map-date { font-family: monospace; font-size: 0.7rem; color: var(--dim); min-width: 90px; }
         .map-slider { flex: 1; accent-color: var(--accent); }
-        .map-btn { background: transparent; border: 1px solid var(--border); color: var(--muted); padding: 0.3rem 0.7rem; border-radius: 4px; font-size: 0.75rem; cursor: pointer; }
+        .map-btn { background: transparent; border: 1px solid var(--border); color: var(--muted); padding: 0.28rem 0.65rem; border-radius: 4px; font-size: 0.75rem; cursor: pointer; }
         .tank-div-icon { background: none !important; border: none !important; }
-
-        /* Section divider */
-        .section-label { font-size: 0.58rem; color: #1e2d3d; text-transform: uppercase; letter-spacing: 0.16em; font-weight: 700; margin-bottom: 1.25rem; margin-top: 0.5rem; }
     </style>
 </head>
 <body>
 
-<nav class="nav">
-    <div class="nav-logo">OILRADAR</div>
-    <div class="nav-right">
-        <span class="user-email" id="userEmail"></span>
+<!-- ── SIDEBAR ── -->
+<aside class="sidebar">
+    <div class="sidebar-logo">
+        <div class="logo-mark">OILRADAR</div>
+        <div class="logo-sub">Kharg Island<br>Iran Crude Terminal</div>
+    </div>
+    <nav class="sidebar-nav">
+        <div class="nav-item active" onclick="showSection('overview')">
+            <span class="nav-icon">◎</span> Overview
+        </div>
+        <div class="nav-item" onclick="showSection('exports')">
+            <span class="nav-icon">⇡</span> Export Signals
+        </div>
+        <div class="nav-item" onclick="showSection('map')">
+            <span class="nav-icon">⊞</span> Per-Tank Map
+        </div>
+    </nav>
+    <div class="sidebar-footer">
+        <span class="user-email" id="userEmail">Loading…</span>
         <button class="logout-btn" onclick="logout()">Logout</button>
     </div>
-</nav>
+</aside>
 
-<div class="container">
+<!-- ── MAIN ── -->
+<div class="main">
 
-    <div class="alert-banner" id="alertBanner">
-        <span>⚡</span><span id="alertText"></span>
-    </div>
-
-    <div class="controls-row">
-        <div class="period-group">
-            <button class="btn" data-range="30" onclick="setRange(30)">1M</button>
-            <button class="btn" data-range="90" onclick="setRange(90)">3M</button>
-            <button class="btn" data-range="180" onclick="setRange(180)">6M</button>
-            <button class="btn" data-range="365" onclick="setRange(365)">1Y</button>
-            <button class="btn active" data-range="1095" onclick="setRange(1095)">3Y</button>
-            <button class="btn" data-range="0" onclick="setRange(0)">ALL</button>
+    <!-- Sticky KPI bar -->
+    <div class="kpi-bar">
+        <div class="kpi-stat">
+            <div class="kpi-label">Fill Rate · 7d</div>
+            <div class="kpi-value" id="kFillRate" style="color:#f1f5f9">--<span class="kpi-unit"> Mb/d</span></div>
+            <div class="kpi-sub" id="kFillRateSub"></div>
         </div>
-        <button class="export-btn" onclick="exportCSV()">Export CSV</button>
-    </div>
-
-    <!-- ── VELOCITY HERO ──────────────────────────────────────────────────── -->
-    <div class="velocity-hero">
-        <div class="vh-stat">
-            <div class="vh-label">Fill Rate · 7d avg</div>
-            <div class="vh-value hero" id="vhRate">--<span class="vh-unit">Mb/d</span></div>
-            <div class="vh-sub" id="vhRateSub"></div>
+        <div class="kpi-stat">
+            <div class="kpi-label">vs 90d Avg</div>
+            <div class="kpi-value" id="kSurprise">--<span class="kpi-unit"> Mb/d</span></div>
+            <div class="kpi-sub" id="kSurpriseSub"></div>
         </div>
-        <div class="vh-divider"></div>
-        <div class="vh-stat">
-            <div class="vh-label">vs 90d avg</div>
-            <div class="vh-value large" id="vhSurprise">--<span class="vh-unit">Mb/d</span></div>
-            <div class="vh-badge" id="vhSurpriseBadge"></div>
+        <div class="kpi-stat">
+            <div class="kpi-label" id="kDaysLabel">Days to Capacity</div>
+            <div class="kpi-value" id="kDays">--<span class="kpi-unit"> d</span></div>
+            <div class="kpi-sub" id="kDaysSub"></div>
         </div>
-        <div class="vh-divider"></div>
-        <div class="vh-stat">
-            <div class="vh-label" id="vhCapLabel">Days to Capacity</div>
-            <div class="vh-value large" id="vhDays">--<span class="vh-unit">d</span></div>
-            <div class="vh-sub" id="vhDaysSub"></div>
+        <div class="kpi-stat">
+            <div class="kpi-label">Storage</div>
+            <div class="kpi-value" id="kVol">--<span class="kpi-unit"> Mb</span></div>
+            <div class="kpi-sub" id="kVolSub"></div>
         </div>
-        <div class="vh-divider"></div>
-        <div class="vh-stat">
-            <div class="vh-label">Storage · <span id="vhDate">--</span></div>
-            <div class="vh-value medium" id="vhVol">--<span class="vh-unit">Mb</span></div>
-            <div class="vh-badge" id="vhUtilBadge"></div>
+        <div class="kpi-stat">
+            <div class="kpi-label">Utilization</div>
+            <div class="kpi-value" id="kUtil">--<span class="kpi-unit">%</span></div>
+            <div class="kpi-sub" id="kUtilSub"></div>
         </div>
-        <div class="vh-divider"></div>
-        <div class="vh-stat">
-            <div class="vh-label">Regime</div>
-            <div class="vh-value medium" id="vhRegime">--</div>
-            <div class="vh-sub" id="vhRegimeSub"></div>
+        <div class="kpi-stat" style="border-right:none">
+            <div class="kpi-label">Regime</div>
+            <div class="kpi-value" id="kRegime" style="font-size:1.1rem;letter-spacing:0.03em">--</div>
+            <div class="kpi-sub" id="kRegimeSub"></div>
         </div>
     </div>
 
-    <!-- ── BLOCK 1: INVENTORY ─────────────────────────────────────────────── -->
-    <div class="block">
-        <div class="block-header">
-            <div class="block-title">Inventory Level &amp; Velocity</div>
-            <div class="block-signal" id="sig1">Loading…</div>
+    <div class="alert-wrap">
+        <div class="alert-banner" id="alertBanner"><span>⚡</span><span id="alertText"></span></div>
+    </div>
+
+    <!-- ── SECTION: OVERVIEW ── -->
+    <div class="section active" id="sec-overview">
+        <div class="ctrl-row">
+            <div class="ctrl-group">
+                <span class="ctrl-label">Period</span>
+                <div class="btn-group">
+                    <button class="tbtn" data-range="30" onclick="setRange(30)">1M</button>
+                    <button class="tbtn" data-range="90" onclick="setRange(90)">3M</button>
+                    <button class="tbtn" data-range="180" onclick="setRange(180)">6M</button>
+                    <button class="tbtn" data-range="365" onclick="setRange(365)">1Y</button>
+                    <button class="tbtn active" data-range="1095" onclick="setRange(1095)">3Y</button>
+                    <button class="tbtn" data-range="0" onclick="setRange(0)">ALL</button>
+                </div>
+            </div>
+            <div class="ctrl-group">
+                <span class="ctrl-label">Granularity</span>
+                <div class="btn-group">
+                    <button class="tbtn active" data-gran="daily" onclick="setGran('daily')">Daily</button>
+                    <button class="tbtn" data-gran="weekly" onclick="setGran('weekly')">Weekly</button>
+                    <button class="tbtn" data-gran="monthly" onclick="setGran('monthly')">Monthly</button>
+                </div>
+            </div>
+            <button class="export-btn" onclick="exportCSV()">Export CSV</button>
         </div>
 
-        <div class="cards cards-4">
-            <div class="card" id="cardVol">
+        <div class="sec-title">Inventory Level &amp; Velocity</div>
+        <div class="signal" id="sig1">Loading…</div>
+
+        <div class="cards c4">
+            <div class="card" id="cVol">
                 <div class="card-label">Current Storage</div>
-                <div class="card-value" id="metVol">--<span class="card-unit">Mb</span></div>
-                <div class="card-sub" id="metVolSub"></div>
+                <div class="card-val" id="mVol">--<span class="cu"> Mb</span></div>
+                <div class="card-sub">of 33.2 Mb capacity</div>
             </div>
-            <div class="card" id="cardUtil">
+            <div class="card" id="cUtil">
                 <div class="card-label">Utilization</div>
-                <div class="card-value" id="metUtil">--<span class="card-unit">%</span></div>
-                <div class="badge" id="metUtilBadge"></div>
+                <div class="card-val" id="mUtil">--<span class="cu">%</span></div>
+                <div class="badge" id="mUtilBadge"></div>
             </div>
-            <div class="card" id="cardRate">
+            <div class="card" id="cRate">
                 <div class="card-label">Fill Rate · 7d</div>
-                <div class="card-value" id="metRate">--<span class="card-unit">Mb/d</span></div>
-                <div class="card-sub" id="metRateSub"></div>
+                <div class="card-val" id="mRate">--<span class="cu"> Mb/d</span></div>
+                <div class="card-sub" id="mRateSub"></div>
             </div>
-            <div class="card" id="cardDays">
-                <div class="card-label" id="metDaysLabel">Days to Capacity</div>
-                <div class="card-value" id="metDays">--<span class="card-unit">d</span></div>
-                <div class="card-sub" id="metDaysSub"></div>
+            <div class="card" id="cDays">
+                <div class="card-label" id="mDaysLabel">Days to Capacity</div>
+                <div class="card-val" id="mDays">--<span class="cu"> d</span></div>
+                <div class="card-sub" id="mDaysSub"></div>
             </div>
         </div>
 
-        <div class="chart-box">
+        <div class="chart-card">
             <div class="chart-head">
-                <div class="chart-title">Volume History — Kharg Island</div>
+                <div class="chart-ttl">Volume History</div>
                 <div class="chart-meta">Mb · Sentinel-1 SAR · ~6d revisit</div>
             </div>
-            <div class="ch-tall"><canvas id="mainChart"></canvas></div>
+            <div class="ch ch-300"><canvas id="mainChart"></canvas></div>
         </div>
 
-        <div class="chart-box">
+        <div class="chart-card">
             <div class="chart-head">
-                <div class="chart-title">Build vs Draw — Daily Rate</div>
-                <div class="chart-meta">Mb/d · 7d delta · red = build · green = draw</div>
+                <div class="chart-ttl">Build vs Draw — Fill Rate</div>
+                <div class="chart-meta">Mb/d · red = build · green = draw</div>
             </div>
-            <div class="ch"><canvas id="fillRateChart"></canvas></div>
+            <div class="ch ch-240"><canvas id="fillRateChart"></canvas></div>
+        </div>
+
+        <div class="chart-card">
+            <div class="chart-head">
+                <div class="chart-ttl">Utilization vs 85% Threshold</div>
+                <div class="chart-meta">% of 33.2 Mb max · above 85% = forced sell zone</div>
+            </div>
+            <div class="ch ch-240"><canvas id="spiChart"></canvas></div>
         </div>
     </div>
 
-    <!-- ── BLOCK 2: SURPRISE ──────────────────────────────────────────────── -->
-    <div class="block">
-        <div class="block-header">
-            <div class="block-title">Rate Surprise — Current vs Historical Baseline</div>
-            <div class="block-signal" id="sig2">Loading…</div>
-        </div>
-
-        <div class="cards cards-3">
-            <div class="card" id="cardSurprise">
-                <div class="card-label">Rate vs 90d Avg</div>
-                <div class="card-value" id="metSurprise">--<span class="card-unit">Mb/d</span></div>
-                <div class="badge" id="metSurpriseBadge"></div>
-            </div>
-            <div class="card" id="cardRate30">
-                <div class="card-label">30d Change</div>
-                <div class="card-value" id="metRate30">--<span class="card-unit">%</span></div>
-                <div class="card-sub" id="metRate30Sub"></div>
-            </div>
-            <div class="card" id="cardStreak">
-                <div class="card-label">Current Streak</div>
-                <div class="card-value lg" id="metStreak">--</div>
-                <div class="card-sub" id="metStreakSub"></div>
+    <!-- ── SECTION: EXPORT SIGNALS ── -->
+    <div class="section" id="sec-exports">
+        <div class="ctrl-row">
+            <div class="ctrl-group">
+                <span class="ctrl-label">Period</span>
+                <div class="btn-group">
+                    <button class="tbtn" data-range="30" onclick="setRange(30)">1M</button>
+                    <button class="tbtn" data-range="90" onclick="setRange(90)">3M</button>
+                    <button class="tbtn" data-range="180" onclick="setRange(180)">6M</button>
+                    <button class="tbtn" data-range="365" onclick="setRange(365)">1Y</button>
+                    <button class="tbtn active" data-range="1095" onclick="setRange(1095)">3Y</button>
+                    <button class="tbtn" data-range="0" onclick="setRange(0)">ALL</button>
+                </div>
             </div>
         </div>
 
-        <div class="chart-box">
-            <div class="chart-head">
-                <div class="chart-title">Utilization vs Capacity Threshold</div>
-                <div class="chart-meta">% of 33.2 Mb · above 85% = forced sell zone</div>
-            </div>
-            <div class="ch"><canvas id="spiChart"></canvas></div>
-        </div>
-    </div>
+        <div class="sec-title">Export Signals — VLCC Loading Events</div>
+        <div class="signal" id="sig3">Loading…</div>
 
-    <!-- ── BLOCK 3: EXPORT SIGNALS ───────────────────────────────────────── -->
-    <div class="block">
-        <div class="block-header">
-            <div class="block-title">Export Signals — VLCC Loading Events</div>
-            <div class="block-signal" id="sig3">Loading…</div>
-        </div>
-
-        <div class="cards cards-3">
-            <div class="card" id="cardEPS">
+        <div class="cards c3">
+            <div class="card" id="cEPS">
                 <div class="card-label">Loadings · 90d</div>
-                <div class="card-value" id="metEPS">--</div>
-                <div class="badge" id="metEPSBadge"></div>
+                <div class="card-val" id="mEPS">--</div>
+                <div class="badge" id="mEPSBadge"></div>
             </div>
-            <div class="card" id="cardInterval">
+            <div class="card" id="cInterval">
                 <div class="card-label">Avg Export Interval</div>
-                <div class="card-value" id="metInterval">--<span class="card-unit">d</span></div>
-                <div class="card-sub" id="metIntervalSub"></div>
+                <div class="card-val" id="mInterval">--<span class="cu"> d</span></div>
+                <div class="card-sub" id="mIntervalSub"></div>
             </div>
-            <div class="card" id="cardExp90">
+            <div class="card" id="cExp90">
                 <div class="card-label">Volume Exported · 90d</div>
-                <div class="card-value" id="metExp90">--<span class="card-unit">Mb</span></div>
-                <div class="card-sub" id="metExp90Sub"></div>
+                <div class="card-val" id="mExp90">--<span class="cu"> Mb</span></div>
+                <div class="card-sub" id="mExp90Sub"></div>
             </div>
         </div>
 
-        <div class="chart-box">
+        <div class="cards c3" style="margin-bottom:1.25rem">
+            <div class="card" id="cSurprise">
+                <div class="card-label">Rate vs 90d Avg</div>
+                <div class="card-val" id="mSurprise">--<span class="cu"> Mb/d</span></div>
+                <div class="badge" id="mSurpriseBadge"></div>
+            </div>
+            <div class="card" id="cChange30">
+                <div class="card-label">30d Volume Change</div>
+                <div class="card-val" id="mChange30">--<span class="cu">%</span></div>
+                <div class="card-sub" id="mChange30Sub"></div>
+            </div>
+            <div class="card" id="cStreak">
+                <div class="card-label">Current Streak</div>
+                <div class="card-val lg" id="mStreak">--</div>
+                <div class="card-sub" id="mStreakSub"></div>
+            </div>
+        </div>
+
+        <div class="chart-card">
             <div class="chart-head">
-                <div class="chart-title">VLCC Loading Events — Detected Drawdowns</div>
+                <div class="chart-ttl">VLCC Loading Events</div>
                 <div class="chart-meta">Each bar = probable tanker load · Mb over 6–12d</div>
             </div>
-            <div class="ch-tall"><canvas id="pulseHistChart"></canvas></div>
+            <div class="ch ch-300"><canvas id="pulseHistChart"></canvas></div>
         </div>
 
-        <div class="chart-box">
+        <div class="chart-card">
             <div class="chart-head">
-                <div class="chart-title">Monthly Balance</div>
+                <div class="chart-ttl">Monthly Balance</div>
                 <div class="chart-meta">Net Mb/month · green = net export · red = net build</div>
             </div>
-            <div class="ch-tall"><canvas id="monthlyChart"></canvas></div>
+            <div class="ch ch-300"><canvas id="monthlyChart"></canvas></div>
         </div>
 
         <div class="pulse-log">
             <div class="pulse-log-label">Event Log</div>
-            <div id="pulseList"><div style="color:var(--muted);font-size:0.78rem;padding:0.5rem 0">Loading…</div></div>
+            <div id="pulseList"><div style="color:var(--muted);font-size:0.75rem;padding:0.5rem 0">Loading…</div></div>
         </div>
     </div>
 
-    <!-- ── BLOCK 4: PER-TANK MAP ──────────────────────────────────────────── -->
-    <div class="block">
-        <div class="block-header">
-            <div class="block-title">Per-Tank Storage Map — 47 Tanks · Full History</div>
-            <div class="block-signal">Blue = full · Red = empty. Use the slider to navigate any date. Click a tank for fill % and volume. Active loading tanks: <span class="hl">t60_2, t55_17</span>. Probable strategic reserve: <span class="hl">t55_31, t60_1</span>.</div>
-        </div>
-        <div class="map-box">
+    <!-- ── SECTION: PER-TANK MAP ── -->
+    <div class="section" id="sec-map">
+        <div class="sec-title" style="margin-bottom:0.4rem">Per-Tank Storage — 47 Tanks · Full History</div>
+        <div class="signal" style="margin-bottom:1.25rem">Blue = full · Red = empty. Navigate with the date slider. Click any tank for fill % and volume. Active loading tanks: <span class="hl">t60_2, t55_17</span>. Probable strategic reserve: <span class="hl">t55_31, t60_1</span>.</div>
+        <div class="map-card">
             <div id="tankMap">
                 <div id="mapLoading" style="display:flex;align-items:center;justify-content:center;height:100%;color:var(--muted);font-size:0.85rem;">Loading satellite data…</div>
             </div>
@@ -345,13 +420,12 @@
     <!-- LEGACY BLOCK (disabled) -->
     <!--
     LEGACY: Multi-country Gulf coverage — disabled 2026-06-24
-    To reactivate: restore fragility.json feed and uncomment country cards,
-    countryChart, fragilityChart. Branch: feature/gulf-multi-country (future)
     -->
 
-</div><!-- /container -->
+</div><!-- /main -->
 
 <script>
+// ── Auth ──────────────────────────────────────────────────────────────────
 async function checkAuth() {
     try {
         const r = await fetch('/auth/check');
@@ -362,6 +436,16 @@ async function checkAuth() {
 }
 function logout() { window.location.href = '/auth/logout'; }
 
+// ── Navigation ─────────────────────────────────────────────────────────────
+function showSection(id) {
+    document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+    document.getElementById('sec-' + id).classList.add('active');
+    event.currentTarget.classList.add('active');
+    if (id === 'map' && !window._mapInited) { initTankMap(); window._mapInited = true; }
+}
+
+// ── Constants ──────────────────────────────────────────────────────────────
 const MAX_CAP = 33.2;
 const PULSE_THRESHOLD = 2.0;
 const PULSE_WIN_MIN = 6;
@@ -369,6 +453,7 @@ const PULSE_WIN_MAX = 12;
 
 let allDates = [], allValues = [];
 let currentRange = 1095;
+let currentGran = 'daily';
 let charts = {};
 
 async function loadData() {
@@ -378,14 +463,49 @@ async function loadData() {
     render();
 }
 
+// ── Aggregation ────────────────────────────────────────────────────────────
+function aggregateWeekly(dates, values) {
+    const weeks = {};
+    dates.forEach((d, i) => {
+        const dt = new Date(d);
+        const day = dt.getDay() || 7;
+        const monday = new Date(dt);
+        monday.setDate(dt.getDate() - day + 1);
+        const key = monday.toISOString().slice(0, 10);
+        weeks[key] = values[i];
+    });
+    const keys = Object.keys(weeks).sort();
+    return { dates: keys, values: keys.map(k => weeks[k]) };
+}
+
+function aggregateMonthly(dates, values) {
+    const months = {};
+    dates.forEach((d, i) => { months[d.slice(0, 7)] = values[i]; });
+    const keys = Object.keys(months).sort();
+    return { dates: keys, values: keys.map(k => months[k]) };
+}
+
+function applyGran(dates, values) {
+    if (currentGran === 'weekly') return aggregateWeekly(dates, values);
+    if (currentGran === 'monthly') return aggregateMonthly(dates, values);
+    return { dates, values };
+}
+
 function setRange(days) {
     currentRange = days;
-    document.querySelectorAll('.btn[data-range]').forEach(b =>
+    document.querySelectorAll('.tbtn[data-range]').forEach(b =>
         b.classList.toggle('active', parseInt(b.dataset.range) === days));
     render();
 }
 
-function getSlice() {
+function setGran(g) {
+    currentGran = g;
+    document.querySelectorAll('.tbtn[data-gran]').forEach(b =>
+        b.classList.toggle('active', b.dataset.gran === g));
+    render();
+}
+
+function getSliceRaw() {
     if (currentRange === 0) return { dates: allDates, values: allValues };
     const cutoff = new Date();
     cutoff.setDate(cutoff.getDate() - currentRange);
@@ -394,6 +514,12 @@ function getSlice() {
     return { dates: allDates.slice(idx), values: allValues.slice(idx) };
 }
 
+function getSlice() {
+    const raw = getSliceRaw();
+    return applyGran(raw.dates, raw.values);
+}
+
+// ── Computations ───────────────────────────────────────────────────────────
 function computeFillRate(dates, values, win = 7) {
     return dates.map((_, i) => {
         const t0 = new Date(dates[i]);
@@ -430,11 +556,11 @@ function detectPulses(dates, values) {
 
 function computeMonthly(dates, values) {
     const months = {};
-    for (let i = 0; i < dates.length; i++) {
-        const m = dates[i].slice(0, 7);
+    dates.forEach((d, i) => {
+        const m = d.slice(0, 7);
         if (!months[m]) months[m] = { first: values[i], last: values[i] };
         months[m].last = values[i];
-    }
+    });
     return Object.entries(months).map(([m, { first, last }]) => ({ month: m, change: last - first }));
 }
 
@@ -453,234 +579,195 @@ function computeStreak(dates, values) {
     return { type, days: Math.round((new Date(dates[n-1]) - new Date(dates[start])) / 86400000), change: values[n-1] - values[start], startDate: dates[start] };
 }
 
-function hl(text, cls) { return `<span class="${cls}">${text}</span>`; }
+function hl(t, c) { return `<span class="${c}">${t}</span>`; }
 
+// ── Render ─────────────────────────────────────────────────────────────────
 function render() {
+    // Always compute fill rate on daily data for accuracy
+    const rawSlice = getSliceRaw();
+    const allFR = computeFillRate(allDates, allValues);
+    const rawFR = computeFillRate(rawSlice.dates, rawSlice.values);
+    const latestFR = rawFR[rawFR.length - 1];
+
+    // Granularity-adjusted slice for charts
     const { dates, values } = getSlice();
-    if (!dates.length) return;
     const n = values.length;
+    if (!n) return;
+
     const latest = values[n - 1];
     const util = (latest / MAX_CAP) * 100;
-    const fillRates = computeFillRate(dates, values);
     const spiSeries = values.map(v => (v / MAX_CAP) * 100);
-    const pulses = detectPulses(dates, values);
-    const streak = computeStreak(dates, values);
+    // Use raw daily data for pulse detection
+    const pulses = detectPulses(rawSlice.dates, rawSlice.values);
+    const streak = computeStreak(rawSlice.dates, rawSlice.values);
     const change30pct = ((latest - values[Math.max(0, n - 30)]) / values[Math.max(0, n - 30)]) * 100;
-    const latestFR = fillRates[n - 1];
 
-    // 90d avg fill rate (surprise baseline) — use ALL data for stable baseline
-    const allFR = computeFillRate(allDates, allValues);
+    // Fill rate for chart (based on current granularity)
+    const chartFR = computeFillRate(dates, values);
+
+    // 90d baseline surprise
     const baseline90 = allFR.filter(r => r !== null).slice(-90);
     const avgFR90 = baseline90.length ? baseline90.reduce((a, b) => a + b, 0) / baseline90.length : 0;
     const surprise = latestFR !== null ? latestFR - avgFR90 : null;
 
-    // Days to capacity / days to empty
-    let daysVal = null, daysLabel = '', daysSub = '';
+    // Days calc
+    let daysVal = null, daysLabel = 'Days to Capacity', daysSub = '';
     if (latestFR !== null && latestFR > 0.005) {
         daysVal = Math.round((MAX_CAP - latest) / latestFR);
-        daysLabel = 'Days to Capacity';
-        daysSub = `At ${latestFR.toFixed(3)} Mb/d fill rate`;
+        daysSub = `at +${latestFR.toFixed(3)} Mb/d`;
     } else if (latestFR !== null && latestFR < -0.005) {
         daysVal = Math.round(latest / Math.abs(latestFR));
         daysLabel = 'Days to Empty';
-        daysSub = `At ${Math.abs(latestFR).toFixed(3)} Mb/d draw rate`;
-    } else {
-        daysLabel = 'Days to Capacity';
-        daysSub = 'Rate near zero';
+        daysSub = `at ${latestFR.toFixed(3)} Mb/d`;
     }
 
-    // Alert
+    // ── KPI BAR ──
+    const frSign = latestFR !== null && latestFR >= 0 ? '+' : '';
+    const kFR = document.getElementById('kFillRate');
+    if (latestFR !== null) {
+        kFR.innerHTML = frSign + latestFR.toFixed(3) + '<span class="kpi-unit"> Mb/d</span>';
+        kFR.style.color = latestFR >= 0 ? '#f87171' : '#34d399';
+    }
+    document.getElementById('kFillRateSub').textContent = latestFR !== null ? (latestFR >= 0 ? '▲ Building' : '▼ Drawing') : '';
+
+    const kSur = document.getElementById('kSurprise');
+    if (surprise !== null) {
+        const ss = surprise >= 0 ? '+' : '';
+        kSur.innerHTML = ss + surprise.toFixed(3) + '<span class="kpi-unit"> Mb/d</span>';
+        kSur.style.color = Math.abs(surprise) < 0.05 ? '#64748b' : surprise > 0 ? '#f87171' : '#34d399';
+        document.getElementById('kSurpriseSub').textContent = Math.abs(surprise) < 0.05 ? 'In line' : surprise > 0 ? 'Surprise build' : 'Surprise draw';
+    }
+
+    document.getElementById('kDaysLabel').textContent = daysLabel;
+    const kD = document.getElementById('kDays');
+    if (daysVal !== null) {
+        kD.innerHTML = daysVal + '<span class="kpi-unit"> d</span>';
+        kD.style.color = daysVal < 30 ? '#f87171' : daysVal < 60 ? '#fbbf24' : '#f1f5f9';
+    } else { kD.innerHTML = '—'; }
+    document.getElementById('kDaysSub').textContent = daysSub;
+
+    document.getElementById('kVol').innerHTML = latest.toFixed(1) + '<span class="kpi-unit"> Mb</span>';
+    document.getElementById('kVolSub').textContent = `${dates[n-1]}`;
+    document.getElementById('kUtil').innerHTML = util.toFixed(1) + '<span class="kpi-unit">%</span>';
+    document.getElementById('kUtilSub').textContent = util > 85 ? 'Critical' : util > 70 ? 'Elevated' : 'Normal';
+
+    const kReg = document.getElementById('kRegime');
+    kReg.textContent = streak.type;
+    kReg.style.color = streak.type === 'BUILD' ? '#f87171' : '#34d399';
+    document.getElementById('kRegimeSub').textContent = `${streak.days}d`;
+
+    // ── ALERT ──
     const banner = document.getElementById('alertBanner');
     banner.className = 'alert-banner';
     if (util > 85) {
         banner.classList.add('visible', 'critical');
-        document.getElementById('alertText').textContent =
-            `Storage CRITICAL — ${util.toFixed(1)}% utilization. Historically precedes forced price concessions within 4–8 weeks.`;
-    } else if (pulses.length && pulses[pulses.length-1].end >= dates[Math.max(0, n-10)]) {
+        document.getElementById('alertText').textContent = `Storage CRITICAL — ${util.toFixed(1)}% utilization. Historically precedes forced price concessions within 4–8 weeks.`;
+    } else if (pulses.length && pulses[pulses.length-1].end >= rawSlice.dates[Math.max(0, rawSlice.dates.length-10)]) {
         banner.classList.add('visible', 'pulse');
         const last = pulses[pulses.length-1];
-        document.getElementById('alertText').textContent =
-            `Export pulse detected: ${last.start} → ${last.end} · −${last.delta.toFixed(2)} Mb in ${last.days}d · Probable VLCC loading`;
+        document.getElementById('alertText').textContent = `Export pulse: ${last.start} → ${last.end} · −${last.delta.toFixed(2)} Mb in ${last.days}d · Probable VLCC loading`;
     }
 
-    // ── VELOCITY HERO ──
-    const frSign = latestFR !== null && latestFR >= 0 ? '+' : '';
-    const frEl = document.getElementById('vhRate');
-    if (latestFR !== null) {
-        frEl.innerHTML = frSign + latestFR.toFixed(3) + '<span class="vh-unit"> Mb/d</span>';
-        frEl.style.color = latestFR >= 0 ? '#f87171' : '#34d399';
-    }
-    document.getElementById('vhRateSub').textContent = latestFR !== null
-        ? (latestFR >= 0 ? '▲ Building inventory' : '▼ Drawing inventory')
-        : '';
-
-    const surEl = document.getElementById('vhSurprise');
-    const surBadge = document.getElementById('vhSurpriseBadge');
-    if (surprise !== null) {
-        const ss = surprise >= 0 ? '+' : '';
-        surEl.innerHTML = ss + surprise.toFixed(3) + '<span class="vh-unit"> Mb/d</span>';
-        surEl.style.color = surprise > 0.05 ? '#f87171' : surprise < -0.05 ? '#34d399' : '#64748b';
-        if (Math.abs(surprise) < 0.05) {
-            surBadge.textContent = 'In line with baseline'; surBadge.className = 'vh-badge badge-blue';
-        } else if (surprise > 0) {
-            surBadge.textContent = 'Building faster than avg'; surBadge.className = 'vh-badge badge-red';
-        } else {
-            surBadge.textContent = 'Drawing faster than avg'; surBadge.className = 'vh-badge badge-green';
-        }
-    }
-
-    const daysEl = document.getElementById('vhDays');
-    document.getElementById('vhCapLabel').textContent = daysLabel;
-    if (daysVal !== null) {
-        daysEl.innerHTML = daysVal + '<span class="vh-unit"> d</span>';
-        daysEl.style.color = daysVal < 30 ? '#f87171' : daysVal < 60 ? '#fbbf24' : '#f1f5f9';
-    } else {
-        daysEl.innerHTML = '—';
-    }
-    document.getElementById('vhDaysSub').textContent = daysSub;
-
-    document.getElementById('vhDate').textContent = dates[n-1];
-    document.getElementById('vhVol').innerHTML = latest.toFixed(1) + '<span class="vh-unit"> Mb</span>';
-    const utilBadge = document.getElementById('vhUtilBadge');
-    utilBadge.textContent = util.toFixed(1) + '% utilized';
-    utilBadge.className = util > 85 ? 'vh-badge badge-red' : util > 70 ? 'vh-badge badge-yellow' : 'vh-badge badge-green';
-
-    const regEl = document.getElementById('vhRegime');
-    regEl.textContent = streak.type;
-    regEl.style.color = streak.type === 'BUILD' ? '#f87171' : '#34d399';
-    document.getElementById('vhRegimeSub').textContent = `${streak.days}d · ${streak.change >= 0 ? '+' : ''}${streak.change.toFixed(2)} Mb`;
-
-    // ── Block 1 cards ──
-    document.getElementById('metVol').innerHTML = latest.toFixed(1) + '<span class="card-unit"> Mb</span>';
-    document.getElementById('metVolSub').textContent = `of ${MAX_CAP} Mb capacity · 47 tanks`;
-
-    document.getElementById('metUtil').innerHTML = util.toFixed(1) + '<span class="card-unit">%</span>';
-    const utilCardBadge = document.getElementById('metUtilBadge');
-    if (util > 85) { utilCardBadge.textContent = 'Critical — forced sell risk'; utilCardBadge.className = 'badge badge-red'; document.getElementById('cardUtil').className = 'card accent-red'; }
-    else if (util > 70) { utilCardBadge.textContent = 'Elevated'; utilCardBadge.className = 'badge badge-yellow'; document.getElementById('cardUtil').className = 'card accent-yellow'; }
-    else { utilCardBadge.textContent = 'Normal'; utilCardBadge.className = 'badge badge-green'; }
+    // ── OVERVIEW CARDS ──
+    document.getElementById('mVol').innerHTML = latest.toFixed(1) + '<span class="cu"> Mb</span>';
+    document.getElementById('mUtil').innerHTML = util.toFixed(1) + '<span class="cu">%</span>';
+    const ub = document.getElementById('mUtilBadge');
+    if (util > 85) { ub.textContent = 'Critical'; ub.className = 'badge br'; document.getElementById('cUtil').className = 'card red'; }
+    else if (util > 70) { ub.textContent = 'Elevated'; ub.className = 'badge by'; document.getElementById('cUtil').className = 'card yellow'; }
+    else { ub.textContent = 'Normal'; ub.className = 'badge bg'; document.getElementById('cUtil').className = 'card'; }
 
     if (latestFR !== null) {
-        const rSign = latestFR >= 0 ? '+' : '';
-        const rEl = document.getElementById('metRate');
-        rEl.innerHTML = rSign + latestFR.toFixed(3) + '<span class="card-unit"> Mb/d</span>';
-        rEl.style.color = latestFR >= 0 ? '#f87171' : '#34d399';
-        document.getElementById('metRateSub').textContent = latestFR >= 0 ? '▲ Build' : '▼ Draw';
-        document.getElementById('cardRate').className = latestFR >= 0 ? 'card accent-red' : 'card accent-green';
+        const rs = latestFR >= 0 ? '+' : '';
+        document.getElementById('mRate').innerHTML = rs + latestFR.toFixed(3) + '<span class="cu"> Mb/d</span>';
+        document.getElementById('mRate').style.color = latestFR >= 0 ? '#f87171' : '#34d399';
+        document.getElementById('mRateSub').textContent = latestFR >= 0 ? '▲ Build' : '▼ Draw';
+        document.getElementById('cRate').className = latestFR >= 0 ? 'card red' : 'card green';
     }
 
-    document.getElementById('metDaysLabel').textContent = daysLabel;
+    document.getElementById('mDaysLabel').textContent = daysLabel;
     if (daysVal !== null) {
-        document.getElementById('metDays').innerHTML = daysVal + '<span class="card-unit"> d</span>';
-        document.getElementById('metDays').style.color = daysVal < 30 ? '#f87171' : daysVal < 60 ? '#fbbf24' : '#f1f5f9';
-        document.getElementById('cardDays').className = daysVal < 30 ? 'card accent-orange' : daysVal < 60 ? 'card accent-yellow' : 'card';
-    } else {
-        document.getElementById('metDays').innerHTML = '—';
-    }
-    document.getElementById('metDaysSub').textContent = daysSub;
+        document.getElementById('mDays').innerHTML = daysVal + '<span class="cu"> d</span>';
+        document.getElementById('mDays').style.color = daysVal < 30 ? '#f87171' : daysVal < 60 ? '#fbbf24' : '#f1f5f9';
+        document.getElementById('cDays').className = daysVal < 30 ? 'card orange' : daysVal < 60 ? 'card yellow' : 'card';
+    } else { document.getElementById('mDays').innerHTML = '—'; }
+    document.getElementById('mDaysSub').textContent = daysSub;
 
-    // ── Block 1 signal ──
+    // Overview signal
     const utilWord = util > 85 ? hl('critical', 'bad') : util > 70 ? hl('elevated', 'warn') : hl('normal', 'good');
     const rateWord = latestFR !== null && latestFR >= 0 ? hl('building', 'bad') : hl('drawing', 'good');
-    const capPressure = daysVal !== null && latestFR > 0
-        ? (daysVal < 30 ? ` Terminal fills in ${hl(daysVal + 'd', 'bad')} at current rate — ${hl('forced sell risk imminent', 'bad')}.`
-           : daysVal < 60 ? ` At current rate, capacity hit in ${hl(daysVal + 'd', 'warn')}.`
-           : '')
+    const capNote = daysVal !== null && latestFR > 0
+        ? (daysVal < 30 ? ` Terminal fills in ${hl(daysVal + 'd', 'bad')} — ${hl('forced sell risk imminent.', 'bad')}` : daysVal < 60 ? ` Capacity hit in ~${hl(daysVal + 'd', 'warn')}.` : '')
         : '';
-    document.getElementById('sig1').innerHTML =
-        `Storage at ${hl(latest.toFixed(2) + ' Mb', 'hl')} (${hl(util.toFixed(0) + '%', 'hl')} utilization) — ${utilWord}. Terminal is ${rateWord} at ${hl((latestFR !== null ? Math.abs(latestFR) : 0).toFixed(3) + ' Mb/d', 'hl')}.${capPressure}`;
+    document.getElementById('sig1').innerHTML = `Storage at ${hl(latest.toFixed(2) + ' Mb', 'hl')} (${hl(util.toFixed(0) + '%', 'hl')} utilization) — ${utilWord}. Terminal ${rateWord} at ${hl(Math.abs(latestFR !== null ? latestFR : 0).toFixed(3) + ' Mb/d', 'hl')}.${capNote}`;
 
-    // ── Block 2 cards ──
-    if (surprise !== null) {
-        const sSign = surprise >= 0 ? '+' : '';
-        const sEl = document.getElementById('metSurprise');
-        sEl.innerHTML = sSign + surprise.toFixed(3) + '<span class="card-unit"> Mb/d</span>';
-        sEl.style.color = Math.abs(surprise) < 0.05 ? '#64748b' : surprise > 0 ? '#f87171' : '#34d399';
-        const sBadge = document.getElementById('metSurpriseBadge');
-        if (Math.abs(surprise) < 0.05) { sBadge.textContent = 'In line'; sBadge.className = 'badge badge-blue'; document.getElementById('cardSurprise').className = 'card'; }
-        else if (surprise > 0) { sBadge.textContent = 'Surprise build'; sBadge.className = 'badge badge-red'; document.getElementById('cardSurprise').className = 'card accent-red'; }
-        else { sBadge.textContent = 'Surprise draw'; sBadge.className = 'badge badge-green'; document.getElementById('cardSurprise').className = 'card accent-green'; }
-    }
-
-    const c30Sign = change30pct >= 0 ? '+' : '';
-    const c30El = document.getElementById('metRate30');
-    c30El.innerHTML = c30Sign + change30pct.toFixed(1) + '<span class="card-unit">%</span>';
-    c30El.style.color = change30pct >= 0 ? '#f87171' : '#34d399';
-    document.getElementById('metRate30Sub').textContent = change30pct >= 0 ? '▲ vs 30 days ago' : '▼ vs 30 days ago';
-    document.getElementById('cardRate30').className = change30pct >= 0 ? 'card accent-red' : 'card accent-green';
-
-    const stEl = document.getElementById('metStreak');
-    stEl.textContent = streak.type;
-    stEl.style.color = streak.type === 'BUILD' ? '#f87171' : '#34d399';
-    const sc = streak.change >= 0 ? '+' : '';
-    document.getElementById('metStreakSub').textContent = `${streak.days}d since ${streak.startDate} · ${sc}${streak.change.toFixed(2)} Mb`;
-    document.getElementById('cardStreak').className = streak.type === 'BUILD' ? 'card accent-red' : 'card accent-green';
-
-    // ── Block 2 signal ──
-    const surpWord = surprise === null ? '' : Math.abs(surprise) < 0.05
-        ? 'Rate in line with 90d baseline.'
-        : surprise > 0
-            ? `Current rate is ${hl('+' + surprise.toFixed(3) + ' Mb/d', 'bad')} above 90d avg — ${hl('surprise build', 'bad')}. Bearish signal.`
-            : `Current rate is ${hl(surprise.toFixed(3) + ' Mb/d', 'good')} below 90d avg — ${hl('surprise draw', 'good')}. Bullish signal.`;
-    document.getElementById('sig2').innerHTML = surpWord +
-        ` Terminal in ${hl(streak.type, streak.type === 'BUILD' ? 'bad' : 'good')} mode for ${hl(streak.days + 'd', 'hl')}.`;
-
-    // ── Block 3 cards ──
-    const recent90 = pulses.filter(e => (new Date(dates[n-1]) - new Date(e.end)) / 86400000 <= 90);
-    document.getElementById('metEPS').textContent = recent90.length;
-    const epsBadge = document.getElementById('metEPSBadge');
-    epsBadge.textContent = recent90.length > 0 ? `${recent90.length} loading${recent90.length > 1 ? 's' : ''} last 90d` : 'None last 90d';
-    epsBadge.className = recent90.length > 0 ? 'badge badge-green' : 'badge badge-blue';
+    // ── EXPORT SECTION CARDS ──
+    const recent90 = pulses.filter(e => (new Date(rawSlice.dates[rawSlice.dates.length-1]) - new Date(e.end)) / 86400000 <= 90);
+    document.getElementById('mEPS').textContent = recent90.length;
+    const eb = document.getElementById('mEPSBadge');
+    eb.textContent = recent90.length > 0 ? `${recent90.length} loading${recent90.length > 1 ? 's' : ''} last 90d` : 'None last 90d';
+    eb.className = recent90.length > 0 ? 'badge bg' : 'badge bb';
 
     if (pulses.length > 1) {
-        let totalGap = 0;
-        for (let i = 1; i < pulses.length; i++) totalGap += (new Date(pulses[i].start) - new Date(pulses[i-1].start)) / 86400000;
-        const avg = Math.round(totalGap / (pulses.length - 1));
-        document.getElementById('metInterval').innerHTML = avg + '<span class="card-unit"> d</span>';
+        let g = 0; for (let i = 1; i < pulses.length; i++) g += (new Date(pulses[i].start) - new Date(pulses[i-1].start)) / 86400000;
+        const avg = Math.round(g / (pulses.length - 1));
+        document.getElementById('mInterval').innerHTML = avg + '<span class="cu"> d</span>';
         const next = new Date(pulses[pulses.length-1].start);
         next.setDate(next.getDate() + avg);
-        const daysUntil = Math.round((next - new Date(dates[n-1])) / 86400000);
-        document.getElementById('metIntervalSub').textContent = daysUntil > 0
-            ? `Next ~${next.toISOString().slice(0,10)} (in ${daysUntil}d)`
-            : `Overdue by ${Math.abs(daysUntil)}d`;
+        const du = Math.round((next - new Date(rawSlice.dates[rawSlice.dates.length-1])) / 86400000);
+        document.getElementById('mIntervalSub').textContent = du > 0 ? `Next ~${next.toISOString().slice(0,10)} (in ${du}d)` : `Overdue by ${Math.abs(du)}d`;
     } else {
-        document.getElementById('metInterval').innerHTML = '--<span class="card-unit"> d</span>';
-        document.getElementById('metIntervalSub').textContent = 'Insufficient data';
+        document.getElementById('mInterval').innerHTML = '--<span class="cu"> d</span>';
+        document.getElementById('mIntervalSub').textContent = 'Insufficient data';
     }
 
     const exp90vol = recent90.reduce((s, e) => s + e.delta, 0);
-    document.getElementById('metExp90').innerHTML = exp90vol.toFixed(2) + '<span class="card-unit"> Mb</span>';
-    document.getElementById('metExp90Sub').textContent = `${recent90.length} pulses · ≈${(exp90vol / 2).toFixed(1)} VLCCs`;
+    document.getElementById('mExp90').innerHTML = exp90vol.toFixed(2) + '<span class="cu"> Mb</span>';
+    document.getElementById('mExp90Sub').textContent = `${recent90.length} pulses · ≈${(exp90vol / 2).toFixed(1)} VLCCs`;
 
-    // ── Block 3 signal ──
+    if (surprise !== null) {
+        const ss = surprise >= 0 ? '+' : '';
+        document.getElementById('mSurprise').innerHTML = ss + surprise.toFixed(3) + '<span class="cu"> Mb/d</span>';
+        document.getElementById('mSurprise').style.color = Math.abs(surprise) < 0.05 ? '#64748b' : surprise > 0 ? '#f87171' : '#34d399';
+        const sb = document.getElementById('mSurpriseBadge');
+        if (Math.abs(surprise) < 0.05) { sb.textContent = 'In line with baseline'; sb.className = 'badge bb'; document.getElementById('cSurprise').className = 'card'; }
+        else if (surprise > 0) { sb.textContent = 'Surprise build'; sb.className = 'badge br'; document.getElementById('cSurprise').className = 'card red'; }
+        else { sb.textContent = 'Surprise draw'; sb.className = 'badge bg'; document.getElementById('cSurprise').className = 'card green'; }
+    }
+
+    const c30s = change30pct >= 0 ? '+' : '';
+    document.getElementById('mChange30').innerHTML = c30s + change30pct.toFixed(1) + '<span class="cu">%</span>';
+    document.getElementById('mChange30').style.color = change30pct >= 0 ? '#f87171' : '#34d399';
+    document.getElementById('mChange30Sub').textContent = change30pct >= 0 ? '▲ vs 30 days ago' : '▼ vs 30 days ago';
+    document.getElementById('cChange30').className = change30pct >= 0 ? 'card red' : 'card green';
+
+    const stEl = document.getElementById('mStreak');
+    stEl.textContent = streak.type;
+    stEl.style.color = streak.type === 'BUILD' ? '#f87171' : '#34d399';
+    document.getElementById('mStreakSub').textContent = `${streak.days}d · ${streak.change >= 0 ? '+' : ''}${streak.change.toFixed(2)} Mb`;
+    document.getElementById('cStreak').className = streak.type === 'BUILD' ? 'card red' : 'card green';
+
+    // Export signal
     if (pulses.length === 0) {
         document.getElementById('sig3').innerHTML = 'No VLCC loading events detected in the selected period.';
     } else {
         const last = pulses[pulses.length - 1];
-        const daysSince = Math.round((new Date(dates[n-1]) - new Date(last.end)) / 86400000);
-        document.getElementById('sig3').innerHTML =
-            `Last detected loading: ${hl(last.start, 'hl')} → ${hl(last.end, 'hl')} · ${hl('−' + last.delta.toFixed(2) + ' Mb', 'good')} in ${last.days}d · ${daysSince < 5 ? hl('May still be loading.', 'warn') : daysSince + 'd ago.'}` +
-            ` ${recent90.length} loadings in past 90d, total ${hl(exp90vol.toFixed(2) + ' Mb', 'hl')} exported.`;
+        const ds = Math.round((new Date(rawSlice.dates[rawSlice.dates.length-1]) - new Date(last.end)) / 86400000);
+        document.getElementById('sig3').innerHTML = `Last loading: ${hl(last.start, 'hl')} → ${hl(last.end, 'hl')} · ${hl('−' + last.delta.toFixed(2) + ' Mb', 'good')} in ${last.days}d · ${ds < 5 ? hl('May still be loading.', 'warn') : ds + 'd ago.'}` +
+            ` ${recent90.length} loadings in 90d — ${hl(exp90vol.toFixed(2) + ' Mb', 'hl')} total.`;
     }
 
-    // ── Pulse log ──
+    // Pulse log
     const shown = [...pulses].reverse().slice(0, 10);
-    const pulseList = document.getElementById('pulseList');
-    if (!shown.length) {
-        pulseList.innerHTML = '<div style="color:var(--muted);font-size:0.75rem;padding:0.5rem 0">No events in selected period</div>';
-    } else {
-        pulseList.innerHTML = shown.map(e =>
-            `<div class="pulse-row">
-                <span class="pulse-dates">${e.start} → ${e.end} &nbsp;(${e.days}d)</span>
-                <span class="pulse-vol">−${e.delta.toFixed(2)} Mb</span>
-            </div>`).join('');
-    }
+    document.getElementById('pulseList').innerHTML = shown.length
+        ? shown.map(e => `<div class="pulse-row"><span class="pulse-dates">${e.start} → ${e.end} &nbsp;(${e.days}d)</span><span class="pulse-vol">−${e.delta.toFixed(2)} Mb</span></div>`).join('')
+        : '<div style="color:var(--muted);font-size:0.75rem;padding:0.5rem 0">No events in selected period</div>';
 
+    // Charts
     destroyCharts();
     renderMainChart(dates, values);
-    renderFillRateChart(dates, fillRates);
+    renderFillRateChart(dates, chartFR);
     renderSPIChart(dates, spiSeries);
-    renderMonthlyChart(dates, values);
+    renderMonthlyChart(rawSlice.dates, rawSlice.values);
     renderPulseHistChart(pulses);
 }
 
@@ -704,7 +791,7 @@ function renderMainChart(dates, values) {
 }
 
 function renderFillRateChart(dates, rates) {
-    charts.fillRate = new Chart(document.getElementById('fillRateChart').getContext('2d'), {
+    charts.fr = new Chart(document.getElementById('fillRateChart').getContext('2d'), {
         type: 'bar',
         data: { labels: dates, datasets: [{ label: 'Fill Rate (Mb/d)', data: rates,
             backgroundColor: rates.map(r => r === null ? 'transparent' : r >= 0 ? 'rgba(239,68,68,0.55)' : 'rgba(52,211,153,0.55)'), borderWidth: 0 }]},
@@ -714,16 +801,16 @@ function renderFillRateChart(dates, rates) {
     });
 }
 
-function renderSPIChart(dates, spiSeries) {
+function renderSPIChart(dates, spi) {
     charts.spi = new Chart(document.getElementById('spiChart').getContext('2d'), {
         type: 'line',
         data: { labels: dates, datasets: [
-            { label: 'Utilization (%)', data: spiSeries, borderColor: '#f59e0b', backgroundColor: 'rgba(245,158,11,0.05)', fill: true, tension: 0.3, pointRadius: 0, borderWidth: 2 },
+            { label: 'Utilization (%)', data: spi, borderColor: '#f59e0b', backgroundColor: 'rgba(245,158,11,0.05)', fill: true, tension: 0.3, pointRadius: 0, borderWidth: 2 },
             { label: '85% alert', data: dates.map(() => 85), borderColor: 'rgba(239,68,68,0.25)', borderDash: [6,4], pointRadius: 0, fill: false, borderWidth: 1 }
         ]},
         options: { responsive: true, maintainAspectRatio: false, interaction: { intersect: false, mode: 'index' },
             plugins: { legend: { labels: { color: '#3d4f63', boxWidth: 10, font: { size: 10 } } } },
-            scales: { x: gX, y: { min: 0, max: 100, ticks: { color: '#3d4f63', callback: v => v + '%', font: { size: 10 } }, grid: { color: 'rgba(255,255,255,0.025)' } } } }
+            scales: { x: gX, y: { min: 0, max: 100, ticks: { color: '#3d4f63', callback: v => v + '%', font: { size: 10 } }, grid: gY.grid } } }
     });
 }
 
@@ -745,36 +832,35 @@ function renderMonthlyChart(dates, values) {
 function renderPulseHistChart(pulses) {
     const el = document.getElementById('pulseHistChart');
     if (!pulses.length) { el.parentElement.innerHTML = '<p style="color:var(--muted);font-size:0.75rem;padding:0.75rem 0">No loading events detected in selected period</p>'; return; }
-    charts.pulseHist = new Chart(el.getContext('2d'), {
+    charts.pulse = new Chart(el.getContext('2d'), {
         type: 'bar',
-        data: { labels: pulses.map(e => e.start), datasets: [{ label: 'Export Volume (Mb)', data: pulses.map(e => parseFloat(e.delta.toFixed(3))),
+        data: { labels: pulses.map(e => e.start), datasets: [{ label: 'Export Volume (Mb)', data: pulses.map(e => e.delta.toFixed(3)),
             backgroundColor: 'rgba(52,211,153,0.65)', borderColor: 'rgba(52,211,153,0.8)', borderWidth: 1, borderRadius: 4 }]},
         options: { responsive: true, maintainAspectRatio: false,
             plugins: { legend: { labels: { color: '#3d4f63', boxWidth: 10, font: { size: 10 } } },
                 tooltip: { backgroundColor: '#0d1117', borderColor: '#1e293b', borderWidth: 1,
                     callbacks: { title: ctx => { const e = pulses[ctx[0].dataIndex]; return `${e.start} → ${e.end} (${e.days}d)`; },
-                        label: ctx => ` −${ctx.parsed.y.toFixed(2)} Mb · probable VLCC` } } },
-            scales: { x: gX, y: { ...gY, ticks: { ...gY.ticks, callback: v => v.toFixed(1) + ' Mb' } } } }
+                        label: ctx => ` −${parseFloat(ctx.parsed.y).toFixed(2)} Mb · probable VLCC` } } },
+            scales: { x: gX, y: { ...gY, ticks: { ...gY.ticks, callback: v => v + ' Mb' } } } }
     });
 }
 
 function exportCSV() {
-    const { dates, values } = getSlice();
-    const frs = computeFillRate(dates, values);
-    const spis = values.map(v => (v / MAX_CAP) * 100);
+    const raw = getSliceRaw();
+    const frs = computeFillRate(raw.dates, raw.values);
     let csv = 'Date,Storage_Mb,Fill_Rate_Mb_per_day,Utilization_pct\n';
-    for (let i = 0; i < dates.length; i++)
-        csv += `${dates[i]},${values[i].toFixed(3)},${frs[i] !== null ? frs[i].toFixed(4) : ''},${spis[i].toFixed(2)}\n`;
+    for (let i = 0; i < raw.dates.length; i++)
+        csv += `${raw.dates[i]},${raw.values[i].toFixed(3)},${frs[i] !== null ? frs[i].toFixed(4) : ''},${(raw.values[i]/MAX_CAP*100).toFixed(2)}\n`;
     const a = document.createElement('a');
     a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv' }));
-    a.download = `kharg_intelligence_${dates[dates.length-1]}.csv`;
+    a.download = `kharg_${raw.dates[raw.dates.length-1]}.csv`;
     a.click();
 }
 
 checkAuth();
 loadData();
 
-// ── Per-Tank Map ──────────────────────────────────────────────────────────
+// ── Per-Tank Map ───────────────────────────────────────────────────────────
 const SUPABASE_URL = 'https://yoekhkczwdeyauwarsyy.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_7j07_zzdqTGM1LXf7-o9Tg_JJRbJQSM';
 const H_MIN = 2, BBL = 6.2898;
@@ -795,50 +881,33 @@ function tankColor(r) {
 function calcRatio(db, p5, p95) { return p95 === p5 ? 0.5 : Math.max(0, Math.min(1, (p95-db)/(p95-p5))); }
 function calcMb(ratio, rm, hm) { return Math.PI*rm*rm*(H_MIN+ratio*(hm-H_MIN))*BBL/1e6; }
 function pct(arr, p) { const s=[...arr].sort((a,b)=>a-b); const i=(p/100)*(s.length-1); const lo=Math.floor(i),hi=Math.ceil(i); return s[lo]+(s[hi]-s[lo])*(i-lo); }
-
 function makeTankSVG(id, info, ratio) {
     const r=info.r, sz=r*2+4, cx=r+2, cy=r+2, fh=ratio!==null?ratio*r*2:0, col=tankColor(ratio), num=id.replace(/^t\d+_/,''), fs=Math.max(6,r*0.38);
-    return L.divIcon({ html:
-        `<svg width="${sz}" height="${sz}" viewBox="0 0 ${sz} ${sz}" xmlns="http://www.w3.org/2000/svg" style="display:block;overflow:visible">
-        <defs><clipPath id="c-${id}"><circle cx="${cx}" cy="${cy}" r="${r}"/></clipPath></defs>
-        <circle cx="${cx}" cy="${cy}" r="${r}" fill="rgba(8,10,13,0.85)"/>
-        <rect x="${cx-r}" y="${cy+r-fh}" width="${r*2}" height="${fh}" fill="${col}" clip-path="url(#c-${id})" opacity="0.9"/>
-        <circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${ratio!==null?col:'#1e2d3d'}" stroke-width="1.5" opacity="${ratio!==null?0.7:0.3}"/>
-        <text x="${cx}" y="${cy+fs*0.4}" text-anchor="middle" fill="#8ab0cc" font-size="${fs}" font-family="monospace">${num}</text>
-        </svg>`,
-        iconSize:[sz,sz], iconAnchor:[cx,cy], className:'tank-div-icon'
-    });
+    return L.divIcon({ html: `<svg width="${sz}" height="${sz}" viewBox="0 0 ${sz} ${sz}" xmlns="http://www.w3.org/2000/svg" style="display:block;overflow:visible"><defs><clipPath id="c-${id}"><circle cx="${cx}" cy="${cy}" r="${r}"/></clipPath></defs><circle cx="${cx}" cy="${cy}" r="${r}" fill="rgba(8,10,13,0.85)"/><rect x="${cx-r}" y="${cy+r-fh}" width="${r*2}" height="${fh}" fill="${col}" clip-path="url(#c-${id})" opacity="0.9"/><circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${ratio!==null?col:'#1e2d3d'}" stroke-width="1.5" opacity="${ratio!==null?0.7:0.3}"/><text x="${cx}" y="${cy+fs*0.4}" text-anchor="middle" fill="#8ab0cc" font-size="${fs}" font-family="monospace">${num}</text></svg>`,
+        iconSize:[sz,sz], iconAnchor:[cx,cy], className:'tank-div-icon' });
 }
 
 async function initTankMap() {
     const map = L.map('tankMap', { center:[29.228,50.312], zoom:14, zoomControl:true, attributionControl:false });
     L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { maxZoom:19 }).addTo(map);
-
     const markers = {};
     Object.entries(TANKS).forEach(([id, info]) => {
         const m = L.marker([info.lat, info.lon], { icon: makeTankSVG(id, info, null) });
         m.bindPopup('', { maxWidth:220, offset:[0,-(info.r+4)] });
         m.on('click', () => {
             const s = window._ds && window._ds[id];
-            m.getPopup().setContent(s
-                ? `<b style="font-family:monospace">${id}</b><br>Fill: ${s.ratio!==null?(s.ratio*100).toFixed(1)+'%':'N/A'}<br>Volume: ${s.mb!==null?s.mb.toFixed(3)+' Mb':'N/A'}<br>Type: ${id.split('_')[0].replace('t','')}m radius`
-                : `<b>${id}</b><br>No data`);
+            m.getPopup().setContent(s ? `<b style="font-family:monospace">${id}</b><br>Fill: ${s.ratio!==null?(s.ratio*100).toFixed(1)+'%':'N/A'}<br>Volume: ${s.mb!==null?s.mb.toFixed(3)+' Mb':'N/A'}` : `<b>${id}</b><br>No data`);
         });
-        m.addTo(map);
-        markers[id] = m;
+        m.addTo(map); markers[id] = m;
     });
-
     const headers = { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` };
     let all = [], offset = 0;
     try {
         while (true) {
             const batch = await fetch(`${SUPABASE_URL}/rest/v1/raw_observations?select=date,tank_id,db_mean&order=date&limit=1000&offset=${offset}`, { headers }).then(r => r.json());
-            all = all.concat(batch);
-            if (batch.length < 1000) break;
-            offset += 1000;
+            all = all.concat(batch); if (batch.length < 1000) break; offset += 1000;
         }
     } catch { document.getElementById('mapLoading').textContent = 'Error loading map data.'; return; }
-
     document.getElementById('mapLoading').style.display = 'none';
     const data = all.filter(r => TANKS[r.tank_id]);
     const dbByTank = {};
@@ -848,18 +917,15 @@ async function initTankMap() {
     const byDate = {};
     data.forEach(r => { if (!byDate[r.date]) byDate[r.date]={}; byDate[r.date][r.tank_id]=r; });
     const dates = Object.keys(byDate).sort();
-
     function renderDate(dt) {
         const dd = byDate[dt]||{}; window._ds={};
         Object.entries(TANKS).forEach(([id, info]) => {
             const obs=dd[id]; let ratio=null, mb=null;
             if (obs && cal[id]) { ratio=calcRatio(obs.db_mean,cal[id].p5,cal[id].p95); mb=calcMb(ratio,info.rm,info.hm); }
-            window._ds[id]={ratio,mb};
-            markers[id].setIcon(makeTankSVG(id,info,ratio));
+            window._ds[id]={ratio,mb}; markers[id].setIcon(makeTankSVG(id,info,ratio));
         });
         document.getElementById('mapDateLabel').textContent = dt;
     }
-
     const slider = document.getElementById('mapSlider');
     slider.max = dates.length-1; slider.value = dates.length-1;
     renderDate(dates[dates.length-1]);
@@ -867,7 +933,6 @@ async function initTankMap() {
     document.getElementById('mapPrev').addEventListener('click', () => { const v=Math.max(0,+slider.value-1); slider.value=v; renderDate(dates[v]); });
     document.getElementById('mapNext').addEventListener('click', () => { const v=Math.min(dates.length-1,+slider.value+1); slider.value=v; renderDate(dates[v]); });
 }
-initTankMap();
 </script>
 </body>
 </html>
