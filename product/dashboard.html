@@ -10,7 +10,7 @@
     <link rel="icon" type="image/png" sizes="16x16" href="/assets/images/favicon-16x16.png">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:ital,wght@0,400;0,500;0,600;1,400&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-TZQ5VH3GPY"></script>
     <script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','G-TZQ5VH3GPY');</script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -18,718 +18,770 @@
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: 'Inter', sans-serif; background: #080b12; min-height: 100vh; color: #fff; }
+        :root {
+            --bg: #080b12;
+            --surface: #0d1117;
+            --border: rgba(255,255,255,0.06);
+            --muted: #3d4f63;
+            --subtle: #1e2d3d;
+            --text: #c9d8e8;
+            --dim: #64748b;
+            --accent: #3b82f6;
+        }
+        body { font-family: 'Inter', sans-serif; background: var(--bg); min-height: 100vh; color: var(--text); }
 
-        .nav { padding: 1rem 2rem; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.06); background: #080b12; position: sticky; top: 0; z-index: 100; }
-        .nav-logo { font-family: 'Space Grotesk', sans-serif; font-size: 1.1rem; font-weight: 700; letter-spacing: 0.18em; color: #3b82f6; }
-        .nav-right { display: flex; align-items: center; gap: 1.25rem; }
-        .user-email { color: #475569; font-size: 0.8rem; }
-        .logout-btn { background: none; border: 1px solid rgba(239,68,68,0.25); color: #f87171; padding: 0.35rem 0.9rem; border-radius: 4px; font-size: 0.75rem; cursor: pointer; letter-spacing: 0.04em; }
+        /* Nav */
+        .nav { padding: 1rem 2.5rem; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 100; background: rgba(8,11,18,0.96); backdrop-filter: blur(8px); }
+        .nav-logo { font-family: 'Space Grotesk', sans-serif; font-size: 1rem; font-weight: 700; letter-spacing: 0.2em; color: var(--accent); }
+        .nav-right { display: flex; align-items: center; gap: 1.5rem; }
+        .user-email { color: var(--muted); font-size: 0.78rem; }
+        .logout-btn { background: none; border: 1px solid rgba(239,68,68,0.2); color: #f87171; padding: 0.3rem 0.85rem; border-radius: 4px; font-size: 0.72rem; cursor: pointer; letter-spacing: 0.05em; transition: border-color 0.2s; }
+        .logout-btn:hover { border-color: rgba(239,68,68,0.5); }
 
-        .container { max-width: 1400px; margin: 0 auto; padding: 2rem; }
+        /* Layout */
+        .container { max-width: 1280px; margin: 0 auto; padding: 3rem 2.5rem 6rem; }
 
-        /* Top summary bar */
-        .summary-bar { display: flex; align-items: baseline; gap: 2rem; margin-bottom: 2rem; padding-bottom: 1.5rem; border-bottom: 1px solid rgba(255,255,255,0.05); flex-wrap: wrap; }
-        .summary-stat { }
-        .summary-val { font-family: 'Space Grotesk', sans-serif; font-size: 2.5rem; font-weight: 700; line-height: 1; color: #fff; }
-        .summary-val span { font-size: 1rem; color: #475569; font-weight: 400; margin-left: 0.25rem; }
-        .summary-label { font-size: 0.65rem; color: #475569; text-transform: uppercase; letter-spacing: 0.1em; margin-top: 0.35rem; }
-        .summary-divider { width: 1px; height: 2.5rem; background: rgba(255,255,255,0.06); align-self: center; }
+        /* Page hero */
+        .page-hero { margin-bottom: 3rem; }
+        .page-title { font-family: 'Space Grotesk', sans-serif; font-size: 1.5rem; font-weight: 600; color: #e2e8f0; letter-spacing: -0.01em; }
+        .page-meta { color: var(--dim); font-size: 0.78rem; margin-top: 0.4rem; }
 
         /* Alert */
-        .alert-banner { border-radius: 6px; padding: 0.65rem 1rem; margin-bottom: 1.5rem; display: none; font-size: 0.8rem; align-items: center; gap: 0.5rem; }
+        .alert-banner { border-radius: 8px; padding: 0.75rem 1.25rem; margin-bottom: 2.5rem; display: none; font-size: 0.82rem; align-items: center; gap: 0.6rem; line-height: 1.5; }
         .alert-banner.visible { display: flex; }
-        .alert-banner.pulse { background: rgba(16,185,129,0.08); border: 1px solid rgba(16,185,129,0.25); color: #6ee7b7; }
-        .alert-banner.critical { background: rgba(239,68,68,0.08); border: 1px solid rgba(239,68,68,0.25); color: #fca5a5; }
+        .alert-banner.pulse { background: rgba(16,185,129,0.07); border: 1px solid rgba(16,185,129,0.2); color: #6ee7b7; }
+        .alert-banner.critical { background: rgba(239,68,68,0.07); border: 1px solid rgba(239,68,68,0.2); color: #fca5a5; }
 
         /* Controls */
-        .controls-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2.5rem; gap: 1rem; }
-        .period-group { display: flex; gap: 0.25rem; }
-        .btn { background: transparent; border: 1px solid rgba(255,255,255,0.08); color: #475569; padding: 0.35rem 0.8rem; border-radius: 4px; font-size: 0.75rem; cursor: pointer; transition: all 0.15s; letter-spacing: 0.04em; }
-        .btn:hover { color: #94a3b8; border-color: rgba(255,255,255,0.15); }
-        .btn.active { background: rgba(59,130,246,0.12); border-color: rgba(59,130,246,0.4); color: #60a5fa; }
-        .export-btn { background: transparent; border: 1px solid rgba(59,130,246,0.25); color: #60a5fa; padding: 0.35rem 0.9rem; border-radius: 4px; font-size: 0.75rem; cursor: pointer; letter-spacing: 0.04em; }
+        .controls-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4rem; gap: 1rem; }
+        .period-group { display: flex; gap: 0.2rem; background: var(--surface); border: 1px solid var(--border); border-radius: 6px; padding: 0.25rem; }
+        .btn { background: transparent; border: none; color: var(--muted); padding: 0.35rem 0.85rem; border-radius: 4px; font-size: 0.74rem; cursor: pointer; transition: all 0.15s; letter-spacing: 0.04em; font-family: inherit; }
+        .btn:hover { color: var(--text); }
+        .btn.active { background: rgba(59,130,246,0.15); color: #60a5fa; }
+        .export-btn { background: transparent; border: 1px solid var(--border); color: var(--dim); padding: 0.4rem 1rem; border-radius: 6px; font-size: 0.74rem; cursor: pointer; letter-spacing: 0.04em; transition: all 0.2s; font-family: inherit; }
+        .export-btn:hover { border-color: rgba(255,255,255,0.15); color: var(--text); }
 
-        /* Section */
-        .section { margin-top: 3rem; margin-bottom: 1.25rem; }
-        .section-title { font-size: 0.65rem; color: #334155; text-transform: uppercase; letter-spacing: 0.15em; font-weight: 600; }
+        /* ── Block structure ── */
+        .block { margin-bottom: 5rem; }
 
-        /* Metric cards */
-        .metrics-grid { display: grid; gap: 1px; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.04); border-radius: 10px; overflow: hidden; }
-        .metrics-grid-4 { grid-template-columns: repeat(4, 1fr); }
-        .metrics-grid-3 { grid-template-columns: repeat(3, 1fr); }
-        @media (max-width: 1100px) { .metrics-grid-4 { grid-template-columns: repeat(2, 1fr); } }
-        @media (max-width: 900px) { .metrics-grid-3, .metrics-grid-4 { grid-template-columns: repeat(2, 1fr); } }
+        .block-header { margin-bottom: 1.5rem; }
+        .block-question { font-family: 'Space Grotesk', sans-serif; font-size: 1.25rem; font-weight: 600; color: #e2e8f0; letter-spacing: -0.01em; line-height: 1.3; }
+        .block-interp { font-size: 0.82rem; color: var(--dim); margin-top: 0.55rem; line-height: 1.6; font-style: italic; }
+        .block-interp .highlight { color: var(--text); font-style: normal; font-weight: 500; }
+        .block-interp .good { color: #10b981; font-style: normal; font-weight: 600; }
+        .block-interp .warn { color: #f59e0b; font-style: normal; font-weight: 600; }
+        .block-interp .bad { color: #ef4444; font-style: normal; font-weight: 600; }
 
-        .metric-card { background: #0c1018; padding: 1.5rem 1.75rem; position: relative; }
-        .metric-card.alert { background: #0e0a0a; }
-        .metric-card.warning { background: #0d0c09; }
-        .metric-card.positive { background: #090d0c; }
+        /* Cards */
+        .cards { display: grid; gap: 1rem; margin-bottom: 1.25rem; }
+        .cards-4 { grid-template-columns: repeat(4, 1fr); }
+        .cards-3 { grid-template-columns: repeat(3, 1fr); }
+        @media (max-width: 1100px) { .cards-4 { grid-template-columns: repeat(2, 1fr); } }
+        @media (max-width: 860px) { .cards-3, .cards-4 { grid-template-columns: repeat(2, 1fr); } }
 
-        .metric-label { color: #334155; font-size: 0.6rem; text-transform: uppercase; letter-spacing: 0.12em; margin-bottom: 0.75rem; font-weight: 600; }
-        .metric-value { font-family: 'Space Grotesk', sans-serif; font-size: 2.25rem; font-weight: 700; line-height: 1; color: #e2e8f0; }
-        .metric-unit { font-size: 0.9rem; color: #475569; font-weight: 400; }
-        .metric-sub { font-size: 0.72rem; color: #475569; margin-top: 0.5rem; }
-        .metric-badge { display: inline-block; padding: 0.18rem 0.5rem; border-radius: 3px; font-size: 0.6rem; font-weight: 700; letter-spacing: 0.08em; margin-top: 0.5rem; text-transform: uppercase; }
-        .badge-red { background: rgba(239,68,68,0.12); color: #f87171; }
-        .badge-yellow { background: rgba(251,191,36,0.12); color: #fbbf24; }
-        .badge-green { background: rgba(16,185,129,0.12); color: #10b981; }
-        .badge-blue { background: rgba(59,130,246,0.12); color: #60a5fa; }
+        .card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 1.5rem 1.75rem; }
+        .card.state-build { border-color: rgba(239,68,68,0.2); }
+        .card.state-draw { border-color: rgba(16,185,129,0.2); }
+        .card.state-warn { border-color: rgba(251,191,36,0.2); }
+        .card.state-critical { border-color: rgba(239,68,68,0.35); }
+
+        .card-label { font-size: 0.62rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.12em; margin-bottom: 0.9rem; font-weight: 600; }
+        .card-value { font-family: 'Space Grotesk', sans-serif; font-size: 2.4rem; font-weight: 700; line-height: 1; color: #f1f5f9; }
+        .card-value.large { font-size: 1.8rem; letter-spacing: 0.02em; }
+        .card-unit { font-size: 0.9rem; color: var(--muted); font-weight: 400; margin-left: 0.2rem; }
+        .card-sub { font-size: 0.72rem; color: var(--muted); margin-top: 0.6rem; line-height: 1.5; }
+        .badge { display: inline-block; padding: 0.2rem 0.55rem; border-radius: 3px; font-size: 0.6rem; font-weight: 700; letter-spacing: 0.08em; margin-top: 0.6rem; text-transform: uppercase; }
+        .badge-green { background: rgba(16,185,129,0.1); color: #34d399; }
+        .badge-yellow { background: rgba(251,191,36,0.1); color: #fbbf24; }
+        .badge-red { background: rgba(239,68,68,0.1); color: #f87171; }
+        .badge-blue { background: rgba(59,130,246,0.1); color: #60a5fa; }
 
         /* Charts */
-        .chart-card { background: #0c1018; border: 1px solid rgba(255,255,255,0.04); border-radius: 10px; padding: 1.5rem 1.75rem; margin-top: 1px; }
-        .chart-head { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1.25rem; }
-        .chart-title { font-size: 0.75rem; color: #64748b; text-transform: uppercase; letter-spacing: 0.1em; font-weight: 600; }
-        .chart-meta { font-size: 0.6rem; color: #1e293b; text-align: right; line-height: 1.6; }
-        .chart-wrap { position: relative; height: 240px; }
-        .chart-wrap.tall { height: 300px; }
+        .chart-box { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 1.5rem 1.75rem; margin-bottom: 1rem; }
+        .chart-box-head { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1.25rem; }
+        .chart-box-title { font-size: 0.72rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.1em; font-weight: 600; }
+        .chart-box-meta { font-size: 0.6rem; color: var(--subtle); text-align: right; line-height: 1.7; }
+        .chart-h { position: relative; height: 240px; }
+        .chart-h-tall { position: relative; height: 300px; }
 
         /* Pulse log */
-        .pulse-list { list-style: none; }
-        .pulse-item { display: flex; justify-content: space-between; padding: 0.55rem 0; border-bottom: 1px solid rgba(255,255,255,0.03); font-size: 0.8rem; }
-        .pulse-item:last-child { border-bottom: none; }
-        .pulse-date { color: #475569; font-family: monospace; font-size: 0.72rem; }
-        .pulse-vol { font-weight: 700; color: #10b981; font-family: 'Space Grotesk', sans-serif; font-size: 0.85rem; }
+        .pulse-log { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 1.25rem 1.75rem; }
+        .pulse-log-title { font-size: 0.62rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.12em; font-weight: 600; margin-bottom: 1rem; }
+        .pulse-row { display: flex; justify-content: space-between; align-items: center; padding: 0.5rem 0; border-bottom: 1px solid rgba(255,255,255,0.03); }
+        .pulse-row:last-child { border-bottom: none; }
+        .pulse-dates { font-family: monospace; font-size: 0.72rem; color: var(--dim); }
+        .pulse-vol { font-family: 'Space Grotesk', sans-serif; font-size: 0.9rem; font-weight: 600; color: #34d399; }
 
         /* Map */
-        .map-card { background: #0c1018; border: 1px solid rgba(255,255,255,0.04); border-radius: 10px; padding: 1.5rem 1.75rem; margin-top: 1px; }
-        #tankMap { height: 520px; border-radius: 6px; }
-        .map-controls { display: flex; align-items: center; gap: 0.75rem; margin-top: 0.75rem; }
-        .map-date-label { font-family: monospace; font-size: 0.72rem; color: #475569; min-width: 90px; }
-        .map-slider { flex: 1; accent-color: #3b82f6; }
-        .map-nav-btn { background: transparent; border: 1px solid rgba(255,255,255,0.08); color: #475569; padding: 0.3rem 0.65rem; border-radius: 4px; font-size: 0.75rem; cursor: pointer; }
+        .map-box { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 1.5rem 1.75rem; }
+        #tankMap { height: 540px; border-radius: 7px; }
+        .map-controls { display: flex; align-items: center; gap: 0.75rem; margin-top: 1rem; }
+        .map-date { font-family: monospace; font-size: 0.72rem; color: var(--dim); min-width: 90px; }
+        .map-slider { flex: 1; accent-color: var(--accent); }
+        .map-btn { background: transparent; border: 1px solid var(--border); color: var(--muted); padding: 0.3rem 0.7rem; border-radius: 4px; font-size: 0.75rem; cursor: pointer; transition: border-color 0.2s; }
+        .map-btn:hover { border-color: rgba(255,255,255,0.15); }
         .tank-div-icon { background: none !important; border: none !important; }
     </style>
 </head>
 <body>
-    <nav class="nav">
-        <div class="nav-logo">OILRADAR</div>
-        <div class="nav-right">
-            <span class="user-email" id="userEmail"></span>
-            <button class="logout-btn" onclick="logout()">Logout</button>
+
+<nav class="nav">
+    <div class="nav-logo">OILRADAR</div>
+    <div class="nav-right">
+        <span class="user-email" id="userEmail"></span>
+        <button class="logout-btn" onclick="logout()">Logout</button>
+    </div>
+</nav>
+
+<div class="container">
+
+    <div class="page-hero">
+        <div class="page-title">Kharg Island · Iran Crude Terminal</div>
+        <div class="page-meta" id="pageMeta">Загрузка данных…</div>
+    </div>
+
+    <div class="alert-banner" id="alertBanner">
+        <span>⚡</span><span id="alertText"></span>
+    </div>
+
+    <div class="controls-row">
+        <div class="period-group">
+            <button class="btn" data-range="30" onclick="setRange(30)">1M</button>
+            <button class="btn" data-range="90" onclick="setRange(90)">3M</button>
+            <button class="btn" data-range="180" onclick="setRange(180)">6M</button>
+            <button class="btn" data-range="365" onclick="setRange(365)">1Y</button>
+            <button class="btn active" data-range="1095" onclick="setRange(1095)">3Y</button>
+            <button class="btn" data-range="0" onclick="setRange(0)">ALL</button>
         </div>
-    </nav>
+        <button class="export-btn" onclick="exportCSV()">Export CSV</button>
+    </div>
 
-    <div class="container">
-
-        <div class="summary-bar" id="summaryBar">
-            <div class="summary-stat">
-                <div class="summary-val" id="sumStorage">--<span>Mb</span></div>
-                <div class="summary-label">Storage</div>
-            </div>
-            <div class="summary-divider"></div>
-            <div class="summary-stat">
-                <div class="summary-val" id="sumUtil">--<span>%</span></div>
-                <div class="summary-label">Utilization</div>
-            </div>
-            <div class="summary-divider"></div>
-            <div class="summary-stat">
-                <div class="summary-val" id="sumRate" style="font-size:2rem">--<span>Mb/d</span></div>
-                <div class="summary-label">Fill Rate 7d</div>
-            </div>
-            <div class="summary-divider"></div>
-            <div class="summary-stat">
-                <div class="summary-val" id="sumRegime" style="font-size:1.5rem;letter-spacing:0.05em">--</div>
-                <div class="summary-label">Regime</div>
-            </div>
-        </div>
-
-        <div class="alert-banner" id="alertBanner">
-            <span>⚡</span><span id="alertText"></span>
-        </div>
-
-        <div class="controls-row">
-            <div class="period-group">
-                <button class="btn" data-range="30" onclick="setRange(30)">1M</button>
-                <button class="btn" data-range="90" onclick="setRange(90)">3M</button>
-                <button class="btn" data-range="180" onclick="setRange(180)">6M</button>
-                <button class="btn" data-range="365" onclick="setRange(365)">1Y</button>
-                <button class="btn active" data-range="1095" onclick="setRange(1095)">3Y</button>
-                <button class="btn" data-range="0" onclick="setRange(0)">ALL</button>
-            </div>
-            <button class="export-btn" onclick="exportCSV()">Export CSV</button>
+    <!-- ── BLOCK 1 ── -->
+    <div class="block">
+        <div class="block-header">
+            <div class="block-question">Сколько нефти хранится в терминале?</div>
+            <div class="block-interp" id="interp1">Загрузка…</div>
         </div>
 
-        <!-- ── STORAGE ──────────────────────────────────────────────────── -->
-        <div class="section"><div class="section-title">Storage</div></div>
-
-        <div class="metrics-grid metrics-grid-4">
-            <div class="metric-card" id="cardStorage">
-                <div class="metric-label">Current Volume</div>
-                <div class="metric-value" id="metStorage">--<span class="metric-unit"> Mb</span></div>
-                <div class="metric-sub" id="metStorageSub"></div>
+        <div class="cards cards-4">
+            <div class="card" id="cardStorage">
+                <div class="card-label">Текущий объём</div>
+                <div class="card-value" id="metStorage">--<span class="card-unit">Mb</span></div>
+                <div class="card-sub" id="metStorageSub"></div>
             </div>
-            <div class="metric-card" id="cardSPI">
-                <div class="metric-label">Utilization</div>
-                <div class="metric-value" id="metSPI">--<span class="metric-unit">%</span></div>
-                <div class="metric-badge" id="metSPIBadge"></div>
+            <div class="card" id="cardSPI">
+                <div class="card-label">Утилизация мощности</div>
+                <div class="card-value" id="metSPI">--<span class="card-unit">%</span></div>
+                <div class="badge" id="metSPIBadge"></div>
             </div>
-            <div class="metric-card" id="cardFillRate">
-                <div class="metric-label">Fill Rate · 7d avg</div>
-                <div class="metric-value" id="metFillRate">--<span class="metric-unit"> Mb/d</span></div>
-                <div class="metric-sub" id="metFillRateSub"></div>
+            <div class="card" id="cardFillRate">
+                <div class="card-label">Скорость изменения · 7d</div>
+                <div class="card-value" id="metFillRate">--<span class="card-unit">Mb/d</span></div>
+                <div class="card-sub" id="metFillRateSub"></div>
             </div>
-            <div class="metric-card" id="cardChange">
-                <div class="metric-label">30-Day Change</div>
-                <div class="metric-value" id="metChange">--<span class="metric-unit">%</span></div>
-                <div class="metric-sub" id="metChangeSub"></div>
+            <div class="card" id="cardChange">
+                <div class="card-label">Изменение за 30 дней</div>
+                <div class="card-value" id="metChange">--<span class="card-unit">%</span></div>
+                <div class="card-sub" id="metChangeSub"></div>
             </div>
         </div>
 
-        <div class="chart-card">
-            <div class="chart-head">
-                <div class="chart-title">Volume History</div>
-                <div class="chart-meta">Mb · Sentinel-1 SAR · ~6d revisit</div>
+        <div class="chart-box">
+            <div class="chart-box-head">
+                <div class="chart-box-title">История хранения · Kharg Island</div>
+                <div class="chart-box-meta">Mb · Sentinel-1 SAR · ~6 дней</div>
             </div>
-            <div class="chart-wrap tall"><canvas id="mainChart"></canvas></div>
+            <div class="chart-h-tall"><canvas id="mainChart"></canvas></div>
         </div>
 
-        <div class="chart-card">
-            <div class="chart-head">
-                <div class="chart-title">Fill Rate · Build vs Drawdown</div>
-                <div class="chart-meta">Mb/day · 7d delta · Red = build · Green = draw</div>
+        <div class="chart-box">
+            <div class="chart-box-head">
+                <div class="chart-box-title">Скорость закачки / слива</div>
+                <div class="chart-box-meta">Mb/день · 7d delta · красный = накопление · зелёный = слив</div>
             </div>
-            <div class="chart-wrap"><canvas id="fillRateChart"></canvas></div>
+            <div class="chart-h"><canvas id="fillRateChart"></canvas></div>
+        </div>
+    </div>
+
+    <!-- ── BLOCK 2 ── -->
+    <div class="block">
+        <div class="block-header">
+            <div class="block-question">Когда и сколько нефти было отгружено?</div>
+            <div class="block-interp" id="interp2">Загрузка…</div>
         </div>
 
-        <!-- ── EXPORTS ──────────────────────────────────────────────────── -->
-        <div class="section"><div class="section-title">Exports</div></div>
-
-        <div class="metrics-grid metrics-grid-3">
-            <div class="metric-card" id="cardEPS">
-                <div class="metric-label">Export Pulses · 90d</div>
-                <div class="metric-value" id="metEPS">--</div>
-                <div class="metric-badge" id="metEPSBadge"></div>
+        <div class="cards cards-3">
+            <div class="card" id="cardEPS">
+                <div class="card-label">Загрузок танкеров · 90d</div>
+                <div class="card-value" id="metEPS">--</div>
+                <div class="badge" id="metEPSBadge"></div>
             </div>
-            <div class="metric-card" id="cardExportInterval">
-                <div class="metric-label">Avg Export Interval</div>
-                <div class="metric-value" id="metExportInterval">--<span class="metric-unit"> d</span></div>
-                <div class="metric-sub" id="metExportIntervalSub"></div>
+            <div class="card" id="cardExportInterval">
+                <div class="card-label">Средний интервал экспорта</div>
+                <div class="card-value" id="metExportInterval">--<span class="card-unit">d</span></div>
+                <div class="card-sub" id="metExportIntervalSub"></div>
             </div>
-            <div class="metric-card" id="cardExported90">
-                <div class="metric-label">Volume Exported · 90d</div>
-                <div class="metric-value" id="metExported90">--<span class="metric-unit"> Mb</span></div>
-                <div class="metric-sub" id="metExported90Sub"></div>
-            </div>
-        </div>
-
-        <div class="chart-card">
-            <div class="chart-head">
-                <div class="chart-title">VLCC Loading Events</div>
-                <div class="chart-meta">Each bar = one probable loading · Mb drawn in 6–12d</div>
-            </div>
-            <div class="chart-wrap tall"><canvas id="pulseHistChart"></canvas></div>
-        </div>
-
-        <div class="chart-card">
-            <div class="chart-head">
-                <div class="chart-title">Event Log</div>
-            </div>
-            <ul class="pulse-list" id="pulseList">
-                <li style="color:#334155;font-size:0.8rem;padding:1rem 0">Loading…</li>
-            </ul>
-        </div>
-
-        <!-- ── TERMINAL ─────────────────────────────────────────────────── -->
-        <div class="section"><div class="section-title">Terminal</div></div>
-
-        <div class="metrics-grid metrics-grid-3">
-            <div class="metric-card" id="cardStreak">
-                <div class="metric-label">Current Regime</div>
-                <div class="metric-value" id="metStreakType" style="font-size:1.75rem;letter-spacing:0.04em">--</div>
-                <div class="metric-sub" id="metStreakDays"></div>
-            </div>
-            <div class="metric-card" id="cardSIR">
-                <div class="metric-label">Idle Tanks</div>
-                <div class="metric-value" id="metSIR">--<span class="metric-unit">%</span></div>
-                <div class="metric-sub">2 of 47 chronically offline</div>
-            </div>
-            <div class="metric-card" id="cardVSA">
-                <div class="metric-label">Volatility Spikes · 30d</div>
-                <div class="metric-value" id="metVSA">--</div>
-                <div class="metric-badge" id="metVSABadge"></div>
+            <div class="card" id="cardExported90">
+                <div class="card-label">Объём экспорта · 90d</div>
+                <div class="card-value" id="metExported90">--<span class="card-unit">Mb</span></div>
+                <div class="card-sub" id="metExported90Sub"></div>
             </div>
         </div>
 
-        <div class="chart-card">
-            <div class="chart-head">
-                <div class="chart-title">Utilization %</div>
-                <div class="chart-meta">% of 33.2 Mb capacity · 85% = forced sell zone</div>
+        <div class="chart-box">
+            <div class="chart-box-head">
+                <div class="chart-box-title">Экспортные события · вероятные загрузки VLCC</div>
+                <div class="chart-box-meta">Каждый столбец = одна загрузка танкера · Mb за 6–12 дней</div>
             </div>
-            <div class="chart-wrap"><canvas id="spiChart"></canvas></div>
+            <div class="chart-h-tall"><canvas id="pulseHistChart"></canvas></div>
         </div>
 
-        <div class="chart-card">
-            <div class="chart-head">
-                <div class="chart-title">Monthly Balance</div>
-                <div class="chart-meta">Net Mb/month · Green = export · Red = build</div>
-            </div>
-            <div class="chart-wrap tall"><canvas id="monthlyChart"></canvas></div>
+        <div class="pulse-log">
+            <div class="pulse-log-title">Журнал событий</div>
+            <div id="pulseList"><div style="color:var(--muted);font-size:0.78rem;padding:0.5rem 0">Загрузка…</div></div>
+        </div>
+    </div>
+
+    <!-- ── BLOCK 3 ── -->
+    <div class="block">
+        <div class="block-header">
+            <div class="block-question">В каком режиме работает терминал прямо сейчас?</div>
+            <div class="block-interp" id="interp3">Загрузка…</div>
         </div>
 
-        <!-- ── TANK MAP ─────────────────────────────────────────────────── -->
-        <div class="section"><div class="section-title">Per-Tank Map · 47 Tanks · Full History</div></div>
+        <div class="cards cards-3">
+            <div class="card" id="cardStreak">
+                <div class="card-label">Текущий режим</div>
+                <div class="card-value large" id="metStreakType">--</div>
+                <div class="card-sub" id="metStreakDays"></div>
+            </div>
+            <div class="card" id="cardSIR">
+                <div class="card-label">Неактивные баки</div>
+                <div class="card-value" id="metSIR">--<span class="card-unit">%</span></div>
+                <div class="card-sub">2 из 47 хронически пустые</div>
+            </div>
+            <div class="card" id="cardVSA">
+                <div class="card-label">Аномальная активность · 30d</div>
+                <div class="card-value" id="metVSA">--</div>
+                <div class="badge" id="metVSABadge"></div>
+            </div>
+        </div>
 
-        <div class="map-card">
+        <div class="chart-box">
+            <div class="chart-box-head">
+                <div class="chart-box-title">Утилизация терминала во времени</div>
+                <div class="chart-box-meta">% от 33.2 Mb · выше 85% = зона принудительных продаж</div>
+            </div>
+            <div class="chart-h"><canvas id="spiChart"></canvas></div>
+        </div>
+
+        <div class="chart-box">
+            <div class="chart-box-head">
+                <div class="chart-box-title">Месячный баланс · накопление vs слив</div>
+                <div class="chart-box-meta">Net Mb/месяц · зелёный = экспорт · красный = накопление</div>
+            </div>
+            <div class="chart-h-tall"><canvas id="monthlyChart"></canvas></div>
+        </div>
+    </div>
+
+    <!-- ── BLOCK 4 ── -->
+    <div class="block">
+        <div class="block-header">
+            <div class="block-question">В каких конкретно баках хранится нефть?</div>
+            <div class="block-interp">47 баков · 3 года истории · синий = полный · красный = пустой. Кликните на бак для деталей.</div>
+        </div>
+
+        <div class="map-box">
             <div id="tankMap">
-                <div id="mapLoading" style="display:flex;align-items:center;justify-content:center;height:100%;color:#334155;font-size:0.875rem;">Loading satellite data…</div>
+                <div id="mapLoading" style="display:flex;align-items:center;justify-content:center;height:100%;color:var(--muted);font-size:0.85rem;">Загрузка спутниковых данных…</div>
             </div>
             <div class="map-controls">
-                <button class="map-nav-btn" id="mapPrev">←</button>
+                <button class="map-btn" id="mapPrev">←</button>
                 <input type="range" class="map-slider" id="mapSlider" min="0" value="0" step="1">
-                <button class="map-nav-btn" id="mapNext">→</button>
-                <span class="map-date-label" id="mapDateLabel">—</span>
+                <button class="map-btn" id="mapNext">→</button>
+                <span class="map-date" id="mapDateLabel">—</span>
             </div>
         </div>
+    </div>
 
-        <!-- LEGACY BLOCK (disabled) -->
-        <!--
-        LEGACY: Multi-country Gulf coverage — disabled 2026-06-24
-        To reactivate: restore fragility.json feed and uncomment country cards,
-        countryChart, fragilityChart. Branch: feature/gulf-multi-country (future)
-        -->
+    <!-- LEGACY BLOCK (disabled) -->
+    <!--
+    LEGACY: Multi-country Gulf coverage — disabled 2026-06-24
+    To reactivate: restore fragility.json feed and uncomment country cards,
+    countryChart, fragilityChart. Branch: feature/gulf-multi-country (future)
+    -->
 
-    </div><!-- /container -->
+</div><!-- /container -->
 
-    <script>
-    async function checkAuth() {
-        try {
-            const r = await fetch('/auth/check');
-            const d = await r.json();
-            if (!d.authenticated) { window.location.href = '/app'; return; }
-            document.getElementById('userEmail').textContent = d.email;
-        } catch { window.location.href = '/app'; }
-    }
-    function logout() { window.location.href = '/auth/logout'; }
+<script>
+async function checkAuth() {
+    try {
+        const r = await fetch('/auth/check');
+        const d = await r.json();
+        if (!d.authenticated) { window.location.href = '/app'; return; }
+        document.getElementById('userEmail').textContent = d.email;
+    } catch { window.location.href = '/app'; }
+}
+function logout() { window.location.href = '/auth/logout'; }
 
-    const MAX_CAP = 33.2;
-    const PULSE_THRESHOLD = 2.0;
-    const PULSE_WIN_MIN = 6;
-    const PULSE_WIN_MAX = 12;
-    const SIR_STATIC = 4.3;
+const MAX_CAP = 33.2;
+const PULSE_THRESHOLD = 2.0;
+const PULSE_WIN_MIN = 6;
+const PULSE_WIN_MAX = 12;
+const SIR_STATIC = 4.3;
 
-    let allDates = [], allValues = [];
-    let currentRange = 1095;
-    let charts = {};
+let allDates = [], allValues = [];
+let currentRange = 1095;
+let charts = {};
 
-    async function loadData() {
-        const daily = await fetch(`/data/data_daily.json?v=${Date.now()}`).then(r => r.json());
-        allDates = daily.dates;
-        allValues = daily.values;
-        render();
-    }
+async function loadData() {
+    const daily = await fetch(`/data/data_daily.json?v=${Date.now()}`).then(r => r.json());
+    allDates = daily.dates;
+    allValues = daily.values;
+    render();
+}
 
-    function setRange(days) {
-        currentRange = days;
-        document.querySelectorAll('.btn[data-range]').forEach(b =>
-            b.classList.toggle('active', parseInt(b.dataset.range) === days));
-        render();
-    }
+function setRange(days) {
+    currentRange = days;
+    document.querySelectorAll('.btn[data-range]').forEach(b =>
+        b.classList.toggle('active', parseInt(b.dataset.range) === days));
+    render();
+}
 
-    function getSlice() {
-        if (currentRange === 0) return { dates: allDates, values: allValues };
-        const cutoff = new Date();
-        cutoff.setDate(cutoff.getDate() - currentRange);
-        const cutStr = cutoff.toISOString().slice(0, 10);
-        const idx = allDates.findIndex(d => d >= cutStr);
-        return { dates: allDates.slice(idx), values: allValues.slice(idx) };
-    }
+function getSlice() {
+    if (currentRange === 0) return { dates: allDates, values: allValues };
+    const cutoff = new Date();
+    cutoff.setDate(cutoff.getDate() - currentRange);
+    const cutStr = cutoff.toISOString().slice(0, 10);
+    const idx = allDates.findIndex(d => d >= cutStr);
+    return { dates: allDates.slice(idx), values: allValues.slice(idx) };
+}
 
-    function computeFillRate(dates, values, win = 7) {
-        return dates.map((_, i) => {
-            const t0 = new Date(dates[i]);
-            let best = -1, bestDiff = Infinity;
-            for (let j = i - 1; j >= 0; j--) {
-                const dt = (t0 - new Date(dates[j])) / 86400000;
-                if (dt <= 0) continue;
-                const diff = Math.abs(dt - win);
-                if (diff < bestDiff) { bestDiff = diff; best = j; }
-                if (dt > win * 2) break;
+function computeFillRate(dates, values, win = 7) {
+    return dates.map((_, i) => {
+        const t0 = new Date(dates[i]);
+        let best = -1, bestDiff = Infinity;
+        for (let j = i - 1; j >= 0; j--) {
+            const dt = (t0 - new Date(dates[j])) / 86400000;
+            if (dt <= 0) continue;
+            const diff = Math.abs(dt - win);
+            if (diff < bestDiff) { bestDiff = diff; best = j; }
+            if (dt > win * 2) break;
+        }
+        if (best < 0) return null;
+        return (values[i] - values[best]) / ((t0 - new Date(dates[best])) / 86400000);
+    });
+}
+
+function computeSPI(values) { return values.map(v => (v / MAX_CAP) * 100); }
+
+function detectPulses(dates, values) {
+    const events = [];
+    for (let i = 0; i < dates.length; i++) {
+        const t0 = new Date(dates[i]);
+        for (let j = i + 1; j < dates.length; j++) {
+            const days = (new Date(dates[j]) - t0) / 86400000;
+            if (days < PULSE_WIN_MIN) continue;
+            if (days > PULSE_WIN_MAX) break;
+            const delta = values[i] - values[j];
+            if (delta >= PULSE_THRESHOLD) {
+                events.push({ start: dates[i], end: dates[j], delta, days: Math.round(days) });
+                i = j; break;
             }
-            if (best < 0) return null;
-            return (values[i] - values[best]) / ((t0 - new Date(dates[best])) / 86400000);
+        }
+    }
+    return events;
+}
+
+function computeVolatility(dates, values) {
+    const win = 30, rollingStds = [];
+    for (let i = 0; i < values.length; i++) {
+        if (i < win) { rollingStds.push(null); continue; }
+        const sl = values.slice(i - win, i);
+        const m = sl.reduce((a, b) => a + b, 0) / sl.length;
+        rollingStds.push(Math.sqrt(sl.reduce((a, b) => a + (b - m) ** 2, 0) / sl.length));
+    }
+    const valid = rollingStds.filter(v => v !== null);
+    const gm = valid.reduce((a, b) => a + b, 0) / valid.length;
+    const gs = Math.sqrt(valid.reduce((a, b) => a + (b - gm) ** 2, 0) / valid.length);
+    const threshold = gm + 1.5 * gs;
+    const spikes = dates.map((d, i) => rollingStds[i] !== null && rollingStds[i] > threshold ? { date: d } : null).filter(Boolean);
+    return { spikes, rollingStds };
+}
+
+function computeMonthly(dates, values) {
+    const months = {};
+    for (let i = 0; i < dates.length; i++) {
+        const m = dates[i].slice(0, 7);
+        if (!months[m]) months[m] = { first: values[i], last: values[i] };
+        months[m].last = values[i];
+    }
+    return Object.entries(months).map(([m, { first, last }]) => ({ month: m, change: last - first }));
+}
+
+function computeStreak(dates, values) {
+    const n = values.length;
+    if (n < 4) return { type: 'UNKNOWN', days: 0, change: 0, startDate: '' };
+    const recentDelta = values[n - 1] - values[Math.max(0, n - 5)];
+    const type = recentDelta >= 0 ? 'BUILD' : 'DRAWDOWN';
+    let start = n - 1;
+    for (let i = n - 1; i > 0; i--) {
+        const d = values[i] - values[i - 1];
+        if (type === 'BUILD' && d < -0.05) break;
+        if (type === 'DRAWDOWN' && d > 0.05) break;
+        start = i - 1;
+    }
+    return { type, days: Math.round((new Date(dates[n-1]) - new Date(dates[start])) / 86400000), change: values[n-1] - values[start], startDate: dates[start] };
+}
+
+function hi(text, cls) { return `<span class="${cls}">${text}</span>`; }
+
+function render() {
+    const { dates, values } = getSlice();
+    if (!dates.length) return;
+    const n = values.length;
+    const latest = values[n - 1];
+    const spi = (latest / MAX_CAP) * 100;
+    const fillRates = computeFillRate(dates, values);
+    const spiSeries = computeSPI(values);
+    const pulses = detectPulses(dates, values);
+    const { spikes } = computeVolatility(dates, values);
+    const change30 = ((latest - values[Math.max(0, n - 30)]) / values[Math.max(0, n - 30)]) * 100;
+    const latestFR = fillRates[n - 1];
+    const streak = computeStreak(dates, values);
+
+    document.getElementById('pageMeta').textContent =
+        `Последнее наблюдение: ${dates[n-1]} · ${latest.toFixed(2)} Mb · Мощность: ${MAX_CAP} Mb`;
+
+    // Alert
+    const banner = document.getElementById('alertBanner');
+    banner.className = 'alert-banner';
+    if (spi > 85) {
+        banner.classList.add('visible', 'critical');
+        document.getElementById('alertText').textContent =
+            `Критический уровень хранения — ${spi.toFixed(1)}% мощности. Исторически предшествует ценовым уступкам в течение 4–8 недель.`;
+    } else if (pulses.length && pulses[pulses.length-1].end >= dates[Math.max(0, n-10)]) {
+        banner.classList.add('visible', 'pulse');
+        const last = pulses[pulses.length-1];
+        document.getElementById('alertText').textContent =
+            `Экспортный импульс ${last.start} → ${last.end}: −${last.delta.toFixed(2)} Mb за ${last.days} дней. Вероятная загрузка VLCC.`;
+    }
+
+    // ── Block 1 cards ──
+    document.getElementById('metStorage').innerHTML = latest.toFixed(1) + '<span class="card-unit"> Mb</span>';
+    document.getElementById('metStorageSub').textContent = `${latest.toFixed(1)} из ${MAX_CAP} Mb · 47 баков`;
+
+    document.getElementById('metSPI').innerHTML = spi.toFixed(1) + '<span class="card-unit">%</span>';
+    const spiBadge = document.getElementById('metSPIBadge');
+    if (spi > 85) {
+        spiBadge.textContent = 'Критично'; spiBadge.className = 'badge badge-red';
+        document.getElementById('cardSPI').className = 'card state-critical';
+    } else if (spi > 70) {
+        spiBadge.textContent = 'Повышено'; spiBadge.className = 'badge badge-yellow';
+        document.getElementById('cardSPI').className = 'card state-warn';
+    } else {
+        spiBadge.textContent = 'Норма'; spiBadge.className = 'badge badge-green';
+    }
+
+    if (latestFR !== null) {
+        const sign = latestFR >= 0 ? '+' : '';
+        const frEl = document.getElementById('metFillRate');
+        frEl.innerHTML = sign + latestFR.toFixed(3) + '<span class="card-unit"> Mb/d</span>';
+        frEl.style.color = latestFR >= 0 ? '#f87171' : '#34d399';
+        document.getElementById('cardFillRate').className = latestFR >= 0 ? 'card state-build' : 'card state-draw';
+        document.getElementById('metFillRateSub').textContent = latestFR >= 0 ? '▲ Накопление' : '▼ Слив';
+    }
+
+    const cs = change30 >= 0 ? '+' : '';
+    const chEl = document.getElementById('metChange');
+    chEl.innerHTML = cs + change30.toFixed(1) + '<span class="card-unit">%</span>';
+    chEl.style.color = change30 >= 0 ? '#f87171' : '#34d399';
+    document.getElementById('metChangeSub').textContent = change30 >= 0 ? '▲ к уровню 30 дней назад' : '▼ к уровню 30 дней назад';
+
+    // ── Block 1 interpretation ──
+    let interp1 = '';
+    const spiLabel = spi > 85 ? hi('критическом', 'bad') : spi > 70 ? hi('повышенном', 'warn') : hi('нормальном', 'good');
+    const dirWord = latestFR !== null && latestFR >= 0 ? hi('растёт', 'bad') : hi('снижается', 'good');
+    interp1 = `Сейчас в хранилище ${hi(latest.toFixed(1) + ' Mb', 'highlight')} — ${spi.toFixed(0)}% от максимальной мощности. Уровень ${spiLabel}. Объём ${dirWord}${latestFR !== null ? ' со скоростью ' + hi(Math.abs(latestFR).toFixed(3) + ' Mb/сут', 'highlight') : ''}.`;
+    document.getElementById('interp1').innerHTML = interp1;
+
+    // ── Block 2 cards ──
+    const recent90 = pulses.filter(e => (new Date(dates[n-1]) - new Date(e.end)) / 86400000 <= 90);
+    document.getElementById('metEPS').textContent = recent90.length;
+    const epsBadge = document.getElementById('metEPSBadge');
+    epsBadge.textContent = recent90.length > 0 ? `${recent90.length} загруз${recent90.length > 1 ? 'ки' : 'ка'} за 90d` : 'Нет за 90d';
+    epsBadge.className = recent90.length > 0 ? 'badge badge-green' : 'badge badge-blue';
+
+    if (pulses.length > 1) {
+        let totalGap = 0;
+        for (let i = 1; i < pulses.length; i++) totalGap += (new Date(pulses[i].start) - new Date(pulses[i-1].start)) / 86400000;
+        const avg = Math.round(totalGap / (pulses.length - 1));
+        document.getElementById('metExportInterval').innerHTML = avg + '<span class="card-unit"> d</span>';
+        const next = new Date(pulses[pulses.length-1].start);
+        next.setDate(next.getDate() + avg);
+        const daysUntil = Math.round((next - new Date(dates[n-1])) / 86400000);
+        document.getElementById('metExportIntervalSub').textContent = daysUntil > 0
+            ? `Следующий ~${next.toISOString().slice(0,10)} (через ${daysUntil}д)`
+            : `Просрочен на ${Math.abs(daysUntil)}д`;
+    } else {
+        document.getElementById('metExportInterval').innerHTML = '--<span class="card-unit"> d</span>';
+        document.getElementById('metExportIntervalSub').textContent = 'Недостаточно данных';
+    }
+
+    const exp90vol = recent90.reduce((s, e) => s + e.delta, 0);
+    document.getElementById('metExported90').innerHTML = exp90vol.toFixed(2) + '<span class="card-unit"> Mb</span>';
+    document.getElementById('metExported90Sub').textContent = `${recent90.length} импульсов · ≈${(exp90vol / 2).toFixed(1)} VLCC`;
+
+    // ── Block 2 interpretation ──
+    let interp2 = '';
+    if (pulses.length === 0) {
+        interp2 = 'За выбранный период экспортных событий не зафиксировано.';
+    } else {
+        const last = pulses[pulses.length - 1];
+        const daysSinceLast = Math.round((new Date(dates[n-1]) - new Date(last.end)) / 86400000);
+        interp2 = `Последний экспорт: ${hi(last.start, 'highlight')} → ${hi(last.end, 'highlight')} — ${hi('−' + last.delta.toFixed(2) + ' Mb', 'good')} за ${last.days} дней. ${daysSinceLast < 7 ? hi('Вероятно, загрузка ещё идёт.', 'warn') : `${daysSinceLast} дней назад.`} За 90 дней отгружено ${hi(exp90vol.toFixed(2) + ' Mb', 'highlight')}.`;
+    }
+    document.getElementById('interp2').innerHTML = interp2;
+
+    // ── Block 3 cards ──
+    const streakEl = document.getElementById('metStreakType');
+    streakEl.textContent = streak.type === 'BUILD' ? 'ЗАКАЧКА' : 'СЛИВ';
+    streakEl.style.color = streak.type === 'BUILD' ? '#f87171' : '#34d399';
+    const sc = streak.change >= 0 ? '+' : '';
+    document.getElementById('metStreakDays').textContent = `${streak.days}д · ${sc}${streak.change.toFixed(2)} Mb`;
+    document.getElementById('cardStreak').className = 'card ' + (streak.type === 'BUILD' ? 'state-build' : 'state-draw');
+
+    document.getElementById('metSIR').innerHTML = SIR_STATIC.toFixed(1) + '<span class="card-unit">%</span>';
+
+    const recentSpikes = spikes.filter(s => (new Date(dates[n-1]) - new Date(s.date)) / 86400000 <= 30);
+    document.getElementById('metVSA').textContent = recentSpikes.length;
+    const vsaBadge = document.getElementById('metVSABadge');
+    if (recentSpikes.length > 0) {
+        vsaBadge.textContent = `Активно · ${recentSpikes[recentSpikes.length-1].date}`;
+        vsaBadge.className = 'badge badge-yellow';
+        document.getElementById('cardVSA').className = 'card state-warn';
+    } else {
+        vsaBadge.textContent = 'Нет за 30d';
+        vsaBadge.className = 'badge badge-green';
+    }
+
+    // ── Block 3 interpretation ──
+    const regimeWord = streak.type === 'BUILD'
+        ? hi('накапливает нефть', 'bad')
+        : hi('сливает нефть', 'good');
+    const regimeDetail = streak.type === 'BUILD'
+        ? ' Накопление — медвежий сигнал для цены нефти.'
+        : ' Слив — возможна загрузка танкера. Бычий сигнал.';
+    const interp3 = `Терминал ${regimeWord} уже ${hi(streak.days + ' дней', 'highlight')} (с ${streak.startDate}).${regimeDetail}`;
+    document.getElementById('interp3').innerHTML = interp3;
+
+    // ── Pulse log ──
+    const shown = [...pulses].reverse().slice(0, 10);
+    const pulseList = document.getElementById('pulseList');
+    if (!shown.length) {
+        pulseList.innerHTML = '<div style="color:var(--muted);font-size:0.78rem;padding:0.5rem 0">Нет событий в выбранном периоде</div>';
+    } else {
+        pulseList.innerHTML = shown.map(e =>
+            `<div class="pulse-row">
+                <span class="pulse-dates">${e.start} → ${e.end} &nbsp;(${e.days}d)</span>
+                <span class="pulse-vol">−${e.delta.toFixed(2)} Mb</span>
+            </div>`).join('');
+    }
+
+    // Charts
+    destroyCharts();
+    renderMainChart(dates, values);
+    renderFillRateChart(dates, fillRates);
+    renderSPIChart(dates, spiSeries);
+    renderMonthlyChart(dates, values);
+    renderPulseHistChart(pulses);
+}
+
+function destroyCharts() { Object.values(charts).forEach(c => c?.destroy()); charts = {}; }
+
+const gridX = { ticks: { color: '#2d3f52', maxTicksLimit: 10, font: { size: 10 } }, grid: { color: 'rgba(255,255,255,0.025)' } };
+const gridY = { ticks: { color: '#3d4f63', font: { size: 10 } }, grid: { color: 'rgba(255,255,255,0.025)' } };
+
+function renderMainChart(dates, values) {
+    charts.main = new Chart(document.getElementById('mainChart').getContext('2d'), {
+        type: 'line',
+        data: { labels: dates, datasets: [
+            { label: 'Объём (Mb)', data: values, borderColor: '#3b82f6', backgroundColor: 'rgba(59,130,246,0.05)', fill: true, tension: 0.3, pointRadius: 0, borderWidth: 2 },
+            { label: '85%', data: dates.map(() => MAX_CAP * 0.85), borderColor: 'rgba(239,68,68,0.25)', borderDash: [6,4], pointRadius: 0, fill: false, borderWidth: 1 }
+        ]},
+        options: { responsive: true, maintainAspectRatio: false, interaction: { intersect: false, mode: 'index' },
+            plugins: { legend: { labels: { color: '#3d4f63', boxWidth: 10, font: { size: 10 } } },
+                tooltip: { backgroundColor: '#0d1117', borderColor: '#1e293b', borderWidth: 1,
+                    callbacks: { label: ctx => ` ${ctx.parsed.y.toFixed(2)} Mb` } } },
+            scales: { x: gridX, y: gridY } }
+    });
+}
+
+function renderFillRateChart(dates, rates) {
+    charts.fillRate = new Chart(document.getElementById('fillRateChart').getContext('2d'), {
+        type: 'bar',
+        data: { labels: dates, datasets: [{ label: 'Fill Rate (Mb/день)', data: rates,
+            backgroundColor: rates.map(r => r === null ? 'transparent' : r >= 0 ? 'rgba(239,68,68,0.55)' : 'rgba(52,211,153,0.55)'), borderWidth: 0 }]},
+        options: { responsive: true, maintainAspectRatio: false,
+            plugins: { legend: { labels: { color: '#3d4f63', boxWidth: 10, font: { size: 10 } } } },
+            scales: { x: gridX, y: { ...gridY, ticks: { ...gridY.ticks, callback: v => v.toFixed(2) } } } }
+    });
+}
+
+function renderSPIChart(dates, spiSeries) {
+    charts.spi = new Chart(document.getElementById('spiChart').getContext('2d'), {
+        type: 'line',
+        data: { labels: dates, datasets: [
+            { label: 'Утилизация (%)', data: spiSeries, borderColor: '#f59e0b', backgroundColor: 'rgba(245,158,11,0.05)', fill: true, tension: 0.3, pointRadius: 0, borderWidth: 2 },
+            { label: '85%', data: dates.map(() => 85), borderColor: 'rgba(239,68,68,0.25)', borderDash: [6,4], pointRadius: 0, fill: false, borderWidth: 1 }
+        ]},
+        options: { responsive: true, maintainAspectRatio: false, interaction: { intersect: false, mode: 'index' },
+            plugins: { legend: { labels: { color: '#3d4f63', boxWidth: 10, font: { size: 10 } } } },
+            scales: { x: gridX, y: { min: 0, max: 100, ticks: { color: '#3d4f63', callback: v => v + '%', font: { size: 10 } }, grid: { color: 'rgba(255,255,255,0.025)' } } } }
+    });
+}
+
+function renderMonthlyChart(dates, values) {
+    const monthly = computeMonthly(dates, values);
+    const data = monthly.map(m => parseFloat(m.change.toFixed(3)));
+    charts.monthly = new Chart(document.getElementById('monthlyChart').getContext('2d'), {
+        type: 'bar',
+        data: { labels: monthly.map(m => m.month), datasets: [{ label: 'Баланс (Mb)', data,
+            backgroundColor: data.map(v => v >= 0 ? 'rgba(239,68,68,0.6)' : 'rgba(52,211,153,0.6)'), borderWidth: 0, borderRadius: 3 }]},
+        options: { responsive: true, maintainAspectRatio: false, interaction: { intersect: false, mode: 'index' },
+            plugins: { legend: { labels: { color: '#3d4f63', boxWidth: 10, font: { size: 10 } } },
+                tooltip: { backgroundColor: '#0d1117', borderColor: '#1e293b', borderWidth: 1,
+                    callbacks: { label: ctx => ctx.parsed.y >= 0 ? ` +${ctx.parsed.y.toFixed(2)} Mb (накопление)` : ` ${ctx.parsed.y.toFixed(2)} Mb (экспорт)` } } },
+            scales: { x: gridX, y: { ...gridY, ticks: { ...gridY.ticks, callback: v => v.toFixed(1) } } } }
+    });
+}
+
+function renderPulseHistChart(pulses) {
+    const el = document.getElementById('pulseHistChart');
+    if (!pulses.length) { el.parentElement.innerHTML = '<p style="color:var(--muted);font-size:0.78rem;padding:0.75rem 0">Нет экспортных импульсов в выбранном периоде</p>'; return; }
+    charts.pulseHist = new Chart(el.getContext('2d'), {
+        type: 'bar',
+        data: { labels: pulses.map(e => e.start), datasets: [{ label: 'Объём экспорта (Mb)', data: pulses.map(e => parseFloat(e.delta.toFixed(3))),
+            backgroundColor: 'rgba(52,211,153,0.65)', borderColor: 'rgba(52,211,153,0.8)', borderWidth: 1, borderRadius: 4 }]},
+        options: { responsive: true, maintainAspectRatio: false,
+            plugins: { legend: { labels: { color: '#3d4f63', boxWidth: 10, font: { size: 10 } } },
+                tooltip: { backgroundColor: '#0d1117', borderColor: '#1e293b', borderWidth: 1,
+                    callbacks: { title: ctx => { const e = pulses[ctx[0].dataIndex]; return `${e.start} → ${e.end} (${e.days}d)`; },
+                        label: ctx => ` −${ctx.parsed.y.toFixed(2)} Mb · вероятная загрузка VLCC` } } },
+            scales: { x: gridX, y: { ...gridY, ticks: { ...gridY.ticks, callback: v => v.toFixed(1) + ' Mb' } } } }
+    });
+}
+
+function exportCSV() {
+    const { dates, values } = getSlice();
+    const frs = computeFillRate(dates, values);
+    const spis = computeSPI(values);
+    let csv = 'Date,Storage_Mb,Fill_Rate_Mb_per_day,Utilization_pct\n';
+    for (let i = 0; i < dates.length; i++)
+        csv += `${dates[i]},${values[i].toFixed(3)},${frs[i] !== null ? frs[i].toFixed(4) : ''},${spis[i].toFixed(2)}\n`;
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv' }));
+    a.download = `kharg_intelligence_${dates[dates.length-1]}.csv`;
+    a.click();
+}
+
+checkAuth();
+loadData();
+
+// ── Per-Tank Map ──────────────────────────────────────────────────────────
+const SUPABASE_URL = 'https://yoekhkczwdeyauwarsyy.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_7j07_zzdqTGM1LXf7-o9Tg_JJRbJQSM';
+const H_MIN = 2, BBL = 6.2898;
+
+const TANKS = {
+    't60_0':{lat:29.2217338,lon:50.3165482,r:20,rm:60,hm:18},'t60_1':{lat:29.2216388,lon:50.3150432,r:20,rm:60,hm:18},'t60_2':{lat:29.2218405,lon:50.3135291,r:20,rm:60,hm:18},'t60_3':{lat:29.2231568,lon:50.3158490,r:20,rm:60,hm:18},'t60_4':{lat:29.2228980,lon:50.3144195,r:20,rm:60,hm:18},
+    't55_5':{lat:29.2359691,lon:50.3126204,r:16,rm:55,hm:17},'t55_6':{lat:29.2364507,lon:50.3109394,r:16,rm:55,hm:17},'t55_7':{lat:29.2379533,lon:50.3108495,r:16,rm:55,hm:17},'t55_8':{lat:29.2390690,lon:50.3096822,r:16,rm:55,hm:17},'t55_9':{lat:29.2389264,lon:50.3068140,r:16,rm:55,hm:17},'t55_10':{lat:29.2376082,lon:50.3072679,r:16,rm:55,hm:17},'t55_11':{lat:29.2362776,lon:50.3077246,r:16,rm:55,hm:17},'t55_12':{lat:29.2363283,lon:50.3093038,r:16,rm:55,hm:17},'t55_13':{lat:29.2349727,lon:50.3081865,r:16,rm:55,hm:17},'t55_14':{lat:29.2351137,lon:50.3098199,r:16,rm:55,hm:17},'t55_15':{lat:29.2336438,lon:50.3086380,r:16,rm:55,hm:17},'t55_16':{lat:29.2338308,lon:50.3102809,r:16,rm:55,hm:17},'t55_17':{lat:29.2314405,lon:50.3087404,r:16,rm:55,hm:17},'t55_18':{lat:29.2317836,lon:50.3103855,r:16,rm:55,hm:17},'t55_19':{lat:29.2320764,lon:50.3122342,r:16,rm:55,hm:17},'t55_20':{lat:29.2302153,lon:50.3101615,r:16,rm:55,hm:17},'t55_21':{lat:29.2288712,lon:50.3099660,r:16,rm:55,hm:17},
+    't40_22':{lat:29.2295289,lon:50.3121871,r:12,rm:40,hm:14},'t40_23':{lat:29.2297632,lon:50.3135015,r:12,rm:40,hm:14},'t40_24':{lat:29.2299639,lon:50.3148147,r:12,rm:40,hm:14},'t40_25':{lat:29.2284236,lon:50.3124414,r:12,rm:40,hm:14},'t40_26':{lat:29.2286165,lon:50.3137337,r:12,rm:40,hm:14},'t40_27':{lat:29.2288114,lon:50.3150200,r:12,rm:40,hm:14},'t40_28':{lat:29.2272092,lon:50.3126984,r:12,rm:40,hm:14},'t40_29':{lat:29.2274357,lon:50.3139937,r:12,rm:40,hm:14},'t40_30':{lat:29.2276408,lon:50.3152672,r:12,rm:40,hm:14},'t55_31':{lat:29.2323461,lon:50.3137663,r:16,rm:55,hm:17},'t40_32':{lat:29.2307178,lon:50.3119291,r:12,rm:40,hm:14},'t40_33':{lat:29.2309474,lon:50.3132419,r:12,rm:40,hm:14},'t40_34':{lat:29.2311351,lon:50.3145438,r:12,rm:40,hm:14},
+    't25_35':{lat:29.2262112,lon:50.3128809,r:8,rm:25,hm:12},'t25_36':{lat:29.2263835,lon:50.3138099,r:8,rm:25,hm:12},'t25_37':{lat:29.2265429,lon:50.3147481,r:8,rm:25,hm:12},'t25_38':{lat:29.2266891,lon:50.3156504,r:8,rm:25,hm:12},'t25_39':{lat:29.2251564,lon:50.3131064,r:8,rm:25,hm:12},'t25_40':{lat:29.2253231,lon:50.3140568,r:8,rm:25,hm:12},'t25_41':{lat:29.2254742,lon:50.3149628,r:8,rm:25,hm:12},'t25_42':{lat:29.2256154,lon:50.3158865,r:8,rm:25,hm:12},'t25_43':{lat:29.2243535,lon:50.3132813,r:8,rm:25,hm:12},'t25_44':{lat:29.2245129,lon:50.3142241,r:8,rm:25,hm:12},'t25_45':{lat:29.2246562,lon:50.3151350,r:8,rm:25,hm:12},'t25_46':{lat:29.2248181,lon:50.3160634,r:8,rm:25,hm:12}
+};
+
+function tankColor(r) {
+    if (r === null) return '#1e2d3d';
+    r = Math.max(0, Math.min(1, r));
+    if (r < 0.5) { const t = r*2; return `rgb(${Math.round(255+(240-255)*t)},${Math.round(71+(165-71)*t)},${Math.round(87-87*t)})`; }
+    const t = (r-0.5)*2; return `rgb(${Math.round(240+(59-240)*t)},${Math.round(165+(130-165)*t)},${Math.round(246*t)})`;
+}
+function calcRatio(db, p5, p95) { return p95 === p5 ? 0.5 : Math.max(0, Math.min(1, (p95-db)/(p95-p5))); }
+function calcMb(ratio, rm, hm) { return Math.PI*rm*rm*(H_MIN+ratio*(hm-H_MIN))*BBL/1e6; }
+function pct(arr, p) { const s=[...arr].sort((a,b)=>a-b); const i=(p/100)*(s.length-1); const lo=Math.floor(i),hi=Math.ceil(i); return s[lo]+(s[hi]-s[lo])*(i-lo); }
+
+function makeTankSVG(id, info, ratio) {
+    const r=info.r, sz=r*2+4, cx=r+2, cy=r+2, fh=ratio!==null?ratio*r*2:0, col=tankColor(ratio), num=id.replace(/^t\d+_/,''), fs=Math.max(6,r*0.38);
+    return L.divIcon({ html:
+        `<svg width="${sz}" height="${sz}" viewBox="0 0 ${sz} ${sz}" xmlns="http://www.w3.org/2000/svg" style="display:block;overflow:visible">
+        <defs><clipPath id="c-${id}"><circle cx="${cx}" cy="${cy}" r="${r}"/></clipPath></defs>
+        <circle cx="${cx}" cy="${cy}" r="${r}" fill="rgba(8,10,13,0.85)"/>
+        <rect x="${cx-r}" y="${cy+r-fh}" width="${r*2}" height="${fh}" fill="${col}" clip-path="url(#c-${id})" opacity="0.9"/>
+        <circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${ratio!==null?col:'#1e2d3d'}" stroke-width="1.5" opacity="${ratio!==null?0.7:0.3}"/>
+        <text x="${cx}" y="${cy+fs*0.4}" text-anchor="middle" fill="#8ab0cc" font-size="${fs}" font-family="monospace">${num}</text>
+        </svg>`,
+        iconSize:[sz,sz], iconAnchor:[cx,cy], className:'tank-div-icon'
+    });
+}
+
+async function initTankMap() {
+    const map = L.map('tankMap', { center:[29.228,50.312], zoom:14, zoomControl:true, attributionControl:false });
+    L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { maxZoom:19 }).addTo(map);
+
+    const markers = {};
+    Object.entries(TANKS).forEach(([id, info]) => {
+        const m = L.marker([info.lat, info.lon], { icon: makeTankSVG(id, info, null) });
+        m.bindPopup('', { maxWidth:220, offset:[0,-(info.r+4)] });
+        m.on('click', () => {
+            const s = window._ds && window._ds[id];
+            m.getPopup().setContent(s
+                ? `<b style="font-family:monospace">${id}</b><br>Fill: ${s.ratio!==null?(s.ratio*100).toFixed(1)+'%':'N/A'}<br>Volume: ${s.mb!==null?s.mb.toFixed(3)+' Mb':'N/A'}<br>Type: ${id.split('_')[0].replace('t','')}m radius`
+                : `<b>${id}</b><br>No data`);
         });
-    }
+        m.addTo(map);
+        markers[id] = m;
+    });
 
-    function computeSPI(values) { return values.map(v => (v / MAX_CAP) * 100); }
-
-    function detectPulses(dates, values) {
-        const events = [];
-        for (let i = 0; i < dates.length; i++) {
-            const t0 = new Date(dates[i]);
-            for (let j = i + 1; j < dates.length; j++) {
-                const days = (new Date(dates[j]) - t0) / 86400000;
-                if (days < PULSE_WIN_MIN) continue;
-                if (days > PULSE_WIN_MAX) break;
-                const delta = values[i] - values[j];
-                if (delta >= PULSE_THRESHOLD) {
-                    events.push({ start: dates[i], end: dates[j], delta, days: Math.round(days) });
-                    i = j; break;
-                }
-            }
+    const headers = { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` };
+    let all = [], offset = 0;
+    try {
+        while (true) {
+            const batch = await fetch(`${SUPABASE_URL}/rest/v1/raw_observations?select=date,tank_id,db_mean&order=date&limit=1000&offset=${offset}`, { headers }).then(r => r.json());
+            all = all.concat(batch);
+            if (batch.length < 1000) break;
+            offset += 1000;
         }
-        return events;
-    }
+    } catch { document.getElementById('mapLoading').textContent = 'Ошибка загрузки данных карты.'; return; }
 
-    function computeVolatility(dates, values) {
-        const win = 30, rollingStds = [];
-        for (let i = 0; i < values.length; i++) {
-            if (i < win) { rollingStds.push(null); continue; }
-            const sl = values.slice(i - win, i);
-            const m = sl.reduce((a, b) => a + b, 0) / sl.length;
-            rollingStds.push(Math.sqrt(sl.reduce((a, b) => a + (b - m) ** 2, 0) / sl.length));
-        }
-        const valid = rollingStds.filter(v => v !== null);
-        const gm = valid.reduce((a, b) => a + b, 0) / valid.length;
-        const gs = Math.sqrt(valid.reduce((a, b) => a + (b - gm) ** 2, 0) / valid.length);
-        const threshold = gm + 1.5 * gs;
-        const spikes = dates.map((d, i) => rollingStds[i] !== null && rollingStds[i] > threshold ? { date: d } : null).filter(Boolean);
-        return { spikes, rollingStds };
-    }
+    document.getElementById('mapLoading').style.display = 'none';
+    const data = all.filter(r => TANKS[r.tank_id]);
+    const dbByTank = {};
+    data.forEach(r => { if (!dbByTank[r.tank_id]) dbByTank[r.tank_id]=[]; dbByTank[r.tank_id].push(r.db_mean); });
+    const cal = {};
+    Object.entries(dbByTank).forEach(([id, vals]) => { cal[id] = { p5: pct(vals,5), p95: pct(vals,95) }; });
+    const byDate = {};
+    data.forEach(r => { if (!byDate[r.date]) byDate[r.date]={}; byDate[r.date][r.tank_id]=r; });
+    const dates = Object.keys(byDate).sort();
 
-    function computeMonthly(dates, values) {
-        const months = {};
-        for (let i = 0; i < dates.length; i++) {
-            const m = dates[i].slice(0, 7);
-            if (!months[m]) months[m] = { first: values[i], last: values[i] };
-            months[m].last = values[i];
-        }
-        return Object.entries(months).map(([m, { first, last }]) => ({ month: m, change: last - first }));
-    }
-
-    function computeStreak(dates, values) {
-        const n = values.length;
-        if (n < 4) return { type: 'UNKNOWN', days: 0, change: 0, startDate: '' };
-        const recentDelta = values[n - 1] - values[Math.max(0, n - 5)];
-        const type = recentDelta >= 0 ? 'BUILD' : 'DRAWDOWN';
-        let start = n - 1;
-        for (let i = n - 1; i > 0; i--) {
-            const d = values[i] - values[i - 1];
-            if (type === 'BUILD' && d < -0.05) break;
-            if (type === 'DRAWDOWN' && d > 0.05) break;
-            start = i - 1;
-        }
-        return { type, days: Math.round((new Date(dates[n-1]) - new Date(dates[start])) / 86400000), change: values[n-1] - values[start], startDate: dates[start] };
-    }
-
-    function render() {
-        const { dates, values } = getSlice();
-        if (!dates.length) return;
-        const n = values.length;
-        const latest = values[n - 1];
-        const spi = (latest / MAX_CAP) * 100;
-        const fillRates = computeFillRate(dates, values);
-        const spiSeries = computeSPI(values);
-        const pulses = detectPulses(dates, values);
-        const { spikes } = computeVolatility(dates, values);
-        const change30 = ((latest - values[Math.max(0, n - 30)]) / values[Math.max(0, n - 30)]) * 100;
-        const latestFR = fillRates[n - 1];
-
-        // Summary bar
-        document.getElementById('sumStorage').innerHTML = latest.toFixed(1) + '<span>Mb</span>';
-        document.getElementById('sumUtil').innerHTML = spi.toFixed(1) + '<span>%</span>';
-        if (latestFR !== null) {
-            const sign = latestFR >= 0 ? '+' : '';
-            const el = document.getElementById('sumRate');
-            el.innerHTML = sign + latestFR.toFixed(3) + '<span>Mb/d</span>';
-            el.style.color = latestFR >= 0 ? '#ef4444' : '#10b981';
-        }
-        const streak = computeStreak(dates, values);
-        const regEl = document.getElementById('sumRegime');
-        regEl.textContent = streak.type;
-        regEl.style.color = streak.type === 'BUILD' ? '#ef4444' : '#10b981';
-
-        // Alert
-        const banner = document.getElementById('alertBanner');
-        banner.className = 'alert-banner';
-        if (spi > 85) {
-            banner.classList.add('visible', 'critical');
-            document.getElementById('alertText').textContent =
-                `Storage CRITICAL — ${spi.toFixed(1)}% of capacity. Historically precedes forced price concessions within 4–8 weeks.`;
-        } else if (pulses.length && pulses[pulses.length-1].end >= dates[n-10]) {
-            banner.classList.add('visible', 'pulse');
-            const last = pulses[pulses.length-1];
-            document.getElementById('alertText').textContent =
-                `Export Pulse ${last.start} → ${last.end}: −${last.delta.toFixed(2)} Mb in ${last.days} days. Probable VLCC loading.`;
-        }
-
-        // Storage cards
-        document.getElementById('metStorage').innerHTML = latest.toFixed(1) + '<span class="metric-unit"> Mb</span>';
-        document.getElementById('metStorageSub').textContent = `${latest.toFixed(1)} of ${MAX_CAP} Mb · 47 tanks`;
-
-        document.getElementById('metSPI').innerHTML = spi.toFixed(1) + '<span class="metric-unit">%</span>';
-        const spiBadge = document.getElementById('metSPIBadge');
-        if (spi > 85) { spiBadge.textContent = 'CRITICAL'; spiBadge.className = 'metric-badge badge-red'; document.getElementById('cardSPI').classList.add('alert'); }
-        else if (spi > 70) { spiBadge.textContent = 'ELEVATED'; spiBadge.className = 'metric-badge badge-yellow'; document.getElementById('cardSPI').classList.add('warning'); }
-        else { spiBadge.textContent = 'NORMAL'; spiBadge.className = 'metric-badge badge-green'; }
-
-        if (latestFR !== null) {
-            const sign = latestFR >= 0 ? '+' : '';
-            document.getElementById('metFillRate').innerHTML = sign + latestFR.toFixed(3) + '<span class="metric-unit"> Mb/d</span>';
-            document.getElementById('metFillRate').style.color = latestFR >= 0 ? '#ef4444' : '#10b981';
-            document.getElementById('metFillRateSub').textContent = latestFR >= 0 ? '▲ Accumulation' : '▼ Drawdown';
-        }
-
-        const cs = change30 >= 0 ? '+' : '';
-        document.getElementById('metChange').innerHTML = cs + change30.toFixed(1) + '<span class="metric-unit">%</span>';
-        document.getElementById('metChange').style.color = change30 >= 0 ? '#ef4444' : '#10b981';
-        document.getElementById('metChangeSub').textContent = change30 >= 0 ? '▲ vs 30 days ago' : '▼ vs 30 days ago';
-
-        // Export cards
-        const recent90 = pulses.filter(e => (new Date(dates[n-1]) - new Date(e.end)) / 86400000 <= 90);
-        document.getElementById('metEPS').textContent = recent90.length;
-        const epsBadge = document.getElementById('metEPSBadge');
-        epsBadge.textContent = recent90.length > 0 ? `${recent90.length} loading${recent90.length > 1 ? 's' : ''} last 90d` : 'None last 90d';
-        epsBadge.className = recent90.length > 0 ? 'metric-badge badge-green' : 'metric-badge badge-blue';
-
-        if (pulses.length > 1) {
-            let totalGap = 0;
-            for (let i = 1; i < pulses.length; i++) totalGap += (new Date(pulses[i].start) - new Date(pulses[i-1].start)) / 86400000;
-            const avg = Math.round(totalGap / (pulses.length - 1));
-            document.getElementById('metExportInterval').innerHTML = avg + '<span class="metric-unit"> d</span>';
-            const next = new Date(pulses[pulses.length-1].start);
-            next.setDate(next.getDate() + avg);
-            const daysUntil = Math.round((next - new Date(dates[n-1])) / 86400000);
-            document.getElementById('metExportIntervalSub').textContent = daysUntil > 0
-                ? `Next ~${next.toISOString().slice(0,10)} (in ${daysUntil}d)`
-                : `Overdue by ${Math.abs(daysUntil)}d`;
-        } else {
-            document.getElementById('metExportInterval').innerHTML = '--<span class="metric-unit"> d</span>';
-            document.getElementById('metExportIntervalSub').textContent = 'Insufficient data';
-        }
-
-        const exp90vol = recent90.reduce((s, e) => s + e.delta, 0);
-        document.getElementById('metExported90').innerHTML = exp90vol.toFixed(2) + '<span class="metric-unit"> Mb</span>';
-        document.getElementById('metExported90Sub').textContent = `${recent90.length} pulses · ≈${(exp90vol / 2).toFixed(1)} VLCCs`;
-
-        // Terminal cards
-        const streakEl = document.getElementById('metStreakType');
-        streakEl.textContent = streak.type;
-        streakEl.style.color = streak.type === 'BUILD' ? '#ef4444' : '#10b981';
-        const sc = streak.change >= 0 ? '+' : '';
-        document.getElementById('metStreakDays').textContent = `${streak.days}d · ${sc}${streak.change.toFixed(2)} Mb`;
-        document.getElementById('cardStreak').className = 'metric-card ' + (streak.type === 'BUILD' ? 'warning' : 'positive');
-
-        document.getElementById('metSIR').innerHTML = SIR_STATIC.toFixed(1) + '<span class="metric-unit">%</span>';
-
-        const recentSpikes = spikes.filter(s => (new Date(dates[n-1]) - new Date(s.date)) / 86400000 <= 30);
-        document.getElementById('metVSA').textContent = recentSpikes.length;
-        const vsaBadge = document.getElementById('metVSABadge');
-        if (recentSpikes.length > 0) {
-            vsaBadge.textContent = `Active · last ${recentSpikes[recentSpikes.length-1].date}`;
-            vsaBadge.className = 'metric-badge badge-yellow';
-            document.getElementById('cardVSA').classList.add('warning');
-        } else {
-            vsaBadge.textContent = 'None last 30d';
-            vsaBadge.className = 'metric-badge badge-green';
-        }
-
-        // Pulse log
-        const pulseList = document.getElementById('pulseList');
-        const shown = [...pulses].reverse().slice(0, 10);
-        if (!shown.length) {
-            pulseList.innerHTML = '<li style="color:#334155;font-size:0.75rem;padding:0.75rem 0">No export pulse events detected in selected period</li>';
-        } else {
-            pulseList.innerHTML = shown.map(e =>
-                `<li class="pulse-item">
-                    <span class="pulse-date">${e.start} → ${e.end} &nbsp;(${e.days}d)</span>
-                    <span class="pulse-vol">−${e.delta.toFixed(2)} Mb</span>
-                </li>`).join('');
-        }
-
-        destroyCharts();
-        renderMainChart(dates, values);
-        renderFillRateChart(dates, fillRates);
-        renderSPIChart(dates, spiSeries);
-        renderMonthlyChart(dates, values);
-        renderPulseHistChart(pulses);
-    }
-
-    function destroyCharts() { Object.values(charts).forEach(c => c?.destroy()); charts = {}; }
-
-    const gridX = { ticks: { color: '#334155', maxTicksLimit: 10, font: { size: 10 } }, grid: { color: 'rgba(255,255,255,0.03)' } };
-    const gridY = { ticks: { color: '#475569', font: { size: 10 } }, grid: { color: 'rgba(255,255,255,0.03)' } };
-
-    function renderMainChart(dates, values) {
-        charts.main = new Chart(document.getElementById('mainChart').getContext('2d'), {
-            type: 'line',
-            data: { labels: dates, datasets: [
-                { label: 'Storage (Mb)', data: values, borderColor: '#3b82f6', backgroundColor: 'rgba(59,130,246,0.05)', fill: true, tension: 0.3, pointRadius: 0, borderWidth: 2 },
-                { label: '85% Threshold', data: dates.map(() => MAX_CAP * 0.85), borderColor: 'rgba(239,68,68,0.3)', borderDash: [6,4], pointRadius: 0, fill: false, borderWidth: 1 }
-            ]},
-            options: { responsive: true, maintainAspectRatio: false, interaction: { intersect: false, mode: 'index' },
-                plugins: { legend: { labels: { color: '#475569', boxWidth: 10, font: { size: 10 } } },
-                    tooltip: { backgroundColor: '#0c1018', borderColor: '#1e293b', borderWidth: 1,
-                        callbacks: { label: ctx => ` ${ctx.parsed.y.toFixed(2)} Mb` } } },
-                scales: { x: gridX, y: gridY } }
-        });
-    }
-
-    function renderFillRateChart(dates, rates) {
-        charts.fillRate = new Chart(document.getElementById('fillRateChart').getContext('2d'), {
-            type: 'bar',
-            data: { labels: dates, datasets: [{ label: 'Fill Rate (Mb/day)', data: rates,
-                backgroundColor: rates.map(r => r === null ? 'transparent' : r >= 0 ? 'rgba(239,68,68,0.6)' : 'rgba(16,185,129,0.6)'), borderWidth: 0 }]},
-            options: { responsive: true, maintainAspectRatio: false,
-                plugins: { legend: { labels: { color: '#475569', boxWidth: 10, font: { size: 10 } } } },
-                scales: { x: gridX, y: { ...gridY, ticks: { ...gridY.ticks, callback: v => v.toFixed(2) } } } }
-        });
-    }
-
-    function renderSPIChart(dates, spiSeries) {
-        charts.spi = new Chart(document.getElementById('spiChart').getContext('2d'), {
-            type: 'line',
-            data: { labels: dates, datasets: [
-                { label: 'Utilization (%)', data: spiSeries, borderColor: '#f59e0b', backgroundColor: 'rgba(245,158,11,0.05)', fill: true, tension: 0.3, pointRadius: 0, borderWidth: 2 },
-                { label: '85% Alert', data: dates.map(() => 85), borderColor: 'rgba(239,68,68,0.3)', borderDash: [6,4], pointRadius: 0, fill: false, borderWidth: 1 }
-            ]},
-            options: { responsive: true, maintainAspectRatio: false, interaction: { intersect: false, mode: 'index' },
-                plugins: { legend: { labels: { color: '#475569', boxWidth: 10, font: { size: 10 } } } },
-                scales: { x: gridX, y: { min: 0, max: 100, ticks: { color: '#475569', callback: v => v + '%', font: { size: 10 } }, grid: { color: 'rgba(255,255,255,0.03)' } } } }
-        });
-    }
-
-    function renderMonthlyChart(dates, values) {
-        const monthly = computeMonthly(dates, values);
-        const data = monthly.map(m => parseFloat(m.change.toFixed(3)));
-        charts.monthly = new Chart(document.getElementById('monthlyChart').getContext('2d'), {
-            type: 'bar',
-            data: { labels: monthly.map(m => m.month), datasets: [{ label: 'Monthly Balance (Mb)', data,
-                backgroundColor: data.map(v => v >= 0 ? 'rgba(239,68,68,0.65)' : 'rgba(16,185,129,0.65)'), borderWidth: 0, borderRadius: 3 }]},
-            options: { responsive: true, maintainAspectRatio: false, interaction: { intersect: false, mode: 'index' },
-                plugins: { legend: { labels: { color: '#475569', boxWidth: 10, font: { size: 10 } } },
-                    tooltip: { backgroundColor: '#0c1018', borderColor: '#1e293b', borderWidth: 1,
-                        callbacks: { label: ctx => ctx.parsed.y >= 0 ? ` +${ctx.parsed.y.toFixed(2)} Mb (build)` : ` ${ctx.parsed.y.toFixed(2)} Mb (export)` } } },
-                scales: { x: gridX, y: { ...gridY, ticks: { ...gridY.ticks, callback: v => v.toFixed(1) } } } }
-        });
-    }
-
-    function renderPulseHistChart(pulses) {
-        const el = document.getElementById('pulseHistChart');
-        if (!pulses.length) { el.parentElement.innerHTML = '<p style="color:#334155;font-size:0.75rem;padding:0.75rem">No export pulses detected in selected period</p>'; return; }
-        charts.pulseHist = new Chart(el.getContext('2d'), {
-            type: 'bar',
-            data: { labels: pulses.map(e => e.start), datasets: [{ label: 'Export Volume (Mb)', data: pulses.map(e => parseFloat(e.delta.toFixed(3))),
-                backgroundColor: 'rgba(16,185,129,0.7)', borderColor: 'rgba(16,185,129,0.85)', borderWidth: 1, borderRadius: 4 }]},
-            options: { responsive: true, maintainAspectRatio: false,
-                plugins: { legend: { labels: { color: '#475569', boxWidth: 10, font: { size: 10 } } },
-                    tooltip: { backgroundColor: '#0c1018', borderColor: '#1e293b', borderWidth: 1,
-                        callbacks: { title: ctx => { const e = pulses[ctx[0].dataIndex]; return `${e.start} → ${e.end} (${e.days}d)`; },
-                            label: ctx => ` −${ctx.parsed.y.toFixed(2)} Mb · probable VLCC` } } },
-                scales: { x: gridX, y: { ...gridY, ticks: { ...gridY.ticks, callback: v => v.toFixed(1) + ' Mb' } } } }
-        });
-    }
-
-    function exportCSV() {
-        const { dates, values } = getSlice();
-        const frs = computeFillRate(dates, values);
-        const spis = computeSPI(values);
-        let csv = 'Date,Storage_Mb,Fill_Rate_Mb_per_day,Utilization_pct\n';
-        for (let i = 0; i < dates.length; i++)
-            csv += `${dates[i]},${values[i].toFixed(3)},${frs[i] !== null ? frs[i].toFixed(4) : ''},${spis[i].toFixed(2)}\n`;
-        const a = document.createElement('a');
-        a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv' }));
-        a.download = `kharg_intelligence_${dates[dates.length-1]}.csv`;
-        a.click();
-    }
-
-    checkAuth();
-    loadData();
-
-    // ── Per-Tank Map ──────────────────────────────────────────────────────────
-    const SUPABASE_URL = 'https://yoekhkczwdeyauwarsyy.supabase.co';
-    const SUPABASE_KEY = 'sb_publishable_7j07_zzdqTGM1LXf7-o9Tg_JJRbJQSM';
-    const H_MIN = 2, BBL = 6.2898;
-
-    const TANKS = {
-        't60_0':{lat:29.2217338,lon:50.3165482,r:20,rm:60,hm:18},'t60_1':{lat:29.2216388,lon:50.3150432,r:20,rm:60,hm:18},'t60_2':{lat:29.2218405,lon:50.3135291,r:20,rm:60,hm:18},'t60_3':{lat:29.2231568,lon:50.3158490,r:20,rm:60,hm:18},'t60_4':{lat:29.2228980,lon:50.3144195,r:20,rm:60,hm:18},
-        't55_5':{lat:29.2359691,lon:50.3126204,r:16,rm:55,hm:17},'t55_6':{lat:29.2364507,lon:50.3109394,r:16,rm:55,hm:17},'t55_7':{lat:29.2379533,lon:50.3108495,r:16,rm:55,hm:17},'t55_8':{lat:29.2390690,lon:50.3096822,r:16,rm:55,hm:17},'t55_9':{lat:29.2389264,lon:50.3068140,r:16,rm:55,hm:17},'t55_10':{lat:29.2376082,lon:50.3072679,r:16,rm:55,hm:17},'t55_11':{lat:29.2362776,lon:50.3077246,r:16,rm:55,hm:17},'t55_12':{lat:29.2363283,lon:50.3093038,r:16,rm:55,hm:17},'t55_13':{lat:29.2349727,lon:50.3081865,r:16,rm:55,hm:17},'t55_14':{lat:29.2351137,lon:50.3098199,r:16,rm:55,hm:17},'t55_15':{lat:29.2336438,lon:50.3086380,r:16,rm:55,hm:17},'t55_16':{lat:29.2338308,lon:50.3102809,r:16,rm:55,hm:17},'t55_17':{lat:29.2314405,lon:50.3087404,r:16,rm:55,hm:17},'t55_18':{lat:29.2317836,lon:50.3103855,r:16,rm:55,hm:17},'t55_19':{lat:29.2320764,lon:50.3122342,r:16,rm:55,hm:17},'t55_20':{lat:29.2302153,lon:50.3101615,r:16,rm:55,hm:17},'t55_21':{lat:29.2288712,lon:50.3099660,r:16,rm:55,hm:17},
-        't40_22':{lat:29.2295289,lon:50.3121871,r:12,rm:40,hm:14},'t40_23':{lat:29.2297632,lon:50.3135015,r:12,rm:40,hm:14},'t40_24':{lat:29.2299639,lon:50.3148147,r:12,rm:40,hm:14},'t40_25':{lat:29.2284236,lon:50.3124414,r:12,rm:40,hm:14},'t40_26':{lat:29.2286165,lon:50.3137337,r:12,rm:40,hm:14},'t40_27':{lat:29.2288114,lon:50.3150200,r:12,rm:40,hm:14},'t40_28':{lat:29.2272092,lon:50.3126984,r:12,rm:40,hm:14},'t40_29':{lat:29.2274357,lon:50.3139937,r:12,rm:40,hm:14},'t40_30':{lat:29.2276408,lon:50.3152672,r:12,rm:40,hm:14},'t55_31':{lat:29.2323461,lon:50.3137663,r:16,rm:55,hm:17},'t40_32':{lat:29.2307178,lon:50.3119291,r:12,rm:40,hm:14},'t40_33':{lat:29.2309474,lon:50.3132419,r:12,rm:40,hm:14},'t40_34':{lat:29.2311351,lon:50.3145438,r:12,rm:40,hm:14},
-        't25_35':{lat:29.2262112,lon:50.3128809,r:8,rm:25,hm:12},'t25_36':{lat:29.2263835,lon:50.3138099,r:8,rm:25,hm:12},'t25_37':{lat:29.2265429,lon:50.3147481,r:8,rm:25,hm:12},'t25_38':{lat:29.2266891,lon:50.3156504,r:8,rm:25,hm:12},'t25_39':{lat:29.2251564,lon:50.3131064,r:8,rm:25,hm:12},'t25_40':{lat:29.2253231,lon:50.3140568,r:8,rm:25,hm:12},'t25_41':{lat:29.2254742,lon:50.3149628,r:8,rm:25,hm:12},'t25_42':{lat:29.2256154,lon:50.3158865,r:8,rm:25,hm:12},'t25_43':{lat:29.2243535,lon:50.3132813,r:8,rm:25,hm:12},'t25_44':{lat:29.2245129,lon:50.3142241,r:8,rm:25,hm:12},'t25_45':{lat:29.2246562,lon:50.3151350,r:8,rm:25,hm:12},'t25_46':{lat:29.2248181,lon:50.3160634,r:8,rm:25,hm:12}
-    };
-
-    function tankColor(r) {
-        if (r === null) return '#1e2d3d';
-        r = Math.max(0, Math.min(1, r));
-        if (r < 0.5) { const t = r*2; return `rgb(${Math.round(255+(240-255)*t)},${Math.round(71+(165-71)*t)},${Math.round(87-87*t)})`; }
-        const t = (r-0.5)*2; return `rgb(${Math.round(240+(59-240)*t)},${Math.round(165+(130-165)*t)},${Math.round(246*t)})`;
-    }
-    function calcRatio(db, p5, p95) { return p95 === p5 ? 0.5 : Math.max(0, Math.min(1, (p95-db)/(p95-p5))); }
-    function calcMb(ratio, rm, hm) { return Math.PI*rm*rm*(H_MIN+ratio*(hm-H_MIN))*BBL/1e6; }
-    function pct(arr, p) { const s=[...arr].sort((a,b)=>a-b); const i=(p/100)*(s.length-1); const lo=Math.floor(i),hi=Math.ceil(i); return s[lo]+(s[hi]-s[lo])*(i-lo); }
-
-    function makeTankSVG(id, info, ratio) {
-        const r=info.r, sz=r*2+4, cx=r+2, cy=r+2, fh=ratio!==null?ratio*r*2:0, col=tankColor(ratio), num=id.replace(/^t\d+_/,''), fs=Math.max(6,r*0.38);
-        return L.divIcon({ html:
-            `<svg width="${sz}" height="${sz}" viewBox="0 0 ${sz} ${sz}" xmlns="http://www.w3.org/2000/svg" style="display:block;overflow:visible">
-            <defs><clipPath id="c-${id}"><circle cx="${cx}" cy="${cy}" r="${r}"/></clipPath></defs>
-            <circle cx="${cx}" cy="${cy}" r="${r}" fill="rgba(8,10,13,0.85)"/>
-            <rect x="${cx-r}" y="${cy+r-fh}" width="${r*2}" height="${fh}" fill="${col}" clip-path="url(#c-${id})" opacity="0.9"/>
-            <circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${ratio!==null?col:'#1e2d3d'}" stroke-width="1.5" opacity="${ratio!==null?0.7:0.3}"/>
-            <text x="${cx}" y="${cy+fs*0.4}" text-anchor="middle" fill="#8ab0cc" font-size="${fs}" font-family="monospace">${num}</text>
-            </svg>`,
-            iconSize:[sz,sz], iconAnchor:[cx,cy], className:'tank-div-icon'
-        });
-    }
-
-    async function initTankMap() {
-        const map = L.map('tankMap', { center:[29.228,50.312], zoom:14, zoomControl:true, attributionControl:false });
-        L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { maxZoom:19 }).addTo(map);
-
-        const markers = {};
+    function renderDate(dt) {
+        const dd = byDate[dt]||{}; window._ds={};
         Object.entries(TANKS).forEach(([id, info]) => {
-            const m = L.marker([info.lat, info.lon], { icon: makeTankSVG(id, info, null) });
-            m.bindPopup('', { maxWidth:220, offset:[0,-(info.r+4)] });
-            m.on('click', () => {
-                const s = window._ds && window._ds[id];
-                m.getPopup().setContent(s
-                    ? `<b style="font-family:monospace">${id}</b><br>Fill: ${s.ratio!==null?(s.ratio*100).toFixed(1)+'%':'N/A'}<br>Volume: ${s.mb!==null?s.mb.toFixed(3)+' Mb':'N/A'}<br>Type: ${id.split('_')[0].replace('t','')}m radius`
-                    : `<b>${id}</b><br>No data`);
-            });
-            m.addTo(map);
-            markers[id] = m;
+            const obs=dd[id]; let ratio=null, mb=null;
+            if (obs && cal[id]) { ratio=calcRatio(obs.db_mean,cal[id].p5,cal[id].p95); mb=calcMb(ratio,info.rm,info.hm); }
+            window._ds[id]={ratio,mb};
+            markers[id].setIcon(makeTankSVG(id,info,ratio));
         });
-
-        const headers = { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` };
-        let all = [], offset = 0;
-        try {
-            while (true) {
-                const batch = await fetch(`${SUPABASE_URL}/rest/v1/raw_observations?select=date,tank_id,db_mean&order=date&limit=1000&offset=${offset}`, { headers }).then(r => r.json());
-                all = all.concat(batch);
-                if (batch.length < 1000) break;
-                offset += 1000;
-            }
-        } catch { document.getElementById('mapLoading').textContent = 'Error loading map data.'; return; }
-
-        document.getElementById('mapLoading').style.display = 'none';
-        const data = all.filter(r => TANKS[r.tank_id]);
-        const dbByTank = {};
-        data.forEach(r => { if (!dbByTank[r.tank_id]) dbByTank[r.tank_id]=[]; dbByTank[r.tank_id].push(r.db_mean); });
-        const cal = {};
-        Object.entries(dbByTank).forEach(([id, vals]) => { cal[id] = { p5: pct(vals,5), p95: pct(vals,95) }; });
-        const byDate = {};
-        data.forEach(r => { if (!byDate[r.date]) byDate[r.date]={}; byDate[r.date][r.tank_id]=r; });
-        const dates = Object.keys(byDate).sort();
-
-        function renderDate(dt) {
-            const dd = byDate[dt]||{}; window._ds={};
-            Object.entries(TANKS).forEach(([id, info]) => {
-                const obs=dd[id]; let ratio=null, mb=null;
-                if (obs && cal[id]) { ratio=calcRatio(obs.db_mean,cal[id].p5,cal[id].p95); mb=calcMb(ratio,info.rm,info.hm); }
-                window._ds[id]={ratio,mb};
-                markers[id].setIcon(makeTankSVG(id,info,ratio));
-            });
-            document.getElementById('mapDateLabel').textContent = dt;
-        }
-
-        const slider = document.getElementById('mapSlider');
-        slider.max = dates.length-1; slider.value = dates.length-1;
-        renderDate(dates[dates.length-1]);
-        slider.addEventListener('input', () => renderDate(dates[+slider.value]));
-        document.getElementById('mapPrev').addEventListener('click', () => { const v=Math.max(0,+slider.value-1); slider.value=v; renderDate(dates[v]); });
-        document.getElementById('mapNext').addEventListener('click', () => { const v=Math.min(dates.length-1,+slider.value+1); slider.value=v; renderDate(dates[v]); });
+        document.getElementById('mapDateLabel').textContent = dt;
     }
-    initTankMap();
-    </script>
+
+    const slider = document.getElementById('mapSlider');
+    slider.max = dates.length-1; slider.value = dates.length-1;
+    renderDate(dates[dates.length-1]);
+    slider.addEventListener('input', () => renderDate(dates[+slider.value]));
+    document.getElementById('mapPrev').addEventListener('click', () => { const v=Math.max(0,+slider.value-1); slider.value=v; renderDate(dates[v]); });
+    document.getElementById('mapNext').addEventListener('click', () => { const v=Math.min(dates.length-1,+slider.value+1); slider.value=v; renderDate(dates[v]); });
+}
+initTankMap();
+</script>
 </body>
 </html>
