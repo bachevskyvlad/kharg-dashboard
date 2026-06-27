@@ -23,94 +23,103 @@
             --surface: #0d1117;
             --border: rgba(255,255,255,0.06);
             --muted: #3d4f63;
-            --subtle: #1e2d3d;
-            --text: #c9d8e8;
             --dim: #64748b;
+            --text: #c9d8e8;
             --accent: #3b82f6;
+            --green: #34d399;
+            --red: #f87171;
+            --yellow: #fbbf24;
         }
         body { font-family: 'Inter', sans-serif; background: var(--bg); min-height: 100vh; color: var(--text); }
 
-        /* Nav */
-        .nav { padding: 1rem 2.5rem; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 100; background: rgba(8,11,18,0.96); backdrop-filter: blur(8px); }
+        .nav { padding: 1rem 2.5rem; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 100; background: rgba(8,11,18,0.97); backdrop-filter: blur(8px); }
         .nav-logo { font-family: 'Space Grotesk', sans-serif; font-size: 1rem; font-weight: 700; letter-spacing: 0.2em; color: var(--accent); }
         .nav-right { display: flex; align-items: center; gap: 1.5rem; }
         .user-email { color: var(--muted); font-size: 0.78rem; }
-        .logout-btn { background: none; border: 1px solid rgba(239,68,68,0.2); color: #f87171; padding: 0.3rem 0.85rem; border-radius: 4px; font-size: 0.72rem; cursor: pointer; letter-spacing: 0.05em; transition: border-color 0.2s; }
+        .logout-btn { background: none; border: 1px solid rgba(239,68,68,0.2); color: var(--red); padding: 0.3rem 0.85rem; border-radius: 4px; font-size: 0.72rem; cursor: pointer; transition: border-color 0.2s; }
         .logout-btn:hover { border-color: rgba(239,68,68,0.5); }
 
-        /* Layout */
-        .container { max-width: 1280px; margin: 0 auto; padding: 3rem 2.5rem 6rem; }
-
-        /* Page hero */
-        .page-hero { margin-bottom: 3rem; }
-        .page-title { font-family: 'Space Grotesk', sans-serif; font-size: 1.5rem; font-weight: 600; color: #e2e8f0; letter-spacing: -0.01em; }
-        .page-meta { color: var(--dim); font-size: 0.78rem; margin-top: 0.4rem; }
+        .container { max-width: 1280px; margin: 0 auto; padding: 2.5rem 2.5rem 6rem; }
 
         /* Alert */
-        .alert-banner { border-radius: 8px; padding: 0.75rem 1.25rem; margin-bottom: 2.5rem; display: none; font-size: 0.82rem; align-items: center; gap: 0.6rem; line-height: 1.5; }
+        .alert-banner { border-radius: 6px; padding: 0.7rem 1.25rem; margin-bottom: 2rem; display: none; font-size: 0.8rem; align-items: center; gap: 0.6rem; line-height: 1.5; }
         .alert-banner.visible { display: flex; }
-        .alert-banner.pulse { background: rgba(16,185,129,0.07); border: 1px solid rgba(16,185,129,0.2); color: #6ee7b7; }
+        .alert-banner.pulse { background: rgba(52,211,153,0.07); border: 1px solid rgba(52,211,153,0.2); color: #6ee7b7; }
         .alert-banner.critical { background: rgba(239,68,68,0.07); border: 1px solid rgba(239,68,68,0.2); color: #fca5a5; }
 
         /* Controls */
-        .controls-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4rem; gap: 1rem; }
-        .period-group { display: flex; gap: 0.2rem; background: var(--surface); border: 1px solid var(--border); border-radius: 6px; padding: 0.25rem; }
-        .btn { background: transparent; border: none; color: var(--muted); padding: 0.35rem 0.85rem; border-radius: 4px; font-size: 0.74rem; cursor: pointer; transition: all 0.15s; letter-spacing: 0.04em; font-family: inherit; }
+        .controls-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 3rem; }
+        .period-group { display: flex; gap: 0.2rem; background: var(--surface); border: 1px solid var(--border); border-radius: 6px; padding: 0.2rem; }
+        .btn { background: transparent; border: none; color: var(--muted); padding: 0.35rem 0.85rem; border-radius: 4px; font-size: 0.74rem; cursor: pointer; transition: all 0.15s; font-family: inherit; }
         .btn:hover { color: var(--text); }
         .btn.active { background: rgba(59,130,246,0.15); color: #60a5fa; }
-        .export-btn { background: transparent; border: 1px solid var(--border); color: var(--dim); padding: 0.4rem 1rem; border-radius: 6px; font-size: 0.74rem; cursor: pointer; letter-spacing: 0.04em; transition: all 0.2s; font-family: inherit; }
+        .export-btn { background: transparent; border: 1px solid var(--border); color: var(--dim); padding: 0.4rem 1rem; border-radius: 6px; font-size: 0.74rem; cursor: pointer; font-family: inherit; transition: all 0.2s; }
         .export-btn:hover { border-color: rgba(255,255,255,0.15); color: var(--text); }
 
-        /* ── Block structure ── */
-        .block { margin-bottom: 5rem; }
+        /* ── VELOCITY HERO ── */
+        .velocity-hero { display: grid; grid-template-columns: auto 1px auto 1px auto 1px auto 1px auto; align-items: center; gap: 0; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 2rem 2.5rem; margin-bottom: 3.5rem; }
+        .vh-divider { width: 1px; height: 3rem; background: var(--border); margin: 0 2.5rem; }
+        .vh-stat { }
+        .vh-label { font-size: 0.6rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.12em; font-weight: 600; margin-bottom: 0.6rem; }
+        .vh-value { font-family: 'Space Grotesk', sans-serif; font-weight: 700; line-height: 1; color: #f1f5f9; }
+        .vh-value.hero { font-size: 3rem; }
+        .vh-value.large { font-size: 2rem; }
+        .vh-value.medium { font-size: 1.5rem; }
+        .vh-unit { font-size: 0.85rem; color: var(--muted); font-weight: 400; margin-left: 0.2rem; }
+        .vh-sub { font-size: 0.7rem; color: var(--dim); margin-top: 0.45rem; }
+        .vh-badge { display: inline-block; padding: 0.18rem 0.55rem; border-radius: 3px; font-size: 0.6rem; font-weight: 700; letter-spacing: 0.07em; margin-top: 0.5rem; text-transform: uppercase; }
+        .badge-green { background: rgba(52,211,153,0.1); color: var(--green); }
+        .badge-yellow { background: rgba(251,191,36,0.1); color: var(--yellow); }
+        .badge-red { background: rgba(239,68,68,0.1); color: var(--red); }
+        .badge-blue { background: rgba(59,130,246,0.1); color: #60a5fa; }
+        .badge-orange { background: rgba(251,146,60,0.1); color: #fb923c; }
 
+        /* ── BLOCKS ── */
+        .block { margin-bottom: 4.5rem; }
         .block-header { margin-bottom: 1.5rem; }
-        .block-question { font-family: 'Space Grotesk', sans-serif; font-size: 1.25rem; font-weight: 600; color: #e2e8f0; letter-spacing: -0.01em; line-height: 1.3; }
-        .block-interp { font-size: 0.82rem; color: var(--dim); margin-top: 0.55rem; line-height: 1.6; font-style: italic; }
-        .block-interp .highlight { color: var(--text); font-style: normal; font-weight: 500; }
-        .block-interp .good { color: #10b981; font-style: normal; font-weight: 600; }
-        .block-interp .warn { color: #f59e0b; font-style: normal; font-weight: 600; }
-        .block-interp .bad { color: #ef4444; font-style: normal; font-weight: 600; }
+        .block-title { font-family: 'Space Grotesk', sans-serif; font-size: 1.1rem; font-weight: 600; color: #e2e8f0; letter-spacing: -0.01em; }
+        .block-signal { font-size: 0.8rem; color: var(--dim); margin-top: 0.45rem; font-style: italic; line-height: 1.6; }
+        .block-signal .hl { color: var(--text); font-style: normal; font-weight: 500; }
+        .block-signal .good { color: var(--green); font-style: normal; font-weight: 600; }
+        .block-signal .warn { color: var(--yellow); font-style: normal; font-weight: 600; }
+        .block-signal .bad { color: var(--red); font-style: normal; font-weight: 600; }
 
         /* Cards */
         .cards { display: grid; gap: 1rem; margin-bottom: 1.25rem; }
         .cards-4 { grid-template-columns: repeat(4, 1fr); }
         .cards-3 { grid-template-columns: repeat(3, 1fr); }
+        .cards-2 { grid-template-columns: repeat(2, 1fr); }
         @media (max-width: 1100px) { .cards-4 { grid-template-columns: repeat(2, 1fr); } }
         @media (max-width: 860px) { .cards-3, .cards-4 { grid-template-columns: repeat(2, 1fr); } }
 
         .card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 1.5rem 1.75rem; }
-        .card.state-build { border-color: rgba(239,68,68,0.2); }
-        .card.state-draw { border-color: rgba(16,185,129,0.2); }
-        .card.state-warn { border-color: rgba(251,191,36,0.2); }
-        .card.state-critical { border-color: rgba(239,68,68,0.35); }
+        .card.accent-red { border-color: rgba(239,68,68,0.25); }
+        .card.accent-green { border-color: rgba(52,211,153,0.2); }
+        .card.accent-yellow { border-color: rgba(251,191,36,0.2); }
+        .card.accent-orange { border-color: rgba(251,146,60,0.25); }
 
-        .card-label { font-size: 0.62rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.12em; margin-bottom: 0.9rem; font-weight: 600; }
-        .card-value { font-family: 'Space Grotesk', sans-serif; font-size: 2.4rem; font-weight: 700; line-height: 1; color: #f1f5f9; }
-        .card-value.large { font-size: 1.8rem; letter-spacing: 0.02em; }
-        .card-unit { font-size: 0.9rem; color: var(--muted); font-weight: 400; margin-left: 0.2rem; }
-        .card-sub { font-size: 0.72rem; color: var(--muted); margin-top: 0.6rem; line-height: 1.5; }
-        .badge { display: inline-block; padding: 0.2rem 0.55rem; border-radius: 3px; font-size: 0.6rem; font-weight: 700; letter-spacing: 0.08em; margin-top: 0.6rem; text-transform: uppercase; }
-        .badge-green { background: rgba(16,185,129,0.1); color: #34d399; }
-        .badge-yellow { background: rgba(251,191,36,0.1); color: #fbbf24; }
-        .badge-red { background: rgba(239,68,68,0.1); color: #f87171; }
-        .badge-blue { background: rgba(59,130,246,0.1); color: #60a5fa; }
+        .card-label { font-size: 0.6rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.12em; margin-bottom: 0.85rem; font-weight: 600; }
+        .card-value { font-family: 'Space Grotesk', sans-serif; font-size: 2.2rem; font-weight: 700; line-height: 1; color: #f1f5f9; }
+        .card-value.lg { font-size: 1.7rem; letter-spacing: 0.02em; }
+        .card-unit { font-size: 0.85rem; color: var(--muted); font-weight: 400; margin-left: 0.15rem; }
+        .card-sub { font-size: 0.72rem; color: var(--muted); margin-top: 0.55rem; line-height: 1.5; }
+        .badge { display: inline-block; padding: 0.18rem 0.55rem; border-radius: 3px; font-size: 0.6rem; font-weight: 700; letter-spacing: 0.07em; margin-top: 0.55rem; text-transform: uppercase; }
 
         /* Charts */
         .chart-box { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 1.5rem 1.75rem; margin-bottom: 1rem; }
-        .chart-box-head { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1.25rem; }
-        .chart-box-title { font-size: 0.72rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.1em; font-weight: 600; }
-        .chart-box-meta { font-size: 0.6rem; color: var(--subtle); text-align: right; line-height: 1.7; }
-        .chart-h { position: relative; height: 240px; }
-        .chart-h-tall { position: relative; height: 300px; }
+        .chart-head { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1.25rem; }
+        .chart-title { font-size: 0.7rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.1em; font-weight: 600; }
+        .chart-meta { font-size: 0.6rem; color: #1e2d3d; text-align: right; line-height: 1.7; }
+        .ch { position: relative; height: 240px; }
+        .ch-tall { position: relative; height: 300px; }
 
         /* Pulse log */
         .pulse-log { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 1.25rem 1.75rem; }
-        .pulse-log-title { font-size: 0.62rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.12em; font-weight: 600; margin-bottom: 1rem; }
+        .pulse-log-label { font-size: 0.6rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.12em; font-weight: 600; margin-bottom: 1rem; }
         .pulse-row { display: flex; justify-content: space-between; align-items: center; padding: 0.5rem 0; border-bottom: 1px solid rgba(255,255,255,0.03); }
         .pulse-row:last-child { border-bottom: none; }
         .pulse-dates { font-family: monospace; font-size: 0.72rem; color: var(--dim); }
-        .pulse-vol { font-family: 'Space Grotesk', sans-serif; font-size: 0.9rem; font-weight: 600; color: #34d399; }
+        .pulse-vol { font-family: 'Space Grotesk', sans-serif; font-size: 0.88rem; font-weight: 600; color: var(--green); }
 
         /* Map */
         .map-box { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 1.5rem 1.75rem; }
@@ -118,9 +127,11 @@
         .map-controls { display: flex; align-items: center; gap: 0.75rem; margin-top: 1rem; }
         .map-date { font-family: monospace; font-size: 0.72rem; color: var(--dim); min-width: 90px; }
         .map-slider { flex: 1; accent-color: var(--accent); }
-        .map-btn { background: transparent; border: 1px solid var(--border); color: var(--muted); padding: 0.3rem 0.7rem; border-radius: 4px; font-size: 0.75rem; cursor: pointer; transition: border-color 0.2s; }
-        .map-btn:hover { border-color: rgba(255,255,255,0.15); }
+        .map-btn { background: transparent; border: 1px solid var(--border); color: var(--muted); padding: 0.3rem 0.7rem; border-radius: 4px; font-size: 0.75rem; cursor: pointer; }
         .tank-div-icon { background: none !important; border: none !important; }
+
+        /* Section divider */
+        .section-label { font-size: 0.58rem; color: #1e2d3d; text-transform: uppercase; letter-spacing: 0.16em; font-weight: 700; margin-bottom: 1.25rem; margin-top: 0.5rem; }
     </style>
 </head>
 <body>
@@ -134,11 +145,6 @@
 </nav>
 
 <div class="container">
-
-    <div class="page-hero">
-        <div class="page-title">Kharg Island · Iran Crude Terminal</div>
-        <div class="page-meta" id="pageMeta">Загрузка данных…</div>
-    </div>
 
     <div class="alert-banner" id="alertBanner">
         <span>⚡</span><span id="alertText"></span>
@@ -156,144 +162,176 @@
         <button class="export-btn" onclick="exportCSV()">Export CSV</button>
     </div>
 
-    <!-- ── BLOCK 1 ── -->
-    <div class="block">
-        <div class="block-header">
-            <div class="block-question">Сколько нефти хранится в терминале?</div>
-            <div class="block-interp" id="interp1">Загрузка…</div>
+    <!-- ── VELOCITY HERO ──────────────────────────────────────────────────── -->
+    <div class="velocity-hero">
+        <div class="vh-stat">
+            <div class="vh-label">Fill Rate · 7d avg</div>
+            <div class="vh-value hero" id="vhRate">--<span class="vh-unit">Mb/d</span></div>
+            <div class="vh-sub" id="vhRateSub"></div>
         </div>
-
-        <div class="cards cards-4">
-            <div class="card" id="cardStorage">
-                <div class="card-label">Текущий объём</div>
-                <div class="card-value" id="metStorage">--<span class="card-unit">Mb</span></div>
-                <div class="card-sub" id="metStorageSub"></div>
-            </div>
-            <div class="card" id="cardSPI">
-                <div class="card-label">Утилизация мощности</div>
-                <div class="card-value" id="metSPI">--<span class="card-unit">%</span></div>
-                <div class="badge" id="metSPIBadge"></div>
-            </div>
-            <div class="card" id="cardFillRate">
-                <div class="card-label">Скорость изменения · 7d</div>
-                <div class="card-value" id="metFillRate">--<span class="card-unit">Mb/d</span></div>
-                <div class="card-sub" id="metFillRateSub"></div>
-            </div>
-            <div class="card" id="cardChange">
-                <div class="card-label">Изменение за 30 дней</div>
-                <div class="card-value" id="metChange">--<span class="card-unit">%</span></div>
-                <div class="card-sub" id="metChangeSub"></div>
-            </div>
+        <div class="vh-divider"></div>
+        <div class="vh-stat">
+            <div class="vh-label">vs 90d avg</div>
+            <div class="vh-value large" id="vhSurprise">--<span class="vh-unit">Mb/d</span></div>
+            <div class="vh-badge" id="vhSurpriseBadge"></div>
         </div>
-
-        <div class="chart-box">
-            <div class="chart-box-head">
-                <div class="chart-box-title">История хранения · Kharg Island</div>
-                <div class="chart-box-meta">Mb · Sentinel-1 SAR · ~6 дней</div>
-            </div>
-            <div class="chart-h-tall"><canvas id="mainChart"></canvas></div>
+        <div class="vh-divider"></div>
+        <div class="vh-stat">
+            <div class="vh-label" id="vhCapLabel">Days to Capacity</div>
+            <div class="vh-value large" id="vhDays">--<span class="vh-unit">d</span></div>
+            <div class="vh-sub" id="vhDaysSub"></div>
         </div>
-
-        <div class="chart-box">
-            <div class="chart-box-head">
-                <div class="chart-box-title">Скорость закачки / слива</div>
-                <div class="chart-box-meta">Mb/день · 7d delta · красный = накопление · зелёный = слив</div>
-            </div>
-            <div class="chart-h"><canvas id="fillRateChart"></canvas></div>
+        <div class="vh-divider"></div>
+        <div class="vh-stat">
+            <div class="vh-label">Storage · <span id="vhDate">--</span></div>
+            <div class="vh-value medium" id="vhVol">--<span class="vh-unit">Mb</span></div>
+            <div class="vh-badge" id="vhUtilBadge"></div>
+        </div>
+        <div class="vh-divider"></div>
+        <div class="vh-stat">
+            <div class="vh-label">Regime</div>
+            <div class="vh-value medium" id="vhRegime">--</div>
+            <div class="vh-sub" id="vhRegimeSub"></div>
         </div>
     </div>
 
-    <!-- ── BLOCK 2 ── -->
+    <!-- ── BLOCK 1: INVENTORY ─────────────────────────────────────────────── -->
     <div class="block">
         <div class="block-header">
-            <div class="block-question">Когда и сколько нефти было отгружено?</div>
-            <div class="block-interp" id="interp2">Загрузка…</div>
+            <div class="block-title">Inventory Level &amp; Velocity</div>
+            <div class="block-signal" id="sig1">Loading…</div>
+        </div>
+
+        <div class="cards cards-4">
+            <div class="card" id="cardVol">
+                <div class="card-label">Current Storage</div>
+                <div class="card-value" id="metVol">--<span class="card-unit">Mb</span></div>
+                <div class="card-sub" id="metVolSub"></div>
+            </div>
+            <div class="card" id="cardUtil">
+                <div class="card-label">Utilization</div>
+                <div class="card-value" id="metUtil">--<span class="card-unit">%</span></div>
+                <div class="badge" id="metUtilBadge"></div>
+            </div>
+            <div class="card" id="cardRate">
+                <div class="card-label">Fill Rate · 7d</div>
+                <div class="card-value" id="metRate">--<span class="card-unit">Mb/d</span></div>
+                <div class="card-sub" id="metRateSub"></div>
+            </div>
+            <div class="card" id="cardDays">
+                <div class="card-label" id="metDaysLabel">Days to Capacity</div>
+                <div class="card-value" id="metDays">--<span class="card-unit">d</span></div>
+                <div class="card-sub" id="metDaysSub"></div>
+            </div>
+        </div>
+
+        <div class="chart-box">
+            <div class="chart-head">
+                <div class="chart-title">Volume History — Kharg Island</div>
+                <div class="chart-meta">Mb · Sentinel-1 SAR · ~6d revisit</div>
+            </div>
+            <div class="ch-tall"><canvas id="mainChart"></canvas></div>
+        </div>
+
+        <div class="chart-box">
+            <div class="chart-head">
+                <div class="chart-title">Build vs Draw — Daily Rate</div>
+                <div class="chart-meta">Mb/d · 7d delta · red = build · green = draw</div>
+            </div>
+            <div class="ch"><canvas id="fillRateChart"></canvas></div>
+        </div>
+    </div>
+
+    <!-- ── BLOCK 2: SURPRISE ──────────────────────────────────────────────── -->
+    <div class="block">
+        <div class="block-header">
+            <div class="block-title">Rate Surprise — Current vs Historical Baseline</div>
+            <div class="block-signal" id="sig2">Loading…</div>
+        </div>
+
+        <div class="cards cards-3">
+            <div class="card" id="cardSurprise">
+                <div class="card-label">Rate vs 90d Avg</div>
+                <div class="card-value" id="metSurprise">--<span class="card-unit">Mb/d</span></div>
+                <div class="badge" id="metSurpriseBadge"></div>
+            </div>
+            <div class="card" id="cardRate30">
+                <div class="card-label">30d Change</div>
+                <div class="card-value" id="metRate30">--<span class="card-unit">%</span></div>
+                <div class="card-sub" id="metRate30Sub"></div>
+            </div>
+            <div class="card" id="cardStreak">
+                <div class="card-label">Current Streak</div>
+                <div class="card-value lg" id="metStreak">--</div>
+                <div class="card-sub" id="metStreakSub"></div>
+            </div>
+        </div>
+
+        <div class="chart-box">
+            <div class="chart-head">
+                <div class="chart-title">Utilization vs Capacity Threshold</div>
+                <div class="chart-meta">% of 33.2 Mb · above 85% = forced sell zone</div>
+            </div>
+            <div class="ch"><canvas id="spiChart"></canvas></div>
+        </div>
+    </div>
+
+    <!-- ── BLOCK 3: EXPORT SIGNALS ───────────────────────────────────────── -->
+    <div class="block">
+        <div class="block-header">
+            <div class="block-title">Export Signals — VLCC Loading Events</div>
+            <div class="block-signal" id="sig3">Loading…</div>
         </div>
 
         <div class="cards cards-3">
             <div class="card" id="cardEPS">
-                <div class="card-label">Загрузок танкеров · 90d</div>
+                <div class="card-label">Loadings · 90d</div>
                 <div class="card-value" id="metEPS">--</div>
                 <div class="badge" id="metEPSBadge"></div>
             </div>
-            <div class="card" id="cardExportInterval">
-                <div class="card-label">Средний интервал экспорта</div>
-                <div class="card-value" id="metExportInterval">--<span class="card-unit">d</span></div>
-                <div class="card-sub" id="metExportIntervalSub"></div>
+            <div class="card" id="cardInterval">
+                <div class="card-label">Avg Export Interval</div>
+                <div class="card-value" id="metInterval">--<span class="card-unit">d</span></div>
+                <div class="card-sub" id="metIntervalSub"></div>
             </div>
-            <div class="card" id="cardExported90">
-                <div class="card-label">Объём экспорта · 90d</div>
-                <div class="card-value" id="metExported90">--<span class="card-unit">Mb</span></div>
-                <div class="card-sub" id="metExported90Sub"></div>
+            <div class="card" id="cardExp90">
+                <div class="card-label">Volume Exported · 90d</div>
+                <div class="card-value" id="metExp90">--<span class="card-unit">Mb</span></div>
+                <div class="card-sub" id="metExp90Sub"></div>
             </div>
         </div>
 
         <div class="chart-box">
-            <div class="chart-box-head">
-                <div class="chart-box-title">Экспортные события · вероятные загрузки VLCC</div>
-                <div class="chart-box-meta">Каждый столбец = одна загрузка танкера · Mb за 6–12 дней</div>
+            <div class="chart-head">
+                <div class="chart-title">VLCC Loading Events — Detected Drawdowns</div>
+                <div class="chart-meta">Each bar = probable tanker load · Mb over 6–12d</div>
             </div>
-            <div class="chart-h-tall"><canvas id="pulseHistChart"></canvas></div>
+            <div class="ch-tall"><canvas id="pulseHistChart"></canvas></div>
+        </div>
+
+        <div class="chart-box">
+            <div class="chart-head">
+                <div class="chart-title">Monthly Balance</div>
+                <div class="chart-meta">Net Mb/month · green = net export · red = net build</div>
+            </div>
+            <div class="ch-tall"><canvas id="monthlyChart"></canvas></div>
         </div>
 
         <div class="pulse-log">
-            <div class="pulse-log-title">Журнал событий</div>
-            <div id="pulseList"><div style="color:var(--muted);font-size:0.78rem;padding:0.5rem 0">Загрузка…</div></div>
+            <div class="pulse-log-label">Event Log</div>
+            <div id="pulseList"><div style="color:var(--muted);font-size:0.78rem;padding:0.5rem 0">Loading…</div></div>
         </div>
     </div>
 
-    <!-- ── BLOCK 3 ── -->
+    <!-- ── BLOCK 4: PER-TANK MAP ──────────────────────────────────────────── -->
     <div class="block">
         <div class="block-header">
-            <div class="block-question">В каком режиме работает терминал прямо сейчас?</div>
-            <div class="block-interp" id="interp3">Загрузка…</div>
+            <div class="block-title">Per-Tank Storage Map — 47 Tanks · Full History</div>
+            <div class="block-signal">Blue = full · Red = empty. Use the slider to navigate any date. Click a tank for fill % and volume. Active loading tanks: <span class="hl">t60_2, t55_17</span>. Probable strategic reserve: <span class="hl">t55_31, t60_1</span>.</div>
         </div>
-
-        <div class="cards cards-3">
-            <div class="card" id="cardStreak">
-                <div class="card-label">Текущий режим</div>
-                <div class="card-value large" id="metStreakType">--</div>
-                <div class="card-sub" id="metStreakDays"></div>
-            </div>
-            <div class="card" id="cardSIR">
-                <div class="card-label">Неактивные баки</div>
-                <div class="card-value" id="metSIR">--<span class="card-unit">%</span></div>
-                <div class="card-sub">2 из 47 хронически пустые</div>
-            </div>
-            <div class="card" id="cardVSA">
-                <div class="card-label">Аномальная активность · 30d</div>
-                <div class="card-value" id="metVSA">--</div>
-                <div class="badge" id="metVSABadge"></div>
-            </div>
-        </div>
-
-        <div class="chart-box">
-            <div class="chart-box-head">
-                <div class="chart-box-title">Утилизация терминала во времени</div>
-                <div class="chart-box-meta">% от 33.2 Mb · выше 85% = зона принудительных продаж</div>
-            </div>
-            <div class="chart-h"><canvas id="spiChart"></canvas></div>
-        </div>
-
-        <div class="chart-box">
-            <div class="chart-box-head">
-                <div class="chart-box-title">Месячный баланс · накопление vs слив</div>
-                <div class="chart-box-meta">Net Mb/месяц · зелёный = экспорт · красный = накопление</div>
-            </div>
-            <div class="chart-h-tall"><canvas id="monthlyChart"></canvas></div>
-        </div>
-    </div>
-
-    <!-- ── BLOCK 4 ── -->
-    <div class="block">
-        <div class="block-header">
-            <div class="block-question">В каких конкретно баках хранится нефть?</div>
-            <div class="block-interp">47 баков · 3 года истории · синий = полный · красный = пустой. Кликните на бак для деталей.</div>
-        </div>
-
         <div class="map-box">
             <div id="tankMap">
-                <div id="mapLoading" style="display:flex;align-items:center;justify-content:center;height:100%;color:var(--muted);font-size:0.85rem;">Загрузка спутниковых данных…</div>
+                <div id="mapLoading" style="display:flex;align-items:center;justify-content:center;height:100%;color:var(--muted);font-size:0.85rem;">Loading satellite data…</div>
             </div>
             <div class="map-controls">
                 <button class="map-btn" id="mapPrev">←</button>
@@ -328,7 +366,6 @@ const MAX_CAP = 33.2;
 const PULSE_THRESHOLD = 2.0;
 const PULSE_WIN_MIN = 6;
 const PULSE_WIN_MAX = 12;
-const SIR_STATIC = 4.3;
 
 let allDates = [], allValues = [];
 let currentRange = 1095;
@@ -373,8 +410,6 @@ function computeFillRate(dates, values, win = 7) {
     });
 }
 
-function computeSPI(values) { return values.map(v => (v / MAX_CAP) * 100); }
-
 function detectPulses(dates, values) {
     const events = [];
     for (let i = 0; i < dates.length; i++) {
@@ -393,22 +428,6 @@ function detectPulses(dates, values) {
     return events;
 }
 
-function computeVolatility(dates, values) {
-    const win = 30, rollingStds = [];
-    for (let i = 0; i < values.length; i++) {
-        if (i < win) { rollingStds.push(null); continue; }
-        const sl = values.slice(i - win, i);
-        const m = sl.reduce((a, b) => a + b, 0) / sl.length;
-        rollingStds.push(Math.sqrt(sl.reduce((a, b) => a + (b - m) ** 2, 0) / sl.length));
-    }
-    const valid = rollingStds.filter(v => v !== null);
-    const gm = valid.reduce((a, b) => a + b, 0) / valid.length;
-    const gs = Math.sqrt(valid.reduce((a, b) => a + (b - gm) ** 2, 0) / valid.length);
-    const threshold = gm + 1.5 * gs;
-    const spikes = dates.map((d, i) => rollingStds[i] !== null && rollingStds[i] > threshold ? { date: d } : null).filter(Boolean);
-    return { spikes, rollingStds };
-}
-
 function computeMonthly(dates, values) {
     const months = {};
     for (let i = 0; i < dates.length; i++) {
@@ -423,163 +442,232 @@ function computeStreak(dates, values) {
     const n = values.length;
     if (n < 4) return { type: 'UNKNOWN', days: 0, change: 0, startDate: '' };
     const recentDelta = values[n - 1] - values[Math.max(0, n - 5)];
-    const type = recentDelta >= 0 ? 'BUILD' : 'DRAWDOWN';
+    const type = recentDelta >= 0 ? 'BUILD' : 'DRAW';
     let start = n - 1;
     for (let i = n - 1; i > 0; i--) {
         const d = values[i] - values[i - 1];
         if (type === 'BUILD' && d < -0.05) break;
-        if (type === 'DRAWDOWN' && d > 0.05) break;
+        if (type === 'DRAW' && d > 0.05) break;
         start = i - 1;
     }
     return { type, days: Math.round((new Date(dates[n-1]) - new Date(dates[start])) / 86400000), change: values[n-1] - values[start], startDate: dates[start] };
 }
 
-function hi(text, cls) { return `<span class="${cls}">${text}</span>`; }
+function hl(text, cls) { return `<span class="${cls}">${text}</span>`; }
 
 function render() {
     const { dates, values } = getSlice();
     if (!dates.length) return;
     const n = values.length;
     const latest = values[n - 1];
-    const spi = (latest / MAX_CAP) * 100;
+    const util = (latest / MAX_CAP) * 100;
     const fillRates = computeFillRate(dates, values);
-    const spiSeries = computeSPI(values);
+    const spiSeries = values.map(v => (v / MAX_CAP) * 100);
     const pulses = detectPulses(dates, values);
-    const { spikes } = computeVolatility(dates, values);
-    const change30 = ((latest - values[Math.max(0, n - 30)]) / values[Math.max(0, n - 30)]) * 100;
-    const latestFR = fillRates[n - 1];
     const streak = computeStreak(dates, values);
+    const change30pct = ((latest - values[Math.max(0, n - 30)]) / values[Math.max(0, n - 30)]) * 100;
+    const latestFR = fillRates[n - 1];
 
-    document.getElementById('pageMeta').textContent =
-        `Последнее наблюдение: ${dates[n-1]} · ${latest.toFixed(2)} Mb · Мощность: ${MAX_CAP} Mb`;
+    // 90d avg fill rate (surprise baseline) — use ALL data for stable baseline
+    const allFR = computeFillRate(allDates, allValues);
+    const baseline90 = allFR.filter(r => r !== null).slice(-90);
+    const avgFR90 = baseline90.length ? baseline90.reduce((a, b) => a + b, 0) / baseline90.length : 0;
+    const surprise = latestFR !== null ? latestFR - avgFR90 : null;
+
+    // Days to capacity / days to empty
+    let daysVal = null, daysLabel = '', daysSub = '';
+    if (latestFR !== null && latestFR > 0.005) {
+        daysVal = Math.round((MAX_CAP - latest) / latestFR);
+        daysLabel = 'Days to Capacity';
+        daysSub = `At ${latestFR.toFixed(3)} Mb/d fill rate`;
+    } else if (latestFR !== null && latestFR < -0.005) {
+        daysVal = Math.round(latest / Math.abs(latestFR));
+        daysLabel = 'Days to Empty';
+        daysSub = `At ${Math.abs(latestFR).toFixed(3)} Mb/d draw rate`;
+    } else {
+        daysLabel = 'Days to Capacity';
+        daysSub = 'Rate near zero';
+    }
 
     // Alert
     const banner = document.getElementById('alertBanner');
     banner.className = 'alert-banner';
-    if (spi > 85) {
+    if (util > 85) {
         banner.classList.add('visible', 'critical');
         document.getElementById('alertText').textContent =
-            `Критический уровень хранения — ${spi.toFixed(1)}% мощности. Исторически предшествует ценовым уступкам в течение 4–8 недель.`;
+            `Storage CRITICAL — ${util.toFixed(1)}% utilization. Historically precedes forced price concessions within 4–8 weeks.`;
     } else if (pulses.length && pulses[pulses.length-1].end >= dates[Math.max(0, n-10)]) {
         banner.classList.add('visible', 'pulse');
         const last = pulses[pulses.length-1];
         document.getElementById('alertText').textContent =
-            `Экспортный импульс ${last.start} → ${last.end}: −${last.delta.toFixed(2)} Mb за ${last.days} дней. Вероятная загрузка VLCC.`;
+            `Export pulse detected: ${last.start} → ${last.end} · −${last.delta.toFixed(2)} Mb in ${last.days}d · Probable VLCC loading`;
     }
+
+    // ── VELOCITY HERO ──
+    const frSign = latestFR !== null && latestFR >= 0 ? '+' : '';
+    const frEl = document.getElementById('vhRate');
+    if (latestFR !== null) {
+        frEl.innerHTML = frSign + latestFR.toFixed(3) + '<span class="vh-unit"> Mb/d</span>';
+        frEl.style.color = latestFR >= 0 ? '#f87171' : '#34d399';
+    }
+    document.getElementById('vhRateSub').textContent = latestFR !== null
+        ? (latestFR >= 0 ? '▲ Building inventory' : '▼ Drawing inventory')
+        : '';
+
+    const surEl = document.getElementById('vhSurprise');
+    const surBadge = document.getElementById('vhSurpriseBadge');
+    if (surprise !== null) {
+        const ss = surprise >= 0 ? '+' : '';
+        surEl.innerHTML = ss + surprise.toFixed(3) + '<span class="vh-unit"> Mb/d</span>';
+        surEl.style.color = surprise > 0.05 ? '#f87171' : surprise < -0.05 ? '#34d399' : '#64748b';
+        if (Math.abs(surprise) < 0.05) {
+            surBadge.textContent = 'In line with baseline'; surBadge.className = 'vh-badge badge-blue';
+        } else if (surprise > 0) {
+            surBadge.textContent = 'Building faster than avg'; surBadge.className = 'vh-badge badge-red';
+        } else {
+            surBadge.textContent = 'Drawing faster than avg'; surBadge.className = 'vh-badge badge-green';
+        }
+    }
+
+    const daysEl = document.getElementById('vhDays');
+    document.getElementById('vhCapLabel').textContent = daysLabel;
+    if (daysVal !== null) {
+        daysEl.innerHTML = daysVal + '<span class="vh-unit"> d</span>';
+        daysEl.style.color = daysVal < 30 ? '#f87171' : daysVal < 60 ? '#fbbf24' : '#f1f5f9';
+    } else {
+        daysEl.innerHTML = '—';
+    }
+    document.getElementById('vhDaysSub').textContent = daysSub;
+
+    document.getElementById('vhDate').textContent = dates[n-1];
+    document.getElementById('vhVol').innerHTML = latest.toFixed(1) + '<span class="vh-unit"> Mb</span>';
+    const utilBadge = document.getElementById('vhUtilBadge');
+    utilBadge.textContent = util.toFixed(1) + '% utilized';
+    utilBadge.className = util > 85 ? 'vh-badge badge-red' : util > 70 ? 'vh-badge badge-yellow' : 'vh-badge badge-green';
+
+    const regEl = document.getElementById('vhRegime');
+    regEl.textContent = streak.type;
+    regEl.style.color = streak.type === 'BUILD' ? '#f87171' : '#34d399';
+    document.getElementById('vhRegimeSub').textContent = `${streak.days}d · ${streak.change >= 0 ? '+' : ''}${streak.change.toFixed(2)} Mb`;
 
     // ── Block 1 cards ──
-    document.getElementById('metStorage').innerHTML = latest.toFixed(1) + '<span class="card-unit"> Mb</span>';
-    document.getElementById('metStorageSub').textContent = `${latest.toFixed(1)} из ${MAX_CAP} Mb · 47 баков`;
+    document.getElementById('metVol').innerHTML = latest.toFixed(1) + '<span class="card-unit"> Mb</span>';
+    document.getElementById('metVolSub').textContent = `of ${MAX_CAP} Mb capacity · 47 tanks`;
 
-    document.getElementById('metSPI').innerHTML = spi.toFixed(1) + '<span class="card-unit">%</span>';
-    const spiBadge = document.getElementById('metSPIBadge');
-    if (spi > 85) {
-        spiBadge.textContent = 'Критично'; spiBadge.className = 'badge badge-red';
-        document.getElementById('cardSPI').className = 'card state-critical';
-    } else if (spi > 70) {
-        spiBadge.textContent = 'Повышено'; spiBadge.className = 'badge badge-yellow';
-        document.getElementById('cardSPI').className = 'card state-warn';
-    } else {
-        spiBadge.textContent = 'Норма'; spiBadge.className = 'badge badge-green';
-    }
+    document.getElementById('metUtil').innerHTML = util.toFixed(1) + '<span class="card-unit">%</span>';
+    const utilCardBadge = document.getElementById('metUtilBadge');
+    if (util > 85) { utilCardBadge.textContent = 'Critical — forced sell risk'; utilCardBadge.className = 'badge badge-red'; document.getElementById('cardUtil').className = 'card accent-red'; }
+    else if (util > 70) { utilCardBadge.textContent = 'Elevated'; utilCardBadge.className = 'badge badge-yellow'; document.getElementById('cardUtil').className = 'card accent-yellow'; }
+    else { utilCardBadge.textContent = 'Normal'; utilCardBadge.className = 'badge badge-green'; }
 
     if (latestFR !== null) {
-        const sign = latestFR >= 0 ? '+' : '';
-        const frEl = document.getElementById('metFillRate');
-        frEl.innerHTML = sign + latestFR.toFixed(3) + '<span class="card-unit"> Mb/d</span>';
-        frEl.style.color = latestFR >= 0 ? '#f87171' : '#34d399';
-        document.getElementById('cardFillRate').className = latestFR >= 0 ? 'card state-build' : 'card state-draw';
-        document.getElementById('metFillRateSub').textContent = latestFR >= 0 ? '▲ Накопление' : '▼ Слив';
+        const rSign = latestFR >= 0 ? '+' : '';
+        const rEl = document.getElementById('metRate');
+        rEl.innerHTML = rSign + latestFR.toFixed(3) + '<span class="card-unit"> Mb/d</span>';
+        rEl.style.color = latestFR >= 0 ? '#f87171' : '#34d399';
+        document.getElementById('metRateSub').textContent = latestFR >= 0 ? '▲ Build' : '▼ Draw';
+        document.getElementById('cardRate').className = latestFR >= 0 ? 'card accent-red' : 'card accent-green';
     }
 
-    const cs = change30 >= 0 ? '+' : '';
-    const chEl = document.getElementById('metChange');
-    chEl.innerHTML = cs + change30.toFixed(1) + '<span class="card-unit">%</span>';
-    chEl.style.color = change30 >= 0 ? '#f87171' : '#34d399';
-    document.getElementById('metChangeSub').textContent = change30 >= 0 ? '▲ к уровню 30 дней назад' : '▼ к уровню 30 дней назад';
+    document.getElementById('metDaysLabel').textContent = daysLabel;
+    if (daysVal !== null) {
+        document.getElementById('metDays').innerHTML = daysVal + '<span class="card-unit"> d</span>';
+        document.getElementById('metDays').style.color = daysVal < 30 ? '#f87171' : daysVal < 60 ? '#fbbf24' : '#f1f5f9';
+        document.getElementById('cardDays').className = daysVal < 30 ? 'card accent-orange' : daysVal < 60 ? 'card accent-yellow' : 'card';
+    } else {
+        document.getElementById('metDays').innerHTML = '—';
+    }
+    document.getElementById('metDaysSub').textContent = daysSub;
 
-    // ── Block 1 interpretation ──
-    let interp1 = '';
-    const spiLabel = spi > 85 ? hi('критическом', 'bad') : spi > 70 ? hi('повышенном', 'warn') : hi('нормальном', 'good');
-    const dirWord = latestFR !== null && latestFR >= 0 ? hi('растёт', 'bad') : hi('снижается', 'good');
-    interp1 = `Сейчас в хранилище ${hi(latest.toFixed(1) + ' Mb', 'highlight')} — ${spi.toFixed(0)}% от максимальной мощности. Уровень ${spiLabel}. Объём ${dirWord}${latestFR !== null ? ' со скоростью ' + hi(Math.abs(latestFR).toFixed(3) + ' Mb/сут', 'highlight') : ''}.`;
-    document.getElementById('interp1').innerHTML = interp1;
+    // ── Block 1 signal ──
+    const utilWord = util > 85 ? hl('critical', 'bad') : util > 70 ? hl('elevated', 'warn') : hl('normal', 'good');
+    const rateWord = latestFR !== null && latestFR >= 0 ? hl('building', 'bad') : hl('drawing', 'good');
+    const capPressure = daysVal !== null && latestFR > 0
+        ? (daysVal < 30 ? ` Terminal fills in ${hl(daysVal + 'd', 'bad')} at current rate — ${hl('forced sell risk imminent', 'bad')}.`
+           : daysVal < 60 ? ` At current rate, capacity hit in ${hl(daysVal + 'd', 'warn')}.`
+           : '')
+        : '';
+    document.getElementById('sig1').innerHTML =
+        `Storage at ${hl(latest.toFixed(2) + ' Mb', 'hl')} (${hl(util.toFixed(0) + '%', 'hl')} utilization) — ${utilWord}. Terminal is ${rateWord} at ${hl((latestFR !== null ? Math.abs(latestFR) : 0).toFixed(3) + ' Mb/d', 'hl')}.${capPressure}`;
 
     // ── Block 2 cards ──
+    if (surprise !== null) {
+        const sSign = surprise >= 0 ? '+' : '';
+        const sEl = document.getElementById('metSurprise');
+        sEl.innerHTML = sSign + surprise.toFixed(3) + '<span class="card-unit"> Mb/d</span>';
+        sEl.style.color = Math.abs(surprise) < 0.05 ? '#64748b' : surprise > 0 ? '#f87171' : '#34d399';
+        const sBadge = document.getElementById('metSurpriseBadge');
+        if (Math.abs(surprise) < 0.05) { sBadge.textContent = 'In line'; sBadge.className = 'badge badge-blue'; document.getElementById('cardSurprise').className = 'card'; }
+        else if (surprise > 0) { sBadge.textContent = 'Surprise build'; sBadge.className = 'badge badge-red'; document.getElementById('cardSurprise').className = 'card accent-red'; }
+        else { sBadge.textContent = 'Surprise draw'; sBadge.className = 'badge badge-green'; document.getElementById('cardSurprise').className = 'card accent-green'; }
+    }
+
+    const c30Sign = change30pct >= 0 ? '+' : '';
+    const c30El = document.getElementById('metRate30');
+    c30El.innerHTML = c30Sign + change30pct.toFixed(1) + '<span class="card-unit">%</span>';
+    c30El.style.color = change30pct >= 0 ? '#f87171' : '#34d399';
+    document.getElementById('metRate30Sub').textContent = change30pct >= 0 ? '▲ vs 30 days ago' : '▼ vs 30 days ago';
+    document.getElementById('cardRate30').className = change30pct >= 0 ? 'card accent-red' : 'card accent-green';
+
+    const stEl = document.getElementById('metStreak');
+    stEl.textContent = streak.type;
+    stEl.style.color = streak.type === 'BUILD' ? '#f87171' : '#34d399';
+    const sc = streak.change >= 0 ? '+' : '';
+    document.getElementById('metStreakSub').textContent = `${streak.days}d since ${streak.startDate} · ${sc}${streak.change.toFixed(2)} Mb`;
+    document.getElementById('cardStreak').className = streak.type === 'BUILD' ? 'card accent-red' : 'card accent-green';
+
+    // ── Block 2 signal ──
+    const surpWord = surprise === null ? '' : Math.abs(surprise) < 0.05
+        ? 'Rate in line with 90d baseline.'
+        : surprise > 0
+            ? `Current rate is ${hl('+' + surprise.toFixed(3) + ' Mb/d', 'bad')} above 90d avg — ${hl('surprise build', 'bad')}. Bearish signal.`
+            : `Current rate is ${hl(surprise.toFixed(3) + ' Mb/d', 'good')} below 90d avg — ${hl('surprise draw', 'good')}. Bullish signal.`;
+    document.getElementById('sig2').innerHTML = surpWord +
+        ` Terminal in ${hl(streak.type, streak.type === 'BUILD' ? 'bad' : 'good')} mode for ${hl(streak.days + 'd', 'hl')}.`;
+
+    // ── Block 3 cards ──
     const recent90 = pulses.filter(e => (new Date(dates[n-1]) - new Date(e.end)) / 86400000 <= 90);
     document.getElementById('metEPS').textContent = recent90.length;
     const epsBadge = document.getElementById('metEPSBadge');
-    epsBadge.textContent = recent90.length > 0 ? `${recent90.length} загруз${recent90.length > 1 ? 'ки' : 'ка'} за 90d` : 'Нет за 90d';
+    epsBadge.textContent = recent90.length > 0 ? `${recent90.length} loading${recent90.length > 1 ? 's' : ''} last 90d` : 'None last 90d';
     epsBadge.className = recent90.length > 0 ? 'badge badge-green' : 'badge badge-blue';
 
     if (pulses.length > 1) {
         let totalGap = 0;
         for (let i = 1; i < pulses.length; i++) totalGap += (new Date(pulses[i].start) - new Date(pulses[i-1].start)) / 86400000;
         const avg = Math.round(totalGap / (pulses.length - 1));
-        document.getElementById('metExportInterval').innerHTML = avg + '<span class="card-unit"> d</span>';
+        document.getElementById('metInterval').innerHTML = avg + '<span class="card-unit"> d</span>';
         const next = new Date(pulses[pulses.length-1].start);
         next.setDate(next.getDate() + avg);
         const daysUntil = Math.round((next - new Date(dates[n-1])) / 86400000);
-        document.getElementById('metExportIntervalSub').textContent = daysUntil > 0
-            ? `Следующий ~${next.toISOString().slice(0,10)} (через ${daysUntil}д)`
-            : `Просрочен на ${Math.abs(daysUntil)}д`;
+        document.getElementById('metIntervalSub').textContent = daysUntil > 0
+            ? `Next ~${next.toISOString().slice(0,10)} (in ${daysUntil}d)`
+            : `Overdue by ${Math.abs(daysUntil)}d`;
     } else {
-        document.getElementById('metExportInterval').innerHTML = '--<span class="card-unit"> d</span>';
-        document.getElementById('metExportIntervalSub').textContent = 'Недостаточно данных';
+        document.getElementById('metInterval').innerHTML = '--<span class="card-unit"> d</span>';
+        document.getElementById('metIntervalSub').textContent = 'Insufficient data';
     }
 
     const exp90vol = recent90.reduce((s, e) => s + e.delta, 0);
-    document.getElementById('metExported90').innerHTML = exp90vol.toFixed(2) + '<span class="card-unit"> Mb</span>';
-    document.getElementById('metExported90Sub').textContent = `${recent90.length} импульсов · ≈${(exp90vol / 2).toFixed(1)} VLCC`;
+    document.getElementById('metExp90').innerHTML = exp90vol.toFixed(2) + '<span class="card-unit"> Mb</span>';
+    document.getElementById('metExp90Sub').textContent = `${recent90.length} pulses · ≈${(exp90vol / 2).toFixed(1)} VLCCs`;
 
-    // ── Block 2 interpretation ──
-    let interp2 = '';
+    // ── Block 3 signal ──
     if (pulses.length === 0) {
-        interp2 = 'За выбранный период экспортных событий не зафиксировано.';
+        document.getElementById('sig3').innerHTML = 'No VLCC loading events detected in the selected period.';
     } else {
         const last = pulses[pulses.length - 1];
-        const daysSinceLast = Math.round((new Date(dates[n-1]) - new Date(last.end)) / 86400000);
-        interp2 = `Последний экспорт: ${hi(last.start, 'highlight')} → ${hi(last.end, 'highlight')} — ${hi('−' + last.delta.toFixed(2) + ' Mb', 'good')} за ${last.days} дней. ${daysSinceLast < 7 ? hi('Вероятно, загрузка ещё идёт.', 'warn') : `${daysSinceLast} дней назад.`} За 90 дней отгружено ${hi(exp90vol.toFixed(2) + ' Mb', 'highlight')}.`;
+        const daysSince = Math.round((new Date(dates[n-1]) - new Date(last.end)) / 86400000);
+        document.getElementById('sig3').innerHTML =
+            `Last detected loading: ${hl(last.start, 'hl')} → ${hl(last.end, 'hl')} · ${hl('−' + last.delta.toFixed(2) + ' Mb', 'good')} in ${last.days}d · ${daysSince < 5 ? hl('May still be loading.', 'warn') : daysSince + 'd ago.'}` +
+            ` ${recent90.length} loadings in past 90d, total ${hl(exp90vol.toFixed(2) + ' Mb', 'hl')} exported.`;
     }
-    document.getElementById('interp2').innerHTML = interp2;
-
-    // ── Block 3 cards ──
-    const streakEl = document.getElementById('metStreakType');
-    streakEl.textContent = streak.type === 'BUILD' ? 'ЗАКАЧКА' : 'СЛИВ';
-    streakEl.style.color = streak.type === 'BUILD' ? '#f87171' : '#34d399';
-    const sc = streak.change >= 0 ? '+' : '';
-    document.getElementById('metStreakDays').textContent = `${streak.days}д · ${sc}${streak.change.toFixed(2)} Mb`;
-    document.getElementById('cardStreak').className = 'card ' + (streak.type === 'BUILD' ? 'state-build' : 'state-draw');
-
-    document.getElementById('metSIR').innerHTML = SIR_STATIC.toFixed(1) + '<span class="card-unit">%</span>';
-
-    const recentSpikes = spikes.filter(s => (new Date(dates[n-1]) - new Date(s.date)) / 86400000 <= 30);
-    document.getElementById('metVSA').textContent = recentSpikes.length;
-    const vsaBadge = document.getElementById('metVSABadge');
-    if (recentSpikes.length > 0) {
-        vsaBadge.textContent = `Активно · ${recentSpikes[recentSpikes.length-1].date}`;
-        vsaBadge.className = 'badge badge-yellow';
-        document.getElementById('cardVSA').className = 'card state-warn';
-    } else {
-        vsaBadge.textContent = 'Нет за 30d';
-        vsaBadge.className = 'badge badge-green';
-    }
-
-    // ── Block 3 interpretation ──
-    const regimeWord = streak.type === 'BUILD'
-        ? hi('накапливает нефть', 'bad')
-        : hi('сливает нефть', 'good');
-    const regimeDetail = streak.type === 'BUILD'
-        ? ' Накопление — медвежий сигнал для цены нефти.'
-        : ' Слив — возможна загрузка танкера. Бычий сигнал.';
-    const interp3 = `Терминал ${regimeWord} уже ${hi(streak.days + ' дней', 'highlight')} (с ${streak.startDate}).${regimeDetail}`;
-    document.getElementById('interp3').innerHTML = interp3;
 
     // ── Pulse log ──
     const shown = [...pulses].reverse().slice(0, 10);
     const pulseList = document.getElementById('pulseList');
     if (!shown.length) {
-        pulseList.innerHTML = '<div style="color:var(--muted);font-size:0.78rem;padding:0.5rem 0">Нет событий в выбранном периоде</div>';
+        pulseList.innerHTML = '<div style="color:var(--muted);font-size:0.75rem;padding:0.5rem 0">No events in selected period</div>';
     } else {
         pulseList.innerHTML = shown.map(e =>
             `<div class="pulse-row">
@@ -588,7 +676,6 @@ function render() {
             </div>`).join('');
     }
 
-    // Charts
     destroyCharts();
     renderMainChart(dates, values);
     renderFillRateChart(dates, fillRates);
@@ -599,32 +686,31 @@ function render() {
 
 function destroyCharts() { Object.values(charts).forEach(c => c?.destroy()); charts = {}; }
 
-const gridX = { ticks: { color: '#2d3f52', maxTicksLimit: 10, font: { size: 10 } }, grid: { color: 'rgba(255,255,255,0.025)' } };
-const gridY = { ticks: { color: '#3d4f63', font: { size: 10 } }, grid: { color: 'rgba(255,255,255,0.025)' } };
+const gX = { ticks: { color: '#2d3f52', maxTicksLimit: 10, font: { size: 10 } }, grid: { color: 'rgba(255,255,255,0.025)' } };
+const gY = { ticks: { color: '#3d4f63', font: { size: 10 } }, grid: { color: 'rgba(255,255,255,0.025)' } };
 
 function renderMainChart(dates, values) {
     charts.main = new Chart(document.getElementById('mainChart').getContext('2d'), {
         type: 'line',
         data: { labels: dates, datasets: [
-            { label: 'Объём (Mb)', data: values, borderColor: '#3b82f6', backgroundColor: 'rgba(59,130,246,0.05)', fill: true, tension: 0.3, pointRadius: 0, borderWidth: 2 },
-            { label: '85%', data: dates.map(() => MAX_CAP * 0.85), borderColor: 'rgba(239,68,68,0.25)', borderDash: [6,4], pointRadius: 0, fill: false, borderWidth: 1 }
+            { label: 'Storage (Mb)', data: values, borderColor: '#3b82f6', backgroundColor: 'rgba(59,130,246,0.05)', fill: true, tension: 0.3, pointRadius: 0, borderWidth: 2 },
+            { label: '85% threshold', data: dates.map(() => MAX_CAP * 0.85), borderColor: 'rgba(239,68,68,0.25)', borderDash: [6,4], pointRadius: 0, fill: false, borderWidth: 1 }
         ]},
         options: { responsive: true, maintainAspectRatio: false, interaction: { intersect: false, mode: 'index' },
             plugins: { legend: { labels: { color: '#3d4f63', boxWidth: 10, font: { size: 10 } } },
-                tooltip: { backgroundColor: '#0d1117', borderColor: '#1e293b', borderWidth: 1,
-                    callbacks: { label: ctx => ` ${ctx.parsed.y.toFixed(2)} Mb` } } },
-            scales: { x: gridX, y: gridY } }
+                tooltip: { backgroundColor: '#0d1117', borderColor: '#1e293b', borderWidth: 1, callbacks: { label: ctx => ` ${ctx.parsed.y.toFixed(2)} Mb` } } },
+            scales: { x: gX, y: gY } }
     });
 }
 
 function renderFillRateChart(dates, rates) {
     charts.fillRate = new Chart(document.getElementById('fillRateChart').getContext('2d'), {
         type: 'bar',
-        data: { labels: dates, datasets: [{ label: 'Fill Rate (Mb/день)', data: rates,
+        data: { labels: dates, datasets: [{ label: 'Fill Rate (Mb/d)', data: rates,
             backgroundColor: rates.map(r => r === null ? 'transparent' : r >= 0 ? 'rgba(239,68,68,0.55)' : 'rgba(52,211,153,0.55)'), borderWidth: 0 }]},
         options: { responsive: true, maintainAspectRatio: false,
             plugins: { legend: { labels: { color: '#3d4f63', boxWidth: 10, font: { size: 10 } } } },
-            scales: { x: gridX, y: { ...gridY, ticks: { ...gridY.ticks, callback: v => v.toFixed(2) } } } }
+            scales: { x: gX, y: { ...gY, ticks: { ...gY.ticks, callback: v => v.toFixed(2) } } } }
     });
 }
 
@@ -632,12 +718,12 @@ function renderSPIChart(dates, spiSeries) {
     charts.spi = new Chart(document.getElementById('spiChart').getContext('2d'), {
         type: 'line',
         data: { labels: dates, datasets: [
-            { label: 'Утилизация (%)', data: spiSeries, borderColor: '#f59e0b', backgroundColor: 'rgba(245,158,11,0.05)', fill: true, tension: 0.3, pointRadius: 0, borderWidth: 2 },
-            { label: '85%', data: dates.map(() => 85), borderColor: 'rgba(239,68,68,0.25)', borderDash: [6,4], pointRadius: 0, fill: false, borderWidth: 1 }
+            { label: 'Utilization (%)', data: spiSeries, borderColor: '#f59e0b', backgroundColor: 'rgba(245,158,11,0.05)', fill: true, tension: 0.3, pointRadius: 0, borderWidth: 2 },
+            { label: '85% alert', data: dates.map(() => 85), borderColor: 'rgba(239,68,68,0.25)', borderDash: [6,4], pointRadius: 0, fill: false, borderWidth: 1 }
         ]},
         options: { responsive: true, maintainAspectRatio: false, interaction: { intersect: false, mode: 'index' },
             plugins: { legend: { labels: { color: '#3d4f63', boxWidth: 10, font: { size: 10 } } } },
-            scales: { x: gridX, y: { min: 0, max: 100, ticks: { color: '#3d4f63', callback: v => v + '%', font: { size: 10 } }, grid: { color: 'rgba(255,255,255,0.025)' } } } }
+            scales: { x: gX, y: { min: 0, max: 100, ticks: { color: '#3d4f63', callback: v => v + '%', font: { size: 10 } }, grid: { color: 'rgba(255,255,255,0.025)' } } } }
     });
 }
 
@@ -646,36 +732,36 @@ function renderMonthlyChart(dates, values) {
     const data = monthly.map(m => parseFloat(m.change.toFixed(3)));
     charts.monthly = new Chart(document.getElementById('monthlyChart').getContext('2d'), {
         type: 'bar',
-        data: { labels: monthly.map(m => m.month), datasets: [{ label: 'Баланс (Mb)', data,
+        data: { labels: monthly.map(m => m.month), datasets: [{ label: 'Monthly Balance (Mb)', data,
             backgroundColor: data.map(v => v >= 0 ? 'rgba(239,68,68,0.6)' : 'rgba(52,211,153,0.6)'), borderWidth: 0, borderRadius: 3 }]},
         options: { responsive: true, maintainAspectRatio: false, interaction: { intersect: false, mode: 'index' },
             plugins: { legend: { labels: { color: '#3d4f63', boxWidth: 10, font: { size: 10 } } },
                 tooltip: { backgroundColor: '#0d1117', borderColor: '#1e293b', borderWidth: 1,
-                    callbacks: { label: ctx => ctx.parsed.y >= 0 ? ` +${ctx.parsed.y.toFixed(2)} Mb (накопление)` : ` ${ctx.parsed.y.toFixed(2)} Mb (экспорт)` } } },
-            scales: { x: gridX, y: { ...gridY, ticks: { ...gridY.ticks, callback: v => v.toFixed(1) } } } }
+                    callbacks: { label: ctx => ctx.parsed.y >= 0 ? ` +${ctx.parsed.y.toFixed(2)} Mb (build)` : ` ${ctx.parsed.y.toFixed(2)} Mb (export)` } } },
+            scales: { x: gX, y: { ...gY, ticks: { ...gY.ticks, callback: v => v.toFixed(1) } } } }
     });
 }
 
 function renderPulseHistChart(pulses) {
     const el = document.getElementById('pulseHistChart');
-    if (!pulses.length) { el.parentElement.innerHTML = '<p style="color:var(--muted);font-size:0.78rem;padding:0.75rem 0">Нет экспортных импульсов в выбранном периоде</p>'; return; }
+    if (!pulses.length) { el.parentElement.innerHTML = '<p style="color:var(--muted);font-size:0.75rem;padding:0.75rem 0">No loading events detected in selected period</p>'; return; }
     charts.pulseHist = new Chart(el.getContext('2d'), {
         type: 'bar',
-        data: { labels: pulses.map(e => e.start), datasets: [{ label: 'Объём экспорта (Mb)', data: pulses.map(e => parseFloat(e.delta.toFixed(3))),
+        data: { labels: pulses.map(e => e.start), datasets: [{ label: 'Export Volume (Mb)', data: pulses.map(e => parseFloat(e.delta.toFixed(3))),
             backgroundColor: 'rgba(52,211,153,0.65)', borderColor: 'rgba(52,211,153,0.8)', borderWidth: 1, borderRadius: 4 }]},
         options: { responsive: true, maintainAspectRatio: false,
             plugins: { legend: { labels: { color: '#3d4f63', boxWidth: 10, font: { size: 10 } } },
                 tooltip: { backgroundColor: '#0d1117', borderColor: '#1e293b', borderWidth: 1,
                     callbacks: { title: ctx => { const e = pulses[ctx[0].dataIndex]; return `${e.start} → ${e.end} (${e.days}d)`; },
-                        label: ctx => ` −${ctx.parsed.y.toFixed(2)} Mb · вероятная загрузка VLCC` } } },
-            scales: { x: gridX, y: { ...gridY, ticks: { ...gridY.ticks, callback: v => v.toFixed(1) + ' Mb' } } } }
+                        label: ctx => ` −${ctx.parsed.y.toFixed(2)} Mb · probable VLCC` } } },
+            scales: { x: gX, y: { ...gY, ticks: { ...gY.ticks, callback: v => v.toFixed(1) + ' Mb' } } } }
     });
 }
 
 function exportCSV() {
     const { dates, values } = getSlice();
     const frs = computeFillRate(dates, values);
-    const spis = computeSPI(values);
+    const spis = values.map(v => (v / MAX_CAP) * 100);
     let csv = 'Date,Storage_Mb,Fill_Rate_Mb_per_day,Utilization_pct\n';
     for (let i = 0; i < dates.length; i++)
         csv += `${dates[i]},${values[i].toFixed(3)},${frs[i] !== null ? frs[i].toFixed(4) : ''},${spis[i].toFixed(2)}\n`;
@@ -751,7 +837,7 @@ async function initTankMap() {
             if (batch.length < 1000) break;
             offset += 1000;
         }
-    } catch { document.getElementById('mapLoading').textContent = 'Ошибка загрузки данных карты.'; return; }
+    } catch { document.getElementById('mapLoading').textContent = 'Error loading map data.'; return; }
 
     document.getElementById('mapLoading').style.display = 'none';
     const data = all.filter(r => TANKS[r.tank_id]);
