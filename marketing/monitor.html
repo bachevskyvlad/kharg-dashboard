@@ -394,11 +394,18 @@ async function loadCharts(){
     const pctSign=pct>0?'+':'';
     const trend=diff>0?'<span style="color:#f0a500">▲ BUILDING</span>':'<span style="color:#3b82f6">▼ DRAWDOWN</span>';
     const latestUtil=(latestVal/NAMEPLATE_MMBBL*100).toFixed(1);
+    const MAX_CAP=33.2;
+    const fr7d=values6m.length>=8?(values6m[values6m.length-1]-values6m[values6m.length-8])/7:null;
+    const fr7dStr=fr7d!==null?`<div>Fill Rate 7d: <strong style="color:${fr7d>0?'#f0a500':'#3b82f6'}">${fr7d>0?'+':''}${fr7d.toFixed(3)} Mb/d</strong></div>`:'';
+    let daysStr='';
+    if(fr7d!==null&&fr7d>0.005){const d=Math.round((MAX_CAP-latestVal)/fr7d);daysStr=`<div>Days to Capacity: <strong style="color:#f0a500">${d}d</strong></div>`;}
+    else if(fr7d!==null&&fr7d<-0.005){const d=Math.round(latestVal/Math.abs(fr7d));daysStr=`<div>Days to Empty: <strong style="color:#3b82f6">${d}d</strong></div>`;}
 
     document.getElementById('latestStat').innerHTML=
-      `<div>Latest: <strong style="color:#3b82f6;">${latestVal.toFixed(2)} Mb</strong></div>`+
-      `<div>Day-over-Day: <strong style="color:${diff>0?'#f0a500':'#3b82f6'}">${sign}${diff} Mb (${pctSign}${pct}%)</strong></div>`+
-      `<div>Utilization: <strong style="color:#f0a500;">${latestUtil}% of capacity</strong></div>`+
+      `<div>Storage: <strong style="color:#3b82f6;">${latestVal.toFixed(2)} Mb</strong></div>`+
+      fr7dStr+
+      daysStr+
+      `<div>Utilization: <strong style="color:${latestUtil>=85?'#ff4757':latestUtil>=70?'#f0a500':'#3b82f6'}">${latestUtil}%</strong></div>`+
       `<div>Status: <strong>${trend}</strong></div>`;
 
     const gridColor='rgba(30,45,61,0.5)';
