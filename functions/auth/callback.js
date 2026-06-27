@@ -47,7 +47,7 @@ export async function onRequest(context) {
     return new Response(null, {
       status: 302,
       headers: {
-        'Location': `${APP_URL}/dashboard.html`,
+        'Location': `${APP_URL}/dashboard`,
         'Set-Cookie': `session=${sessionToken}; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=${7 * 24 * 60 * 60}`
       }
     });
