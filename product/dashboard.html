@@ -19,88 +19,101 @@
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: 'Inter', sans-serif; background: #0a0e17; min-height: 100vh; color: #fff; }
+
+        /* Nav */
         .nav { padding: 1rem 2rem; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.08); background: rgba(10,14,23,0.95); position: sticky; top: 0; z-index: 100; }
         .nav-logo { font-family: 'Space Grotesk', sans-serif; font-size: 1.25rem; font-weight: 700; letter-spacing: 0.15em; color: #3b82f6; }
         .nav-subtitle { font-size: 0.7rem; color: #64748b; letter-spacing: 0.05em; margin-top: 2px; }
         .nav-user { display: flex; align-items: center; gap: 1rem; }
         .user-email { color: #64748b; font-size: 0.875rem; }
         .logout-btn { background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.2); color: #f87171; padding: 0.5rem 1rem; border-radius: 6px; font-size: 0.8125rem; cursor: pointer; }
+
+        /* Layout */
         .container { max-width: 1400px; margin: 0 auto; padding: 2rem; }
         .page-header { margin-bottom: 1.5rem; }
         .page-title { font-family: 'Space Grotesk', sans-serif; font-size: 1.25rem; font-weight: 700; color: #e2e8f0; }
         .page-meta { font-size: 0.75rem; color: #64748b; margin-top: 0.25rem; }
-        .section-title { font-size: 0.75rem; color: #64748b; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 1rem; margin-top: 2rem; }
-        .controls-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem; }
+
+        /* Section header */
+        .section-header { margin-bottom: 1rem; margin-top: 2.5rem; padding-bottom: 0.5rem; border-bottom: 1px solid rgba(255,255,255,0.06); }
+        .section-label { font-size: 0.6875rem; color: #64748b; text-transform: uppercase; letter-spacing: 0.12em; }
+        .section-question { font-size: 0.8125rem; color: #94a3b8; margin-top: 0.2rem; }
+
+        /* Controls */
+        .controls-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06); border-radius: 10px; padding: 0.75rem 1rem; }
         .controls-group { display: flex; gap: 0.5rem; align-items: center; }
         .control-label { font-size: 0.7rem; color: #64748b; margin-right: 0.25rem; }
-        .btn { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: #94a3b8; padding: 0.5rem 1rem; border-radius: 6px; font-size: 0.75rem; cursor: pointer; transition: all 0.2s; }
+        .btn { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: #94a3b8; padding: 0.4rem 0.9rem; border-radius: 6px; font-size: 0.75rem; cursor: pointer; transition: all 0.2s; }
         .btn:hover { background: rgba(255,255,255,0.1); }
         .btn.active { background: rgba(59,130,246,0.2); border-color: #3b82f6; color: #3b82f6; }
-        .export-btn { background: rgba(59,130,246,0.1); border: 1px solid rgba(59,130,246,0.2); color: #60a5fa; padding: 0.35rem 0.7rem; border-radius: 5px; font-size: 0.7rem; cursor: pointer; }
-
-        /* Metrics grid */
-        .metrics-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; margin-bottom: 2rem; }
-        @media (max-width: 900px) { .metrics-row { grid-template-columns: repeat(2, 1fr); } }
-        .metrics-row-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; margin-bottom: 2rem; }
-        @media (max-width: 900px) { .metrics-row-3 { grid-template-columns: repeat(2, 1fr); } }
-        .metric-card { background: linear-gradient(145deg, #111827, #0d1320); border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; padding: 1.25rem; position: relative; overflow: hidden; }
-        .metric-card.alert { border-color: rgba(239,68,68,0.4); }
-        .metric-card.warning { border-color: rgba(251,191,36,0.35); }
-        .metric-card.ok { border-color: rgba(16,185,129,0.3); }
-        .metric-label { color: #64748b; font-size: 0.6875rem; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.5rem; }
-        .metric-value { font-family: 'Space Grotesk', sans-serif; font-size: 2rem; font-weight: 700; line-height: 1; }
-        .metric-unit { font-size: 0.875rem; color: #64748b; }
-        .metric-sub { font-size: 0.75rem; color: #64748b; margin-top: 0.35rem; }
-        .metric-badge { display: inline-block; padding: 0.2rem 0.6rem; border-radius: 999px; font-size: 0.6875rem; font-weight: 600; margin-top: 0.5rem; }
-        .badge-red { background: rgba(239,68,68,0.2); color: #f87171; }
-        .badge-yellow { background: rgba(251,191,36,0.2); color: #fbbf24; }
-        .badge-green { background: rgba(16,185,129,0.2); color: #10b981; }
-        .badge-blue { background: rgba(59,130,246,0.2); color: #60a5fa; }
-        .metric-tooltip { font-size: 0.6875rem; color: #475569; margin-top: 0.35rem; line-height: 1.5; }
-
-        /* Charts */
-        .chart-container { background: linear-gradient(145deg, #111827, #0d1320); border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; padding: 1.25rem; margin-bottom: 1.5rem; }
-        .chart-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; }
-        .chart-title { font-weight: 600; font-size: 0.9375rem; }
-        .chart-badge { font-size: 0.6875rem; color: #64748b; }
-        .chart-wrapper { position: relative; height: 260px; }
-        .chart-wrapper.tall { height: 320px; }
-
-        /* Info cards */
-        .info-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem; margin-top: 2rem; }
-        @media (max-width: 700px) { .info-grid { grid-template-columns: 1fr; } }
-        .info-card { background: linear-gradient(145deg, #111827, #0d1320); border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; padding: 1.5rem; }
-        .info-card h3 { font-size: 1rem; font-weight: 600; margin-bottom: 0.75rem; color: #e2e8f0; }
-        .info-card p { color: #94a3b8; font-size: 0.8125rem; line-height: 1.6; margin-bottom: 0.5rem; }
+        .export-btn { background: rgba(59,130,246,0.1); border: 1px solid rgba(59,130,246,0.2); color: #60a5fa; padding: 0.4rem 0.8rem; border-radius: 6px; font-size: 0.75rem; cursor: pointer; }
 
         /* Alert banner */
         .alert-banner { background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.3); border-radius: 8px; padding: 0.75rem 1rem; margin-bottom: 1.5rem; display: none; font-size: 0.8125rem; color: #fca5a5; }
         .alert-banner.visible { display: flex; align-items: center; gap: 0.5rem; }
 
-        /* Pulse event list */
+        /* Metric cards */
+        .metrics-grid { display: grid; gap: 1rem; margin-bottom: 0; }
+        .metrics-grid-4 { grid-template-columns: repeat(4, 1fr); }
+        .metrics-grid-3 { grid-template-columns: repeat(3, 1fr); }
+        @media (max-width: 1100px) { .metrics-grid-4 { grid-template-columns: repeat(2, 1fr); } }
+        @media (max-width: 900px) { .metrics-grid-3, .metrics-grid-4 { grid-template-columns: repeat(2, 1fr); } }
+
+        .metric-card { background: linear-gradient(145deg, #111827, #0d1320); border: 1px solid rgba(255,255,255,0.07); border-radius: 12px; padding: 1.25rem; position: relative; }
+        .metric-card.alert { border-color: rgba(239,68,68,0.4); background: linear-gradient(145deg, #1a1014, #0d0a10); }
+        .metric-card.warning { border-color: rgba(251,191,36,0.3); }
+        .metric-card.positive { border-color: rgba(16,185,129,0.25); }
+
+        .metric-question { font-size: 0.7rem; color: #3b82f6; font-style: italic; margin-bottom: 0.6rem; line-height: 1.4; }
+        .metric-label { color: #64748b; font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 0.4rem; }
+        .metric-value { font-family: 'Space Grotesk', sans-serif; font-size: 1.875rem; font-weight: 700; line-height: 1; }
+        .metric-unit { font-size: 0.875rem; color: #64748b; font-weight: 400; }
+        .metric-context { font-size: 0.75rem; color: #64748b; margin-top: 0.35rem; }
+        .metric-badge { display: inline-block; padding: 0.2rem 0.55rem; border-radius: 999px; font-size: 0.65rem; font-weight: 600; margin-top: 0.5rem; }
+        .badge-red { background: rgba(239,68,68,0.2); color: #f87171; }
+        .badge-yellow { background: rgba(251,191,36,0.2); color: #fbbf24; }
+        .badge-green { background: rgba(16,185,129,0.2); color: #10b981; }
+        .badge-blue { background: rgba(59,130,246,0.2); color: #60a5fa; }
+        .metric-formula { font-size: 0.625rem; color: #374151; margin-top: 0.5rem; line-height: 1.5; border-top: 1px solid rgba(255,255,255,0.04); padding-top: 0.4rem; }
+
+        /* Charts */
+        .chart-card { background: linear-gradient(145deg, #111827, #0d1320); border: 1px solid rgba(255,255,255,0.07); border-radius: 12px; padding: 1.25rem; margin-top: 1rem; }
+        .chart-head { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.75rem; }
+        .chart-title { font-weight: 600; font-size: 0.9375rem; color: #e2e8f0; }
+        .chart-question { font-size: 0.7rem; color: #3b82f6; font-style: italic; margin-top: 0.2rem; }
+        .chart-meta { font-size: 0.65rem; color: #475569; text-align: right; }
+        .chart-wrap { position: relative; height: 260px; }
+        .chart-wrap.tall { height: 320px; }
+
+        /* Pulse list */
         .pulse-list { list-style: none; }
-        .pulse-item { display: flex; justify-content: space-between; padding: 0.5rem 0; border-bottom: 1px solid rgba(255,255,255,0.04); font-size: 0.8125rem; }
+        .pulse-item { display: flex; justify-content: space-between; padding: 0.5rem 0; border-bottom: 1px solid rgba(255,255,255,0.04); font-size: 0.8rem; }
         .pulse-item:last-child { border-bottom: none; }
         .pulse-date { color: #64748b; font-family: monospace; font-size: 0.75rem; }
-        .pulse-val { font-weight: 600; }
-        .pulse-val.drain { color: #10b981; }
-        .pulse-val.build { color: #ef4444; }
+        .pulse-vol { font-weight: 600; color: #10b981; }
 
-        /* Tank Map */
-        .map-section { background: linear-gradient(145deg, #111827, #0d1320); border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; padding: 1.25rem; margin-bottom: 1.5rem; }
-        #tankMap { height: 480px; border-radius: 8px; }
+        /* Map */
+        .map-card { background: linear-gradient(145deg, #111827, #0d1320); border: 1px solid rgba(255,255,255,0.07); border-radius: 12px; padding: 1.25rem; margin-top: 1rem; }
+        #tankMap { height: 520px; border-radius: 8px; }
         .map-controls { display: flex; align-items: center; gap: 1rem; margin-top: 0.75rem; flex-wrap: wrap; }
-        .map-date-label { font-family: monospace; font-size: 0.75rem; color: #60a5fa; }
+        .map-date-label { font-family: monospace; font-size: 0.75rem; color: #60a5fa; min-width: 90px; }
         .map-slider { flex: 1; accent-color: #3b82f6; }
-        .map-nav-btn { background: rgba(59,130,246,0.15); border: 1px solid rgba(59,130,246,0.3); color: #60a5fa; padding: 0.25rem 0.6rem; border-radius: 4px; font-size: 0.75rem; cursor: pointer; }
+        .map-nav-btn { background: rgba(59,130,246,0.15); border: 1px solid rgba(59,130,246,0.3); color: #60a5fa; padding: 0.3rem 0.7rem; border-radius: 4px; font-size: 0.75rem; cursor: pointer; }
         .tank-div-icon { background: none !important; border: none !important; }
+
+        /* Info grid */
+        .info-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem; margin-top: 1rem; }
+        @media (max-width: 700px) { .info-grid { grid-template-columns: 1fr; } }
+        .info-card { background: linear-gradient(145deg, #111827, #0d1320); border: 1px solid rgba(255,255,255,0.07); border-radius: 12px; padding: 1.5rem; }
+        .info-card h3 { font-size: 0.9375rem; font-weight: 600; margin-bottom: 0.75rem; color: #e2e8f0; }
+        .info-card p { color: #94a3b8; font-size: 0.8rem; line-height: 1.6; margin-bottom: 0.5rem; }
     </style>
 </head>
 <body>
     <nav class="nav">
         <div>
             <div class="nav-logo">OILRADAR</div>
-            <div class="nav-subtitle">Kharg Island Terminal — Iran Crude Export Intelligence</div>
+            <div class="nav-subtitle">Kharg Island Terminal · Iran Crude Export Intelligence</div>
         </div>
         <div class="nav-user">
             <span class="user-email" id="userEmail">Loading...</span>
@@ -109,16 +122,17 @@
     </nav>
 
     <div class="container">
+
         <div class="page-header">
             <div class="page-title">Kharg Island Storage Intelligence</div>
-            <div class="page-meta" id="pageMeta">Loading latest data...</div>
+            <div class="page-meta" id="pageMeta">Loading latest data…</div>
         </div>
 
         <div class="alert-banner" id="alertBanner">
-            <span>⚡</span>
-            <span id="alertText"></span>
+            <span>⚡</span><span id="alertText"></span>
         </div>
 
+        <!-- Controls -->
         <div class="controls-row">
             <div class="controls-group">
                 <span class="control-label">Period:</span>
@@ -132,100 +146,193 @@
             <button class="export-btn" onclick="exportCSV()">Export CSV</button>
         </div>
 
-        <!-- Primary metrics -->
-        <div class="section-title">Core Storage Metrics</div>
-        <div class="metrics-row">
+        <!-- ── BLOCK 1: CURRENT STATE ──────────────────────────────────── -->
+        <div class="section-header">
+            <div class="section-label">1 · Current State</div>
+            <div class="section-question">How much oil is at Kharg right now — and is the level rising or falling?</div>
+        </div>
+
+        <div class="metrics-grid metrics-grid-4">
             <div class="metric-card" id="cardStorage">
+                <div class="metric-question">How much crude is stored at Kharg right now?</div>
                 <div class="metric-label">Current Storage</div>
                 <div class="metric-value" id="metStorage">--<span class="metric-unit"> Mb</span></div>
-                <div class="metric-sub" id="metStorageSub">-- of -- Mb capacity</div>
+                <div class="metric-context" id="metStorageSub">-- of 33.2 Mb capacity</div>
+                <div class="metric-formula">Sum across all 47 tanks · Sentinel-1 SAR</div>
             </div>
             <div class="metric-card" id="cardSPI">
-                <div class="metric-label">Storage Pressure Index</div>
+                <div class="metric-question">How close to full capacity — is a forced sell-off likely?</div>
+                <div class="metric-label">Storage Utilization</div>
                 <div class="metric-value" id="metSPI">--<span class="metric-unit">%</span></div>
                 <div class="metric-badge" id="metSPIBadge">--</div>
-                <div class="metric-tooltip">vol / max_capacity. &gt;85% → forced sell pressure risk</div>
+                <div class="metric-formula">vol / 33.2 Mb · &gt;85% → historically forces price concessions within 4–8 weeks</div>
             </div>
             <div class="metric-card" id="cardFillRate">
-                <div class="metric-label">Fill Rate (7-day)</div>
+                <div class="metric-question">Is Iran building inventory or actively loading tankers?</div>
+                <div class="metric-label">Fill Rate (7-day avg)</div>
                 <div class="metric-value" id="metFillRate">--<span class="metric-unit"> Mb/d</span></div>
-                <div class="metric-sub" id="metFillRateSub">--</div>
-                <div class="metric-tooltip">(vol[t] − vol[t−7]) / 7. Positive = accumulation</div>
+                <div class="metric-context" id="metFillRateSub">--</div>
+                <div class="metric-formula">(vol[t] − vol[t−7]) / 7 · positive = accumulation (bearish) · negative = drawdown (bullish)</div>
             </div>
             <div class="metric-card" id="cardChange">
+                <div class="metric-question">What happened to storage over the past 30 days — build or export?</div>
                 <div class="metric-label">30-Day Change</div>
                 <div class="metric-value" id="metChange">--<span class="metric-unit">%</span></div>
-                <div class="metric-sub" id="metChangeSub">--</div>
+                <div class="metric-context" id="metChangeSub">--</div>
+                <div class="metric-formula">(vol[now] − vol[−30d]) / vol[−30d]</div>
             </div>
         </div>
 
-        <!-- Storage dynamics chart -->
-        <div class="chart-container">
-            <div class="chart-header">
-                <div class="chart-title">Storage Dynamics — Kharg Island (Mb)</div>
-                <div class="chart-badge" id="chartBadge">Sentinel-1 SAR · ~6-day revisit · 3-year full access</div>
+        <!-- Storage Dynamics Chart -->
+        <div class="chart-card">
+            <div class="chart-head">
+                <div>
+                    <div class="chart-title">Storage Dynamics — Kharg Island</div>
+                    <div class="chart-question">How has crude inventory evolved over 3 years? Where are the seasonal patterns and export cycles?</div>
+                </div>
+                <div class="chart-meta">Mb · Sentinel-1 SAR<br>~6-day revisit · 3-year full access</div>
             </div>
-            <div class="chart-wrapper tall"><canvas id="mainChart"></canvas></div>
+            <div class="chart-wrap tall"><canvas id="mainChart"></canvas></div>
         </div>
 
-        <!-- Advanced metrics -->
-        <div class="section-title">Advanced Intelligence Metrics</div>
-        <div class="metrics-row-3">
+        <!-- Fill Rate Chart -->
+        <div class="chart-card">
+            <div class="chart-head">
+                <div>
+                    <div class="chart-title">Fill Rate — Accumulation vs Drawdown</div>
+                    <div class="chart-question">On each day, was Iran building inventory or exporting? How fast?</div>
+                </div>
+                <div class="chart-meta">Mb/day · 7-day rolling delta<br>Red = build · Green = draw</div>
+            </div>
+            <div class="chart-wrap"><canvas id="fillRateChart"></canvas></div>
+        </div>
+
+        <!-- ── BLOCK 2: EXPORT INTELLIGENCE ───────────────────────────── -->
+        <div class="section-header">
+            <div class="section-label">2 · Export Intelligence</div>
+            <div class="section-question">How many tankers have loaded, and when is the next export window likely?</div>
+        </div>
+
+        <div class="metrics-grid metrics-grid-3">
             <div class="metric-card" id="cardEPS">
+                <div class="metric-question">How many probable VLCC tanker loadings in the last 90 days?</div>
                 <div class="metric-label">Export Pulse Score</div>
                 <div class="metric-value" id="metEPS">--</div>
                 <div class="metric-badge" id="metEPSBadge">--</div>
-                <div class="metric-tooltip">Drain &gt;2 Mb in 6–12 days → probable VLCC loading event</div>
+                <div class="metric-formula">Triggered when storage drops &gt;2 Mb over 6–12 days · 1–2 weeks ahead of AIS</div>
+            </div>
+            <div class="metric-card" id="cardExportInterval">
+                <div class="metric-question">How often does Iran typically export — and when is the next window?</div>
+                <div class="metric-label">Avg Export Interval</div>
+                <div class="metric-value" id="metExportInterval">--<span class="metric-unit"> d</span></div>
+                <div class="metric-context" id="metExportIntervalSub">--</div>
+                <div class="metric-formula">Mean days between consecutive export pulse start dates</div>
+            </div>
+            <div class="metric-card" id="cardExported90">
+                <div class="metric-question">How much crude was shipped in the last 90 days total?</div>
+                <div class="metric-label">Total Exported (90d)</div>
+                <div class="metric-value" id="metExported90">--<span class="metric-unit"> Mb</span></div>
+                <div class="metric-context" id="metExported90Sub">--</div>
+                <div class="metric-formula">Sum of drawdowns from all detected export pulses in last 90 days</div>
+            </div>
+        </div>
+
+        <!-- Export Pulse History Chart -->
+        <div class="chart-card">
+            <div class="chart-head">
+                <div>
+                    <div class="chart-title">Export Pulse History — Detected VLCC Loadings</div>
+                    <div class="chart-question">When did each export event happen, and how large was it?</div>
+                </div>
+                <div class="chart-meta">Each bar = one probable loading<br>Mb drawn in 6–12 days</div>
+            </div>
+            <div class="chart-wrap tall"><canvas id="pulseHistChart"></canvas></div>
+        </div>
+
+        <!-- Export Pulse list -->
+        <div class="chart-card">
+            <div class="chart-head">
+                <div>
+                    <div class="chart-title">Export Pulse Event Log</div>
+                    <div class="chart-question">Full record of detected VLCC loading events in the selected period</div>
+                </div>
+            </div>
+            <ul class="pulse-list" id="pulseList">
+                <li style="color:#64748b;font-size:0.8rem;padding:1rem 0">Loading…</li>
+            </ul>
+        </div>
+
+        <!-- ── BLOCK 3: TERMINAL OPERATIONS ───────────────────────────── -->
+        <div class="section-header">
+            <div class="section-label">3 · Terminal Operations</div>
+            <div class="section-question">What is the terminal doing right now, and what does the monthly pattern look like?</div>
+        </div>
+
+        <div class="metrics-grid metrics-grid-3">
+            <div class="metric-card" id="cardStreak">
+                <div class="metric-question">Is the terminal currently in a build phase or actively exporting?</div>
+                <div class="metric-label">Current Regime</div>
+                <div class="metric-value" id="metStreakType">--</div>
+                <div class="metric-context" id="metStreakDays">--</div>
+                <div class="metric-formula">Consecutive days in same direction (build or drawdown)</div>
             </div>
             <div class="metric-card" id="cardSIR">
+                <div class="metric-question">What fraction of tanks are structurally offline or idle?</div>
                 <div class="metric-label">Structural Idle Ratio</div>
                 <div class="metric-value" id="metSIR">--<span class="metric-unit">%</span></div>
-                <div class="metric-sub">tanks with mean dB &gt;12</div>
-                <div class="metric-tooltip">Fraction of tanks likely offline or empty long-term</div>
+                <div class="metric-context">2 of 47 tanks chronically empty</div>
+                <div class="metric-formula">Tanks with 90d mean dB &gt;12 / total tanks · updated quarterly</div>
             </div>
             <div class="metric-card" id="cardVSA">
+                <div class="metric-question">Is there unusual simultaneous activity across multiple tanks — a signal of something bigger?</div>
                 <div class="metric-label">Volatility Spike Alert</div>
                 <div class="metric-value" id="metVSA">--</div>
                 <div class="metric-badge" id="metVSABadge">--</div>
-                <div class="metric-tooltip">Cross-tank std &gt; mean + 1.5σ → abnormal operational activity</div>
+                <div class="metric-formula">30d rolling σ &gt; mean + 1.5σ → abnormal cross-tank activity</div>
             </div>
         </div>
 
-        <!-- Fill Rate chart -->
-        <div class="chart-container">
-            <div class="chart-header">
-                <div class="chart-title">Fill Rate — Accumulation vs Drawdown</div>
-                <div class="chart-badge">Mb/day · 7-day delta</div>
+        <!-- Storage Utilization Chart -->
+        <div class="chart-card">
+            <div class="chart-head">
+                <div>
+                    <div class="chart-title">Storage Utilization Over Time</div>
+                    <div class="chart-question">How has the terminal's fill level tracked against the critical 85% threshold?</div>
+                </div>
+                <div class="chart-meta">% of 33.2 Mb max capacity<br>&gt;85% = forced sell pressure zone</div>
             </div>
-            <div class="chart-wrapper"><canvas id="fillRateChart"></canvas></div>
+            <div class="chart-wrap"><canvas id="spiChart"></canvas></div>
         </div>
 
-        <!-- Storage Utilization chart -->
-        <div class="chart-container">
-            <div class="chart-header">
-                <div class="chart-title">Storage Utilization (%)</div>
-                <div class="chart-badge">vol / max capacity (33.2 Mb) · 85% = forced sell zone</div>
+        <!-- Monthly Balance Chart -->
+        <div class="chart-card">
+            <div class="chart-head">
+                <div>
+                    <div class="chart-title">Monthly Storage Balance</div>
+                    <div class="chart-question">Which months were dominated by exports — and which by accumulation?</div>
+                </div>
+                <div class="chart-meta">Net Mb change per month<br>Green = export · Red = build</div>
             </div>
-            <div class="chart-wrapper"><canvas id="spiChart"></canvas></div>
+            <div class="chart-wrap tall"><canvas id="monthlyChart"></canvas></div>
         </div>
 
-        <!-- Export Pulse events -->
-        <div class="chart-container">
-            <div class="chart-header">
-                <div class="chart-title">Export Pulse Events</div>
-                <div class="chart-badge">Probable VLCC loadings detected from storage drawdowns</div>
-            </div>
-            <ul class="pulse-list" id="pulseList"><li style="color:#64748b;font-size:0.8rem;padding:1rem 0">Loading...</li></ul>
+        <!-- ── BLOCK 4: PER-TANK MAP ───────────────────────────────────── -->
+        <div class="section-header">
+            <div class="section-label">4 · Per-Tank Storage Map</div>
+            <div class="section-question">Which specific tanks are full, empty, or actively cycling — across all 47 tanks and 3 years of history?</div>
         </div>
 
-        <!-- Per-Tank Map — Full Access -->
-        <div class="section-title">Per-Tank Storage Map — Full Access · 3-Year History</div>
-        <div class="map-section">
-            <div class="chart-header">
-                <div class="chart-title">Kharg Island · 47 Tanks · Fill Level</div>
-                <div class="chart-badge">All dates · No restriction · Use slider to navigate history</div>
+        <div class="map-card">
+            <div class="chart-head">
+                <div>
+                    <div class="chart-title">Kharg Island · 47 Tanks · Full History</div>
+                    <div class="chart-question">Use the slider to navigate any date. Click a tank for fill % and volume.</div>
+                </div>
+                <div class="chart-meta">Blue = full · Red = empty<br>All dates · No restriction</div>
             </div>
-            <div id="tankMap"><div id="mapLoading" style="display:flex;align-items:center;justify-content:center;height:100%;color:#64748b;font-size:0.875rem;">Loading satellite data…</div></div>
+            <div id="tankMap">
+                <div id="mapLoading" style="display:flex;align-items:center;justify-content:center;height:100%;color:#64748b;font-size:0.875rem;">Loading satellite data…</div>
+            </div>
             <div class="map-controls">
                 <button class="map-nav-btn" id="mapPrev">←</button>
                 <input type="range" class="map-slider" id="mapSlider" min="0" value="0" step="1">
@@ -234,687 +341,474 @@
             </div>
         </div>
 
-        <!-- Terminal Operations -->
-        <div class="section-title">Terminal Operations</div>
-        <div class="metrics-row-3">
-            <div class="metric-card" id="cardStreak">
-                <div class="metric-label">Current Regime</div>
-                <div class="metric-value" id="metStreakType">--</div>
-                <div class="metric-sub" id="metStreakDays">--</div>
-                <div class="metric-tooltip">Consecutive days in same direction — build or drawdown</div>
-            </div>
-            <div class="metric-card" id="cardExportInterval">
-                <div class="metric-label">Avg Export Interval</div>
-                <div class="metric-value" id="metExportInterval">--<span class="metric-unit"> d</span></div>
-                <div class="metric-sub" id="metExportIntervalSub">days between export pulses</div>
-                <div class="metric-tooltip">Average time between detected VLCC loading events</div>
-            </div>
-            <div class="metric-card" id="cardExported90">
-                <div class="metric-label">Total Exported (90d)</div>
-                <div class="metric-value" id="metExported90">--<span class="metric-unit"> Mb</span></div>
-                <div class="metric-sub" id="metExported90Sub">sum of export pulse drawdowns</div>
-                <div class="metric-tooltip">Cumulative volume from detected export pulses last 90 days</div>
-            </div>
+        <!-- ── METHODOLOGY ─────────────────────────────────────────────── -->
+        <div class="section-header" style="margin-top:2.5rem;">
+            <div class="section-label">Methodology & Definitions</div>
         </div>
-
-        <!-- Monthly Storage Balance chart -->
-        <div class="chart-container">
-            <div class="chart-header">
-                <div class="chart-title">Monthly Storage Balance</div>
-                <div class="chart-badge">Net Mb change per month · green = export/draw · red = accumulation</div>
-            </div>
-            <div class="chart-wrapper tall"><canvas id="monthlyChart"></canvas></div>
-        </div>
-
-        <!-- Export Pulse History chart -->
-        <div class="chart-container">
-            <div class="chart-header">
-                <div class="chart-title">Export Pulse History — Detected VLCC Loadings</div>
-                <div class="chart-badge">Each bar = one probable loading event · height = Mb drained</div>
-            </div>
-            <div class="chart-wrapper tall"><canvas id="pulseHistChart"></canvas></div>
-        </div>
-
-        <!-- Info cards -->
         <div class="info-grid">
             <div class="info-card">
-                <h3>Metric Definitions</h3>
-                <p><strong>Fill Rate:</strong> (vol[t] − vol[t−7]) / 7 days. Positive = Iran accumulating. Negative = active loading.</p>
-                <p><strong>Storage Pressure Index:</strong> vol / max_capacity. Above 85% historically precedes price concessions or forced exports.</p>
-                <p><strong>Export Pulse Score:</strong> Triggered when storage drops &gt;2 Mb over 6–12 days. Probable VLCC tanker loading event, 1–2 weeks ahead of AIS confirmation.</p>
-                <p><strong>Structural Idle Ratio:</strong> % of tanks with 90-day mean backscatter &gt;12 dB — consistently empty or non-operational.</p>
-                <p><strong>Volatility Spike Alert:</strong> Date where cross-tank σ exceeds historical mean + 1.5σ — signals abnormal simultaneous activity across multiple tanks.</p>
-                <p><strong>Monthly Balance:</strong> Net storage change per calendar month. Persistent negative months = sustained export activity.</p>
-                <p><strong>Export Interval:</strong> Average days between consecutive VLCC loading events — proxy for terminal throughput tempo.</p>
+                <h3>How to Read This Dashboard</h3>
+                <p><strong>Start with Block 1</strong> — current storage level and direction. If SPI &gt;85%, a price discount or forced export is historically likely within 4–8 weeks.</p>
+                <p><strong>Block 2</strong> — check when the last export pulse was and how many have happened. The interval estimate predicts the next probable loading window.</p>
+                <p><strong>Block 3</strong> — the current regime (BUILD vs DRAWDOWN) tells you what the terminal is doing right now. Monthly balance shows seasonal rhythm.</p>
+                <p><strong>Block 4</strong> — per-tank detail. Active tanks: t60_2, t55_17 (high σ). Probable strategic reserve: t55_31, t60_1 (chronically full).</p>
             </div>
             <div class="info-card">
-                <h3>Methodology</h3>
-                <p><strong>Source:</strong> Sentinel-1 C-band SAR (ESA Copernicus). Penetrates clouds and darkness.</p>
-                <p><strong>Coverage:</strong> 47 floating-roof tanks at Kharg Island (~90% of Iranian crude exports).</p>
-                <p><strong>Signal:</strong> Inverse crescent radiometry — radar shadow on the far side of each tank reveals fill level. Lower VV backscatter (dB) = higher oil level.</p>
-                <p><strong>Volume formula:</strong> V = π × r² × h_current × 6.29 bbl/m³. Fill ratio derived from per-tank dB calibrated to 5th/95th percentile range.</p>
-                <p><strong>Revisit:</strong> ~6 days average, sometimes 2–3 times/week on overlapping passes.</p>
-                <p><strong>Limitations:</strong> Export terminal only. Rain and strong wind can affect SAR signal quality.</p>
+                <h3>Data &amp; Methodology</h3>
+                <p><strong>Source:</strong> Sentinel-1 C-band SAR (ESA Copernicus). Penetrates clouds, 24/7 coverage.</p>
+                <p><strong>Signal:</strong> Inverse crescent radiometry — radar shadow on the far side of each floating-roof tank. Lower VV backscatter (dB) = more oil.</p>
+                <p><strong>Volume:</strong> V = π × r² × h_fill × 6.29 bbl/m³. Fill ratio from per-tank dB calibrated to 5th/95th percentile range across all observations.</p>
+                <p><strong>Coverage:</strong> 47 tanks at Kharg Island (~90% of Iranian crude exports). Max theoretical capacity: 33.2 Mb.</p>
+                <p><strong>Revisit:</strong> ~6 days average. Limitations: export terminal only; heavy rain can affect signal quality.</p>
             </div>
         </div>
 
-        <!-- LEGACY: Multi-country dashboard (disabled, kept for future reactivation) -->
+        <!-- LEGACY BLOCK (disabled) -->
         <!--
-        LEGACY BLOCK — multi-country Gulf coverage
-        Status: disabled 2026-06-24, focus shifted to Kharg Island only
-        To reactivate: uncomment this block and restore fragility.json data feed
-        GitHub branch for Gulf expansion: feature/gulf-multi-country (future)
-
-        <div class="section-title">Storage by Country (click to filter)</div>
-        <div class="country-grid" id="countryGrid"></div>
-        <div class="chart-container">
-            <div class="chart-header">
-                <div class="chart-title">Utilization by Country</div>
-                <button class="export-btn" onclick="resetCountryFilter()">Show All</button>
-            </div>
-            <div class="chart-wrapper"><canvas id="countryChart"></canvas></div>
-        </div>
-        <div class="chart-container">
-            <div class="chart-header"><div class="chart-title">Fragility Index</div></div>
-            <div class="chart-wrapper"><canvas id="fragilityChart"></canvas></div>
-        </div>
-
-        LEGACY JS (multi-country):
-        let activeCountries = new Set(['Iran', 'Saudi Arabia', 'UAE', 'Kuwait']);
-        const FLAGS = { 'Iran': '🇮🇷', 'Saudi Arabia': '🇸🇦', 'UAE': '🇦🇪', 'Kuwait': '🇰🇼' };
-        const COLORS = { 'Iran': '#ef4444', 'Saudi Arabia': '#22c55e', 'UAE': '#3b82f6', 'Kuwait': '#f59e0b' };
-        // fragility.json: rawData[currentFreq].utilization_by_country / storage_by_country
-        // renderCountryCards(), toggleCountry(), resetCountryFilter(), updateCountryChart()
-        END LEGACY BLOCK
+        LEGACY: Multi-country Gulf coverage — disabled 2026-06-24
+        To reactivate: restore fragility.json feed and uncomment country cards,
+        countryChart, fragilityChart. Branch: feature/gulf-multi-country (future)
         -->
-    </div>
+
+    </div><!-- /container -->
 
     <script>
-        // ── Auth ──────────────────────────────────────────────────────────────
-        async function checkAuth() {
-            try {
-                const res = await fetch('/auth/check');
-                const d = await res.json();
-                if (!d.authenticated) { window.location.href = '/app'; return; }
-                document.getElementById('userEmail').textContent = d.email;
-            } catch (e) { window.location.href = '/app'; }
-        }
-        function logout() { window.location.href = '/auth/logout'; }
+    // ── Auth ──────────────────────────────────────────────────────────────────
+    async function checkAuth() {
+        try {
+            const r = await fetch('/auth/check');
+            const d = await r.json();
+            if (!d.authenticated) { window.location.href = '/app'; return; }
+            document.getElementById('userEmail').textContent = d.email;
+        } catch { window.location.href = '/app'; }
+    }
+    function logout() { window.location.href = '/auth/logout'; }
 
-        // ── Constants ─────────────────────────────────────────────────────────
-        const MAX_CAPACITY = 33.2; // Mb — theoretical max across all 47 tanks
-        const EXPORT_PULSE_THRESHOLD = 2.0; // Mb
-        const EXPORT_PULSE_WINDOW_MIN = 6;
-        const EXPORT_PULSE_WINDOW_MAX = 12;
-        const SIR_STATIC = 4.3; // % — 2 of 47 tanks (t55_5, t55_10) structurally idle
+    // ── Constants ─────────────────────────────────────────────────────────────
+    const MAX_CAP = 33.2;
+    const PULSE_THRESHOLD = 2.0;
+    const PULSE_WIN_MIN = 6;
+    const PULSE_WIN_MAX = 12;
+    const SIR_STATIC = 4.3;
 
-        let allDates = [], allValues = [];
-        let currentRange = 1095; // default: 3 years
-        let charts = {};
+    let allDates = [], allValues = [];
+    let currentRange = 1095;
+    let charts = {};
 
-        // ── Data loading ──────────────────────────────────────────────────────
-        async function loadData() {
-            const [daily] = await Promise.all([
-                fetch(`/data/data_daily.json?v=${Date.now()}`).then(r => r.json())
-            ]);
-            allDates = daily.dates;
-            allValues = daily.values;
-            render();
-        }
+    // ── Data ──────────────────────────────────────────────────────────────────
+    async function loadData() {
+        const daily = await fetch(`/data/data_daily.json?v=${Date.now()}`).then(r => r.json());
+        allDates = daily.dates;
+        allValues = daily.values;
+        render();
+    }
 
-        // ── Range selector ────────────────────────────────────────────────────
-        function setRange(days) {
-            currentRange = days;
-            document.querySelectorAll('.btn[data-range]').forEach(b =>
-                b.classList.toggle('active', parseInt(b.dataset.range) === days));
-            render();
-        }
+    function setRange(days) {
+        currentRange = days;
+        document.querySelectorAll('.btn[data-range]').forEach(b =>
+            b.classList.toggle('active', parseInt(b.dataset.range) === days));
+        render();
+    }
 
-        function getSlice() {
-            if (currentRange === 0) return { dates: allDates, values: allValues };
-            const cutoff = new Date();
-            cutoff.setDate(cutoff.getDate() - currentRange);
-            const cutStr = cutoff.toISOString().slice(0, 10);
-            const idx = allDates.findIndex(d => d >= cutStr);
-            return { dates: allDates.slice(idx), values: allValues.slice(idx) };
-        }
+    function getSlice() {
+        if (currentRange === 0) return { dates: allDates, values: allValues };
+        const cutoff = new Date();
+        cutoff.setDate(cutoff.getDate() - currentRange);
+        const cutStr = cutoff.toISOString().slice(0, 10);
+        const idx = allDates.findIndex(d => d >= cutStr);
+        return { dates: allDates.slice(idx), values: allValues.slice(idx) };
+    }
 
-        // ── Compute metrics ───────────────────────────────────────────────────
-        function computeFillRate(dates, values, window = 7) {
-            const rates = [];
-            for (let i = 0; i < dates.length; i++) {
-                const t0 = new Date(dates[i]);
-                let best = -1, bestDiff = Infinity;
-                for (let j = i - 1; j >= 0; j--) {
-                    const dt = (t0 - new Date(dates[j])) / 86400000;
-                    if (dt <= 0) continue;
-                    const diff = Math.abs(dt - window);
-                    if (diff < bestDiff) { bestDiff = diff; best = j; }
-                    if (dt > window * 2) break;
-                }
-                if (best >= 0) {
-                    const days = (t0 - new Date(dates[best])) / 86400000;
-                    rates.push((values[i] - values[best]) / days);
-                } else {
-                    rates.push(null);
-                }
+    // ── Computations ──────────────────────────────────────────────────────────
+    function computeFillRate(dates, values, win = 7) {
+        return dates.map((_, i) => {
+            const t0 = new Date(dates[i]);
+            let best = -1, bestDiff = Infinity;
+            for (let j = i - 1; j >= 0; j--) {
+                const dt = (t0 - new Date(dates[j])) / 86400000;
+                if (dt <= 0) continue;
+                const diff = Math.abs(dt - win);
+                if (diff < bestDiff) { bestDiff = diff; best = j; }
+                if (dt > win * 2) break;
             }
-            return rates;
-        }
+            if (best < 0) return null;
+            return (values[i] - values[best]) / ((t0 - new Date(dates[best])) / 86400000);
+        });
+    }
 
-        function computeSPI(values) {
-            return values.map(v => (v / MAX_CAPACITY) * 100);
-        }
+    function computeSPI(values) { return values.map(v => (v / MAX_CAP) * 100); }
 
-        function detectExportPulse(dates, values) {
-            const events = [];
-            for (let i = 0; i < dates.length; i++) {
-                const t0 = new Date(dates[i]);
-                for (let j = i + 1; j < dates.length; j++) {
-                    const days = (new Date(dates[j]) - t0) / 86400000;
-                    if (days < EXPORT_PULSE_WINDOW_MIN) continue;
-                    if (days > EXPORT_PULSE_WINDOW_MAX) break;
-                    const delta = values[i] - values[j];
-                    if (delta >= EXPORT_PULSE_THRESHOLD) {
-                        events.push({ start: dates[i], end: dates[j], delta, days: Math.round(days) });
-                        i = j;
-                        break;
-                    }
+    function detectPulses(dates, values) {
+        const events = [];
+        for (let i = 0; i < dates.length; i++) {
+            const t0 = new Date(dates[i]);
+            for (let j = i + 1; j < dates.length; j++) {
+                const days = (new Date(dates[j]) - t0) / 86400000;
+                if (days < PULSE_WIN_MIN) continue;
+                if (days > PULSE_WIN_MAX) break;
+                const delta = values[i] - values[j];
+                if (delta >= PULSE_THRESHOLD) {
+                    events.push({ start: dates[i], end: dates[j], delta, days: Math.round(days) });
+                    i = j; break;
                 }
             }
-            return events;
+        }
+        return events;
+    }
+
+    function computeVolatility(dates, values) {
+        const win = 30, rollingStds = [];
+        for (let i = 0; i < values.length; i++) {
+            if (i < win) { rollingStds.push(null); continue; }
+            const sl = values.slice(i - win, i);
+            const m = sl.reduce((a, b) => a + b, 0) / sl.length;
+            rollingStds.push(Math.sqrt(sl.reduce((a, b) => a + (b - m) ** 2, 0) / sl.length));
+        }
+        const valid = rollingStds.filter(v => v !== null);
+        const gm = valid.reduce((a, b) => a + b, 0) / valid.length;
+        const gs = Math.sqrt(valid.reduce((a, b) => a + (b - gm) ** 2, 0) / valid.length);
+        const threshold = gm + 1.5 * gs;
+        const spikes = dates.map((d, i) => rollingStds[i] !== null && rollingStds[i] > threshold ? { date: d } : null).filter(Boolean);
+        return { spikes, rollingStds };
+    }
+
+    function computeMonthly(dates, values) {
+        const months = {};
+        for (let i = 0; i < dates.length; i++) {
+            const m = dates[i].slice(0, 7);
+            if (!months[m]) months[m] = { first: values[i], last: values[i] };
+            months[m].last = values[i];
+        }
+        return Object.entries(months).map(([m, { first, last }]) => ({ month: m, change: last - first }));
+    }
+
+    function computeStreak(dates, values) {
+        const n = values.length;
+        if (n < 4) return { type: 'UNKNOWN', days: 0, change: 0, startDate: '' };
+        const recentDelta = values[n - 1] - values[Math.max(0, n - 5)];
+        const type = recentDelta >= 0 ? 'BUILD' : 'DRAWDOWN';
+        let start = n - 1;
+        for (let i = n - 1; i > 0; i--) {
+            const d = values[i] - values[i - 1];
+            if (type === 'BUILD' && d < -0.05) break;
+            if (type === 'DRAWDOWN' && d > 0.05) break;
+            start = i - 1;
+        }
+        return { type, days: Math.round((new Date(dates[n-1]) - new Date(dates[start])) / 86400000), change: values[n-1] - values[start], startDate: dates[start] };
+    }
+
+    // ── Render ────────────────────────────────────────────────────────────────
+    function render() {
+        const { dates, values } = getSlice();
+        if (!dates.length) return;
+        const n = values.length;
+        const latest = values[n - 1];
+        const spi = (latest / MAX_CAP) * 100;
+        const fillRates = computeFillRate(dates, values);
+        const spiSeries = computeSPI(values);
+        const pulses = detectPulses(dates, values);
+        const { spikes } = computeVolatility(dates, values);
+        const change30 = ((latest - values[Math.max(0, n - 30)]) / values[Math.max(0, n - 30)]) * 100;
+        const latestFR = fillRates[n - 1];
+
+        // Meta
+        document.getElementById('pageMeta').textContent =
+            `Last observation: ${dates[n-1]} · ${latest.toFixed(2)} Mb · Capacity: ${MAX_CAP} Mb`;
+
+        // Alert
+        const banner = document.getElementById('alertBanner');
+        if (spi > 85) {
+            banner.classList.add('visible');
+            document.getElementById('alertText').textContent =
+                `Storage Pressure CRITICAL — ${spi.toFixed(1)}% of capacity. Historically precedes forced concessions within 4–8 weeks.`;
+        } else if (pulses.length && pulses[pulses.length-1].end >= dates[n-10]) {
+            banner.classList.add('visible');
+            banner.style.cssText += 'background:rgba(16,185,129,0.1);border-color:rgba(16,185,129,0.3);color:#6ee7b7;';
+            const last = pulses[pulses.length-1];
+            document.getElementById('alertText').textContent =
+                `Export Pulse ${last.start} → ${last.end}: −${last.delta.toFixed(2)} Mb in ${last.days} days. Probable VLCC loading.`;
         }
 
-        function computeVolatilitySpikes(dates, values) {
-            const window = 30;
-            const rollingStds = [];
-            for (let i = 0; i < values.length; i++) {
-                if (i < window) { rollingStds.push(null); continue; }
-                const slice = values.slice(i - window, i);
-                const mean = slice.reduce((a, b) => a + b, 0) / slice.length;
-                const std = Math.sqrt(slice.reduce((a, b) => a + (b - mean) ** 2, 0) / slice.length);
-                rollingStds.push(std);
-            }
-            const validStds = rollingStds.filter(v => v !== null);
-            const globalMean = validStds.reduce((a, b) => a + b, 0) / validStds.length;
-            const globalStd = Math.sqrt(validStds.reduce((a, b) => a + (b - globalMean) ** 2, 0) / validStds.length);
-            const threshold = globalMean + 1.5 * globalStd;
-            const spikes = [];
-            for (let i = 0; i < dates.length; i++) {
-                if (rollingStds[i] !== null && rollingStds[i] > threshold) {
-                    spikes.push({ date: dates[i], std: rollingStds[i] });
-                }
-            }
-            return { spikes, threshold, rollingStds };
+        // Block 1 — Current State
+        document.getElementById('metStorage').innerHTML = latest.toFixed(1) + '<span class="metric-unit"> Mb</span>';
+        document.getElementById('metStorageSub').textContent = `${latest.toFixed(1)} of ${MAX_CAP} Mb capacity`;
+
+        document.getElementById('metSPI').innerHTML = spi.toFixed(1) + '<span class="metric-unit">%</span>';
+        const spiBadge = document.getElementById('metSPIBadge');
+        if (spi > 85) { spiBadge.textContent = 'CRITICAL'; spiBadge.className = 'metric-badge badge-red'; document.getElementById('cardSPI').classList.add('alert'); }
+        else if (spi > 70) { spiBadge.textContent = 'ELEVATED'; spiBadge.className = 'metric-badge badge-yellow'; document.getElementById('cardSPI').classList.add('warning'); }
+        else { spiBadge.textContent = 'NORMAL'; spiBadge.className = 'metric-badge badge-green'; }
+
+        if (latestFR !== null) {
+            const sign = latestFR >= 0 ? '+' : '';
+            document.getElementById('metFillRate').innerHTML = sign + latestFR.toFixed(3) + '<span class="metric-unit"> Mb/d</span>';
+            document.getElementById('metFillRate').style.color = latestFR >= 0 ? '#ef4444' : '#10b981';
+            document.getElementById('metFillRateSub').textContent = latestFR >= 0 ? '▲ Accumulation — bearish for oil price' : '▼ Drawdown — loading activity, bullish';
         }
 
-        // ── Monthly storage balance ───────────────────────────────────────────
-        function computeMonthlyBalance(dates, values) {
-            const months = {};
-            for (let i = 0; i < dates.length; i++) {
-                const m = dates[i].slice(0, 7);
-                if (!months[m]) months[m] = { first: values[i], last: values[i] };
-                months[m].last = values[i];
-            }
-            return Object.entries(months).map(([m, { first, last }]) => ({
-                month: m, change: last - first
-            }));
+        const cs = change30 >= 0 ? '+' : '';
+        document.getElementById('metChange').innerHTML = cs + change30.toFixed(1) + '<span class="metric-unit">%</span>';
+        document.getElementById('metChange').style.color = change30 >= 0 ? '#ef4444' : '#10b981';
+        document.getElementById('metChangeSub').textContent = change30 >= 0 ? '▲ Net build vs 30 days ago' : '▼ Net export vs 30 days ago';
+
+        // Block 2 — Export Intelligence
+        const recent90 = pulses.filter(e => (new Date(dates[n-1]) - new Date(e.end)) / 86400000 <= 90);
+        document.getElementById('metEPS').textContent = recent90.length;
+        const epsBadge = document.getElementById('metEPSBadge');
+        epsBadge.textContent = recent90.length > 0 ? `${recent90.length} loading${recent90.length > 1 ? 's' : ''} last 90d` : 'None last 90d';
+        epsBadge.className = recent90.length > 0 ? 'metric-badge badge-green' : 'metric-badge badge-blue';
+
+        if (pulses.length > 1) {
+            let totalGap = 0;
+            for (let i = 1; i < pulses.length; i++) totalGap += (new Date(pulses[i].start) - new Date(pulses[i-1].start)) / 86400000;
+            const avg = Math.round(totalGap / (pulses.length - 1));
+            document.getElementById('metExportInterval').innerHTML = avg + '<span class="metric-unit"> d</span>';
+            const next = new Date(pulses[pulses.length-1].start);
+            next.setDate(next.getDate() + avg);
+            const daysUntil = Math.round((next - new Date(dates[n-1])) / 86400000);
+            document.getElementById('metExportIntervalSub').textContent = daysUntil > 0
+                ? `Next window est. ~${next.toISOString().slice(0,10)} (in ${daysUntil}d)`
+                : `Window overdue by ${Math.abs(daysUntil)}d`;
+        } else {
+            document.getElementById('metExportInterval').innerHTML = '--<span class="metric-unit"> d</span>';
+            document.getElementById('metExportIntervalSub').textContent = 'insufficient data';
         }
 
-        // ── Operating streak ──────────────────────────────────────────────────
-        function computeStreak(dates, values) {
-            if (values.length < 4) return { type: 'UNKNOWN', days: 0, change: 0, startDate: '' };
-            const n = values.length;
-            // Determine direction from last meaningful move
-            const recentDelta = values[n - 1] - values[Math.max(0, n - 5)];
-            const type = recentDelta >= 0 ? 'BUILD' : 'DRAWDOWN';
-            // Walk back to find streak start
-            let streakStart = n - 1;
-            for (let i = n - 1; i > 0; i--) {
-                const d = values[i] - values[i - 1];
-                // Allow small noise (< 0.05 Mb) before declaring streak break
-                if (type === 'BUILD' && d < -0.05) break;
-                if (type === 'DRAWDOWN' && d > 0.05) break;
-                streakStart = i - 1;
-            }
-            const days = Math.round((new Date(dates[n - 1]) - new Date(dates[streakStart])) / 86400000);
-            const change = values[n - 1] - values[streakStart];
-            return { type, days, change, startDate: dates[streakStart] };
+        const exp90vol = recent90.reduce((s, e) => s + e.delta, 0);
+        document.getElementById('metExported90').innerHTML = exp90vol.toFixed(2) + '<span class="metric-unit"> Mb</span>';
+        document.getElementById('metExported90Sub').textContent = `${recent90.length} pulses · ≈${(exp90vol / 2).toFixed(1)} VLCCs`;
+
+        // Block 3 — Streak & VSA
+        const streak = computeStreak(dates, values);
+        const streakEl = document.getElementById('metStreakType');
+        streakEl.textContent = streak.type;
+        streakEl.style.color = streak.type === 'BUILD' ? '#ef4444' : '#10b981';
+        const sc = streak.change >= 0 ? '+' : '';
+        document.getElementById('metStreakDays').textContent = `${streak.days}d since ${streak.startDate} · ${sc}${streak.change.toFixed(2)} Mb`;
+        document.getElementById('cardStreak').className = 'metric-card ' + (streak.type === 'BUILD' ? 'warning' : 'positive');
+
+        document.getElementById('metSIR').innerHTML = SIR_STATIC.toFixed(1) + '<span class="metric-unit">%</span>';
+
+        const recentSpikes = spikes.filter(s => (new Date(dates[n-1]) - new Date(s.date)) / 86400000 <= 30);
+        document.getElementById('metVSA').textContent = recentSpikes.length;
+        const vsaBadge = document.getElementById('metVSABadge');
+        if (recentSpikes.length > 0) {
+            vsaBadge.textContent = `ACTIVE — last ${recentSpikes[recentSpikes.length-1].date}`;
+            vsaBadge.className = 'metric-badge badge-yellow';
+            document.getElementById('cardVSA').classList.add('warning');
+        } else {
+            vsaBadge.textContent = 'None last 30d';
+            vsaBadge.className = 'metric-badge badge-green';
         }
 
-        // ── Render ────────────────────────────────────────────────────────────
-        function render() {
-            const { dates, values } = getSlice();
-            if (!dates.length) return;
+        // Pulse list
+        const pulseList = document.getElementById('pulseList');
+        const shown = [...pulses].reverse().slice(0, 10);
+        if (!shown.length) {
+            pulseList.innerHTML = '<li style="color:#64748b;font-size:0.8rem;padding:1rem 0">No export pulse events detected in selected period</li>';
+        } else {
+            pulseList.innerHTML = shown.map(e =>
+                `<li class="pulse-item">
+                    <span class="pulse-date">${e.start} → ${e.end} &nbsp;(${e.days}d)</span>
+                    <span class="pulse-vol">−${e.delta.toFixed(2)} Mb</span>
+                </li>`).join('');
+        }
 
-            const n = values.length;
-            const latest = values[n - 1];
-            const prev30 = values[Math.max(0, n - 30)];
-            const spi = (latest / MAX_CAPACITY) * 100;
-            const fillRates = computeFillRate(dates, values, 7);
-            const latestFR = fillRates[n - 1];
-            const spiSeries = computeSPI(values);
-            const pulseEvents = detectExportPulse(dates, values);
-            const { spikes, rollingStds } = computeVolatilitySpikes(dates, values);
-            const change30 = ((latest - prev30) / prev30) * 100;
+        // Charts
+        destroyCharts();
+        renderMainChart(dates, values);
+        renderFillRateChart(dates, fillRates);
+        renderSPIChart(dates, spiSeries);
+        renderMonthlyChart(dates, values);
+        renderPulseHistChart(pulses);
+    }
 
-            // ── Meta ──
-            document.getElementById('pageMeta').textContent =
-                `Last observation: ${dates[n - 1]} · ${latest.toFixed(2)} Mb · Capacity: ${MAX_CAPACITY.toFixed(1)} Mb`;
+    function destroyCharts() { Object.values(charts).forEach(c => c?.destroy()); charts = {}; }
 
-            // ── Alert banner ──
-            const alertBanner = document.getElementById('alertBanner');
-            if (spi > 85) {
-                alertBanner.classList.add('visible');
-                document.getElementById('alertText').textContent =
-                    `Storage Pressure CRITICAL — ${spi.toFixed(1)}% of capacity. Historical precedent: forced concessions or price discount within 4–8 weeks.`;
-            } else if (pulseEvents.length && pulseEvents[pulseEvents.length - 1].end >= dates[n - 10]) {
-                alertBanner.classList.add('visible');
-                alertBanner.style.background = 'rgba(16,185,129,0.1)';
-                alertBanner.style.borderColor = 'rgba(16,185,129,0.3)';
-                alertBanner.style.color = '#6ee7b7';
-                const last = pulseEvents[pulseEvents.length - 1];
-                document.getElementById('alertText').textContent =
-                    `Export Pulse detected ${last.start} → ${last.end}: −${last.delta.toFixed(2)} Mb in ${last.days} days. Probable VLCC loading.`;
-            }
+    const gridX = { ticks: { color: '#64748b', maxTicksLimit: 10, font: { size: 10 } }, grid: { color: 'rgba(255,255,255,0.04)' } };
+    const gridY = { ticks: { color: '#94a3b8', font: { size: 10 } }, grid: { color: 'rgba(255,255,255,0.04)' } };
 
-            // ── Core metrics ──
-            document.getElementById('metStorage').innerHTML = latest.toFixed(1) + '<span class="metric-unit"> Mb</span>';
-            document.getElementById('metStorageSub').textContent = `${latest.toFixed(1)} of ${MAX_CAPACITY.toFixed(1)} Mb capacity`;
+    function renderMainChart(dates, values) {
+        charts.main = new Chart(document.getElementById('mainChart').getContext('2d'), {
+            type: 'line',
+            data: { labels: dates, datasets: [
+                { label: 'Storage (Mb)', data: values, borderColor: '#3b82f6', backgroundColor: 'rgba(59,130,246,0.07)', fill: true, tension: 0.3, pointRadius: 0, borderWidth: 2 },
+                { label: '85% Threshold', data: dates.map(() => MAX_CAP * 0.85), borderColor: 'rgba(239,68,68,0.45)', borderDash: [6,4], pointRadius: 0, fill: false, borderWidth: 1 }
+            ]},
+            options: { responsive: true, maintainAspectRatio: false, interaction: { intersect: false, mode: 'index' },
+                plugins: { legend: { labels: { color: '#94a3b8', boxWidth: 12 } },
+                    tooltip: { backgroundColor: '#111820', borderColor: '#1e2d3d', borderWidth: 1,
+                        callbacks: { label: ctx => ` ${ctx.parsed.y.toFixed(2)} Mb` } } },
+                scales: { x: gridX, y: gridY } }
+        });
+    }
 
-            const spiEl = document.getElementById('metSPI');
-            spiEl.innerHTML = spi.toFixed(1) + '<span class="metric-unit">%</span>';
-            const spiBadge = document.getElementById('metSPIBadge');
-            if (spi > 85) {
-                spiBadge.textContent = 'CRITICAL';
-                spiBadge.className = 'metric-badge badge-red';
-                document.getElementById('cardSPI').classList.add('alert');
-            } else if (spi > 70) {
-                spiBadge.textContent = 'ELEVATED';
-                spiBadge.className = 'metric-badge badge-yellow';
-                document.getElementById('cardSPI').classList.add('warning');
-            } else {
-                spiBadge.textContent = 'NORMAL';
-                spiBadge.className = 'metric-badge badge-green';
-            }
+    function renderFillRateChart(dates, rates) {
+        charts.fillRate = new Chart(document.getElementById('fillRateChart').getContext('2d'), {
+            type: 'bar',
+            data: { labels: dates, datasets: [{ label: 'Fill Rate (Mb/day)', data: rates,
+                backgroundColor: rates.map(r => r === null ? 'transparent' : r >= 0 ? 'rgba(239,68,68,0.65)' : 'rgba(16,185,129,0.65)'), borderWidth: 0 }]},
+            options: { responsive: true, maintainAspectRatio: false,
+                plugins: { legend: { labels: { color: '#94a3b8', boxWidth: 12 } } },
+                scales: { x: gridX, y: { ...gridY, ticks: { ...gridY.ticks, callback: v => v.toFixed(2) } } } }
+        });
+    }
 
-            if (latestFR !== null) {
-                const frSign = latestFR >= 0 ? '+' : '';
-                document.getElementById('metFillRate').innerHTML = frSign + latestFR.toFixed(3) + '<span class="metric-unit"> Mb/d</span>';
-                document.getElementById('metFillRateSub').textContent = latestFR >= 0 ? '▲ Accumulation phase' : '▼ Drawdown — loading activity';
-                document.getElementById('metFillRate').style.color = latestFR >= 0 ? '#ef4444' : '#10b981';
-            }
+    function renderSPIChart(dates, spiSeries) {
+        charts.spi = new Chart(document.getElementById('spiChart').getContext('2d'), {
+            type: 'line',
+            data: { labels: dates, datasets: [
+                { label: 'Utilization (%)', data: spiSeries, borderColor: '#f59e0b', backgroundColor: 'rgba(245,158,11,0.07)', fill: true, tension: 0.3, pointRadius: 0, borderWidth: 2 },
+                { label: '85% Alert', data: dates.map(() => 85), borderColor: 'rgba(239,68,68,0.45)', borderDash: [6,4], pointRadius: 0, fill: false, borderWidth: 1 }
+            ]},
+            options: { responsive: true, maintainAspectRatio: false, interaction: { intersect: false, mode: 'index' },
+                plugins: { legend: { labels: { color: '#94a3b8', boxWidth: 12 } } },
+                scales: { x: gridX, y: { min: 0, max: 100, ticks: { color: '#94a3b8', callback: v => v + '%' }, grid: { color: 'rgba(255,255,255,0.04)' } } } }
+        });
+    }
 
-            const chSign = change30 >= 0 ? '+' : '';
-            document.getElementById('metChange').innerHTML = chSign + change30.toFixed(1) + '<span class="metric-unit">%</span>';
-            document.getElementById('metChange').style.color = change30 >= 0 ? '#ef4444' : '#10b981';
-            document.getElementById('metChangeSub').textContent = change30 >= 0 ? '▲ Build vs 30 days ago' : '▼ Draw vs 30 days ago';
+    function renderMonthlyChart(dates, values) {
+        const monthly = computeMonthly(dates, values);
+        const data = monthly.map(m => parseFloat(m.change.toFixed(3)));
+        charts.monthly = new Chart(document.getElementById('monthlyChart').getContext('2d'), {
+            type: 'bar',
+            data: { labels: monthly.map(m => m.month), datasets: [{ label: 'Monthly Balance (Mb)', data,
+                backgroundColor: data.map(v => v >= 0 ? 'rgba(239,68,68,0.7)' : 'rgba(16,185,129,0.7)'), borderWidth: 0, borderRadius: 3 }]},
+            options: { responsive: true, maintainAspectRatio: false, interaction: { intersect: false, mode: 'index' },
+                plugins: { legend: { labels: { color: '#94a3b8', boxWidth: 12 } },
+                    tooltip: { backgroundColor: '#111820', borderColor: '#1e2d3d', borderWidth: 1,
+                        callbacks: { label: ctx => ctx.parsed.y >= 0 ? ` +${ctx.parsed.y.toFixed(2)} Mb (build)` : ` ${ctx.parsed.y.toFixed(2)} Mb (export)` } } },
+                scales: { x: gridX, y: { ...gridY, ticks: { ...gridY.ticks, callback: v => v.toFixed(1) } } } }
+        });
+    }
 
-            // ── Advanced metrics ──
-            const recentPulses = pulseEvents.filter(e => {
-                const days = (new Date(dates[n - 1]) - new Date(e.end)) / 86400000;
-                return days <= 90;
+    function renderPulseHistChart(pulses) {
+        const el = document.getElementById('pulseHistChart');
+        if (!pulses.length) { el.parentElement.innerHTML = '<p style="color:#64748b;font-size:0.8rem;padding:1rem">No export pulses detected in selected period</p>'; return; }
+        charts.pulseHist = new Chart(el.getContext('2d'), {
+            type: 'bar',
+            data: { labels: pulses.map(e => e.start), datasets: [{ label: 'Export Volume (Mb)', data: pulses.map(e => parseFloat(e.delta.toFixed(3))),
+                backgroundColor: 'rgba(16,185,129,0.75)', borderColor: 'rgba(16,185,129,0.9)', borderWidth: 1, borderRadius: 4 }]},
+            options: { responsive: true, maintainAspectRatio: false,
+                plugins: { legend: { labels: { color: '#94a3b8', boxWidth: 12 } },
+                    tooltip: { backgroundColor: '#111820', borderColor: '#1e2d3d', borderWidth: 1,
+                        callbacks: { title: ctx => { const e = pulses[ctx[0].dataIndex]; return `${e.start} → ${e.end} (${e.days}d)`; },
+                            label: ctx => ` −${ctx.parsed.y.toFixed(2)} Mb · probable VLCC loading` } } },
+                scales: { x: gridX, y: { ...gridY, ticks: { ...gridY.ticks, callback: v => v.toFixed(1) + ' Mb' } } } }
+        });
+    }
+
+    function exportCSV() {
+        const { dates, values } = getSlice();
+        const frs = computeFillRate(dates, values);
+        const spis = computeSPI(values);
+        let csv = 'Date,Storage_Mb,Fill_Rate_Mb_per_day,Utilization_pct\n';
+        for (let i = 0; i < dates.length; i++)
+            csv += `${dates[i]},${values[i].toFixed(3)},${frs[i] !== null ? frs[i].toFixed(4) : ''},${spis[i].toFixed(2)}\n`;
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv' }));
+        a.download = `kharg_intelligence_${dates[dates.length-1]}.csv`;
+        a.click();
+    }
+
+    checkAuth();
+    loadData();
+
+    // ── Per-Tank Map ──────────────────────────────────────────────────────────
+    const SUPABASE_URL = 'https://yoekhkczwdeyauwarsyy.supabase.co';
+    const SUPABASE_KEY = 'sb_publishable_7j07_zzdqTGM1LXf7-o9Tg_JJRbJQSM';
+    const H_MIN = 2, BBL = 6.2898;
+
+    const TANKS = {
+        't60_0':{lat:29.2217338,lon:50.3165482,r:20,rm:60,hm:18},'t60_1':{lat:29.2216388,lon:50.3150432,r:20,rm:60,hm:18},'t60_2':{lat:29.2218405,lon:50.3135291,r:20,rm:60,hm:18},'t60_3':{lat:29.2231568,lon:50.3158490,r:20,rm:60,hm:18},'t60_4':{lat:29.2228980,lon:50.3144195,r:20,rm:60,hm:18},
+        't55_5':{lat:29.2359691,lon:50.3126204,r:16,rm:55,hm:17},'t55_6':{lat:29.2364507,lon:50.3109394,r:16,rm:55,hm:17},'t55_7':{lat:29.2379533,lon:50.3108495,r:16,rm:55,hm:17},'t55_8':{lat:29.2390690,lon:50.3096822,r:16,rm:55,hm:17},'t55_9':{lat:29.2389264,lon:50.3068140,r:16,rm:55,hm:17},'t55_10':{lat:29.2376082,lon:50.3072679,r:16,rm:55,hm:17},'t55_11':{lat:29.2362776,lon:50.3077246,r:16,rm:55,hm:17},'t55_12':{lat:29.2363283,lon:50.3093038,r:16,rm:55,hm:17},'t55_13':{lat:29.2349727,lon:50.3081865,r:16,rm:55,hm:17},'t55_14':{lat:29.2351137,lon:50.3098199,r:16,rm:55,hm:17},'t55_15':{lat:29.2336438,lon:50.3086380,r:16,rm:55,hm:17},'t55_16':{lat:29.2338308,lon:50.3102809,r:16,rm:55,hm:17},'t55_17':{lat:29.2314405,lon:50.3087404,r:16,rm:55,hm:17},'t55_18':{lat:29.2317836,lon:50.3103855,r:16,rm:55,hm:17},'t55_19':{lat:29.2320764,lon:50.3122342,r:16,rm:55,hm:17},'t55_20':{lat:29.2302153,lon:50.3101615,r:16,rm:55,hm:17},'t55_21':{lat:29.2288712,lon:50.3099660,r:16,rm:55,hm:17},
+        't40_22':{lat:29.2295289,lon:50.3121871,r:12,rm:40,hm:14},'t40_23':{lat:29.2297632,lon:50.3135015,r:12,rm:40,hm:14},'t40_24':{lat:29.2299639,lon:50.3148147,r:12,rm:40,hm:14},'t40_25':{lat:29.2284236,lon:50.3124414,r:12,rm:40,hm:14},'t40_26':{lat:29.2286165,lon:50.3137337,r:12,rm:40,hm:14},'t40_27':{lat:29.2288114,lon:50.3150200,r:12,rm:40,hm:14},'t40_28':{lat:29.2272092,lon:50.3126984,r:12,rm:40,hm:14},'t40_29':{lat:29.2274357,lon:50.3139937,r:12,rm:40,hm:14},'t40_30':{lat:29.2276408,lon:50.3152672,r:12,rm:40,hm:14},'t55_31':{lat:29.2323461,lon:50.3137663,r:16,rm:55,hm:17},'t40_32':{lat:29.2307178,lon:50.3119291,r:12,rm:40,hm:14},'t40_33':{lat:29.2309474,lon:50.3132419,r:12,rm:40,hm:14},'t40_34':{lat:29.2311351,lon:50.3145438,r:12,rm:40,hm:14},
+        't25_35':{lat:29.2262112,lon:50.3128809,r:8,rm:25,hm:12},'t25_36':{lat:29.2263835,lon:50.3138099,r:8,rm:25,hm:12},'t25_37':{lat:29.2265429,lon:50.3147481,r:8,rm:25,hm:12},'t25_38':{lat:29.2266891,lon:50.3156504,r:8,rm:25,hm:12},'t25_39':{lat:29.2251564,lon:50.3131064,r:8,rm:25,hm:12},'t25_40':{lat:29.2253231,lon:50.3140568,r:8,rm:25,hm:12},'t25_41':{lat:29.2254742,lon:50.3149628,r:8,rm:25,hm:12},'t25_42':{lat:29.2256154,lon:50.3158865,r:8,rm:25,hm:12},'t25_43':{lat:29.2243535,lon:50.3132813,r:8,rm:25,hm:12},'t25_44':{lat:29.2245129,lon:50.3142241,r:8,rm:25,hm:12},'t25_45':{lat:29.2246562,lon:50.3151350,r:8,rm:25,hm:12},'t25_46':{lat:29.2248181,lon:50.3160634,r:8,rm:25,hm:12}
+    };
+
+    function tankColor(r) {
+        if (r === null) return '#1e2d3d';
+        r = Math.max(0, Math.min(1, r));
+        if (r < 0.5) { const t = r*2; return `rgb(${Math.round(255+(240-255)*t)},${Math.round(71+(165-71)*t)},${Math.round(87-87*t)})`; }
+        const t = (r-0.5)*2; return `rgb(${Math.round(240+(59-240)*t)},${Math.round(165+(130-165)*t)},${Math.round(246*t)})`;
+    }
+    function calcRatio(db, p5, p95) { return p95 === p5 ? 0.5 : Math.max(0, Math.min(1, (p95-db)/(p95-p5))); }
+    function calcMb(ratio, rm, hm) { return Math.PI*rm*rm*(H_MIN+ratio*(hm-H_MIN))*BBL/1e6; }
+    function pct(arr, p) { const s=[...arr].sort((a,b)=>a-b); const i=(p/100)*(s.length-1); const lo=Math.floor(i),hi=Math.ceil(i); return s[lo]+(s[hi]-s[lo])*(i-lo); }
+
+    function makeTankSVG(id, info, ratio) {
+        const r=info.r, sz=r*2+4, cx=r+2, cy=r+2, fh=ratio!==null?ratio*r*2:0, col=tankColor(ratio), num=id.replace(/^t\d+_/,''), fs=Math.max(6,r*0.38);
+        return L.divIcon({ html:
+            `<svg width="${sz}" height="${sz}" viewBox="0 0 ${sz} ${sz}" xmlns="http://www.w3.org/2000/svg" style="display:block;overflow:visible">
+            <defs><clipPath id="c-${id}"><circle cx="${cx}" cy="${cy}" r="${r}"/></clipPath></defs>
+            <circle cx="${cx}" cy="${cy}" r="${r}" fill="rgba(8,10,13,0.85)"/>
+            <rect x="${cx-r}" y="${cy+r-fh}" width="${r*2}" height="${fh}" fill="${col}" clip-path="url(#c-${id})" opacity="0.9"/>
+            <circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${ratio!==null?col:'#1e2d3d'}" stroke-width="1.5" opacity="${ratio!==null?0.7:0.3}"/>
+            <text x="${cx}" y="${cy+fs*0.4}" text-anchor="middle" fill="#8ab0cc" font-size="${fs}" font-family="monospace">${num}</text>
+            </svg>`,
+            iconSize:[sz,sz], iconAnchor:[cx,cy], className:'tank-div-icon'
+        });
+    }
+
+    async function initTankMap() {
+        // zoom:14 (wider view), attributionControl:false (removes Leaflet/Esri branding)
+        const map = L.map('tankMap', { center:[29.228,50.312], zoom:14, zoomControl:true, attributionControl:false });
+        L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { maxZoom:19 }).addTo(map);
+
+        const markers = {};
+        Object.entries(TANKS).forEach(([id, info]) => {
+            const m = L.marker([info.lat, info.lon], { icon: makeTankSVG(id, info, null) });
+            m.bindPopup('', { maxWidth:220, offset:[0,-(info.r+4)] });
+            m.on('click', () => {
+                const s = window._ds && window._ds[id];
+                m.getPopup().setContent(s
+                    ? `<b style="font-family:monospace">${id}</b><br>Fill: ${s.ratio!==null?(s.ratio*100).toFixed(1)+'%':'N/A'}<br>Volume: ${s.mb!==null?s.mb.toFixed(3)+' Mb':'N/A'}<br>Type: ${id.split('_')[0].replace('t','')}m radius`
+                    : `<b>${id}</b><br>No data`);
             });
-            document.getElementById('metEPS').textContent = recentPulses.length;
-            const epsBadge = document.getElementById('metEPSBadge');
-            epsBadge.textContent = recentPulses.length > 0
-                ? `${recentPulses.length} event${recentPulses.length > 1 ? 's' : ''} last 90d`
-                : 'No events last 90d';
-            epsBadge.className = recentPulses.length > 0 ? 'metric-badge badge-green' : 'metric-badge badge-blue';
+            m.addTo(map);
+            markers[id] = m;
+        });
 
-            document.getElementById('metSIR').innerHTML = SIR_STATIC.toFixed(1) + '<span class="metric-unit">%</span>';
-
-            const recentSpikes = spikes.filter(s => {
-                const days = (new Date(dates[n - 1]) - new Date(s.date)) / 86400000;
-                return days <= 30;
-            });
-            document.getElementById('metVSA').textContent = recentSpikes.length;
-            const vsaBadge = document.getElementById('metVSABadge');
-            if (recentSpikes.length > 0) {
-                vsaBadge.textContent = `ACTIVE — last ${recentSpikes[recentSpikes.length - 1].date}`;
-                vsaBadge.className = 'metric-badge badge-yellow';
-                document.getElementById('cardVSA').classList.add('warning');
-            } else {
-                vsaBadge.textContent = 'None last 30d';
-                vsaBadge.className = 'metric-badge badge-green';
+        const headers = { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` };
+        let all = [], offset = 0;
+        try {
+            while (true) {
+                const batch = await fetch(`${SUPABASE_URL}/rest/v1/raw_observations?select=date,tank_id,db_mean&order=date&limit=1000&offset=${offset}`, { headers }).then(r => r.json());
+                all = all.concat(batch);
+                if (batch.length < 1000) break;
+                offset += 1000;
             }
+        } catch { document.getElementById('mapLoading').textContent = 'Error loading map data.'; return; }
 
-            // ── Pulse list ──
-            const pulseList = document.getElementById('pulseList');
-            const allPulses = [...pulseEvents].reverse().slice(0, 8);
-            if (allPulses.length === 0) {
-                pulseList.innerHTML = '<li style="color:#64748b;font-size:0.8rem;padding:1rem 0">No export pulse events detected in selected period</li>';
-            } else {
-                pulseList.innerHTML = allPulses.map(e =>
-                    `<li class="pulse-item">
-                        <span class="pulse-date">${e.start} → ${e.end} (${e.days}d)</span>
-                        <span class="pulse-val drain">−${e.delta.toFixed(2)} Mb</span>
-                    </li>`
-                ).join('');
-            }
+        document.getElementById('mapLoading').style.display = 'none';
+        const data = all.filter(r => TANKS[r.tank_id]);
+        const dbByTank = {};
+        data.forEach(r => { if (!dbByTank[r.tank_id]) dbByTank[r.tank_id]=[]; dbByTank[r.tank_id].push(r.db_mean); });
+        const cal = {};
+        Object.entries(dbByTank).forEach(([id, vals]) => { cal[id] = { p5: pct(vals,5), p95: pct(vals,95) }; });
+        const byDate = {};
+        data.forEach(r => { if (!byDate[r.date]) byDate[r.date]={}; byDate[r.date][r.tank_id]=r; });
+        const dates = Object.keys(byDate).sort();
 
-            // ── Terminal Operations metrics ──
-            const streak = computeStreak(dates, values);
-            const streakEl = document.getElementById('metStreakType');
-            streakEl.textContent = streak.type;
-            streakEl.style.color = streak.type === 'BUILD' ? '#ef4444' : '#10b981';
-            const changeSign = streak.change >= 0 ? '+' : '';
-            document.getElementById('metStreakDays').textContent =
-                `${streak.days}d since ${streak.startDate} · ${changeSign}${streak.change.toFixed(2)} Mb`;
-            document.getElementById('cardStreak').className =
-                'metric-card ' + (streak.type === 'BUILD' ? 'warning' : 'ok');
-
-            // Average export interval
-            if (pulseEvents.length > 1) {
-                let totalGap = 0;
-                for (let i = 1; i < pulseEvents.length; i++) {
-                    totalGap += (new Date(pulseEvents[i].start) - new Date(pulseEvents[i - 1].start)) / 86400000;
-                }
-                const avgInterval = Math.round(totalGap / (pulseEvents.length - 1));
-                document.getElementById('metExportInterval').innerHTML = avgInterval + '<span class="metric-unit"> d</span>';
-                // Next probable window estimate
-                const lastPulseDate = new Date(pulseEvents[pulseEvents.length - 1].start);
-                const nextEst = new Date(lastPulseDate);
-                nextEst.setDate(nextEst.getDate() + avgInterval);
-                const today = new Date(dates[n - 1]);
-                const daysUntil = Math.round((nextEst - today) / 86400000);
-                document.getElementById('metExportIntervalSub').textContent =
-                    daysUntil > 0
-                        ? `next window est. ~${nextEst.toISOString().slice(0, 10)} (${daysUntil}d)`
-                        : `window may be overdue by ${Math.abs(daysUntil)}d`;
-            } else {
-                document.getElementById('metExportInterval').innerHTML = '--<span class="metric-unit"> d</span>';
-                document.getElementById('metExportIntervalSub').textContent = 'insufficient data';
-            }
-
-            // Total exported last 90d
-            const exported90 = recentPulses.reduce((sum, e) => sum + e.delta, 0);
-            document.getElementById('metExported90').innerHTML = exported90.toFixed(2) + '<span class="metric-unit"> Mb</span>';
-            document.getElementById('metExported90Sub').textContent =
-                `${recentPulses.length} pulse${recentPulses.length !== 1 ? 's' : ''} · ~${(exported90 / 2).toFixed(1)} VLCCs equiv.`;
-
-            // ── Charts ──
-            destroyCharts();
-            renderMainChart(dates, values);
-            renderFillRateChart(dates, fillRates);
-            renderSPIChart(dates, spiSeries);
-            renderMonthlyChart(dates, values);
-            renderPulseHistChart(pulseEvents);
-        }
-
-        function destroyCharts() {
-            Object.values(charts).forEach(c => c?.destroy());
-            charts = {};
-        }
-
-        const gridOpts = {
-            x: { ticks: { color: '#64748b', maxTicksLimit: 10, font: { size: 10 } }, grid: { color: 'rgba(255,255,255,0.04)' } },
-            y: { ticks: { color: '#94a3b8', font: { size: 10 } }, grid: { color: 'rgba(255,255,255,0.04)' } }
-        };
-
-        function renderMainChart(dates, values) {
-            charts.main = new Chart(document.getElementById('mainChart').getContext('2d'), {
-                type: 'line',
-                data: { labels: dates, datasets: [{
-                    label: 'Storage (Mb)',
-                    data: values,
-                    borderColor: '#3b82f6',
-                    backgroundColor: 'rgba(59,130,246,0.07)',
-                    fill: true, tension: 0.3, pointRadius: 0, borderWidth: 2
-                }, {
-                    label: '85% Capacity Threshold',
-                    data: dates.map(() => MAX_CAPACITY * 0.85),
-                    borderColor: 'rgba(239,68,68,0.5)',
-                    borderDash: [6, 4],
-                    pointRadius: 0,
-                    fill: false,
-                    borderWidth: 1
-                }]},
-                options: {
-                    responsive: true, maintainAspectRatio: false,
-                    interaction: { intersect: false, mode: 'index' },
-                    plugins: { legend: { labels: { color: '#94a3b8', boxWidth: 12 } },
-                        tooltip: { backgroundColor: '#111820', borderColor: '#1e2d3d', borderWidth: 1,
-                            callbacks: { label: ctx => ` ${ctx.parsed.y.toFixed(2)} Mb` } } },
-                    scales: { ...gridOpts }
-                }
-            });
-        }
-
-        function renderFillRateChart(dates, rates) {
-            const colors = rates.map(r => r === null ? 'transparent' : r >= 0 ? 'rgba(239,68,68,0.7)' : 'rgba(16,185,129,0.7)');
-            charts.fillRate = new Chart(document.getElementById('fillRateChart').getContext('2d'), {
-                type: 'bar',
-                data: { labels: dates, datasets: [{
-                    label: 'Fill Rate (Mb/day)',
-                    data: rates,
-                    backgroundColor: colors,
-                    borderWidth: 0
-                }]},
-                options: {
-                    responsive: true, maintainAspectRatio: false,
-                    plugins: { legend: { labels: { color: '#94a3b8', boxWidth: 12 } } },
-                    scales: {
-                        x: { ticks: { color: '#64748b', maxTicksLimit: 10, font: { size: 10 } }, grid: { color: 'rgba(255,255,255,0.04)' } },
-                        y: { ticks: { color: '#94a3b8', font: { size: 10 }, callback: v => v.toFixed(2) }, grid: { color: 'rgba(255,255,255,0.04)' } }
-                    }
-                }
-            });
-        }
-
-        function renderSPIChart(dates, spiSeries) {
-            charts.spi = new Chart(document.getElementById('spiChart').getContext('2d'), {
-                type: 'line',
-                data: { labels: dates, datasets: [{
-                    label: 'Storage Utilization (%)',
-                    data: spiSeries,
-                    borderColor: '#f59e0b',
-                    backgroundColor: 'rgba(245,158,11,0.07)',
-                    fill: true, tension: 0.3, pointRadius: 0, borderWidth: 2
-                }, {
-                    label: '85% Alert Threshold',
-                    data: dates.map(() => 85),
-                    borderColor: 'rgba(239,68,68,0.5)',
-                    borderDash: [6, 4],
-                    pointRadius: 0, fill: false, borderWidth: 1
-                }]},
-                options: {
-                    responsive: true, maintainAspectRatio: false,
-                    interaction: { intersect: false, mode: 'index' },
-                    plugins: { legend: { labels: { color: '#94a3b8', boxWidth: 12 } } },
-                    scales: {
-                        x: gridOpts.x,
-                        y: { min: 0, max: 100, ticks: { color: '#94a3b8', callback: v => v + '%' }, grid: { color: 'rgba(255,255,255,0.04)' } }
-                    }
-                }
-            });
-        }
-
-        function renderMonthlyChart(dates, values) {
-            const monthly = computeMonthlyBalance(dates, values);
-            const labels = monthly.map(m => m.month);
-            const data = monthly.map(m => parseFloat(m.change.toFixed(3)));
-            const colors = data.map(v => v >= 0 ? 'rgba(239,68,68,0.75)' : 'rgba(16,185,129,0.75)');
-            charts.monthly = new Chart(document.getElementById('monthlyChart').getContext('2d'), {
-                type: 'bar',
-                data: { labels, datasets: [{
-                    label: 'Monthly Balance (Mb)',
-                    data,
-                    backgroundColor: colors,
-                    borderWidth: 0,
-                    borderRadius: 3
-                }]},
-                options: {
-                    responsive: true, maintainAspectRatio: false,
-                    interaction: { intersect: false, mode: 'index' },
-                    plugins: {
-                        legend: { labels: { color: '#94a3b8', boxWidth: 12 } },
-                        tooltip: {
-                            backgroundColor: '#111820', borderColor: '#1e2d3d', borderWidth: 1,
-                            callbacks: {
-                                label: ctx => {
-                                    const v = ctx.parsed.y;
-                                    return v >= 0 ? ` +${v.toFixed(2)} Mb (build)` : ` ${v.toFixed(2)} Mb (export)`;
-                                }
-                            }
-                        }
-                    },
-                    scales: {
-                        x: { ticks: { color: '#64748b', font: { size: 10 } }, grid: { color: 'rgba(255,255,255,0.04)' } },
-                        y: { ticks: { color: '#94a3b8', font: { size: 10 }, callback: v => v.toFixed(1) }, grid: { color: 'rgba(255,255,255,0.04)' } }
-                    }
-                }
-            });
-        }
-
-        function renderPulseHistChart(pulseEvents) {
-            if (!pulseEvents.length) {
-                document.getElementById('pulseHistChart').parentElement.innerHTML =
-                    '<p style="color:#64748b;font-size:0.8rem;padding:1rem">No export pulse events detected in selected period</p>';
-                return;
-            }
-            const labels = pulseEvents.map(e => e.start);
-            const data = pulseEvents.map(e => parseFloat(e.delta.toFixed(3)));
-            charts.pulseHist = new Chart(document.getElementById('pulseHistChart').getContext('2d'), {
-                type: 'bar',
-                data: { labels, datasets: [{
-                    label: 'Export Volume (Mb)',
-                    data,
-                    backgroundColor: 'rgba(16,185,129,0.75)',
-                    borderColor: 'rgba(16,185,129,0.9)',
-                    borderWidth: 1,
-                    borderRadius: 4
-                }]},
-                options: {
-                    responsive: true, maintainAspectRatio: false,
-                    plugins: {
-                        legend: { labels: { color: '#94a3b8', boxWidth: 12 } },
-                        tooltip: {
-                            backgroundColor: '#111820', borderColor: '#1e2d3d', borderWidth: 1,
-                            callbacks: {
-                                title: ctx => {
-                                    const e = pulseEvents[ctx[0].dataIndex];
-                                    return `${e.start} → ${e.end} (${e.days}d)`;
-                                },
-                                label: ctx => ` −${ctx.parsed.y.toFixed(2)} Mb · probable VLCC loading`
-                            }
-                        }
-                    },
-                    scales: {
-                        x: { ticks: { color: '#64748b', font: { size: 10 } }, grid: { color: 'rgba(255,255,255,0.04)' } },
-                        y: { ticks: { color: '#94a3b8', font: { size: 10 }, callback: v => v.toFixed(1) + ' Mb' }, grid: { color: 'rgba(255,255,255,0.04)' } }
-                    }
-                }
-            });
-        }
-
-        function exportCSV() {
-            const { dates, values } = getSlice();
-            const frs = computeFillRate(dates, values, 7);
-            const spis = computeSPI(values);
-            let csv = 'Date,Storage_Mb,Fill_Rate_Mb_per_day,Storage_Utilization_pct\n';
-            for (let i = 0; i < dates.length; i++) {
-                csv += `${dates[i]},${values[i].toFixed(3)},${frs[i] !== null ? frs[i].toFixed(4) : ''},${spis[i].toFixed(2)}\n`;
-            }
-            const a = document.createElement('a');
-            a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv' }));
-            a.download = `kharg_intelligence_${dates[dates.length - 1]}.csv`;
-            a.click();
-        }
-
-        checkAuth();
-        loadData();
-
-        // ── Per-Tank Map (Full Access — all dates, no restriction) ────────────
-        const SUPABASE_URL = 'https://yoekhkczwdeyauwarsyy.supabase.co';
-        const SUPABASE_KEY = 'sb_publishable_7j07_zzdqTGM1LXf7-o9Tg_JJRbJQSM';
-        const H_MIN = 2, BARREL_PER_M3 = 6.2898;
-        const TANKS = {
-            't60_0': { lat: 29.2217338, lon: 50.3165482, r: 20, rm: 60, hm: 18 }, 't60_1': { lat: 29.2216388, lon: 50.3150432, r: 20, rm: 60, hm: 18 }, 't60_2': { lat: 29.2218405, lon: 50.3135291, r: 20, rm: 60, hm: 18 }, 't60_3': { lat: 29.2231568, lon: 50.3158490, r: 20, rm: 60, hm: 18 }, 't60_4': { lat: 29.2228980, lon: 50.3144195, r: 20, rm: 60, hm: 18 },
-            't55_5': { lat: 29.2359691, lon: 50.3126204, r: 16, rm: 55, hm: 17 }, 't55_6': { lat: 29.2364507, lon: 50.3109394, r: 16, rm: 55, hm: 17 }, 't55_7': { lat: 29.2379533, lon: 50.3108495, r: 16, rm: 55, hm: 17 }, 't55_8': { lat: 29.2390690, lon: 50.3096822, r: 16, rm: 55, hm: 17 }, 't55_9': { lat: 29.2389264, lon: 50.3068140, r: 16, rm: 55, hm: 17 }, 't55_10': { lat: 29.2376082, lon: 50.3072679, r: 16, rm: 55, hm: 17 }, 't55_11': { lat: 29.2362776, lon: 50.3077246, r: 16, rm: 55, hm: 17 }, 't55_12': { lat: 29.2363283, lon: 50.3093038, r: 16, rm: 55, hm: 17 }, 't55_13': { lat: 29.2349727, lon: 50.3081865, r: 16, rm: 55, hm: 17 }, 't55_14': { lat: 29.2351137, lon: 50.3098199, r: 16, rm: 55, hm: 17 }, 't55_15': { lat: 29.2336438, lon: 50.3086380, r: 16, rm: 55, hm: 17 }, 't55_16': { lat: 29.2338308, lon: 50.3102809, r: 16, rm: 55, hm: 17 }, 't55_17': { lat: 29.2314405, lon: 50.3087404, r: 16, rm: 55, hm: 17 }, 't55_18': { lat: 29.2317836, lon: 50.3103855, r: 16, rm: 55, hm: 17 }, 't55_19': { lat: 29.2320764, lon: 50.3122342, r: 16, rm: 55, hm: 17 }, 't55_20': { lat: 29.2302153, lon: 50.3101615, r: 16, rm: 55, hm: 17 }, 't55_21': { lat: 29.2288712, lon: 50.3099660, r: 16, rm: 55, hm: 17 },
-            't40_22': { lat: 29.2295289, lon: 50.3121871, r: 12, rm: 40, hm: 14 }, 't40_23': { lat: 29.2297632, lon: 50.3135015, r: 12, rm: 40, hm: 14 }, 't40_24': { lat: 29.2299639, lon: 50.3148147, r: 12, rm: 40, hm: 14 }, 't40_25': { lat: 29.2284236, lon: 50.3124414, r: 12, rm: 40, hm: 14 }, 't40_26': { lat: 29.2286165, lon: 50.3137337, r: 12, rm: 40, hm: 14 }, 't40_27': { lat: 29.2288114, lon: 50.3150200, r: 12, rm: 40, hm: 14 }, 't40_28': { lat: 29.2272092, lon: 50.3126984, r: 12, rm: 40, hm: 14 }, 't40_29': { lat: 29.2274357, lon: 50.3139937, r: 12, rm: 40, hm: 14 }, 't40_30': { lat: 29.2276408, lon: 50.3152672, r: 12, rm: 40, hm: 14 }, 't55_31': { lat: 29.2323461, lon: 50.3137663, r: 16, rm: 55, hm: 17 }, 't40_32': { lat: 29.2307178, lon: 50.3119291, r: 12, rm: 40, hm: 14 }, 't40_33': { lat: 29.2309474, lon: 50.3132419, r: 12, rm: 40, hm: 14 }, 't40_34': { lat: 29.2311351, lon: 50.3145438, r: 12, rm: 40, hm: 14 },
-            't25_35': { lat: 29.2262112, lon: 50.3128809, r: 8, rm: 25, hm: 12 }, 't25_36': { lat: 29.2263835, lon: 50.3138099, r: 8, rm: 25, hm: 12 }, 't25_37': { lat: 29.2265429, lon: 50.3147481, r: 8, rm: 25, hm: 12 }, 't25_38': { lat: 29.2266891, lon: 50.3156504, r: 8, rm: 25, hm: 12 }, 't25_39': { lat: 29.2251564, lon: 50.3131064, r: 8, rm: 25, hm: 12 }, 't25_40': { lat: 29.2253231, lon: 50.3140568, r: 8, rm: 25, hm: 12 }, 't25_41': { lat: 29.2254742, lon: 50.3149628, r: 8, rm: 25, hm: 12 }, 't25_42': { lat: 29.2256154, lon: 50.3158865, r: 8, rm: 25, hm: 12 }, 't25_43': { lat: 29.2243535, lon: 50.3132813, r: 8, rm: 25, hm: 12 }, 't25_44': { lat: 29.2245129, lon: 50.3142241, r: 8, rm: 25, hm: 12 }, 't25_45': { lat: 29.2246562, lon: 50.3151350, r: 8, rm: 25, hm: 12 }, 't25_46': { lat: 29.2248181, lon: 50.3160634, r: 8, rm: 25, hm: 12 }
-        };
-
-        function tankColor(r) {
-            if (r === null) return '#1e2d3d';
-            r = Math.max(0, Math.min(1, r));
-            if (r < 0.5) { const t = r * 2; return `rgb(${Math.round(255 + (240 - 255) * t)},${Math.round(71 + (165 - 71) * t)},${Math.round(87 + (0 - 87) * t)})`; }
-            else { const t = (r - 0.5) * 2; return `rgb(${Math.round(240 + (59 - 240) * t)},${Math.round(165 + (130 - 165) * t)},${Math.round(0 + 246 * t)})`; }
-        }
-        function calcRatio(db, p5, p95) { return p95 === p5 ? 0.5 : Math.max(0, Math.min(1, (p95 - db) / (p95 - p5))); }
-        // Volume uses radius_m (not diameter): V = π × r² × h
-        function calcMb(ratio, rm, hm) { return Math.PI * rm * rm * (H_MIN + ratio * (hm - H_MIN)) * BARREL_PER_M3 / 1e6; }
-        function pct(arr, p) {
-            if (!arr.length) return 0;
-            const s = [...arr].sort((a, b) => a - b);
-            const i = (p / 100) * (s.length - 1);
-            const lo = Math.floor(i), hi = Math.ceil(i);
-            return s[lo] + (s[hi] - s[lo]) * (i - lo);
-        }
-        function makeTankSVG(id, info, ratio) {
-            const r = info.r, size = r * 2 + 4, cx = r + 2, cy = r + 2, fillH = ratio !== null ? ratio * r * 2 : 0, col = tankColor(ratio), num = id.replace(/^t\d+_/, ''), fs = Math.max(6, r * 0.38);
-            const svg = `<svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" xmlns="http://www.w3.org/2000/svg" style="display:block;overflow:visible"><defs><clipPath id="dc-${id}"><circle cx="${cx}" cy="${cy}" r="${r}"/></clipPath></defs><circle cx="${cx}" cy="${cy}" r="${r}" fill="rgba(8,10,13,0.85)"/><rect x="${cx - r}" y="${cy + r - fillH}" width="${r * 2}" height="${fillH}" fill="${col}" clip-path="url(#dc-${id})" opacity="0.9"/><circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${ratio !== null ? col : '#1e2d3d'}" stroke-width="1.5" opacity="${ratio !== null ? 0.7 : 0.3}"/><text x="${cx}" y="${cy + fs * 0.4}" text-anchor="middle" fill="#8ab0cc" font-size="${fs}" font-family="monospace" font-weight="400">${num}</text></svg>`;
-            return L.divIcon({ html: svg, iconSize: [size, size], iconAnchor: [cx, cy], className: 'tank-div-icon' });
-        }
-
-        async function initTankMap() {
-            const map = L.map('tankMap', { center: [29.230, 50.311], zoom: 15, zoomControl: true });
-            L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { attribution: '© Esri', maxZoom: 19 }).addTo(map);
-            const markers = {};
+        function renderDate(dt) {
+            const dd = byDate[dt]||{}; window._ds={};
             Object.entries(TANKS).forEach(([id, info]) => {
-                const m = L.marker([info.lat, info.lon], { icon: makeTankSVG(id, info, null) });
-                m.bindPopup('', { maxWidth: 220, offset: [0, -(info.r + 4)] });
-                m.on('click', () => {
-                    const s = window._ds && window._ds[id];
-                    const content = s
-                        ? `<b style="font-family:monospace">${id}</b><br>Fill: ${s.ratio !== null ? (s.ratio * 100).toFixed(1) + '%' : 'N/A'}<br>Volume: ${s.mb !== null ? s.mb.toFixed(3) + ' Mb' : 'N/A'}<br>Type: ${id.split('_')[0].replace('t', '')}m radius`
-                        : `<b>${id}</b><br>No data`;
-                    m.getPopup().setContent(content);
-                });
-                m.addTo(map);
-                markers[id] = m;
+                const obs=dd[id]; let ratio=null, mb=null;
+                if (obs && cal[id]) { ratio=calcRatio(obs.db_mean,cal[id].p5,cal[id].p95); mb=calcMb(ratio,info.rm,info.hm); }
+                window._ds[id]={ratio,mb};
+                markers[id].setIcon(makeTankSVG(id,info,ratio));
             });
-            const headers = { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` };
-            let all = [], offset = 0;
-            try {
-                while (true) {
-                    const res = await fetch(`${SUPABASE_URL}/rest/v1/raw_observations?select=date,tank_id,db_mean&order=date&limit=1000&offset=${offset}`, { headers });
-                    const batch = await res.json();
-                    all = all.concat(batch);
-                    if (batch.length < 1000) break;
-                    offset += 1000;
-                }
-            } catch (e) { document.getElementById('mapLoading').textContent = 'Error loading map data.'; return; }
-            document.getElementById('mapLoading').style.display = 'none';
-            const data = all.filter(r => TANKS[r.tank_id]);
-            const dbByTank = {};
-            data.forEach(r => { if (!dbByTank[r.tank_id]) dbByTank[r.tank_id] = []; dbByTank[r.tank_id].push(r.db_mean); });
-            const cal = {};
-            Object.entries(dbByTank).forEach(([id, vals]) => { cal[id] = { p5: pct(vals, 5), p95: pct(vals, 95) }; });
-            const byDate = {};
-            data.forEach(r => { if (!byDate[r.date]) byDate[r.date] = {}; byDate[r.date][r.tank_id] = r; });
-            const dates = Object.keys(byDate).sort();
-            function renderDate(dt) {
-                const dd = byDate[dt] || {};
-                window._ds = {};
-                Object.entries(TANKS).forEach(([id, info]) => {
-                    const obs = dd[id]; let ratio = null, mb = null;
-                    if (obs && cal[id]) { ratio = calcRatio(obs.db_mean, cal[id].p5, cal[id].p95); mb = calcMb(ratio, info.rm, info.hm); }
-                    window._ds[id] = { ratio, mb };
-                    markers[id].setIcon(makeTankSVG(id, info, ratio));
-                });
-                document.getElementById('mapDateLabel').textContent = dt;
-            }
-            const slider = document.getElementById('mapSlider');
-            slider.max = dates.length - 1;
-            slider.value = dates.length - 1;
-            renderDate(dates[dates.length - 1]);
-            slider.addEventListener('input', () => renderDate(dates[+slider.value]));
-            document.getElementById('mapPrev').addEventListener('click', () => { const v = Math.max(0, +slider.value - 1); slider.value = v; renderDate(dates[v]); });
-            document.getElementById('mapNext').addEventListener('click', () => { const v = Math.min(dates.length - 1, +slider.value + 1); slider.value = v; renderDate(dates[v]); });
+            document.getElementById('mapDateLabel').textContent = dt;
         }
-        initTankMap();
+
+        const slider = document.getElementById('mapSlider');
+        slider.max = dates.length-1; slider.value = dates.length-1;
+        renderDate(dates[dates.length-1]);
+        slider.addEventListener('input', () => renderDate(dates[+slider.value]));
+        document.getElementById('mapPrev').addEventListener('click', () => { const v=Math.max(0,+slider.value-1); slider.value=v; renderDate(dates[v]); });
+        document.getElementById('mapNext').addEventListener('click', () => { const v=Math.min(dates.length-1,+slider.value+1); slider.value=v; renderDate(dates[v]); });
+    }
+    initTankMap();
     </script>
 </body>
 </html>
