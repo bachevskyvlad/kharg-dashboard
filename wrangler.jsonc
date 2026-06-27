@@ -1,6 +1,7 @@
 {
   "name": "kharg-dashboard",
   "compatibility_date": "2026-02-16",
+  "main": "_worker.js",
   "assets": {
     "directory": ".",
     "html_handling": "none"
