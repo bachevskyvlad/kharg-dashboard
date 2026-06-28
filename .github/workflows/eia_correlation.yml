@@ -20,15 +20,12 @@ jobs:
         with:
           name: eia-correlation-chart
           path: public/eia_correlation.png
-      - name: Telegram — results
+      - name: Telegram - results
         if: success()
         run: |
-          STATS=$(grep -E "Correlation|months|EIA:|SAR:" /tmp/eia_result.txt | head -10)
+          STATS=$(grep -E "Correlation|months|EIA:|SAR:" /tmp/eia_result.txt | head -10 | tr '\n' ' | ')
+          MSG="EIA Correlation Analysis%0A${STATS}%0AChart: see Actions artifacts"
           curl -s -X POST "https://api.telegram.org/bot7745904293:AAHV2qN_5_XNxpg6Ir3iV3XmEKpokthi308/sendMessage" \
             -d chat_id="204715787" \
             -d parse_mode="HTML" \
-            --data-urlencode text="📊 <b>EIA Correlation Analysis</b>
-
-${STATS}
-
-📎 Chart uploaded as artifact in Actions"
+            -d "text=📊 <b>EIA Correlation Analysis</b>%0A${STATS}"
