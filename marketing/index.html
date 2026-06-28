@@ -210,7 +210,7 @@ footer{background:var(--panel);border-top:1px solid var(--border);padding:40px 6
 <section id="chart-section">
   <div class="chart-section-inner">
     <span class="section-label">Kharg Island · SAR Extraction</span>
-    <h2 class="section-title">Storage Dynamics<br>Last 12 Months</h2>
+    <h2 class="section-title">Storage Dynamics<br>Full History</h2>
     <div class="chart-outer">
       <div class="chart-canvas-wrap">
         <div id="chartStat">Loading data...</div>
@@ -289,18 +289,14 @@ async function loadLandingChart() {
     const res = await fetch(`/data/data_daily.json?v=${Date.now()}`);
     const d = await res.json();
 
-    // Last 12 months, exclude last 14 days
+    // All time, exclude last 14 days
     const latestDate = new Date(d.dates[d.dates.length - 1]);
     const cutoff = new Date(latestDate);
     cutoff.setDate(cutoff.getDate() - 14);
     const cutoffStr = cutoff.toISOString().slice(0, 10);
 
-    const yearAgo = new Date(latestDate);
-    yearAgo.setFullYear(yearAgo.getFullYear() - 1);
-    const yearAgoStr = yearAgo.toISOString().slice(0, 10);
-
     const filtered = d.dates.reduce((acc, dt, i) => {
-      if (dt >= yearAgoStr && dt <= cutoffStr) {
+      if (dt <= cutoffStr) {
         acc.dates.push(dt);
         acc.values.push(d.values[i]);
       }
