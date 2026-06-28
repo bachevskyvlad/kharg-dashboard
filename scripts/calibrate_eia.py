@@ -15,26 +15,36 @@ DATA_PATH = Path(__file__).parent.parent / "data" / "data_daily.json"
 
 
 def fetch_eia_iran_exports():
-    # First discover valid activityId values
-    facet_url = f"https://api.eia.gov/v2/international/data/facet/activityId/?api_key={EIA_API_KEY}"
-    fr = requests.get(facet_url, timeout=30)
-    raw_facet = fr.json()
-    print(f"Facet raw keys: {list(raw_facet.get('response', {}).keys())}")
-    print(f"Facet raw: {json.dumps(raw_facet)[:500]}")
-    activities = {r["id"]: r["description"] for r in raw_facet.get("response", {}).get("facets", [])}
-    print(f"Available activityIds: {activities}")
+    # Step 1: discover what's available for Iran
+    irn_url = (
+        "https://api.eia.gov/v2/international/data/"
+        f"?api_key={EIA_API_KEY}"
+        "&facets[countryRegionId][]=IRN"
+        "&facets[unit][]=TBPD"
+        "&sort[0][column]=period&sort[0][direction]=desc&length=20"
+    )
+    ir = requests.get(irn_url, timeout=30)
+    irn_data = ir.json()["response"]["data"]
+    print(f"Iran TBPD rows available: {len(irn_data)}")
+    for row in irn_data[:5]:
+        print(f"  activityId={row.get('activityId')} ({row.get('activityName')}) productId={row.get('productId')} ({row.get('productName')})")
 
-    # Find exports activityId
-    exports_id = next((k for k, v in activities.items() if "export" in v.lower()), "4")
-    print(f"Using activityId={exports_id} for exports")
+    # Step 2: find exports + crude oil combo
+    exports_row = next(
+        (r for r in irn_data if "export" in (r.get("activityName") or "").lower()
+         and "crude" in (r.get("productName") or "").lower()), None
+    )
+    if not exports_row:
+        exports_row = next(
+            (r for r in irn_data if "export" in (r.get("activityName") or "").lower()), None
+        )
+    if not exports_row:
+        combos = [(r["activityId"], r["activityName"], r["productId"], r["productName"]) for r in irn_data]
+        raise ValueError(f"No exports data found for Iran. Available: {combos[:10]}")
 
-    # Discover valid productId values for crude
-    pfacet_url = f"https://api.eia.gov/v2/international/data/facet/productId/?api_key={EIA_API_KEY}"
-    pr = requests.get(pfacet_url, timeout=30)
-    products = {r["id"]: r["description"] for r in pr.json().get("response", {}).get("facets", [])}
-    crude_id = next((k for k, v in products.items() if "crude" in v.lower()), "57")
-    print(f"Available productIds (crude): {[(k,v) for k,v in products.items() if 'crude' in v.lower()]}")
-    print(f"Using productId={crude_id} for crude oil")
+    exports_id = exports_row["activityId"]
+    crude_id = exports_row["productId"]
+    print(f"Using activityId={exports_id} ({exports_row['activityName']}) productId={crude_id} ({exports_row['productName']})")
 
     url = (
         "https://api.eia.gov/v2/international/data/"
@@ -48,27 +58,10 @@ def fetch_eia_iran_exports():
     r = requests.get(url, timeout=30)
     r.raise_for_status()
     raw = r.json()
-    print(f"EIA response total: {raw['response'].get('total', 0)}")
     rows = raw["response"]["data"]
-    print(f"EIA rows count: {len(rows)}")
-    if rows:
-        print(f"First row: {rows[0]}")
+    print(f"EIA rows fetched: {len(rows)}")
     if not rows:
-        # Try without Iran filter to check if endpoint works at all
-        test_url = (
-            "https://api.eia.gov/v2/international/data/"
-            f"?api_key={EIA_API_KEY}"
-            f"&facets[activityId][]={exports_id}"
-            f"&facets[productId][]={crude_id}"
-            "&facets[unit][]=TBPD"
-            "&sort[0][column]=period&sort[0][direction]=desc&length=5"
-        )
-        tr = requests.get(test_url, timeout=30)
-        test_raw = tr.json()
-        print(f"Test (no country filter) total: {test_raw['response'].get('total', 0)}")
-        if test_raw["response"]["data"]:
-            print(f"Test first row: {test_raw['response']['data'][0]}")
-        raise ValueError("EIA returned empty data for Iran — see test query above")
+        raise ValueError("EIA returned empty data after discovery")
     df = pd.DataFrame(rows)
     print(f"EIA columns: {list(df.columns)}")
     print(df.head(2).to_string())
