@@ -1,5 +1,6 @@
 """
-Correlation: OilRadar satellite signal vs EIA Iran crude oil exports.
+Correlation: OilRadar satellite signal vs JODI Iran crude oil exports.
+Falls back to EIA Iran production if JODI is unavailable.
 Run locally: python scripts/calibrate_eia.py
 Requires: pip install requests pandas scipy matplotlib
 """
@@ -13,139 +14,167 @@ from pathlib import Path
 EIA_API_KEY = "ng4UlxTeT7EgyvAIPSsbA2QR94o6D01CqOwge6C6"
 DATA_PATH = Path(__file__).parent.parent / "data" / "data_daily.json"
 
+JODI_URL = "https://www.jodidb.org/api/1.0/bulk_download/archivefileposapi/"
 
-def fetch_eia_iran_exports():
-    # Step 1: discover what's available for Iran
-    irn_url = (
-        "https://api.eia.gov/v2/international/data/"
-        f"?api_key={EIA_API_KEY}"
-        "&data[]=value"
-        "&facets[countryRegionId][]=IRN"
-        "&facets[unit][]=TBPD"
-        "&sort[0][column]=period&sort[0][direction]=desc&length=20"
-    )
-    ir = requests.get(irn_url, timeout=30)
-    irn_data = ir.json()["response"]["data"]
-    print(f"Iran TBPD rows available: {len(irn_data)}")
-    for row in irn_data[:5]:
-        print(f"  activityId={row.get('activityId')} ({row.get('activityName')}) productId={row.get('productId')} ({row.get('productName')})")
 
-    # EIA does not publish Iran exports via API (sanctions).
-    # Use crude oil production as proxy (activityId=1, productId=57).
-    exports_id = "1"
-    crude_id = "57"
-    print(f"Iran exports not in EIA API. Using Production (activityId=1) crude oil (productId=57) as proxy.")
+def fetch_jodi_iran_exports():
+    """Fetch Iran crude oil exports from JODI World database (monthly, kbd)."""
+    params = {
+        "country_name": "IRAN, ISLAMIC REP. OF",
+        "product_name": "CRUDEOIL",
+        "flow_breakdown": "EXPORTS",
+        "unit_measure": "KBD",
+        "frequency": "Monthly",
+        "recent_vintage": "true",
+    }
+    print("Fetching JODI Iran crude exports...")
+    r = requests.get(JODI_URL, params=params, timeout=30)
+    print(f"JODI status: {r.status_code}")
+    if r.status_code != 200:
+        raise ValueError(f"JODI returned {r.status_code}: {r.text[:300]}")
 
+    data = r.json()
+    # JODI returns list of dicts with keys: country_name, product_name, flow_breakdown,
+    # unit_measure, frequency, date (YYYY-MM), quantity
+    if isinstance(data, dict) and "data" in data:
+        rows = data["data"]
+    elif isinstance(data, list):
+        rows = data
+    else:
+        raise ValueError(f"Unexpected JODI response structure: {str(data)[:300]}")
+
+    print(f"JODI rows: {len(rows)}")
+    if not rows:
+        raise ValueError("JODI returned empty data")
+
+    df = pd.DataFrame(rows)
+    print(f"JODI columns: {list(df.columns)}")
+    print(df.head(3).to_string())
+
+    # Normalise column names (JODI uses various casing)
+    df.columns = [c.lower().strip() for c in df.columns]
+    date_col = next((c for c in df.columns if "date" in c or "period" in c or "time" in c), None)
+    val_col = next((c for c in df.columns if "quantity" in c or "value" in c), None)
+    if not date_col or not val_col:
+        raise ValueError(f"Cannot find date/value columns in JODI response: {list(df.columns)}")
+
+    df = df[[date_col, val_col]].copy()
+    df.columns = ["month", "exports_kbd"]
+    df["exports_kbd"] = pd.to_numeric(df["exports_kbd"], errors="coerce")
+    df["month"] = pd.to_datetime(df["month"])
+    df = df.dropna().sort_values("month")
+    print(f"JODI: {len(df)} months, {df['month'].min().date()} — {df['month'].max().date()}")
+    return df
+
+
+def fetch_eia_iran_production():
+    """Fallback: EIA Iran crude production (activityId=1, productId=57)."""
     url = (
         "https://api.eia.gov/v2/international/data/"
         f"?api_key={EIA_API_KEY}"
         "&data[]=value"
-        f"&facets[activityId][]={exports_id}"
-        f"&facets[productId][]={crude_id}"
+        "&facets[activityId][]=1"
+        "&facets[productId][]=57"
         "&facets[countryRegionId][]=IRN"
         "&facets[unit][]=TBPD"
         "&sort[0][column]=period&sort[0][direction]=desc&length=36"
     )
+    print("Fetching EIA Iran crude production (fallback)...")
     r = requests.get(url, timeout=30)
     r.raise_for_status()
-    raw = r.json()
-    rows = raw["response"]["data"]
-    print(f"EIA rows fetched: {len(rows)}")
+    rows = r.json()["response"]["data"]
+    print(f"EIA rows: {len(rows)}")
     if not rows:
-        raise ValueError("EIA returned empty data after discovery")
+        raise ValueError("EIA returned empty data")
     df = pd.DataFrame(rows)
-    print(f"EIA columns: {list(df.columns)}")
-    print(df.head(2).to_string())
-    period_col = "period" if "period" in df.columns else df.columns[0]
-    value_col = "value" if "value" in df.columns else df.columns[1]
-    df = df[[period_col, value_col]].copy()
-    df.columns = ["month", "eia_production_kbd"]
-    df["eia_production_kbd"] = pd.to_numeric(df["eia_production_kbd"], errors="coerce")
+    df = df[["period", "value"]].copy()
+    df.columns = ["month", "exports_kbd"]
+    df["exports_kbd"] = pd.to_numeric(df["exports_kbd"], errors="coerce")
     df["month"] = pd.to_datetime(df["month"])
-    return df.dropna().sort_values("month")
+    df = df.dropna().sort_values("month")
+    print(f"EIA production: {len(df)} months, {df['month'].min().date()} — {df['month'].max().date()}")
+    return df, "EIA Iran Crude Production (kbd)"
 
 
 def load_satellite_data():
     with open(DATA_PATH) as f:
         d = json.load(f)
     df = pd.DataFrame({"date": pd.to_datetime(d["dates"]), "vol_mb": d["values"]})
-    # Monthly average storage volume
     df["month"] = df["date"].dt.to_period("M").dt.to_timestamp()
     monthly = df.groupby("month")["vol_mb"].mean().reset_index()
     monthly.columns = ["month", "avg_vol_mb"]
     return monthly
 
 
-def main():
-    print("Fetching EIA Iran export data...")
-    eia = fetch_eia_iran_exports()
-    print(f"EIA: {len(eia)} months, {eia['month'].min().date()} — {eia['month'].max().date()}")
-
-    print("Loading satellite data...")
-    sat = load_satellite_data()
-    print(f"SAR: {len(sat)} months, {sat['month'].min().date()} — {sat['month'].max().date()}")
-
-    # Merge on month
-    merged = pd.merge(sat, eia, on="month", how="inner")
-    merged = merged.sort_values("month")
-    print(f"\nOverlapping months: {len(merged)}")
-
-    if len(merged) < 4:
-        print("Not enough overlapping data for correlation.")
-        return
-
-    print("\nMerged data:")
-    print(merged[["month", "avg_vol_mb", "eia_production_kbd"]].to_string())
-    print(f"\nNaN in avg_vol_mb: {merged['avg_vol_mb'].isna().sum()}")
-    print(f"NaN in eia_production_kbd: {merged['eia_production_kbd'].isna().sum()}")
-    print(f"Unique EIA values: {merged['eia_production_kbd'].nunique()}")
-
-    # Drop NaN before correlation
-    clean = merged.dropna(subset=["avg_vol_mb", "eia_production_kbd"])
+def correlate_and_plot(merged, ext_label):
+    clean = merged.dropna(subset=["avg_vol_mb", "exports_kbd"])
     print(f"Clean rows for correlation: {len(clean)}")
     if len(clean) < 4:
         print("Not enough clean data for correlation.")
         return
-    merged = clean
+    m = clean.copy()
 
-    # Correlation: SAR volume vs EIA production (same month)
-    r0, p0 = pearsonr(merged["avg_vol_mb"], merged["eia_production_kbd"])
-    print(f"\nCorrelation (same month):        r={r0:.3f}, p={p0:.3f}")
+    r0, p0 = pearsonr(m["avg_vol_mb"], m["exports_kbd"])
+    print(f"\nCorrelation (same month):         r={r0:.3f}, p={p0:.3f}")
 
-    # Correlation: SAR volume (t) vs EIA exports (t+1) — SAR leads by 1 month
-    if len(merged) > 4:
-        lead1 = merged.copy()
-        lead1["eia_next"] = lead1["eia_production_kbd"].shift(-1)
-        lead1 = lead1.dropna()
-        r1, p1 = pearsonr(lead1["avg_vol_mb"], lead1["eia_next"])
-        print(f"Correlation (SAR leads 1 month): r={r1:.3f}, p={p1:.3f}")
+    if len(m) > 4:
+        l1 = m.copy()
+        l1["ext_next"] = l1["exports_kbd"].shift(-1)
+        l1 = l1.dropna()
+        r1, p1 = pearsonr(l1["avg_vol_mb"], l1["ext_next"])
+        print(f"Correlation (SAR leads 1 month):  r={r1:.3f}, p={p1:.3f}")
 
-    if len(merged) > 5:
-        lead2 = merged.copy()
-        lead2["eia_next2"] = lead2["eia_production_kbd"].shift(-2)
-        lead2 = lead2.dropna()
-        r2, p2 = pearsonr(lead2["avg_vol_mb"], lead2["eia_next2"])
+    if len(m) > 5:
+        l2 = m.copy()
+        l2["ext_next2"] = l2["exports_kbd"].shift(-2)
+        l2 = l2.dropna()
+        r2, p2 = pearsonr(l2["avg_vol_mb"], l2["ext_next2"])
         print(f"Correlation (SAR leads 2 months): r={r2:.3f}, p={p2:.3f}")
 
-    # Plot
     fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(12, 8), sharex=True)
-    fig.suptitle("OilRadar SAR Signal vs EIA Iran Crude Production", fontsize=14)
+    fig.suptitle(f"OilRadar SAR Signal vs {ext_label}", fontsize=13)
 
-    ax1.plot(merged["month"], merged["avg_vol_mb"], color="#3b82f6", marker="o", ms=4, label="SAR Storage (Mb, monthly avg)")
+    ax1.plot(m["month"], m["avg_vol_mb"], color="#3b82f6", marker="o", ms=4, label="SAR Storage (Mb)")
     ax1.set_ylabel("Storage (Mb)")
     ax1.legend()
     ax1.grid(alpha=0.3)
 
-    ax2.plot(merged["month"], merged["eia_production_kbd"], color="#f0a500", marker="o", ms=4, label="EIA Iran Production (kbd)")
-    ax2.set_ylabel("Production (kbd)")
+    ax2.plot(m["month"], m["exports_kbd"], color="#f0a500", marker="o", ms=4, label=ext_label)
+    ax2.set_ylabel("kbd")
     ax2.legend()
     ax2.grid(alpha=0.3)
 
     plt.tight_layout()
     out = Path(__file__).parent.parent / "public" / "eia_correlation.png"
+    out.parent.mkdir(exist_ok=True)
     plt.savefig(out, dpi=150, bbox_inches="tight", facecolor="#080a0d")
     print(f"\nChart saved: {out}")
-    plt.show()
+
+
+def main():
+    # Try JODI first, fall back to EIA production
+    ext_label = "JODI Iran Crude Exports (kbd)"
+    try:
+        ext_df = fetch_jodi_iran_exports()
+        ext_df = ext_df.rename(columns={"exports_kbd": "exports_kbd"})
+    except Exception as e:
+        print(f"JODI failed: {e}")
+        print("Falling back to EIA Iran production...")
+        ext_df, ext_label = fetch_eia_iran_production()
+
+    print("\nLoading satellite data...")
+    sat = load_satellite_data()
+    print(f"SAR: {len(sat)} months, {sat['month'].min().date()} — {sat['month'].max().date()}")
+
+    merged = pd.merge(sat, ext_df, on="month", how="inner").sort_values("month")
+    print(f"\nOverlapping months: {len(merged)}")
+    print(merged[["month", "avg_vol_mb", "exports_kbd"]].to_string())
+
+    if len(merged) < 4:
+        print("Not enough overlapping data for correlation.")
+        return
+
+    correlate_and_plot(merged, ext_label)
 
 
 if __name__ == "__main__":
