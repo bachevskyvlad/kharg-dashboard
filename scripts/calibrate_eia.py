@@ -18,7 +18,8 @@ def fetch_eia_iran_exports():
     url = (
         "https://api.eia.gov/v2/international/data/"
         f"?api_key={EIA_API_KEY}"
-        "&facets[productId][]=5"
+        "&facets[activityId][]=4"
+        "&facets[productId][]=57"
         "&facets[countryRegionId][]=IRN"
         "&facets[unit][]=TBPD"
         "&sort[0][column]=period&sort[0][direction]=desc&length=36"
