@@ -18,7 +18,10 @@ def fetch_eia_iran_exports():
     # First discover valid activityId values
     facet_url = f"https://api.eia.gov/v2/international/data/facet/activityId/?api_key={EIA_API_KEY}"
     fr = requests.get(facet_url, timeout=30)
-    activities = {r["id"]: r["description"] for r in fr.json().get("response", {}).get("facets", [])}
+    raw_facet = fr.json()
+    print(f"Facet raw keys: {list(raw_facet.get('response', {}).keys())}")
+    print(f"Facet raw: {json.dumps(raw_facet)[:500]}")
+    activities = {r["id"]: r["description"] for r in raw_facet.get("response", {}).get("facets", [])}
     print(f"Available activityIds: {activities}")
 
     # Find exports activityId
@@ -51,7 +54,21 @@ def fetch_eia_iran_exports():
     if rows:
         print(f"First row: {rows[0]}")
     if not rows:
-        raise ValueError("EIA returned empty data — Iran exports may not be available in this dataset")
+        # Try without Iran filter to check if endpoint works at all
+        test_url = (
+            "https://api.eia.gov/v2/international/data/"
+            f"?api_key={EIA_API_KEY}"
+            f"&facets[activityId][]={exports_id}"
+            f"&facets[productId][]={crude_id}"
+            "&facets[unit][]=TBPD"
+            "&sort[0][column]=period&sort[0][direction]=desc&length=5"
+        )
+        tr = requests.get(test_url, timeout=30)
+        test_raw = tr.json()
+        print(f"Test (no country filter) total: {test_raw['response'].get('total', 0)}")
+        if test_raw["response"]["data"]:
+            print(f"Test first row: {test_raw['response']['data'][0]}")
+        raise ValueError("EIA returned empty data for Iran — see test query above")
     df = pd.DataFrame(rows)
     print(f"EIA columns: {list(df.columns)}")
     print(df.head(2).to_string())
