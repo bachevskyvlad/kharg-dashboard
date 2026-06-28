@@ -29,22 +29,11 @@ def fetch_eia_iran_exports():
     for row in irn_data[:5]:
         print(f"  activityId={row.get('activityId')} ({row.get('activityName')}) productId={row.get('productId')} ({row.get('productName')})")
 
-    # Step 2: find exports + crude oil combo
-    exports_row = next(
-        (r for r in irn_data if "export" in (r.get("activityName") or "").lower()
-         and "crude" in (r.get("productName") or "").lower()), None
-    )
-    if not exports_row:
-        exports_row = next(
-            (r for r in irn_data if "export" in (r.get("activityName") or "").lower()), None
-        )
-    if not exports_row:
-        combos = [(r["activityId"], r["activityName"], r["productId"], r["productName"]) for r in irn_data]
-        raise ValueError(f"No exports data found for Iran. Available: {combos[:10]}")
-
-    exports_id = exports_row["activityId"]
-    crude_id = exports_row["productId"]
-    print(f"Using activityId={exports_id} ({exports_row['activityName']}) productId={crude_id} ({exports_row['productName']})")
+    # EIA does not publish Iran exports via API (sanctions).
+    # Use crude oil production as proxy (activityId=1, productId=57).
+    exports_id = "1"
+    crude_id = "57"
+    print(f"Iran exports not in EIA API. Using Production (activityId=1) crude oil (productId=57) as proxy.")
 
     url = (
         "https://api.eia.gov/v2/international/data/"
@@ -68,8 +57,8 @@ def fetch_eia_iran_exports():
     period_col = "period" if "period" in df.columns else df.columns[0]
     value_col = "value" if "value" in df.columns else df.columns[1]
     df = df[[period_col, value_col]].copy()
-    df.columns = ["month", "eia_exports_kbd"]
-    df["eia_exports_kbd"] = pd.to_numeric(df["eia_exports_kbd"], errors="coerce")
+    df.columns = ["month", "eia_production_kbd"]
+    df["eia_production_kbd"] = pd.to_numeric(df["eia_production_kbd"], errors="coerce")
     df["month"] = pd.to_datetime(df["month"])
     return df.dropna().sort_values("month")
 
@@ -104,35 +93,35 @@ def main():
         return
 
     # Correlation: SAR volume vs EIA exports (same month)
-    r0, p0 = pearsonr(merged["avg_vol_mb"], merged["eia_exports_kbd"])
+    r0, p0 = pearsonr(merged["avg_vol_mb"], merged["eia_production_kbd"])
     print(f"\nCorrelation (same month):        r={r0:.3f}, p={p0:.3f}")
 
     # Correlation: SAR volume (t) vs EIA exports (t+1) — SAR leads by 1 month
     if len(merged) > 4:
         lead1 = merged.copy()
-        lead1["eia_next"] = lead1["eia_exports_kbd"].shift(-1)
+        lead1["eia_next"] = lead1["eia_production_kbd"].shift(-1)
         lead1 = lead1.dropna()
         r1, p1 = pearsonr(lead1["avg_vol_mb"], lead1["eia_next"])
         print(f"Correlation (SAR leads 1 month): r={r1:.3f}, p={p1:.3f}")
 
     if len(merged) > 5:
         lead2 = merged.copy()
-        lead2["eia_next2"] = lead2["eia_exports_kbd"].shift(-2)
+        lead2["eia_next2"] = lead2["eia_production_kbd"].shift(-2)
         lead2 = lead2.dropna()
         r2, p2 = pearsonr(lead2["avg_vol_mb"], lead2["eia_next2"])
         print(f"Correlation (SAR leads 2 months): r={r2:.3f}, p={p2:.3f}")
 
     # Plot
     fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(12, 8), sharex=True)
-    fig.suptitle("OilRadar SAR Signal vs EIA Iran Crude Exports", fontsize=14)
+    fig.suptitle("OilRadar SAR Signal vs EIA Iran Crude Production", fontsize=14)
 
     ax1.plot(merged["month"], merged["avg_vol_mb"], color="#3b82f6", marker="o", ms=4, label="SAR Storage (Mb, monthly avg)")
     ax1.set_ylabel("Storage (Mb)")
     ax1.legend()
     ax1.grid(alpha=0.3)
 
-    ax2.plot(merged["month"], merged["eia_exports_kbd"], color="#f0a500", marker="o", ms=4, label="EIA Iran Exports (kbd)")
-    ax2.set_ylabel("Exports (kbd)")
+    ax2.plot(merged["month"], merged["eia_production_kbd"], color="#f0a500", marker="o", ms=4, label="EIA Iran Production (kbd)")
+    ax2.set_ylabel("Production (kbd)")
     ax2.legend()
     ax2.grid(alpha=0.3)
 
