@@ -23,17 +23,12 @@ jobs:
         run: pip install -r scripts/requirements.txt
       - name: Restore previous cache
         if: ${{ github.event.inputs.force_reset != 'true' }}
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          LATEST=$(gh run list --repo ${{ github.repository }} --workflow monitor.yml \
-            --status success --limit 1 --json databaseId -q '.[0].databaseId' 2>/dev/null || echo "")
-          if [ -n "$LATEST" ]; then
-            gh run download "$LATEST" -n kharg-raw-cache --dir public/ 2>/dev/null || echo "No cache in run $LATEST"
-          else
-            echo "No previous successful run found"
-          fi
-        continue-on-error: true
+        uses: actions/cache@v4
+        with:
+          path: public/data_raw_cache.json
+          key: kharg-raw-cache-${{ github.run_id }}
+          restore-keys: |
+            kharg-raw-cache-
       - name: Count dates BEFORE run
         id: before
         run: |
