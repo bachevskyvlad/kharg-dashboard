@@ -92,7 +92,21 @@ def main():
         print("Not enough overlapping data for correlation.")
         return
 
-    # Correlation: SAR volume vs EIA exports (same month)
+    print("\nMerged data:")
+    print(merged[["month", "avg_vol_mb", "eia_production_kbd"]].to_string())
+    print(f"\nNaN in avg_vol_mb: {merged['avg_vol_mb'].isna().sum()}")
+    print(f"NaN in eia_production_kbd: {merged['eia_production_kbd'].isna().sum()}")
+    print(f"Unique EIA values: {merged['eia_production_kbd'].nunique()}")
+
+    # Drop NaN before correlation
+    clean = merged.dropna(subset=["avg_vol_mb", "eia_production_kbd"])
+    print(f"Clean rows for correlation: {len(clean)}")
+    if len(clean) < 4:
+        print("Not enough clean data for correlation.")
+        return
+    merged = clean
+
+    # Correlation: SAR volume vs EIA production (same month)
     r0, p0 = pearsonr(merged["avg_vol_mb"], merged["eia_production_kbd"])
     print(f"\nCorrelation (same month):        r={r0:.3f}, p={p0:.3f}")
 
