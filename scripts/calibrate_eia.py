@@ -25,11 +25,15 @@ def fetch_eia_iran_exports():
     )
     r = requests.get(url, timeout=30)
     r.raise_for_status()
-    rows = r.json()["response"]["data"]
+    raw = r.json()
+    print(f"EIA raw response: {json.dumps(raw)[:1000]}")
+    rows = raw["response"]["data"]
+    print(f"EIA rows count: {len(rows)}")
+    if not rows:
+        raise ValueError("EIA returned empty data array")
     df = pd.DataFrame(rows)
     print(f"EIA columns: {list(df.columns)}")
     print(df.head(2).to_string())
-    # EIA API v2 uses 'period' and 'value' but fallback to first two cols
     period_col = "period" if "period" in df.columns else df.columns[0]
     value_col = "value" if "value" in df.columns else df.columns[1]
     df = df[[period_col, value_col]].copy()
