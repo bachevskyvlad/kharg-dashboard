@@ -14,7 +14,9 @@ jobs:
       - name: Install dependencies
         run: pip install requests pandas scipy matplotlib
       - name: Run correlation analysis
-        run: python scripts/calibrate_eia.py 2>&1 | tee /tmp/eia_result.txt
+        run: |
+          set -o pipefail
+          python scripts/calibrate_eia.py 2>&1 | tee /tmp/eia_result.txt
       - name: Upload chart
         uses: actions/upload-artifact@v4
         with:
