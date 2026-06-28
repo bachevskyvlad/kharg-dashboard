@@ -15,11 +15,29 @@ DATA_PATH = Path(__file__).parent.parent / "data" / "data_daily.json"
 
 
 def fetch_eia_iran_exports():
+    # First discover valid activityId values
+    facet_url = f"https://api.eia.gov/v2/international/data/facet/activityId/?api_key={EIA_API_KEY}"
+    fr = requests.get(facet_url, timeout=30)
+    activities = {r["id"]: r["description"] for r in fr.json().get("response", {}).get("facets", [])}
+    print(f"Available activityIds: {activities}")
+
+    # Find exports activityId
+    exports_id = next((k for k, v in activities.items() if "export" in v.lower()), "4")
+    print(f"Using activityId={exports_id} for exports")
+
+    # Discover valid productId values for crude
+    pfacet_url = f"https://api.eia.gov/v2/international/data/facet/productId/?api_key={EIA_API_KEY}"
+    pr = requests.get(pfacet_url, timeout=30)
+    products = {r["id"]: r["description"] for r in pr.json().get("response", {}).get("facets", [])}
+    crude_id = next((k for k, v in products.items() if "crude" in v.lower()), "57")
+    print(f"Available productIds (crude): {[(k,v) for k,v in products.items() if 'crude' in v.lower()]}")
+    print(f"Using productId={crude_id} for crude oil")
+
     url = (
         "https://api.eia.gov/v2/international/data/"
         f"?api_key={EIA_API_KEY}"
-        "&facets[activityId][]=4"
-        "&facets[productId][]=57"
+        f"&facets[activityId][]={exports_id}"
+        f"&facets[productId][]={crude_id}"
         "&facets[countryRegionId][]=IRN"
         "&facets[unit][]=TBPD"
         "&sort[0][column]=period&sort[0][direction]=desc&length=36"
@@ -27,11 +45,13 @@ def fetch_eia_iran_exports():
     r = requests.get(url, timeout=30)
     r.raise_for_status()
     raw = r.json()
-    print(f"EIA raw response: {json.dumps(raw)[:1000]}")
+    print(f"EIA response total: {raw['response'].get('total', 0)}")
     rows = raw["response"]["data"]
     print(f"EIA rows count: {len(rows)}")
+    if rows:
+        print(f"First row: {rows[0]}")
     if not rows:
-        raise ValueError("EIA returned empty data array")
+        raise ValueError("EIA returned empty data — Iran exports may not be available in this dataset")
     df = pd.DataFrame(rows)
     print(f"EIA columns: {list(df.columns)}")
     print(df.head(2).to_string())
