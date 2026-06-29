@@ -414,7 +414,7 @@ async function loadCharts(){
     new Chart(document.getElementById('dailyChart'),{type:'line',data:{labels:dates6m,datasets:[{label:'Storage (Mb)',data:values6m,borderColor:'#3b82f6',borderWidth:2,backgroundColor:'rgba(59,130,246,0.1)',fill:true,pointRadius:2,pointBackgroundColor:'#111820',pointBorderColor:'#3b82f6',tension:0.1}]},options:{responsive:true,maintainAspectRatio:false,interaction:{intersect:false,mode:'index'},scales:{x:{ticks:{...tickOpts},grid:{color:gridColor}},y:{ticks:{color:'#5a7a94',font:{family:'DM Mono, monospace',size:11},callback:v=>v.toFixed(1)+' Mb'},grid:{color:gridColor}}},plugins:{legend:{display:false},tooltip:{backgroundColor:'#111820',borderColor:'#1e2d3d',borderWidth:1,titleColor:'#5a7a94',bodyColor:'#3b82f6',callbacks:{label:ctx=>` ${ctx.parsed.y.toFixed(2)} Mb`}}}}});
 
   }catch(e){
-    document.getElementById('latestStat').innerHTML='<span style="color:#ff4757">Error loading data.</span>';
+    document.getElementById('latestStat').innerHTML=`<span style="color:#ff4757">Error: ${e.message||e}</span>`;
     console.error(e);
   }
 }
