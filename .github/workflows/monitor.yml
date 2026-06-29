@@ -87,37 +87,9 @@ jobs:
           &#128197; <code>$(date -u +'%Y-%m-%d %H:%M UTC')</code>
           &#128279; <a href='https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}'>Open logs</a>"
 
-  dbt:
-    runs-on: ubuntu-latest
-    needs: [kharg]
-    if: always()
-    continue-on-error: true
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "3.11"
-      - name: Install dbt
-        run: pip install "dbt-postgres>=1.8,<2.0"
-      - name: dbt run
-        env:
-          SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
-          SUPABASE_DB_HOST: aws-0-ap-south-1.pooler.supabase.com
-        run: |
-          cd dbt
-          dbt run --profiles-dir .
-      - name: dbt test
-        env:
-          SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
-          SUPABASE_DB_HOST: aws-0-ap-south-1.pooler.supabase.com
-        run: |
-          cd dbt
-          dbt test --profiles-dir .
-        continue-on-error: true
-
   commit_data:
     runs-on: ubuntu-latest
-    needs: [dbt]
+    needs: [kharg]
     if: always()
     steps:
       - uses: actions/checkout@v4
