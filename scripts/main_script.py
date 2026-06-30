@@ -45,7 +45,7 @@ LOS_AZIMUTH    = 282
 WIDTH_WIDE     = 15
 TANK_HEIGHT_MIN = 2
 
-SMA_WINDOW     = 13
+EWMA_ALPHA     = 0.1
 
 RAW_CACHE_PATH = "public/data_raw_cache.json"
 DAILY_PATH     = "public/data_daily.json"
@@ -277,13 +277,13 @@ df["week_start"] = (df["date"] - pd.to_timedelta(df["date"].dt.dayofweek, unit="
 weekly_tank = df.groupby(['week_start', 'tank_id'])["barrels"].mean().reset_index()
 weekly_total = weekly_tank.groupby("week_start")["barrels"].sum().reset_index()
 weekly_total["vol_mn_bbl"] = weekly_total["barrels"] / 1_000_000
-weekly_total['smoothed_vol'] = weekly_total['vol_mn_bbl'].rolling(window=SMA_WINDOW, min_periods=1, center=True).mean()
+weekly_total['smoothed_vol'] = weekly_total['vol_mn_bbl'].ewm(alpha=EWMA_ALPHA, adjust=False).mean()
 weekly_total = weekly_total.dropna(subset=['smoothed_vol'])
 
 result_weekly = {
     "dates": weekly_total["week_start"].dt.strftime("%Y-%m-%d").tolist(),
     "values": weekly_total["smoothed_vol"].round(3).tolist(),
-    "meta": {"orbit": "descending", "polarization": "VV", "method": "inverse_crescent_radiometry", "mask_type": "15m_far_side_crescent", "scaling": "global_5_95_percentiles", "smoothing": f"SMA_{SMA_WINDOW}w_centered", "predictive_edge": 10}
+    "meta": {"orbit": "descending", "polarization": "VV", "method": "inverse_crescent_radiometry", "mask_type": "15m_far_side_crescent", "scaling": "global_5_95_percentiles", "smoothing": f"EWMA_alpha{EWMA_ALPHA}"}
 }
 with open(WEEKLY_PATH, "w") as f:
     json.dump(result_weekly, f, indent=2)
@@ -299,8 +299,8 @@ print(f"\nPipeline complete!")
 
 plt.figure(figsize=(14, 7))
 plt.plot(weekly_total["week_start"], weekly_total["vol_mn_bbl"], marker='.', linestyle='', color='gray', alpha=0.4, label="Raw Weekly Extractions")
-plt.plot(weekly_total["week_start"], weekly_total["smoothed_vol"], marker='s', linestyle='-', color='indigo', linewidth=3, label=f"Inverse Production Model (SMA-{SMA_WINDOW})")
-plt.title(f"Production Output: Kharg Island Storage ({len(raw_tanks)} Tanks)\nInverse Crescent Radiometry (SMA-{SMA_WINDOW})", fontsize=16)
+plt.plot(weekly_total["week_start"], weekly_total["smoothed_vol"], marker='s', linestyle='-', color='indigo', linewidth=3, label=f"Inverse Production Model (EWMA α={EWMA_ALPHA})")
+plt.title(f"Production Output: Kharg Island Storage ({len(raw_tanks)} Tanks)\nInverse Crescent Radiometry (EWMA α={EWMA_ALPHA})", fontsize=16)
 plt.xlabel("Date", fontsize=13)
 plt.ylabel("Total Active Volume (Mn. Barrels)", fontsize=13)
 plt.grid(True, linestyle='--', alpha=0.5)
