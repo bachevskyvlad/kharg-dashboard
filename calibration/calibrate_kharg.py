@@ -151,6 +151,48 @@ def train_test_split_by_time(merged, train_frac=0.7):
     return merged.iloc[:cut], merged.iloc[cut:]
 
 
+GRID_SMA_WEEKS = [1, 2, 3, 4, 6, 8, 10, 13, 16, 20, 26]
+GRID_EWMA_ALPHA = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9]
+
+
+def apply_smoothing(daily, method, param):
+    """Apply SMA or EWMA to weekly-aggregated volume, return monthly series."""
+    w = daily.set_index("date")["vol_mn_bbl"].resample("W").mean().reset_index()
+    w = w.rename(columns={"date": "week"})
+    if method == "sma":
+        w["smoothed"] = w["vol_mn_bbl"].rolling(window=param, min_periods=1, center=True).mean()
+    else:  # ewma
+        w["smoothed"] = w["vol_mn_bbl"].ewm(alpha=param, adjust=False).mean()
+    w["month"] = w["week"].dt.to_period("M").dt.to_timestamp()
+    monthly = w.groupby("month")["smoothed"].mean().reset_index()
+    monthly.columns = ["month", "vol_mn_bbl"]
+    return monthly
+
+
+def find_best_smoothing(daily, exports_monthly):
+    """Grid-search SMA window and EWMA alpha to maximize |r| on train split."""
+    best = None
+    for method, params in [("sma", GRID_SMA_WEEKS), ("ewma", GRID_EWMA_ALPHA)]:
+        for param in params:
+            monthly = apply_smoothing(daily, method, param)
+            merged, r, p = correlate(monthly, exports_monthly)
+            if r is None:
+                continue
+            train, test = train_test_split_by_time(merged)
+            if len(train) < 4 or len(test) < 3:
+                continue
+            r_train, _ = pearsonr(train["vol_mn_bbl"], train["exports_bpd"])
+            r_test, p_test = pearsonr(test["vol_mn_bbl"], test["exports_bpd"])
+            candidate = {
+                "method": method, "param": param,
+                "r_train": r_train, "r_test": r_test, "p_test": p_test,
+                "n_train": len(train), "n_test": len(test),
+            }
+            if best is None or abs(r_train) > abs(best["r_train"]):
+                best = candidate
+    return best
+
+
 def interpolate_exports_to_weekly(weekly_dates, exports_monthly):
     ex = exports_monthly.set_index("month")["exports_bpd"]
     out = []
@@ -219,6 +261,32 @@ def main():
     print(f"Baseline + exclude idle ({sorted(IDLE_TANKS)}): "
           f"r={base_filt_r:.4f}, p={base_filt_p:.4f}, n={len(base_filt_merged)}")
 
+    # --- smoothing calibration: find SMA/EWMA params that maximize correlation ---
+    print("\nSearching for best smoothing (UANI-supervised)...")
+    best_smooth = find_best_smoothing(base_daily, exports_monthly)
+    print(f"Best smoothing: method={best_smooth['method']}, param={best_smooth['param']}, "
+          f"r_train={best_smooth['r_train']:.4f}, r_test={best_smooth['r_test']:.4f} (p={best_smooth['p_test']:.4f}), "
+          f"n_train={best_smooth['n_train']}, n_test={best_smooth['n_test']}")
+
+    # full-period r for the best smoothing
+    best_smooth_monthly = apply_smoothing(base_daily, best_smooth["method"], best_smooth["param"])
+    _, r_smooth_full, p_smooth_full = correlate(best_smooth_monthly, exports_monthly)
+    print(f"Best smoothing full-period r={r_smooth_full:.4f} (p={p_smooth_full:.4f})")
+    best_smooth["r_full"] = r_smooth_full
+    best_smooth["p_full"] = p_smooth_full
+
+    # --- recent 15-month window (2025+): baseline vs best smoothing ---
+    cutoff = pd.Timestamp("2025-01-01")
+    raw_recent = raw[raw["date"] >= cutoff]
+    recent_daily = compute_volume(raw_recent, BASE_PCTL_LO, BASE_PCTL_HI, BASE_HMIN)
+    recent_monthly = monthly_series(recent_daily)
+    _, r_recent_base, p_recent_base = correlate(recent_monthly, exports_monthly)
+    recent_smooth_monthly = apply_smoothing(recent_daily, best_smooth["method"], best_smooth["param"])
+    _, r_recent_smooth, p_recent_smooth = correlate(recent_smooth_monthly, exports_monthly)
+    print(f"\nRecent period (2025+, n≈15 months):")
+    print(f"  Baseline:      r={r_recent_base:.4f}, p={p_recent_base:.4f}")
+    print(f"  Best smoothing ({best_smooth['method']} α/w={best_smooth['param']}): r={r_recent_smooth:.4f}, p={p_recent_smooth:.4f}")
+
     # --- grid search on train split only (with and without idle exclusion) ---
     best = None
     best_filtered = None
@@ -281,6 +349,7 @@ def main():
         },
         "best_calibrated": best,
         "best_calibrated_filtered": best_filtered,
+        "best_smoothing": best_smooth,
         "weekly_diagnostic": weekly_result,
     }
     RESULTS_PATH.write_text(json.dumps(results, indent=2, default=str))
