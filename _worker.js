@@ -14,6 +14,13 @@ export default {
     if (path === '/auth/check')    return checkFn.onRequest(context);
     if (path === '/auth/callback') return callbackFn.onRequest(context);
 
+    // app.oilradar.io → serve product pages
+    if (url.hostname === 'app.oilradar.io') {
+      const appPath = (path === '/' || path === '') ? '/product/index.html' : path;
+      const appUrl = new URL(appPath, url.origin);
+      return env.ASSETS.fetch(new Request(appUrl.toString(), request));
+    }
+
     return env.ASSETS.fetch(request);
   }
 };
