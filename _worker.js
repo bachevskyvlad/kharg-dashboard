@@ -15,11 +15,11 @@ export default {
     if (path === '/auth/callback') return callbackFn.onRequest(context);
 
     // app.oilradar.io → serve product pages
-    if (url.hostname === 'app.oilradar.io') {
-      const appPath = (path === '/' || path === '') ? '/product/index.html' : path;
+    const host = request.headers.get('host') || url.hostname;
+    if (host === 'app.oilradar.io' && (path === '/' || path === '')) {
       const appUrl = new URL(request.url);
-      appUrl.pathname = appPath;
-      return env.ASSETS.fetch(appUrl.toString());
+      appUrl.pathname = '/product/index.html';
+      return env.ASSETS.fetch(new Request(appUrl.toString()));
     }
 
     return env.ASSETS.fetch(request);
