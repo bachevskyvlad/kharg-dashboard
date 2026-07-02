@@ -17,8 +17,9 @@ export default {
     // app.oilradar.io → serve product pages
     if (url.hostname === 'app.oilradar.io') {
       const appPath = (path === '/' || path === '') ? '/product/index.html' : path;
-      const appUrl = new URL(appPath, url.origin);
-      return env.ASSETS.fetch(new Request(appUrl.toString(), request));
+      const appUrl = new URL(request.url);
+      appUrl.pathname = appPath;
+      return env.ASSETS.fetch(appUrl.toString());
     }
 
     return env.ASSETS.fetch(request);
