@@ -132,7 +132,7 @@
 <body>
 <nav>
   <a href="/" class="logo">OilRadar</a>
-  <div class="nav-links"><a href="/team" class="nav-link">Team</a><a href="/" class="nav-cta">&larr; Back to Main</a></div>
+  <div class="nav-links"><a href="/team" class="nav-link">Team</a><a href="/" class="nav-link">&larr; Main</a><a id="dashboardCta" href="https://calendly.com/bachevsky/60min" target="_blank" class="nav-cta">Dashboard &rarr;</a></div>
 </nav>
 <main>
   <h1 class="section-title">Iranian Crude Oil Export Dynamics</h1>
@@ -421,6 +421,23 @@ async function loadCharts(){
 
 loadCharts();
 initMap();
+</script>
+<script>
+// Dashboard CTA: route logged-in users (valid session on app.oilradar.io) to the
+// dashboard; everyone else falls through to the Calendly access request (default href).
+(function(){
+  var el = document.getElementById('dashboardCta');
+  if(!el) return;
+  fetch('https://app.oilradar.io/auth/check', { credentials: 'include' })
+    .then(function(r){ return r.json(); })
+    .then(function(d){
+      if(d && d.authenticated){
+        el.href = 'https://app.oilradar.io/dashboard';
+        el.removeAttribute('target');
+      }
+    })
+    .catch(function(){});
+})();
 </script>
 </body>
 </html>
