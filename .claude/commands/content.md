@@ -190,7 +190,7 @@ Wrote about how we track Iranian crude oil exports when there's no official data
 ## CTA Rules
 
 - **"Request Data Access"** — not "Schedule a Call", not "Book a Demo"
-- Calendly link: https://calendly.com/bachevsky/60min
+- Calendly link: https://calendly.com/bachevsky/intro
 - On social: never include Calendly link — use oilradar.io/monitor only
 - Calendly CTA appears on landing pages and direct outreach only
 

@@ -212,7 +212,7 @@ Do not change `_redirects` without confirming this mapping.
    ```
 2. **_redirects**: Confirm `/monitor → /marketing/monitor.html` is intact after any routing change
 3. **Units**: All volume figures use **Mb** in UI/charts (not MM bbl, not Mn bbl, not M bbl)
-4. **Calendly CTA**: Any "Schedule a Call" / "Request Access" button → `https://calendly.com/bachevsky/60min`
+4. **Calendly CTA**: Any "Schedule a Call" / "Request Access" button → `https://calendly.com/bachevsky/intro`
 5. **monitor.html layout**: Must always have Leaflet map + volume chart — do not remove either
 6. **SEO**: Title includes "Kharg Island" + "Iran" or "crude oil"; first paragraph mentions both within 50 words
 
@@ -230,6 +230,6 @@ Do not change `_redirects` without confirming this mapping.
 
 ## Key Links
 
-- **Calendly**: https://calendly.com/bachevsky/60min
+- **Calendly**: https://calendly.com/bachevsky/intro
 - **Monitor**: https://oilradar.io/monitor
 - **GA4 ID**: G-TZQ5VH3GPY
