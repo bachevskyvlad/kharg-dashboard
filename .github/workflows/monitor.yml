@@ -2,7 +2,11 @@ name: Monitor — Kharg SAR
 
 on:
   schedule:
+    # Twice a day. A cheap gate (see 'gate' job) skips the heavy SAR fetch
+    # unless >= REVISIT_GATE_DAYS have passed since the last data point,
+    # so we only actually poll Sentinel Hub around the ~6-day revisit window.
     - cron: "0 3 * * *"
+    - cron: "0 15 * * *"
   workflow_dispatch:
     inputs:
       force_reset:
@@ -10,9 +14,41 @@ on:
         required: false
         default: 'false'
 
+env:
+  # Start polling this many days after the last captured date (Sentinel-1
+  # descending revisit at Kharg is ~6 days). Below this, runs exit in seconds.
+  REVISIT_GATE_DAYS: "5"
+
 jobs:
 
+  # Cheap guard: decides whether it's worth running the full pipeline today.
+  # Manual runs (workflow_dispatch) and force_reset always proceed.
+  gate:
+    runs-on: ubuntu-latest
+    outputs:
+      run: ${{ steps.check.outputs.run }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: check
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "Manual trigger — running."
+            echo "run=true" >> "$GITHUB_OUTPUT"; exit 0
+          fi
+          LAST=$(python3 -c "import json;print(json.load(open('data/data_daily.json'))['dates'][-1])")
+          DAYS=$(( ( $(date -u +%s) - $(date -u -d "$LAST" +%s) ) / 86400 ))
+          echo "Last data point: $LAST ($DAYS days ago); gate = ${REVISIT_GATE_DAYS}d"
+          if [ "$DAYS" -ge "${REVISIT_GATE_DAYS}" ]; then
+            echo "Within revisit window — running."
+            echo "run=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "Too soon since last pass — skipping heavy fetch."
+            echo "run=false" >> "$GITHUB_OUTPUT"
+          fi
+
   kharg:
+    needs: gate
+    if: needs.gate.outputs.run == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -89,8 +125,8 @@ jobs:
 
   commit_data:
     runs-on: ubuntu-latest
-    needs: [kharg]
-    if: always()
+    needs: [gate, kharg]
+    if: always() && needs.gate.outputs.run == 'true'
     steps:
       - uses: actions/checkout@v4
         with:
