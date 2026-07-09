@@ -1,0 +1,680 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Maison Fumier — Artisanal Heating Bricks, Hand-Pressed &amp; Single-Farm Traced</title>
+<meta name="description" content="Hand-pressed heating bricks of aged manure and sun-cured hay from single European farms. Each brick numbered, dated, and traceable to its pasture. For discerning hearths.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,700;0,900;1,600&family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=Special+Elite&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper:#f3e8d2;
+  --paper-dark:#e6d4b0;
+  --kraft:#c8a874;
+  --kraft-deep:#a9855a;
+  --ink:#2b1c10;
+  --ink-soft:#4a3520;
+  --brown:#5c3a20;
+  --brown-deep:#3a2313;
+  --gold:#a9772f;
+  --gold-light:#c9974b;
+  --wax:#7c2a1a;
+  --hay:#7d6a2f;
+  --green:#4f5c33;
+  --cream:#fbf4e4;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+html{scroll-behavior:smooth;}
+body{
+  background:var(--paper);
+  color:var(--ink);
+  font-family:'Cormorant Garamond',serif;
+  font-size:19px;
+  line-height:1.5;
+  background-image:
+    radial-gradient(circle at 15% 8%, rgba(255,255,255,0.25), transparent 40%),
+    radial-gradient(circle at 85% 92%, rgba(0,0,0,0.06), transparent 45%),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.05'/%3E%3C/svg%3E");
+}
+h1,h2,h3,.serif-title{font-family:'Playfair Display',serif;color:var(--brown-deep);}
+.stamp{font-family:'Special Elite',cursive;letter-spacing:2px;}
+.mono{font-family:'DM Mono',monospace;}
+a{color:inherit;}
+.wrap{max-width:1180px;margin:0 auto;padding:0 32px;}
+img,svg{max-width:100%;display:block;}
+
+/* NAV */
+nav{position:sticky;top:0;z-index:200;background:rgba(243,232,210,0.92);backdrop-filter:blur(8px);border-bottom:2px solid var(--kraft-deep);}
+.navbar{display:flex;align-items:center;justify-content:space-between;padding:14px 32px;max-width:1180px;margin:0 auto;}
+.logo{font-family:'Playfair Display',serif;font-weight:900;font-size:22px;letter-spacing:1px;text-decoration:none;color:var(--brown-deep);}
+.logo span{color:var(--wax);}
+.nav-links{display:flex;gap:28px;list-style:none;align-items:center;}
+.nav-links a{text-decoration:none;font-size:15px;letter-spacing:0.5px;text-transform:uppercase;font-family:'DM Mono',monospace;color:var(--ink-soft);border-bottom:1px solid transparent;padding-bottom:2px;transition:.2s;}
+.nav-links a:hover{color:var(--wax);border-color:var(--wax);}
+.nav-cta{background:var(--brown-deep);color:var(--cream)!important;padding:9px 18px;border-radius:2px;font-family:'DM Mono',monospace;font-size:12px;letter-spacing:1px;text-transform:uppercase;}
+.nav-cta:hover{background:var(--wax);border-color:transparent!important;}
+@media (max-width:820px){.nav-links{display:none;}}
+
+/* HERO */
+.hero{position:relative;padding:90px 32px 70px;overflow:hidden;border-bottom:2px solid var(--kraft-deep);}
+.hero-inner{max-width:1180px;margin:0 auto;display:grid;grid-template-columns:1.1fr 0.9fr;gap:56px;align-items:center;}
+.eyebrow{font-family:'DM Mono',monospace;font-size:12px;letter-spacing:3px;text-transform:uppercase;color:var(--wax);margin-bottom:18px;display:inline-block;border:1px solid var(--wax);padding:6px 12px;border-radius:20px;}
+.hero h1{font-size:56px;line-height:1.05;font-weight:900;margin-bottom:22px;}
+.hero h1 em{font-style:italic;color:var(--wax);}
+.hero p.lede{font-size:21px;color:var(--ink-soft);max-width:520px;margin-bottom:30px;}
+.btn-row{display:flex;gap:16px;flex-wrap:wrap;margin-bottom:26px;}
+.btn{font-family:'DM Mono',monospace;text-decoration:none;font-size:13px;letter-spacing:1px;text-transform:uppercase;padding:15px 26px;border-radius:2px;display:inline-block;transition:.2s;cursor:pointer;border:2px solid var(--brown-deep);}
+.btn-primary{background:var(--brown-deep);color:var(--cream);}
+.btn-primary:hover{background:var(--wax);border-color:var(--wax);}
+.btn-ghost{background:transparent;color:var(--brown-deep);}
+.btn-ghost:hover{background:var(--brown-deep);color:var(--cream);}
+.badges{display:flex;gap:10px;flex-wrap:wrap;}
+.badge{font-family:'DM Mono',monospace;font-size:11px;letter-spacing:0.5px;background:var(--paper-dark);border:1px solid var(--kraft-deep);padding:6px 11px;border-radius:20px;color:var(--ink-soft);}
+@media (max-width:900px){
+  .hero-inner{grid-template-columns:1fr;}
+  .brick-art{order:-1;margin-bottom:20px;}
+  .hero h1{font-size:40px;}
+}
+@media (max-width:900px){
+  .collection-grid{grid-template-columns:1fr;}
+}
+
+/* HERO BRICK VISUAL */
+.brick-art{position:relative;display:flex;align-items:center;justify-content:center;}
+.brick{
+  width:280px;height:170px;
+  background:linear-gradient(160deg,#6b4a2c,#4a2f18 55%,#3a2313);
+  border-radius:6px;
+  position:relative;
+  box-shadow:0 30px 50px -18px rgba(0,0,0,0.45), inset 0 0 40px rgba(0,0,0,0.35);
+  transform:rotate(-6deg);
+}
+.brick::before{
+  content:"";position:absolute;inset:0;border-radius:6px;
+  background-image:
+    radial-gradient(circle at 20% 30%, rgba(255,255,255,0.08) 0, transparent 3%),
+    radial-gradient(circle at 70% 60%, rgba(255,255,255,0.06) 0, transparent 4%),
+    radial-gradient(circle at 40% 80%, rgba(0,0,0,0.3) 0, transparent 5%),
+    repeating-linear-gradient(115deg, rgba(255,229,180,0.05) 0 2px, transparent 2px 6px);
+}
+.brick-label{
+  position:absolute;inset:18px;border:1.5px dashed rgba(243,232,210,0.55);
+  border-radius:3px;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  text-align:center;color:var(--paper);
+}
+.brick-label .stamp{font-size:12px;letter-spacing:2px;opacity:0.85;}
+.brick-label .num{font-family:'Playfair Display',serif;font-size:26px;font-weight:700;margin:4px 0;}
+.wax-seal{
+  position:absolute;bottom:-22px;right:20px;width:64px;height:64px;border-radius:50%;
+  background:radial-gradient(circle at 35% 30%, #9a3a24, var(--wax) 60%, #591a0e);
+  box-shadow:0 6px 14px rgba(0,0,0,0.4);
+  display:flex;align-items:center;justify-content:center;
+  font-family:'Playfair Display',serif;color:var(--cream);font-size:20px;font-weight:900;
+  transform:rotate(10deg);
+}
+.twine{position:absolute;top:50%;left:-40px;width:calc(100% + 80px);height:4px;background:repeating-linear-gradient(90deg,#b89b72 0 8px, #8a6a42 8px 10px);transform:translateY(-50%) rotate(-6deg);opacity:.85;}
+
+/* SECTION GENERIC */
+section{padding:80px 32px;}
+.section-head{max-width:640px;margin:0 auto 50px;text-align:center;}
+.section-head .eyebrow{margin-bottom:14px;}
+.section-head h2{font-size:38px;font-weight:900;margin-bottom:14px;}
+.section-head p{color:var(--ink-soft);font-size:19px;}
+
+/* VALUE GRID */
+.value-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:24px;max-width:1180px;margin:0 auto;}
+.value-card{background:var(--cream);border:1px solid var(--kraft-deep);border-radius:6px;padding:28px 22px;text-align:center;}
+.value-card .icon{font-size:34px;margin-bottom:14px;}
+.value-card h3{font-size:20px;margin-bottom:8px;}
+.value-card p{font-size:16px;color:var(--ink-soft);}
+@media (max-width:900px){.value-grid{grid-template-columns:1fr 1fr;}}
+@media (max-width:560px){.value-grid{grid-template-columns:1fr;}}
+
+/* REGISTRY / STORY SECTION */
+.registry{background:var(--brown-deep);color:var(--cream);}
+.registry .section-head h2, .registry .section-head p{color:var(--cream);}
+.registry .eyebrow{color:var(--gold-light);border-color:var(--gold-light);}
+.lookup-box{max-width:760px;margin:0 auto 34px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.18);border-radius:8px;padding:26px;}
+.lookup-row{display:flex;gap:12px;flex-wrap:wrap;justify-content:center;}
+.lookup-row input{
+  flex:1;min-width:180px;background:var(--paper);border:none;border-radius:2px;padding:13px 14px;
+  font-family:'DM Mono',monospace;font-size:15px;letter-spacing:1px;color:var(--ink);
+}
+.lookup-row button{border:2px solid var(--gold-light);background:var(--gold-light);color:var(--brown-deep);}
+.lookup-row button:hover{background:transparent;color:var(--gold-light);}
+.example-chips{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-top:14px;}
+.example-chips button{background:transparent;border:1px solid rgba(255,255,255,0.3);color:var(--cream);font-family:'DM Mono',monospace;font-size:11px;padding:6px 10px;border-radius:14px;cursor:pointer;}
+.example-chips button:hover{border-color:var(--gold-light);color:var(--gold-light);}
+
+.story-card{max-width:760px;margin:0 auto;background:var(--paper);color:var(--ink);border-radius:8px;padding:30px 34px;border:1px solid var(--kraft-deep);position:relative;display:none;}
+.story-card.visible{display:block;animation:fadeUp .4s ease;}
+@keyframes fadeUp{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:translateY(0);}}
+.story-head{display:flex;justify-content:space-between;align-items:flex-start;border-bottom:1.5px dashed var(--kraft-deep);padding-bottom:16px;margin-bottom:16px;flex-wrap:wrap;gap:10px;}
+.story-serial{font-family:'Playfair Display',serif;font-size:28px;font-weight:900;color:var(--wax);}
+.story-serial small{display:block;font-family:'DM Mono',monospace;font-size:11px;color:var(--ink-soft);font-weight:400;letter-spacing:1px;}
+.story-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px 26px;margin-bottom:16px;}
+.story-grid div span{display:block;font-family:'DM Mono',monospace;font-size:11px;letter-spacing:1px;text-transform:uppercase;color:var(--gold);margin-bottom:2px;}
+.story-note{font-style:italic;color:var(--ink-soft);font-size:18px;border-left:3px solid var(--wax);padding-left:14px;}
+@media (max-width:600px){.story-grid{grid-template-columns:1fr;}}
+
+/* COLLECTION */
+.collection-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:26px;max-width:1180px;margin:0 auto;}
+.product-card{background:var(--cream);border:1px solid var(--kraft-deep);border-radius:8px;overflow:hidden;display:flex;flex-direction:column;}
+.product-card.featured{border:2px solid var(--wax);position:relative;}
+.product-card.featured::before{content:"Most Reserved";position:absolute;top:14px;right:-30px;background:var(--wax);color:var(--cream);font-family:'DM Mono',monospace;font-size:10px;letter-spacing:1px;padding:5px 34px;transform:rotate(35deg);}
+.product-swatch{height:150px;display:flex;align-items:center;justify-content:center;font-size:56px;}
+.p1 .product-swatch{background:linear-gradient(135deg,#8a6a42,#5c3a20);}
+.p2 .product-swatch{background:linear-gradient(135deg,#6b4a2c,#3a2313);}
+.p3 .product-swatch{background:linear-gradient(135deg,#4a3520,#241407);}
+.product-body{padding:24px 24px 28px;flex:1;display:flex;flex-direction:column;}
+.product-body h3{font-size:23px;margin-bottom:2px;}
+.product-body .fr{font-family:'Cormorant Garamond',serif;font-style:italic;color:var(--gold);font-size:16px;margin-bottom:12px;}
+.product-body p.desc{color:var(--ink-soft);font-size:16px;margin-bottom:16px;flex:1;}
+.spec-list{list-style:none;font-size:14px;font-family:'DM Mono',monospace;color:var(--ink-soft);margin-bottom:18px;}
+.spec-list li{padding:4px 0;border-bottom:1px dotted var(--kraft-deep);display:flex;justify-content:space-between;}
+.price{font-family:'Playfair Display',serif;font-size:28px;font-weight:900;color:var(--brown-deep);margin-bottom:14px;}
+.price span{font-size:14px;font-family:'DM Mono',monospace;color:var(--ink-soft);}
+.product-body .btn{text-align:center;width:100%;}
+
+/* PROCESS */
+.process{background:var(--paper-dark);}
+.timeline{max-width:1000px;margin:0 auto;display:grid;grid-template-columns:repeat(6,1fr);gap:16px;}
+.tstep{text-align:center;position:relative;}
+.tstep .n{width:44px;height:44px;border-radius:50%;background:var(--brown-deep);color:var(--cream);font-family:'Playfair Display',serif;font-weight:900;display:flex;align-items:center;justify-content:center;margin:0 auto 12px;}
+.tstep h4{font-size:16px;margin-bottom:6px;}
+.tstep p{font-size:14px;color:var(--ink-soft);}
+@media (max-width:900px){.timeline{grid-template-columns:repeat(3,1fr);row-gap:34px;}}
+@media (max-width:560px){.timeline{grid-template-columns:1fr 1fr;}}
+
+/* PACKAGING */
+.pkg{display:grid;grid-template-columns:0.9fr 1.1fr;gap:56px;align-items:center;max-width:1180px;margin:0 auto;}
+.pkg-visual{display:flex;justify-content:center;}
+.box{
+  width:260px;height:200px;background:linear-gradient(160deg,var(--kraft),var(--kraft-deep));
+  border-radius:4px;position:relative;box-shadow:0 26px 40px -16px rgba(0,0,0,0.35);
+}
+.box::before{content:"";position:absolute;inset:0;background:repeating-linear-gradient(115deg, rgba(255,255,255,0.04) 0 2px, transparent 2px 7px);border-radius:4px;}
+.box .twine-v,.box .twine-h{position:absolute;background:#7a5a34;}
+.box .twine-v{left:50%;top:-10px;width:6px;height:220px;transform:translateX(-50%);}
+.box .twine-h{top:50%;left:-10px;height:6px;width:280px;transform:translateY(-50%);}
+.box .seal2{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:58px;height:58px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#9a3a24,var(--wax) 60%,#591a0e);display:flex;align-items:center;justify-content:center;font-family:'Playfair Display',serif;color:var(--cream);font-weight:900;box-shadow:0 6px 12px rgba(0,0,0,0.35);}
+.pkg-text h2{font-size:34px;margin-bottom:16px;}
+.pkg-text p{color:var(--ink-soft);margin-bottom:16px;}
+.pkg-list{list-style:none;}
+.pkg-list li{padding:8px 0;border-bottom:1px dotted var(--kraft-deep);font-size:17px;}
+.pkg-list li::before{content:"✦ ";color:var(--wax);}
+@media (max-width:820px){.pkg{grid-template-columns:1fr;}}
+
+/* TESTIMONIALS */
+.testi-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:24px;max-width:1180px;margin:0 auto;}
+.testi{background:var(--cream);border:1px solid var(--kraft-deep);border-radius:8px;padding:26px;}
+.testi p.quote{font-style:italic;font-size:18px;margin-bottom:16px;}
+.testi .who{font-family:'DM Mono',monospace;font-size:12px;letter-spacing:0.5px;color:var(--gold);text-transform:uppercase;}
+@media (max-width:900px){.testi-grid{grid-template-columns:1fr;}}
+
+/* FAQ */
+.faq{max-width:820px;margin:0 auto;}
+details{background:var(--cream);border:1px solid var(--kraft-deep);border-radius:6px;margin-bottom:12px;padding:18px 22px;}
+summary{cursor:pointer;font-family:'Playfair Display',serif;font-weight:700;font-size:19px;list-style:none;display:flex;justify-content:space-between;align-items:center;}
+summary::-webkit-details-marker{display:none;}
+summary::after{content:"+";font-size:24px;color:var(--wax);}
+details[open] summary::after{content:"–";}
+details p{margin-top:12px;color:var(--ink-soft);font-size:17px;}
+
+/* ORDER FORM */
+.order{background:var(--brown-deep);color:var(--cream);}
+.order .section-head h2,.order .section-head p{color:var(--cream);}
+.order-wrap{max-width:640px;margin:0 auto;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.18);border-radius:10px;padding:36px;}
+.order-wrap.confirmed{display:none;}
+.field{margin-bottom:18px;}
+.field label{display:block;font-family:'DM Mono',monospace;font-size:11px;letter-spacing:1px;text-transform:uppercase;margin-bottom:6px;color:var(--gold-light);}
+.field input,.field select{width:100%;padding:12px 14px;border-radius:3px;border:none;font-family:'Cormorant Garamond',serif;font-size:17px;background:var(--paper);color:var(--ink);}
+.field-row{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+@media (max-width:560px){.field-row{grid-template-columns:1fr;}}
+.order-wrap .btn-primary{width:100%;margin-top:8px;background:var(--gold-light);border-color:var(--gold-light);color:var(--brown-deep);}
+.order-wrap .btn-primary:hover{background:transparent;color:var(--gold-light);}
+.confirm-panel{display:none;max-width:640px;margin:0 auto;background:var(--cream);color:var(--ink);border-radius:10px;padding:36px;text-align:center;}
+.confirm-panel.visible{display:block;animation:fadeUp .4s ease;}
+.confirm-panel .story-serial{margin:14px 0;}
+
+/* FOOTER */
+footer{padding:40px 32px;text-align:center;border-top:2px solid var(--kraft-deep);}
+footer p{font-family:'DM Mono',monospace;font-size:12px;color:var(--ink-soft);letter-spacing:0.5px;}
+footer p.tiny{margin-top:8px;opacity:0.7;}
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="navbar">
+    <a href="#" class="logo">MAISON <span>FUMIER</span></a>
+    <ul class="nav-links">
+      <li><a href="#collection">Collection</a></li>
+      <li><a href="#process">The Process</a></li>
+      <li><a href="#registry">Provenance</a></li>
+      <li><a href="#reviews">Reviews</a></li>
+      <li><a href="#order" class="nav-cta">Reserve Yours</a></li>
+    </ul>
+  </div>
+</nav>
+
+<header class="hero">
+  <div class="hero-inner">
+    <div>
+      <span class="eyebrow">Established Nowhere in Particular · Est. This Winter</span>
+      <h1>Heat your hearth <em>with heritage.</em></h1>
+      <p class="lede">Hand-pressed heating bricks of aged manure and sun-cured hay, sourced from single farms across the Alps, Provence and the Dordogne. Every brick is numbered, dated, and comes with the story of the pasture it grew in.</p>
+      <div class="btn-row">
+        <a href="#order" class="btn btn-primary">Reserve Your Bricks</a>
+        <a href="#registry" class="btn btn-ghost">Trace a Brick's Story</a>
+      </div>
+      <div class="badges">
+        <span class="badge">100% Organic Matter</span>
+        <span class="badge">Single-Farm Traceable</span>
+        <span class="badge">Hand-Formed, Not Machine-Pressed</span>
+        <span class="badge">Slow-Burning, 3+ Hours</span>
+      </div>
+    </div>
+    <div class="brick-art">
+      <div class="brick">
+        <div class="twine"></div>
+        <div class="brick-label">
+          <span class="stamp">MAISON FUMIER</span>
+          <span class="num">N° 0427</span>
+          <span class="stamp" style="font-size:10px;">HAND PRESSED · FRANCE</span>
+        </div>
+        <div class="wax-seal">MF</div>
+      </div>
+    </div>
+  </div>
+</header>
+
+<section id="why">
+  <div class="section-head">
+    <span class="eyebrow">A Fuel With A Face</span>
+    <h2>Why manure, why now</h2>
+    <p>Long before gas lines and quarterly heating bills, Europe's grandest hearths burned exactly this. We simply refused to let the tradition, or the aroma, disappear.</p>
+  </div>
+  <div class="value-grid">
+    <div class="value-card">
+      <div class="icon">🔥</div>
+      <h3>Slow, Even Heat</h3>
+      <p>Dense-packed fibre burns low and long — up to 3.5 hours per brick, far outlasting kiln-dried logs.</p>
+    </div>
+    <div class="value-card">
+      <div class="icon">🌾</div>
+      <h3>Single-Farm Sourced</h3>
+      <p>No blending, no bulk suppliers. Every batch comes from one farm, one field, one season.</p>
+    </div>
+    <div class="value-card">
+      <div class="icon">✋</div>
+      <h3>Hand-Formed</h3>
+      <p>Pressed by hand in small batches, the old way, by artisans who will tell you it is "basically ceramics."</p>
+    </div>
+    <div class="value-card">
+      <div class="icon">📜</div>
+      <h3>A Story Per Brick</h3>
+      <p>Every brick is numbered at the press and logged with its farm, its field, and the animal behind it.</p>
+    </div>
+  </div>
+</section>
+
+<section id="collection">
+  <div class="section-head">
+    <span class="eyebrow">The Collection</span>
+    <h2>Three ways to feel very European about your fireplace</h2>
+    <p>Choose your terroir. Each brick is sold individually numbered, wax-sealed, and wrapped in undyed kraft paper.</p>
+  </div>
+  <div class="collection-grid">
+    <div class="product-card p1">
+      <div class="product-swatch">🐄</div>
+      <div class="product-body">
+        <h3>Réserve Rustique</h3>
+        <div class="fr">cow &amp; meadow hay, entry cuvée</div>
+        <p class="desc">Our house blend: Simmental cow manure aged four months, folded with sun-cured meadow hay. Approachable, dependable, unmistakably rustic.</p>
+        <ul class="spec-list">
+          <li><span>Weight</span><span>1.2 kg / brick</span></li>
+          <li><span>Burn time</span><span>~2.5 hrs</span></li>
+          <li><span>Origin</span><span>Dordogne, FR</span></li>
+        </ul>
+        <div class="price">€38 <span>/ box of 6</span></div>
+        <a href="#order" class="btn btn-primary">Add to Reservation</a>
+      </div>
+    </div>
+    <div class="product-card p2 featured">
+      <div class="product-swatch">🐴</div>
+      <div class="product-body">
+        <h3>Grande Étable</h3>
+        <div class="fr">horse &amp; lavender hay, aged 6 months</div>
+        <p class="desc">Haflinger horse manure, aged twice as long, layered with lavender-flecked highland hay. Notes of stable leather and dried flowers on the finish.</p>
+        <ul class="spec-list">
+          <li><span>Weight</span><span>1.4 kg / brick</span></li>
+          <li><span>Burn time</span><span>~3.5 hrs</span></li>
+          <li><span>Origin</span><span>Tyrol, AT</span></li>
+        </ul>
+        <div class="price">€64 <span>/ box of 6</span></div>
+        <a href="#order" class="btn btn-primary">Add to Reservation</a>
+      </div>
+    </div>
+    <div class="product-card p3">
+      <div class="product-swatch">🐐</div>
+      <div class="product-body">
+        <h3>Cuvée du Comte</h3>
+        <div class="fr">goat, alpine hay &amp; shaved truffle, limited</div>
+        <p class="desc">Our numbered limited release. Alpine goat manure, wild mountain hay, and a whisper of shaved truffle. Signed by the pressmaster. 200 boxes per season.</p>
+        <ul class="spec-list">
+          <li><span>Weight</span><span>1.5 kg / brick</span></li>
+          <li><span>Burn time</span><span>~4 hrs</span></li>
+          <li><span>Origin</span><span>South Tyrol, IT</span></li>
+        </ul>
+        <div class="price">€129 <span>/ box of 4, signed</span></div>
+        <a href="#order" class="btn btn-primary">Add to Reservation</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="registry" class="registry">
+  <div class="section-head">
+    <span class="eyebrow">Provenance Registry</span>
+    <h2>Every brick has a history. Go find yours.</h2>
+    <p>Enter the serial number stamped into your brick's wax seal, or one of the examples below, to trace it back to its farm, its field, and the animal that made it possible.</p>
+  </div>
+
+  <div class="lookup-box">
+    <div class="lookup-row">
+      <input id="serialInput" class="mono" type="text" placeholder="e.g. MF-0427 or any name/number" maxlength="24">
+      <button class="btn" id="traceBtn">Trace This Brick</button>
+    </div>
+    <div class="example-chips">
+      <button data-serial="MF-0427">MF-0427</button>
+      <button data-serial="MF-1188">MF-1188</button>
+      <button data-serial="MF-9002">MF-9002</button>
+      <button data-serial="MF-0001">MF-0001</button>
+      <button id="randomBtn">🎲 Random Brick</button>
+    </div>
+  </div>
+
+  <div class="story-card" id="storyCard"></div>
+</section>
+
+<section id="process" class="process">
+  <div class="section-head">
+    <span class="eyebrow">The Process</span>
+    <h2>From pasture to parlour</h2>
+    <p>Six steps, no shortcuts. Everything we cannot say happens by hand, does not happen at all.</p>
+  </div>
+  <div class="timeline">
+    <div class="tstep"><div class="n">1</div><h4>Selection</h4><p>One farm, one field, one season per batch.</p></div>
+    <div class="tstep"><div class="n">2</div><h4>Curing</h4><p>4–6 months open-air, turned weekly.</p></div>
+    <div class="tstep"><div class="n">3</div><h4>Blending</h4><p>Folded with hand-cut hay, by hand.</p></div>
+    <div class="tstep"><div class="n">4</div><h4>Pressing</h4><p>Molded, weighed, sun-dried 3 weeks.</p></div>
+    <div class="tstep"><div class="n">5</div><h4>Numbering</h4><p>Stamped, logged, wax-sealed.</p></div>
+    <div class="tstep"><div class="n">6</div><h4>Wrapping</h4><p>Kraft paper, twine, straight to your crate.</p></div>
+  </div>
+</section>
+
+<section class="pkg">
+  <div class="pkg-visual">
+    <div class="box">
+      <div class="twine-v"></div>
+      <div class="twine-h"></div>
+      <div class="seal2">MF</div>
+    </div>
+  </div>
+  <div class="pkg-text">
+    <span class="eyebrow">Unboxing</span>
+    <h2>Packaging worthy of the mantelpiece</h2>
+    <p>No plastic, no barcodes shouting from the box. Just undyed kraft card, cotton twine, a wax seal, and a folded provenance card tucked beneath the bricks.</p>
+    <ul class="pkg-list">
+      <li>Kraft box, hand-tied twine, wax-stamped closure</li>
+      <li>Provenance card with your bricks' individual serials</li>
+      <li>Linen drawstring ash bag included, because of course</li>
+      <li>Fully compostable — including, we admit, the contents</li>
+    </ul>
+  </div>
+</section>
+
+<section id="reviews">
+  <div class="section-head">
+    <span class="eyebrow">Reviews</span>
+    <h2>What discerning hearths are saying</h2>
+  </div>
+  <div class="testi-grid">
+    <div class="testi">
+      <p class="quote">"I no longer tell guests it's manure. I tell them it's 'aged pasture fuel, single-origin.' They nod. They always nod."</p>
+      <div class="who">— H. von Alten-Rothbach, Munich</div>
+    </div>
+    <div class="testi">
+      <p class="quote">"The Grande Étable burns for hours and the whole château smells faintly of a very expensive stable. I mean that as the highest compliment."</p>
+      <div class="who">— Comtesse M. de Lisle, Loire Valley</div>
+    </div>
+    <div class="testi">
+      <p class="quote">"My brick's story said it came from a goat named Colette on a hillside above a vineyard. I now feel a personal relationship with Colette. Five stars."</p>
+      <div class="who">— J.P. Verlinden, Antwerp</div>
+    </div>
+  </div>
+</section>
+
+<section id="faq" style="background:var(--paper-dark);">
+  <div class="section-head">
+    <span class="eyebrow">Questions, Answered Honestly</span>
+    <h2>Before you reserve</h2>
+  </div>
+  <div class="faq">
+    <details open>
+      <summary>Is this actually manure and hay?</summary>
+      <p>Yes. Precisely that, aged, dried, hand-pressed and sealed. We are not going to pretend otherwise — we simply think it deserves better packaging than a feed sack.</p>
+    </details>
+    <details>
+      <summary>Does it smell while burning?</summary>
+      <p>A faint, warm, hay-and-woodsmoke note in the first minutes, then very little. Several customers describe it as "barn-adjacent, in a nice way."</p>
+    </details>
+    <details>
+      <summary>Why does a brick of dung cost more than firewood?</summary>
+      <p>Because firewood does not come with the name of the cow that made it possible. You are paying for provenance, packaging, and a very good story to tell at dinner.</p>
+    </details>
+    <details>
+      <summary>Is it safe for indoor fireplaces and wood stoves?</summary>
+      <p>Yes — properly cured dung fuel has been used in hearths across Europe and Asia for centuries. Burn as you would any dense biomass log, with adequate ventilation.</p>
+    </details>
+    <details>
+      <summary>Can I really trace my exact brick?</summary>
+      <p>Every brick is stamped with a serial at the press. Enter it in the Provenance Registry above and we'll surface its farm, field, artisan, and press date.</p>
+    </details>
+  </div>
+</section>
+
+<section id="order" class="order">
+  <div class="section-head">
+    <span class="eyebrow">Reserve Yours</span>
+    <h2>Claim your bricks before the season sells out</h2>
+    <p>Leave your details below. We'll assign your reservation a brick, with its own number and story, on the spot.</p>
+  </div>
+
+  <form class="order-wrap" id="orderForm">
+    <div class="field">
+      <label for="oName">Full Name</label>
+      <input id="oName" type="text" placeholder="Baron / Baroness / Just You" required>
+    </div>
+    <div class="field-row">
+      <div class="field">
+        <label for="oEmail">Email</label>
+        <input id="oEmail" type="email" placeholder="you@estate.eu" required>
+      </div>
+      <div class="field">
+        <label for="oQty">Collection</label>
+        <select id="oQty">
+          <option>Réserve Rustique — €38</option>
+          <option>Grande Étable — €64</option>
+          <option>Cuvée du Comte — €129</option>
+        </select>
+      </div>
+    </div>
+    <div class="field">
+      <label for="oAddr">Shipping Address</label>
+      <input id="oAddr" type="text" placeholder="Château, Villa, or otherwise" required>
+    </div>
+    <button type="submit" class="btn btn-primary">Reserve My Bricks</button>
+  </form>
+
+  <div class="confirm-panel" id="confirmPanel">
+    <span class="eyebrow" style="border-color:var(--wax);color:var(--wax);">Reservation Confirmed</span>
+    <h3 class="serif-title" style="margin:10px 0;">Your brick has been pressed and numbered.</h3>
+    <div class="story-serial" id="confirmSerial"></div>
+    <p style="color:var(--ink-soft);">A confirmation with your brick's full story has been logged to the registry above. (We didn't actually email anyone — this is a concept landing page.)</p>
+  </div>
+</section>
+
+<footer>
+  <p>MAISON FUMIER — Artisanal Heating Bricks. Not a real company. Not real shipping. Extremely real manure.</p>
+  <p class="tiny">Concept landing page, built for fun. No orders are processed and no data leaves your browser.</p>
+</footer>
+
+<script>
+(function(){
+  const farms = [
+    ["Ferme du Vieux Chêne", "Dordogne, France"],
+    ["Alpenhof Grünmatt", "Tyrol, Austria"],
+    ["Tenuta San Casciano", "Tuscany, Italy"],
+    ["Hoeve de Groene Weide", "Friesland, Netherlands"],
+    ["Cortijo La Encina", "Andalusia, Spain"],
+    ["Gutshof Birkental", "Bavaria, Germany"],
+    ["Domaine des Trois Peupliers", "Provence, France"],
+    ["Maso Belvedere", "South Tyrol, Italy"],
+    ["Bruyn's Hoeve", "Limburg, Belgium"],
+    ["Fazenda... no, wait, Ferme Haute-Loire", "Auvergne, France"]
+  ];
+  const animals = [
+    "Simmental cow N°14, 'Bernadette'",
+    "Haflinger horse N°7, 'Kaiser'",
+    "Alpine goat N°22, 'Colette'",
+    "Jersey cow N°3, 'Margot'",
+    "Merino sheep N°31, 'Baron'",
+    "Holstein cow N°58, 'Josephine'",
+    "Shetland pony N°2, 'Duke'"
+  ];
+  const fields = [
+    "the north meadow, cut at dawn",
+    "the riverside pasture, second cut of the season",
+    "the terraced hillside above the old vineyard",
+    "the orchard meadow, wild clover and dandelion",
+    "the highland pasture at 1,100 metres",
+    "the lavender-edged lower field",
+    "the meadow behind the chapel ruins"
+  ];
+  const artisans = [
+    "Master presser Henri D.",
+    "Artisan Ilse V.",
+    "The Rossi family, third-generation pressers",
+    "Old Bertrand, forty years in the trade",
+    "Sisters Anke &amp; Greet",
+    "Pressmaster Tomás R."
+  ];
+  const notes = [
+    "Notes of dried clover, cedar smoke, and a whisper of stable leather.",
+    "Bright hay top notes over a slow, oaky burn.",
+    "Rich and barnyard-forward, with a long, warm finish.",
+    "Delicate wildflower sweetness and clean mineral ash.",
+    "Deep and smoky, with a rustic, faintly truffled finish.",
+    "Grassy and sweet at first light, mellowing to warm straw."
+  ];
+
+  function hash(str){
+    let h = 0;
+    for (let i = 0; i < str.length; i++){
+      h = (h * 31 + str.charCodeAt(i)) | 0;
+    }
+    return Math.abs(h);
+  }
+
+  function pad(n, len){
+    return String(n).padStart(len, "0");
+  }
+
+  function storyFor(serialRaw){
+    const serial = (serialRaw || "MF-0000").trim();
+    const h = hash(serial.toUpperCase());
+    const farm = farms[h % farms.length];
+    const animal = animals[(h >> 2) % animals.length];
+    const field = fields[(h >> 4) % fields.length];
+    const artisan = artisans[(h >> 6) % artisans.length];
+    const note = notes[(h >> 8) % notes.length];
+    const burn = 90 + (h % 60);
+    const dayOffset = h % 480;
+    const base = new Date(2023, 0, 1);
+    base.setDate(base.getDate() + dayOffset);
+    const dateStr = base.toLocaleDateString('en-GB', { day:'2-digit', month:'long', year:'numeric' });
+    const weight = (1.1 + (h % 5) / 10).toFixed(1);
+    const displaySerial = /^MF-/i.test(serial) ? serial.toUpperCase() : "MF-" + pad(h % 9999, 4);
+
+    return { displaySerial, farm, animal, field, artisan, note, burn, dateStr, weight };
+  }
+
+  function renderStory(container, s){
+    container.innerHTML = `
+      <div class="story-head">
+        <div class="story-serial">${s.displaySerial}<small>PROVENANCE CERTIFICATE</small></div>
+        <div class="mono" style="font-size:12px;color:var(--ink-soft);text-align:right;">PRESSED<br>${s.dateStr}</div>
+      </div>
+      <div class="story-grid">
+        <div><span>Farm</span>${s.farm[0]}, ${s.farm[1]}</div>
+        <div><span>Animal</span>${s.animal}</div>
+        <div><span>Field</span>${s.field}</div>
+        <div><span>Artisan</span>${s.artisan}</div>
+        <div><span>Weight</span>${s.weight} kg</div>
+        <div><span>Burn time</span>~${(s.burn/60).toFixed(1)} hrs</div>
+      </div>
+      <p class="story-note">"${s.note}"</p>
+    `;
+    container.classList.add("visible");
+  }
+
+  const storyCard = document.getElementById("storyCard");
+  const serialInput = document.getElementById("serialInput");
+
+  document.getElementById("traceBtn").addEventListener("click", function(){
+    const v = serialInput.value || "MF-0427";
+    renderStory(storyCard, storyFor(v));
+    storyCard.scrollIntoView({behavior:"smooth", block:"nearest"});
+  });
+
+  document.querySelectorAll(".example-chips button[data-serial]").forEach(function(btn){
+    btn.addEventListener("click", function(){
+      serialInput.value = btn.dataset.serial;
+      renderStory(storyCard, storyFor(btn.dataset.serial));
+    });
+  });
+
+  document.getElementById("randomBtn").addEventListener("click", function(){
+    const s = "MF-" + pad(Math.floor(Math.random() * 9999), 4);
+    serialInput.value = s;
+    renderStory(storyCard, storyFor(s));
+  });
+
+  // default view
+  renderStory(storyCard, storyFor("MF-0427"));
+
+  // order form
+  const form = document.getElementById("orderForm");
+  const confirmPanel = document.getElementById("confirmPanel");
+  const confirmSerial = document.getElementById("confirmSerial");
+
+  form.addEventListener("submit", function(e){
+    e.preventDefault();
+    const email = document.getElementById("oEmail").value || "guest";
+    const serial = "MF-" + pad(hash(email + Date.now()) % 9999, 4);
+    confirmSerial.textContent = serial;
+    form.classList.add("confirmed");
+    confirmPanel.classList.add("visible");
+    serialInput.value = serial;
+    renderStory(storyCard, storyFor(serial));
+    confirmPanel.scrollIntoView({behavior:"smooth", block:"center"});
+  });
+})();
+</script>
+
+</body>
+</html>
