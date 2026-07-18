@@ -73,6 +73,31 @@ Weekly grid: 236 weeks · terminal mean 18.5 Mn bbl (min 15.4, max 26.2)
 - **t55_31**: mean 81% fill, floor 26% on 2022-04-17. Drawn during stress.
 - **t60_1**: mean 80% fill, floor 25% on 2023-12-08. Drawn during stress.
 
+## 6B. Build/draw dispersion by year (volatility of weekly change)
+| year | weekly Δ std | net change |
+|---|---|---|
+| 2022 | 0.98 | -1.1 |
+| 2023 | 0.94 | +1.3 |
+| 2024 | 0.66 | +0.4 |
+| 2025 | 0.83 | +2.4 |
+| 2026 | 1.61 | -0.5 |
+
+→ Dispersion rose 0.98→1.61 Mn bbl. Most volatile year: 2026 (1.61).
+
+## 5C. Tank size classes (which class is more active)
+| class | tanks | total vol | vol/tank | avg σ fill | var-share |
+|---|---|---|---|---|---|
+| t60 | 5 | 4.3 | 0.87 | 25.1 | 17% |
+| t55 | 18 | 9.8 | 0.54 | 24.2 | 60% |
+| t40 | 12 | 3.4 | 0.28 | 23.9 | 19% |
+| t25 | 12 | 1.0 | 0.08 | 25.6 | 4% |
+
+→ Top-8 mover tanks hold on average **4.8 Mn bbl** (26% of terminal volume) — they carry 52% of the movement on that share.
+
+## Peak draw event
+- Largest single-week draw: **-3.93 Mn bbl**, week of 2026-02-22
+- Largest 6–14d pulse: **−5.06 Mn bbl**, 2026-06-21 → 2026-07-05 (14d)
+
 ## 7. Signal dictionary (assertions only — weak patterns dropped)
 
 | # | Pattern | Interpretation | Confirmed on |
