@@ -277,6 +277,52 @@ def main():
             + ("Drawn during stress." if mn<60 else "Held near-full throughout — genuine strategic reserve."))
     log("")
 
+    # ============ 6B. YEARLY BUILD/DRAW DISPERSION ============
+    log("## 6B. Build/draw dispersion by year (volatility of weekly change)")
+    dW = totalW.diff(); disp = dW.groupby(dW.index.year).std(); yrnet = dW.groupby(dW.index.year).sum()
+    log("| year | weekly Δ std | net change |")
+    log("|---|---|---|")
+    for y in disp.index: log(f"| {y} | {disp[y]:.2f} | {yrnet[y]:+.1f} |")
+    log(f"\n→ Dispersion { 'rose' if disp.iloc[-1]>disp.iloc[0] else 'fell' } "
+        f"{disp.iloc[0]:.2f}→{disp.iloc[-1]:.2f} Mn bbl. Most volatile year: {disp.idxmax()} ({disp.max():.2f}).\n")
+
+    # ============ 5C. SIZE-CLASS COMPARISON ============
+    log("## 5C. Tank size classes (which class is more active)")
+    st["size"] = [t.split('_')[0] for t in st.index]
+    dTw = totalW.diff(); varTw = dTw.var(); cls_rows = []
+    for sz in ["t60","t55","t40","t25"]:
+        members = [t for t in st.index if st.loc[t,"size"]==sz]
+        if not members: continue
+        vol_mean = volW[members].sum(axis=1).mean()
+        vs = volW[members].sum(axis=1).diff().cov(dTw)/varTw if varTw else 0
+        cls_rows.append(dict(size=sz, n=len(members), total_vol=round(vol_mean,1),
+            per_tank=round(vol_mean/len(members),2), avg_sigma=round(fillp[members].std().mean(),1),
+            var_share=round(100*vs)))
+    pd.DataFrame(cls_rows).to_csv(os.path.join(OUT,"size_class.csv"),index=False)
+    log("| class | tanks | total vol | vol/tank | avg σ fill | var-share |")
+    log("|---|---|---|---|---|---|")
+    for r in cls_rows:
+        log(f"| {r['size']} | {r['n']} | {r['total_vol']} | {r['per_tank']} | {r['avg_sigma']} | {r['var_share']}% |")
+    top8 = cs.head(8).index
+    t8v = volW[list(top8)].sum(axis=1).mean()
+    log(f"\n→ Top-8 mover tanks hold on average **{t8v:.1f} Mn bbl** ({100*t8v/totalW.mean():.0f}% of terminal volume) "
+        f"— they carry {100*cs.head(8).sum():.0f}% of the movement on that share.\n")
+
+    # ============ PEAK DRAW EVENT ============
+    log("## Peak draw event")
+    wk = dW.dropna(); pk = wk.idxmin()
+    log(f"- Largest single-week draw: **{wk.min():.2f} Mn bbl**, week of {pk.date()}")
+    tt2 = totalW.dropna(); idx2 = list(tt2.index); best = (None, 0.0)
+    for i in range(len(idx2)):
+        for j in range(i+1, len(idx2)):
+            dd = (idx2[j]-idx2[i]).days
+            if dd < 6: continue
+            if dd > 14: break
+            drop = tt2.iloc[i]-tt2.iloc[j]
+            if drop > best[1]: best = ((idx2[i].date(), idx2[j].date(), dd), drop)
+    if best[0]:
+        log(f"- Largest 6–14d pulse: **−{best[1]:.2f} Mn bbl**, {best[0][0]} → {best[0][1]} ({best[0][2]}d)\n")
+
     # ============ 7. SIGNAL DICTIONARY ============
     log("## 7. Signal dictionary (assertions only — weak patterns dropped)\n")
     # export pulses on weekly grid
