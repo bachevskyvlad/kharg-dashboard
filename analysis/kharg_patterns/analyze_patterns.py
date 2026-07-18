@@ -239,6 +239,34 @@ def main():
     log(f"- Top-8 tanks account for **{100*top.sum():.0f}%** of all terminal movement "
         f"→ the terminal is driven by a small active core, not all 47 evenly.\n")
 
+    # ============ 5B. GEOGRAPHIC CLUSTERS ============
+    log("## 5B. Geographic clusters — north / central / south")
+    dTw = totalW.diff(); varTw = dTw.var(); tmean = totalW.mean()
+    geo_rows=[]
+    for g in ["north","central","south"]:
+        s = clg[g]; members=[t for t in st.index if st.loc[t,"geo"]==g]
+        sizes = pd.Series([t.split("_")[0] for t in members]).value_counts().to_dict()
+        dser = s.diff(); drawn = -dser[dser<0].sum()
+        vshare = s.diff().cov(dTw)/varTw if varTw else 0
+        mss = s.resample("MS").mean().diff(); mnet = mss.groupby(mss.index.month).mean()
+        draw_months=[MONTHS[m-1] for m in mnet.index if mnet[m]<-0.05]
+        top_draw=MONTHS[mnet.idxmin()-1] if len(mnet) else "—"
+        d25=s[s.index.year==2025].mean(); d26=s[s.index.year==2026].mean()
+        geo_rows.append(dict(geo=g,n=len(members),sizes=str(sizes),
+            mean_level=round(s.mean(),1),share=round(100*s.mean()/tmean),
+            std=round(s.std(),2),total_drawn=round(drawn,1),var_share=round(100*vshare),
+            top_draw_month=top_draw,draw_months=";".join(draw_months),
+            chg_25_26=round((d26-d25),1)))
+    pd.DataFrame(geo_rows).to_csv(os.path.join(OUT,"geo_cluster.csv"),index=False)
+    log("| cluster | tanks | avg lvl | share | σ | drawn | var% | peak-draw mo | draw months | 2025→26 |")
+    log("|---|---|---|---|---|---|---|---|---|---|")
+    for r in geo_rows:
+        log(f"| {r['geo']} | {r['n']} {r['sizes']} | {r['mean_level']} | {r['share']}% | {r['std']} "
+            f"| {r['total_drawn']} | {r['var_share']}% | {r['top_draw_month']} | {r['draw_months'] or '—'} | {r['chg_25_26']:+.1f} |")
+    ma=max(geo_rows,key=lambda r:r['var_share'])
+    log(f"\n→ Most active (drives most terminal movement): **{ma['geo']}** ({ma['var_share']}% of variance).")
+    log(f"→ 2026 build carried mostly by: **{max(geo_rows,key=lambda r:r['chg_25_26'])['geo']}** cluster.\n")
+
     # ============ 6. RESERVE UNDER STRESS ============
     log("## 6. Reserve behaviour (is the strategic hold ever tapped?)")
     for t in KNOWN_RESERVE:
