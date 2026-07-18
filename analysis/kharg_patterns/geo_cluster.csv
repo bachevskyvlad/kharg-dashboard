@@ -1,0 +1,4 @@
+geo,n,sizes,mean_level,share,std,total_drawn,var_share,top_draw_month,draw_months,chg_25_26
+north,16,{'t55': 16},8.7,47,1.09,55.9,54,Jul,Feb;Jun;Jul;Aug;Sep;Nov;Dec,2.1
+central,15,"{'t40': 12, 't55': 2, 't25': 1}",4.5,24,0.57,32.7,25,Jun,Mar;Jun;Jul;Sep,0.7
+south,16,"{'t25': 11, 't60': 5}",5.3,29,0.74,37.0,21,Jun,Feb;Jun;Jul;Oct;Nov;Dec,1.1

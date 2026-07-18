@@ -59,9 +59,19 @@ Weekly grid: 236 weeks · terminal mean 18.5 Mn bbl (min 15.4, max 26.2)
   - **t55_14** (swing, north): 4% of terminal weekly variance
 - Top-8 tanks account for **52%** of all terminal movement → the terminal is driven by a small active core, not all 47 evenly.
 
+## 5B. Geographic clusters — north / central / south
+| cluster | tanks | avg lvl | share | σ | drawn | var% | peak-draw mo | draw months | 2025→26 |
+|---|---|---|---|---|---|---|---|---|---|
+| north | 16 {'t55': 16} | 8.7 | 47% | 1.09 | 55.9 | 54% | Jul | Feb;Jun;Jul;Aug;Sep;Nov;Dec | +2.1 |
+| central | 15 {'t40': 12, 't55': 2, 't25': 1} | 4.5 | 24% | 0.57 | 32.7 | 25% | Jun | Mar;Jun;Jul;Sep | +0.7 |
+| south | 16 {'t25': 11, 't60': 5} | 5.3 | 29% | 0.74 | 37.0 | 21% | Jun | Feb;Jun;Jul;Oct;Nov;Dec | +1.1 |
+
+→ Most active (drives most terminal movement): **north** (54% of variance).
+→ 2026 build carried mostly by: **north** cluster.
+
 ## 6. Reserve behaviour (is the strategic hold ever tapped?)
-- **t60_1**: mean 80% fill, floor 25% on 2023-12-08. Drawn during stress.
 - **t55_31**: mean 81% fill, floor 26% on 2022-04-17. Drawn during stress.
+- **t60_1**: mean 80% fill, floor 25% on 2023-12-08. Drawn during stress.
 
 ## 7. Signal dictionary (assertions only — weak patterns dropped)
 
