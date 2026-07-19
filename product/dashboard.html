@@ -952,7 +952,13 @@ function render() {
     renderPulseHistChart(pulses);
 }
 
-function destroyCharts() { Object.values(charts).forEach(c => c?.destroy()); charts = {}; }
+function destroyCharts() {
+    Object.entries(charts).forEach(([k, c]) => {
+        if (k === 'flowsExport' || k === 'flowsInflow') return;
+        c?.destroy();
+        delete charts[k];
+    });
+}
 
 const _isNarrow = window.matchMedia('(max-width: 820px)').matches;
 const gX = { ticks: { color: '#2d3f52', maxTicksLimit: _isNarrow ? 5 : 10, maxRotation: _isNarrow ? 45 : 45, autoSkip: true, font: { size: _isNarrow ? 9 : 10 } }, grid: { color: 'rgba(255,255,255,0.025)' } };
