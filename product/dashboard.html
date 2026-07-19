@@ -1161,94 +1161,6 @@ function renderFlows(raw) {
     document.getElementById('fTotalOutSub').textContent = `${passes.length} SAR passes · avg ${(totalOut/passes.length).toFixed(2)} Mb/pass`;
     document.getElementById('fTotalInSub').textContent  = `avg inflow ${(totalIn/passes.length).toFixed(2)} Mb/pass`;
 
-    // ECR — Export Coverage Ratio per pass/bucket
-    const ecrData = buckets.map(p => p.grossIn > 0 ? +(p.grossOut / p.grossIn).toFixed(3) : null);
-    const ecrAvg = (() => { const v = ecrData.filter(x => x !== null); return v.length ? (v.reduce((a,b)=>a+b,0)/v.length).toFixed(2) : null; })();
-    const ecrEl = document.getElementById('fECR');
-    if (ecrAvg !== null) {
-        const e = parseFloat(ecrAvg);
-        ecrEl.innerHTML = ecrAvg + '<span style="font-size:0.75rem;color:var(--muted)">x avg</span>';
-        ecrEl.style.color = e > 1.2 ? '#34d399' : e < 0.85 ? '#f87171' : '#D4D9E4';
-        document.getElementById('fECRSub').textContent = e > 1.2 ? '▲ Reserve drawdown regime' : e < 0.85 ? '▼ Accumulation regime' : '≈ Pass-through / balanced';
-    }
-
-    charts.flowsECR && charts.flowsECR.destroy();
-    charts.flowsECR = new Chart(document.getElementById('flowsECRChart').getContext('2d'), {
-        type: 'bar',
-        data: {
-            labels: buckets.map(p => p.d1),
-            datasets: [{
-                label: 'ECR', data: ecrData,
-                backgroundColor: ecrData.map(v => v === null ? 'transparent' : v > 1.2 ? 'rgba(52,211,153,0.7)' : v < 0.85 ? 'rgba(248,113,113,0.7)' : 'rgba(180,180,200,0.5)'),
-                borderWidth: 0, borderRadius: 2
-            }]
-        },
-        options: {
-            responsive: true, maintainAspectRatio: false,
-            plugins: {
-                legend: { display: false },
-                tooltip: { backgroundColor: '#0d1117', borderColor: '#1e293b', borderWidth: 1,
-                    callbacks: {
-                        title: ctx => { const p = buckets[ctx[0].dataIndex]; return `${p.d0} → ${p.d1}`; },
-                        label: ctx => {
-                            const v = ctx.parsed.y;
-                            return ` ECR: ${v.toFixed(3)}x · ${v > 1.2 ? 'reserve drawdown' : v < 0.85 ? 'accumulation' : 'balanced'}`;
-                        }
-                    }
-                },
-                annotation: { annotations: { baseline: { type: 'line', yMin: 1, yMax: 1, borderColor: 'rgba(255,255,255,0.15)', borderWidth: 1, borderDash: [4,4] } } }
-            },
-            scales: {
-                x: gX,
-                y: { ...gY, ticks: { ...gY.ticks, callback: v => v.toFixed(1) + 'x' } }
-            }
-        }
-    });
-
-    // Storage Turnover per pass/bucket (rolling vol from allValues)
-    const currentVol = allValues.length ? allValues[allValues.length - 1] : null;
-    const turnoverData = buckets.map(p => {
-        const throughput = p.days > 0 ? (p.grossOut + p.grossIn) / p.days : null;
-        return (currentVol && throughput) ? +( currentVol / throughput).toFixed(1) : null;
-    });
-    const lastTurnover = turnoverData.filter(v => v !== null).slice(-1)[0];
-    if (lastTurnover !== null && lastTurnover !== undefined) {
-        document.getElementById('fTurnover').innerHTML = Math.round(lastTurnover) + '<span style="font-size:0.75rem;color:var(--muted)">d latest</span>';
-        document.getElementById('fTurnoverSub').textContent = lastTurnover < 40 ? 'High activity — terminal cycling fast' : lastTurnover > 90 ? 'Low activity — possible export freeze' : 'Normal operational tempo';
-    }
-
-    charts.flowsTurnover && charts.flowsTurnover.destroy();
-    charts.flowsTurnover = new Chart(document.getElementById('flowsTurnoverChart').getContext('2d'), {
-        type: 'bar',
-        data: {
-            labels: buckets.map(p => p.d1),
-            datasets: [{
-                label: 'Turnover (days)', data: turnoverData,
-                backgroundColor: turnoverData.map(v => v === null ? 'transparent' : v < 40 ? 'rgba(52,211,153,0.7)' : v > 90 ? 'rgba(248,113,113,0.7)' : 'rgba(180,180,200,0.5)'),
-                borderWidth: 0, borderRadius: 2
-            }]
-        },
-        options: {
-            responsive: true, maintainAspectRatio: false,
-            plugins: {
-                legend: { display: false },
-                tooltip: { backgroundColor: '#0d1117', borderColor: '#1e293b', borderWidth: 1,
-                    callbacks: {
-                        title: ctx => { const p = buckets[ctx[0].dataIndex]; return `${p.d0} → ${p.d1}`; },
-                        label: ctx => {
-                            const v = ctx.parsed.y;
-                            return ` Turnover: ${Math.round(v)}d · ${v < 40 ? 'high activity' : v > 90 ? 'low activity' : 'normal'}`;
-                        }
-                    }
-                }
-            },
-            scales: {
-                x: gX,
-                y: { ...gY, ticks: { ...gY.ticks, callback: v => Math.round(v) + 'd' } }
-            }
-        }
-    });
-
     // Signal text
     const maxOut = passes.reduce((m, p) => p.grossOut > m.grossOut ? p : m, passes[0]);
     document.getElementById('sigFlows').innerHTML =
@@ -1282,6 +1194,55 @@ function renderFlows(raw) {
         });
         buckets = Object.values(grouped).sort((a,b) => a.d1 < b.d1 ? -1 : 1);
     }
+
+    // ECR — Export Coverage Ratio per bucket
+    const ecrData = buckets.map(p => p.grossIn > 0 ? +(p.grossOut / p.grossIn).toFixed(3) : null);
+    const ecrAvg = (() => { const v = ecrData.filter(x => x !== null); return v.length ? (v.reduce((a,b)=>a+b,0)/v.length).toFixed(2) : null; })();
+    const ecrEl = document.getElementById('fECR');
+    if (ecrAvg !== null) {
+        const e = parseFloat(ecrAvg);
+        ecrEl.innerHTML = ecrAvg + '<span style="font-size:0.75rem;color:var(--muted)">x avg</span>';
+        ecrEl.style.color = e > 1.2 ? '#34d399' : e < 0.85 ? '#f87171' : '#D4D9E4';
+        document.getElementById('fECRSub').textContent = e > 1.2 ? '▲ Reserve drawdown regime' : e < 0.85 ? '▼ Accumulation regime' : '≈ Pass-through / balanced';
+    }
+    charts.flowsECR && charts.flowsECR.destroy();
+    charts.flowsECR = new Chart(document.getElementById('flowsECRChart').getContext('2d'), {
+        type: 'bar',
+        data: { labels: buckets.map(p => p.d1), datasets: [{ label: 'ECR', data: ecrData,
+            backgroundColor: ecrData.map(v => v === null ? 'transparent' : v > 1.2 ? 'rgba(52,211,153,0.7)' : v < 0.85 ? 'rgba(248,113,113,0.7)' : 'rgba(180,180,200,0.5)'),
+            borderWidth: 0, borderRadius: 2 }] },
+        options: { responsive: true, maintainAspectRatio: false,
+            plugins: { legend: { display: false },
+                tooltip: { backgroundColor: '#0d1117', borderColor: '#1e293b', borderWidth: 1,
+                    callbacks: { title: ctx => { const p = buckets[ctx[0].dataIndex]; return `${p.d0} → ${p.d1}`; },
+                        label: ctx => ` ECR: ${ctx.parsed.y.toFixed(3)}x · ${ctx.parsed.y > 1.2 ? 'reserve drawdown' : ctx.parsed.y < 0.85 ? 'accumulation' : 'balanced'}` } } },
+            scales: { x: gX, y: { ...gY, ticks: { ...gY.ticks, callback: v => v.toFixed(1) + 'x' } } } }
+    });
+
+    // Storage Turnover per bucket
+    const currentVol = allValues.length ? allValues[allValues.length - 1] : null;
+    const turnoverData = buckets.map(p => {
+        const throughput = p.days > 0 ? (p.grossOut + p.grossIn) / p.days : null;
+        return (currentVol && throughput) ? +(currentVol / throughput).toFixed(1) : null;
+    });
+    const lastTurnover = turnoverData.filter(v => v !== null).slice(-1)[0];
+    if (lastTurnover != null) {
+        document.getElementById('fTurnover').innerHTML = Math.round(lastTurnover) + '<span style="font-size:0.75rem;color:var(--muted)">d latest</span>';
+        document.getElementById('fTurnoverSub').textContent = lastTurnover < 40 ? 'High activity — terminal cycling fast' : lastTurnover > 90 ? 'Low activity — possible export freeze' : 'Normal operational tempo';
+    }
+    charts.flowsTurnover && charts.flowsTurnover.destroy();
+    charts.flowsTurnover = new Chart(document.getElementById('flowsTurnoverChart').getContext('2d'), {
+        type: 'bar',
+        data: { labels: buckets.map(p => p.d1), datasets: [{ label: 'Turnover (days)', data: turnoverData,
+            backgroundColor: turnoverData.map(v => v === null ? 'transparent' : v < 40 ? 'rgba(52,211,153,0.7)' : v > 90 ? 'rgba(248,113,113,0.7)' : 'rgba(180,180,200,0.5)'),
+            borderWidth: 0, borderRadius: 2 }] },
+        options: { responsive: true, maintainAspectRatio: false,
+            plugins: { legend: { display: false },
+                tooltip: { backgroundColor: '#0d1117', borderColor: '#1e293b', borderWidth: 1,
+                    callbacks: { title: ctx => { const p = buckets[ctx[0].dataIndex]; return `${p.d0} → ${p.d1}`; },
+                        label: ctx => ` Turnover: ${Math.round(ctx.parsed.y)}d · ${ctx.parsed.y < 40 ? 'high activity' : ctx.parsed.y > 90 ? 'low activity' : 'normal'}` } } },
+            scales: { x: gX, y: { ...gY, ticks: { ...gY.ticks, callback: v => Math.round(v) + 'd' } } } }
+    });
 
     // Two separate charts — Export Velocity and Production Inflow
     const chartOpts = (datasets, tooltipCb) => ({
