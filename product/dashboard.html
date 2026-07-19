@@ -171,6 +171,22 @@
         .pulse-dates { font-family: monospace; font-size: 0.7rem; color: var(--dim); }
         .pulse-vol { font-family: 'Space Grotesk', sans-serif; font-size: 0.85rem; font-weight: 600; color: var(--green); }
 
+        /* Gross Flows table */
+        .flows-table { width: 100%; border-collapse: collapse; font-size: 0.76rem; }
+        .flows-table th { font-size: 0.55rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.1em; padding: 0.5rem 0.75rem; border-bottom: 1px solid var(--border); text-align: left; font-weight: 600; }
+        .flows-table td { padding: 0.55rem 0.75rem; border-bottom: 1px solid rgba(255,255,255,0.025); font-variant-numeric: tabular-nums; }
+        .flows-table tr:last-child td { border-bottom: none; }
+        .flows-table td.mono { font-family: monospace; color: var(--dim); font-size: 0.72rem; }
+        .flows-table td.out { color: #34d399; font-family: 'Space Grotesk', sans-serif; font-weight: 600; }
+        .flows-table td.inp { color: #f87171; font-family: 'Space Grotesk', sans-serif; font-weight: 600; }
+        .flows-table td.net-pos { color: #f87171; font-family: 'Space Grotesk', sans-serif; }
+        .flows-table td.net-neg { color: #34d399; font-family: 'Space Grotesk', sans-serif; }
+        .flows-table td.tanks { color: #4a5f74; font-size: 0.68rem; }
+        .flows-table tr:hover td { background: rgba(255,255,255,0.015); }
+        .flows-total td { background: rgba(255,255,255,0.025) !important; font-weight: 600; border-top: 1px solid var(--border); }
+        .flows-loading { color: var(--muted); font-size: 0.78rem; padding: 2rem 0; text-align: center; }
+        .period-badge { display: inline-block; padding: 0.15rem 0.5rem; border-radius: 3px; font-size: 0.6rem; font-weight: 600; margin-left: 0.5rem; vertical-align: middle; }
+
         /* Map */
         .map-card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 1.4rem 1.6rem; }
         #tankMap { height: calc(100vh - 280px); min-height: 400px; border-radius: 7px; }
@@ -258,6 +274,9 @@
         </div>
         <div class="nav-item" onclick="showSection('exports')">
             <span class="nav-icon">⇡</span> Export Signals
+        </div>
+        <div class="nav-item" onclick="showSection('flows')">
+            <span class="nav-icon">⇅</span> Gross Flows
         </div>
         <div class="nav-item" onclick="showSection('map')">
             <span class="nav-icon">⊞</span> Per-Tank Map
@@ -463,6 +482,71 @@
         </div>
     </div>
 
+    <!-- ── SECTION: GROSS FLOWS ── -->
+    <div class="section" id="sec-flows">
+        <div class="ctrl-row">
+            <div class="ctrl-group">
+                <span class="ctrl-label">Period</span>
+                <div class="btn-group">
+                    <button class="tbtn" data-frange="90" onclick="setFlowsRange(90)">3M</button>
+                    <button class="tbtn" data-frange="180" onclick="setFlowsRange(180)">6M</button>
+                    <button class="tbtn" data-frange="365" onclick="setFlowsRange(365)">1Y</button>
+                    <button class="tbtn active" data-frange="0" onclick="setFlowsRange(0)">ALL</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="sec-title">Gross Flows — Per-Pass Tank-Level Accounting</div>
+        <div class="signal" id="sigFlows">Loading gross flow data…</div>
+
+        <div class="cards c3" style="margin-bottom:1.25rem">
+            <div class="card green">
+                <div class="card-label">Total Gross Out</div>
+                <div class="card-val" id="fTotalOut" style="color:#34d399">--<span class="cu"> Mb</span></div>
+                <div class="card-sub" id="fTotalOutSub">Σ all tanks drained across all passes</div>
+            </div>
+            <div class="card red">
+                <div class="card-label">Total Gross In</div>
+                <div class="card-val" id="fTotalIn" style="color:#f87171">--<span class="cu"> Mb</span></div>
+                <div class="card-sub" id="fTotalInSub">Σ all tanks filled across all passes</div>
+            </div>
+            <div class="card">
+                <div class="card-label">Net Change</div>
+                <div class="card-val" id="fNet">--<span class="cu"> Mb</span></div>
+                <div class="card-sub" id="fNetSub">Gross Out − Gross In</div>
+            </div>
+        </div>
+
+        <div class="chart-card">
+            <div class="chart-head">
+                <div class="chart-ttl">Gross Out vs Gross In — Per SAR Pass</div>
+                <div class="chart-meta">Mb · green = outflow · red = inflow</div>
+            </div>
+            <div class="ch ch-300"><canvas id="flowsChart"></canvas></div>
+        </div>
+
+        <div class="chart-card" style="padding:0;overflow:hidden">
+            <div class="chart-head" style="padding:1.1rem 1.4rem 0.75rem">
+                <div class="chart-ttl">Pass-by-Pass Breakdown</div>
+                <div class="chart-meta">Per SAR observation pass · ~6d revisit</div>
+            </div>
+            <div style="overflow-x:auto">
+                <table class="flows-table">
+                    <thead><tr>
+                        <th>Period</th>
+                        <th>Days</th>
+                        <th style="color:#34d399">Gross Out</th>
+                        <th>Tanks draining</th>
+                        <th style="color:#f87171">Gross In</th>
+                        <th>Tanks filling</th>
+                        <th>Net</th>
+                    </tr></thead>
+                    <tbody id="flowsTableBody"><tr><td colspan="7" class="flows-loading">Loading…</td></tr></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
     <!-- ── SECTION: PER-TANK MAP ── -->
     <div class="section" id="sec-map">
         <div class="sec-title" style="margin-bottom:0.4rem">Per-Tank Storage — 47 Tanks · Full History</div>
@@ -506,6 +590,7 @@ function showSection(id) {
     document.getElementById('sec-' + id).classList.add('active');
     event.currentTarget.classList.add('active');
     if (id === 'map' && !window._mapInited) { initTankMap(); window._mapInited = true; }
+    if (id === 'flows' && !window._flowsInited) { window._flowsInited = true; loadFlows(); }
 }
 
 // ── Constants ──────────────────────────────────────────────────────────────
@@ -919,6 +1004,188 @@ function exportCSV() {
     a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv' }));
     a.download = `kharg_${raw.dates[raw.dates.length-1]}.csv`;
     a.click();
+}
+
+// ── Gross Flows ────────────────────────────────────────────────────────────
+let _flowsData = null;
+let _flowsRange = 0;
+
+function setFlowsRange(days) {
+    _flowsRange = days;
+    document.querySelectorAll('.tbtn[data-frange]').forEach(b =>
+        b.classList.toggle('active', parseInt(b.dataset.frange) === days));
+    if (_flowsData) renderFlows(_flowsData);
+}
+
+async function loadFlows() {
+    if (_flowsData) { renderFlows(_flowsData); return; }
+    document.getElementById('sigFlows').textContent = 'Loading gross flow data from Supabase…';
+    const headers = { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` };
+    try {
+        let all = [], offset = 0;
+        while (true) {
+            const batch = await fetch(
+                `${SUPABASE_URL}/rest/v1/raw_observations?select=date,tank_id,db_mean,radius_m,h_max&order=date&limit=1000&offset=${offset}`,
+                { headers }
+            ).then(r => r.json());
+            all = all.concat(batch);
+            if (batch.length < 1000) break;
+            offset += 1000;
+        }
+        _flowsData = all;
+        renderFlows(all);
+    } catch(e) {
+        document.getElementById('sigFlows').textContent = 'Error loading data: ' + e.message;
+    }
+}
+
+function renderFlows(raw) {
+    const H_MIN = 2, BBL = 6.2898;
+
+    // Filter by range
+    let data = raw;
+    if (_flowsRange > 0) {
+        const cutoff = new Date();
+        cutoff.setDate(cutoff.getDate() - _flowsRange);
+        const cutStr = cutoff.toISOString().slice(0, 10);
+        data = raw.filter(r => r.date >= cutStr);
+    }
+
+    // Calibrate per tank across all raw data (global percentiles)
+    const dbByTank = {};
+    raw.forEach(r => { if (!dbByTank[r.tank_id]) dbByTank[r.tank_id] = []; dbByTank[r.tank_id].push(r.db_mean); });
+    const cal = {};
+    Object.entries(dbByTank).forEach(([id, vals]) => {
+        const s = [...vals].sort((a,b) => a - b);
+        const p5i = 0.05 * (s.length - 1), p95i = 0.95 * (s.length - 1);
+        cal[id] = {
+            p5:  s[Math.floor(p5i)]  + (s[Math.ceil(p5i)]  - s[Math.floor(p5i)])  * (p5i  % 1),
+            p95: s[Math.floor(p95i)] + (s[Math.ceil(p95i)] - s[Math.floor(p95i)]) * (p95i % 1)
+        };
+    });
+
+    function toMb(tank_id, db_mean, rm, hm) {
+        if (!cal[tank_id]) return null;
+        const { p5, p95 } = cal[tank_id];
+        if (p95 === p5) return null;
+        const ratio = Math.max(0, Math.min(1, (p95 - db_mean) / (p95 - p5)));
+        const h = H_MIN + ratio * (hm - H_MIN);
+        return Math.PI * rm * rm * h * BBL / 1e6;
+    }
+
+    // Group by date
+    const byDate = {};
+    data.forEach(r => {
+        if (!byDate[r.date]) byDate[r.date] = {};
+        byDate[r.date][r.tank_id] = r;
+    });
+    const dates = Object.keys(byDate).sort();
+
+    // Compute per-pass gross flows
+    const passes = [];
+    for (let i = 1; i < dates.length; i++) {
+        const d0 = dates[i-1], d1 = dates[i];
+        const row0 = byDate[d0], row1 = byDate[d1];
+        const common = Object.keys(row1).filter(k => row0[k]);
+        let grossOut = 0, grossIn = 0, tanksOut = 0, tanksIn = 0;
+        common.forEach(tid => {
+            const r0 = row0[tid], r1 = row1[tid];
+            const rm = r0.radius_m || (r0.diameter ? r0.diameter / 2 : null);
+            const hm = r0.h_max;
+            if (!rm || !hm) return;
+            const v0 = toMb(tid, r0.db_mean, rm, hm);
+            const v1 = toMb(tid, r1.db_mean, rm, hm);
+            if (v0 === null || v1 === null) return;
+            const delta = v1 - v0;
+            if (delta < 0) { grossOut += Math.abs(delta); tanksOut++; }
+            else if (delta > 0) { grossIn += delta; tanksIn++; }
+        });
+        const days = Math.round((new Date(d1) - new Date(d0)) / 86400000);
+        passes.push({ d0, d1, days, grossOut, grossIn, net: grossIn - grossOut, tanksOut, tanksIn });
+    }
+
+    if (!passes.length) {
+        document.getElementById('sigFlows').textContent = 'No data in selected period.';
+        return;
+    }
+
+    // Summary KPIs
+    const totalOut = passes.reduce((s, p) => s + p.grossOut, 0);
+    const totalIn  = passes.reduce((s, p) => s + p.grossIn,  0);
+    const totalNet = totalIn - totalOut;
+
+    document.getElementById('fTotalOut').innerHTML = totalOut.toFixed(2) + '<span class="cu"> Mb</span>';
+    document.getElementById('fTotalIn').innerHTML  = totalIn.toFixed(2)  + '<span class="cu"> Mb</span>';
+    const netEl = document.getElementById('fNet');
+    const netSign = totalNet >= 0 ? '+' : '';
+    netEl.innerHTML = netSign + totalNet.toFixed(2) + '<span class="cu"> Mb</span>';
+    netEl.style.color = totalNet >= 0 ? '#f87171' : '#34d399';
+    document.getElementById('fNetSub').textContent = totalNet >= 0 ? '▲ Net build over period' : '▼ Net drawdown over period';
+    document.getElementById('fTotalOutSub').textContent = `${passes.length} SAR passes · avg ${(totalOut/passes.length).toFixed(2)} Mb/pass`;
+    document.getElementById('fTotalInSub').textContent  = `avg inflow ${(totalIn/passes.length).toFixed(2)} Mb/pass`;
+
+    // Signal text
+    const maxOut = passes.reduce((m, p) => p.grossOut > m.grossOut ? p : m, passes[0]);
+    document.getElementById('sigFlows').innerHTML =
+        `Gross outflow tracks actual tank-level drawdowns — not net terminal change. ` +
+        `Peak drawdown pass: <span class="hl">${maxOut.d0} → ${maxOut.d1}</span> · ` +
+        `<span class="good">−${maxOut.grossOut.toFixed(2)} Mb</span> gross out with ${maxOut.tanksOut} tanks draining simultaneously.`;
+
+    // Chart
+    charts.flows && charts.flows.destroy();
+    charts.flows = new Chart(document.getElementById('flowsChart').getContext('2d'), {
+        type: 'bar',
+        data: {
+            labels: passes.map(p => p.d1),
+            datasets: [
+                { label: 'Gross Out (Mb)', data: passes.map(p => -p.grossOut),
+                  backgroundColor: 'rgba(52,211,153,0.6)', borderWidth: 0, borderRadius: 2 },
+                { label: 'Gross In (Mb)',  data: passes.map(p => p.grossIn),
+                  backgroundColor: 'rgba(248,113,113,0.6)', borderWidth: 0, borderRadius: 2 }
+            ]
+        },
+        options: { responsive: true, maintainAspectRatio: false,
+            interaction: { intersect: false, mode: 'index' },
+            plugins: { legend: { labels: { color: '#3d4f63', boxWidth: 10, font: { size: 10 } } },
+                tooltip: { backgroundColor: '#0d1117', borderColor: '#1e293b', borderWidth: 1,
+                    callbacks: {
+                        label: ctx => {
+                            const p = passes[ctx.dataIndex];
+                            if (ctx.datasetIndex === 0) return ` Gross Out: −${p.grossOut.toFixed(3)} Mb (${p.tanksOut} tanks)`;
+                            return ` Gross In: +${p.grossIn.toFixed(3)} Mb (${p.tanksIn} tanks)`;
+                        }
+                    }
+                }
+            },
+            scales: { x: gX, y: { ...gY, stacked: false,
+                ticks: { ...gY.ticks, callback: v => (v < 0 ? '' : '+') + v.toFixed(1) + ' Mb' } } }
+        }
+    });
+
+    // Table
+    const tbody = document.getElementById('flowsTableBody');
+    const rows = [...passes].reverse();
+    tbody.innerHTML = rows.map(p => {
+        const netSign = p.net >= 0 ? '+' : '';
+        const netClass = p.net >= 0 ? 'net-pos' : 'net-neg';
+        return `<tr>
+            <td class="mono">${p.d0} → ${p.d1}</td>
+            <td class="tanks">${p.days}d</td>
+            <td class="out">−${p.grossOut.toFixed(3)}</td>
+            <td class="tanks">${p.tanksOut} tanks</td>
+            <td class="inp">+${p.grossIn.toFixed(3)}</td>
+            <td class="tanks">${p.tanksIn} tanks</td>
+            <td class="${netClass}">${netSign}${p.net.toFixed(3)}</td>
+        </tr>`;
+    }).join('') + `<tr class="flows-total">
+        <td class="mono">TOTAL · ${passes.length} passes</td>
+        <td></td>
+        <td class="out">−${totalOut.toFixed(3)}</td>
+        <td></td>
+        <td class="inp">+${totalIn.toFixed(3)}</td>
+        <td></td>
+        <td class="${totalNet >= 0 ? 'net-pos' : 'net-neg'}">${totalNet >= 0 ? '+' : ''}${totalNet.toFixed(3)}</td>
+    </tr>`;
 }
 
 checkAuth();
