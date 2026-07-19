@@ -509,6 +509,14 @@
                     <button class="tbtn active" data-frange="0" onclick="setFlowsRange(0)">ALL</button>
                 </div>
             </div>
+            <div class="ctrl-group">
+                <span class="ctrl-label">Group by</span>
+                <div class="btn-group">
+                    <button class="tbtn active" data-fgran="pass" onclick="setFlowsGran('pass')">Pass</button>
+                    <button class="tbtn" data-fgran="weekly" onclick="setFlowsGran('weekly')">Weekly</button>
+                    <button class="tbtn" data-fgran="monthly" onclick="setFlowsGran('monthly')">Monthly</button>
+                </div>
+            </div>
         </div>
 
         <div class="sec-title">Gross Flows — Per-Pass Tank-Level Accounting</div>
@@ -534,10 +542,18 @@
 
         <div class="chart-card">
             <div class="chart-head">
-                <div class="chart-ttl">Terminal Flow — Export vs Inflow per Pass</div>
-                <div class="chart-meta">Mb/d · green below axis = exporting · red above = filling · normalised by pass interval</div>
+                <div class="chart-ttl">Export Velocity</div>
+                <div class="chart-meta">Mb/d gross out · normalised by interval</div>
             </div>
-            <div class="ch ch-300"><canvas id="flowsChart"></canvas></div>
+            <div class="ch ch-240"><canvas id="flowsExportChart"></canvas></div>
+        </div>
+
+        <div class="chart-card">
+            <div class="chart-head">
+                <div class="chart-ttl">Production Inflow</div>
+                <div class="chart-meta">Mb/d gross in · normalised by interval</div>
+            </div>
+            <div class="ch ch-240"><canvas id="flowsInflowChart"></canvas></div>
         </div>
 
         <div class="chart-card" style="padding:0;overflow:hidden">
@@ -1026,6 +1042,9 @@ function exportCSV() {
 // ── Gross Flows ────────────────────────────────────────────────────────────
 let _flowsData = null;
 let _flowsRange = 0;
+let _flowsGran = 'pass';
+const FLOWS_CACHE_KEY = 'oilradar_flows_v1';
+const FLOWS_CACHE_TTL = 6 * 3600 * 1000; // 6 hours
 
 function setFlowsRange(days) {
     _flowsRange = days;
@@ -1034,22 +1053,52 @@ function setFlowsRange(days) {
     if (_flowsData) renderFlows(_flowsData);
 }
 
+function setFlowsGran(g) {
+    _flowsGran = g;
+    document.querySelectorAll('.tbtn[data-fgran]').forEach(b =>
+        b.classList.toggle('active', b.dataset.fgran === g));
+    if (_flowsData) renderFlows(_flowsData);
+}
+
 async function loadFlows() {
     if (_flowsData) { renderFlows(_flowsData); return; }
-    document.getElementById('sigFlows').textContent = 'Loading gross flow data from Supabase…';
-    const headers = { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` };
+
+    // Try localStorage cache first
     try {
-        let all = [], offset = 0;
-        while (true) {
-            const batch = await fetch(
-                `${SUPABASE_URL}/rest/v1/raw_observations?select=date,tank_id,db_mean,radius_m,h_max&order=date&limit=1000&offset=${offset}`,
-                { headers }
-            ).then(r => r.json());
-            all = all.concat(batch);
-            if (batch.length < 1000) break;
-            offset += 1000;
+        const cached = localStorage.getItem(FLOWS_CACHE_KEY);
+        if (cached) {
+            const { ts, data } = JSON.parse(cached);
+            if (Date.now() - ts < FLOWS_CACHE_TTL) {
+                _flowsData = data;
+                renderFlows(data);
+                return;
+            }
         }
+    } catch {}
+
+    document.getElementById('sigFlows').textContent = 'Loading gross flow data…';
+    const headers = { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` };
+
+    try {
+        // First request to find total count
+        const countRes = await fetch(
+            `${SUPABASE_URL}/rest/v1/raw_observations?select=date,tank_id,db_mean,radius_m,h_max&order=date&limit=1&offset=0`,
+            { headers: { ...headers, 'Prefer': 'count=exact' } }
+        );
+        const total = parseInt(countRes.headers.get('content-range')?.split('/')[1] || '10000');
+        const pageSize = 1000;
+        const pages = Math.ceil(total / pageSize);
+
+        // Fetch all pages in parallel
+        const requests = Array.from({ length: pages }, (_, i) =>
+            fetch(`${SUPABASE_URL}/rest/v1/raw_observations?select=date,tank_id,db_mean,radius_m,h_max&order=date&limit=${pageSize}&offset=${i * pageSize}`, { headers })
+                .then(r => r.json())
+        );
+        const results = await Promise.all(requests);
+        const all = results.flat();
+
         _flowsData = all;
+        try { localStorage.setItem(FLOWS_CACHE_KEY, JSON.stringify({ ts: Date.now(), data: all })); } catch {}
         renderFlows(all);
     } catch(e) {
         document.getElementById('sigFlows').textContent = 'Error loading data: ' + e.message;
@@ -1148,50 +1197,67 @@ function renderFlows(raw) {
         `Peak drawdown pass: <span class="hl">${maxOut.d0} → ${maxOut.d1}</span> · ` +
         `<span class="good">−${maxOut.grossOut.toFixed(2)} Mb</span> gross out with ${maxOut.tanksOut} tanks draining simultaneously.`;
 
-    // Divergent flow chart — export below axis (negative), inflow above (positive), normalised to Mb/d
-    charts.flows && charts.flows.destroy();
-    const expVelData = passes.map(p => p.days > 0 ? +(-p.grossOut / p.days).toFixed(4) : null);
-    const infVelData = passes.map(p => p.days > 0 ? +(p.grossIn  / p.days).toFixed(4) : null);
-    charts.flows = new Chart(document.getElementById('flowsChart').getContext('2d'), {
+    // Apply grouping (weekly / monthly) on top of per-pass data
+    let buckets = passes;
+    if (_flowsGran === 'weekly' || _flowsGran === 'monthly') {
+        const bucketKey = p => {
+            const d = new Date(p.d1);
+            if (_flowsGran === 'monthly') return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+            const jan1 = new Date(d.getFullYear(), 0, 1);
+            const week = Math.ceil(((d - jan1) / 86400000 + jan1.getDay() + 1) / 7);
+            return `${d.getFullYear()}-W${String(week).padStart(2,'0')}`;
+        };
+        const grouped = {};
+        passes.forEach(p => {
+            const k = bucketKey(p);
+            if (!grouped[k]) grouped[k] = { d0: p.d0, d1: p.d1, days: 0, grossOut: 0, grossIn: 0, net: 0, tanksOut: 0, tanksIn: 0, count: 0 };
+            const g = grouped[k];
+            g.d1 = p.d1;
+            g.days += p.days;
+            g.grossOut += p.grossOut;
+            g.grossIn  += p.grossIn;
+            g.net      += p.net;
+            g.tanksOut = Math.max(g.tanksOut, p.tanksOut);
+            g.tanksIn  = Math.max(g.tanksIn,  p.tanksIn);
+            g.count++;
+        });
+        buckets = Object.values(grouped).sort((a,b) => a.d1 < b.d1 ? -1 : 1);
+    }
+
+    // Two separate charts — Export Velocity and Production Inflow
+    const chartOpts = (datasets, tooltipCb) => ({
         type: 'bar',
-        data: {
-            labels: passes.map(p => p.d1),
-            datasets: [
-                { label: 'Export (Mb/d)',
-                  data: expVelData,
-                  backgroundColor: expVelData.map(() => 'rgba(52,211,153,0.7)'),
-                  borderWidth: 0, borderRadius: 2 },
-                { label: 'Inflow (Mb/d)',
-                  data: infVelData,
-                  backgroundColor: infVelData.map(() => 'rgba(248,113,113,0.7)'),
-                  borderWidth: 0, borderRadius: 2 }
-            ]
-        },
+        data: { labels: buckets.map(p => p.d1), datasets },
         options: {
             responsive: true, maintainAspectRatio: false,
-            interaction: { intersect: false, mode: 'index' },
             plugins: {
-                legend: { labels: { color: '#3d4f63', boxWidth: 10, font: { size: 10 } } },
+                legend: { display: false },
                 tooltip: { backgroundColor: '#0d1117', borderColor: '#1e293b', borderWidth: 1,
-                    callbacks: {
-                        title: ctx => { const p = passes[ctx[0].dataIndex]; return `${p.d0} → ${p.d1} (${p.days}d)`; },
-                        label: ctx => {
-                            const p = passes[ctx.dataIndex];
-                            if (ctx.datasetIndex === 0) return ` Export: −${p.grossOut.toFixed(3)} Mb · ${(-ctx.parsed.y).toFixed(4)} Mb/d · ${p.tanksOut} tanks`;
-                            return ` Inflow: +${p.grossIn.toFixed(3)} Mb · ${ctx.parsed.y.toFixed(4)} Mb/d · ${p.tanksIn} tanks`;
-                        }
-                    }
+                    callbacks: { title: ctx => { const p = buckets[ctx[0].dataIndex]; return `${p.d0} → ${p.d1} (${p.days}d)`; }, label: tooltipCb }
                 }
             },
-            scales: {
-                x: gX,
-                y: { ...gY,
-                    ticks: { ...gY.ticks, callback: v => v.toFixed(3) + ' Mb/d' },
-                    grid: { ...gY.grid, color: ctx => ctx.tick.value === 0 ? 'rgba(255,255,255,0.12)' : 'rgba(255,255,255,0.025)' }
-                }
-            }
+            scales: { x: gX, y: { ...gY, ticks: { ...gY.ticks, callback: v => v.toFixed(3) + ' Mb/d' } } }
         }
     });
+
+    charts.flowsExport && charts.flowsExport.destroy();
+    charts.flowsInflow && charts.flowsInflow.destroy();
+
+    const expVelData = buckets.map(p => p.days > 0 ? +(p.grossOut / p.days).toFixed(4) : null);
+    charts.flowsExport = new Chart(document.getElementById('flowsExportChart').getContext('2d'),
+        chartOpts([{ label: 'Export Velocity', data: expVelData,
+            backgroundColor: expVelData.map(() => 'rgba(52,211,153,0.7)'), borderWidth: 0, borderRadius: 2 }],
+            ctx => { const p = buckets[ctx.dataIndex]; return ` ${(p.grossOut/p.days).toFixed(3)} Mb/d · ${p.grossOut.toFixed(2)} Mb total · ${p.tanksOut} tanks`; }
+        )
+    );
+
+    const infVelData = buckets.map(p => p.days > 0 ? +(p.grossIn / p.days).toFixed(4) : null);
+    charts.flowsInflow = new Chart(document.getElementById('flowsInflowChart').getContext('2d'),
+        chartOpts([{ label: 'Production Inflow', data: infVelData,
+            backgroundColor: infVelData.map(() => 'rgba(248,113,113,0.7)'), borderWidth: 0, borderRadius: 2 }],
+            ctx => { const p = buckets[ctx.dataIndex]; return ` ${(p.grossIn/p.days).toFixed(3)} Mb/d · ${p.grossIn.toFixed(2)} Mb total · ${p.tanksIn} tanks`; }
+        )
+    );
 
     // Update KPI bar velocity metrics from last pass
     const lastPass = passes[passes.length - 1];
