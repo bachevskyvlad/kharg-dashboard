@@ -546,10 +546,17 @@
                 <div class="chart-meta" id="fECRSub">Export Velocity ÷ Production Inflow · per pass</div>
             </div>
             <div class="ch ch-200"><canvas id="flowsECRChart"></canvas></div>
-            <div style="font-size:0.7rem;color:var(--muted);padding:0.75rem 0 0.25rem;line-height:1.6">
-                <b style="color:var(--dim)">ECR &gt; 1</b> — экспортируют больше, чем поступает с полей: Иран сбрасывает накопленные резервы. &nbsp;
-                <b style="color:var(--dim)">ECR ≈ 1</b> — транзитный режим, терминал как труба. &nbsp;
-                <b style="color:var(--dim)">ECR &lt; 1</b> — накопление, добыча опережает вывоз.
+            <div style="font-size:0.7rem;color:var(--muted);padding:0.9rem 0 0.25rem;line-height:1.7">
+                <b style="color:var(--dim)">Export Coverage Ratio = Export Velocity ÷ Production Inflow.</b>
+                Показывает, откуда берётся экспортируемая нефть — из текущей добычи или из накопленных резервов.<br><br>
+                <b style="color:#34d399">ECR &gt; 1.2 (зелёный)</b> — Иран экспортирует больше, чем поступает с месторождений.
+                Терминал активно сбрасывает стратегические резервы. Исторически совпадает с периодами ценового давления или срочных продаж
+                (апрель 2022 — энергетический кризис, декабрь 2023 — хуситские атаки на Red Sea).<br><br>
+                <b style="color:var(--dim)">ECR ≈ 1 (серый, 0.85–1.2)</b> — транзитный режим: терминал работает как труба,
+                добыча напрямую конвертируется в экспорт без существенного изменения запасов.<br><br>
+                <b style="color:#f87171">ECR &lt; 0.85 (красный)</b> — добыча опережает вывоз, запасы накапливаются.
+                Сигнал экспортных ограничений: санкционное давление на покупателей, отсутствие доступных танкеров, или
+                намеренная стратегическая аккумуляция перед ожидаемым ростом цены.
             </div>
         </div>
 
@@ -568,18 +575,21 @@
 
         <div class="chart-card">
             <div class="chart-head">
-                <div class="chart-ttl">Export Velocity</div>
-                <div class="chart-meta">Mb/d gross out · normalised by interval</div>
+                <div class="chart-ttl">Export Velocity &amp; Production Inflow</div>
+                <div class="chart-meta">Mb/d per SAR pass · export below zero · inflow above zero</div>
             </div>
-            <div class="ch ch-240"><canvas id="flowsExportChart"></canvas></div>
-        </div>
-
-        <div class="chart-card">
-            <div class="chart-head">
-                <div class="chart-ttl">Production Inflow</div>
-                <div class="chart-meta">Mb/d gross in · normalised by interval</div>
+            <div class="ch ch-280"><canvas id="flowsDivergentChart"></canvas></div>
+            <div style="font-size:0.7rem;color:var(--muted);padding:0.9rem 0 0.25rem;line-height:1.7">
+                <b style="color:#34d399">Export Velocity (зелёный, ниже нуля)</b> — скорость фактического вывоза нефти с терминала на танкеры, Mb/d.
+                Считается как суммарное уменьшение объёма по всем дренирующим бакам за пасс, нормированное на количество дней между наблюдениями.
+                Высокий экспорт = нефть активно грузится. Низкий = отгрузки приостановлены или замедлены.<br><br>
+                <b style="color:#f87171">Production Inflow (красный, выше нуля)</b> — скорость поступления нефти с месторождений в хранилище, Mb/d.
+                Считается как суммарный прирост объёма по всем заполняющимся бакам. Proxy-метрика добычи:
+                при стабильной добыче inflow должен быть относительно постоянным. Резкое падение = остановка добычи или перекачка между терминалами.
+                Резкий рост = возврат из простоя или новый промысловый поток.<br><br>
+                <b style="color:var(--dim)">Важное ограничение:</b> SAR не различает внутренний перекач между баками и реальный экспорт/добычу.
+                Крупные события (&gt;1.5 Mb за пасс) с высокой вероятностью — реальные операции. Мелкие движения могут быть операционным шумом.
             </div>
-            <div class="ch ch-240"><canvas id="flowsInflowChart"></canvas></div>
         </div>
 
         <div class="chart-card" style="padding:0;overflow:hidden">
@@ -980,7 +990,7 @@ function render() {
 
 function destroyCharts() {
     Object.entries(charts).forEach(([k, c]) => {
-        if (k === 'flowsExport' || k === 'flowsInflow' || k === 'flowsECR' || k === 'flowsTurnover') return;
+        if (k === 'flowsDivergent' || k === 'flowsECR' || k === 'flowsTurnover') return;
         c?.destroy();
         delete charts[k];
     });
@@ -1244,40 +1254,46 @@ function renderFlows(raw) {
             scales: { x: gX, y: { ...gY, ticks: { ...gY.ticks, callback: v => Math.round(v) + 'd' } } } }
     });
 
-    // Two separate charts — Export Velocity and Production Inflow
-    const chartOpts = (datasets, tooltipCb) => ({
+    // Divergent chart — export below zero (green), inflow above zero (red)
+    charts.flowsDivergent && charts.flowsDivergent.destroy();
+    const expVelData = buckets.map(p => p.days > 0 ? +(-p.grossOut / p.days).toFixed(4) : null);
+    const infVelData = buckets.map(p => p.days > 0 ? +(p.grossIn  / p.days).toFixed(4) : null);
+    charts.flowsDivergent = new Chart(document.getElementById('flowsDivergentChart').getContext('2d'), {
         type: 'bar',
-        data: { labels: buckets.map(p => p.d1), datasets },
+        data: {
+            labels: buckets.map(p => p.d1),
+            datasets: [
+                { label: 'Export Velocity', data: expVelData,
+                  backgroundColor: 'rgba(52,211,153,0.75)', borderWidth: 0, borderRadius: 2 },
+                { label: 'Production Inflow', data: infVelData,
+                  backgroundColor: 'rgba(248,113,113,0.75)', borderWidth: 0, borderRadius: 2 }
+            ]
+        },
         options: {
             responsive: true, maintainAspectRatio: false,
+            interaction: { intersect: false, mode: 'index' },
             plugins: {
-                legend: { display: false },
+                legend: { labels: { color: '#4a5f74', boxWidth: 10, font: { size: 10 } } },
                 tooltip: { backgroundColor: '#0d1117', borderColor: '#1e293b', borderWidth: 1,
-                    callbacks: { title: ctx => { const p = buckets[ctx[0].dataIndex]; return `${p.d0} → ${p.d1} (${p.days}d)`; }, label: tooltipCb }
+                    callbacks: {
+                        title: ctx => { const p = buckets[ctx[0].dataIndex]; return `${p.d0} → ${p.d1} (${p.days}d)`; },
+                        label: ctx => {
+                            const p = buckets[ctx.dataIndex];
+                            if (ctx.datasetIndex === 0) return ` Export: −${p.grossOut.toFixed(3)} Mb · ${(p.grossOut/p.days).toFixed(3)} Mb/d · ${p.tanksOut} tanks draining`;
+                            return ` Inflow: +${p.grossIn.toFixed(3)} Mb · ${(p.grossIn/p.days).toFixed(3)} Mb/d · ${p.tanksIn} tanks filling`;
+                        }
+                    }
                 }
             },
-            scales: { x: gX, y: { ...gY, ticks: { ...gY.ticks, callback: v => v.toFixed(3) + ' Mb/d' } } }
+            scales: {
+                x: gX,
+                y: { ...gY,
+                    ticks: { ...gY.ticks, callback: v => v.toFixed(3) + ' Mb/d' },
+                    grid: { ...gY.grid, color: ctx => ctx.tick.value === 0 ? 'rgba(255,255,255,0.15)' : 'rgba(255,255,255,0.025)' }
+                }
+            }
         }
     });
-
-    charts.flowsExport && charts.flowsExport.destroy();
-    charts.flowsInflow && charts.flowsInflow.destroy();
-
-    const expVelData = buckets.map(p => p.days > 0 ? +(p.grossOut / p.days).toFixed(4) : null);
-    charts.flowsExport = new Chart(document.getElementById('flowsExportChart').getContext('2d'),
-        chartOpts([{ label: 'Export Velocity', data: expVelData,
-            backgroundColor: expVelData.map(() => 'rgba(52,211,153,0.7)'), borderWidth: 0, borderRadius: 2 }],
-            ctx => { const p = buckets[ctx.dataIndex]; return ` ${(p.grossOut/p.days).toFixed(3)} Mb/d · ${p.grossOut.toFixed(2)} Mb total · ${p.tanksOut} tanks`; }
-        )
-    );
-
-    const infVelData = buckets.map(p => p.days > 0 ? +(p.grossIn / p.days).toFixed(4) : null);
-    charts.flowsInflow = new Chart(document.getElementById('flowsInflowChart').getContext('2d'),
-        chartOpts([{ label: 'Production Inflow', data: infVelData,
-            backgroundColor: infVelData.map(() => 'rgba(248,113,113,0.7)'), borderWidth: 0, borderRadius: 2 }],
-            ctx => { const p = buckets[ctx.dataIndex]; return ` ${(p.grossIn/p.days).toFixed(3)} Mb/d · ${p.grossIn.toFixed(2)} Mb total · ${p.tanksIn} tanks`; }
-        )
-    );
 
     // Update KPI bar velocity metrics from last pass
     const lastPass = passes[passes.length - 1];
