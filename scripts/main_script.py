@@ -295,6 +295,12 @@ try:
 except Exception as e:
     print(f"  [!] Supabase weekly write failed: {e}")
 
+try:
+    sb.rpc('refresh_gross_flows', {}).execute()
+    print(f"  Supabase kharg_gross_flows: refreshed")
+except Exception as e:
+    print(f"  [!] kharg_gross_flows refresh failed: {e}")
+
 print(f"\nPipeline complete!")
 
 plt.figure(figsize=(14, 7))
