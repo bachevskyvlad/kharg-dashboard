@@ -540,6 +540,29 @@
             </div>
         </div>
 
+        <div class="cards c2" style="margin-bottom:1.25rem">
+            <div class="card">
+                <div class="card-label">Export Coverage Ratio</div>
+                <div class="card-val" id="fECR">--</div>
+                <div class="card-sub" id="fECRSub">Export Velocity ÷ Production Inflow</div>
+                <div class="card-desc" id="fECRDesc" style="font-size:0.68rem;color:var(--muted);margin-top:0.5rem;line-height:1.4">
+                    ECR &gt; 1 — экспортируют больше, чем поступает с полей: Иран сбрасывает резервы.<br>
+                    ECR ≈ 1 — транзитный режим, терминал как труба.<br>
+                    ECR &lt; 1 — накопление, добыча опережает вывоз.
+                </div>
+            </div>
+            <div class="card">
+                <div class="card-label">Storage Turnover</div>
+                <div class="card-val" id="fTurnover">--</div>
+                <div class="card-sub" id="fTurnoverSub">days to cycle full terminal volume</div>
+                <div class="card-desc" id="fTurnoverDesc" style="font-size:0.68rem;color:var(--muted);margin-top:0.5rem;line-height:1.4">
+                    Текущий объём ÷ среднесуточный оборот (Out + In).<br>
+                    Низкий turnover (20–40d) — терминал высокоактивен.<br>
+                    Высокий (&gt;90d) — низкая операционная активность, возможная заморозка экспорта.
+                </div>
+            </div>
+        </div>
+
         <div class="chart-card">
             <div class="chart-head">
                 <div class="chart-ttl">Export Velocity</div>
@@ -1195,6 +1218,27 @@ function renderFlows(raw) {
     document.getElementById('fNetSub').textContent = totalNet >= 0 ? '▲ Net build over period' : '▼ Net drawdown over period';
     document.getElementById('fTotalOutSub').textContent = `${passes.length} SAR passes · avg ${(totalOut/passes.length).toFixed(2)} Mb/pass`;
     document.getElementById('fTotalInSub').textContent  = `avg inflow ${(totalIn/passes.length).toFixed(2)} Mb/pass`;
+
+    // ECR — Export Coverage Ratio
+    const totalDays = passes.reduce((s, p) => s + p.days, 0);
+    const avgExpVel = totalDays > 0 ? totalOut / totalDays : 0;
+    const avgInfVel = totalDays > 0 ? totalIn  / totalDays : 0;
+    const ecr = avgInfVel > 0 ? avgExpVel / avgInfVel : null;
+    const ecrEl = document.getElementById('fECR');
+    if (ecr !== null) {
+        ecrEl.innerHTML = ecr.toFixed(2) + '<span style="font-size:0.8rem;color:var(--muted)">x</span>';
+        ecrEl.style.color = ecr > 1.2 ? '#34d399' : ecr < 0.85 ? '#f87171' : '#D4D9E4';
+        document.getElementById('fECRSub').textContent = ecr > 1.2 ? '▲ Reserve drawdown regime' : ecr < 0.85 ? '▼ Accumulation regime' : '≈ Pass-through / balanced';
+    }
+
+    // Storage Turnover
+    const currentVol = allValues.length ? allValues[allValues.length - 1] : null;
+    const dailyThroughput = totalDays > 0 ? (totalOut + totalIn) / totalDays : 0;
+    if (currentVol && dailyThroughput > 0) {
+        const turnoverDays = currentVol / dailyThroughput;
+        document.getElementById('fTurnover').innerHTML = Math.round(turnoverDays) + '<span style="font-size:0.8rem;color:var(--muted)">d</span>';
+        document.getElementById('fTurnoverSub').textContent = turnoverDays < 40 ? 'High activity — terminal cycling fast' : turnoverDays > 90 ? 'Low activity — possible export freeze' : 'Normal operational tempo';
+    }
 
     // Signal text
     const maxOut = passes.reduce((m, p) => p.grossOut > m.grossOut ? p : m, passes[0]);
