@@ -534,18 +534,10 @@
 
         <div class="chart-card">
             <div class="chart-head">
-                <div class="chart-ttl">Gross Out vs Gross In — Per SAR Pass</div>
-                <div class="chart-meta">Mb · green = outflow · red = inflow</div>
+                <div class="chart-ttl">Terminal Flow — Export vs Inflow per Pass</div>
+                <div class="chart-meta">Mb/d · green below axis = exporting · red above = filling · normalised by pass interval</div>
             </div>
             <div class="ch ch-300"><canvas id="flowsChart"></canvas></div>
-        </div>
-
-        <div class="chart-card">
-            <div class="chart-head">
-                <div class="chart-ttl">Export Velocity &amp; Production Inflow</div>
-                <div class="chart-meta">Mb/d · normalised by days between passes</div>
-            </div>
-            <div class="ch ch-300"><canvas id="velocityChart"></canvas></div>
         </div>
 
         <div class="chart-card" style="padding:0;overflow:hidden">
@@ -1156,65 +1148,48 @@ function renderFlows(raw) {
         `Peak drawdown pass: <span class="hl">${maxOut.d0} → ${maxOut.d1}</span> · ` +
         `<span class="good">−${maxOut.grossOut.toFixed(2)} Mb</span> gross out with ${maxOut.tanksOut} tanks draining simultaneously.`;
 
-    // Chart
+    // Divergent flow chart — export below axis (negative), inflow above (positive), normalised to Mb/d
     charts.flows && charts.flows.destroy();
+    const expVelData = passes.map(p => p.days > 0 ? +(-p.grossOut / p.days).toFixed(4) : null);
+    const infVelData = passes.map(p => p.days > 0 ? +(p.grossIn  / p.days).toFixed(4) : null);
     charts.flows = new Chart(document.getElementById('flowsChart').getContext('2d'), {
         type: 'bar',
         data: {
             labels: passes.map(p => p.d1),
             datasets: [
-                { label: 'Gross Out (Mb)', data: passes.map(p => -p.grossOut),
-                  backgroundColor: 'rgba(52,211,153,0.6)', borderWidth: 0, borderRadius: 2 },
-                { label: 'Gross In (Mb)',  data: passes.map(p => p.grossIn),
-                  backgroundColor: 'rgba(248,113,113,0.6)', borderWidth: 0, borderRadius: 2 }
+                { label: 'Export (Mb/d)',
+                  data: expVelData,
+                  backgroundColor: expVelData.map(() => 'rgba(52,211,153,0.7)'),
+                  borderWidth: 0, borderRadius: 2 },
+                { label: 'Inflow (Mb/d)',
+                  data: infVelData,
+                  backgroundColor: infVelData.map(() => 'rgba(248,113,113,0.7)'),
+                  borderWidth: 0, borderRadius: 2 }
             ]
         },
-        options: { responsive: true, maintainAspectRatio: false,
+        options: {
+            responsive: true, maintainAspectRatio: false,
             interaction: { intersect: false, mode: 'index' },
-            plugins: { legend: { labels: { color: '#3d4f63', boxWidth: 10, font: { size: 10 } } },
+            plugins: {
+                legend: { labels: { color: '#3d4f63', boxWidth: 10, font: { size: 10 } } },
                 tooltip: { backgroundColor: '#0d1117', borderColor: '#1e293b', borderWidth: 1,
                     callbacks: {
+                        title: ctx => { const p = passes[ctx[0].dataIndex]; return `${p.d0} → ${p.d1} (${p.days}d)`; },
                         label: ctx => {
                             const p = passes[ctx.dataIndex];
-                            if (ctx.datasetIndex === 0) return ` Gross Out: −${p.grossOut.toFixed(3)} Mb (${p.tanksOut} tanks)`;
-                            return ` Gross In: +${p.grossIn.toFixed(3)} Mb (${p.tanksIn} tanks)`;
+                            if (ctx.datasetIndex === 0) return ` Export: −${p.grossOut.toFixed(3)} Mb · ${(-ctx.parsed.y).toFixed(4)} Mb/d · ${p.tanksOut} tanks`;
+                            return ` Inflow: +${p.grossIn.toFixed(3)} Mb · ${ctx.parsed.y.toFixed(4)} Mb/d · ${p.tanksIn} tanks`;
                         }
                     }
                 }
             },
-            scales: { x: gX, y: { ...gY, stacked: false,
-                ticks: { ...gY.ticks, callback: v => (v < 0 ? '' : '+') + v.toFixed(1) + ' Mb' } } }
-        }
-    });
-
-    // Velocity chart
-    charts.velocity && charts.velocity.destroy();
-    charts.velocity = new Chart(document.getElementById('velocityChart').getContext('2d'), {
-        type: 'line',
-        data: {
-            labels: passes.map(p => p.d1),
-            datasets: [
-                { label: 'Export Velocity (Mb/d)',
-                  data: passes.map(p => p.days > 0 ? +(p.grossOut / p.days).toFixed(4) : null),
-                  borderColor: '#34d399', backgroundColor: 'rgba(52,211,153,0.06)',
-                  fill: true, tension: 0.3, pointRadius: 2, borderWidth: 2 },
-                { label: 'Production Inflow (Mb/d)',
-                  data: passes.map(p => p.days > 0 ? +(p.grossIn / p.days).toFixed(4) : null),
-                  borderColor: '#f87171', backgroundColor: 'rgba(248,113,113,0.06)',
-                  fill: true, tension: 0.3, pointRadius: 2, borderWidth: 2 }
-            ]
-        },
-        options: { responsive: true, maintainAspectRatio: false,
-            interaction: { intersect: false, mode: 'index' },
-            plugins: { legend: { labels: { color: '#3d4f63', boxWidth: 10, font: { size: 10 } } },
-                tooltip: { backgroundColor: '#0d1117', borderColor: '#1e293b', borderWidth: 1,
-                    callbacks: {
-                        title: ctx => { const p = passes[ctx[0].dataIndex]; return `${p.d0} → ${p.d1} (${p.days}d)`; },
-                        label: ctx => ` ${ctx.dataset.label.split(' (')[0]}: ${ctx.parsed.y.toFixed(4)} Mb/d`
-                    }
+            scales: {
+                x: gX,
+                y: { ...gY,
+                    ticks: { ...gY.ticks, callback: v => v.toFixed(3) + ' Mb/d' },
+                    grid: { ...gY.grid, color: ctx => ctx.tick.value === 0 ? 'rgba(255,255,255,0.12)' : 'rgba(255,255,255,0.025)' }
                 }
-            },
-            scales: { x: gX, y: { ...gY, ticks: { ...gY.ticks, callback: v => v.toFixed(3) + ' Mb/d' } } }
+            }
         }
     });
 
