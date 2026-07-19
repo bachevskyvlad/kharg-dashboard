@@ -318,10 +318,25 @@
             <div class="kpi-value" id="kUtil">--<span class="kpi-unit">%</span></div>
             <div class="kpi-sub" id="kUtilSub"></div>
         </div>
-        <div class="kpi-stat" style="border-right:none">
+        <div class="kpi-stat">
             <div class="kpi-label">Regime</div>
             <div class="kpi-value" id="kRegime" style="font-size:1.1rem;letter-spacing:0.03em">--</div>
             <div class="kpi-sub" id="kRegimeSub"></div>
+        </div>
+        <div class="kpi-stat">
+            <div class="kpi-label">Export Velocity</div>
+            <div class="kpi-value" id="kExpVel" style="color:#34d399">--<span class="kpi-unit"> Mb/d</span></div>
+            <div class="kpi-sub" id="kExpVelSub">gross out · last pass</div>
+        </div>
+        <div class="kpi-stat">
+            <div class="kpi-label">Production Inflow</div>
+            <div class="kpi-value" id="kInflow" style="color:#f87171">--<span class="kpi-unit"> Mb/d</span></div>
+            <div class="kpi-sub" id="kInflowSub">gross in · last pass</div>
+        </div>
+        <div class="kpi-stat" style="border-right:none">
+            <div class="kpi-label">Gross Throughput</div>
+            <div class="kpi-value" id="kThroughput" style="color:#f1f5f9">--<span class="kpi-unit"> Mb/d</span></div>
+            <div class="kpi-sub" id="kThroughputSub">terminal activity · last pass</div>
         </div>
     </div>
 
@@ -536,12 +551,14 @@
                         <th>Period</th>
                         <th>Days</th>
                         <th style="color:#34d399">Gross Out</th>
+                        <th style="color:#34d399">Out Mb/d</th>
                         <th>Tanks draining</th>
                         <th style="color:#f87171">Gross In</th>
+                        <th style="color:#f87171">In Mb/d</th>
                         <th>Tanks filling</th>
                         <th>Net</th>
                     </tr></thead>
-                    <tbody id="flowsTableBody"><tr><td colspan="7" class="flows-loading">Loading…</td></tr></tbody>
+                    <tbody id="flowsTableBody"><tr><td colspan="9" class="flows-loading">Loading…</td></tr></tbody>
                 </table>
             </div>
         </div>
@@ -1162,18 +1179,36 @@ function renderFlows(raw) {
         }
     });
 
+    // Update KPI bar velocity metrics from last pass
+    const lastPass = passes[passes.length - 1];
+    if (lastPass && lastPass.days > 0) {
+        const expVel = lastPass.grossOut / lastPass.days;
+        const inVel  = lastPass.grossIn  / lastPass.days;
+        const thru   = (lastPass.grossOut + lastPass.grossIn) / lastPass.days;
+        document.getElementById('kExpVel').innerHTML = expVel.toFixed(3) + '<span class="kpi-unit"> Mb/d</span>';
+        document.getElementById('kExpVelSub').textContent = `${lastPass.d0} → ${lastPass.d1}`;
+        document.getElementById('kInflow').innerHTML = inVel.toFixed(3) + '<span class="kpi-unit"> Mb/d</span>';
+        document.getElementById('kInflowSub').textContent = `${lastPass.tanksIn} tanks filling`;
+        document.getElementById('kThroughput').innerHTML = thru.toFixed(3) + '<span class="kpi-unit"> Mb/d</span>';
+        document.getElementById('kThroughputSub').textContent = `${lastPass.tanksOut + lastPass.tanksIn} tanks active`;
+    }
+
     // Table
     const tbody = document.getElementById('flowsTableBody');
     const rows = [...passes].reverse();
     tbody.innerHTML = rows.map(p => {
         const netSign = p.net >= 0 ? '+' : '';
         const netClass = p.net >= 0 ? 'net-pos' : 'net-neg';
+        const outRate = p.days > 0 ? (p.grossOut / p.days).toFixed(3) : '—';
+        const inRate  = p.days > 0 ? (p.grossIn  / p.days).toFixed(3) : '—';
         return `<tr>
             <td class="mono">${p.d0} → ${p.d1}</td>
             <td class="tanks">${p.days}d</td>
             <td class="out">−${p.grossOut.toFixed(3)}</td>
+            <td class="out" style="font-size:0.7rem">${outRate}</td>
             <td class="tanks">${p.tanksOut} tanks</td>
             <td class="inp">+${p.grossIn.toFixed(3)}</td>
+            <td class="inp" style="font-size:0.7rem">${inRate}</td>
             <td class="tanks">${p.tanksIn} tanks</td>
             <td class="${netClass}">${netSign}${p.net.toFixed(3)}</td>
         </tr>`;
@@ -1182,7 +1217,9 @@ function renderFlows(raw) {
         <td></td>
         <td class="out">−${totalOut.toFixed(3)}</td>
         <td></td>
+        <td></td>
         <td class="inp">+${totalIn.toFixed(3)}</td>
+        <td></td>
         <td></td>
         <td class="${totalNet >= 0 ? 'net-pos' : 'net-neg'}">${totalNet >= 0 ? '+' : ''}${totalNet.toFixed(3)}</td>
     </tr>`;
