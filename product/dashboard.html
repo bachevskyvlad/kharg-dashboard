@@ -505,10 +505,10 @@
             <div class="ctrl-group">
                 <span class="ctrl-label">Period</span>
                 <div class="btn-group">
-                    <button class="tbtn" data-frange="90" onclick="setFlowsRange(90)">3M</button>
+                    <button class="tbtn active" data-frange="90" onclick="setFlowsRange(90)">3M</button>
                     <button class="tbtn" data-frange="180" onclick="setFlowsRange(180)">6M</button>
                     <button class="tbtn" data-frange="365" onclick="setFlowsRange(365)">1Y</button>
-                    <button class="tbtn active" data-frange="0" onclick="setFlowsRange(0)">ALL</button>
+                    <button class="tbtn" data-frange="0" onclick="setFlowsRange(0)">ALL</button>
                 </div>
             </div>
             <div class="ctrl-group">
@@ -1084,7 +1084,7 @@ function exportCSV() {
 
 // ── Gross Flows ────────────────────────────────────────────────────────────
 let _flowsData = null;
-let _flowsRange = 0;
+let _flowsRange = 90;
 let _flowsGran = 'pass';
 const FLOWS_CACHE_KEY = 'oilradar_flows_v2';
 const FLOWS_CACHE_TTL = 6 * 3600 * 1000; // 6 hours
