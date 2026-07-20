@@ -351,10 +351,10 @@
                 <span class="ctrl-label">Period</span>
                 <div class="btn-group">
                     <button class="tbtn" data-range="30" onclick="setRange(30)">1M</button>
-                    <button class="tbtn" data-range="90" onclick="setRange(90)">3M</button>
+                    <button class="tbtn active" data-range="90" onclick="setRange(90)">3M</button>
                     <button class="tbtn" data-range="180" onclick="setRange(180)">6M</button>
                     <button class="tbtn" data-range="365" onclick="setRange(365)">1Y</button>
-                    <button class="tbtn active" data-range="1095" onclick="setRange(1095)">3Y</button>
+                    <button class="tbtn" data-range="1095" onclick="setRange(1095)">3Y</button>
                     <button class="tbtn" data-range="0" onclick="setRange(0)">ALL</button>
                 </div>
             </div>
@@ -430,7 +430,7 @@
                     <button class="tbtn" data-range="90" onclick="setRange(90)">3M</button>
                     <button class="tbtn" data-range="180" onclick="setRange(180)">6M</button>
                     <button class="tbtn" data-range="365" onclick="setRange(365)">1Y</button>
-                    <button class="tbtn active" data-range="1095" onclick="setRange(1095)">3Y</button>
+                    <button class="tbtn" data-range="1095" onclick="setRange(1095)">3Y</button>
                     <button class="tbtn" data-range="0" onclick="setRange(0)">ALL</button>
                 </div>
             </div>
@@ -672,7 +672,7 @@ const PULSE_WIN_MIN = 6;
 const PULSE_WIN_MAX = 12;
 
 let allDates = [], allValues = [];
-let currentRange = 1095;
+let currentRange = 90;
 let currentGran = 'daily';
 let charts = {};
 
