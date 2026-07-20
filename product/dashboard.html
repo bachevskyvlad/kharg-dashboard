@@ -659,7 +659,10 @@ function showSection(id) {
     document.getElementById('sec-' + id).classList.add('active');
     event.currentTarget.classList.add('active');
     if (id === 'map' && !window._mapInited) { initTankMap(); window._mapInited = true; }
-    if (id === 'flows' && !window._flowsInited) { window._flowsInited = true; loadFlows(); }
+    if (id === 'flows') {
+        if (!window._flowsInited) { window._flowsInited = true; loadFlows(); }
+        else if (_flowsData) { renderFlows(_flowsData); }
+    }
 }
 
 // ── Constants ──────────────────────────────────────────────────────────────
