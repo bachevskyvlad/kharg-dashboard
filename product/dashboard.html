@@ -13,7 +13,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-TZQ5VH3GPY"></script>
     <script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','G-TZQ5VH3GPY');</script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <style>
@@ -659,7 +659,10 @@ function showSection(id) {
     document.getElementById('sec-' + id).classList.add('active');
     event.currentTarget.classList.add('active');
     if (id === 'map' && !window._mapInited) { initTankMap(); window._mapInited = true; }
-    if (id === 'flows' && !window._flowsInited) { window._flowsInited = true; loadFlows(); }
+    if (id === 'flows') {
+        if (!window._flowsInited) { window._flowsInited = true; loadFlows(); }
+        else if (_flowsData) { renderFlows(_flowsData); }
+    }
 }
 
 // ── Constants ──────────────────────────────────────────────────────────────
