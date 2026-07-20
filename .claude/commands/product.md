@@ -177,6 +177,7 @@ ALERT when rolling_std_30d[date] > threshold
 3. Multi-country code in `product/dashboard.html` is LEGACY — keep commented, never delete
 4. Max capacity is 33.2 Mn bbl — update only if new tanks are mapped and added to raw_tanks
 5. Always deduplicate raw_observations on (date, tank_id) before any aggregation
+6. **All UI text, chart labels, descriptions, and tooltips must be in English.** This is an English-only product. Never write Russian in any HTML, JS, or template file.
 
 ---
 

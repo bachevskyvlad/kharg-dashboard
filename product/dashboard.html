@@ -151,7 +151,9 @@
         .chart-meta { font-size: 0.58rem; color: #1e2d3d; text-align: right; line-height: 1.7; }
         .ch { position: relative; }
         .ch-240 { height: 240px; }
+        .ch-280 { height: 280px; }
         .ch-300 { height: 300px; }
+        .ch-320 { height: 320px; }
 
         /* Signal line */
         .signal { font-size: 0.78rem; color: var(--dim); font-style: italic; line-height: 1.65; margin-bottom: 1.5rem; padding: 0.75rem 1rem; background: rgba(255,255,255,0.02); border-left: 2px solid rgba(255,255,255,0.06); border-radius: 0 4px 4px 0; }
@@ -545,18 +547,15 @@
                 <div class="chart-ttl">Export Coverage Ratio <span id="fECR" style="font-size:0.85rem;font-weight:400;margin-left:0.5rem">--</span></div>
                 <div class="chart-meta" id="fECRSub">Export Velocity ÷ Production Inflow · per pass</div>
             </div>
-            <div class="ch ch-200"><canvas id="flowsECRChart"></canvas></div>
+            <div class="ch ch-280"><canvas id="flowsECRChart"></canvas></div>
             <div style="font-size:0.7rem;color:var(--muted);padding:0.9rem 0 0.25rem;line-height:1.7">
                 <b style="color:var(--dim)">Export Coverage Ratio = Export Velocity ÷ Production Inflow.</b>
-                Показывает, откуда берётся экспортируемая нефть — из текущей добычи или из накопленных резервов.<br><br>
-                <b style="color:#34d399">ECR &gt; 1.2 (зелёный)</b> — Иран экспортирует больше, чем поступает с месторождений.
-                Терминал активно сбрасывает стратегические резервы. Исторически совпадает с периодами ценового давления или срочных продаж
-                (апрель 2022 — энергетический кризис, декабрь 2023 — хуситские атаки на Red Sea).<br><br>
-                <b style="color:var(--dim)">ECR ≈ 1 (серый, 0.85–1.2)</b> — транзитный режим: терминал работает как труба,
-                добыча напрямую конвертируется в экспорт без существенного изменения запасов.<br><br>
-                <b style="color:#f87171">ECR &lt; 0.85 (красный)</b> — добыча опережает вывоз, запасы накапливаются.
-                Сигнал экспортных ограничений: санкционное давление на покупателей, отсутствие доступных танкеров, или
-                намеренная стратегическая аккумуляция перед ожидаемым ростом цены.
+                Shows whether exported oil comes from current field production or from accumulated strategic reserves.<br><br>
+                <b style="color:#34d399">ECR &gt; 1.2 (green)</b> — Iran is exporting more than fields are delivering.
+                Terminal is actively drawing down strategic reserves. Historically coincides with price pressure or urgent sales.<br><br>
+                <b style="color:var(--dim)">ECR ≈ 1 (grey, 0.85–1.2)</b> — pass-through mode: production flows directly to export with minimal inventory change.<br><br>
+                <b style="color:#f87171">ECR &lt; 0.85 (red)</b> — production outpaces exports, inventories accumulating.
+                Signal of export constraints: sanctions pressure on buyers, tanker shortage, or deliberate strategic accumulation ahead of an expected price move.
             </div>
         </div>
 
@@ -565,11 +564,11 @@
                 <div class="chart-ttl">Storage Turnover <span id="fTurnover" style="font-size:0.85rem;font-weight:400;margin-left:0.5rem">--</span></div>
                 <div class="chart-meta" id="fTurnoverSub">days to cycle full terminal volume · per pass</div>
             </div>
-            <div class="ch ch-200"><canvas id="flowsTurnoverChart"></canvas></div>
+            <div class="ch ch-280"><canvas id="flowsTurnoverChart"></canvas></div>
             <div style="font-size:0.7rem;color:var(--muted);padding:0.75rem 0 0.25rem;line-height:1.6">
-                Текущий объём ÷ среднесуточный оборот (Out + In). &nbsp;
-                <b style="color:var(--dim)">&lt; 40d</b> — терминал высокоактивен, быстрый цикл. &nbsp;
-                <b style="color:var(--dim)">&gt; 90d</b> — низкая операционная активность, возможная заморозка экспорта.
+                Current volume ÷ average daily throughput (Out + In). &nbsp;
+                <b style="color:var(--dim)">&lt; 40d</b> — terminal highly active, fast cycle. &nbsp;
+                <b style="color:var(--dim)">&gt; 90d</b> — low operational activity, possible export freeze.
             </div>
         </div>
 
@@ -578,17 +577,16 @@
                 <div class="chart-ttl">Export Velocity &amp; Production Inflow</div>
                 <div class="chart-meta">Mb/d per SAR pass · export below zero · inflow above zero</div>
             </div>
-            <div class="ch ch-280"><canvas id="flowsDivergentChart"></canvas></div>
+            <div class="ch ch-320"><canvas id="flowsDivergentChart"></canvas></div>
             <div style="font-size:0.7rem;color:var(--muted);padding:0.9rem 0 0.25rem;line-height:1.7">
-                <b style="color:#34d399">Export Velocity (зелёный, ниже нуля)</b> — скорость фактического вывоза нефти с терминала на танкеры, Mb/d.
-                Считается как суммарное уменьшение объёма по всем дренирующим бакам за пасс, нормированное на количество дней между наблюдениями.
-                Высокий экспорт = нефть активно грузится. Низкий = отгрузки приостановлены или замедлены.<br><br>
-                <b style="color:#f87171">Production Inflow (красный, выше нуля)</b> — скорость поступления нефти с месторождений в хранилище, Mb/d.
-                Считается как суммарный прирост объёма по всем заполняющимся бакам. Proxy-метрика добычи:
-                при стабильной добыче inflow должен быть относительно постоянным. Резкое падение = остановка добычи или перекачка между терминалами.
-                Резкий рост = возврат из простоя или новый промысловый поток.<br><br>
-                <b style="color:var(--dim)">Важное ограничение:</b> SAR не различает внутренний перекач между баками и реальный экспорт/добычу.
-                Крупные события (&gt;1.5 Mb за пасс) с высокой вероятностью — реальные операции. Мелкие движения могут быть операционным шумом.
+                <b style="color:#34d399">Export Velocity (green, below zero)</b> — rate of oil leaving the terminal to tankers, Mb/d.
+                Computed as the total volume decrease across all draining tanks per SAR pass, normalised by days between observations.
+                High export = active loading. Low = shipments paused or slowing.<br><br>
+                <b style="color:#f87171">Production Inflow (red, above zero)</b> — rate of oil arriving from oilfields into storage, Mb/d.
+                Computed as total volume increase across all filling tanks. Proxy for production rate:
+                stable inflow = steady field output. Sharp drop = production halt or inter-terminal transfer. Sharp rise = new production stream or return from idle.<br><br>
+                <b style="color:var(--dim)">Key limitation:</b> SAR cannot distinguish internal tank-to-tank transfers from real exports or field production.
+                Large events (&gt;1.5 Mb per pass) are very likely real operations. Small movements may be operational noise.
             </div>
         </div>
 
