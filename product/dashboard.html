@@ -274,9 +274,6 @@
         <div class="nav-item active" onclick="showSection('overview')">
             <span class="nav-icon">◎</span> Overview
         </div>
-        <div class="nav-item" onclick="showSection('exports')">
-            <span class="nav-icon">⇡</span> Export Signals
-        </div>
         <div class="nav-item" onclick="showSection('flows')">
             <span class="nav-icon">⇅</span> Gross Flows
         </div>
@@ -292,55 +289,6 @@
 
 <!-- ── MAIN ── -->
 <div class="main">
-
-    <!-- Sticky KPI bar -->
-    <div class="kpi-bar">
-        <div class="kpi-stat">
-            <div class="kpi-label">Fill Rate · 7d</div>
-            <div class="kpi-value" id="kFillRate" style="color:#f1f5f9">--<span class="kpi-unit"> Mb/d</span></div>
-            <div class="kpi-sub" id="kFillRateSub"></div>
-        </div>
-        <div class="kpi-stat">
-            <div class="kpi-label">vs 90d Avg</div>
-            <div class="kpi-value" id="kSurprise">--<span class="kpi-unit"> Mb/d</span></div>
-            <div class="kpi-sub" id="kSurpriseSub"></div>
-        </div>
-        <div class="kpi-stat">
-            <div class="kpi-label" id="kDaysLabel">Days to Capacity</div>
-            <div class="kpi-value" id="kDays">--<span class="kpi-unit"> d</span></div>
-            <div class="kpi-sub" id="kDaysSub"></div>
-        </div>
-        <div class="kpi-stat">
-            <div class="kpi-label">Storage</div>
-            <div class="kpi-value" id="kVol">--<span class="kpi-unit"> Mb</span></div>
-            <div class="kpi-sub" id="kVolSub"></div>
-        </div>
-        <div class="kpi-stat">
-            <div class="kpi-label">Utilization</div>
-            <div class="kpi-value" id="kUtil">--<span class="kpi-unit">%</span></div>
-            <div class="kpi-sub" id="kUtilSub"></div>
-        </div>
-        <div class="kpi-stat">
-            <div class="kpi-label">Regime</div>
-            <div class="kpi-value" id="kRegime" style="font-size:1.1rem;letter-spacing:0.03em">--</div>
-            <div class="kpi-sub" id="kRegimeSub"></div>
-        </div>
-        <div class="kpi-stat">
-            <div class="kpi-label">Export Velocity</div>
-            <div class="kpi-value" id="kExpVel" style="color:#34d399">--<span class="kpi-unit"> Mb/d</span></div>
-            <div class="kpi-sub" id="kExpVelSub">gross out · last pass</div>
-        </div>
-        <div class="kpi-stat">
-            <div class="kpi-label">Production Inflow</div>
-            <div class="kpi-value" id="kInflow" style="color:#f87171">--<span class="kpi-unit"> Mb/d</span></div>
-            <div class="kpi-sub" id="kInflowSub">gross in · last pass</div>
-        </div>
-        <div class="kpi-stat" style="border-right:none">
-            <div class="kpi-label">Gross Throughput</div>
-            <div class="kpi-value" id="kThroughput" style="color:#f1f5f9">--<span class="kpi-unit"> Mb/d</span></div>
-            <div class="kpi-sub" id="kThroughputSub">terminal activity · last pass</div>
-        </div>
-    </div>
 
     <div class="alert-wrap">
         <div class="alert-banner" id="alertBanner"><span>⚡</span><span id="alertText"></span></div>
@@ -419,83 +367,6 @@
                 <div class="chart-meta">% of 33.2 Mb max · above 85% = forced sell zone</div>
             </div>
             <div class="ch ch-240"><canvas id="spiChart"></canvas></div>
-        </div>
-    </div>
-
-    <!-- ── SECTION: EXPORT SIGNALS ── -->
-    <div class="section" id="sec-exports">
-        <div class="ctrl-row">
-            <div class="ctrl-group">
-                <span class="ctrl-label">Period</span>
-                <div class="btn-group">
-                    <button class="tbtn" data-range="30" onclick="setRange(30)">1M</button>
-                    <button class="tbtn" data-range="90" onclick="setRange(90)">3M</button>
-                    <button class="tbtn" data-range="180" onclick="setRange(180)">6M</button>
-                    <button class="tbtn" data-range="365" onclick="setRange(365)">1Y</button>
-                    <button class="tbtn" data-range="1095" onclick="setRange(1095)">3Y</button>
-                    <button class="tbtn" data-range="0" onclick="setRange(0)">ALL</button>
-                </div>
-            </div>
-        </div>
-
-        <div class="sec-title">Export Signals — VLCC Loading Events</div>
-        <div class="signal" id="sig3">Loading…</div>
-
-        <div class="cards c3">
-            <div class="card" id="cEPS">
-                <div class="card-label">Loadings · 90d</div>
-                <div class="card-val" id="mEPS">--</div>
-                <div class="badge" id="mEPSBadge"></div>
-            </div>
-            <div class="card" id="cInterval">
-                <div class="card-label">Avg Export Interval</div>
-                <div class="card-val" id="mInterval">--<span class="cu"> d</span></div>
-                <div class="card-sub" id="mIntervalSub"></div>
-            </div>
-            <div class="card" id="cExp90">
-                <div class="card-label">Volume Exported · 90d</div>
-                <div class="card-val" id="mExp90">--<span class="cu"> Mb</span></div>
-                <div class="card-sub" id="mExp90Sub"></div>
-            </div>
-        </div>
-
-        <div class="cards c3" style="margin-bottom:1.25rem">
-            <div class="card" id="cSurprise">
-                <div class="card-label">Rate vs 90d Avg</div>
-                <div class="card-val" id="mSurprise">--<span class="cu"> Mb/d</span></div>
-                <div class="badge" id="mSurpriseBadge"></div>
-            </div>
-            <div class="card" id="cChange30">
-                <div class="card-label">30d Volume Change</div>
-                <div class="card-val" id="mChange30">--<span class="cu">%</span></div>
-                <div class="card-sub" id="mChange30Sub"></div>
-            </div>
-            <div class="card" id="cStreak">
-                <div class="card-label">Current Streak</div>
-                <div class="card-val lg" id="mStreak">--</div>
-                <div class="card-sub" id="mStreakSub"></div>
-            </div>
-        </div>
-
-        <div class="chart-card">
-            <div class="chart-head">
-                <div class="chart-ttl">VLCC Loading Events</div>
-                <div class="chart-meta">Each bar = probable tanker load · Mb over 6–12d</div>
-            </div>
-            <div class="ch ch-300"><canvas id="pulseHistChart"></canvas></div>
-        </div>
-
-        <div class="chart-card">
-            <div class="chart-head">
-                <div class="chart-ttl">Monthly Balance</div>
-                <div class="chart-meta">Net Mb/month · green = net export · red = net build</div>
-            </div>
-            <div class="ch ch-300"><canvas id="monthlyChart"></canvas></div>
-        </div>
-
-        <div class="pulse-log">
-            <div class="pulse-log-label">Event Log</div>
-            <div id="pulseList"><div style="color:var(--muted);font-size:0.75rem;padding:0.5rem 0">Loading…</div></div>
         </div>
     </div>
 
@@ -839,53 +710,6 @@ function render() {
         daysSub = `at ${latestFR.toFixed(3)} Mb/d`;
     }
 
-    // ── KPI BAR ──
-    const frSign = latestFR !== null && latestFR >= 0 ? '+' : '';
-    const kFR = document.getElementById('kFillRate');
-    if (latestFR !== null) {
-        kFR.innerHTML = frSign + latestFR.toFixed(3) + '<span class="kpi-unit"> Mb/d</span>';
-        kFR.style.color = latestFR >= 0 ? '#f87171' : '#34d399';
-    }
-    document.getElementById('kFillRateSub').textContent = latestFR !== null ? (latestFR >= 0 ? '▲ Building' : '▼ Drawing') : '';
-
-    const kSur = document.getElementById('kSurprise');
-    if (surprise !== null) {
-        const ss = surprise >= 0 ? '+' : '';
-        kSur.innerHTML = ss + surprise.toFixed(3) + '<span class="kpi-unit"> Mb/d</span>';
-        kSur.style.color = Math.abs(surprise) < 0.05 ? '#64748b' : surprise > 0 ? '#f87171' : '#34d399';
-        document.getElementById('kSurpriseSub').textContent = Math.abs(surprise) < 0.05 ? 'In line' : surprise > 0 ? 'Surprise build' : 'Surprise draw';
-    }
-
-    document.getElementById('kDaysLabel').textContent = daysLabel;
-    const kD = document.getElementById('kDays');
-    if (daysVal !== null) {
-        kD.innerHTML = daysVal + '<span class="kpi-unit"> d</span>';
-        kD.style.color = daysVal < 30 ? '#f87171' : daysVal < 60 ? '#fbbf24' : '#f1f5f9';
-    } else { kD.innerHTML = '—'; }
-    document.getElementById('kDaysSub').textContent = daysSub;
-
-    document.getElementById('kVol').innerHTML = latest.toFixed(1) + '<span class="kpi-unit"> Mb</span>';
-    document.getElementById('kVolSub').textContent = `${dates[n-1]}`;
-    document.getElementById('kUtil').innerHTML = util.toFixed(1) + '<span class="kpi-unit">%</span>';
-    document.getElementById('kUtilSub').textContent = util > 85 ? 'Critical' : util > 70 ? 'Elevated' : 'Normal';
-
-    const kReg = document.getElementById('kRegime');
-    kReg.textContent = streak.type;
-    kReg.style.color = streak.type === 'BUILD' ? '#f87171' : '#34d399';
-    document.getElementById('kRegimeSub').textContent = `${streak.days}d`;
-
-    // ── ALERT ──
-    const banner = document.getElementById('alertBanner');
-    banner.className = 'alert-banner';
-    if (util > 85) {
-        banner.classList.add('visible', 'critical');
-        document.getElementById('alertText').textContent = `Storage CRITICAL — ${util.toFixed(1)}% utilization. Historically precedes forced price concessions within 4–8 weeks.`;
-    } else if (pulses.length && pulses[pulses.length-1].end >= rawSlice.dates[Math.max(0, rawSlice.dates.length-10)]) {
-        banner.classList.add('visible', 'pulse');
-        const last = pulses[pulses.length-1];
-        document.getElementById('alertText').textContent = `Export pulse: ${last.start} → ${last.end} · −${last.delta.toFixed(2)} Mb in ${last.days}d · Probable VLCC loading`;
-    }
-
     // ── OVERVIEW CARDS ──
     document.getElementById('mVol').innerHTML = latest.toFixed(1) + '<span class="cu"> Mb</span>';
     document.getElementById('mUtil').innerHTML = util.toFixed(1) + '<span class="cu">%</span>';
@@ -910,6 +734,18 @@ function render() {
     } else { document.getElementById('mDays').innerHTML = '—'; }
     document.getElementById('mDaysSub').textContent = daysSub;
 
+    // ── ALERT ──
+    const banner = document.getElementById('alertBanner');
+    banner.className = 'alert-banner';
+    if (util > 85) {
+        banner.classList.add('visible', 'critical');
+        document.getElementById('alertText').textContent = `Storage CRITICAL — ${util.toFixed(1)}% utilization. Historically precedes forced price concessions within 4–8 weeks.`;
+    } else if (pulses.length && pulses[pulses.length-1].end >= rawSlice.dates[Math.max(0, rawSlice.dates.length-10)]) {
+        banner.classList.add('visible', 'pulse');
+        const last = pulses[pulses.length-1];
+        document.getElementById('alertText').textContent = `Export pulse: ${last.start} → ${last.end} · −${last.delta.toFixed(2)} Mb in ${last.days}d · Probable VLCC loading`;
+    }
+
     // Overview signal
     const utilWord = util > 85 ? hl('critical', 'bad') : util > 70 ? hl('elevated', 'warn') : hl('normal', 'good');
     const rateWord = latestFR !== null && latestFR >= 0 ? hl('building', 'bad') : hl('drawing', 'good');
@@ -918,75 +754,12 @@ function render() {
         : '';
     document.getElementById('sig1').innerHTML = `Storage at ${hl(latest.toFixed(2) + ' Mb', 'hl')} (${hl(util.toFixed(0) + '%', 'hl')} utilization) — ${utilWord}. Terminal ${rateWord} at ${hl(Math.abs(latestFR !== null ? latestFR : 0).toFixed(3) + ' Mb/d', 'hl')}.${capNote}`;
 
-    // ── EXPORT SECTION CARDS ──
-    const recent90 = pulses.filter(e => (new Date(rawSlice.dates[rawSlice.dates.length-1]) - new Date(e.end)) / 86400000 <= 90);
-    document.getElementById('mEPS').textContent = recent90.length;
-    const eb = document.getElementById('mEPSBadge');
-    eb.textContent = recent90.length > 0 ? `${recent90.length} loading${recent90.length > 1 ? 's' : ''} last 90d` : 'None last 90d';
-    eb.className = recent90.length > 0 ? 'badge bg' : 'badge bb';
-
-    if (pulses.length > 1) {
-        let g = 0; for (let i = 1; i < pulses.length; i++) g += (new Date(pulses[i].start) - new Date(pulses[i-1].start)) / 86400000;
-        const avg = Math.round(g / (pulses.length - 1));
-        document.getElementById('mInterval').innerHTML = avg + '<span class="cu"> d</span>';
-        const next = new Date(pulses[pulses.length-1].start);
-        next.setDate(next.getDate() + avg);
-        const du = Math.round((next - new Date(rawSlice.dates[rawSlice.dates.length-1])) / 86400000);
-        document.getElementById('mIntervalSub').textContent = du > 0 ? `Next ~${next.toISOString().slice(0,10)} (in ${du}d)` : `Overdue by ${Math.abs(du)}d`;
-    } else {
-        document.getElementById('mInterval').innerHTML = '--<span class="cu"> d</span>';
-        document.getElementById('mIntervalSub').textContent = 'Insufficient data';
-    }
-
-    const exp90vol = recent90.reduce((s, e) => s + e.delta, 0);
-    document.getElementById('mExp90').innerHTML = exp90vol.toFixed(2) + '<span class="cu"> Mb</span>';
-    document.getElementById('mExp90Sub').textContent = `${recent90.length} pulses · ≈${(exp90vol / 2).toFixed(1)} VLCCs`;
-
-    if (surprise !== null) {
-        const ss = surprise >= 0 ? '+' : '';
-        document.getElementById('mSurprise').innerHTML = ss + surprise.toFixed(3) + '<span class="cu"> Mb/d</span>';
-        document.getElementById('mSurprise').style.color = Math.abs(surprise) < 0.05 ? '#64748b' : surprise > 0 ? '#f87171' : '#34d399';
-        const sb = document.getElementById('mSurpriseBadge');
-        if (Math.abs(surprise) < 0.05) { sb.textContent = 'In line with baseline'; sb.className = 'badge bb'; document.getElementById('cSurprise').className = 'card'; }
-        else if (surprise > 0) { sb.textContent = 'Surprise build'; sb.className = 'badge br'; document.getElementById('cSurprise').className = 'card red'; }
-        else { sb.textContent = 'Surprise draw'; sb.className = 'badge bg'; document.getElementById('cSurprise').className = 'card green'; }
-    }
-
-    const c30s = change30pct >= 0 ? '+' : '';
-    document.getElementById('mChange30').innerHTML = c30s + change30pct.toFixed(1) + '<span class="cu">%</span>';
-    document.getElementById('mChange30').style.color = change30pct >= 0 ? '#f87171' : '#34d399';
-    document.getElementById('mChange30Sub').textContent = change30pct >= 0 ? '▲ vs 30 days ago' : '▼ vs 30 days ago';
-    document.getElementById('cChange30').className = change30pct >= 0 ? 'card red' : 'card green';
-
-    const stEl = document.getElementById('mStreak');
-    stEl.textContent = streak.type;
-    stEl.style.color = streak.type === 'BUILD' ? '#f87171' : '#34d399';
-    document.getElementById('mStreakSub').textContent = `${streak.days}d · ${streak.change >= 0 ? '+' : ''}${streak.change.toFixed(2)} Mb`;
-    document.getElementById('cStreak').className = streak.type === 'BUILD' ? 'card red' : 'card green';
-
-    // Export signal
-    if (pulses.length === 0) {
-        document.getElementById('sig3').innerHTML = 'No VLCC loading events detected in the selected period.';
-    } else {
-        const last = pulses[pulses.length - 1];
-        const ds = Math.round((new Date(rawSlice.dates[rawSlice.dates.length-1]) - new Date(last.end)) / 86400000);
-        document.getElementById('sig3').innerHTML = `Last loading: ${hl(last.start, 'hl')} → ${hl(last.end, 'hl')} · ${hl('−' + last.delta.toFixed(2) + ' Mb', 'good')} in ${last.days}d · ${ds < 5 ? hl('May still be loading.', 'warn') : ds + 'd ago.'}` +
-            ` ${recent90.length} loadings in 90d — ${hl(exp90vol.toFixed(2) + ' Mb', 'hl')} total.`;
-    }
-
-    // Pulse log
-    const shown = [...pulses].reverse().slice(0, 10);
-    document.getElementById('pulseList').innerHTML = shown.length
-        ? shown.map(e => `<div class="pulse-row"><span class="pulse-dates">${e.start} → ${e.end} &nbsp;(${e.days}d)</span><span class="pulse-vol">−${e.delta.toFixed(2)} Mb</span></div>`).join('')
-        : '<div style="color:var(--muted);font-size:0.75rem;padding:0.5rem 0">No events in selected period</div>';
-
     // Charts
     destroyCharts();
     renderMainChart(dates, values);
     renderFillRateChart(dates, chartFR);
     renderSPIChart(dates, spiSeries);
     renderMonthlyChart(rawSlice.dates, rawSlice.values);
-    renderPulseHistChart(pulses);
 }
 
 function destroyCharts() {
@@ -1056,21 +829,6 @@ function renderMonthlyChart(dates, values) {
     });
 }
 
-function renderPulseHistChart(pulses) {
-    const el = document.getElementById('pulseHistChart');
-    if (!pulses.length) { el.parentElement.innerHTML = '<p style="color:var(--muted);font-size:0.75rem;padding:0.75rem 0">No loading events detected in selected period</p>'; return; }
-    charts.pulse = new Chart(el.getContext('2d'), {
-        type: 'bar',
-        data: { labels: pulses.map(e => e.start), datasets: [{ label: 'Export Volume (Mb)', data: pulses.map(e => e.delta.toFixed(3)),
-            backgroundColor: 'rgba(5,150,105,0.65)', borderColor: 'rgba(5,150,105,0.8)', borderWidth: 1, borderRadius: 4 }]},
-        options: { responsive: true, maintainAspectRatio: false,
-            plugins: { legend: { labels: { color: '#6b7280', boxWidth: 10, font: { size: 10 } } },
-                tooltip: { backgroundColor: '#ffffff', borderColor: 'rgba(0,0,0,0.1)', borderWidth: 1, titleColor: '#111827', bodyColor: '#374151',
-                    callbacks: { title: ctx => { const e = pulses[ctx[0].dataIndex]; return `${e.start} → ${e.end} (${e.days}d)`; },
-                        label: ctx => ` −${parseFloat(ctx.parsed.y).toFixed(2)} Mb · probable VLCC` } } },
-            scales: { x: gX, y: { ...gY, ticks: { ...gY.ticks, callback: v => v + ' Mb' } } } }
-    });
-}
 
 function exportCSV() {
     const raw = getSliceRaw();
@@ -1298,19 +1056,6 @@ function renderFlows(raw) {
         }
     });
 
-    // Update KPI bar velocity metrics from last pass
-    const lastPass = passes[passes.length - 1];
-    if (lastPass && lastPass.days > 0) {
-        const expVel = lastPass.grossOut / lastPass.days;
-        const inVel  = lastPass.grossIn  / lastPass.days;
-        const thru   = (lastPass.grossOut + lastPass.grossIn) / lastPass.days;
-        document.getElementById('kExpVel').innerHTML = expVel.toFixed(3) + '<span class="kpi-unit"> Mb/d</span>';
-        document.getElementById('kExpVelSub').textContent = `${lastPass.d0} → ${lastPass.d1}`;
-        document.getElementById('kInflow').innerHTML = inVel.toFixed(3) + '<span class="kpi-unit"> Mb/d</span>';
-        document.getElementById('kInflowSub').textContent = `${lastPass.tanksIn} tanks filling`;
-        document.getElementById('kThroughput').innerHTML = thru.toFixed(3) + '<span class="kpi-unit"> Mb/d</span>';
-        document.getElementById('kThroughputSub').textContent = `${lastPass.tanksOut + lastPass.tanksIn} tanks active`;
-    }
 
     // Table
     const tbody = document.getElementById('flowsTableBody');

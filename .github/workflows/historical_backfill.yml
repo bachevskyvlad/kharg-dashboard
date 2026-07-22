@@ -1,4 +1,4 @@
-name: Historical Backfill — Kharg SAR 2022-2024
+name: Historical Backfill — Kharg SAR 2014-present
 
 on:
   workflow_dispatch:
@@ -6,13 +6,13 @@ on:
 jobs:
   backfill:
     runs-on: ubuntu-latest
-    timeout-minutes: 300
+    timeout-minutes: 350
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
       - name: Install dependencies
-        run: pip install sentinelhub supabase pandas numpy
-      - name: Run historical backfill
-        run: python scripts/backfill_historical.py
+        run: pip install sentinelhub supabase pandas numpy matplotlib
+      - name: Run backfill
+        run: python scripts/main_script.py
