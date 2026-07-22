@@ -7,13 +7,13 @@ import pandas as pd
 import numpy as np
 from supabase import create_client
 
-SUPABASE_URL = os.environ["SUPABASE_URL"]
-SUPABASE_KEY = os.environ["SUPABASE_KEY"]
-
 BARREL_PER_M3 = 6.2898
 TANK_HEIGHT_MIN = 2
 
-sb = create_client(SUPABASE_URL, SUPABASE_KEY)
+sb = create_client(
+    "https://yoekhkczwdeyauwarsyy.supabase.co",
+    "sb_publishable_7j07_zzdqTGM1LXf7-o9Tg_JJRbJQSM"
+)
 
 # ── 1. Pull raw_observations 2025-11 onwards (need prior context for percentiles)
 rows = []

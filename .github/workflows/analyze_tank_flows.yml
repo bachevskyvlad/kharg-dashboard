@@ -17,9 +17,6 @@ jobs:
       - name: Install dependencies
         run: pip install supabase pandas numpy
       - name: Run per-tank flow analysis
-        env:
-          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
-          SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
         run: python scripts/analyze_tank_flows.py
       - name: Commit results
         run: |
