@@ -137,19 +137,20 @@ if os.path.exists(RAW_CACHE_PATH):
     cached_dates = {pd.to_datetime(r["date"]).normalize() for r in cached_records}
     print(f"Loaded {len(cached_records)} cached raw records covering {len(cached_dates)} dates.")
 else:
-    print("No local cache — seeding processed dates from Supabase to skip already-downloaded scenes.")
+    print("No local cache — loading all raw_observations from Supabase.")
     try:
         offset = 0
         while True:
-            rows = sb.table("raw_observations").select("date").range(offset, offset + 999).execute().data
+            rows = sb.table("raw_observations").select("date,tank_id,radius_m,diameter,h_max,db_mean").range(offset, offset + 999).execute().data
+            cached_records.extend(rows)
             for r in rows:
                 cached_dates.add(pd.to_datetime(r["date"]).normalize())
             if len(rows) < 1000:
                 break
             offset += 1000
-        print(f"  Supabase: {len(cached_dates)} dates already processed — will skip these.")
+        print(f"  Supabase: loaded {len(cached_records)} records covering {len(cached_dates)} dates.")
     except Exception as e:
-        print(f"  [!] Could not load dates from Supabase: {e}. Will process everything from {START_DATE.date()}.")
+        print(f"  [!] Could not load from Supabase: {e}. Will process everything from {START_DATE.date()}.")
 
 try:
     catalog = SentinelHubCatalog(config=config)
