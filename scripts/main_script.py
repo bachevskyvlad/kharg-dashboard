@@ -48,8 +48,8 @@ TANK_HEIGHT_MIN = 2
 EWMA_ALPHA     = 0.1
 
 RAW_CACHE_PATH = "public/data_raw_cache.json"
-DAILY_PATH     = "public/data_daily.json"
-WEEKLY_PATH    = "public/data.json"
+DAILY_PATH     = "data/data_daily.json"
+WEEKLY_PATH    = "data/data.json"
 PLOT_PATH      = "public/volume_graph.png"
 
 # ================= TANKS DATA =================
