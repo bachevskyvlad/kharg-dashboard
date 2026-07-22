@@ -2,15 +2,6 @@ name: Historical Backfill — Kharg SAR 2014-present
 
 on:
   workflow_dispatch:
-    inputs:
-      start_date:
-        description: "Start date (YYYY-MM-DD), default 2014-06-01"
-        required: false
-        default: "2014-06-01"
-      end_date:
-        description: "End date (YYYY-MM-DD), default today"
-        required: false
-        default: ""
 
 jobs:
   backfill:
@@ -22,9 +13,6 @@ jobs:
         with:
           python-version: "3.11"
       - name: Install dependencies
-        run: pip install sentinelhub supabase pandas numpy
-      - name: Run historical backfill
-        env:
-          BACKFILL_START: ${{ github.event.inputs.start_date || '2014-06-01' }}
-          BACKFILL_END: ${{ github.event.inputs.end_date || '' }}
-        run: python scripts/backfill.py
+        run: pip install sentinelhub supabase pandas numpy matplotlib
+      - name: Run backfill
+        run: python scripts/main_script.py
