@@ -35,7 +35,7 @@ S1_CDSE = DataCollection.SENTINEL1_IW.define_from(
     service_url="https://sh.dataspace.copernicus.eu"
 )
 
-START_DATE     = datetime.strptime("2025-01-01", "%Y-%m-%d")
+START_DATE     = datetime.strptime("2014-06-01", "%Y-%m-%d")
 END_DATE       = datetime.utcnow()
 RESOLUTION     = 5
 BUFFER_METERS  = 300
@@ -137,7 +137,19 @@ if os.path.exists(RAW_CACHE_PATH):
     cached_dates = {pd.to_datetime(r["date"]).normalize() for r in cached_records}
     print(f"Loaded {len(cached_records)} cached raw records covering {len(cached_dates)} dates.")
 else:
-    print("No raw cache found - full download will run.")
+    print("No local cache — seeding processed dates from Supabase to skip already-downloaded scenes.")
+    try:
+        offset = 0
+        while True:
+            rows = sb.table("raw_observations").select("date").range(offset, offset + 999).execute().data
+            for r in rows:
+                cached_dates.add(pd.to_datetime(r["date"]).normalize())
+            if len(rows) < 1000:
+                break
+            offset += 1000
+        print(f"  Supabase: {len(cached_dates)} dates already processed — will skip these.")
+    except Exception as e:
+        print(f"  [!] Could not load dates from Supabase: {e}. Will process everything from {START_DATE.date()}.")
 
 try:
     catalog = SentinelHubCatalog(config=config)
