@@ -1,12 +1,21 @@
-name: Historical Backfill — Kharg SAR 2022-2024
+name: Historical Backfill — Kharg SAR 2014-present
 
 on:
   workflow_dispatch:
+    inputs:
+      start_date:
+        description: "Start date (YYYY-MM-DD), default 2014-06-01"
+        required: false
+        default: "2014-06-01"
+      end_date:
+        description: "End date (YYYY-MM-DD), default today"
+        required: false
+        default: ""
 
 jobs:
   backfill:
     runs-on: ubuntu-latest
-    timeout-minutes: 300
+    timeout-minutes: 350
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -15,4 +24,7 @@ jobs:
       - name: Install dependencies
         run: pip install sentinelhub supabase pandas numpy
       - name: Run historical backfill
-        run: python scripts/backfill_historical.py
+        env:
+          BACKFILL_START: ${{ github.event.inputs.start_date || '2014-06-01' }}
+          BACKFILL_END: ${{ github.event.inputs.end_date || '' }}
+        run: python scripts/backfill.py
