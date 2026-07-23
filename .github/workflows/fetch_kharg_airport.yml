@@ -1,0 +1,27 @@
+name: Fetch Kharg Airport Weekly Viewer
+
+on:
+  workflow_dispatch:
+
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install dependencies
+        run: pip install requests Pillow
+      - name: Fetch images and build viewer
+        run: python scripts/fetch_kharg_airport.py
+      - name: Commit
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add public/kharg_airport_viewer.html
+          git diff --cached --quiet || git commit -m "data: Kharg airport weekly S2 viewer Jan-Jul 2026"
+          git push
