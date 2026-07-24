@@ -14,10 +14,10 @@ WIDTH, HEIGHT = 1000, 560
 EVALSCRIPT = """
 //VERSION=3
 function setup() {
-  return { input: ["B04","B03","B02","dataMask"], output: { bands: 4 } };
+  return { input: ["B12","B11","B04","dataMask"], output: { bands: 4 } };
 }
 function evaluatePixel(s) {
-  return [3.5*s.B04, 3.5*s.B03, 3.5*s.B02, s.dataMask];
+  return [2.5*s.B12, 2.5*s.B11, 2.5*s.B04, s.dataMask];
 }
 """
 
