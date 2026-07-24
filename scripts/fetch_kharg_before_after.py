@@ -8,8 +8,8 @@ SH_CLIENT_SECRET = "U1W6BcqS4bFEIJy2u9xXdlBMZPxtQMBU"
 SH_TOKEN_URL     = "https://identity.dataspace.copernicus.eu/auth/realms/CDSE/protocol/openid-connect/token"
 SH_PROCESS_URL   = "https://sh.dataspace.copernicus.eu/api/v1/process"
 
-BBOX = [50.288, 29.250, 50.378, 29.310]
-WIDTH, HEIGHT = 1000, 660
+BBOX = [50.305, 29.248, 50.358, 29.278]
+WIDTH, HEIGHT = 1000, 560
 
 EVALSCRIPT = """
 //VERSION=3
