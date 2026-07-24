@@ -1,0 +1,27 @@
+name: Fetch Kharg Before/After Strikes
+
+on:
+  workflow_dispatch:
+
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install dependencies
+        run: pip install requests Pillow
+      - name: Fetch before/after images
+        run: python scripts/fetch_kharg_before_after.py
+      - name: Commit
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add public/kharg_before_after.html
+          git diff --cached --quiet || git commit -m "data: Kharg before/after March 13 strikes S2 viewer"
+          git push
