@@ -1,0 +1,27 @@
+name: Export Raw Observations CSV
+
+on:
+  workflow_dispatch:
+
+jobs:
+  export:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install dependencies
+        run: pip install supabase
+      - name: Export CSV
+        run: python scripts/export_raw_observations_csv.py
+      - name: Commit
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add public/kharg_raw_observations.csv
+          git diff --cached --quiet || git commit -m "data: export raw_observations CSV all tanks"
+          git push
