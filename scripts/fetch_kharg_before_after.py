@@ -8,8 +8,8 @@ SH_CLIENT_SECRET = "U1W6BcqS4bFEIJy2u9xXdlBMZPxtQMBU"
 SH_TOKEN_URL     = "https://identity.dataspace.copernicus.eu/auth/realms/CDSE/protocol/openid-connect/token"
 SH_PROCESS_URL   = "https://sh.dataspace.copernicus.eu/api/v1/process"
 
-BBOX = [50.265, 29.240, 50.395, 29.320]
-WIDTH, HEIGHT = 900, 560
+BBOX = [50.288, 29.250, 50.378, 29.310]
+WIDTH, HEIGHT = 1000, 660
 
 EVALSCRIPT = """
 //VERSION=3
@@ -123,7 +123,7 @@ html = f"""<!DOCTYPE html>
   .strike-note {{ font-size: 12px; color: #c87a30; background: #1a1000;
                   border: 1px solid #3a2800; border-radius: 4px;
                   padding: 6px 14px; margin-bottom: 22px; }}
-  .compare-wrap {{ position: relative; width: 900px; max-width: 100%;
+  .compare-wrap {{ position: relative; width: 1000px; max-width: 100%;
                    border-radius: 8px; overflow: hidden; cursor: ew-resize;
                    user-select: none; }}
   .compare-wrap img {{ width: 100%; display: block; }}
@@ -145,7 +145,7 @@ html = f"""<!DOCTYPE html>
                    background: rgba(0,0,0,.65); color: #52c07a;
                    font-size: 11px; font-weight: 700; letter-spacing: .08em;
                    text-transform: uppercase; padding: 3px 8px; border-radius: 3px; }}
-  .strip {{ display: flex; gap: 10px; margin-top: 16px; width: 900px; max-width: 100%; }}
+  .strip {{ display: flex; gap: 10px; margin-top: 16px; width: 1000px; max-width: 100%; }}
   .thumb {{ flex: 1; cursor: pointer; border-radius: 5px; overflow: hidden;
             border: 2px solid transparent; transition: border-color .15s; }}
   .thumb.active {{ border-color: #d4a843; }}
@@ -156,7 +156,7 @@ html = f"""<!DOCTYPE html>
 </head>
 <body>
 <h1>Kharg Island · Military Area — Before &amp; After</h1>
-<div class="sub">Sentinel-2 L2A · True Color · Northern Kharg (airfield, naval base, AA positions)</div>
+<div class="sub">Sentinel-2 L2A · True Color · Kharg Island (airfield, naval base, AA positions)</div>
 <div class="strike-note">US strikes on military targets: March 13, 2026 · Second wave: April 7, 2026</div>
 <div class="compare-wrap" id="cmp">
   <img id="img-before" src="" alt="Before">
