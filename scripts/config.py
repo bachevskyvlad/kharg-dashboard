@@ -15,8 +15,11 @@ from supabase import create_client
 # Credentials default to env vars so the same config works locally and in CI.
 # The CDSE token URL differs from legacy sentinelhub.com — keep it explicit.
 config = SHConfig()
-config.sh_client_id     = os.environ.get("CLIENT_ID",     "sh-4a504e67-3704-4c78-bfbc-e5b92cb1d5b4")
-config.sh_client_secret = os.environ.get("CLIENT_SECRET", "U1W6BcqS4bFEIJy2u9xXdlBMZPxtQMBU")
+# Use env var if non-empty, otherwise fall back to the hardcoded credentials.
+# os.environ.get(key, default) doesn't help when the env var is set to ""
+# (GitHub Actions sets it to "" if the secret is missing), hence the `or`.
+config.sh_client_id     = os.environ.get("CLIENT_ID")     or "sh-4a504e67-3704-4c78-bfbc-e5b92cb1d5b4"
+config.sh_client_secret = os.environ.get("CLIENT_SECRET") or "U1W6BcqS4bFEIJy2u9xXdlBMZPxtQMBU"
 config.sh_token_url     = "https://identity.dataspace.copernicus.eu/auth/realms/CDSE/protocol/openid-connect/token"
 config.sh_base_url      = "https://sh.dataspace.copernicus.eu"
 
