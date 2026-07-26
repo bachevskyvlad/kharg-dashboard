@@ -50,7 +50,7 @@ export async function onRequest(context) {
     method: 'POST',
     headers: { 'Authorization': `Bearer ${resendKey}`, 'Content-Type': 'application/json' },
     body: JSON.stringify({
-      from: 'OilRadar <onboarding@resend.dev>',
+      from: 'OilRadar <noreply@oilradar.io>',
       to: [email],
       subject: `Your OilRadar access code: ${code}`,
       html: `
