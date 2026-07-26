@@ -587,7 +587,7 @@ function showSection(id) {
     event.currentTarget.classList.add('active');
     if (id === 'map' && !window._mapInited) { initTankMap(); window._mapInited = true; }
     if (id === 'flows') {
-        if (!window._flowsInited) { window._flowsInited = true; loadFlows(); }
+        if (!window._flowsInited) { window._flowsInited = true; _flowsRange = 90; loadFlows(); }
         else if (_flowsData) { renderFlows(_flowsData); }
     }
 }
@@ -900,7 +900,7 @@ function exportCSV() {
 let _flowsData = null;
 let _flowsRange = 90;
 let _flowsGran = 'pass';
-const FLOWS_CACHE_KEY = 'oilradar_flows_v2';
+const FLOWS_CACHE_KEY = 'oilradar_flows_v3';
 const FLOWS_CACHE_TTL = 6 * 3600 * 1000; // 6 hours
 
 function setFlowsRange(days) {
