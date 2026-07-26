@@ -170,7 +170,7 @@ try:
     for dt in raw_dates:
         if not deduped or (dt - deduped[-1]).total_seconds() > 43200:  # 12h gap
             deduped.append(dt)
-    all_dates = sorted({d.normalize() for d in deduped})
+    all_dates = sorted({d.normalize().tz_localize(None) for d in deduped})
 except Exception as e:
     print(f"CRITICAL: Failed to connect to Sentinel Hub. Error: {e}")
     sys.exit(1)
