@@ -182,6 +182,39 @@
         /* Section header */
         .sec-title { font-family: 'Space Grotesk', sans-serif; font-size: 1.05rem; font-weight: 600; color: var(--text); margin-bottom: 0.5rem; }
 
+        /* ── EXPORT SETUP ── */
+        .es-block { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 1.25rem 1.6rem; margin-bottom: 1.25rem; }
+        .es-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; }
+        .es-label { font-size: 0.58rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.12em; font-weight: 600; }
+        .es-composite { display: flex; align-items: baseline; gap: 0.45rem; }
+        .es-pct { font-family: 'Space Grotesk', sans-serif; font-size: 1.5rem; font-weight: 700; color: var(--muted); line-height: 1; }
+        .es-pct.active { color: var(--yellow); }
+        .es-pct.hot { color: var(--red); }
+        .es-pct-sub { font-size: 0.6rem; color: var(--dim); }
+        .es-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1px; background: var(--border); border: 1px solid var(--border); border-radius: 6px; overflow: hidden; }
+        .es-row { background: var(--surface); padding: 0.9rem 1rem; cursor: default; transition: background 0.15s; }
+        .es-row:hover { background: rgba(255,255,255,0.02); }
+        .es-row.on { background: rgba(251,191,36,0.06); }
+        .es-row.hot { background: rgba(248,113,113,0.08); }
+        .es-row-top { display: flex; align-items: center; gap: 0.45rem; margin-bottom: 0.3rem; }
+        .es-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--dim); flex-shrink: 0; }
+        .es-row.on .es-dot { background: var(--yellow); }
+        .es-row.hot .es-dot { background: var(--red); }
+        .es-row-name { font-size: 0.68rem; font-weight: 600; color: var(--text); }
+        .es-row-trigger { font-size: 0.6rem; color: var(--dim); margin-bottom: 0.55rem; font-family: monospace; line-height: 1.5; min-height: 1.8em; }
+        .es-row-bottom { display: flex; align-items: baseline; justify-content: space-between; }
+        .es-row-p { font-family: 'Space Grotesk', sans-serif; font-size: 1.15rem; font-weight: 700; color: var(--dim); }
+        .es-row.on .es-row-p { color: var(--yellow); }
+        .es-row.hot .es-row-p { color: var(--red); }
+        .es-row-meta { font-size: 0.58rem; color: var(--dim); text-align: right; line-height: 1.5; }
+        .es-row-status { font-size: 0.55rem; text-transform: uppercase; letter-spacing: 0.1em; font-weight: 700; color: var(--dim); }
+        .es-row.on .es-row-status { color: var(--yellow); }
+        .es-row.hot .es-row-status { color: var(--red); }
+        @media (max-width: 820px) { .es-grid { grid-template-columns: repeat(2, 1fr); } }
+
+        /* Tooltip */
+        .es-tip { position: fixed; z-index: 9999; background: #0d1320; border: 1px solid rgba(255,255,255,0.12); border-radius: 6px; padding: 0.65rem 0.85rem; font-size: 0.7rem; color: #94a3b8; line-height: 1.55; max-width: 280px; pointer-events: none; opacity: 0; transition: opacity 0.12s; box-shadow: 0 4px 16px rgba(0,0,0,0.4); }
+
         /* Pulse log */
         .pulse-log { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 1.25rem 1.6rem; margin-bottom: 1.25rem; }
         .pulse-log-label { font-size: 0.58rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.12em; font-weight: 600; margin-bottom: 0.9rem; }
@@ -451,6 +484,55 @@
             </div>
         </div>
 
+        <!-- Export Setup -->
+        <div class="es-block">
+            <div class="es-header">
+                <span class="es-label">Export Setup</span>
+                <div class="es-composite">
+                    <span class="es-pct" id="esPct">—</span>
+                    <span class="es-pct-sub">composite P(drawdown next pass)</span>
+                </div>
+            </div>
+            <div class="es-grid">
+                <div class="es-row" id="esr-pressure"
+                     data-tip="Level is the primary predictor. At &gt;65% utilization the terminal is under pressure — historically zero drawdowns below 50%, monotonic probability ladder above it.">
+                    <div class="es-row-top"><span class="es-dot"></span><span class="es-row-name">Pressure</span></div>
+                    <div class="es-row-trigger" id="est-pressure">util &gt;65%</div>
+                    <div class="es-row-bottom">
+                        <span class="es-row-p" id="esp-pressure">—</span>
+                        <div class="es-row-meta"><span class="es-row-status" id="ess-pressure">—</span><br>×1.8 lift</div>
+                    </div>
+                </div>
+                <div class="es-row" id="esr-staging"
+                     data-tip="t60_0 and t40_22 are the berth-side tanks — the last stop before a VLCC loads. When t60_0 fills +10pp in a single pass, Iran is staging a cargo. Historically precedes a large drawdown in 29% of passes vs 15% baseline — 6–12 days lead time over AIS.">
+                    <div class="es-row-top"><span class="es-dot"></span><span class="es-row-name">Staging</span></div>
+                    <div class="es-row-trigger">t60_0 +10pp · t40_22 ↑</div>
+                    <div class="es-row-bottom">
+                        <span class="es-row-p" id="esp-staging">—</span>
+                        <div class="es-row-meta"><span class="es-row-status" id="ess-staging">loading</span><br>×1.9 lift</div>
+                    </div>
+                </div>
+                <div class="es-row" id="esr-pendulum"
+                     data-tip="The terminal operates on a receive/ship rhythm. A large net inflow this pass correlates with a large export next pass at +0.39. Iran fills to order — a big intake means a tanker is already allocated.">
+                    <div class="es-row-top"><span class="es-dot"></span><span class="es-row-name">Pendulum</span></div>
+                    <div class="es-row-trigger">big inflow prev pass</div>
+                    <div class="es-row-bottom">
+                        <span class="es-row-p" id="esp-pendulum">—</span>
+                        <div class="es-row-meta"><span class="es-row-status" id="ess-pendulum">—</span><br>×2.9 lift</div>
+                    </div>
+                </div>
+                <div class="es-row" id="esr-streak"
+                     data-tip="Three or more consecutive build passes without a drawdown historically resolves into a large export in 28% of cases — vs 15% baseline. The longer the accumulation, the higher the pressure to sell.">
+                    <div class="es-row-top"><span class="es-dot"></span><span class="es-row-name">Streak</span></div>
+                    <div class="es-row-trigger" id="est-streak">3+ build passes</div>
+                    <div class="es-row-bottom">
+                        <span class="es-row-p" id="esp-streak">—</span>
+                        <div class="es-row-meta"><span class="es-row-status" id="ess-streak">—</span><br>×1.8 lift</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <div class="chart-card">
             <div class="chart-head">
                 <div class="chart-ttl">Volume History</div>
@@ -697,6 +779,11 @@ async function loadData() {
     allDates = daily.dates;
     allValues = daily.values;
     render();
+    // Fetch staging signal async — re-render Export Setup when ready
+    loadStagingSignal().then(s => {
+        window._stagingData = s;
+        render();
+    });
 }
 
 // ── Aggregation ────────────────────────────────────────────────────────────
@@ -898,6 +985,9 @@ function render() {
         : '';
     document.getElementById('sig1').innerHTML = `Storage at ${hl(latest.toFixed(2) + ' Mb', 'hl')} (${hl(util.toFixed(0) + '%', 'hl')} utilization) — ${utilWord}. Terminal ${rateWord} ${hl(Math.abs(fr7d !== null ? fr7d : 0).toFixed(2) + ' Mb over 7d', 'hl')}.${capNote}`;
 
+    // Export Setup (staging injected async after initial render)
+    renderExportSetup(util, fr7d, streak, window._stagingData || null);
+
     // Charts
     destroyCharts();
     renderMainChart(dates, values);
@@ -905,6 +995,130 @@ function render() {
     renderSPIChart(dates, spiSeries);
     renderMonthlyChart(rawSlice.dates, rawSlice.values);
 }
+
+// ── EXPORT SETUP ──────────────────────────────────────────────────────────────
+function tPct(arr, p) {
+    const s = [...arr].sort((a, b) => a - b);
+    const i = (p / 100) * (s.length - 1);
+    const lo = Math.floor(i), hi = Math.ceil(i);
+    return s[lo] + (s[hi] - s[lo]) * (i - lo);
+}
+function tRatio(db, p5, p95) {
+    return Math.min(1, Math.max(0, (p95 - db) / (p95 - p5)));
+}
+
+async function loadStagingSignal() {
+    try {
+        const headers = { apikey: SUPABASE_KEY, Authorization: 'Bearer ' + SUPABASE_KEY };
+        const url = `${SUPABASE_URL}/rest/v1/raw_observations?select=date,tank_id,db_mean&tank_id=in.(t60_0,t40_22)&order=date.desc&limit=120`;
+        const raw = await fetch(url, { headers }).then(r => r.json());
+        if (!Array.isArray(raw) || raw.length < 4) return null;
+        const byTank = { t60_0: [], t40_22: [] };
+        raw.forEach(r => { if (byTank[r.tank_id]) byTank[r.tank_id].push(r); });
+        Object.values(byTank).forEach(arr => arr.sort((a, b) => (a.date < b.date ? -1 : 1)));
+        const calibrate = arr => ({ p5: tPct(arr.map(r => r.db_mean), 5), p95: tPct(arr.map(r => r.db_mean), 95) });
+        const cal60 = calibrate(byTank.t60_0);
+        const cal40 = calibrate(byTank.t40_22);
+        const t60 = byTank.t60_0, t40 = byTank.t40_22;
+        if (t60.length < 2 || t40.length < 2) return null;
+        const r60prev = tRatio(t60[t60.length - 2].db_mean, cal60.p5, cal60.p95);
+        const r60last = tRatio(t60[t60.length - 1].db_mean, cal60.p5, cal60.p95);
+        const r40prev = tRatio(t40[t40.length - 2].db_mean, cal40.p5, cal40.p95);
+        const r40last = tRatio(t40[t40.length - 1].db_mean, cal40.p5, cal40.p95);
+        const t60delta = r60last - r60prev;   // positive = filling
+        const t40filling = r40last > r40prev;
+        return { t60delta, t40filling, t60pct: Math.round(t60delta * 100), active: t60delta >= 0.10 && t40filling };
+    } catch { return null; }
+}
+
+function renderExportSetup(util, fr7d, streak, staging) {
+    // ── Signal evaluation ──
+    const pressureActive = util >= 65;
+    const pressureP = util >= 80 ? 30 : util >= 70 ? 28 : util >= 65 ? 19 : 0;
+
+    const pendulumActive = fr7d !== null && fr7d > 1.5;  // big build last period
+    const pendulumP = 45;
+
+    const stagingActive = staging && staging.active;
+    const stagingP = 29;
+
+    const streakActive = streak.type === 'BUILD' && streak.passes >= 3;
+    const streakP = 28;
+
+    // Composite: pick the strongest active combination
+    let compositeP = null;
+    if (pressureActive && stagingActive) compositeP = 48;          // ×3.2
+    else if (pressureActive && pendulumActive) compositeP = 40;    // ×2.6
+    else if (pendulumActive) compositeP = 45;                      // ×2.9
+    else if (stagingActive) compositeP = 29;                       // ×1.9
+    else if (streakActive) compositeP = 28;                        // ×1.8
+    else if (pressureActive) compositeP = pressureP;
+
+    // ── Render composite ──
+    const pctEl = document.getElementById('esPct');
+    if (compositeP !== null) {
+        pctEl.textContent = compositeP + '%';
+        pctEl.className = 'es-pct' + (compositeP >= 40 ? ' hot' : ' active');
+    } else {
+        pctEl.textContent = '—';
+        pctEl.className = 'es-pct';
+    }
+
+    // ── Pressure row ──
+    setEsRow('pressure', pressureActive, false, pressureP + '%',
+        pressureActive ? 'util ' + util.toFixed(0) + '%' : 'util <65%',
+        pressureActive ? 'active' : '—');
+
+    // ── Staging row ──
+    const stagingHot = stagingActive && pressureActive;
+    const stagingTrigger = staging
+        ? (stagingActive ? 't60_0 +' + staging.t60pct + 'pp · t40_22 ↑' : 't60_0 ' + (staging.t60pct >= 0 ? '+' : '') + staging.t60pct + 'pp · watching')
+        : 'loading…';
+    setEsRow('staging', stagingActive, stagingHot, stagingP + '%', stagingTrigger,
+        staging ? (stagingActive ? 'active' : '—') : 'loading');
+
+    // ── Pendulum row ──
+    const pendulumHot = pendulumActive && pressureActive;
+    setEsRow('pendulum', pendulumActive, pendulumHot, pendulumP + '%',
+        fr7d !== null ? (fr7d > 0 ? '+' + fr7d.toFixed(1) + ' Mb last 7d' : fr7d.toFixed(1) + ' Mb last 7d') : '—',
+        pendulumActive ? 'active' : '—');
+
+    // ── Streak row ──
+    const streakTrigger = streak.type === 'BUILD'
+        ? streak.passes + ' pass' + (streak.passes !== 1 ? 'es' : '') + ' build'
+        : streak.type === 'DRAW' ? 'drawdown streak' : '—';
+    setEsRow('streak', streakActive, false, streakP + '%', streakTrigger,
+        streakActive ? 'active' : '—');
+}
+
+function setEsRow(id, active, hot, p, trigger, status) {
+    const row = document.getElementById('esr-' + id);
+    row.className = 'es-row' + (hot ? ' hot' : active ? ' on' : '');
+    const trigEl = document.getElementById('est-' + id);
+    if (trigEl) trigEl.textContent = trigger;
+    document.getElementById('esp-' + id).textContent = active ? p : '—';
+    document.getElementById('ess-' + id).textContent = status;
+}
+
+// Tooltip wiring
+(function () {
+    const tip = document.getElementById('esTip');
+    document.querySelectorAll('[data-tip]').forEach(el => {
+        el.addEventListener('mouseenter', e => {
+            tip.textContent = el.getAttribute('data-tip');
+            tip.style.opacity = '1';
+            moveTip(e);
+        });
+        el.addEventListener('mousemove', moveTip);
+        el.addEventListener('mouseleave', () => { tip.style.opacity = '0'; });
+    });
+    function moveTip(e) {
+        const x = e.clientX + 14, y = e.clientY + 14;
+        const w = tip.offsetWidth || 260;
+        tip.style.left = (x + w > window.innerWidth ? e.clientX - w - 10 : x) + 'px';
+        tip.style.top = (y + 120 > window.innerHeight ? e.clientY - 120 : y) + 'px';
+    }
+})();
 
 function destroyCharts() {
     Object.entries(charts).forEach(([k, c]) => {
@@ -1310,6 +1524,8 @@ async function initTankMap() {
     document.getElementById('mapNext').addEventListener('click', () => { const v=Math.min(dates.length-1,+slider.value+1); slider.value=v; renderDate(dates[v]); });
 }
 </script>
+
+<div class="es-tip" id="esTip"></div>
 
 <!-- ── ONBOARDING MODAL ── -->
 <div class="ob-overlay" id="obOverlay">
