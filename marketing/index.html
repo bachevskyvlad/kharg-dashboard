@@ -35,13 +35,13 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@300;400;500&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
 <style>
-:root{--bg:#fafaf8;--deep:#f4f2ef;--panel:#ffffff;--border:rgba(0,0,0,0.08);--accent:#1d4ed8;--accent2:#dc2626;--gold:#d97706;--text:#111827;--muted:#6b7280;--dim:#9ca3af;--white:#ffffff;}
+:root{--bg:#0a0e17;--deep:#0d1320;--panel:#111827;--border:rgba(255,255,255,0.07);--accent:#3b82f6;--accent2:#ef4444;--gold:#f59e0b;--text:#e2e8f0;--muted:#94a3b8;--dim:#64748b;--white:#f8fafc;}
 *{margin:0;padding:0;box-sizing:border-box;}
 html{scroll-behavior:smooth;}
 body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;overflow-x:hidden;}
 
 /* NAV */
-nav{position:fixed;top:0;left:0;right:0;z-index:200;display:flex;align-items:center;justify-content:space-between;padding:14px 48px;background:rgba(250,250,248,0.97);backdrop-filter:blur(16px);border-bottom:1px solid var(--border);}
+nav{position:fixed;top:0;left:0;right:0;z-index:200;display:flex;align-items:center;justify-content:space-between;padding:14px 48px;background:rgba(10,14,23,0.97);backdrop-filter:blur(16px);border-bottom:1px solid var(--border);}
 .logo{font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:4px;color:var(--accent);text-decoration:none;}
 .nav-right{display:flex;align-items:center;gap:28px;}
 .nav-link{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);text-decoration:none;transition:color .2s;}
@@ -65,7 +65,7 @@ h1.hero-title span{color:var(--accent);}
 .btn-primary{font-family:'DM Mono',monospace;font-size:11px;letter-spacing:3px;text-transform:uppercase;background:var(--accent);color:#ffffff;padding:14px 32px;border:none;cursor:pointer;text-decoration:none;display:inline-block;transition:opacity .2s;}
 .btn-primary:hover{opacity:.85;}
 .btn-outline{font-family:'DM Mono',monospace;font-size:11px;letter-spacing:3px;text-transform:uppercase;background:transparent;color:var(--accent);padding:13px 32px;border:1px solid var(--accent);cursor:pointer;text-decoration:none;display:inline-block;transition:all .2s;}
-.btn-outline:hover{background:rgba(29,78,216,0.06);}
+.btn-outline:hover{background:rgba(59,130,246,0.12);}
 @media(max-width:900px){#hero{grid-template-columns:1fr;}.hero-img{display:none;}.hero-content{padding:100px 24px 60px;}}
 
 /* STATS STRIP */
@@ -95,12 +95,12 @@ h1.hero-title span{color:var(--accent);}
 #chart-section{padding:100px 64px;background:var(--bg);text-align:center;}
 .chart-section-inner{max-width:1100px;margin:0 auto;}
 .chart-outer{position:relative;margin-top:40px;text-align:left;}
-.chart-canvas-wrap{background:var(--panel);border:1px solid var(--border);padding:28px 32px;position:relative;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,0.05);}
-.chart-lock-overlay{position:absolute;top:0;right:0;width:10%;height:100%;background:linear-gradient(to right,transparent,rgba(250,250,248,0.97) 40%);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;z-index:10;}
+.chart-canvas-wrap{background:var(--panel);border:1px solid var(--border);padding:28px 32px;position:relative;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,0.3);}
+.chart-lock-overlay{position:absolute;top:0;right:0;width:10%;height:100%;background:linear-gradient(to right,transparent,rgba(10,14,23,0.97) 40%);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;z-index:10;}
 .lock-icon{font-size:20px;}
 .lock-label{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);text-align:center;line-height:1.5;}
 .lock-cta-btn{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:2px;text-transform:uppercase;background:var(--accent);color:#ffffff;padding:8px 14px;text-decoration:none;display:inline-block;margin-top:4px;white-space:nowrap;}
-#chartStat{font-family:'DM Mono',monospace;font-size:13px;color:var(--text);margin-bottom:20px;padding:12px 16px;background:rgba(29,78,216,0.04);border-left:2px solid var(--accent);display:flex;gap:24px;flex-wrap:wrap;}
+#chartStat{font-family:'DM Mono',monospace;font-size:13px;color:var(--text);margin-bottom:20px;padding:12px 16px;background:rgba(59,130,246,0.06);border-left:2px solid var(--accent);display:flex;gap:24px;flex-wrap:wrap;}
 @media(max-width:768px){#chart-section{padding:70px 24px;}.chart-lock-overlay{width:18%;}}
 
 /* PRODUCTS */
@@ -108,7 +108,7 @@ h1.hero-title span{color:var(--accent);}
 .products-inner{max-width:1000px;margin:0 auto;}
 .products-grid{display:grid;grid-template-columns:1fr 1fr;gap:2px;margin-top:48px;text-align:left;}
 .product-card{background:var(--panel);border:1px solid var(--border);padding:48px 40px;}
-.product-card.featured{border-color:var(--accent);background:rgba(29,78,216,0.02);}
+.product-card.featured{border-color:var(--accent);background:rgba(59,130,246,0.06);}
 .product-badge{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:3px;text-transform:uppercase;color:var(--muted);margin-bottom:16px;}
 .product-card.featured .product-badge{color:var(--accent);}
 .product-card h3{font-family:'Bebas Neue',sans-serif;font-size:36px;color:var(--text);margin-bottom:16px;}
@@ -312,12 +312,12 @@ async function loadLandingChart() {
     const pctVal = pct(prev);
     const pctSign = pctVal > 0 ? '+' : '';
     const trend = diff > 0
-      ? '<span style="color:#d97706">▲ BUILDING</span>'
-      : '<span style="color:#1d4ed8">▼ DRAWDOWN</span>';
+      ? '<span style="color:#f59e0b">▲ BUILDING</span>'
+      : '<span style="color:#3b82f6">▼ DRAWDOWN</span>';
 
     document.getElementById('chartStat').innerHTML =
-      `<div>Latest shown: <strong style="color:#1d4ed8">${latest.toFixed(2)} Mb</strong></div>` +
-      `<div>Day-over-Day: <strong style="color:${diff > 0 ? '#d97706' : '#1d4ed8'}">${sign}${diff} Mb (${pctSign}${pctVal}%)</strong></div>` +
+      `<div>Latest shown: <strong style="color:#3b82f6">${latest.toFixed(2)} Mb</strong></div>` +
+      `<div>Day-over-Day: <strong style="color:${diff > 0 ? '#f59e0b' : '#3b82f6'}">${sign}${diff} Mb (${pctSign}${pctVal}%)</strong></div>` +
       `<div>Status: <strong>${trend}</strong></div>` +
       `<div style="color:var(--muted);font-size:11px;">Latest 2 weeks gated — <a href="https://calendly.com/bachevsky/intro" target="_blank" style="color:var(--accent);">request access</a></div>`;
 
@@ -332,13 +332,13 @@ async function loadLandingChart() {
         datasets: [{
           label: 'Storage (Mb)',
           data: filtered.values,
-          borderColor: '#1d4ed8',
+          borderColor: '#3b82f6',
           borderWidth: 2,
-          backgroundColor: 'rgba(29,78,216,0.06)',
+          backgroundColor: 'rgba(59,130,246,0.10)',
           fill: true,
           pointRadius: 2,
-          pointBackgroundColor: '#ffffff',
-          pointBorderColor: '#1d4ed8',
+          pointBackgroundColor: '#0a0e17',
+          pointBorderColor: '#3b82f6',
           tension: 0.1
         }]
       },
@@ -348,19 +348,19 @@ async function loadLandingChart() {
         interaction: { intersect: false, mode: 'index' },
         scales: {
           x: {
-            ticks: { color: '#9ca3af', font: { family: 'DM Mono, monospace', size: 10 }, maxTicksLimit: 10 },
-            grid: { color: 'rgba(0,0,0,0.05)' }
+            ticks: { color: '#64748b', font: { family: 'DM Mono, monospace', size: 10 }, maxTicksLimit: 10 },
+            grid: { color: 'rgba(255,255,255,0.05)' }
           },
           y: {
-            ticks: { color: '#9ca3af', font: { family: 'DM Mono, monospace', size: 11 }, callback: v => v.toFixed(1) + ' Mb' },
-            grid: { color: 'rgba(0,0,0,0.05)' }
+            ticks: { color: '#64748b', font: { family: 'DM Mono, monospace', size: 11 }, callback: v => v.toFixed(1) + ' Mb' },
+            grid: { color: 'rgba(255,255,255,0.05)' }
           }
         },
         plugins: {
           legend: { display: false },
           tooltip: {
-            backgroundColor: '#ffffff', borderColor: 'rgba(0,0,0,0.1)', borderWidth: 1,
-            titleColor: '#6b7280', bodyColor: '#1d4ed8',
+            backgroundColor: '#111827', borderColor: 'rgba(255,255,255,0.1)', borderWidth: 1,
+            titleColor: '#94a3b8', bodyColor: '#3b82f6',
             callbacks: { label: ctx => ` ${ctx.parsed.y.toFixed(2)} Mb` }
           }
         }
