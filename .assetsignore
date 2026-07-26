@@ -1,2 +1,9 @@
 _worker.js
 node_modules/
+.git/
+scripts/
+dbt/
+.github/
+*.py
+*.yml
+*.md
