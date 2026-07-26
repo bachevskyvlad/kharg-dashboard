@@ -565,7 +565,7 @@ function applyTierRestrictions() {
             <div class="paywall-icon">🔒</div>
             <div class="paywall-title">Raw data — paid plan only</div>
             <div class="paywall-sub">Pass-by-pass tank-level breakdown and CSV export are available on the full plan.</div>
-            <a class="paywall-cta" href="https://calendly.com/bachevsky/60min" target="_blank">Request full access</a>`;
+            <a class="paywall-cta" href="https://calendly.com/bachevsky/intro" target="_blank">Request full access</a>`;
         card.appendChild(overlay);
     }
 }
@@ -573,7 +573,7 @@ function applyTierRestrictions() {
 function showUpgradeToast(feature) {
     const t = document.createElement('div');
     t.style.cssText = 'position:fixed;bottom:1.5rem;right:1.5rem;background:#1d4ed8;color:#fff;padding:0.65rem 1.1rem;border-radius:6px;font-size:0.75rem;z-index:9999;box-shadow:0 4px 12px rgba(0,0,0,0.15)';
-    t.innerHTML = `${feature} is available on the full plan. <a href="https://calendly.com/bachevsky/60min" target="_blank" style="color:#93c5fd;text-decoration:underline">Request access →</a>`;
+    t.innerHTML = `${feature} is available on the full plan. <a href="https://calendly.com/bachevsky/intro" target="_blank" style="color:#93c5fd;text-decoration:underline">Request access →</a>`;
     document.body.appendChild(t);
     setTimeout(() => t.remove(), 5000);
 }
