@@ -145,10 +145,10 @@
         .c2 { grid-template-columns: repeat(2, 1fr); }
         @media (max-width: 1200px) { .c4 { grid-template-columns: repeat(2, 1fr); } }
         .card { background: var(--surface); padding: 1.4rem 1.6rem; }
-        .card.red { background: #fff5f5; }
-        .card.green { background: #f0fdf8; }
-        .card.yellow { background: #fffbeb; }
-        .card.orange { background: #fff7ed; }
+        .card.red { background: rgba(248,113,113,0.08); }
+        .card.green { background: rgba(52,211,153,0.07); }
+        .card.yellow { background: rgba(251,191,36,0.07); }
+        .card.orange { background: rgba(251,146,60,0.07); }
         .card-label { font-size: 0.58rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.12em; margin-bottom: 0.8rem; font-weight: 600; }
         .card-val { font-family: 'Space Grotesk', sans-serif; font-size: 2rem; font-weight: 700; line-height: 1; color: var(--text); }
         .card-val.lg { font-size: 1.5rem; letter-spacing: 0.02em; }
@@ -960,7 +960,7 @@ function renderSPIChart(dates, spi) {
 
 function renderMonthlyChart(dates, values) {
     const monthly = computeMonthly(dates, values);
-    const data = monthly.map(m => parseFloat(m.change.toFixed(3)));
+    const data = monthly.map(m => parseFloat(m.change.toFixed(2)));
     charts.monthly = new Chart(document.getElementById('monthlyChart').getContext('2d'), {
         type: 'bar',
         data: { labels: monthly.map(m => m.month), datasets: [{ label: 'Monthly Balance (Mb)', data,
@@ -979,7 +979,7 @@ function exportCSV() {
     const frs = computeFillRate(raw.dates, raw.values);
     let csv = 'Date,Storage_Mb,Fill_Rate_Mb_per_day,Utilization_pct\n';
     for (let i = 0; i < raw.dates.length; i++)
-        csv += `${raw.dates[i]},${raw.values[i].toFixed(3)},${frs[i] !== null ? frs[i].toFixed(4) : ''},${(raw.values[i]/MAX_CAP*100).toFixed(2)}\n`;
+        csv += `${raw.dates[i]},${raw.values[i].toFixed(2)},${frs[i] !== null ? frs[i].toFixed(2) : ''},${(raw.values[i]/MAX_CAP*100).toFixed(2)}\n`;
     const a = document.createElement('a');
     a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv' }));
     a.download = `kharg_${raw.dates[raw.dates.length-1]}.csv`;
@@ -1111,7 +1111,7 @@ function renderFlows(raw) {
     }
 
     // ECR — Export Coverage Ratio per bucket
-    const ecrData = buckets.map(p => p.grossIn > 0 ? +(p.grossOut / p.grossIn).toFixed(3) : null);
+    const ecrData = buckets.map(p => p.grossIn > 0 ? +(p.grossOut / p.grossIn).toFixed(2) : null);
     const ecrAvg = (() => { const v = ecrData.filter(x => x !== null); return v.length ? (v.reduce((a,b)=>a+b,0)/v.length).toFixed(2) : null; })();
     const ecrEl = document.getElementById('fECR');
     if (ecrAvg !== null) {
@@ -1129,8 +1129,8 @@ function renderFlows(raw) {
         options: { responsive: true, maintainAspectRatio: false,
             plugins: { legend: { display: false },
                 tooltip: { backgroundColor: '#111827', borderColor: 'rgba(255,255,255,0.1)', borderWidth: 1, titleColor: '#e2e8f0', bodyColor: '#94a3b8',
-                    callbacks: { title: ctx => { const p = buckets[ctx[0].dataIndex]; return `${p.d0} → ${p.d1}`; },
-                        label: ctx => ` ECR: ${ctx.parsed.y.toFixed(3)}x · ${ctx.parsed.y > 1.2 ? 'reserve drawdown' : ctx.parsed.y < 0.85 ? 'accumulation' : 'balanced'}` } } },
+                    callbacks: { title: ctx => { const p = buckets[ctx[0].dataIndex]; return p.d1; },
+                        label: ctx => ` ECR: ${ctx.parsed.y.toFixed(2)}x · ${ctx.parsed.y > 1.2 ? 'reserve drawdown' : ctx.parsed.y < 0.85 ? 'accumulation' : 'balanced'}` } } },
             scales: { x: gX, y: { ...gY, ticks: { ...gY.ticks, callback: v => v.toFixed(1) + 'x' } } } }
     });
 
@@ -1154,15 +1154,15 @@ function renderFlows(raw) {
         options: { responsive: true, maintainAspectRatio: false,
             plugins: { legend: { display: false },
                 tooltip: { backgroundColor: '#111827', borderColor: 'rgba(255,255,255,0.1)', borderWidth: 1, titleColor: '#e2e8f0', bodyColor: '#94a3b8',
-                    callbacks: { title: ctx => { const p = buckets[ctx[0].dataIndex]; return `${p.d0} → ${p.d1}`; },
+                    callbacks: { title: ctx => { const p = buckets[ctx[0].dataIndex]; return p.d1; },
                         label: ctx => ` Turnover: ${Math.round(ctx.parsed.y)}d · ${ctx.parsed.y < 40 ? 'high activity' : ctx.parsed.y > 90 ? 'low activity' : 'normal'}` } } },
             scales: { x: gX, y: { ...gY, ticks: { ...gY.ticks, callback: v => Math.round(v) + 'd' } } } }
     });
 
     // Divergent chart — export below zero (green), inflow above zero (red)
     charts.flowsDivergent && charts.flowsDivergent.destroy();
-    const expVelData = buckets.map(p => p.days > 0 ? +(-p.grossOut / p.days).toFixed(4) : null);
-    const infVelData = buckets.map(p => p.days > 0 ? +(p.grossIn  / p.days).toFixed(4) : null);
+    const expVelData = buckets.map(p => p.days > 0 ? +(-p.grossOut / p.days).toFixed(2) : null);
+    const infVelData = buckets.map(p => p.days > 0 ? +(p.grossIn  / p.days).toFixed(2) : null);
     charts.flowsDivergent = new Chart(document.getElementById('flowsDivergentChart').getContext('2d'), {
         type: 'bar',
         data: {
@@ -1184,8 +1184,8 @@ function renderFlows(raw) {
                         title: ctx => { const p = buckets[ctx[0].dataIndex]; return p.d1; },
                         label: ctx => {
                             const p = buckets[ctx.dataIndex];
-                            if (ctx.datasetIndex === 0) return ` Export: −${p.grossOut.toFixed(2)} Mb · ${(p.grossOut/p.days).toFixed(3)} Mb/d · ${p.tanksOut} tanks draining`;
-                            return ` Inflow: +${p.grossIn.toFixed(2)} Mb · ${(p.grossIn/p.days).toFixed(3)} Mb/d · ${p.tanksIn} tanks filling`;
+                            if (ctx.datasetIndex === 0) return ` Export: −${p.grossOut.toFixed(2)} Mb · ${(p.grossOut/p.days).toFixed(2)} Mb/d · ${p.tanksOut} tanks draining`;
+                            return ` Inflow: +${p.grossIn.toFixed(2)} Mb · ${(p.grossIn/p.days).toFixed(2)} Mb/d · ${p.tanksIn} tanks filling`;
                         }
                     }
                 }
@@ -1207,29 +1207,29 @@ function renderFlows(raw) {
     tbody.innerHTML = rows.map(p => {
         const netSign = p.net >= 0 ? '+' : '';
         const netClass = p.net >= 0 ? 'net-pos' : 'net-neg';
-        const outRate = p.days > 0 ? (p.grossOut / p.days).toFixed(3) : '—';
-        const inRate  = p.days > 0 ? (p.grossIn  / p.days).toFixed(3) : '—';
+        const outRate = p.days > 0 ? (p.grossOut / p.days).toFixed(2) : '—';
+        const inRate  = p.days > 0 ? (p.grossIn  / p.days).toFixed(2) : '—';
         return `<tr>
             <td class="mono">${p.d0} → ${p.d1}</td>
             <td class="tanks">${p.days}d</td>
-            <td class="out">−${p.grossOut.toFixed(3)}</td>
+            <td class="out">−${p.grossOut.toFixed(2)}</td>
             <td class="out" style="font-size:0.7rem">${outRate}</td>
             <td class="tanks">${p.tanksOut} tanks</td>
-            <td class="inp">+${p.grossIn.toFixed(3)}</td>
+            <td class="inp">+${p.grossIn.toFixed(2)}</td>
             <td class="inp" style="font-size:0.7rem">${inRate}</td>
             <td class="tanks">${p.tanksIn} tanks</td>
-            <td class="${netClass}">${netSign}${p.net.toFixed(3)}</td>
+            <td class="${netClass}">${netSign}${p.net.toFixed(2)}</td>
         </tr>`;
     }).join('') + `<tr class="flows-total">
         <td class="mono">TOTAL · ${passes.length} passes</td>
         <td></td>
-        <td class="out">−${totalOut.toFixed(3)}</td>
+        <td class="out">−${totalOut.toFixed(2)}</td>
         <td></td>
         <td></td>
-        <td class="inp">+${totalIn.toFixed(3)}</td>
+        <td class="inp">+${totalIn.toFixed(2)}</td>
         <td></td>
         <td></td>
-        <td class="${totalNet >= 0 ? 'net-pos' : 'net-neg'}">${totalNet >= 0 ? '+' : ''}${totalNet.toFixed(3)}</td>
+        <td class="${totalNet >= 0 ? 'net-pos' : 'net-neg'}">${totalNet >= 0 ? '+' : ''}${totalNet.toFixed(2)}</td>
     </tr>`;
 }
 
@@ -1272,7 +1272,7 @@ async function initTankMap() {
         m.bindPopup('', { maxWidth:220, offset:[0,-(info.r+4)] });
         m.on('click', () => {
             const s = window._ds && window._ds[id];
-            m.getPopup().setContent(s ? `<b style="font-family:monospace">${id}</b><br>Fill: ${s.ratio!==null?(s.ratio*100).toFixed(1)+'%':'N/A'}<br>Volume: ${s.mb!==null?s.mb.toFixed(3)+' Mb':'N/A'}` : `<b>${id}</b><br>No data`);
+            m.getPopup().setContent(s ? `<b style="font-family:monospace">${id}</b><br>Fill: ${s.ratio!==null?(s.ratio*100).toFixed(1)+'%':'N/A'}<br>Volume: ${s.mb!==null?s.mb.toFixed(2)+' Mb':'N/A'}` : `<b>${id}</b><br>No data`);
         });
         m.addTo(map); markers[id] = m;
     });
