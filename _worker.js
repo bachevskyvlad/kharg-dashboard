@@ -4,6 +4,7 @@ import * as checkFn from './functions/auth/check.js';
 import * as callbackFn from './functions/auth/callback.js';
 import * as sendOtpFn from './functions/auth/send-otp.js';
 import * as verifyOtpFn from './functions/auth/verify-otp.js';
+import * as notifySarFn from './functions/auth/notify-sar.js';
 
 export default {
   async fetch(request, env, ctx) {
@@ -17,6 +18,7 @@ export default {
     if (path === '/auth/callback')   return callbackFn.onRequest(context);
     if (path === '/auth/send-otp')   return sendOtpFn.onRequest(context);
     if (path === '/auth/verify-otp') return verifyOtpFn.onRequest(context);
+    if (path === '/auth/notify-sar') return notifySarFn.onRequest(context);
 
     // app.oilradar.io → serve product pages
     const host = request.headers.get('host') || url.hostname;
