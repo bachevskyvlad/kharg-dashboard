@@ -10,6 +10,11 @@ const WHITELIST = [
   'cyril@bluewaterstrategy.eu'
 ];
 
+const TRIAL_USERS = [
+  'vladislav.bachevsky@gmail.com',
+  'cyril@bluewaterstrategy.eu'
+];
+
 export async function onRequest(context) {
   const { request } = context;
   const url = new URL(request.url);
@@ -42,7 +47,8 @@ export async function onRequest(context) {
     const isAuthorized = WHITELIST.map(e => e.toLowerCase()).includes(email);
     if (!isAuthorized) return Response.redirect(`${APP_URL}/?error=unauthorized`, 302);
 
-    const sessionData = { email, name: user.name || email, exp: Date.now() + (7 * 24 * 60 * 60 * 1000) };
+    const tier = TRIAL_USERS.map(e => e.toLowerCase()).includes(email) ? 'trial' : 'paid';
+    const sessionData = { email, name: user.name || email, tier, exp: Date.now() + (7 * 24 * 60 * 60 * 1000) };
     const sessionToken = btoa(JSON.stringify(sessionData));
 
     return new Response(null, {

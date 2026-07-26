@@ -20,7 +20,7 @@ export async function onRequest(context) {
   try {
     const sessionData = JSON.parse(atob(sessionToken));
     if (sessionData.exp && sessionData.exp < Date.now()) return jsonResponse({ authenticated: false }, origin);
-    return jsonResponse({ authenticated: true, email: sessionData.email, name: sessionData.name }, origin);
+    return jsonResponse({ authenticated: true, email: sessionData.email, name: sessionData.name, tier: sessionData.tier || 'paid' }, origin);
   } catch (e) {
     return jsonResponse({ authenticated: false }, origin);
   }

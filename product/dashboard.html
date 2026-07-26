@@ -120,6 +120,23 @@
         .tbtn.active { background: rgba(29,78,216,0.08); color: var(--accent); }
         .export-btn { background: transparent; border: 1px solid var(--border); color: var(--dim); padding: 0.32rem 0.85rem; border-radius: 5px; font-size: 0.72rem; cursor: pointer; font-family: inherit; transition: all 0.2s; }
         .export-btn:hover { border-color: rgba(0,0,0,0.2); color: var(--text); }
+        .export-btn.locked { border-color: rgba(217,119,6,0.4); color: var(--yellow); cursor: default; }
+        .export-btn.locked:hover { border-color: rgba(217,119,6,0.6); color: var(--yellow); }
+
+        /* Paywall overlay */
+        .paywall-wrap { position: relative; }
+        .paywall-blur { filter: blur(4px); pointer-events: none; user-select: none; }
+        .paywall-overlay {
+            position: absolute; inset: 0;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            background: rgba(250,250,248,0.85); backdrop-filter: blur(2px);
+            border-radius: 10px; z-index: 10; gap: 0.6rem;
+        }
+        .paywall-icon { font-size: 1.5rem; }
+        .paywall-title { font-family: 'Space Grotesk', sans-serif; font-size: 0.85rem; font-weight: 600; color: var(--text); }
+        .paywall-sub { font-size: 0.72rem; color: var(--muted); text-align: center; max-width: 280px; line-height: 1.5; }
+        .paywall-cta { background: var(--accent); color: #fff; border: none; padding: 0.45rem 1.1rem; border-radius: 5px; font-size: 0.72rem; font-weight: 600; cursor: pointer; font-family: inherit; text-decoration: none; margin-top: 0.2rem; }
+        .paywall-cta:hover { opacity: 0.88; }
 
         /* Cards */
         .cards { display: grid; gap: 1px; background: var(--border); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; margin-bottom: 1.25rem; }
@@ -462,12 +479,12 @@
             </div>
         </div>
 
-        <div class="chart-card" style="padding:0;overflow:hidden">
+        <div class="chart-card paywall-wrap" style="padding:0;overflow:hidden" id="paywallTableCard">
             <div class="chart-head" style="padding:1.1rem 1.4rem 0.75rem">
                 <div class="chart-ttl">Pass-by-Pass Breakdown</div>
                 <div class="chart-meta">Per SAR observation pass · ~6d revisit</div>
             </div>
-            <div style="overflow-x:auto">
+            <div style="overflow-x:auto" id="paywallTableInner">
                 <table class="flows-table">
                     <thead><tr>
                         <th>Period</th>
@@ -512,13 +529,53 @@
 
 <script>
 // ── Auth ──────────────────────────────────────────────────────────────────
+let _userTier = 'paid';
+
 async function checkAuth() {
     try {
         const r = await fetch('/auth/check');
         const d = await r.json();
         if (!d.authenticated) { window.location.href = '/app'; return; }
-        document.getElementById('userEmail').textContent = d.email;
+        _userTier = d.tier || 'paid';
+        const label = _userTier === 'trial' ? `${d.email} · Trial` : d.email;
+        document.getElementById('userEmail').textContent = label;
+        applyTierRestrictions();
     } catch { window.location.href = '/app'; }
+}
+
+function applyTierRestrictions() {
+    if (_userTier !== 'trial') return;
+
+    // Lock Export CSV button
+    const btn = document.querySelector('.export-btn');
+    if (btn) {
+        btn.classList.add('locked');
+        btn.title = 'Raw data export — paid plan only';
+        btn.onclick = () => showUpgradeToast('CSV export');
+    }
+
+    // Blur pass-by-pass table with overlay
+    const inner = document.getElementById('paywallTableInner');
+    const card = document.getElementById('paywallTableCard');
+    if (inner && card) {
+        inner.classList.add('paywall-blur');
+        const overlay = document.createElement('div');
+        overlay.className = 'paywall-overlay';
+        overlay.innerHTML = `
+            <div class="paywall-icon">🔒</div>
+            <div class="paywall-title">Raw data — paid plan only</div>
+            <div class="paywall-sub">Pass-by-pass tank-level breakdown and CSV export are available on the full plan.</div>
+            <a class="paywall-cta" href="https://calendly.com/bachevsky/60min" target="_blank">Request full access</a>`;
+        card.appendChild(overlay);
+    }
+}
+
+function showUpgradeToast(feature) {
+    const t = document.createElement('div');
+    t.style.cssText = 'position:fixed;bottom:1.5rem;right:1.5rem;background:#1d4ed8;color:#fff;padding:0.65rem 1.1rem;border-radius:6px;font-size:0.75rem;z-index:9999;box-shadow:0 4px 12px rgba(0,0,0,0.15)';
+    t.innerHTML = `${feature} is available on the full plan. <a href="https://calendly.com/bachevsky/60min" target="_blank" style="color:#93c5fd;text-decoration:underline">Request access →</a>`;
+    document.body.appendChild(t);
+    setTimeout(() => t.remove(), 5000);
 }
 function logout() { window.location.href = '/auth/logout'; }
 
