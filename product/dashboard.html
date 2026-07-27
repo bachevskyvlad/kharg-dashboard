@@ -829,7 +829,12 @@ function setGran(g) {
 }
 
 function getSliceRaw() {
-    if (currentRange === 0) return { dates: allDates, values: allValues };
+    if (currentRange === 0) {
+        const idx = allDates.findIndex(d => d >= '2017-01-01');
+        return idx >= 0
+            ? { dates: allDates.slice(idx), values: allValues.slice(idx) }
+            : { dates: allDates, values: allValues };
+    }
     const cutoff = new Date();
     cutoff.setDate(cutoff.getDate() - currentRange);
     const cutStr = cutoff.toISOString().slice(0, 10);
@@ -1257,6 +1262,8 @@ function renderFlows(raw) {
         cutoff.setDate(cutoff.getDate() - _flowsRange);
         const cutStr = cutoff.toISOString().slice(0, 10);
         data = raw.filter(r => r.date_to >= cutStr);
+    } else {
+        data = raw.filter(r => r.date_from >= '2017-01-01');
     }
 
     // Normalise to passes array (field names from kharg_gross_flows)

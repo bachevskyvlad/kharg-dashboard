@@ -16,7 +16,7 @@ jobs:
       - name: Install dependencies
         run: pip install supabase
 
-      - name: Refresh gross flows
+      - name: Count dates 2015-2017
         run: |
           python3 - <<'EOF'
           from supabase import create_client
@@ -25,6 +25,16 @@ jobs:
               "https://yoekhkczwdeyauwarsyy.supabase.co",
               "sb_publishable_7j07_zzdqTGM1LXf7-o9Tg_JJRbJQSM"
           )
-          result = sb.rpc("refresh_gross_flows", {}).execute()
-          print("Done:", result.data)
+
+          r = sb.table("raw_observations").select("date").gte("date", "2015-01-01").lt("date", "2017-01-01").order("date", desc=False).execute()
+          dates = sorted(set(row["date"] for row in r.data))
+          print(f"Unique SAR passes 2015-2016: {len(dates)}")
+          for d in dates:
+              print(" ", d)
+
+          r2 = sb.table("kharg_gross_flows").select("date_from").gte("date_from", "2015-01-01").lt("date_from", "2017-01-01").order("date_from", desc=False).execute()
+          gf_dates = sorted(set(row["date_from"] for row in r2.data))
+          print(f"\nGross flows rows 2015-2016: {len(gf_dates)}")
+          for d in gf_dates:
+              print(" ", d)
           EOF
