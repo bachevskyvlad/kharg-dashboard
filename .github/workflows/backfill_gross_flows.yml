@@ -17,17 +17,14 @@ jobs:
         run: pip install supabase
 
       - name: Refresh gross flows
-        env:
-          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
-          SUPABASE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
         run: |
           python3 - <<'EOF'
-          import os
           from supabase import create_client
 
-          url = os.environ.get("SUPABASE_URL", "https://yoekhkczwdeyauwarsyy.supabase.co")
-          key = os.environ.get("SUPABASE_KEY", "sb_publishable_7j07_zzdqTGM1LXf7-o9Tg_JJRbJQSM")
-          sb = create_client(url, key)
+          sb = create_client(
+              "https://yoekhkczwdeyauwarsyy.supabase.co",
+              "sb_publishable_7j07_zzdqTGM1LXf7-o9Tg_JJRbJQSM"
+          )
           result = sb.rpc("refresh_gross_flows", {}).execute()
           print("Done:", result.data)
           EOF
