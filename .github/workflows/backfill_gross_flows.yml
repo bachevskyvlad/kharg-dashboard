@@ -16,7 +16,7 @@ jobs:
       - name: Install dependencies
         run: pip install supabase
 
-      - name: Debug gross flows date range
+      - name: Query missing passes and recompute
         run: |
           python3 - <<'EOF'
           from supabase import create_client
@@ -26,23 +26,10 @@ jobs:
               "sb_publishable_7j07_zzdqTGM1LXf7-o9Tg_JJRbJQSM"
           )
 
-          # Earliest date in raw_observations
-          r1 = sb.table("raw_observations").select("date").order("date", desc=False).limit(3).execute()
-          print("EARLIEST raw_observations:", r1.data)
-
-          # Latest date in raw_observations
-          r2 = sb.table("raw_observations").select("date").order("date", desc=True).limit(1).execute()
-          print("LATEST raw_observations:", r2.data)
-
-          # Earliest date in kharg_gross_flows
-          r3 = sb.table("kharg_gross_flows").select("date_from").order("date_from", desc=False).limit(3).execute()
-          print("EARLIEST kharg_gross_flows:", r3.data)
-
-          # Total rows in kharg_gross_flows
-          r4 = sb.table("kharg_gross_flows").select("date_from", count="exact").execute()
-          print("TOTAL kharg_gross_flows rows:", r4.count)
-
-          # Sample of rows near 2015-2016 in raw_observations
-          r5 = sb.table("raw_observations").select("date,tank_id").lt("date", "2017-01-01").order("date", desc=False).limit(5).execute()
-          print("raw_observations before 2017:", r5.data)
+          # Get all unique dates in raw_observations between 2015-04-06 and 2017-02-18
+          r = sb.table("raw_observations").select("date").gte("date", "2015-04-06").lte("date", "2017-02-18").order("date", desc=False).execute()
+          dates = sorted(set(row["date"] for row in r.data))
+          print(f"Unique dates between 2015-04-06 and 2017-02-18: {len(dates)}")
+          for d in dates:
+              print(" ", d)
           EOF
