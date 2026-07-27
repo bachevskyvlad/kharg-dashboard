@@ -1,0 +1,34 @@
+name: Kharg Anchorage — Ship Detection
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 6 * * 1'   # every Monday 06:00 UTC (~after weekend SAR pass)
+
+jobs:
+  detect:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install sentinelhub pillow numpy scipy
+
+      - name: Run ship detection
+        env:
+          CLIENT_ID: ${{ secrets.CLIENT_ID }}
+          CLIENT_SECRET: ${{ secrets.CLIENT_SECRET }}
+        run: |
+          cd scripts
+          python ship_detect.py
+
+      - name: Upload images as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: kharg-ships-${{ github.run_id }}
+          path: scripts/kharg_ships_*.png
+          retention-days: 30
