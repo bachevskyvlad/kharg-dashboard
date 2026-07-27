@@ -32,3 +32,14 @@ jobs:
           name: kharg-ships-${{ github.run_id }}
           path: scripts/kharg_ships_*.png
           retention-days: 30
+
+      - name: Commit PNGs to repo
+        run: |
+          cp scripts/kharg_ships_pass1.png public/kharg_ships_pass1.png 2>/dev/null || true
+          cp scripts/kharg_ships_pass2.png public/kharg_ships_pass2.png 2>/dev/null || true
+          git config user.name "bot"
+          git config user.email "bot@github.com"
+          git add public/kharg_ships_pass1.png public/kharg_ships_pass2.png
+          git diff --cached --quiet && echo "no changes" && exit 0
+          git commit -m "ship detect $(date -u +'%Y-%m-%d')"
+          git push
