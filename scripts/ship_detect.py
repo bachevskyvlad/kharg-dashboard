@@ -23,21 +23,24 @@ config.sh_client_secret = os.environ.get("CLIENT_SECRET") or "U1W6BcqS4bFEIJy2u9
 config.sh_token_url     = "https://identity.dataspace.copernicus.eu/auth/realms/CDSE/protocol/openid-connect/token"
 config.sh_base_url      = "https://sh.dataspace.copernicus.eu"
 
-# ── AOI: 20km box around Kharg (center 29.24N, 50.32E) ───────────────────────
-# ~0.18 degrees lat/lon ≈ 20km
+# ── AOI: asymmetric box around Kharg (center 29.24N, 50.32E) ─────────────────
+# Anchorage queue sits N/E of the island; less water to the S is needed.
 KHARG_CENTER = (50.32, 29.24)
-OFFSET = 0.27
+OFFSET_N = 0.27   # ~30 km north
+OFFSET_S = 0.15   # ~17 km south (open Gulf, no queue)
+OFFSET_E = 0.27   # ~24 km east
+OFFSET_W = 0.27   # ~24 km west
 bbox = BBox(
     bbox=[
-        KHARG_CENTER[0] - OFFSET,  # west
-        KHARG_CENTER[1] - OFFSET,  # south
-        KHARG_CENTER[0] + OFFSET,  # east
-        KHARG_CENTER[1] + OFFSET,  # north
+        KHARG_CENTER[0] - OFFSET_W,
+        KHARG_CENTER[1] - OFFSET_S,
+        KHARG_CENTER[0] + OFFSET_E,
+        KHARG_CENTER[1] + OFFSET_N,
     ],
     crs=CRS.WGS84
 )
 
-RESOLUTION = 25  # metres — must keep image ≤2500px; at OFFSET=0.27 this gives ~2113x2381px
+RESOLUTION = 25  # metres — image stays well under 2500px with asymmetric bbox
 size = bbox_to_dimensions(bbox, resolution=RESOLUTION)
 print(f"Image size: {size[0]}x{size[1]} px @ {RESOLUTION}m/px")
 
@@ -199,10 +202,11 @@ def render_image(arr, ships, label, outpath):
     counts = {}
     for s in ships:
         cls, color = classify_vessel(s['length_m'])
+        if cls == 'Small':
+            continue  # non-export vessels — skip annotation and count
         counts[cls] = counts.get(cls, 0) + 1
         r = max(5, s['area'] // 2)
         cx, cy = s['cx'], s['cy']
-        # Draw box
         draw.rectangle([cx-r, cy-r, cx+r, cy+r], outline=color, width=2)
         draw.text((cx+r+2, cy-6), f"{cls}\n{s['length_m']:.0f}m", fill=color)
 
