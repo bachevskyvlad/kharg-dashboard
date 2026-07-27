@@ -101,7 +101,8 @@ def fetch_pass(date_from, date_to, label):
     if not data or data[0] is None:
         print(f"  No data for {label}")
         return None
-    arr = data[0][:, :, 0]
+    raw = data[0]
+    arr = raw[:, :, 0] if raw.ndim == 3 else raw
     print(f"  Got array {arr.shape}, range {arr.min():.3f}–{arr.max():.3f}")
     return arr
 
