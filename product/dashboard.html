@@ -1257,6 +1257,8 @@ function renderFlows(raw) {
         cutoff.setDate(cutoff.getDate() - _flowsRange);
         const cutStr = cutoff.toISOString().slice(0, 10);
         data = raw.filter(r => r.date_to >= cutStr);
+    } else {
+        data = raw.filter(r => r.date_to >= '2026-01-01');
     }
 
     // Normalise to passes array (field names from kharg_gross_flows)
