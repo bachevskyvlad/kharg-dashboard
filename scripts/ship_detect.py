@@ -119,15 +119,33 @@ def lon_lat_to_px(lon, lat, bbox, size):
     py = int((bbox.max_y - lat) / (bbox.max_y - bbox.min_y) * size[1])
     return px, py
 
-def detect_ships(arr, bbox, size, threshold=0.80):
+def adaptive_threshold(arr):
     """
-    Detect bright spots = ships.
-    threshold: normalised brightness (0-1). Ships typically >0.80.
-    Returns list of (px, py, size_px) for each detection.
+    Per-pass threshold: sea clutter median + N*std on water pixels.
+    Water pixels = below 70th percentile (avoids ships/land skewing the estimate).
+    """
+    valid = arr[np.isfinite(arr) & (arr > 0.01)]
+    if len(valid) == 0:
+        return 0.80
+    sea_level = np.percentile(valid, 70)
+    sea_pixels = valid[valid <= sea_level]
+    if len(sea_pixels) < 100:
+        return sea_level + 0.20
+    threshold = sea_level + 3.5 * sea_pixels.std()
+    # clamp: never below 0.55 (avoids sea noise) or above 0.92
+    return float(np.clip(threshold, 0.55, 0.92))
+
+
+def detect_ships(arr, bbox, size):
+    """
+    Detect ships via per-pass adaptive threshold + land/platform masking.
+    Land blobs (area > 400px at 25m/px ≈ buildings/coast) are discarded.
     """
     h, w = arr.shape
-    # Build platform mask
+    # Build platform + land mask
     mask = np.zeros((h, w), dtype=bool)
+
+    # Mask known offshore platforms
     for lon, lat in PLATFORMS:
         px, py = lon_lat_to_px(lon, lat, bbox, size)
         if 0 <= px < w and 0 <= py < h:
@@ -137,21 +155,25 @@ def detect_ships(arr, bbox, size, threshold=0.80):
             x1 = min(w, px + PLATFORM_BUFFER_PX)
             mask[y0:y1, x0:x1] = True
 
-    # Suppress platforms
     arr_masked = arr.copy()
+    arr_masked[~np.isfinite(arr_masked)] = 0
     arr_masked[mask] = 0
 
-    # Binary threshold
+    # Per-pass adaptive threshold
+    threshold = adaptive_threshold(arr_masked)
+    print(f"  Adaptive threshold: {threshold:.3f}")
+
     bright = arr_masked > threshold
 
-    # Label connected components (simple flood fill via scipy)
     from scipy import ndimage
     labeled, num = ndimage.label(bright)
     ships = []
     for i in range(1, num + 1):
         component = (labeled == i)
         area = component.sum()
-        if area < 3:  # noise
+        if area < 3:       # speckle noise
+            continue
+        if area > 400:     # land mass / coastline artifact
             continue
         ys, xs = np.where(component)
         cx, cy = int(xs.mean()), int(ys.mean())
@@ -227,5 +249,5 @@ for arr, label, fname in [
     (arr2, f"Pass 2 — {(today-timedelta(days=14)).strftime('%Y-%m-%d')} to {(today-timedelta(days=7)).strftime('%Y-%m-%d')}", 'kharg_ships_pass2.png'),
 ]:
     if arr is not None:
-        ships = detect_ships(arr, bbox, size)
+        ships = detect_ships(arr, bbox, size)  # threshold computed per-pass
         render_image(arr, ships, label, os.path.join(out_dir, fname))
