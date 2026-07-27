@@ -37,7 +37,7 @@ bbox = BBox(
     crs=CRS.WGS84
 )
 
-RESOLUTION = 20  # metres — 10m gives >2500px which exceeds Sentinel Hub limit
+RESOLUTION = 25  # metres — must keep image ≤2500px; at OFFSET=0.27 this gives ~2113x2381px
 size = bbox_to_dimensions(bbox, resolution=RESOLUTION)
 print(f"Image size: {size[0]}x{size[1]} px @ {RESOLUTION}m/px")
 
