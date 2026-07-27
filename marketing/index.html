@@ -293,14 +293,14 @@ async function loadLandingChart() {
     const res = await fetch(`/data/data_daily.json?v=${Date.now()}`);
     const d = await res.json();
 
-    // All time, exclude last 14 days
+    // 2026 only, exclude last 14 days
     const latestDate = new Date(d.dates[d.dates.length - 1]);
     const cutoff = new Date(latestDate);
     cutoff.setDate(cutoff.getDate() - 14);
     const cutoffStr = cutoff.toISOString().slice(0, 10);
 
     const filtered = d.dates.reduce((acc, dt, i) => {
-      if (dt <= cutoffStr) {
+      if (dt >= '2026-01-01' && dt <= cutoffStr) {
         acc.dates.push(dt);
         acc.values.push(d.values[i]);
       }

@@ -324,7 +324,7 @@ async function initMap(){
   const allDates=Object.keys(byDate).sort();
   const lockCutoff=new Date();lockCutoff.setDate(lockCutoff.getDate()-14);
   const lockCutoffStr=lockCutoff.toISOString().slice(0,10);
-  const dates=allDates.filter(d=>d<=lockCutoffStr);
+  const dates=allDates.filter(d=>d>='2026-01-01'&&d<=lockCutoffStr);
   if(!dates.length){document.getElementById('mapLoadingMsg').innerHTML='<span style="color:#ef4444">No data available.</span>';return;}
   function renderDate(dateStr){
     const dateData=byDate[dateStr]||{};
