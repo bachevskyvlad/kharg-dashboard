@@ -16,7 +16,7 @@ jobs:
       - name: Install dependencies
         run: pip install supabase
 
-      - name: Debug gross flows function
+      - name: Debug gross flows date range
         run: |
           python3 - <<'EOF'
           from supabase import create_client
@@ -26,19 +26,23 @@ jobs:
               "sb_publishable_7j07_zzdqTGM1LXf7-o9Tg_JJRbJQSM"
           )
 
-          # Get the function definition
-          r = sb.rpc("pg_get_functiondef_text", {"fname": "refresh_gross_flows"}).execute()
-          print("FUNCTION DEF:", r.data)
+          # Earliest date in raw_observations
+          r1 = sb.table("raw_observations").select("date").order("date", desc=False).limit(3).execute()
+          print("EARLIEST raw_observations:", r1.data)
 
-          # Get earliest date in raw_observations
-          r2 = sb.table("raw_observations").select("date").order("date", desc=False).limit(1).execute()
-          print("EARLIEST raw_observations:", r2.data)
+          # Latest date in raw_observations
+          r2 = sb.table("raw_observations").select("date").order("date", desc=True).limit(1).execute()
+          print("LATEST raw_observations:", r2.data)
 
-          # Get earliest date in kharg_gross_flows
-          r3 = sb.table("kharg_gross_flows").select("date_from").order("date_from", desc=False).limit(1).execute()
+          # Earliest date in kharg_gross_flows
+          r3 = sb.table("kharg_gross_flows").select("date_from").order("date_from", desc=False).limit(3).execute()
           print("EARLIEST kharg_gross_flows:", r3.data)
 
-          # Count rows in kharg_gross_flows before 2017
-          r4 = sb.table("kharg_gross_flows").select("date_from", count="exact").lt("date_from", "2017-01-01").execute()
-          print("Rows before 2017:", r4.count)
+          # Total rows in kharg_gross_flows
+          r4 = sb.table("kharg_gross_flows").select("date_from", count="exact").execute()
+          print("TOTAL kharg_gross_flows rows:", r4.count)
+
+          # Sample of rows near 2015-2016 in raw_observations
+          r5 = sb.table("raw_observations").select("date,tank_id").lt("date", "2017-01-01").order("date", desc=False).limit(5).execute()
+          print("raw_observations before 2017:", r5.data)
           EOF
