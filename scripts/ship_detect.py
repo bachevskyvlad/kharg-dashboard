@@ -26,7 +26,7 @@ config.sh_base_url      = "https://sh.dataspace.copernicus.eu"
 # ── AOI: 20km box around Kharg (center 29.24N, 50.32E) ───────────────────────
 # ~0.18 degrees lat/lon ≈ 20km
 KHARG_CENTER = (50.32, 29.24)
-OFFSET = 0.18
+OFFSET = 0.27
 bbox = BBox(
     bbox=[
         KHARG_CENTER[0] - OFFSET,  # west
