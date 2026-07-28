@@ -2,150 +2,140 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Kharg Tanker Queue — OilRadar</title>
-<meta name="description" content="Live tanker queue monitor at Kharg Island, Iran. Weekly Sentinel-1 SAR ship counts from 2017 — VLCC, Suezmax, Aframax, MR/Panamax vessel breakdown.">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kharg Tanker Queue — Kharg Island Ship Detection | OilRadar</title>
+<meta name="description" content="Weekly Sentinel-1 SAR tanker queue monitor at Kharg Island, Iran. VLCC, Suezmax, Aframax, MR/Panamax vessel counts from 2017.">
+<link rel="icon" type="image/x-icon" href="/assets/images/favicon.ico">
+<link rel="icon" type="image/png" sizes="32x32" href="/assets/images/favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="/assets/images/favicon-16x16.png">
+<link rel="apple-touch-icon" sizes="180x180" href="/assets/images/apple-touch-icon.png">
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-TZQ5VH3GPY"></script>
 <script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','G-TZQ5VH3GPY');</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@300;400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+<noscript><link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@300;400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"></noscript>
 <style>
-:root {
-  --bg:       #0a0e17;
-  --surface:  #111827;
-  --surface2: #1a2540;
-  --border:   #1e2d45;
-  --text:     #e2e8f0;
-  --muted:    #64748b;
-  --accent:   #38bdf8;
-  --vlcc:     #ef4444;
-  --suezmax:  #f97316;
-  --aframax:  #eab308;
-  --mr:       #22c55e;
-}
-*{box-sizing:border-box;margin:0;padding:0}
-html,body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-size:14px;line-height:1.5;min-height:100vh}
-a{color:var(--accent);text-decoration:none}
-.mono{font-family:'JetBrains Mono','Fira Mono',Consolas,monospace}
+:root{--bg:#0a0e17;--deep:#0d1320;--panel:#111827;--border:rgba(255,255,255,0.07);--accent:#3b82f6;--accent2:#ef4444;--gold:#f59e0b;--text:#e2e8f0;--muted:#94a3b8;--dim:#64748b;--white:#f8fafc;
+  --vlcc:#ef4444;--suezmax:#f97316;--aframax:#eab308;--mr:#22c55e;}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;overflow-x:hidden;min-height:100vh;display:flex;flex-direction:column;}
+nav{position:fixed;top:0;left:0;right:0;z-index:100;display:flex;align-items:center;justify-content:space-between;padding:16px 32px;background:rgba(10,14,23,0.97);backdrop-filter:blur(12px);border-bottom:1px solid var(--border);}
+.logo{font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:4px;color:var(--accent);text-decoration:none;}
+.nav-links{display:flex;align-items:center;gap:24px;}
+.nav-link{font-family:'DM Mono',monospace;font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);text-decoration:none;transition:color .2s;}
+.nav-link:hover,.nav-link.active{color:var(--accent);}
+.nav-cta{font-family:'DM Mono',monospace;font-size:11px;letter-spacing:2px;text-transform:uppercase;background:transparent;border:1px solid var(--accent);color:var(--accent);padding:8px 20px;cursor:pointer;transition:all .2s;text-decoration:none;}
+.nav-cta:hover{background:var(--accent);color:var(--white);}
+main{flex:1;padding:100px 32px 80px;width:100%;}
+.section-label{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:4px;text-transform:uppercase;color:var(--accent);margin-bottom:8px;}
+.section-title{font-family:'Bebas Neue',sans-serif;font-size:clamp(36px,4vw,56px);line-height:1;color:var(--text);margin-bottom:6px;}
+.section-sub{font-family:'DM Mono',monospace;font-size:11px;color:var(--dim);margin-bottom:36px;letter-spacing:.5px;}
 
-/* ── Nav ── */
-nav{display:flex;align-items:center;justify-content:space-between;padding:14px 24px;border-bottom:1px solid var(--border);position:sticky;top:0;z-index:10;background:rgba(10,14,23,.92);backdrop-filter:blur(8px)}
-.logo{font-size:15px;font-weight:700;color:var(--text);letter-spacing:-.02em}
-.logo span{color:var(--accent)}
-.nav-links{display:flex;gap:20px;font-size:13px}
-.nav-links a{color:var(--muted);transition:color .15s}
-.nav-links a:hover,.nav-links a.active{color:var(--text)}
-.nav-cta{background:var(--accent);color:#000;font-weight:600;font-size:12px;padding:6px 14px;border-radius:6px;letter-spacing:.02em}
-.nav-cta:hover{opacity:.9;color:#000}
+/* KPI row */
+.kpi-row{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:24px;}
+@media(max-width:900px){.kpi-row{grid-template-columns:repeat(2,1fr);}}
+.kpi-card{background:var(--panel);border:1px solid var(--border);padding:20px 24px;}
+.kpi-label{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:3px;text-transform:uppercase;color:var(--muted);margin-bottom:10px;}
+.kpi-value{font-family:'DM Mono',monospace;font-size:36px;font-weight:500;line-height:1;font-variant-numeric:tabular-nums;margin-bottom:6px;}
+.kpi-sub{font-family:'DM Mono',monospace;font-size:10px;color:var(--dim);}
+.kpi-value.blue{color:var(--accent);}
+.kpi-value.red{color:var(--vlcc);}
+.kpi-value.green{color:var(--mr);}
+.status-pill{display:inline-block;padding:3px 10px;font-family:'DM Mono',monospace;font-size:9px;font-weight:500;letter-spacing:2px;text-transform:uppercase;margin-top:6px;}
+.pill-low{background:rgba(34,197,94,.1);color:var(--mr);border:1px solid rgba(34,197,94,.2);}
+.pill-normal{background:rgba(59,130,246,.1);color:var(--accent);border:1px solid rgba(59,130,246,.2);}
+.pill-elevated{background:rgba(249,115,22,.1);color:var(--suezmax);border:1px solid rgba(249,115,22,.2);}
+.pill-high{background:rgba(239,68,68,.1);color:var(--vlcc);border:1px solid rgba(239,68,68,.2);}
 
-/* ── Page ── */
-.page{max-width:860px;margin:0 auto;padding:36px 24px 64px}
-.eyebrow{font-size:11px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--accent);margin-bottom:6px}
-h1{font-size:26px;font-weight:700;line-height:1.15;text-wrap:balance;margin-bottom:6px}
-.subtitle{font-size:13px;color:var(--muted);margin-bottom:32px}
+/* Chart panel */
+.monitor-wrap{background:var(--panel);border:1px solid var(--border);padding:24px 28px;margin-bottom:20px;}
+.monitor-header{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:20px;gap:16px;flex-wrap:wrap;}
+.monitor-title{font-family:'DM Mono',monospace;font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--accent);}
+.monitor-sub{font-family:'DM Mono',monospace;font-size:10px;color:var(--dim);margin-top:4px;}
+.range-btns{display:flex;gap:4px;flex-shrink:0;}
+.range-btn{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:1px;text-transform:uppercase;background:transparent;border:1px solid var(--border);color:var(--muted);padding:5px 12px;cursor:pointer;transition:all .15s;}
+.range-btn:hover{border-color:var(--accent);color:var(--accent);}
+.range-btn.active{background:var(--accent);border-color:var(--accent);color:var(--white);}
+canvas#queueChart{width:100%;display:block;}
+.legend-row{display:flex;gap:20px;flex-wrap:wrap;margin-top:14px;}
+.leg{display:flex;align-items:center;gap:7px;font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);}
+.leg-dot{width:10px;height:10px;flex-shrink:0;}
 
-/* ── TQI ── */
-.tqi-row{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:10px;margin-bottom:28px}
-@media(max-width:600px){.tqi-row{grid-template-columns:1fr 1fr}}
-.kpi{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:16px 18px}
-.kpi-label{font-size:11px;font-weight:500;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);margin-bottom:8px}
-.kpi-value{font-size:28px;font-weight:700;line-height:1;font-variant-numeric:tabular-nums;margin-bottom:4px}
-.kpi-sub{font-size:11px;color:var(--muted)}
-.kpi-value.accent{color:var(--accent)}
-.kpi-value.vlcc{color:var(--vlcc)}
-.kpi-value.mr{color:var(--mr)}
-.kpi-value.warn{color:var(--suezmax)}
-.status-pill{display:inline-block;padding:2px 8px;border-radius:12px;font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;margin-top:4px}
-.status-normal{background:rgba(34,197,94,.12);color:var(--mr)}
-.status-elevated{background:rgba(249,115,22,.12);color:var(--suezmax)}
-.status-high{background:rgba(239,68,68,.12);color:var(--vlcc)}
+/* Latest breakdown */
+.breakdown-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:16px;}
+@media(max-width:700px){.breakdown-grid{grid-template-columns:repeat(3,1fr);}}
+.breakdown-item{}
+.breakdown-cls{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:6px;}
+.breakdown-n{font-family:'DM Mono',monospace;font-size:28px;font-variant-numeric:tabular-nums;}
 
-/* ── Chart card ── */
-.chart-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;overflow:hidden;margin-bottom:24px}
-.chart-header{display:flex;align-items:center;justify-content:space-between;padding:16px 20px 0;flex-wrap:wrap;gap:10px}
-.chart-title{font-size:13px;font-weight:600;color:var(--text)}
-.chart-sub{font-size:11px;color:var(--muted);margin-top:2px}
-.range-btns{display:flex;gap:4px}
-.range-btn{background:none;border:1px solid var(--border);color:var(--muted);font-size:11px;font-weight:600;padding:4px 10px;border-radius:5px;cursor:pointer;transition:.15s;letter-spacing:.04em}
-.range-btn:hover{border-color:var(--accent);color:var(--accent)}
-.range-btn.active{background:var(--accent);border-color:var(--accent);color:#000}
-.chart-wrap{padding:12px 16px 8px;position:relative}
-canvas#queueChart{width:100%;display:block}
+/* Note */
+.data-note{font-family:'DM Mono',monospace;font-size:10px;color:var(--dim);line-height:1.8;border-left:2px solid var(--border);padding-left:14px;margin-top:8px;}
 
-/* ── Legend ── */
-.legend{display:flex;gap:16px;padding:4px 20px 16px;flex-wrap:wrap}
-.leg{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted)}
-.leg-dot{width:8px;height:8px;border-radius:2px;flex-shrink:0}
-
-/* ── Latest row ── */
-.latest-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:16px 20px}
-.latest-title{font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:12px}
-.latest-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:8px}
-@media(max-width:500px){.latest-grid{grid-template-columns:repeat(3,1fr)}}
-.latest-item{}
-.latest-cls{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:3px}
-.latest-n{font-size:20px;font-weight:700;font-variant-numeric:tabular-nums}
-
-/* ── Note ── */
-.note{margin-top:20px;font-size:11px;color:var(--muted);line-height:1.7;border-left:2px solid var(--border);padding-left:12px}
+footer{background:var(--panel);border-top:1px solid var(--border);padding:32px 48px;display:flex;align-items:center;justify-content:space-between;margin-top:auto;}
+.footer-logo{font-family:'Bebas Neue',sans-serif;font-size:24px;letter-spacing:6px;color:var(--accent);}
+.footer-right{display:flex;align-items:center;gap:32px;}
+.footer-link{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);text-decoration:none;}
+.footer-text{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:2px;color:var(--muted);}
+@media(max-width:900px){nav{padding:16px;}main{padding:90px 16px 60px;}.footer{flex-direction:column;gap:16px;}.footer-right{flex-direction:column;gap:12px;}}
 </style>
 </head>
 <body>
 
 <nav>
-  <a href="/" class="logo">Oil<span>Radar</span></a>
+  <a href="/" class="logo">OILRADAR</a>
   <div class="nav-links">
-    <a href="/monitor">Monitor</a>
-    <a href="/anchorage" class="active">Anchorage</a>
-    <a href="/team">Team</a>
+    <a href="/monitor" class="nav-link">Monitor</a>
+    <a href="/anchorage" class="nav-link active">Anchorage</a>
+    <a href="/team" class="nav-link">Team</a>
     <a href="https://calendly.com/bachevsky/60min" class="nav-cta">Request Access</a>
   </div>
 </nav>
 
-<div class="page">
-  <div class="eyebrow">Sentinel-1 SAR · Kharg Island · Iran</div>
-  <h1>Tanker Queue</h1>
-  <div class="subtitle" id="subtitle">Loading — weekly SAR passes 2017–present · VLCC / Suezmax / Aframax / MR/Panamax</div>
+<main>
+  <div class="section-label">Sentinel-1 SAR · Kharg Island · Iran</div>
+  <div class="section-title">Tanker Queue</div>
+  <div class="section-sub" id="subtitle">Loading — weekly SAR passes 2017–present · Sentinel-1 IW</div>
 
-  <!-- KPI row -->
-  <div class="tqi-row">
-    <div class="kpi">
+  <div class="kpi-row">
+    <div class="kpi-card">
       <div class="kpi-label">Queue Index</div>
-      <div class="kpi-value accent mono" id="tqi">—</div>
+      <div class="kpi-value blue" id="tqi">—</div>
       <div id="tqi-pill"></div>
     </div>
-    <div class="kpi">
-      <div class="kpi-label">Current total</div>
-      <div class="kpi-value accent mono" id="kpi-total">—</div>
+    <div class="kpi-card">
+      <div class="kpi-label">Current Total</div>
+      <div class="kpi-value blue" id="kpi-total">—</div>
       <div class="kpi-sub" id="kpi-date">vessels</div>
     </div>
-    <div class="kpi">
+    <div class="kpi-card">
       <div class="kpi-label">VLCC + Suezmax</div>
-      <div class="kpi-value vlcc mono" id="kpi-large">—</div>
+      <div class="kpi-value red" id="kpi-large">—</div>
       <div class="kpi-sub">large tankers, latest pass</div>
     </div>
-    <div class="kpi">
-      <div class="kpi-label">Historical avg</div>
-      <div class="kpi-value mr mono" id="kpi-avg">—</div>
+    <div class="kpi-card">
+      <div class="kpi-label">Historical Avg</div>
+      <div class="kpi-value green" id="kpi-avg">—</div>
       <div class="kpi-sub">vessels/week since 2017</div>
     </div>
   </div>
 
-  <!-- Chart -->
-  <div class="chart-card">
-    <div class="chart-header">
+  <div class="monitor-wrap">
+    <div class="monitor-header">
       <div>
-        <div class="chart-title">Weekly Export Vessel Count</div>
-        <div class="chart-sub">Kharg anchorage — VLCC · Suezmax · Aframax · MR/Panamax</div>
+        <div class="monitor-title">Weekly Export Vessel Count</div>
+        <div class="monitor-sub">Kharg anchorage — VLCC · Suezmax · Aframax · MR/Panamax</div>
       </div>
       <div class="range-btns">
-        <button class="range-btn" data-range="1">1Y</button>
-        <button class="range-btn" data-range="3">3Y</button>
-        <button class="range-btn active" data-range="0">ALL</button>
+        <button class="range-btn" data-range="1m">1M</button>
+        <button class="range-btn" data-range="3m">3M</button>
+        <button class="range-btn" data-range="6m">6M</button>
+        <button class="range-btn active" data-range="1y">1Y</button>
+        <button class="range-btn" data-range="all">ALL</button>
       </div>
     </div>
-    <div class="chart-wrap">
-      <canvas id="queueChart" height="260"></canvas>
-    </div>
-    <div class="legend">
+    <canvas id="queueChart" height="300"></canvas>
+    <div class="legend-row">
       <div class="leg"><div class="leg-dot" style="background:var(--vlcc)"></div>VLCC ≥290m</div>
       <div class="leg"><div class="leg-dot" style="background:var(--suezmax)"></div>Suezmax 260–290m</div>
       <div class="leg"><div class="leg-dot" style="background:var(--aframax)"></div>Aframax 220–260m</div>
@@ -153,74 +143,99 @@ canvas#queueChart{width:100%;display:block}
     </div>
   </div>
 
-  <!-- Latest pass -->
-  <div class="latest-card">
-    <div class="latest-title">Latest SAR pass breakdown</div>
-    <div class="latest-grid">
-      <div class="latest-item">
-        <div class="latest-cls">VLCC</div>
-        <div class="latest-n" id="l-vlcc" style="color:var(--vlcc)">—</div>
+  <div class="monitor-wrap">
+    <div class="monitor-title" style="margin-bottom:20px">Latest SAR Pass Breakdown</div>
+    <div class="breakdown-grid">
+      <div class="breakdown-item">
+        <div class="breakdown-cls">VLCC</div>
+        <div class="breakdown-n" id="l-vlcc" style="color:var(--vlcc)">—</div>
       </div>
-      <div class="latest-item">
-        <div class="latest-cls">Suezmax</div>
-        <div class="latest-n" id="l-suezmax" style="color:var(--suezmax)">—</div>
+      <div class="breakdown-item">
+        <div class="breakdown-cls">Suezmax</div>
+        <div class="breakdown-n" id="l-suezmax" style="color:var(--suezmax)">—</div>
       </div>
-      <div class="latest-item">
-        <div class="latest-cls">Aframax</div>
-        <div class="latest-n" id="l-aframax" style="color:var(--aframax)">—</div>
+      <div class="breakdown-item">
+        <div class="breakdown-cls">Aframax</div>
+        <div class="breakdown-n" id="l-aframax" style="color:var(--aframax)">—</div>
       </div>
-      <div class="latest-item">
-        <div class="latest-cls">MR/Panamax</div>
-        <div class="latest-n" id="l-mr" style="color:var(--mr)">—</div>
+      <div class="breakdown-item">
+        <div class="breakdown-cls">MR/Panamax</div>
+        <div class="breakdown-n" id="l-mr" style="color:var(--mr)">—</div>
       </div>
-      <div class="latest-item">
-        <div class="latest-cls">Total</div>
-        <div class="latest-n" id="l-total" style="color:var(--accent)">—</div>
+      <div class="breakdown-item">
+        <div class="breakdown-cls">Total</div>
+        <div class="breakdown-n" id="l-total" style="color:var(--accent)">—</div>
       </div>
     </div>
   </div>
 
-  <div class="note" id="note">
+  <div class="data-note" id="note">
     Detection via Sentinel-1 IW VV backscatter. Per-pass adaptive threshold. Kharg Island and known offshore platforms masked.
-    Small vessels (&lt;100m) excluded — non-export traffic. Queue Index = current 4-week avg / historical 95th percentile × 100.
+    Small vessels (&lt;100m) excluded — non-export traffic. Last 2 weeks hidden (SAR processing lag).
+    Queue Index = current 4-week avg / historical 95th percentile × 100.
   </div>
-</div>
+</main>
+
+<footer>
+  <div class="footer-logo">OILRADAR</div>
+  <div class="footer-right">
+    <a href="/monitor" class="footer-link">Monitor</a>
+    <a href="/anchorage" class="footer-link">Anchorage</a>
+    <a href="/team" class="footer-link">Team</a>
+    <span class="footer-text">© 2025 OilRadar</span>
+  </div>
+</footer>
 
 <script>
-// ── Colours ──────────────────────────────────────────────────────────────────
-const C = {
+const COLORS = {
   vlcc:    '#ef4444',
   suezmax: '#f97316',
   aframax: '#eab308',
   mr:      '#22c55e',
-  accent:  '#38bdf8',
-  grid:    'rgba(30,45,69,.7)',
+  accent:  '#3b82f6',
+  grid:    'rgba(255,255,255,0.05)',
   text:    '#64748b',
-  surface: '#1a2540',
 };
 
 let ALL_RECORDS = [];
-let activeRange = 0; // 0=all, 1=1Y, 3=3Y
+let activeRange = '1y';
 
-// ── Fetch data ────────────────────────────────────────────────────────────────
 async function loadData() {
   try {
     const r = await fetch('/data/anchorage.json');
-    if (!r.ok) throw new Error('no data');
+    if (!r.ok) throw new Error();
     return await r.json();
-  } catch(e) {
-    // fallback: show "data loading" state — backfill hasn't run yet
-    return null;
-  }
+  } catch(e) { return null; }
 }
 
-// ── Stats ─────────────────────────────────────────────────────────────────────
+function filterRecords(records, range) {
+  // Always hide last 2 weeks (SAR processing lag)
+  const cutEnd = new Date();
+  cutEnd.setDate(cutEnd.getDate() - 14);
+  const endStr = cutEnd.toISOString().slice(0,10);
+  let data = records.filter(r => r.date <= endStr);
+
+  if (range === 'all') return data;
+
+  const now = new Date(endStr);
+  let months = 0;
+  if (range === '1m')  months = 1;
+  if (range === '3m')  months = 3;
+  if (range === '6m')  months = 6;
+  if (range === '1y')  months = 12;
+
+  const cutStart = new Date(now);
+  cutStart.setMonth(cutStart.getMonth() - months);
+  const startStr = cutStart.toISOString().slice(0,10);
+  return data.filter(r => r.date >= startStr);
+}
+
 function computeStats(records) {
   if (!records.length) return {};
   const totals = records.map(r => r.total);
   const mean   = totals.reduce((a,b) => a+b, 0) / totals.length;
   const sorted = [...totals].sort((a,b) => a-b);
-  const p95    = sorted[Math.floor(sorted.length * 0.95)];
+  const p95    = sorted[Math.floor(sorted.length * 0.95)] || sorted[sorted.length-1];
   const latest = records[records.length - 1];
   const last4  = records.slice(-4);
   const avg4   = last4.reduce((a,r) => a+r.total, 0) / last4.length;
@@ -228,11 +243,12 @@ function computeStats(records) {
   return { mean, p95, latest, tqi };
 }
 
-// ── Update KPIs ───────────────────────────────────────────────────────────────
 function updateKPIs(records) {
-  const { mean, p95, latest, tqi } = computeStats(records);
-  const first = records[0], last = records[records.length-1];
+  const visible = filterRecords(records, 'all');
+  const { mean, p95, latest, tqi } = computeStats(visible);
+  if (!latest) return;
 
+  const first = records[0], last = visible[visible.length-1];
   document.getElementById('subtitle').textContent =
     `${records.length} weekly SAR passes · ${first.date} – ${last.date} · Sentinel-1 IW`;
 
@@ -244,10 +260,10 @@ function updateKPIs(records) {
 
   const pill = document.getElementById('tqi-pill');
   let cls, label;
-  if (tqi < 50)       { cls='status-normal';   label='Low'; }
-  else if (tqi < 70)  { cls='status-normal';   label='Normal'; }
-  else if (tqi < 85)  { cls='status-elevated'; label='Elevated'; }
-  else                { cls='status-high';     label='High Pressure'; }
+  if (tqi < 50)      { cls='pill-low';      label='Low'; }
+  else if (tqi < 70) { cls='pill-normal';   label='Normal'; }
+  else if (tqi < 85) { cls='pill-elevated'; label='Elevated'; }
+  else               { cls='pill-high';     label='High Pressure'; }
   pill.innerHTML = `<span class="status-pill ${cls}">${label}</span>`;
 
   document.getElementById('l-vlcc').textContent    = latest.vlcc;
@@ -257,12 +273,14 @@ function updateKPIs(records) {
   document.getElementById('l-total').textContent   = latest.total;
 }
 
-// ── Canvas chart ──────────────────────────────────────────────────────────────
 function drawChart(records) {
+  const data = filterRecords(records, activeRange);
+  if (!data.length) return;
+
   const canvas = document.getElementById('queueChart');
   const dpr = window.devicePixelRatio || 1;
-  const W = canvas.parentElement.clientWidth - 32;
-  const H = 260;
+  const W = canvas.parentElement.clientWidth - 4;
+  const H = 300;
   canvas.style.width  = W + 'px';
   canvas.style.height = H + 'px';
   canvas.width  = W * dpr;
@@ -270,123 +288,112 @@ function drawChart(records) {
   const ctx = canvas.getContext('2d');
   ctx.scale(dpr, dpr);
 
-  const PAD = { top: 12, right: 16, bottom: 32, left: 36 };
+  const PAD = { top: 16, right: 20, bottom: 36, left: 40 };
   const cw = W - PAD.left - PAD.right;
   const ch = H - PAD.top  - PAD.bottom;
-
-  // Filter by range
-  let data = records;
-  if (activeRange > 0) {
-    const cutoff = new Date();
-    cutoff.setFullYear(cutoff.getFullYear() - activeRange);
-    const cut = cutoff.toISOString().slice(0,10);
-    data = records.filter(r => r.date >= cut);
-  }
-  if (!data.length) return;
+  const n  = data.length;
 
   const maxY = Math.max(...data.map(r => r.total), 5);
-  const yMax = Math.ceil(maxY / 5) * 5 + 2;
-  const n = data.length;
+  const yMax = Math.ceil(maxY / 5) * 5 + 3;
 
-  function xp(i) { return PAD.left + (i / (n-1)) * cw; }
+  function xp(i) { return PAD.left + (i / Math.max(n-1,1)) * cw; }
   function yp(v) { return PAD.top + ch - (v / yMax) * ch; }
 
-  // Grid
-  ctx.strokeStyle = C.grid;
-  ctx.lineWidth = 1;
-  const yTicks = 4;
-  ctx.font = `10px -apple-system,sans-serif`;
-  ctx.fillStyle = C.text;
+  // Grid lines
+  ctx.font = `10px 'DM Mono', monospace`;
   ctx.textAlign = 'right';
-  for (let t = 0; t <= yTicks; t++) {
-    const v = Math.round(yMax * t / yTicks);
+  for (let t = 0; t <= 4; t++) {
+    const v = Math.round(yMax * t / 4);
     const y = yp(v);
-    ctx.beginPath(); ctx.moveTo(PAD.left, y); ctx.lineTo(PAD.left+cw, y); ctx.stroke();
-    ctx.fillText(v, PAD.left - 5, y + 3);
+    ctx.strokeStyle = COLORS.grid;
+    ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(PAD.left, y); ctx.lineTo(PAD.left + cw, y); ctx.stroke();
+    ctx.fillStyle = COLORS.text;
+    ctx.fillText(v, PAD.left - 6, y + 3);
   }
 
-  // X labels (years)
+  // X labels
   ctx.textAlign = 'center';
-  const years = [...new Set(data.map(r => r.date.slice(0,4)))];
-  years.forEach(yr => {
-    const idx = data.findIndex(r => r.date.startsWith(yr));
+  ctx.fillStyle = COLORS.text;
+  const labelEvery = activeRange === '1m' ? 1 : activeRange === '3m' ? 2 : activeRange === '6m' ? 4 : 4;
+  const years = [...new Set(data.map(r => r.date.slice(0,7)))];
+  const labelDates = years.filter((_, i) => i % labelEvery === 0);
+  labelDates.forEach(ym => {
+    const idx = data.findIndex(r => r.date.startsWith(ym));
     if (idx < 0) return;
-    const x = xp(idx);
-    ctx.fillStyle = C.text;
-    ctx.fillText(yr, x, PAD.top + ch + 20);
+    const label = activeRange === 'all' ? ym.slice(0,4) : ym.slice(0,7);
+    // only show unique year labels for 'all'
+    if (activeRange === 'all') {
+      const yr = ym.slice(0,4);
+      if (data.findIndex(r => r.date.startsWith(yr)) !== idx) return;
+    }
+    ctx.fillText(label, xp(idx), PAD.top + ch + 24);
   });
 
-  // Stacked area helpers
-  function stackedArea(layers, alphas) {
-    // layers: array of [values] from bottom to top; each layer adds to stack
-    const stacks = data.map(() => 0);
-    layers.forEach(([vals, color, alpha], li) => {
-      const tops = vals.map((v, i) => stacks[i] + v);
-      // fill
-      ctx.beginPath();
-      ctx.moveTo(xp(0), yp(stacks[0]));
-      tops.forEach((v, i) => ctx.lineTo(xp(i), yp(v)));
-      for (let i = n-1; i >= 0; i--) ctx.lineTo(xp(i), yp(stacks[i]));
-      ctx.closePath();
-      ctx.fillStyle = color + Math.round(alpha * 255).toString(16).padStart(2,'0');
-      ctx.fill();
-      // top line
-      ctx.beginPath();
-      tops.forEach((v, i) => i === 0 ? ctx.moveTo(xp(i), yp(v)) : ctx.lineTo(xp(i), yp(v)));
-      ctx.strokeStyle = color;
-      ctx.lineWidth = 1.5;
-      ctx.stroke();
-      // advance stack
-      tops.forEach((v, i) => stacks[i] = v);
-    });
-  }
+  // Stacked area
+  const layers = [
+    { key: 'mr',      color: COLORS.mr },
+    { key: 'aframax', color: COLORS.aframax },
+    { key: 'suezmax', color: COLORS.suezmax },
+    { key: 'vlcc',    color: COLORS.vlcc },
+  ];
+  const stacks = new Array(n).fill(0);
+  layers.forEach(({ key, color }) => {
+    const vals = data.map(r => r[key] || 0);
+    const tops = vals.map((v, i) => stacks[i] + v);
 
-  stackedArea([
-    [data.map(r => r.mr),      C.mr,      0.55],
-    [data.map(r => r.aframax), C.aframax, 0.55],
-    [data.map(r => r.suezmax), C.suezmax, 0.55],
-    [data.map(r => r.vlcc),    C.vlcc,    0.55],
-  ]);
+    ctx.beginPath();
+    ctx.moveTo(xp(0), yp(stacks[0]));
+    tops.forEach((v, i) => ctx.lineTo(xp(i), yp(v)));
+    for (let i = n-1; i >= 0; i--) ctx.lineTo(xp(i), yp(stacks[i]));
+    ctx.closePath();
+    ctx.fillStyle = color + '99';
+    ctx.fill();
 
-  // Latest vertical indicator
-  const li = n - 1;
+    ctx.beginPath();
+    tops.forEach((v, i) => i === 0 ? ctx.moveTo(xp(i), yp(v)) : ctx.lineTo(xp(i), yp(v)));
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+
+    tops.forEach((v, i) => stacks[i] = v);
+  });
+
+  // Latest line
   ctx.beginPath();
-  ctx.moveTo(xp(li), PAD.top);
-  ctx.lineTo(xp(li), PAD.top + ch);
-  ctx.strokeStyle = 'rgba(56,189,248,.4)';
+  ctx.moveTo(xp(n-1), PAD.top);
+  ctx.lineTo(xp(n-1), PAD.top + ch);
+  ctx.strokeStyle = 'rgba(59,130,246,0.35)';
   ctx.lineWidth = 1;
   ctx.setLineDash([3,3]);
   ctx.stroke();
   ctx.setLineDash([]);
 }
 
-// ── Range buttons ─────────────────────────────────────────────────────────────
 document.querySelectorAll('.range-btn').forEach(btn => {
   btn.addEventListener('click', () => {
     document.querySelectorAll('.range-btn').forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
-    activeRange = parseInt(btn.dataset.range);
+    activeRange = btn.dataset.range;
     drawChart(ALL_RECORDS);
   });
 });
 
 window.addEventListener('resize', () => { if (ALL_RECORDS.length) drawChart(ALL_RECORDS); });
 
-// ── Init ──────────────────────────────────────────────────────────────────────
 (async () => {
   const result = await loadData();
-  if (!result || !result.records || result.records.length === 0) {
+  if (!result || !result.records || !result.records.length) {
     document.getElementById('subtitle').textContent =
-      'Backfill in progress — weekly SAR passes 2017–present · check back shortly';
+      'Backfill in progress — check back shortly';
     return;
   }
   ALL_RECORDS = result.records.filter(r => r.total !== undefined);
   updateKPIs(ALL_RECORDS);
   drawChart(ALL_RECORDS);
-
-  const note = document.getElementById('note');
-  if (result.updated && result.updated !== 'MOCK') {
-    note.innerHTML = note.innerHTML + ` Updated ${result.updated.slice(0,10)}.`;
+  if (result.updated && result.updated !== '2017-01-01T00:00:00Z') {
+    document.getElementById('note').textContent +=
+      ' Updated ' + result.updated.slice(0,10) + '.';
   }
 })();
 </script>
