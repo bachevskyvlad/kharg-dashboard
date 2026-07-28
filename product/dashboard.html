@@ -247,6 +247,10 @@
         .map-slider { flex: 1; accent-color: var(--accent); }
         .map-btn { background: transparent; border: 1px solid var(--border); color: var(--muted); padding: 0.28rem 0.65rem; border-radius: 4px; font-size: 0.75rem; cursor: pointer; }
         .tank-div-icon { background: none !important; border: none !important; }
+        /* Anchorage range buttons */
+        .aq-rbtn { font-family: monospace; font-size: 0.68rem; letter-spacing: 1px; text-transform: uppercase; background: transparent; border: 1px solid var(--border); color: var(--muted); padding: 4px 10px; cursor: pointer; transition: all .15s; }
+        .aq-rbtn:hover { border-color: var(--accent); color: var(--accent); }
+        .aq-rbtn-active { background: var(--accent) !important; border-color: var(--accent) !important; color: #fff !important; }
 
         /* ── MOBILE / TABLET ── */
         @media (max-width: 820px) {
@@ -415,6 +419,9 @@
         </div>
         <div class="nav-item" onclick="showSection('map')">
             <span class="nav-icon">⊞</span> Per-Tank Map
+        </div>
+        <div class="nav-item" onclick="showSection('anchorage')">
+            <span class="nav-icon">⚓</span> Tanker Queue
         </div>
         <div class="nav-item" onclick="window.open('/tutorial','_blank')" style="margin-top:auto;color:var(--muted);font-size:0.72rem;">
             <span class="nav-icon">?</span> Tutorial
@@ -696,6 +703,50 @@
     LEGACY: Multi-country Gulf coverage — disabled 2026-06-24
     -->
 
+    <div class="section" id="sec-anchorage">
+        <div class="sec-title" style="margin-bottom:0.4rem">Tanker Queue — Kharg Anchorage · Full History 2017–Present</div>
+        <div class="signal" style="margin-bottom:1.25rem">Weekly Sentinel-1 SAR ship detection. No date restrictions — full dataset including latest 2 weeks. VLCC ≥290m · Suezmax 260–290m · Aframax 220–260m · MR/Panamax 100–220m.</div>
+
+        <div style="background:var(--surface);border:1px solid var(--border);padding:1.25rem 1.5rem 1rem;margin-bottom:1.25rem;">
+            <div style="display:flex;gap:2rem;flex-wrap:wrap;">
+                <div>
+                    <div style="font-size:0.65rem;letter-spacing:1px;text-transform:uppercase;color:var(--muted);margin-bottom:0.25rem">Queue Index</div>
+                    <div style="font-size:2rem;font-weight:700;color:var(--accent);font-family:'Space Grotesk',sans-serif" id="aq-tqi">—</div>
+                    <div style="font-size:0.7rem;color:var(--muted)" id="aq-tqi-label">latest / p95</div>
+                </div>
+                <div>
+                    <div style="font-size:0.65rem;letter-spacing:1px;text-transform:uppercase;color:var(--muted);margin-bottom:0.25rem">Current Total</div>
+                    <div style="font-size:2rem;font-weight:700;color:var(--text);font-family:'Space Grotesk',sans-serif" id="aq-total">—</div>
+                    <div style="font-size:0.7rem;color:var(--muted)" id="aq-date">vessels</div>
+                </div>
+                <div>
+                    <div style="font-size:0.65rem;letter-spacing:1px;text-transform:uppercase;color:var(--muted);margin-bottom:0.25rem">VLCC + Suezmax</div>
+                    <div style="font-size:2rem;font-weight:700;color:#ef4444;font-family:'Space Grotesk',sans-serif" id="aq-large">—</div>
+                    <div style="font-size:0.7rem;color:var(--muted)">large tankers, latest pass</div>
+                </div>
+                <div>
+                    <div style="font-size:0.65rem;letter-spacing:1px;text-transform:uppercase;color:var(--muted);margin-bottom:0.25rem">Historical Avg</div>
+                    <div style="font-size:2rem;font-weight:700;color:var(--green);font-family:'Space Grotesk',sans-serif" id="aq-avg">—</div>
+                    <div style="font-size:0.7rem;color:var(--muted)">vessels/week since 2017</div>
+                </div>
+            </div>
+        </div>
+
+        <div style="background:var(--surface);border:1px solid var(--border);padding:1.25rem 1.5rem 1rem;">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;flex-wrap:wrap;gap:0.5rem;">
+                <div style="font-size:0.7rem;letter-spacing:1px;text-transform:uppercase;color:var(--accent)">Weekly Export Vessel Count</div>
+                <div style="display:flex;gap:4px" id="aq-range-btns">
+                    <button class="aq-rbtn" data-r="1m">1M</button>
+                    <button class="aq-rbtn" data-r="3m">3M</button>
+                    <button class="aq-rbtn" data-r="6m">6M</button>
+                    <button class="aq-rbtn" data-r="1y">1Y</button>
+                    <button class="aq-rbtn aq-rbtn-active" data-r="all">ALL</button>
+                </div>
+            </div>
+            <canvas id="aqChart" style="width:100%;display:block;height:280px"></canvas>
+        </div>
+    </div>
+
 </div><!-- /main -->
 
 <script>
@@ -757,6 +808,7 @@ function showSection(id) {
     document.getElementById('sec-' + id).classList.add('active');
     event.currentTarget.classList.add('active');
     if (id === 'map' && !window._mapInited) { initTankMap(); window._mapInited = true; }
+    if (id === 'anchorage') { initAnchorage(); }
     if (id === 'flows') {
         if (!window._flowsInited) { window._flowsInited = true; _flowsRange = 90; loadFlows(); }
         else if (_flowsData) { renderFlows(_flowsData); }
@@ -1695,6 +1747,130 @@ async function initTankMap() {
     setTimeout(() => el.style.display = 'none', 260);
   };
 })();
+</script>
+
+<script>
+// ── Tanker Queue (Anchorage) ───────────────────────────────────────────────
+let _aqInited = false;
+let _aqRecords = [];
+let _aqRange = 'all';
+
+function aqFilter(records, range) {
+  if (range === 'all') return records;
+  const now = new Date();
+  let months = range === '1m' ? 1 : range === '3m' ? 3 : range === '6m' ? 6 : 12;
+  const cut = new Date(now);
+  cut.setMonth(cut.getMonth() - months);
+  const cutStr = cut.toISOString().slice(0,10);
+  return records.filter(r => r.date >= cutStr);
+}
+
+function aqDraw() {
+  const data = aqFilter(_aqRecords, _aqRange);
+  if (!data.length) return;
+  const canvas = document.getElementById('aqChart');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  const dpr = window.devicePixelRatio || 1;
+  const W = canvas.offsetWidth, H = 280;
+  canvas.width = W * dpr; canvas.height = H * dpr;
+  canvas.style.height = H + 'px';
+  ctx.scale(dpr, dpr);
+
+  const PAD = { t: 16, r: 16, b: 32, l: 36 };
+  const cw = W - PAD.l - PAD.r, ch = H - PAD.t - PAD.b;
+
+  const maxVal = Math.max(...data.map(r => r.total), 1);
+  const yScale = v => PAD.t + ch - (v / maxVal) * ch;
+  const xScale = i => PAD.l + (i / (data.length - 1)) * cw;
+
+  const COLORS = { vlcc:'#ef4444', suezmax:'#f97316', aframax:'#eab308', mr:'#22c55e' };
+  const layers = ['mr','aframax','suezmax','vlcc'];
+
+  function cumulative(r, upTo) {
+    let s = 0;
+    for (const k of layers) { if (k === upTo) { s += r[k]; break; } s += r[k]; }
+    return s;
+  }
+
+  ctx.clearRect(0, 0, W, H);
+
+  // grid
+  ctx.strokeStyle = 'rgba(255,255,255,0.05)'; ctx.lineWidth = 1;
+  [0.25,0.5,0.75,1].forEach(f => {
+    const y = yScale(maxVal * f);
+    ctx.beginPath(); ctx.moveTo(PAD.l, y); ctx.lineTo(PAD.l + cw, y); ctx.stroke();
+    ctx.fillStyle = '#64748b'; ctx.font = '10px monospace'; ctx.textAlign = 'right';
+    ctx.fillText(Math.round(maxVal * f), PAD.l - 4, y + 3);
+  });
+
+  // stacked area layers
+  for (let li = 0; li < layers.length; li++) {
+    const key = layers[li];
+    ctx.beginPath();
+    data.forEach((r, i) => {
+      const top = cumulative(r, key);
+      const bot = top - r[key];
+      if (i === 0) ctx.moveTo(xScale(i), yScale(top));
+      else ctx.lineTo(xScale(i), yScale(top));
+    });
+    for (let i = data.length - 1; i >= 0; i--) {
+      const bot = cumulative(data[i], key) - data[i][key];
+      ctx.lineTo(xScale(i), yScale(bot));
+    }
+    ctx.closePath();
+    ctx.fillStyle = COLORS[key] + 'cc';
+    ctx.fill();
+  }
+
+  // x labels
+  ctx.textAlign = 'center'; ctx.fillStyle = '#64748b'; ctx.font = '10px monospace';
+  const years = [...new Set(data.map(r => r.date.slice(0,4)))];
+  years.forEach(yr => {
+    const idx = data.findIndex(r => r.date.startsWith(yr));
+    if (idx < 0) return;
+    ctx.fillText(yr, xScale(idx), H - 6);
+  });
+}
+
+async function initAnchorage() {
+  if (_aqInited) { aqDraw(); return; }
+  try {
+    const res = await fetch('/data/anchorage.json');
+    const json = await res.json();
+    _aqRecords = (json.records || []).filter(r => r.total !== undefined);
+  } catch(e) { return; }
+
+  // KPIs
+  if (_aqRecords.length) {
+    const totals = _aqRecords.map(r => r.total);
+    const sorted = [...totals].sort((a,b) => a-b);
+    const p95 = sorted[Math.floor(sorted.length * 0.95)] || sorted[sorted.length-1];
+    const mean = totals.reduce((a,b) => a+b,0) / totals.length;
+    const latest = _aqRecords[_aqRecords.length - 1];
+    const tqi = Math.round(latest.total / p95 * 100);
+    document.getElementById('aq-tqi').textContent = tqi;
+    document.getElementById('aq-tqi-label').textContent = tqi >= 85 ? 'HIGH PRESSURE' : tqi >= 70 ? 'Elevated' : 'Normal';
+    document.getElementById('aq-tqi').style.color = tqi >= 85 ? '#ef4444' : tqi >= 70 ? '#f97316' : 'var(--accent)';
+    document.getElementById('aq-total').textContent = latest.total;
+    document.getElementById('aq-date').textContent = latest.date;
+    document.getElementById('aq-large').textContent = latest.vlcc + latest.suezmax;
+    document.getElementById('aq-avg').textContent = mean.toFixed(1);
+  }
+
+  // range buttons
+  document.querySelectorAll('.aq-rbtn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.aq-rbtn').forEach(b => b.classList.remove('aq-rbtn-active'));
+      btn.classList.add('aq-rbtn-active');
+      _aqRange = btn.dataset.r;
+      aqDraw();
+    });
+  });
+
+  _aqInited = true;
+  aqDraw();
+}
 </script>
 </body>
 </html>
