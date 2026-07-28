@@ -130,7 +130,8 @@ footer{background:var(--panel);border-top:1px solid var(--border);padding:32px 4
         <button class="range-btn" data-range="1m">1M</button>
         <button class="range-btn" data-range="3m">3M</button>
         <button class="range-btn" data-range="6m">6M</button>
-        <button class="range-btn active" data-range="1y">1Y</button>
+        <button class="range-btn active" data-range="2026">2026</button>
+        <button class="range-btn" data-range="1y">1Y</button>
         <button class="range-btn" data-range="all">ALL</button>
       </div>
     </div>
@@ -198,7 +199,7 @@ const COLORS = {
 };
 
 let ALL_RECORDS = [];
-let activeRange = '1y';
+let activeRange = '2026';
 
 async function loadData() {
   try {
@@ -216,6 +217,7 @@ function filterRecords(records, range) {
   let data = records.filter(r => r.date <= endStr);
 
   if (range === 'all') return data;
+  if (range === '2026') return data.filter(r => r.date.startsWith('2026'));
 
   const now = new Date(endStr);
   let months = 0;
