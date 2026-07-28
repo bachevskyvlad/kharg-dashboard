@@ -17,10 +17,15 @@ export async function onRequest(context) {
 
   if (!sessionToken) return jsonResponse({ authenticated: false }, origin);
 
+  const TRIAL_USERS = [
+    'cyril@bluewaterstrategy.eu'
+  ];
+
   try {
     const sessionData = JSON.parse(atob(sessionToken));
     if (sessionData.exp && sessionData.exp < Date.now()) return jsonResponse({ authenticated: false }, origin);
-    return jsonResponse({ authenticated: true, email: sessionData.email, name: sessionData.name, tier: sessionData.tier || 'paid' }, origin);
+    const tier = TRIAL_USERS.map(e => e.toLowerCase()).includes((sessionData.email || '').toLowerCase()) ? 'trial' : 'paid';
+    return jsonResponse({ authenticated: true, email: sessionData.email, name: sessionData.name, tier }, origin);
   } catch (e) {
     return jsonResponse({ authenticated: false }, origin);
   }
