@@ -5,6 +5,12 @@ import * as callbackFn from './functions/auth/callback.js';
 import * as sendOtpFn from './functions/auth/send-otp.js';
 import * as verifyOtpFn from './functions/auth/verify-otp.js';
 import * as notifySarFn from './functions/auth/notify-sar.js';
+import * as apiKeyFn from './functions/api/key.js';
+import * as apiTankerQueueFn from './functions/api/v1/tanker-queue.js';
+import * as apiStorageDailyFn from './functions/api/v1/storage/daily.js';
+import * as apiStorageWeeklyFn from './functions/api/v1/storage/weekly.js';
+import * as apiStorageMetricsFn from './functions/api/v1/storage/metrics.js';
+import * as apiTanksFn from './functions/api/v1/tanks.js';
 
 export default {
   async fetch(request, env, ctx) {
@@ -19,6 +25,13 @@ export default {
     if (path === '/auth/send-otp')   return sendOtpFn.onRequest(context);
     if (path === '/auth/verify-otp') return verifyOtpFn.onRequest(context);
     if (path === '/auth/notify-sar') return notifySarFn.onRequest(context);
+
+    if (path === '/api/key')                  return apiKeyFn.onRequest(context);
+    if (path === '/api/v1/tanker-queue')      return apiTankerQueueFn.onRequest(context);
+    if (path === '/api/v1/storage/daily')     return apiStorageDailyFn.onRequest(context);
+    if (path === '/api/v1/storage/weekly')    return apiStorageWeeklyFn.onRequest(context);
+    if (path === '/api/v1/storage/metrics')   return apiStorageMetricsFn.onRequest(context);
+    if (path === '/api/v1/tanks')             return apiTanksFn.onRequest(context);
 
     // app.oilradar.io → serve product pages
     const host = request.headers.get('host') || url.hostname;
