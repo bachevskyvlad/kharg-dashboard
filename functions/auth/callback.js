@@ -62,7 +62,7 @@ export async function onRequest(context) {
     const sessionData = { email, name: user.name || email, tier, exp: Date.now() + (7 * 24 * 60 * 60 * 1000) };
     const sessionToken = btoa(JSON.stringify(sessionData));
 
-    context.waitUntil(tgLogin(email, user.name || email));
+    context.ctx.waitUntil(tgLogin(email, user.name || email));
 
     return new Response(null, {
       status: 302,
