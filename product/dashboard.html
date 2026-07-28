@@ -261,6 +261,30 @@
         .api-desc { font-size: 0.72rem; color: var(--muted); }
         .api-pre { font-family: monospace; font-size: 0.68rem; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.06); padding: 0.6rem 0.9rem; color: #94a3b8; white-space: pre-wrap; word-break: break-all; margin-bottom: 0.5rem; }
         .api-fields { font-size: 0.65rem; color: var(--dim); font-family: monospace; letter-spacing: 0.5px; }
+        /* API redesign */
+        .api-key-box { background: var(--surface); border: 1px solid var(--border); padding: 1rem 1.25rem; margin-bottom: 1.25rem; }
+        .api-key-row { display: flex; align-items: center; gap: 0.5rem; }
+        .api-key-val { font-family: monospace; font-size: 0.72rem; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--muted); background: rgba(0,0,0,0.2); border: 1px solid var(--border); padding: 0.45rem 0.75rem; }
+        .api-btn-primary { background: var(--accent); border: none; color: #fff; padding: 0.45rem 1rem; font-size: 0.68rem; cursor: pointer; font-family: monospace; letter-spacing: 1px; white-space: nowrap; flex-shrink: 0; }
+        .api-btn-ghost { background: transparent; border: 1px solid var(--border); color: var(--muted); padding: 0.45rem 0.75rem; font-size: 0.68rem; cursor: pointer; font-family: monospace; letter-spacing: 1px; white-space: nowrap; flex-shrink: 0; transition: border-color .15s, color .15s; }
+        .api-btn-ghost:hover { border-color: var(--accent); color: var(--accent); }
+        .api-btn-ghost.copied { border-color: var(--green) !important; color: var(--green) !important; }
+        .api-ref-table { width: 100%; border-collapse: collapse; font-size: 0.72rem; margin-bottom: 1.25rem; }
+        .api-ref-table th { text-align: left; font-size: 0.6rem; letter-spacing: 1px; text-transform: uppercase; color: var(--dim); padding: 0 0.75rem 0.5rem; border-bottom: 1px solid var(--border); font-weight: 400; }
+        .api-ref-table td { padding: 0.55rem 0.75rem; border-bottom: 1px solid rgba(255,255,255,0.04); vertical-align: top; }
+        .api-ref-table tr:last-child td { border-bottom: none; }
+        .api-ref-table tr { cursor: pointer; }
+        .api-ref-table tr:hover td { background: rgba(255,255,255,0.02); }
+        .api-ref-table tr.ep-active td { background: rgba(59,130,246,0.06); }
+        .api-ref-table tr.ep-active td:first-child { border-left: 2px solid var(--accent); }
+        .ep-method { font-family: monospace; font-size: 0.65rem; font-weight: 700; color: var(--accent); letter-spacing: 1px; }
+        .ep-path-cell { font-family: monospace; font-size: 0.73rem; color: var(--text); }
+        .ep-desc-cell { font-size: 0.7rem; color: var(--muted); }
+        .ep-fields-cell { font-family: monospace; font-size: 0.62rem; color: var(--dim); }
+        .api-curl-block { background: var(--surface); border: 1px solid var(--border); padding: 1rem 1.25rem; }
+        .api-curl-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.75rem; }
+        .api-curl-title { font-size: 0.65rem; letter-spacing: 1px; text-transform: uppercase; color: var(--dim); }
+        .api-curl-pre { font-family: monospace; font-size: 0.7rem; background: rgba(0,0,0,0.35); border: 1px solid rgba(255,255,255,0.06); padding: 0.75rem 1rem; color: #94a3b8; white-space: pre-wrap; word-break: break-all; margin: 0; line-height: 1.6; }
 
         /* Anchorage range buttons */
         .aq-rbtn { font-family: monospace; font-size: 0.68rem; letter-spacing: 1px; text-transform: uppercase; background: transparent; border: 1px solid var(--border); color: var(--muted); padding: 4px 10px; cursor: pointer; transition: all .15s; }
@@ -723,70 +747,72 @@
 
     <div class="section" id="sec-api">
         <div class="sec-title" style="margin-bottom:0.4rem">API Access</div>
-        <div class="signal" style="margin-bottom:1.5rem">Programmatic access to all OilRadar datasets. Paid plan only. Include your key in the <code style="background:rgba(255,255,255,0.06);padding:1px 6px;font-size:0.78rem">X-API-Key</code> header or as <code style="background:rgba(255,255,255,0.06);padding:1px 6px;font-size:0.78rem">?api_key=</code> query param. All endpoints support <code style="background:rgba(255,255,255,0.06);padding:1px 6px;font-size:0.78rem">?from=YYYY-MM-DD&to=YYYY-MM-DD</code> and <code style="background:rgba(255,255,255,0.06);padding:1px 6px;font-size:0.78rem">?format=csv</code>.</div>
+        <div class="signal" style="margin-bottom:1.5rem">REST API — paid plan only. Pass your key as <code style="background:rgba(255,255,255,0.06);padding:1px 5px;font-size:0.78rem">X-API-Key: &lt;key&gt;</code> header or <code style="background:rgba(255,255,255,0.06);padding:1px 5px;font-size:0.78rem">?api_key=</code> query param. All endpoints accept <code style="background:rgba(255,255,255,0.06);padding:1px 5px;font-size:0.78rem">?from=YYYY-MM-DD</code>, <code style="background:rgba(255,255,255,0.06);padding:1px 5px;font-size:0.78rem">?to=YYYY-MM-DD</code>, and <code style="background:rgba(255,255,255,0.06);padding:1px 5px;font-size:0.78rem">?format=csv</code>. Base URL: <code style="background:rgba(255,255,255,0.06);padding:1px 5px;font-size:0.78rem">https://app.oilradar.io</code></div>
 
-        <div style="background:var(--surface);border:1px solid var(--border);padding:1.25rem 1.5rem;margin-bottom:1.25rem;">
-            <div style="font-size:0.65rem;letter-spacing:1px;text-transform:uppercase;color:var(--muted);margin-bottom:0.6rem">Your API Key</div>
-            <div style="display:flex;gap:0.75rem;align-items:center;flex-wrap:wrap;">
-                <code id="api-key-display" style="font-family:monospace;font-size:0.75rem;background:rgba(255,255,255,0.04);border:1px solid var(--border);padding:0.5rem 1rem;flex:1;min-width:200px;color:var(--muted)">Click to generate</code>
-                <button onclick="generateKey()" style="background:var(--accent);border:none;color:#fff;padding:0.5rem 1.25rem;font-size:0.72rem;cursor:pointer;font-family:monospace;letter-spacing:1px">GENERATE KEY</button>
-                <button id="api-copy-btn" onclick="copyKey()" style="display:none;background:transparent;border:1px solid var(--border);color:var(--muted);padding:0.5rem 1rem;font-size:0.72rem;cursor:pointer;font-family:monospace;letter-spacing:1px">COPY</button>
+        <!-- API Key -->
+        <div class="api-key-box">
+            <div style="font-size:0.6rem;letter-spacing:1px;text-transform:uppercase;color:var(--dim);margin-bottom:0.5rem">Your API Key</div>
+            <div class="api-key-row">
+                <span id="api-key-display" class="api-key-val">Click Generate to get your key</span>
+                <button class="api-btn-primary" onclick="generateKey()" id="api-gen-btn">GENERATE</button>
+                <button class="api-btn-ghost" id="api-copy-btn" onclick="copyKey()" style="display:none">COPY KEY</button>
             </div>
-            <div style="font-size:0.65rem;color:var(--dim);margin-top:0.5rem">Key is deterministic — regenerate anytime. Keep it private.</div>
+            <div style="font-size:0.62rem;color:var(--dim);margin-top:0.45rem">Deterministic — same key every time. Keep it private.</div>
         </div>
 
-        <div id="api-endpoints" style="display:flex;flex-direction:column;gap:1rem;">
+        <!-- Endpoint reference table -->
+        <div style="overflow-x:auto;margin-bottom:1.25rem;">
+        <table class="api-ref-table" id="api-ref-table">
+            <thead>
+                <tr>
+                    <th style="width:3rem"></th>
+                    <th>Endpoint</th>
+                    <th>Description</th>
+                    <th>Response fields</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr class="ep-row ep-active" data-ep="tq" onclick="selectEp('tq')">
+                    <td><span class="ep-method">GET</span></td>
+                    <td class="ep-path-cell">/api/v1/tanker-queue</td>
+                    <td class="ep-desc-cell">Weekly vessel counts at Kharg anchorage · 2017–present</td>
+                    <td class="ep-fields-cell">date · vlcc · suezmax · aframax · mr · total</td>
+                </tr>
+                <tr class="ep-row" data-ep="sd" onclick="selectEp('sd')">
+                    <td><span class="ep-method">GET</span></td>
+                    <td class="ep-path-cell">/api/v1/storage/daily</td>
+                    <td class="ep-desc-cell">Daily storage volume · Mb</td>
+                    <td class="ep-fields-cell">date · vol_mn_bbl</td>
+                </tr>
+                <tr class="ep-row" data-ep="sw" onclick="selectEp('sw')">
+                    <td><span class="ep-method">GET</span></td>
+                    <td class="ep-path-cell">/api/v1/storage/weekly</td>
+                    <td class="ep-desc-cell">Weekly smoothed storage · SMA-13 · Mb</td>
+                    <td class="ep-fields-cell">date · vol_mn_bbl</td>
+                </tr>
+                <tr class="ep-row" data-ep="sm" onclick="selectEp('sm')">
+                    <td><span class="ep-method">GET</span></td>
+                    <td class="ep-path-cell">/api/v1/storage/metrics</td>
+                    <td class="ep-desc-cell">Daily metrics: fill rate, signal, 30d change</td>
+                    <td class="ep-fields-cell">date · vol_mn_bbl · vol_5d_ma · day_change · signal · pct_change_30d</td>
+                </tr>
+                <tr class="ep-row" data-ep="tk" onclick="selectEp('tk')">
+                    <td><span class="ep-method">GET</span></td>
+                    <td class="ep-path-cell">/api/v1/tanks</td>
+                    <td class="ep-desc-cell">Per-tank volume · all 47 tanks · every SAR pass</td>
+                    <td class="ep-fields-cell">date · tank_id · vol_mn_bbl &nbsp;·&nbsp; ?tank_id=t60_0</td>
+                </tr>
+            </tbody>
+        </table>
+        </div>
 
-            <div class="api-ep">
-                <div class="api-ep-head">
-                    <span class="api-method">GET</span>
-                    <span class="api-path">/api/v1/tanker-queue</span>
-                    <span class="api-desc">Weekly vessel counts at Kharg anchorage · 2017–present</span>
-                </div>
-                <pre class="api-pre" id="curl-tq"></pre>
-                <div class="api-fields">date · vlcc · suezmax · aframax · mr · total</div>
+        <!-- Single curl block -->
+        <div class="api-curl-block">
+            <div class="api-curl-header">
+                <span class="api-curl-title" id="curl-ep-label">GET /api/v1/tanker-queue</span>
+                <button class="api-btn-ghost" id="curl-copy-btn" onclick="copyCurl()">COPY</button>
             </div>
-
-            <div class="api-ep">
-                <div class="api-ep-head">
-                    <span class="api-method">GET</span>
-                    <span class="api-path">/api/v1/storage/daily</span>
-                    <span class="api-desc">Daily storage volume · Mb</span>
-                </div>
-                <pre class="api-pre" id="curl-sd"></pre>
-                <div class="api-fields">date · vol_mn_bbl</div>
-            </div>
-
-            <div class="api-ep">
-                <div class="api-ep-head">
-                    <span class="api-method">GET</span>
-                    <span class="api-path">/api/v1/storage/weekly</span>
-                    <span class="api-desc">Weekly smoothed storage · SMA-13 · Mb</span>
-                </div>
-                <pre class="api-pre" id="curl-sw"></pre>
-                <div class="api-fields">date · vol_mn_bbl</div>
-            </div>
-
-            <div class="api-ep">
-                <div class="api-ep-head">
-                    <span class="api-method">GET</span>
-                    <span class="api-path">/api/v1/storage/metrics</span>
-                    <span class="api-desc">Daily metrics: fill rate, signal, 30d change</span>
-                </div>
-                <pre class="api-pre" id="curl-sm"></pre>
-                <div class="api-fields">date · vol_mn_bbl · vol_5d_ma · day_change · signal · pct_change_30d</div>
-            </div>
-
-            <div class="api-ep">
-                <div class="api-ep-head">
-                    <span class="api-method">GET</span>
-                    <span class="api-path">/api/v1/tanks</span>
-                    <span class="api-desc">Per-tank volume · all 47 tanks · every SAR pass</span>
-                </div>
-                <pre class="api-pre" id="curl-tk"></pre>
-                <div class="api-fields">date · tank_id · vol_mn_bbl &nbsp;·&nbsp; optional: <code style="font-size:0.7rem">?tank_id=t60_0</code></div>
-            </div>
-
+            <pre class="api-curl-pre" id="curl-single"></pre>
         </div>
     </div>
 
@@ -1883,19 +1909,48 @@ async function initTankMap() {
 <script>
 // ── API Section ────────────────────────────────────────────────────────────
 let _apiKey = null;
+let _selectedEp = 'tq';
+
+const EP_MAP = {
+  tq: { path: '/api/v1/tanker-queue?from=2024-01-01',  label: 'GET /api/v1/tanker-queue' },
+  sd: { path: '/api/v1/storage/daily?from=2024-01-01',  label: 'GET /api/v1/storage/daily' },
+  sw: { path: '/api/v1/storage/weekly',                 label: 'GET /api/v1/storage/weekly' },
+  sm: { path: '/api/v1/storage/metrics?from=2024-01-01',label: 'GET /api/v1/storage/metrics' },
+  tk: { path: '/api/v1/tanks?from=2025-01-01',          label: 'GET /api/v1/tanks' },
+};
+
+function buildCurl(ep, key) {
+  const base = 'https://app.oilradar.io';
+  const k = key || '<YOUR_API_KEY>';
+  return `curl -H "X-API-Key: ${k}" \\\n  "${base}${EP_MAP[ep].path}"`;
+}
+
+function renderCurlBlock() {
+  const pre = document.getElementById('curl-single');
+  const lbl = document.getElementById('curl-ep-label');
+  if (pre) pre.textContent = buildCurl(_selectedEp, _apiKey);
+  if (lbl) lbl.textContent = EP_MAP[_selectedEp].label;
+}
+
+function selectEp(ep) {
+  _selectedEp = ep;
+  document.querySelectorAll('.ep-row').forEach(r => r.classList.toggle('ep-active', r.dataset.ep === ep));
+  renderCurlBlock();
+}
 
 async function generateKey() {
-  const btn = document.querySelector('#sec-api button');
+  const btn = document.getElementById('api-gen-btn');
   if (btn) btn.textContent = 'GENERATING…';
   try {
     const res = await fetch('/api/key');
     const data = await res.json();
-    if (data.error) { alert(data.error); return; }
+    if (data.error) { alert(data.error); if (btn) btn.textContent = 'GENERATE'; return; }
     _apiKey = data.api_key;
-    document.getElementById('api-key-display').textContent = _apiKey;
-    document.getElementById('api-key-display').style.color = 'var(--text)';
+    const disp = document.getElementById('api-key-display');
+    disp.textContent = _apiKey;
+    disp.style.color = 'var(--text)';
     document.getElementById('api-copy-btn').style.display = 'inline-block';
-    updateCurls(_apiKey);
+    renderCurlBlock();
   } catch(e) { alert('Failed to generate key'); }
   if (btn) btn.textContent = 'REGENERATE';
 }
@@ -1903,31 +1958,28 @@ async function generateKey() {
 function copyKey() {
   if (!_apiKey) return;
   navigator.clipboard.writeText(_apiKey).then(() => {
-    const btn = document.getElementById('api-copy-btn');
-    const orig = btn.textContent;
-    btn.textContent = 'COPIED';
-    setTimeout(() => btn.textContent = orig, 1500);
+    flashCopy('api-copy-btn', 'COPIED ✓', 'COPY KEY');
   });
 }
 
-function updateCurls(key) {
-  const base = 'https://app.oilradar.io';
-  const h = `-H "X-API-Key: ${key}"`;
-  const pairs = [
-    ['curl-tq', '/api/v1/tanker-queue?from=2024-01-01'],
-    ['curl-sd', '/api/v1/storage/daily?from=2024-01-01'],
-    ['curl-sw', '/api/v1/storage/weekly'],
-    ['curl-sm', '/api/v1/storage/metrics?from=2024-01-01'],
-    ['curl-tk', '/api/v1/tanks?from=2025-01-01'],
-  ];
-  pairs.forEach(([id, path]) => {
-    const el = document.getElementById(id);
-    if (el) el.textContent = `curl ${h} \\\n  "${base}${path}"`;
+function copyCurl() {
+  const pre = document.getElementById('curl-single');
+  if (!pre) return;
+  navigator.clipboard.writeText(pre.textContent).then(() => {
+    flashCopy('curl-copy-btn', 'COPIED ✓', 'COPY');
   });
 }
 
-// Populate curl examples with placeholder on load
-updateCurls('<YOUR_API_KEY>');
+function flashCopy(id, msg, orig) {
+  const btn = document.getElementById(id);
+  if (!btn) return;
+  btn.textContent = msg;
+  btn.classList.add('copied');
+  setTimeout(() => { btn.textContent = orig; btn.classList.remove('copied'); }, 1500);
+}
+
+// Init curl block on load
+renderCurlBlock();
 </script>
 
 <script>
