@@ -63,6 +63,10 @@ PLATFORMS = [
 ]
 PLATFORM_BUFFER_PX = 4  # pixels to mask around each platform at 10m/px ≈ 40m radius
 
+# Kharg Island land mask — rectangular exclusion zone (island is ~8×4 km)
+# Coordinates: (lon_min, lat_min, lon_max, lat_max)
+KHARG_ISLAND_BBOX = (50.285, 29.185, 50.375, 29.300)
+
 # ── Evalscript: VV backscatter in dB ────────────────────────────────────────
 evalscript = """
 //VERSION=3
@@ -147,6 +151,14 @@ def detect_ships(arr, bbox, size):
     h, w = arr.shape
     # Build platform + land mask
     mask = np.zeros((h, w), dtype=bool)
+
+    # Mask Kharg Island landmass
+    ilon0, ilat0, ilon1, ilat1 = KHARG_ISLAND_BBOX
+    ix0, iy1 = lon_lat_to_px(ilon0, ilat0, bbox, size)
+    ix1, iy0 = lon_lat_to_px(ilon1, ilat1, bbox, size)
+    ix0, ix1 = max(0, ix0), min(w, ix1)
+    iy0, iy1 = max(0, iy0), min(h, iy1)
+    mask[iy0:iy1, ix0:ix1] = True
 
     # Mask known offshore platforms
     for lon, lat in PLATFORMS:
