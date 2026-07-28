@@ -253,6 +253,15 @@
         .map-slider { flex: 1; accent-color: var(--accent); }
         .map-btn { background: transparent; border: 1px solid var(--border); color: var(--muted); padding: 0.28rem 0.65rem; border-radius: 4px; font-size: 0.75rem; cursor: pointer; }
         .tank-div-icon { background: none !important; border: none !important; }
+        /* API section */
+        .api-ep { background: var(--surface); border: 1px solid var(--border); padding: 1rem 1.25rem; }
+        .api-ep-head { display: flex; align-items: baseline; gap: 0.75rem; flex-wrap: wrap; margin-bottom: 0.6rem; }
+        .api-method { font-family: monospace; font-size: 0.68rem; font-weight: 700; color: var(--accent); letter-spacing: 1px; }
+        .api-path { font-family: monospace; font-size: 0.78rem; color: var(--text); }
+        .api-desc { font-size: 0.72rem; color: var(--muted); }
+        .api-pre { font-family: monospace; font-size: 0.68rem; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.06); padding: 0.6rem 0.9rem; color: #94a3b8; white-space: pre-wrap; word-break: break-all; margin-bottom: 0.5rem; }
+        .api-fields { font-size: 0.65rem; color: var(--dim); font-family: monospace; letter-spacing: 0.5px; }
+
         /* Anchorage range buttons */
         .aq-rbtn { font-family: monospace; font-size: 0.68rem; letter-spacing: 1px; text-transform: uppercase; background: transparent; border: 1px solid var(--border); color: var(--muted); padding: 4px 10px; cursor: pointer; transition: all .15s; }
         .aq-rbtn:hover { border-color: var(--accent); color: var(--accent); }
@@ -434,6 +443,9 @@
         </div>
         <hr class="nav-divider">
         <div class="nav-group-label">Docs</div>
+        <div class="nav-item" onclick="showSection('api')">
+            <span class="nav-icon">⌥</span> API
+        </div>
         <div class="nav-item" onclick="window.open('/tutorial','_blank')" style="color:var(--muted);font-size:0.72rem;">
             <span class="nav-icon">?</span> Tutorial
         </div>
@@ -706,6 +718,75 @@
                 <button class="map-btn" id="mapNext">→</button>
                 <span class="map-date" id="mapDateLabel">—</span>
             </div>
+        </div>
+    </div>
+
+    <div class="section" id="sec-api">
+        <div class="sec-title" style="margin-bottom:0.4rem">API Access</div>
+        <div class="signal" style="margin-bottom:1.5rem">Programmatic access to all OilRadar datasets. Paid plan only. Include your key in the <code style="background:rgba(255,255,255,0.06);padding:1px 6px;font-size:0.78rem">X-API-Key</code> header or as <code style="background:rgba(255,255,255,0.06);padding:1px 6px;font-size:0.78rem">?api_key=</code> query param. All endpoints support <code style="background:rgba(255,255,255,0.06);padding:1px 6px;font-size:0.78rem">?from=YYYY-MM-DD&to=YYYY-MM-DD</code> and <code style="background:rgba(255,255,255,0.06);padding:1px 6px;font-size:0.78rem">?format=csv</code>.</div>
+
+        <div style="background:var(--surface);border:1px solid var(--border);padding:1.25rem 1.5rem;margin-bottom:1.25rem;">
+            <div style="font-size:0.65rem;letter-spacing:1px;text-transform:uppercase;color:var(--muted);margin-bottom:0.6rem">Your API Key</div>
+            <div style="display:flex;gap:0.75rem;align-items:center;flex-wrap:wrap;">
+                <code id="api-key-display" style="font-family:monospace;font-size:0.75rem;background:rgba(255,255,255,0.04);border:1px solid var(--border);padding:0.5rem 1rem;flex:1;min-width:200px;color:var(--muted)">Click to generate</code>
+                <button onclick="generateKey()" style="background:var(--accent);border:none;color:#fff;padding:0.5rem 1.25rem;font-size:0.72rem;cursor:pointer;font-family:monospace;letter-spacing:1px">GENERATE KEY</button>
+                <button id="api-copy-btn" onclick="copyKey()" style="display:none;background:transparent;border:1px solid var(--border);color:var(--muted);padding:0.5rem 1rem;font-size:0.72rem;cursor:pointer;font-family:monospace;letter-spacing:1px">COPY</button>
+            </div>
+            <div style="font-size:0.65rem;color:var(--dim);margin-top:0.5rem">Key is deterministic — regenerate anytime. Keep it private.</div>
+        </div>
+
+        <div id="api-endpoints" style="display:flex;flex-direction:column;gap:1rem;">
+
+            <div class="api-ep">
+                <div class="api-ep-head">
+                    <span class="api-method">GET</span>
+                    <span class="api-path">/api/v1/tanker-queue</span>
+                    <span class="api-desc">Weekly vessel counts at Kharg anchorage · 2017–present</span>
+                </div>
+                <pre class="api-pre" id="curl-tq"></pre>
+                <div class="api-fields">date · vlcc · suezmax · aframax · mr · total</div>
+            </div>
+
+            <div class="api-ep">
+                <div class="api-ep-head">
+                    <span class="api-method">GET</span>
+                    <span class="api-path">/api/v1/storage/daily</span>
+                    <span class="api-desc">Daily storage volume · Mb</span>
+                </div>
+                <pre class="api-pre" id="curl-sd"></pre>
+                <div class="api-fields">date · vol_mn_bbl</div>
+            </div>
+
+            <div class="api-ep">
+                <div class="api-ep-head">
+                    <span class="api-method">GET</span>
+                    <span class="api-path">/api/v1/storage/weekly</span>
+                    <span class="api-desc">Weekly smoothed storage · SMA-13 · Mb</span>
+                </div>
+                <pre class="api-pre" id="curl-sw"></pre>
+                <div class="api-fields">date · vol_mn_bbl</div>
+            </div>
+
+            <div class="api-ep">
+                <div class="api-ep-head">
+                    <span class="api-method">GET</span>
+                    <span class="api-path">/api/v1/storage/metrics</span>
+                    <span class="api-desc">Daily metrics: fill rate, signal, 30d change</span>
+                </div>
+                <pre class="api-pre" id="curl-sm"></pre>
+                <div class="api-fields">date · vol_mn_bbl · vol_5d_ma · day_change · signal · pct_change_30d</div>
+            </div>
+
+            <div class="api-ep">
+                <div class="api-ep-head">
+                    <span class="api-method">GET</span>
+                    <span class="api-path">/api/v1/tanks</span>
+                    <span class="api-desc">Per-tank volume · all 47 tanks · every SAR pass</span>
+                </div>
+                <pre class="api-pre" id="curl-tk"></pre>
+                <div class="api-fields">date · tank_id · vol_mn_bbl &nbsp;·&nbsp; optional: <code style="font-size:0.7rem">?tank_id=t60_0</code></div>
+            </div>
+
         </div>
     </div>
 
@@ -1781,6 +1862,15 @@ async function initTankMap() {
     obSections.appendChild(row);
   }
 
+  // API section init
+  if (document.getElementById('sec-api')) {
+    const origShow = window.showSection;
+    window.showSection = function(id) {
+      origShow && origShow.call(this, ...arguments);
+      if (id === 'api' && !window._apiKeyLoaded) { window._apiKeyLoaded = true; }
+    };
+  }
+
   window.obDismiss = function() {
     localStorage.setItem(OB_KEY, '1');
     const el = document.getElementById('obOverlay');
@@ -1788,6 +1878,56 @@ async function initTankMap() {
     setTimeout(() => el.style.display = 'none', 260);
   };
 })();
+</script>
+
+<script>
+// ── API Section ────────────────────────────────────────────────────────────
+let _apiKey = null;
+
+async function generateKey() {
+  const btn = document.querySelector('#sec-api button');
+  if (btn) btn.textContent = 'GENERATING…';
+  try {
+    const res = await fetch('/api/key');
+    const data = await res.json();
+    if (data.error) { alert(data.error); return; }
+    _apiKey = data.api_key;
+    document.getElementById('api-key-display').textContent = _apiKey;
+    document.getElementById('api-key-display').style.color = 'var(--text)';
+    document.getElementById('api-copy-btn').style.display = 'inline-block';
+    updateCurls(_apiKey);
+  } catch(e) { alert('Failed to generate key'); }
+  if (btn) btn.textContent = 'REGENERATE';
+}
+
+function copyKey() {
+  if (!_apiKey) return;
+  navigator.clipboard.writeText(_apiKey).then(() => {
+    const btn = document.getElementById('api-copy-btn');
+    const orig = btn.textContent;
+    btn.textContent = 'COPIED';
+    setTimeout(() => btn.textContent = orig, 1500);
+  });
+}
+
+function updateCurls(key) {
+  const base = 'https://app.oilradar.io';
+  const h = `-H "X-API-Key: ${key}"`;
+  const pairs = [
+    ['curl-tq', '/api/v1/tanker-queue?from=2024-01-01'],
+    ['curl-sd', '/api/v1/storage/daily?from=2024-01-01'],
+    ['curl-sw', '/api/v1/storage/weekly'],
+    ['curl-sm', '/api/v1/storage/metrics?from=2024-01-01'],
+    ['curl-tk', '/api/v1/tanks?from=2025-01-01'],
+  ];
+  pairs.forEach(([id, path]) => {
+    const el = document.getElementById(id);
+    if (el) el.textContent = `curl ${h} \\\n  "${base}${path}"`;
+  });
+}
+
+// Populate curl examples with placeholder on load
+updateCurls('<YOUR_API_KEY>');
 </script>
 
 <script>
