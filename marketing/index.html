@@ -84,7 +84,7 @@ h1.hero-title span{color:var(--accent);}
 
 /* HOW IT WORKS */
 #how{padding:100px 64px;background:var(--deep);text-align:center;}
-.how-inner{max-width:760px;margin:0 auto;}
+.how-inner{width:100%;}
 .how-steps{display:grid;grid-template-columns:repeat(3,1fr);gap:2px;margin-top:48px;}
 .how-step{background:var(--panel);border:1px solid var(--border);padding:36px 28px;text-align:center;}
 .how-step-icon{font-size:32px;margin-bottom:16px;display:block;}
@@ -94,7 +94,7 @@ h1.hero-title span{color:var(--accent);}
 
 /* CHART */
 #chart-section{padding:100px 64px;background:var(--bg);text-align:center;}
-.chart-section-inner{max-width:1100px;margin:0 auto;}
+.chart-section-inner{width:100%;}
 .chart-outer{position:relative;margin-top:40px;text-align:left;}
 .chart-canvas-wrap{background:var(--panel);border:1px solid var(--border);padding:28px 32px;position:relative;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,0.3);}
 .chart-lock-overlay{position:absolute;top:0;right:0;width:10%;height:100%;background:linear-gradient(to right,transparent,rgba(10,14,23,0.97) 40%);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;z-index:10;}
@@ -106,7 +106,7 @@ h1.hero-title span{color:var(--accent);}
 
 /* PRODUCTS */
 #products{padding:100px 64px;background:var(--deep);text-align:center;}
-.products-inner{max-width:1000px;margin:0 auto;}
+.products-inner{width:100%;}
 .products-grid{display:grid;grid-template-columns:1fr 1fr;gap:2px;margin-top:48px;text-align:left;}
 .product-card{background:var(--panel);border:1px solid var(--border);padding:48px 40px;}
 .product-card.featured{border-color:var(--accent);background:rgba(59,130,246,0.06);}
@@ -239,7 +239,7 @@ footer{background:var(--panel);border-top:1px solid var(--border);padding:40px 6
       <div class="product-card">
         <div class="product-badge">Free · Public</div>
         <h3>Live Monitor</h3>
-        <p>Kharg Island storage chart and per-tank fill levels. Updated with each satellite pass. Latest 2 weeks gated.</p>
+        <p>Kharg Island storage chart and per-tank fill levels. Updated with each satellite pass. Latest 2 weeks are gated — visible only to paid subscribers.</p>
         <ul>
           <li>Storage volume chart — last 6 months</li>
           <li>Per-tank fill level map (47 tanks)</li>
@@ -251,13 +251,13 @@ footer{background:var(--panel);border-top:1px solid var(--border);padding:40px 6
       <div class="product-card featured">
         <div class="product-badge">Data Access</div>
         <h3>Full Intelligence Feed</h3>
-        <p>Complete signal with latest 2-week data, all metrics, and data export. Custom terminal coverage available.</p>
+        <p>Complete Kharg Island signal from 2017 to present. No data gates. All metrics, raw tank observations, and programmatic access.</p>
         <ul>
-          <li>Latest 2-week signal — not gated</li>
-          <li>Fill Rate · Storage Pressure Index · Rate Surprise vs 90d baseline</li>
-          <li>Export Pulse detection — VLCC loading events</li>
-          <li>CSV / API data export</li>
-          <li>Custom coverage: Saudi Arabia, Iraq, UAE, Qatar</li>
+          <li>Full history from 2017 — no 2-week gate</li>
+          <li>Storage Pressure Index · Fill Rate · Export Pulse detection</li>
+          <li>Tanker Queue Index — weekly VLCC / Suezmax / Aframax counts since 2017</li>
+          <li>Per-tank observations — all 47 tanks, every SAR pass</li>
+          <li>REST API — JSON &amp; CSV export, date-range filtering</li>
         </ul>
         <a href="https://calendly.com/bachevsky/intro" target="_blank" class="btn-primary">Request Data Access</a>
       </div>
