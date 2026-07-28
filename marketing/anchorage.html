@@ -130,9 +130,8 @@ footer{background:var(--panel);border-top:1px solid var(--border);padding:32px 4
         <button class="range-btn" data-range="1m">1M</button>
         <button class="range-btn" data-range="3m">3M</button>
         <button class="range-btn" data-range="6m">6M</button>
-        <button class="range-btn active" data-range="2026">2026</button>
         <button class="range-btn" data-range="1y">1Y</button>
-        <button class="range-btn" data-range="all">ALL</button>
+        <button class="range-btn active" data-range="all">ALL</button>
       </div>
     </div>
     <canvas id="queueChart" height="300"></canvas>
@@ -199,7 +198,7 @@ const COLORS = {
 };
 
 let ALL_RECORDS = [];
-let activeRange = '2026';
+let activeRange = 'all';
 
 async function loadData() {
   try {
@@ -210,14 +209,13 @@ async function loadData() {
 }
 
 function filterRecords(records, range) {
-  // Always hide last 2 weeks (SAR processing lag)
+  // Dataset is always 2026+; hide last 2 weeks (SAR processing lag)
   const cutEnd = new Date();
   cutEnd.setDate(cutEnd.getDate() - 14);
   const endStr = cutEnd.toISOString().slice(0,10);
-  let data = records.filter(r => r.date <= endStr);
+  let data = records.filter(r => r.date >= '2026-01-01' && r.date <= endStr);
 
   if (range === 'all') return data;
-  if (range === '2026') return data.filter(r => r.date.startsWith('2026'));
 
   const now = new Date(endStr);
   let months = 0;
@@ -246,13 +244,17 @@ function computeStats(records) {
 }
 
 function updateKPIs(records) {
-  const visible = filterRecords(records, 'all');
-  const { mean, p95, latest, tqi } = computeStats(visible);
+  // Historical stats from full dataset; chart/KPI display from 2026+
+  const cutEnd = new Date(); cutEnd.setDate(cutEnd.getDate() - 14);
+  const endStr = cutEnd.toISOString().slice(0,10);
+  const fullData = records.filter(r => r.date <= endStr);
+  const visible  = fullData.filter(r => r.date >= '2026-01-01');
+  const { mean, p95, latest, tqi } = computeStats(fullData);
   if (!latest) return;
 
-  const first = records[0], last = visible[visible.length-1];
+  const first2026 = visible[0] || fullData[0], last2026 = visible[visible.length-1] || fullData[fullData.length-1];
   document.getElementById('subtitle').textContent =
-    `${records.length} weekly SAR passes · ${first.date} – ${last.date} · Sentinel-1 IW`;
+    `${visible.length} weekly SAR passes · ${first2026.date} – ${last2026.date} · Sentinel-1 IW`;
 
   document.getElementById('tqi').textContent = tqi;
   document.getElementById('kpi-total').textContent = latest.total;
