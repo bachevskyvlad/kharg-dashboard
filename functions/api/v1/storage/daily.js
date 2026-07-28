@@ -27,7 +27,10 @@ export async function onRequest(context) {
   const url = new URL(request.url);
   const from = url.searchParams.get('from'), to = url.searchParams.get('to'), fmt = url.searchParams.get('format') || 'json';
   let data;
-  try { data = await (await fetch(`${url.protocol}//${url.host}/data/data_daily.json`)).json(); } catch { return err('Data unavailable', 503); }
+  try {
+    const assetUrl = `${url.protocol}//${url.host}/data/data_daily.json`;
+    data = await (await context.env.ASSETS.fetch(new Request(assetUrl))).json();
+  } catch { return err('Data unavailable', 503); }
   let rows = (data.dates || []).map((d,i) => ({ date:d, vol_mn_bbl:+((data.values[i]||0).toFixed(3)) }));
   if (from) rows = rows.filter(r => r.date >= from);
   if (to)   rows = rows.filter(r => r.date <= to);

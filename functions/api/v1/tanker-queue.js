@@ -34,8 +34,10 @@ export async function onRequest(context) {
   const fmt  = url.searchParams.get('format') || 'json';
 
   let json;
-  try { json = await (await fetch(`${url.protocol}//${url.host}/data/anchorage.json`)).json(); }
-  catch { return err('Data unavailable', 503); }
+  try {
+    const assetUrl = `${url.protocol}//${url.host}/data/anchorage.json`;
+    json = await (await context.env.ASSETS.fetch(new Request(assetUrl))).json();
+  } catch { return err('Data unavailable', 503); }
 
   let rows = (json.records || []).map(r => ({ date:r.date, vlcc:r.vlcc, suezmax:r.suezmax, aframax:r.aframax, mr:r.mr, total:r.total }));
   if (from) rows = rows.filter(r => r.date >= from);
