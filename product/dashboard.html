@@ -731,11 +731,6 @@
                     <div style="font-size:0.7rem;color:var(--muted)" id="aq-date">vessels</div>
                 </div>
                 <div>
-                    <div style="font-size:0.65rem;letter-spacing:1px;text-transform:uppercase;color:var(--muted);margin-bottom:0.25rem">VLCC + Suezmax</div>
-                    <div style="font-size:2rem;font-weight:700;color:#ef4444;font-family:'Space Grotesk',sans-serif" id="aq-large">—</div>
-                    <div style="font-size:0.7rem;color:var(--muted)">large tankers, latest pass</div>
-                </div>
-                <div>
                     <div style="font-size:0.65rem;letter-spacing:1px;text-transform:uppercase;color:var(--muted);margin-bottom:0.25rem">Historical Avg</div>
                     <div style="font-size:2rem;font-weight:700;color:var(--green);font-family:'Space Grotesk',sans-serif" id="aq-avg">—</div>
                     <div style="font-size:0.7rem;color:var(--muted)">vessels/week since 2017</div>
@@ -743,18 +738,45 @@
             </div>
         </div>
 
-        <div style="background:var(--surface);border:1px solid var(--border);padding:1.25rem 1.5rem 1rem;">
+        <div style="background:var(--surface);border:1px solid var(--border);padding:1.25rem 1.5rem 1rem;margin-bottom:1.25rem;">
             <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;flex-wrap:wrap;gap:0.5rem;">
                 <div style="font-size:0.7rem;letter-spacing:1px;text-transform:uppercase;color:var(--accent)">Weekly Export Vessel Count</div>
                 <div style="display:flex;gap:4px" id="aq-range-btns">
                     <button class="aq-rbtn" data-r="1m">1M</button>
-                    <button class="aq-rbtn" data-r="3m">3M</button>
+                    <button class="aq-rbtn aq-rbtn-active" data-r="3m">3M</button>
                     <button class="aq-rbtn" data-r="6m">6M</button>
                     <button class="aq-rbtn" data-r="1y">1Y</button>
-                    <button class="aq-rbtn aq-rbtn-active" data-r="all">ALL</button>
+                    <button class="aq-rbtn" data-r="all">ALL</button>
                 </div>
             </div>
             <canvas id="aqChart" style="width:100%;display:block;height:280px"></canvas>
+        </div>
+
+        <div style="position:relative;" id="aq-table-wrap">
+            <div style="background:var(--surface);border:1px solid var(--border);padding:1.25rem 1.5rem 1rem;">
+                <div style="font-size:0.7rem;letter-spacing:1px;text-transform:uppercase;color:var(--accent);margin-bottom:1rem">Weekly Breakdown</div>
+                <div style="overflow-x:auto;">
+                    <table id="aq-table" style="width:100%;border-collapse:collapse;font-size:0.75rem;font-family:monospace;">
+                        <thead>
+                            <tr style="color:var(--dim);text-align:right;border-bottom:1px solid var(--border);">
+                                <th style="text-align:left;padding:0.4rem 0.6rem;font-weight:500">Date</th>
+                                <th style="padding:0.4rem 0.6rem;font-weight:500">VLCC</th>
+                                <th style="padding:0.4rem 0.6rem;font-weight:500">Suezmax</th>
+                                <th style="padding:0.4rem 0.6rem;font-weight:500">Aframax</th>
+                                <th style="padding:0.4rem 0.6rem;font-weight:500">MR</th>
+                                <th style="padding:0.4rem 0.6rem;font-weight:500">Total</th>
+                            </tr>
+                        </thead>
+                        <tbody id="aq-table-body"></tbody>
+                    </table>
+                </div>
+            </div>
+            <div id="aq-paywall" style="display:none;position:absolute;inset:0;backdrop-filter:blur(6px);background:rgba(10,14,23,0.7);display:flex;align-items:center;justify-content:center;flex-direction:column;gap:0.75rem;">
+                <div style="font-size:1.1rem">🔒</div>
+                <div style="font-size:0.85rem;font-weight:600;color:var(--text)">Weekly breakdown — paid plan only</div>
+                <div style="font-size:0.72rem;color:var(--muted);text-align:center;max-width:280px">Pass-by-pass vessel counts are available on the full plan.</div>
+                <a href="https://calendly.com/bachevsky/60min" target="_blank" style="background:var(--accent);color:#fff;padding:0.5rem 1.25rem;font-size:0.75rem;text-decoration:none;margin-top:0.25rem">Request full access →</a>
+            </div>
         </div>
     </div>
 
@@ -1772,7 +1794,7 @@ async function initTankMap() {
 // ── Tanker Queue (Anchorage) ───────────────────────────────────────────────
 let _aqInited = false;
 let _aqRecords = [];
-let _aqRange = 'all';
+let _aqRange = '3m';
 
 function aqFilter(records, range) {
   if (range === 'all') return records;
@@ -1931,8 +1953,27 @@ async function initAnchorage() {
     document.getElementById('aq-tqi').style.color = tqi >= 85 ? '#ef4444' : tqi >= 70 ? '#f97316' : 'var(--accent)';
     document.getElementById('aq-total').textContent = latest.total;
     document.getElementById('aq-date').textContent = latest.date;
-    document.getElementById('aq-large').textContent = latest.vlcc + latest.suezmax;
     document.getElementById('aq-avg').textContent = mean.toFixed(1);
+
+    // Weekly table — last 52 weeks, newest first
+    const tbody = document.getElementById('aq-table-body');
+    if (tbody) {
+      const rows = [..._aqRecords].reverse().slice(0, 52);
+      tbody.innerHTML = rows.map(r => `<tr style="border-bottom:1px solid rgba(255,255,255,0.04);">
+        <td style="padding:0.35rem 0.6rem;color:var(--muted)">${r.date}</td>
+        <td style="padding:0.35rem 0.6rem;text-align:right;color:#ef4444">${r.vlcc}</td>
+        <td style="padding:0.35rem 0.6rem;text-align:right;color:#f97316">${r.suezmax}</td>
+        <td style="padding:0.35rem 0.6rem;text-align:right;color:#eab308">${r.aframax}</td>
+        <td style="padding:0.35rem 0.6rem;text-align:right;color:#22c55e">${r.mr}</td>
+        <td style="padding:0.35rem 0.6rem;text-align:right;font-weight:600">${r.total}</td>
+      </tr>`).join('');
+    }
+
+    // Paywall for trial users
+    if (_userTier === 'trial') {
+      const pw = document.getElementById('aq-paywall');
+      if (pw) pw.style.display = 'flex';
+    }
   }
 
   // range buttons

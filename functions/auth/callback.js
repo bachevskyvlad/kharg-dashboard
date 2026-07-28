@@ -11,7 +11,6 @@ const WHITELIST = [
 ];
 
 const TRIAL_USERS = [
-  'vladislav.bachevsky@gmail.com',
   'cyril@bluewaterstrategy.eu'
 ];
 

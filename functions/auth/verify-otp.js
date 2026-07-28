@@ -1,7 +1,6 @@
 const APP_URL = "https://app.oilradar.io";
 
 const TRIAL_USERS = [
-  'vladislav.bachevsky@gmail.com',
   'cyril@bluewaterstrategy.eu'
 ];
 
