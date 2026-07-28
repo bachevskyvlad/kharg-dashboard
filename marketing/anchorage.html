@@ -275,21 +275,7 @@ function updateKPIs(records) {
   document.getElementById('l-total').textContent   = latest.total;
 }
 
-function drawChart(records) {
-  const data = filterRecords(records, activeRange);
-  if (!data.length) return;
-
-  const canvas = document.getElementById('queueChart');
-  const dpr = window.devicePixelRatio || 1;
-  const W = canvas.parentElement.clientWidth - 4;
-  const H = 300;
-  canvas.style.width  = W + 'px';
-  canvas.style.height = H + 'px';
-  canvas.width  = W * dpr;
-  canvas.height = H * dpr;
-  const ctx = canvas.getContext('2d');
-  ctx.scale(dpr, dpr);
-
+function drawFrame(ctx, data, W, H, range, hoverIdx) {
   const PAD = { top: 16, right: 20, bottom: 36, left: 40 };
   const cw = W - PAD.left - PAD.right;
   const ch = H - PAD.top  - PAD.bottom;
@@ -300,6 +286,8 @@ function drawChart(records) {
 
   function xp(i) { return PAD.left + (i / Math.max(n-1,1)) * cw; }
   function yp(v) { return PAD.top + ch - (v / yMax) * ch; }
+
+  ctx.clearRect(0, 0, W, H);
 
   // Grid lines
   ctx.font = `10px 'DM Mono', monospace`;
@@ -317,15 +305,13 @@ function drawChart(records) {
   // X labels
   ctx.textAlign = 'center';
   ctx.fillStyle = COLORS.text;
-  const labelEvery = activeRange === '1m' ? 1 : activeRange === '3m' ? 2 : activeRange === '6m' ? 4 : 4;
-  const years = [...new Set(data.map(r => r.date.slice(0,7)))];
-  const labelDates = years.filter((_, i) => i % labelEvery === 0);
-  labelDates.forEach(ym => {
+  const labelEvery = range === '1m' ? 1 : range === '3m' ? 2 : range === '6m' ? 4 : 4;
+  const months = [...new Set(data.map(r => r.date.slice(0,7)))];
+  months.filter((_, i) => i % labelEvery === 0).forEach(ym => {
     const idx = data.findIndex(r => r.date.startsWith(ym));
     if (idx < 0) return;
-    const label = activeRange === 'all' ? ym.slice(0,4) : ym.slice(0,7);
-    // only show unique year labels for 'all'
-    if (activeRange === 'all') {
+    const label = range === 'all' ? ym.slice(0,4) : ym.slice(0,7);
+    if (range === 'all') {
       const yr = ym.slice(0,4);
       if (data.findIndex(r => r.date.startsWith(yr)) !== idx) return;
     }
@@ -343,33 +329,93 @@ function drawChart(records) {
   layers.forEach(({ key, color }) => {
     const vals = data.map(r => r[key] || 0);
     const tops = vals.map((v, i) => stacks[i] + v);
-
     ctx.beginPath();
     ctx.moveTo(xp(0), yp(stacks[0]));
     tops.forEach((v, i) => ctx.lineTo(xp(i), yp(v)));
     for (let i = n-1; i >= 0; i--) ctx.lineTo(xp(i), yp(stacks[i]));
     ctx.closePath();
-    ctx.fillStyle = color + '99';
-    ctx.fill();
-
+    ctx.fillStyle = color + '99'; ctx.fill();
     ctx.beginPath();
     tops.forEach((v, i) => i === 0 ? ctx.moveTo(xp(i), yp(v)) : ctx.lineTo(xp(i), yp(v)));
-    ctx.strokeStyle = color;
-    ctx.lineWidth = 1.5;
-    ctx.stroke();
-
+    ctx.strokeStyle = color; ctx.lineWidth = 1.5; ctx.stroke();
     tops.forEach((v, i) => stacks[i] = v);
   });
 
   // Latest line
-  ctx.beginPath();
-  ctx.moveTo(xp(n-1), PAD.top);
-  ctx.lineTo(xp(n-1), PAD.top + ch);
-  ctx.strokeStyle = 'rgba(59,130,246,0.35)';
-  ctx.lineWidth = 1;
-  ctx.setLineDash([3,3]);
-  ctx.stroke();
-  ctx.setLineDash([]);
+  ctx.beginPath(); ctx.moveTo(xp(n-1), PAD.top); ctx.lineTo(xp(n-1), PAD.top + ch);
+  ctx.strokeStyle = 'rgba(59,130,246,0.35)'; ctx.lineWidth = 1;
+  ctx.setLineDash([3,3]); ctx.stroke(); ctx.setLineDash([]);
+
+  // Hover crosshair
+  if (hoverIdx >= 0 && hoverIdx < n) {
+    const x = xp(hoverIdx);
+    ctx.strokeStyle = 'rgba(255,255,255,0.25)'; ctx.lineWidth = 1;
+    ctx.setLineDash([3,3]);
+    ctx.beginPath(); ctx.moveTo(x, PAD.top); ctx.lineTo(x, PAD.top + ch); ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.beginPath(); ctx.arc(x, yp(data[hoverIdx].total), 3, 0, Math.PI*2);
+    ctx.fillStyle = '#fff'; ctx.fill();
+  }
+}
+
+function drawChart(records) {
+  const data = filterRecords(records, activeRange);
+  if (!data.length) return;
+
+  const canvas = document.getElementById('queueChart');
+  const dpr = window.devicePixelRatio || 1;
+  const W = canvas.parentElement.clientWidth - 4;
+  const H = 300;
+  canvas.style.width = W + 'px'; canvas.style.height = H + 'px';
+  canvas.width = W * dpr; canvas.height = H * dpr;
+  const ctx = canvas.getContext('2d');
+  ctx.scale(dpr, dpr);
+  drawFrame(ctx, data, W, H, activeRange, -1);
+  canvas._chartData = data;
+
+  if (!canvas._tooltipBound) {
+    canvas._tooltipBound = true;
+    let tip = document.getElementById('chartTip');
+    if (!tip) {
+      tip = document.createElement('div');
+      tip.id = 'chartTip';
+      tip.style.cssText = 'position:fixed;pointer-events:none;display:none;background:#111827;border:1px solid rgba(255,255,255,0.1);padding:8px 12px;font-size:0.72rem;font-family:"DM Mono",monospace;color:#e2e8f0;z-index:9999;min-width:150px;';
+      document.body.appendChild(tip);
+    }
+    canvas.addEventListener('mousemove', e => {
+      const d = canvas._chartData;
+      if (!d || !d.length) return;
+      const rect = canvas.getBoundingClientRect();
+      const PAD = { left: 40, right: 20 };
+      const cw = canvas.offsetWidth - PAD.left - PAD.right;
+      const mx = e.clientX - rect.left - PAD.left;
+      const idx = Math.round((mx / cw) * (d.length - 1));
+      if (idx < 0 || idx >= d.length) { tip.style.display='none'; return; }
+      const r = d[idx];
+      tip.style.display = 'block';
+      tip.style.left = (e.clientX + 14) + 'px';
+      tip.style.top  = (e.clientY - 10) + 'px';
+      tip.innerHTML = `<div style="color:#64748b;margin-bottom:5px">${r.date}</div>
+        <div style="display:flex;gap:6px;align-items:center;margin-bottom:2px"><span style="width:8px;height:8px;background:${COLORS.vlcc};display:inline-block"></span>VLCC ≥290m: <b>${r.vlcc}</b></div>
+        <div style="display:flex;gap:6px;align-items:center;margin-bottom:2px"><span style="width:8px;height:8px;background:${COLORS.suezmax};display:inline-block"></span>Suezmax 260–290m: <b>${r.suezmax}</b></div>
+        <div style="display:flex;gap:6px;align-items:center;margin-bottom:2px"><span style="width:8px;height:8px;background:${COLORS.aframax};display:inline-block"></span>Aframax 220–260m: <b>${r.aframax}</b></div>
+        <div style="display:flex;gap:6px;align-items:center;margin-bottom:2px"><span style="width:8px;height:8px;background:${COLORS.mr};display:inline-block"></span>MR/Panamax 100–220m: <b>${r.mr}</b></div>
+        <div style="border-top:1px solid rgba(255,255,255,0.08);margin-top:5px;padding-top:4px">Total: <b>${r.total}</b></div>`;
+      const ctx2 = canvas.getContext('2d');
+      const dpr2 = window.devicePixelRatio || 1;
+      ctx2.setTransform(dpr2, 0, 0, dpr2, 0, 0);
+      drawFrame(ctx2, d, canvas.offsetWidth, canvas.offsetHeight / dpr2, activeRange, idx);
+    });
+    canvas.addEventListener('mouseleave', () => {
+      tip.style.display = 'none';
+      const d = canvas._chartData;
+      if (!d) return;
+      const ctx2 = canvas.getContext('2d');
+      const dpr2 = window.devicePixelRatio || 1;
+      ctx2.setTransform(dpr2, 0, 0, dpr2, 0, 0);
+      drawFrame(ctx2, d, canvas.offsetWidth, canvas.offsetHeight / dpr2, activeRange, -1);
+    });
+  }
 }
 
 document.querySelectorAll('.range-btn').forEach(btn => {

@@ -342,6 +342,30 @@
       </div>
     </div>
 
+    <div class="metric-card">
+      <div class="metric-inner" style="border-top-color:#3b82f6">
+        <div class="metric-tag">Anchorage · Ships</div>
+        <div class="metric-title">Tanker Queue Index</div>
+        <div class="metric-body">
+          Weekly vessel count at Kharg anchorage derived from <strong>Sentinel-1 SAR ship detection</strong>.
+          Each weekly pass is classified by vessel length: VLCC ≥290m, Suezmax 260–290m, Aframax 220–260m, MR/Panamax 100–220m.
+          The <strong>Queue Index (TQI)</strong> = latest weekly count ÷ historical p95 × 100.
+          A TQI above 85 indicates the anchorage queue is near its historical maximum — a leading indicator of
+          export pressure and potential loading delays.
+        </div>
+        <div class="interp">
+          <div class="interp-col">
+            <div class="interp-arrow" style="color:#ef4444;">TQI &gt; 85</div>
+            <div class="interp-text"><strong>High Pressure</strong> — queue near historical max. Tanker backlog building; probable loading delays or export surge imminent.</div>
+          </div>
+          <div class="interp-col">
+            <div class="interp-arrow" style="color:#3b82f6;">TQI &lt; 50</div>
+            <div class="interp-text"><strong>Low activity</strong> — anchorage below normal. Fewer tankers waiting; consistent with sanctions pressure on buyers or low export volumes.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <div class="divider"></div>
 
     <div class="footnote">

@@ -54,10 +54,15 @@
         .logo-mark { font-family: 'Space Grotesk', sans-serif; font-size: 0.9rem; font-weight: 700; letter-spacing: 0.2em; color: var(--accent); }
         .logo-sub { font-size: 0.58rem; color: var(--muted); margin-top: 0.3rem; letter-spacing: 0.04em; line-height: 1.5; }
 
-        .sidebar-nav { flex: 1; padding: 1rem 0; }
+        .sidebar-nav { flex: 1; padding: 0.75rem 0; overflow-y: auto; }
+        .nav-group-label {
+            padding: 0.55rem 1.25rem 0.2rem;
+            font-size: 0.58rem; letter-spacing: 0.12em; text-transform: uppercase;
+            color: var(--dim); font-weight: 600;
+        }
         .nav-item {
             display: flex; align-items: center; gap: 0.7rem;
-            padding: 0.65rem 1.25rem;
+            padding: 0.55rem 1.25rem;
             font-size: 0.78rem; color: var(--muted);
             cursor: pointer; transition: all 0.15s;
             border-left: 2px solid transparent;
@@ -66,6 +71,7 @@
         .nav-item:hover { color: var(--text); background: rgba(255,255,255,0.04); }
         .nav-item.active { color: var(--text); border-left-color: var(--accent); background: rgba(59,130,246,0.1); }
         .nav-icon { font-size: 0.85rem; opacity: 0.7; }
+        .nav-divider { margin: 0.5rem 1.25rem; border: none; border-top: 1px solid var(--border); }
 
         .sidebar-footer {
             padding: 1rem 1.25rem;
@@ -411,6 +417,7 @@
         <div class="logo-sub">Kharg Island<br>Iran Crude Terminal</div>
     </div>
     <nav class="sidebar-nav">
+        <div class="nav-group-label">Oil</div>
         <div class="nav-item active" onclick="showSection('overview')">
             <span class="nav-icon">◎</span> Overview
         </div>
@@ -420,10 +427,14 @@
         <div class="nav-item" onclick="showSection('map')">
             <span class="nav-icon">⊞</span> Per-Tank Map
         </div>
+        <hr class="nav-divider">
+        <div class="nav-group-label">Ships</div>
         <div class="nav-item" onclick="showSection('anchorage')">
             <span class="nav-icon">⚓</span> Tanker Queue
         </div>
-        <div class="nav-item" onclick="window.open('/tutorial','_blank')" style="margin-top:auto;color:var(--muted);font-size:0.72rem;">
+        <hr class="nav-divider">
+        <div class="nav-group-label">Docs</div>
+        <div class="nav-item" onclick="window.open('/tutorial','_blank')" style="color:var(--muted);font-size:0.72rem;">
             <span class="nav-icon">?</span> Tutorial
         </div>
     </nav>
@@ -1740,6 +1751,14 @@ async function initTankMap() {
     else obDismiss();
   };
 
+  // onboarding sections list — add Tanker Queue
+  const obSections = document.querySelector('.ob-section-list');
+  if (obSections) {
+    const row = document.createElement('div'); row.className = 'ob-section-row';
+    row.innerHTML = '<div class="ob-section-num">04</div><div><div class="ob-section-name">Tanker Queue</div><div class="ob-section-desc">Weekly vessel count at Kharg anchorage — full SAR history since 2017</div></div>';
+    obSections.appendChild(row);
+  }
+
   window.obDismiss = function() {
     localStorage.setItem(OB_KEY, '1');
     const el = document.getElementById('obOverlay');
@@ -1765,33 +1784,21 @@ function aqFilter(records, range) {
   return records.filter(r => r.date >= cutStr);
 }
 
-function aqDraw() {
-  const data = aqFilter(_aqRecords, _aqRange);
-  if (!data.length) return;
-  const canvas = document.getElementById('aqChart');
-  if (!canvas) return;
-  const ctx = canvas.getContext('2d');
-  const dpr = window.devicePixelRatio || 1;
-  const W = canvas.offsetWidth, H = 280;
-  canvas.width = W * dpr; canvas.height = H * dpr;
-  canvas.style.height = H + 'px';
-  ctx.scale(dpr, dpr);
+const AQ_COLORS = { vlcc:'#ef4444', suezmax:'#f97316', aframax:'#eab308', mr:'#22c55e' };
+const AQ_LAYERS = ['mr','aframax','suezmax','vlcc'];
 
+function aqCumulative(r, upTo) {
+  let s = 0;
+  for (const k of AQ_LAYERS) { if (k === upTo) { s += r[k]; break; } s += r[k]; }
+  return s;
+}
+
+function aqDrawFrame(ctx, data, W, H, hoverIdx) {
   const PAD = { t: 16, r: 16, b: 32, l: 36 };
   const cw = W - PAD.l - PAD.r, ch = H - PAD.t - PAD.b;
-
   const maxVal = Math.max(...data.map(r => r.total), 1);
   const yScale = v => PAD.t + ch - (v / maxVal) * ch;
-  const xScale = i => PAD.l + (i / (data.length - 1)) * cw;
-
-  const COLORS = { vlcc:'#ef4444', suezmax:'#f97316', aframax:'#eab308', mr:'#22c55e' };
-  const layers = ['mr','aframax','suezmax','vlcc'];
-
-  function cumulative(r, upTo) {
-    let s = 0;
-    for (const k of layers) { if (k === upTo) { s += r[k]; break; } s += r[k]; }
-    return s;
-  }
+  const xScale = i => PAD.l + (data.length > 1 ? (i / (data.length - 1)) * cw : cw / 2);
 
   ctx.clearRect(0, 0, W, H);
 
@@ -1805,21 +1812,18 @@ function aqDraw() {
   });
 
   // stacked area layers
-  for (let li = 0; li < layers.length; li++) {
-    const key = layers[li];
+  for (let li = 0; li < AQ_LAYERS.length; li++) {
+    const key = AQ_LAYERS[li];
     ctx.beginPath();
     data.forEach((r, i) => {
-      const top = cumulative(r, key);
-      const bot = top - r[key];
-      if (i === 0) ctx.moveTo(xScale(i), yScale(top));
-      else ctx.lineTo(xScale(i), yScale(top));
+      if (i === 0) ctx.moveTo(xScale(i), yScale(aqCumulative(r, key)));
+      else ctx.lineTo(xScale(i), yScale(aqCumulative(r, key)));
     });
     for (let i = data.length - 1; i >= 0; i--) {
-      const bot = cumulative(data[i], key) - data[i][key];
-      ctx.lineTo(xScale(i), yScale(bot));
+      ctx.lineTo(xScale(i), yScale(aqCumulative(data[i], key) - data[i][key]));
     }
     ctx.closePath();
-    ctx.fillStyle = COLORS[key] + 'cc';
+    ctx.fillStyle = AQ_COLORS[key] + 'cc';
     ctx.fill();
   }
 
@@ -1828,9 +1832,82 @@ function aqDraw() {
   const years = [...new Set(data.map(r => r.date.slice(0,4)))];
   years.forEach(yr => {
     const idx = data.findIndex(r => r.date.startsWith(yr));
-    if (idx < 0) return;
-    ctx.fillText(yr, xScale(idx), H - 6);
+    if (idx >= 0) ctx.fillText(yr, xScale(idx), H - 6);
   });
+
+  // hover crosshair
+  if (hoverIdx >= 0 && hoverIdx < data.length) {
+    const x = xScale(hoverIdx);
+    ctx.strokeStyle = 'rgba(255,255,255,0.2)'; ctx.lineWidth = 1;
+    ctx.setLineDash([3,3]);
+    ctx.beginPath(); ctx.moveTo(x, PAD.t); ctx.lineTo(x, PAD.t + ch); ctx.stroke();
+    ctx.setLineDash([]);
+    // dot at top of stack
+    const r = data[hoverIdx];
+    const topY = yScale(r.total);
+    ctx.beginPath(); ctx.arc(x, topY, 3, 0, Math.PI*2);
+    ctx.fillStyle = '#fff'; ctx.fill();
+  }
+}
+
+function aqDraw() {
+  const data = aqFilter(_aqRecords, _aqRange);
+  if (!data.length) return;
+  const canvas = document.getElementById('aqChart');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  const dpr = window.devicePixelRatio || 1;
+  const W = canvas.offsetWidth, H = 280;
+  canvas.width = W * dpr; canvas.height = H * dpr;
+  canvas.style.height = H + 'px';
+  ctx.scale(dpr, dpr);
+  aqDrawFrame(ctx, data, W, H, -1);
+  canvas._aqData = data;
+
+  // tooltip setup (once)
+  if (!canvas._aqTooltipBound) {
+    canvas._aqTooltipBound = true;
+    let tip = document.getElementById('aqTip');
+    if (!tip) {
+      tip = document.createElement('div');
+      tip.id = 'aqTip';
+      tip.style.cssText = 'position:fixed;pointer-events:none;display:none;background:#1e293b;border:1px solid rgba(255,255,255,0.12);padding:8px 12px;font-size:0.72rem;font-family:monospace;color:#e2e8f0;z-index:999;min-width:140px;';
+      document.body.appendChild(tip);
+    }
+    canvas.addEventListener('mousemove', e => {
+      const d = canvas._aqData;
+      if (!d || !d.length) return;
+      const rect = canvas.getBoundingClientRect();
+      const PAD = { l: 36, r: 16 };
+      const cw = canvas.offsetWidth - PAD.l - PAD.r;
+      const mx = e.clientX - rect.left - PAD.l;
+      const idx = Math.round((mx / cw) * (d.length - 1));
+      if (idx < 0 || idx >= d.length) { tip.style.display='none'; return; }
+      const r = d[idx];
+      tip.style.display = 'block';
+      tip.style.left = (e.clientX + 14) + 'px';
+      tip.style.top  = (e.clientY - 10) + 'px';
+      tip.innerHTML = `<div style="color:#94a3b8;margin-bottom:4px">${r.date}</div>
+        <div style="display:flex;align-items:center;gap:6px;margin-bottom:2px"><span style="width:8px;height:8px;background:#ef4444;display:inline-block"></span>VLCC: <b>${r.vlcc}</b></div>
+        <div style="display:flex;align-items:center;gap:6px;margin-bottom:2px"><span style="width:8px;height:8px;background:#f97316;display:inline-block"></span>Suezmax: <b>${r.suezmax}</b></div>
+        <div style="display:flex;align-items:center;gap:6px;margin-bottom:2px"><span style="width:8px;height:8px;background:#eab308;display:inline-block"></span>Aframax: <b>${r.aframax}</b></div>
+        <div style="display:flex;align-items:center;gap:6px;margin-bottom:2px"><span style="width:8px;height:8px;background:#22c55e;display:inline-block"></span>MR: <b>${r.mr}</b></div>
+        <div style="border-top:1px solid rgba(255,255,255,0.08);margin-top:4px;padding-top:4px">Total: <b>${r.total}</b></div>`;
+      const ctx2 = canvas.getContext('2d');
+      const dpr2 = window.devicePixelRatio || 1;
+      ctx2.setTransform(dpr2, 0, 0, dpr2, 0, 0);
+      aqDrawFrame(ctx2, d, canvas.offsetWidth, 280, idx);
+    });
+    canvas.addEventListener('mouseleave', () => {
+      tip.style.display = 'none';
+      const d = canvas._aqData;
+      if (!d) return;
+      const ctx2 = canvas.getContext('2d');
+      const dpr2 = window.devicePixelRatio || 1;
+      ctx2.setTransform(dpr2, 0, 0, dpr2, 0, 0);
+      aqDrawFrame(ctx2, d, canvas.offsetWidth, 280, -1);
+    });
+  }
 }
 
 async function initAnchorage() {
