@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Kharg Tanker Queue — OilRadar</title>
+<meta name="description" content="Live tanker queue monitor at Kharg Island, Iran. Weekly Sentinel-1 SAR ship counts from 2017 — VLCC, Suezmax, Aframax, MR/Panamax vessel breakdown.">
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-TZQ5VH3GPY"></script>
+<script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','G-TZQ5VH3GPY');</script>
+<style>
+:root {
+  --bg:       #0a0e17;
+  --surface:  #111827;
+  --surface2: #1a2540;
+  --border:   #1e2d45;
+  --text:     #e2e8f0;
+  --muted:    #64748b;
+  --accent:   #38bdf8;
+  --vlcc:     #ef4444;
+  --suezmax:  #f97316;
+  --aframax:  #eab308;
+  --mr:       #22c55e;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-size:14px;line-height:1.5;min-height:100vh}
+a{color:var(--accent);text-decoration:none}
+.mono{font-family:'JetBrains Mono','Fira Mono',Consolas,monospace}
+
+/* ── Nav ── */
+nav{display:flex;align-items:center;justify-content:space-between;padding:14px 24px;border-bottom:1px solid var(--border);position:sticky;top:0;z-index:10;background:rgba(10,14,23,.92);backdrop-filter:blur(8px)}
+.logo{font-size:15px;font-weight:700;color:var(--text);letter-spacing:-.02em}
+.logo span{color:var(--accent)}
+.nav-links{display:flex;gap:20px;font-size:13px}
+.nav-links a{color:var(--muted);transition:color .15s}
+.nav-links a:hover,.nav-links a.active{color:var(--text)}
+.nav-cta{background:var(--accent);color:#000;font-weight:600;font-size:12px;padding:6px 14px;border-radius:6px;letter-spacing:.02em}
+.nav-cta:hover{opacity:.9;color:#000}
+
+/* ── Page ── */
+.page{max-width:860px;margin:0 auto;padding:36px 24px 64px}
+.eyebrow{font-size:11px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--accent);margin-bottom:6px}
+h1{font-size:26px;font-weight:700;line-height:1.15;text-wrap:balance;margin-bottom:6px}
+.subtitle{font-size:13px;color:var(--muted);margin-bottom:32px}
+
+/* ── TQI ── */
+.tqi-row{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:10px;margin-bottom:28px}
+@media(max-width:600px){.tqi-row{grid-template-columns:1fr 1fr}}
+.kpi{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:16px 18px}
+.kpi-label{font-size:11px;font-weight:500;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);margin-bottom:8px}
+.kpi-value{font-size:28px;font-weight:700;line-height:1;font-variant-numeric:tabular-nums;margin-bottom:4px}
+.kpi-sub{font-size:11px;color:var(--muted)}
+.kpi-value.accent{color:var(--accent)}
+.kpi-value.vlcc{color:var(--vlcc)}
+.kpi-value.mr{color:var(--mr)}
+.kpi-value.warn{color:var(--suezmax)}
+.status-pill{display:inline-block;padding:2px 8px;border-radius:12px;font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;margin-top:4px}
+.status-normal{background:rgba(34,197,94,.12);color:var(--mr)}
+.status-elevated{background:rgba(249,115,22,.12);color:var(--suezmax)}
+.status-high{background:rgba(239,68,68,.12);color:var(--vlcc)}
+
+/* ── Chart card ── */
+.chart-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;overflow:hidden;margin-bottom:24px}
+.chart-header{display:flex;align-items:center;justify-content:space-between;padding:16px 20px 0;flex-wrap:wrap;gap:10px}
+.chart-title{font-size:13px;font-weight:600;color:var(--text)}
+.chart-sub{font-size:11px;color:var(--muted);margin-top:2px}
+.range-btns{display:flex;gap:4px}
+.range-btn{background:none;border:1px solid var(--border);color:var(--muted);font-size:11px;font-weight:600;padding:4px 10px;border-radius:5px;cursor:pointer;transition:.15s;letter-spacing:.04em}
+.range-btn:hover{border-color:var(--accent);color:var(--accent)}
+.range-btn.active{background:var(--accent);border-color:var(--accent);color:#000}
+.chart-wrap{padding:12px 16px 8px;position:relative}
+canvas#queueChart{width:100%;display:block}
+
+/* ── Legend ── */
+.legend{display:flex;gap:16px;padding:4px 20px 16px;flex-wrap:wrap}
+.leg{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted)}
+.leg-dot{width:8px;height:8px;border-radius:2px;flex-shrink:0}
+
+/* ── Latest row ── */
+.latest-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:16px 20px}
+.latest-title{font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:12px}
+.latest-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:8px}
+@media(max-width:500px){.latest-grid{grid-template-columns:repeat(3,1fr)}}
+.latest-item{}
+.latest-cls{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:3px}
+.latest-n{font-size:20px;font-weight:700;font-variant-numeric:tabular-nums}
+
+/* ── Note ── */
+.note{margin-top:20px;font-size:11px;color:var(--muted);line-height:1.7;border-left:2px solid var(--border);padding-left:12px}
+</style>
+</head>
+<body>
+
+<nav>
+  <a href="/" class="logo">Oil<span>Radar</span></a>
+  <div class="nav-links">
+    <a href="/monitor">Monitor</a>
+    <a href="/anchorage" class="active">Anchorage</a>
+    <a href="/team">Team</a>
+    <a href="https://calendly.com/bachevsky/60min" class="nav-cta">Request Access</a>
+  </div>
+</nav>
+
+<div class="page">
+  <div class="eyebrow">Sentinel-1 SAR · Kharg Island · Iran</div>
+  <h1>Tanker Queue</h1>
+  <div class="subtitle" id="subtitle">Loading — weekly SAR passes 2017–present · VLCC / Suezmax / Aframax / MR/Panamax</div>
+
+  <!-- KPI row -->
+  <div class="tqi-row">
+    <div class="kpi">
+      <div class="kpi-label">Queue Index</div>
+      <div class="kpi-value accent mono" id="tqi">—</div>
+      <div id="tqi-pill"></div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-label">Current total</div>
+      <div class="kpi-value accent mono" id="kpi-total">—</div>
+      <div class="kpi-sub" id="kpi-date">vessels</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-label">VLCC + Suezmax</div>
+      <div class="kpi-value vlcc mono" id="kpi-large">—</div>
+      <div class="kpi-sub">large tankers, latest pass</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-label">Historical avg</div>
+      <div class="kpi-value mr mono" id="kpi-avg">—</div>
+      <div class="kpi-sub">vessels/week since 2017</div>
+    </div>
+  </div>
+
+  <!-- Chart -->
+  <div class="chart-card">
+    <div class="chart-header">
+      <div>
+        <div class="chart-title">Weekly Export Vessel Count</div>
+        <div class="chart-sub">Kharg anchorage — VLCC · Suezmax · Aframax · MR/Panamax</div>
+      </div>
+      <div class="range-btns">
+        <button class="range-btn" data-range="1">1Y</button>
+        <button class="range-btn" data-range="3">3Y</button>
+        <button class="range-btn active" data-range="0">ALL</button>
+      </div>
+    </div>
+    <div class="chart-wrap">
+      <canvas id="queueChart" height="260"></canvas>
+    </div>
+    <div class="legend">
+      <div class="leg"><div class="leg-dot" style="background:var(--vlcc)"></div>VLCC ≥290m</div>
+      <div class="leg"><div class="leg-dot" style="background:var(--suezmax)"></div>Suezmax 260–290m</div>
+      <div class="leg"><div class="leg-dot" style="background:var(--aframax)"></div>Aframax 220–260m</div>
+      <div class="leg"><div class="leg-dot" style="background:var(--mr)"></div>MR/Panamax 100–220m</div>
+    </div>
+  </div>
+
+  <!-- Latest pass -->
+  <div class="latest-card">
+    <div class="latest-title">Latest SAR pass breakdown</div>
+    <div class="latest-grid">
+      <div class="latest-item">
+        <div class="latest-cls">VLCC</div>
+        <div class="latest-n" id="l-vlcc" style="color:var(--vlcc)">—</div>
+      </div>
+      <div class="latest-item">
+        <div class="latest-cls">Suezmax</div>
+        <div class="latest-n" id="l-suezmax" style="color:var(--suezmax)">—</div>
+      </div>
+      <div class="latest-item">
+        <div class="latest-cls">Aframax</div>
+        <div class="latest-n" id="l-aframax" style="color:var(--aframax)">—</div>
+      </div>
+      <div class="latest-item">
+        <div class="latest-cls">MR/Panamax</div>
+        <div class="latest-n" id="l-mr" style="color:var(--mr)">—</div>
+      </div>
+      <div class="latest-item">
+        <div class="latest-cls">Total</div>
+        <div class="latest-n" id="l-total" style="color:var(--accent)">—</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="note" id="note">
+    Detection via Sentinel-1 IW VV backscatter. Per-pass adaptive threshold. Kharg Island and known offshore platforms masked.
+    Small vessels (&lt;100m) excluded — non-export traffic. Queue Index = current 4-week avg / historical 95th percentile × 100.
+  </div>
+</div>
+
+<script>
+// ── Colours ──────────────────────────────────────────────────────────────────
+const C = {
+  vlcc:    '#ef4444',
+  suezmax: '#f97316',
+  aframax: '#eab308',
+  mr:      '#22c55e',
+  accent:  '#38bdf8',
+  grid:    'rgba(30,45,69,.7)',
+  text:    '#64748b',
+  surface: '#1a2540',
+};
+
+let ALL_RECORDS = [];
+let activeRange = 0; // 0=all, 1=1Y, 3=3Y
+
+// ── Fetch data ────────────────────────────────────────────────────────────────
+async function loadData() {
+  try {
+    const r = await fetch('/data/anchorage.json');
+    if (!r.ok) throw new Error('no data');
+    return await r.json();
+  } catch(e) {
+    // fallback: show "data loading" state — backfill hasn't run yet
+    return null;
+  }
+}
+
+// ── Stats ─────────────────────────────────────────────────────────────────────
+function computeStats(records) {
+  if (!records.length) return {};
+  const totals = records.map(r => r.total);
+  const mean   = totals.reduce((a,b) => a+b, 0) / totals.length;
+  const sorted = [...totals].sort((a,b) => a-b);
+  const p95    = sorted[Math.floor(sorted.length * 0.95)];
+  const latest = records[records.length - 1];
+  const last4  = records.slice(-4);
+  const avg4   = last4.reduce((a,r) => a+r.total, 0) / last4.length;
+  const tqi    = Math.round(avg4 / p95 * 100);
+  return { mean, p95, latest, tqi };
+}
+
+// ── Update KPIs ───────────────────────────────────────────────────────────────
+function updateKPIs(records) {
+  const { mean, p95, latest, tqi } = computeStats(records);
+  const first = records[0], last = records[records.length-1];
+
+  document.getElementById('subtitle').textContent =
+    `${records.length} weekly SAR passes · ${first.date} – ${last.date} · Sentinel-1 IW`;
+
+  document.getElementById('tqi').textContent = tqi;
+  document.getElementById('kpi-total').textContent = latest.total;
+  document.getElementById('kpi-date').textContent = latest.date;
+  document.getElementById('kpi-large').textContent = latest.vlcc + latest.suezmax;
+  document.getElementById('kpi-avg').textContent = mean.toFixed(1);
+
+  const pill = document.getElementById('tqi-pill');
+  let cls, label;
+  if (tqi < 50)       { cls='status-normal';   label='Low'; }
+  else if (tqi < 70)  { cls='status-normal';   label='Normal'; }
+  else if (tqi < 85)  { cls='status-elevated'; label='Elevated'; }
+  else                { cls='status-high';     label='High Pressure'; }
+  pill.innerHTML = `<span class="status-pill ${cls}">${label}</span>`;
+
+  document.getElementById('l-vlcc').textContent    = latest.vlcc;
+  document.getElementById('l-suezmax').textContent = latest.suezmax;
+  document.getElementById('l-aframax').textContent = latest.aframax;
+  document.getElementById('l-mr').textContent      = latest.mr;
+  document.getElementById('l-total').textContent   = latest.total;
+}
+
+// ── Canvas chart ──────────────────────────────────────────────────────────────
+function drawChart(records) {
+  const canvas = document.getElementById('queueChart');
+  const dpr = window.devicePixelRatio || 1;
+  const W = canvas.parentElement.clientWidth - 32;
+  const H = 260;
+  canvas.style.width  = W + 'px';
+  canvas.style.height = H + 'px';
+  canvas.width  = W * dpr;
+  canvas.height = H * dpr;
+  const ctx = canvas.getContext('2d');
+  ctx.scale(dpr, dpr);
+
+  const PAD = { top: 12, right: 16, bottom: 32, left: 36 };
+  const cw = W - PAD.left - PAD.right;
+  const ch = H - PAD.top  - PAD.bottom;
+
+  // Filter by range
+  let data = records;
+  if (activeRange > 0) {
+    const cutoff = new Date();
+    cutoff.setFullYear(cutoff.getFullYear() - activeRange);
+    const cut = cutoff.toISOString().slice(0,10);
+    data = records.filter(r => r.date >= cut);
+  }
+  if (!data.length) return;
+
+  const maxY = Math.max(...data.map(r => r.total), 5);
+  const yMax = Math.ceil(maxY / 5) * 5 + 2;
+  const n = data.length;
+
+  function xp(i) { return PAD.left + (i / (n-1)) * cw; }
+  function yp(v) { return PAD.top + ch - (v / yMax) * ch; }
+
+  // Grid
+  ctx.strokeStyle = C.grid;
+  ctx.lineWidth = 1;
+  const yTicks = 4;
+  ctx.font = `10px -apple-system,sans-serif`;
+  ctx.fillStyle = C.text;
+  ctx.textAlign = 'right';
+  for (let t = 0; t <= yTicks; t++) {
+    const v = Math.round(yMax * t / yTicks);
+    const y = yp(v);
+    ctx.beginPath(); ctx.moveTo(PAD.left, y); ctx.lineTo(PAD.left+cw, y); ctx.stroke();
+    ctx.fillText(v, PAD.left - 5, y + 3);
+  }
+
+  // X labels (years)
+  ctx.textAlign = 'center';
+  const years = [...new Set(data.map(r => r.date.slice(0,4)))];
+  years.forEach(yr => {
+    const idx = data.findIndex(r => r.date.startsWith(yr));
+    if (idx < 0) return;
+    const x = xp(idx);
+    ctx.fillStyle = C.text;
+    ctx.fillText(yr, x, PAD.top + ch + 20);
+  });
+
+  // Stacked area helpers
+  function stackedArea(layers, alphas) {
+    // layers: array of [values] from bottom to top; each layer adds to stack
+    const stacks = data.map(() => 0);
+    layers.forEach(([vals, color, alpha], li) => {
+      const tops = vals.map((v, i) => stacks[i] + v);
+      // fill
+      ctx.beginPath();
+      ctx.moveTo(xp(0), yp(stacks[0]));
+      tops.forEach((v, i) => ctx.lineTo(xp(i), yp(v)));
+      for (let i = n-1; i >= 0; i--) ctx.lineTo(xp(i), yp(stacks[i]));
+      ctx.closePath();
+      ctx.fillStyle = color + Math.round(alpha * 255).toString(16).padStart(2,'0');
+      ctx.fill();
+      // top line
+      ctx.beginPath();
+      tops.forEach((v, i) => i === 0 ? ctx.moveTo(xp(i), yp(v)) : ctx.lineTo(xp(i), yp(v)));
+      ctx.strokeStyle = color;
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+      // advance stack
+      tops.forEach((v, i) => stacks[i] = v);
+    });
+  }
+
+  stackedArea([
+    [data.map(r => r.mr),      C.mr,      0.55],
+    [data.map(r => r.aframax), C.aframax, 0.55],
+    [data.map(r => r.suezmax), C.suezmax, 0.55],
+    [data.map(r => r.vlcc),    C.vlcc,    0.55],
+  ]);
+
+  // Latest vertical indicator
+  const li = n - 1;
+  ctx.beginPath();
+  ctx.moveTo(xp(li), PAD.top);
+  ctx.lineTo(xp(li), PAD.top + ch);
+  ctx.strokeStyle = 'rgba(56,189,248,.4)';
+  ctx.lineWidth = 1;
+  ctx.setLineDash([3,3]);
+  ctx.stroke();
+  ctx.setLineDash([]);
+}
+
+// ── Range buttons ─────────────────────────────────────────────────────────────
+document.querySelectorAll('.range-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.range-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    activeRange = parseInt(btn.dataset.range);
+    drawChart(ALL_RECORDS);
+  });
+});
+
+window.addEventListener('resize', () => { if (ALL_RECORDS.length) drawChart(ALL_RECORDS); });
+
+// ── Init ──────────────────────────────────────────────────────────────────────
+(async () => {
+  const result = await loadData();
+  if (!result || !result.records || result.records.length === 0) {
+    document.getElementById('subtitle').textContent =
+      'Backfill in progress — weekly SAR passes 2017–present · check back shortly';
+    return;
+  }
+  ALL_RECORDS = result.records.filter(r => r.total !== undefined);
+  updateKPIs(ALL_RECORDS);
+  drawChart(ALL_RECORDS);
+
+  const note = document.getElementById('note');
+  if (result.updated && result.updated !== 'MOCK') {
+    note.innerHTML = note.innerHTML + ` Updated ${result.updated.slice(0,10)}.`;
+  }
+})();
+</script>
+</body>
+</html>
