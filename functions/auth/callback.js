@@ -1,3 +1,15 @@
+const TG_BOT = "7745904293:AAHV2qN_5_XNxpg6Ir3iV3XmEKpokthi308";
+const TG_CHAT = "204715787";
+
+async function tgLogin(email, name) {
+  const text = `🔐 Login\n${name} (${email})\n${new Date().toISOString().slice(0,16).replace('T',' ')} UTC`;
+  await fetch(`https://api.telegram.org/bot${TG_BOT}/sendMessage`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ chat_id: TG_CHAT, text })
+  }).catch(() => {});
+}
+
 const GOOGLE_CLIENT_ID = "377241273746-2qhpgcaa0a9nkhjuiihfqqs35rvp5asv.apps.googleusercontent.com";
 const GOOGLE_CLIENT_SECRET = "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";
 const APP_URL = "https://app.oilradar.io";
@@ -49,6 +61,8 @@ export async function onRequest(context) {
     const tier = TRIAL_USERS.map(e => e.toLowerCase()).includes(email) ? 'trial' : 'paid';
     const sessionData = { email, name: user.name || email, tier, exp: Date.now() + (7 * 24 * 60 * 60 * 1000) };
     const sessionToken = btoa(JSON.stringify(sessionData));
+
+    context.waitUntil(tgLogin(email, user.name || email));
 
     return new Response(null, {
       status: 302,

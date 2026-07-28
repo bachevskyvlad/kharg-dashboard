@@ -1,4 +1,15 @@
 const APP_URL = "https://app.oilradar.io";
+const TG_BOT = "7745904293:AAHV2qN_5_XNxpg6Ir3iV3XmEKpokthi308";
+const TG_CHAT = "204715787";
+
+async function tgLogin(email) {
+  const text = `🔐 Login\n${email}\n${new Date().toISOString().slice(0,16).replace('T',' ')} UTC`;
+  await fetch(`https://api.telegram.org/bot${TG_BOT}/sendMessage`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ chat_id: TG_CHAT, text })
+  }).catch(() => {});
+}
 
 const TRIAL_USERS = [
   'cyril@bluewaterstrategy.eu'
@@ -49,6 +60,8 @@ export async function onRequest(context) {
   const tier = TRIAL_USERS.map(e => e.toLowerCase()).includes(email) ? 'trial' : 'paid';
   const sessionData = { email, name: email, tier, exp: Date.now() + (7 * 24 * 60 * 60 * 1000) };
   const sessionToken = btoa(JSON.stringify(sessionData));
+
+  context.waitUntil(tgLogin(email));
 
   return new Response(JSON.stringify({ ok: true }), {
     status: 200,
