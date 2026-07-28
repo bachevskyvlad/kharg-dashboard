@@ -237,9 +237,7 @@ function computeStats(records) {
   const sorted = [...totals].sort((a,b) => a-b);
   const p95    = sorted[Math.floor(sorted.length * 0.95)] || sorted[sorted.length-1];
   const latest = records[records.length - 1];
-  const last4  = records.slice(-4);
-  const avg4   = last4.reduce((a,r) => a+r.total, 0) / last4.length;
-  const tqi    = Math.round(avg4 / p95 * 100);
+  const tqi    = Math.round(latest.total / p95 * 100);
   return { mean, p95, latest, tqi };
 }
 
