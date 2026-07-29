@@ -404,7 +404,7 @@ function drawChart(records) {
       const ctx2 = canvas.getContext('2d');
       const dpr2 = window.devicePixelRatio || 1;
       ctx2.setTransform(dpr2, 0, 0, dpr2, 0, 0);
-      drawFrame(ctx2, d, canvas.offsetWidth, canvas.offsetHeight / dpr2, activeRange, idx);
+      drawFrame(ctx2, d, canvas.offsetWidth, canvas.offsetHeight, activeRange, idx);
     });
     canvas.addEventListener('mouseleave', () => {
       tip.style.display = 'none';
@@ -413,7 +413,7 @@ function drawChart(records) {
       const ctx2 = canvas.getContext('2d');
       const dpr2 = window.devicePixelRatio || 1;
       ctx2.setTransform(dpr2, 0, 0, dpr2, 0, 0);
-      drawFrame(ctx2, d, canvas.offsetWidth, canvas.offsetHeight / dpr2, activeRange, -1);
+      drawFrame(ctx2, d, canvas.offsetWidth, canvas.offsetHeight, activeRange, -1);
     });
   }
 }
