@@ -1,11 +1,13 @@
+const SHEET_ID = '1tjdKbciMOH9J1WXLD692fiw-dyHmmpn4b39u7cPXnZQ';
+const SA_EMAIL = 'oilradar-crm@arctic-shadow-255321.iam.gserviceaccount.com';
 const SHEET_NAME = 'Sheet1';
 const COLS = ['email','first_name','last_name','status','date_from','date_to','added_at','last_login'];
 
-async function getToken(saEmail, privateKeyPem) {
+async function getToken(privateKeyPem) {
   const now = Math.floor(Date.now() / 1000);
   const header = btoa(JSON.stringify({ alg: 'RS256', typ: 'JWT' })).replace(/=/g,'').replace(/\+/g,'-').replace(/\//g,'_');
   const claim = btoa(JSON.stringify({
-    iss: saEmail,
+    iss: SA_EMAIL,
     scope: 'https://www.googleapis.com/auth/spreadsheets',
     aud: 'https://oauth2.googleapis.com/token',
     exp: now + 3600, iat: now
@@ -26,18 +28,18 @@ async function getToken(saEmail, privateKeyPem) {
   return data.access_token;
 }
 
-export async function sheetsGet(sheetId, saEmail, privateKey) {
-  const token = await getToken(saEmail, privateKey);
+async function sheetsGet(privateKey) {
+  const token = await getToken(privateKey);
   const res = await fetch(
-    `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/${SHEET_NAME}`,
+    `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${SHEET_NAME}`,
     { headers: { Authorization: `Bearer ${token}` } }
   );
   const data = await res.json();
   return data.values || [];
 }
 
-export async function getUserByEmail(sheetId, saEmail, privateKey, email) {
-  const rows = await sheetsGet(sheetId, saEmail, privateKey);
+export async function getUserByEmail(privateKey, email) {
+  const rows = await sheetsGet(privateKey);
   const header = rows[0] || COLS;
   const idx = r => header.indexOf(r);
   for (let i = 1; i < rows.length; i++) {
@@ -48,13 +50,12 @@ export async function getUserByEmail(sheetId, saEmail, privateKey, email) {
   return null;
 }
 
-export async function upsertUser(sheetId, saEmail, privateKey, { email, first_name, last_name, status }) {
-  const token = await getToken(saEmail, privateKey);
-  const existing = await getUserByEmail(sheetId, saEmail, privateKey, email);
+export async function upsertUser(privateKey, { email, first_name, last_name, status }) {
+  const token = await getToken(privateKey);
+  const existing = await getUserByEmail(privateKey, email);
   const now = new Date().toISOString().slice(0,10);
 
   if (existing) {
-    // update last_login; keep existing status/names unless provided
     const d = existing.data;
     const updated = [
       email,
@@ -68,7 +69,7 @@ export async function upsertUser(sheetId, saEmail, privateKey, { email, first_na
     ];
     const range = `${SHEET_NAME}!A${existing.row}:H${existing.row}`;
     await fetch(
-      `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/${encodeURIComponent(range)}?valueInputOption=RAW`,
+      `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${encodeURIComponent(range)}?valueInputOption=RAW`,
       { method: 'PUT', headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
         body: JSON.stringify({ range, majorDimension: 'ROWS', values: [updated] }) }
     );
@@ -76,7 +77,7 @@ export async function upsertUser(sheetId, saEmail, privateKey, { email, first_na
   } else {
     const row = [email, first_name || '', last_name || '', status || 'paid', now, '', now, now];
     await fetch(
-      `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/${SHEET_NAME}:append?valueInputOption=RAW&insertDataOption=INSERT_ROWS`,
+      `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${SHEET_NAME}:append?valueInputOption=RAW&insertDataOption=INSERT_ROWS`,
       { method: 'POST', headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
         body: JSON.stringify({ majorDimension: 'ROWS', values: [row] }) }
     );

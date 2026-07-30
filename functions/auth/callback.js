@@ -58,9 +58,9 @@ export async function onRequest(context) {
 
     // Upsert user in CRM (creates if new, updates last_login if existing)
     let tier = 'paid';
-    if (env.GOOGLE_SHEET_ID && env.GOOGLE_SA_EMAIL && env.GOOGLE_SA_KEY) {
+    if (env.GOOGLE_SA_KEY) {
       const nameParts = (user.name || '').split(' ');
-      tier = await upsertUser(env.GOOGLE_SHEET_ID, env.GOOGLE_SA_EMAIL, env.GOOGLE_SA_KEY, {
+      tier = await upsertUser(env.GOOGLE_SA_KEY, {
         email,
         first_name: nameParts[0] || '',
         last_name: nameParts.slice(1).join(' ') || '',

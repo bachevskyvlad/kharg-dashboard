@@ -24,8 +24,8 @@ export async function onRequest(context) {
     if (sessionData.exp && sessionData.exp < Date.now()) return jsonResponse({ authenticated: false }, origin);
 
     let tier = 'paid';
-    if (env.GOOGLE_SHEET_ID && env.GOOGLE_SA_EMAIL && env.GOOGLE_SA_KEY) {
-      const user = await getUserByEmail(env.GOOGLE_SHEET_ID, env.GOOGLE_SA_EMAIL, env.GOOGLE_SA_KEY, sessionData.email);
+    if (env.GOOGLE_SA_KEY) {
+      const user = await getUserByEmail(env.GOOGLE_SA_KEY, sessionData.email);
       if (user) tier = user.data.status || 'paid';
     }
 

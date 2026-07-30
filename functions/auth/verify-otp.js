@@ -60,8 +60,8 @@ export async function onRequest(context) {
   }
 
   let tier = 'paid';
-  if (env.GOOGLE_SHEET_ID && env.GOOGLE_SA_EMAIL && env.GOOGLE_SA_KEY) {
-    tier = await upsertUser(env.GOOGLE_SHEET_ID, env.GOOGLE_SA_EMAIL, env.GOOGLE_SA_KEY, { email });
+  if (env.GOOGLE_SA_KEY) {
+    tier = await upsertUser(env.GOOGLE_SA_KEY, { email });
   }
 
   const sessionData = { email, name: email, tier, exp: Date.now() + (7 * 24 * 60 * 60 * 1000) };
