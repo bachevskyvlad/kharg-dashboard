@@ -200,8 +200,8 @@
         .es-pct-sm { font-family: 'Space Grotesk', sans-serif; font-size: 1.3rem; font-weight: 700; color: var(--dim); line-height: 1; }
         .es-row.on  .es-pct-sm { color: var(--yellow); }
         .es-row.hot .es-pct-sm { color: var(--red); }
-        .es-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1px; background: var(--border); border: 1px solid var(--border); border-radius: 6px; overflow: hidden; }
-        .es-row { background: var(--surface); padding: 1rem 1.1rem; display: flex; flex-direction: column; gap: 0.5rem; transition: background 0.15s; }
+        .es-grid { display: flex; flex-wrap: wrap; gap: 1px; background: var(--border); border: 1px solid var(--border); border-radius: 6px; overflow: hidden; }
+        .es-row { flex: 1 1 calc(50% - 1px); min-width: 280px; background: var(--surface); padding: 1rem 1.1rem; display: flex; flex-direction: column; gap: 0.5rem; transition: background 0.15s; }
         .es-row.on  { background: rgba(251,191,36,0.05); }
         .es-row.hot { background: rgba(248,113,113,0.07); }
         .es-row-head { display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; }
@@ -460,8 +460,8 @@
         <div class="nav-item" onclick="showSection('map')">
             <span class="nav-icon">⊞</span> Per-Tank Map
         </div>
-        <div class="nav-item" onclick="showSection('signals')">
-            <span class="nav-icon">⚡</span> Export Signals
+        <div class="nav-item" id="nav-signals" onclick="showSection('signals')" style="opacity:0.35;pointer-events:none">
+            <span class="nav-icon">⚡</span> Export Signals <span id="signals-badge" style="display:none;background:var(--accent);color:#fff;font-size:0.6rem;font-weight:700;padding:1px 6px;border-radius:10px;margin-left:4px"></span>
         </div>
         <hr class="nav-divider">
         <div class="nav-group-label">Ships</div>
@@ -837,7 +837,7 @@
         <div class="sec-title" style="margin-bottom:0.25rem">Export Signals</div>
         <div class="signal" style="margin-bottom:1.5rem;line-height:1.6">
             Four independent research findings. Each describes a storage condition that, historically, precedes a drawdown event on the next SAR pass.
-            Baseline probability of observing a drawdown on any given pass: <span class="hl">15%</span>.
+            Baseline probability of an export drawdown on any given observation: <span class="hl">15%</span>.
             When a signal is <span style="color:var(--accent);font-weight:600">ACTIVE</span>, the observed probability rises — shown per signal below.
             When multiple signals are active simultaneously, the composite probability is shown at top.
         </div>
@@ -848,7 +848,7 @@
                 <div style="font-size:0.58rem;letter-spacing:0.12em;text-transform:uppercase;color:var(--muted);margin-bottom:0.3rem">Composite P(drawdown)</div>
                 <div style="display:flex;align-items:baseline;gap:0.5rem">
                     <span id="esPct" class="es-pct">—</span>
-                    <span style="font-size:0.7rem;color:var(--muted)">on next SAR pass</span>
+                    <span style="font-size:0.7rem;color:var(--muted)">export probability</span>
                 </div>
             </div>
             <div style="flex:1;min-width:200px;font-size:0.72rem;color:var(--muted);line-height:1.5">
@@ -860,8 +860,8 @@
         <!-- How to read -->
         <div style="background:rgba(255,255,255,0.03);border:1px solid var(--border);border-left:3px solid var(--accent);padding:0.9rem 1.2rem;margin-bottom:1.25rem;font-size:0.74rem;line-height:1.6;color:var(--muted)">
             <span style="color:var(--text);font-weight:600">How to read: </span>
-            Each card shows the signal name, its current state (ACTIVE / INACTIVE), the trigger condition being observed right now, and the historical probability of a drawdown when that condition is true.
-            ACTIVE means the condition is met today. It does not guarantee an export — it means historical data shows elevated likelihood.
+            Each card shows a market condition and the historical probability of an export drawdown when that condition is true.
+            ACTIVE means the condition is met right now. It does not guarantee an export — it means odds are elevated based on observed history.
         </div>
 
         <!-- 2×2 signal grid -->
@@ -933,7 +933,7 @@
                     <div>
                         <div class="es-label">Accumulation Streak</div>
                         <div style="font-size:0.8rem;color:var(--text);margin-top:0.3rem;line-height:1.4">
-                            18+ consecutive days of net build historically marks a pressure peak. Exports tend to follow within the next 2 SAR passes.
+                            18+ consecutive days of net build historically marks a pressure peak. Exports tend to follow within the next 10–14 days.
                         </div>
                     </div>
                     <div class="es-composite">
@@ -950,8 +950,8 @@
         </div><!-- /es-grid -->
 
         <div style="font-size:0.65rem;color:var(--dim);margin-top:1rem;line-height:1.5">
-            Probabilities are derived from Sentinel-1 SAR pass history 2017–present. Sample size per signal: 40–120 qualifying events.
-            Export Signals are research outputs, not trading signals. Past observation rates do not guarantee future outcomes.
+            Probabilities are derived from satellite observation history 2017–present. Sample size per signal: 40–120 qualifying events.
+            Export Signals are research outputs, not trading signals. Past rates do not guarantee future outcomes.
         </div>
     </div>
 
@@ -1355,10 +1355,26 @@ function renderExportSetup(util, fr7d, streak, staging) {
         : streak.type === 'DRAW' ? streakDays + 'd drawdown streak' : '—';
     setEsRow('streak', streakActive, false, streakP + '%', streakTrigger,
         streakActive ? 'active' : '—');
+
+    // ── Nav badge + enable/disable ──
+    const activeCount = [pressureActive, stagingActive, pendulumActive, streakActive].filter(Boolean).length;
+    const navEl = document.getElementById('nav-signals');
+    const badge = document.getElementById('signals-badge');
+    if (activeCount > 0) {
+        navEl.style.opacity = '1';
+        navEl.style.pointerEvents = 'auto';
+        badge.style.display = 'inline';
+        badge.textContent = activeCount;
+    } else {
+        navEl.style.opacity = '0.35';
+        navEl.style.pointerEvents = 'none';
+        badge.style.display = 'none';
+    }
 }
 
 function setEsRow(id, active, hot, p, trigger, status) {
     const row = document.getElementById('esr-' + id);
+    row.style.display = active ? '' : 'none';
     row.className = 'es-row' + (hot ? ' hot' : active ? ' on' : '');
     const trigEl = document.getElementById('est-' + id);
     if (trigEl) trigEl.textContent = trigger;
