@@ -25,8 +25,12 @@ export async function onRequest(context) {
 
     let tier = 'paid';
     if (env.GOOGLE_SA_KEY) {
-      const user = await getUserByEmail(env.GOOGLE_SA_KEY, sessionData.email);
-      if (user) tier = user.data.status || 'paid';
+      try {
+        const user = await getUserByEmail(env.GOOGLE_SA_KEY, sessionData.email);
+        if (user) tier = user.data.status || 'paid';
+      } catch (e) {
+        console.error('Sheets error in check:', e?.message);
+      }
     }
 
     return jsonResponse({ authenticated: true, email: sessionData.email, name: sessionData.name, tier }, origin);
