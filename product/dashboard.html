@@ -644,14 +644,9 @@
             </div>
             <div class="ch ch-320"><canvas id="flowsDivergentChart"></canvas></div>
             <div style="font-size:0.7rem;color:var(--muted);padding:0.9rem 0 0.25rem;line-height:1.7">
-                <b style="color:#34d399">Export Velocity (green, below zero)</b> — rate of oil leaving the terminal to tankers, Mb/d.
-                Computed as the total volume decrease across all draining tanks per SAR pass, normalised by days between observations.
-                High export = active loading. Low = shipments paused or slowing.<br><br>
-                <b style="color:#f87171">Production Inflow (red, above zero)</b> — rate of oil arriving from oilfields into storage, Mb/d.
-                Computed as total volume increase across all filling tanks. Proxy for production rate:
-                stable inflow = steady field output. Sharp drop = production halt or inter-terminal transfer. Sharp rise = new production stream or return from idle.<br><br>
-                <b style="color:var(--dim)">Key limitation:</b> SAR cannot distinguish internal tank-to-tank transfers from real exports or field production.
-                Large events (&gt;1.5 Mb per pass) are very likely real operations. Small movements may be operational noise.
+                <b style="color:#34d399">Export Velocity (green)</b> — how fast oil is leaving the terminal into tankers, Mb/d.<br><br>
+                <b style="color:#f87171">Production Inflow (red)</b> — how fast oil is arriving from upstream fields into storage, Mb/d.<br><br>
+                <b style="color:var(--dim)">Note:</b> SAR measures tank levels, not flow directly. Moves under 1.5 Mb per pass may be operational noise rather than real export or production events.
             </div>
         </div>
 
