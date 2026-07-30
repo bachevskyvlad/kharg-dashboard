@@ -613,17 +613,14 @@
         <div class="chart-card">
             <div class="chart-head">
                 <div class="chart-ttl">Export Coverage Ratio <span id="fECR" style="font-size:0.85rem;font-weight:400;margin-left:0.5rem">--</span></div>
-                <div class="chart-meta" id="fECRSub">Export Velocity ÷ Production Inflow · per pass</div>
+                <div class="chart-meta" id="fECRSub">outflow ÷ inflow · per SAR pass</div>
             </div>
             <div class="ch ch-280"><canvas id="flowsECRChart"></canvas></div>
             <div style="font-size:0.7rem;color:var(--muted);padding:0.9rem 0 0.25rem;line-height:1.7">
-                <b style="color:var(--dim)">Export Coverage Ratio = Export Velocity ÷ Production Inflow.</b>
-                Shows whether exported oil comes from current field production or from accumulated strategic reserves.<br><br>
-                <b style="color:#34d399">ECR &gt; 1.2 (green)</b> — Iran is exporting more than fields are delivering.
-                Terminal is actively drawing down strategic reserves. Historically coincides with price pressure or urgent sales.<br><br>
-                <b style="color:var(--dim)">ECR ≈ 1 (grey, 0.85–1.2)</b> — pass-through mode: production flows directly to export with minimal inventory change.<br><br>
-                <b style="color:#f87171">ECR &lt; 0.85 (red)</b> — production outpaces exports, inventories accumulating.
-                Signal of export constraints: sanctions pressure on buyers, tanker shortage, or deliberate strategic accumulation ahead of an expected price move.
+                <b style="color:var(--dim)">Export Coverage Ratio</b> — how much oil left the terminal vs how much arrived from upstream fields on the same pass.<br><br>
+                <b style="color:#34d399">ECR &gt; 1.2 (green)</b> — exports exceed upstream inflow; terminal is drawing down reserves.<br><br>
+                <b style="color:var(--dim)">ECR ≈ 1 (grey, 0.85–1.2)</b> — upstream inflow and exports are roughly equal; oil flows straight through.<br><br>
+                <b style="color:#f87171">ECR &lt; 0.85 (red)</b> — upstream inflow significantly exceeds exports; oil is accumulating in storage.
             </div>
         </div>
 
