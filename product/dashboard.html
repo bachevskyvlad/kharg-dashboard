@@ -626,14 +626,14 @@
 
         <div class="chart-card">
             <div class="chart-head">
-                <div class="chart-ttl">Storage Turnover <span id="fTurnover" style="font-size:0.85rem;font-weight:400;margin-left:0.5rem">--</span></div>
-                <div class="chart-meta" id="fTurnoverSub">days to cycle full terminal volume · per pass</div>
+                <div class="chart-ttl">Days to Empty <span id="fTurnover" style="font-size:0.85rem;font-weight:400;margin-left:0.5rem">--</span></div>
+                <div class="chart-meta" id="fTurnoverSub">at current export rate · how long until storage is drained</div>
             </div>
             <div class="ch ch-280"><canvas id="flowsTurnoverChart"></canvas></div>
             <div style="font-size:0.7rem;color:var(--muted);padding:0.75rem 0 0.25rem;line-height:1.6">
-                Current volume ÷ average daily throughput (Out + In). &nbsp;
-                <b style="color:var(--dim)">&lt; 40d</b> — terminal highly active, fast cycle. &nbsp;
-                <b style="color:var(--dim)">&gt; 90d</b> — low operational activity, possible export freeze.
+                How many days at the current export pace until the terminal would be fully drained.<br><br>
+                <b style="color:var(--dim)">&lt; 40d</b> — exports are fast relative to storage; active loading, high throughput.<br>
+                <b style="color:var(--dim)">&gt; 90d</b> — exports are slow relative to storage; oil is sitting, possible export slowdown.
             </div>
         </div>
 
@@ -1634,8 +1634,8 @@ function renderFlows(raw) {
     });
     const lastTurnover = turnoverData.filter(v => v !== null).slice(-1)[0];
     if (lastTurnover != null) {
-        document.getElementById('fTurnover').innerHTML = Math.round(lastTurnover) + '<span style="font-size:0.75rem;color:var(--muted)">d latest</span>';
-        document.getElementById('fTurnoverSub').textContent = lastTurnover < 40 ? 'High activity — terminal cycling fast' : lastTurnover > 90 ? 'Low activity — possible export freeze' : 'Normal operational tempo';
+        document.getElementById('fTurnover').innerHTML = Math.round(lastTurnover) + '<span style="font-size:0.75rem;color:var(--muted)">d</span>';
+        document.getElementById('fTurnoverSub').textContent = lastTurnover < 40 ? 'Fast drain — active loading' : lastTurnover > 90 ? 'Slow drain — exports below average' : 'at current export rate · how long until storage is drained';
     }
     charts.flowsTurnover && charts.flowsTurnover.destroy();
     charts.flowsTurnover = new Chart(document.getElementById('flowsTurnoverChart').getContext('2d'), {
