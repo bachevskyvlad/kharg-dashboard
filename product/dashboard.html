@@ -197,6 +197,9 @@
         .es-pct.active { color: var(--yellow); }
         .es-pct.hot { color: var(--red); }
         .es-pct-sub { font-size: 0.58rem; color: var(--dim); white-space: nowrap; }
+        .es-pct-sm { font-family: 'Space Grotesk', sans-serif; font-size: 1.3rem; font-weight: 700; color: var(--dim); line-height: 1; }
+        .es-row.on  .es-pct-sm { color: var(--yellow); }
+        .es-row.hot .es-pct-sm { color: var(--red); }
         .es-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1px; background: var(--border); border: 1px solid var(--border); border-radius: 6px; overflow: hidden; }
         .es-row { background: var(--surface); padding: 1rem 1.1rem; display: flex; flex-direction: column; gap: 0.5rem; transition: background 0.15s; }
         .es-row.on  { background: rgba(251,191,36,0.05); }
@@ -457,6 +460,9 @@
         <div class="nav-item" onclick="showSection('map')">
             <span class="nav-icon">⊞</span> Per-Tank Map
         </div>
+        <div class="nav-item" onclick="showSection('signals')">
+            <span class="nav-icon">⚡</span> Export Signals
+        </div>
         <hr class="nav-divider">
         <div class="nav-group-label">Ships</div>
         <div class="nav-item" onclick="showSection('anchorage')">
@@ -532,71 +538,6 @@
                 <div class="card-label" id="mDaysLabel">Days to Capacity</div>
                 <div class="card-val" id="mDays">--<span class="cu"> d</span></div>
                 <div class="card-sub" id="mDaysSub"></div>
-            </div>
-        </div>
-
-        <!-- Signal Research -->
-        <div class="es-block">
-            <div class="es-header">
-                <div>
-                    <span class="es-label">Export Signal Research</span>
-                    <div style="font-size:0.63rem;color:var(--dim);margin-top:0.25rem">Patterns that historically raise P(drawdown next pass) above the 15% baseline</div>
-                </div>
-                <div class="es-composite">
-                    <span class="es-pct" id="esPct">—</span>
-                    <span class="es-pct-sub">composite P(drawdown)</span>
-                </div>
-            </div>
-            <div class="es-grid">
-
-                <div class="es-row" id="esr-pressure">
-                    <div class="es-row-head">
-                        <span class="es-row-name">Storage Pressure</span>
-                        <span class="es-state" id="ess-pressure">inactive</span>
-                    </div>
-                    <div class="es-row-desc">Utilization above 65% — terminal under fill pressure. At &gt;80% historically precedes forced price concessions within 4–8 weeks.</div>
-                    <div class="es-row-foot">
-                        <span class="es-row-p" id="esp-pressure">—</span>
-                        <div class="es-row-lift"><span class="es-row-trigger" id="est-pressure">util &lt;65%</span><br>×1.8 vs baseline</div>
-                    </div>
-                </div>
-
-                <div class="es-row" id="esr-staging">
-                    <div class="es-row-head">
-                        <span class="es-row-name">Berth Staging</span>
-                        <span class="es-state" id="ess-staging">—</span>
-                    </div>
-                    <div class="es-row-desc">Berth-side tanks (t60_0, t40_22) filling rapidly in a single pass — Iran is staging a cargo. Leads AIS confirmation by 6–12 days.</div>
-                    <div class="es-row-foot">
-                        <span class="es-row-p" id="esp-staging">—</span>
-                        <div class="es-row-lift"><span class="es-row-trigger" id="est-staging">watching</span><br>×1.9 vs baseline</div>
-                    </div>
-                </div>
-
-                <div class="es-row" id="esr-pendulum">
-                    <div class="es-row-head">
-                        <span class="es-row-name">Pendulum Rhythm</span>
-                        <span class="es-state" id="ess-pendulum">inactive</span>
-                    </div>
-                    <div class="es-row-desc">Large inflow on the previous pass. Iran fills to order — a big build means a tanker is already allocated. Export typically follows within one pass.</div>
-                    <div class="es-row-foot">
-                        <span class="es-row-p" id="esp-pendulum">—</span>
-                        <div class="es-row-lift"><span class="es-row-trigger" id="est-pendulum">fr7d &lt;+1.5 Mb</span><br>×2.9 vs baseline</div>
-                    </div>
-                </div>
-
-                <div class="es-row" id="esr-streak">
-                    <div class="es-row-head">
-                        <span class="es-row-name">Accumulation Streak</span>
-                        <span class="es-state" id="ess-streak">inactive</span>
-                    </div>
-                    <div class="es-row-desc">3+ consecutive SAR passes with net build and no drawdown. The longer the streak, the higher the pressure to sell.</div>
-                    <div class="es-row-foot">
-                        <span class="es-row-p" id="esp-streak">—</span>
-                        <div class="es-row-lift"><span class="es-row-trigger" id="est-streak">streak &lt;18d</span><br>×1.8 vs baseline</div>
-                    </div>
-                </div>
-
             </div>
         </div>
 
@@ -897,6 +838,129 @@
                 <div style="font-size:0.72rem;color:var(--muted);text-align:center;max-width:280px">Pass-by-pass vessel counts are available on the full plan.</div>
                 <a href="https://calendly.com/bachevsky/intro" target="_blank" style="background:var(--accent);color:#fff;padding:0.5rem 1.25rem;font-size:0.75rem;text-decoration:none;margin-top:0.25rem">Request full access →</a>
             </div>
+        </div>
+    </div>
+
+    <!-- ── SECTION: EXPORT SIGNALS ── -->
+    <div class="section" id="sec-signals">
+        <div class="sec-title" style="margin-bottom:0.25rem">Export Signals</div>
+        <div class="signal" style="margin-bottom:1.5rem;line-height:1.6">
+            Four independent research findings. Each describes a storage condition that, historically, precedes a drawdown event on the next SAR pass.
+            Baseline probability of observing a drawdown on any given pass: <span class="hl">15%</span>.
+            When a signal is <span style="color:var(--accent);font-weight:600">ACTIVE</span>, the observed probability rises — shown per signal below.
+            When multiple signals are active simultaneously, the composite probability is shown at top.
+        </div>
+
+        <!-- Composite score -->
+        <div style="background:var(--surface);border:1px solid var(--border);padding:1.1rem 1.5rem;margin-bottom:1.25rem;display:flex;align-items:center;gap:1.5rem;flex-wrap:wrap;">
+            <div>
+                <div style="font-size:0.58rem;letter-spacing:0.12em;text-transform:uppercase;color:var(--muted);margin-bottom:0.3rem">Composite P(drawdown)</div>
+                <div style="display:flex;align-items:baseline;gap:0.5rem">
+                    <span id="esPct" class="es-pct">—</span>
+                    <span style="font-size:0.7rem;color:var(--muted)">on next SAR pass</span>
+                </div>
+            </div>
+            <div style="flex:1;min-width:200px;font-size:0.72rem;color:var(--muted);line-height:1.5">
+                Composite rises when signals stack. Strongest combination shown.
+                Baseline is 15% with no active signals.
+            </div>
+        </div>
+
+        <!-- How to read -->
+        <div style="background:rgba(255,255,255,0.03);border:1px solid var(--border);border-left:3px solid var(--accent);padding:0.9rem 1.2rem;margin-bottom:1.25rem;font-size:0.74rem;line-height:1.6;color:var(--muted)">
+            <span style="color:var(--text);font-weight:600">How to read: </span>
+            Each card shows the signal name, its current state (ACTIVE / INACTIVE), the trigger condition being observed right now, and the historical probability of a drawdown when that condition is true.
+            ACTIVE means the condition is met today. It does not guarantee an export — it means historical data shows elevated likelihood.
+        </div>
+
+        <!-- 2×2 signal grid -->
+        <div class="es-grid">
+
+            <!-- Storage Pressure -->
+            <div class="es-row" id="esr-pressure">
+                <div class="es-header">
+                    <div>
+                        <div class="es-label">Storage Pressure</div>
+                        <div style="font-size:0.8rem;color:var(--text);margin-top:0.3rem;line-height:1.4">
+                            When tanks are ≥65% full, Iran faces commercial pressure to export — storage costs rise and production curtailment becomes costly.
+                        </div>
+                    </div>
+                    <div class="es-composite">
+                        <div class="es-state" id="ess-pressure">inactive</div>
+                        <div class="es-pct-sm" id="esp-pressure">—</div>
+                    </div>
+                </div>
+                <div style="display:flex;justify-content:space-between;align-items:center;font-size:0.7rem;padding-top:0.6rem;border-top:1px solid var(--border)">
+                    <span style="color:var(--muted)">Condition</span>
+                    <span id="est-pressure" style="font-family:monospace;color:var(--text)">—</span>
+                </div>
+            </div>
+
+            <!-- Berth Staging -->
+            <div class="es-row" id="esr-staging">
+                <div class="es-header">
+                    <div>
+                        <div class="es-label">Berth Staging</div>
+                        <div style="font-size:0.8rem;color:var(--text);margin-top:0.3rem;line-height:1.4">
+                            Loading berth tanks (t60_0, t40_22) fill faster than the terminal average — a tanker may be in position and loading is imminent.
+                        </div>
+                    </div>
+                    <div class="es-composite">
+                        <div class="es-state" id="ess-staging">inactive</div>
+                        <div class="es-pct-sm" id="esp-staging">—</div>
+                    </div>
+                </div>
+                <div style="display:flex;justify-content:space-between;align-items:center;font-size:0.7rem;padding-top:0.6rem;border-top:1px solid var(--border)">
+                    <span style="color:var(--muted)">Condition</span>
+                    <span id="est-staging" style="font-family:monospace;color:var(--text)">—</span>
+                </div>
+            </div>
+
+            <!-- Pendulum Rhythm -->
+            <div class="es-row" id="esr-pendulum">
+                <div class="es-header">
+                    <div>
+                        <div class="es-label">Pendulum Rhythm</div>
+                        <div style="font-size:0.8rem;color:var(--text);margin-top:0.3rem;line-height:1.4">
+                            A sharp build (&gt;+1.5 Mb in 7 days) historically precedes a drawdown of similar magnitude within 6–12 days — the terminal "exhales" after filling.
+                        </div>
+                    </div>
+                    <div class="es-composite">
+                        <div class="es-state" id="ess-pendulum">inactive</div>
+                        <div class="es-pct-sm" id="esp-pendulum">—</div>
+                    </div>
+                </div>
+                <div style="display:flex;justify-content:space-between;align-items:center;font-size:0.7rem;padding-top:0.6rem;border-top:1px solid var(--border)">
+                    <span style="color:var(--muted)">Condition</span>
+                    <span id="est-pendulum" style="font-family:monospace;color:var(--text)">—</span>
+                </div>
+            </div>
+
+            <!-- Accumulation Streak -->
+            <div class="es-row" id="esr-streak">
+                <div class="es-header">
+                    <div>
+                        <div class="es-label">Accumulation Streak</div>
+                        <div style="font-size:0.8rem;color:var(--text);margin-top:0.3rem;line-height:1.4">
+                            18+ consecutive days of net build historically marks a pressure peak. Exports tend to follow within the next 2 SAR passes.
+                        </div>
+                    </div>
+                    <div class="es-composite">
+                        <div class="es-state" id="ess-streak">inactive</div>
+                        <div class="es-pct-sm" id="esp-streak">—</div>
+                    </div>
+                </div>
+                <div style="display:flex;justify-content:space-between;align-items:center;font-size:0.7rem;padding-top:0.6rem;border-top:1px solid var(--border)">
+                    <span style="color:var(--muted)">Condition</span>
+                    <span id="est-streak" style="font-family:monospace;color:var(--text)">—</span>
+                </div>
+            </div>
+
+        </div><!-- /es-grid -->
+
+        <div style="font-size:0.65rem;color:var(--dim);margin-top:1rem;line-height:1.5">
+            Probabilities are derived from Sentinel-1 SAR pass history 2017–present. Sample size per signal: 40–120 qualifying events.
+            Export Signals are research outputs, not trading signals. Past observation rates do not guarantee future outcomes.
         </div>
     </div>
 
