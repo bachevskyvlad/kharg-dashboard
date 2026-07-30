@@ -1,3 +1,5 @@
+import { upsertUser } from '../lib/sheets.js';
+
 const APP_URL = "https://app.oilradar.io";
 const TG_BOT = "7745904293:AAHV2qN_5_XNxpg6Ir3iV3XmEKpokthi308";
 const TG_CHAT = "204715787";
@@ -57,7 +59,11 @@ export async function onRequest(context) {
     return jsonErr('Invalid or expired code. Please request a new one.');
   }
 
-  const tier = TRIAL_USERS.map(e => e.toLowerCase()).includes(email) ? 'trial' : 'paid';
+  let tier = 'paid';
+  if (env.GOOGLE_SHEET_ID && env.GOOGLE_SA_EMAIL && env.GOOGLE_SA_KEY) {
+    tier = await upsertUser(env.GOOGLE_SHEET_ID, env.GOOGLE_SA_EMAIL, env.GOOGLE_SA_KEY, { email });
+  }
+
   const sessionData = { email, name: email, tier, exp: Date.now() + (7 * 24 * 60 * 60 * 1000) };
   const sessionToken = btoa(JSON.stringify(sessionData));
 

@@ -1,3 +1,5 @@
+import { upsertUser } from '../lib/sheets.js';
+
 const TG_BOT = "7745904293:AAHV2qN_5_XNxpg6Ir3iV3XmEKpokthi308";
 const TG_CHAT = "204715787";
 
@@ -22,12 +24,8 @@ const WHITELIST = [
   'cyril@bluewaterstrategy.eu'
 ];
 
-const TRIAL_USERS = [
-  'cyril@bluewaterstrategy.eu'
-];
-
 export async function onRequest(context) {
-  const { request } = context;
+  const { request, env } = context;
   const url = new URL(request.url);
   const code = url.searchParams.get('code');
   const error = url.searchParams.get('error');
@@ -58,7 +56,17 @@ export async function onRequest(context) {
     const isAuthorized = WHITELIST.map(e => e.toLowerCase()).includes(email);
     if (!isAuthorized) return Response.redirect(`${APP_URL}/?error=unauthorized`, 302);
 
-    const tier = TRIAL_USERS.map(e => e.toLowerCase()).includes(email) ? 'trial' : 'paid';
+    // Upsert user in CRM (creates if new, updates last_login if existing)
+    let tier = 'paid';
+    if (env.GOOGLE_SHEET_ID && env.GOOGLE_SA_EMAIL && env.GOOGLE_SA_KEY) {
+      const nameParts = (user.name || '').split(' ');
+      tier = await upsertUser(env.GOOGLE_SHEET_ID, env.GOOGLE_SA_EMAIL, env.GOOGLE_SA_KEY, {
+        email,
+        first_name: nameParts[0] || '',
+        last_name: nameParts.slice(1).join(' ') || '',
+      });
+    }
+
     const sessionData = { email, name: user.name || email, tier, exp: Date.now() + (7 * 24 * 60 * 60 * 1000) };
     const sessionToken = btoa(JSON.stringify(sessionData));
 

@@ -1,3 +1,5 @@
+import { getUserByEmail } from '../lib/sheets.js';
+
 const ALLOWED_ORIGINS = [
   'https://oilradar.io',
   'https://www.oilradar.io',
@@ -5,7 +7,7 @@ const ALLOWED_ORIGINS = [
 ];
 
 export async function onRequest(context) {
-  const { request } = context;
+  const { request, env } = context;
   const origin = request.headers.get('Origin');
 
   if (request.method === 'OPTIONS') {
@@ -17,14 +19,16 @@ export async function onRequest(context) {
 
   if (!sessionToken) return jsonResponse({ authenticated: false }, origin);
 
-  const TRIAL_USERS = [
-    'cyril@bluewaterstrategy.eu'
-  ];
-
   try {
     const sessionData = JSON.parse(atob(sessionToken));
     if (sessionData.exp && sessionData.exp < Date.now()) return jsonResponse({ authenticated: false }, origin);
-    const tier = TRIAL_USERS.map(e => e.toLowerCase()).includes((sessionData.email || '').toLowerCase()) ? 'trial' : 'paid';
+
+    let tier = 'paid';
+    if (env.GOOGLE_SHEET_ID && env.GOOGLE_SA_EMAIL && env.GOOGLE_SA_KEY) {
+      const user = await getUserByEmail(env.GOOGLE_SHEET_ID, env.GOOGLE_SA_EMAIL, env.GOOGLE_SA_KEY, sessionData.email);
+      if (user) tier = user.data.status || 'paid';
+    }
+
     return jsonResponse({ authenticated: true, email: sessionData.email, name: sessionData.name, tier }, origin);
   } catch (e) {
     return jsonResponse({ authenticated: false }, origin);
