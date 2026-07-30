@@ -46,17 +46,22 @@ export async function onRequest(context) {
     if (!email) return Response.redirect(`${APP_URL}/?error=auth_failed`, 302);
 
     // Authorization: must exist in CRM sheet
-    if (!env.GOOGLE_SA_KEY) return Response.redirect(`${APP_URL}/?error=auth_failed`, 302);
-    const existing = await getUserByEmail(env.GOOGLE_SA_KEY, email);
-    if (!existing) return Response.redirect(`${APP_URL}/?error=unauthorized`, 302);
-
-    // Update last_login and get tier
-    const nameParts = (user.name || '').split(' ');
-    const tier = await upsertUser(env.GOOGLE_SA_KEY, {
-      email,
-      first_name: nameParts[0] || '',
-      last_name: nameParts.slice(1).join(' ') || '',
-    });
+    let tier = 'paid';
+    if (env.GOOGLE_SA_KEY) {
+      try {
+        const existing = await getUserByEmail(env.GOOGLE_SA_KEY, email);
+        if (!existing) return Response.redirect(`${APP_URL}/?error=unauthorized`, 302);
+        const nameParts = (user.name || '').split(' ');
+        tier = await upsertUser(env.GOOGLE_SA_KEY, {
+          email,
+          first_name: nameParts[0] || '',
+          last_name: nameParts.slice(1).join(' ') || '',
+        });
+      } catch (sheetErr) {
+        // Sheets unavailable — allow login with paid tier, log error
+        console.error('Sheets error:', sheetErr?.message);
+      }
+    }
 
     const sessionData = { email, name: user.name || email, tier, exp: Date.now() + (7 * 24 * 60 * 60 * 1000) };
     const sessionToken = btoa(JSON.stringify(sessionData));
