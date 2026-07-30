@@ -1,4 +1,4 @@
-import { upsertUser } from '../lib/sheets.js';
+import { getUserByEmail, upsertUser } from '../lib/sheets.js';
 
 const APP_URL = "https://app.oilradar.io";
 const TG_BOT = "7745904293:AAHV2qN_5_XNxpg6Ir3iV3XmEKpokthi308";
@@ -12,10 +12,6 @@ async function tgLogin(email) {
     body: JSON.stringify({ chat_id: TG_CHAT, text })
   }).catch(() => {});
 }
-
-const TRIAL_USERS = [
-  'cyril@bluewaterstrategy.eu'
-];
 
 async function computeOTP(secret, email, windowOffset = 0) {
   const window = Math.floor(Date.now() / 600000) + windowOffset;
@@ -59,10 +55,12 @@ export async function onRequest(context) {
     return jsonErr('Invalid or expired code. Please request a new one.');
   }
 
-  let tier = 'paid';
-  if (env.GOOGLE_SA_KEY) {
-    tier = await upsertUser(env.GOOGLE_SA_KEY, { email });
-  }
+  // Authorization: must exist in CRM sheet
+  if (!env.GOOGLE_SA_KEY) return jsonErr('Server configuration error');
+  const existing = await getUserByEmail(env.GOOGLE_SA_KEY, email);
+  if (!existing) return jsonErr('Access not granted. Contact support.');
+
+  const tier = await upsertUser(env.GOOGLE_SA_KEY, { email });
 
   const sessionData = { email, name: email, tier, exp: Date.now() + (7 * 24 * 60 * 60 * 1000) };
   const sessionToken = btoa(JSON.stringify(sessionData));

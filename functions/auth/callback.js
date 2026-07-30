@@ -1,4 +1,4 @@
-import { upsertUser } from '../lib/sheets.js';
+import { getUserByEmail, upsertUser } from '../lib/sheets.js';
 
 const TG_BOT = "7745904293:AAHV2qN_5_XNxpg6Ir3iV3XmEKpokthi308";
 const TG_CHAT = "204715787";
@@ -15,14 +15,6 @@ async function tgLogin(email, name) {
 const GOOGLE_CLIENT_ID = "377241273746-2qhpgcaa0a9nkhjuiihfqqs35rvp5asv.apps.googleusercontent.com";
 const GOOGLE_CLIENT_SECRET = "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";
 const APP_URL = "https://app.oilradar.io";
-
-const WHITELIST = [
-  'vladislav.bachevsky@gmail.com',
-  'keepmeup2date@gmail.com',
-  'vvbobylev@gmail.com',
-  'fryday.kg@gmail.com',
-  'cyril@bluewaterstrategy.eu'
-];
 
 export async function onRequest(context) {
   const { request, env } = context;
@@ -53,19 +45,18 @@ export async function onRequest(context) {
     const email = user.email?.toLowerCase();
     if (!email) return Response.redirect(`${APP_URL}/?error=auth_failed`, 302);
 
-    const isAuthorized = WHITELIST.map(e => e.toLowerCase()).includes(email);
-    if (!isAuthorized) return Response.redirect(`${APP_URL}/?error=unauthorized`, 302);
+    // Authorization: must exist in CRM sheet
+    if (!env.GOOGLE_SA_KEY) return Response.redirect(`${APP_URL}/?error=auth_failed`, 302);
+    const existing = await getUserByEmail(env.GOOGLE_SA_KEY, email);
+    if (!existing) return Response.redirect(`${APP_URL}/?error=unauthorized`, 302);
 
-    // Upsert user in CRM (creates if new, updates last_login if existing)
-    let tier = 'paid';
-    if (env.GOOGLE_SA_KEY) {
-      const nameParts = (user.name || '').split(' ');
-      tier = await upsertUser(env.GOOGLE_SA_KEY, {
-        email,
-        first_name: nameParts[0] || '',
-        last_name: nameParts.slice(1).join(' ') || '',
-      });
-    }
+    // Update last_login and get tier
+    const nameParts = (user.name || '').split(' ');
+    const tier = await upsertUser(env.GOOGLE_SA_KEY, {
+      email,
+      first_name: nameParts[0] || '',
+      last_name: nameParts.slice(1).join(' ') || '',
+    });
 
     const sessionData = { email, name: user.name || email, tier, exp: Date.now() + (7 * 24 * 60 * 60 * 1000) };
     const sessionToken = btoa(JSON.stringify(sessionData));
