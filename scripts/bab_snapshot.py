@@ -39,7 +39,7 @@ bbox = BBox(
     crs=CRS.WGS84
 )
 
-RESOLUTION = 80
+RESOLUTION = 90
 size = bbox_to_dimensions(bbox, resolution=RESOLUTION)
 
 LAND_BOXES = [

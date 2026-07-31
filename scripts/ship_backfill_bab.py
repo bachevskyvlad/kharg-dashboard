@@ -44,7 +44,7 @@ bbox = BBox(
     crs=CRS.WGS84
 )
 
-RESOLUTION = 80  # 80m → image ~2450×1100px, within API 2500px limit
+RESOLUTION = 90  # 90m → image ~2420×1100px, within API 2500px limit
 size = bbox_to_dimensions(bbox, resolution=RESOLUTION)
 
 # Land exclusions — Perim Island and coastal margins
