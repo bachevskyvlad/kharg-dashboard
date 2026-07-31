@@ -29,9 +29,9 @@ config.sh_base_url      = "https://sh.dataspace.copernicus.eu"
 
 # Bab-el-Mandeb anchorage: Gulf of Aden approaches + strait entrance
 # Ships queue east of the strait (43.2–44.8°E) before transiting north into Red Sea
-BAB_CENTER = (43.8, 12.4)
-OFFSET_LON = 0.75  # ~80km east–west
-OFFSET_LAT = 0.60  # ~65km north–south
+BAB_CENTER = (44.0, 12.4)
+OFFSET_LON = 0.48  # ~53km east–west
+OFFSET_LAT = 0.38  # ~42km north–south
 
 bbox = BBox(
     bbox=[
@@ -43,7 +43,7 @@ bbox = BBox(
     crs=CRS.WGS84
 )
 
-RESOLUTION = 25
+RESOLUTION = 45  # 45m → image ~2325×1860px, within API 2500px limit
 size = bbox_to_dimensions(bbox, resolution=RESOLUTION)
 
 # Land exclusions — Perim Island and coastal margins
