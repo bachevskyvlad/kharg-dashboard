@@ -30,7 +30,7 @@ export async function onRequest(context) {
     vol_prev,
     prev_date,
     fill_rate_7d,
-    capacity = 33.2
+    capacity = 31.78
   } = body;
 
   const resendKey = env.RESEND_API_KEY;

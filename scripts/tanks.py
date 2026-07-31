@@ -19,7 +19,7 @@ Known structural outliers (do not use for trend analysis alone):
   t55_31, t60_1   — mean dB <1 chronically → probable strategic reserve, always full
   t60_2, t55_17   — std >6 dB → primary active loading terminals
 
-Total mapped: 47 tanks. Max theoretical capacity ≈ 33.2 Mn bbl.
+Total mapped: 47 tanks. Max theoretical capacity ≈ 31.78 Mn bbl.
 Adding a new tank: append to raw_tanks with correct id prefix and measured
 radius/lat/lon. Re-run the full pipeline (force_reset=true) to recalculate
 global dB percentiles and historical volumes with the new tank included.

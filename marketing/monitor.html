@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Kharg Oil Terminal Monitor — Kharg Island Crude Storage & Exports | OilRadar</title>
-<meta name="description" content="Live Kharg oil terminal data — track Kharg Island crude oil storage levels and export signal via Sentinel-1 SAR satellite. Updated 2–3x per week. 4–7 week lead over EIA reports.">
+<meta name="description" content="Live Kharg oil terminal data — track Kharg Island crude oil storage levels and export signal via Sentinel-1 SAR satellite. Updated on average every ~6 days. 4–7 week lead over EIA reports.">
 <meta name="keywords" content="Kharg oil, Kharg oil terminal, Kharg Island oil, Kharg crude oil, Kharg oil capacity, Kharg oil level, Kharg oil monitor, Kharg oil data, Kharg Island live data, Kharg Island storage monitor, SAR satellite oil data, Iran crude oil terminal, floating roof tank analysis, Sentinel-1 oil storage, oil export signal, Iranian crude exports live, Kharg Island storage levels, Iran crude oil exports satellite, Persian Gulf oil terminal monitor, SAR radar oil storage, oil supply intelligence, crude oil export bottleneck, Iranian oil production tracker, oil market leading indicator, satellite oil data feed, physical oil supply tracker">
 <meta name="robots" content="index, follow">
 <link rel="canonical" href="https://oilradar.io/monitor">
@@ -15,14 +15,14 @@
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://oilradar.io/monitor">
 <meta property="og:title" content="Kharg Island Storage Monitor — Live SAR Oil Data | OilRadar">
-<meta property="og:description" content="Live satellite monitoring of crude oil storage at Kharg Island, Iran. Sentinel-1 SAR imagery updated 2-3x per week.">
+<meta property="og:description" content="Live satellite monitoring of crude oil storage at Kharg Island, Iran. Sentinel-1 SAR imagery updated on average every ~6 days.">
 <meta property="og:image" content="https://oilradar.io/assets/images/og-image.png">
 <meta property="og:site_name" content="OilRadar">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:site" content="@IberianLobos">
 <meta name="twitter:creator" content="@IberianLobos">
 <meta name="twitter:title" content="Kharg Island Oil Storage Monitor | OilRadar">
-<meta name="twitter:description" content="Live SAR satellite data for Kharg Island crude oil terminal. Updated 2-3x per week.">
+<meta name="twitter:description" content="Live SAR satellite data for Kharg Island crude oil terminal. Updated on average every ~6 days.">
 <meta name="twitter:image" content="https://oilradar.io/assets/images/og-image.png">
 <script type="application/ld+json">
 {
@@ -169,7 +169,7 @@
   </div>
 
   <div class="explanation-grid" style="margin-top:32px;grid-template-columns:1fr 1fr;">
-    <div class="explain-card"><h4>🛰️ How The Radar Works</h4><p>Oil storage tanks on Kharg Island use <strong>floating roofs</strong> that lower as oil is pumped out and rise as tanks fill. Sentinel-1 SAR signals bounce off the internal walls. A low roof returns a brighter radar reflection. We invert this radiometric signal to calculate the physical volume in millions of barrels.</p><p class="muted">On average, the satellite passes over the region twice a week.</p></div>
+    <div class="explain-card"><h4>🛰️ How The Radar Works</h4><p>Oil storage tanks on Kharg Island use <strong>floating roofs</strong> that lower as oil is pumped out and rise as tanks fill. Sentinel-1 SAR signals bounce off the internal walls. A low roof returns a brighter radar reflection. We invert this radiometric signal to calculate the physical volume in millions of barrels.</p><p class="muted">On average, the satellite passes over the region every ~6 days.</p></div>
     <div class="explain-card" style="border-color:rgba(59,130,246,0.2);display:flex;flex-direction:column;justify-content:center;align-items:flex-start;gap:16px;">
       <div>
         <div style="font-family:'DM Mono',monospace;font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:12px;">Need custom coverage?</div>
@@ -393,7 +393,7 @@ async function loadCharts(){
     const pctSign=pct>0?'+':'';
     const trend=diff>0?'<span style="color:#f59e0b">▲ BUILDING</span>':'<span style="color:#3b82f6">▼ DRAWDOWN</span>';
     const latestUtil=(latestVal/NAMEPLATE_MMBBL*100).toFixed(1);
-    const MAX_CAP=33.2;
+    const MAX_CAP=31.78;
     const fr7d=values6m.length>=8?(values6m[values6m.length-1]-values6m[values6m.length-8])/7:null;
     const fr7dStr=fr7d!==null?`<div>Fill Rate 7d: <strong style="color:${fr7d>0?'#f59e0b':'#3b82f6'}">${fr7d>0?'+':''}${fr7d.toFixed(3)} Mb/d</strong></div>`:'';
     let daysStr='';
