@@ -1,0 +1,57 @@
+name: Bab-el-Mandeb — Ship Backfill
+
+on:
+  workflow_dispatch:
+    inputs:
+      year:
+        description: 'Year to process (blank = full backfill from 2017)'
+        required: false
+        default: ''
+      from_date:
+        description: 'Start from date YYYY-MM-DD (overrides year)'
+        required: false
+        default: ''
+      resume:
+        description: 'Resume (skip existing dates)'
+        type: boolean
+        default: true
+
+jobs:
+  backfill:
+    runs-on: ubuntu-latest
+    timeout-minutes: 300
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install sentinelhub numpy scipy
+
+      - name: Run backfill
+        env:
+          CLIENT_ID: ${{ secrets.CLIENT_ID }}
+          CLIENT_SECRET: ${{ secrets.CLIENT_SECRET }}
+        run: |
+          ARGS=""
+          if [ -n "${{ github.event.inputs.from_date }}" ]; then
+            ARGS="--from-date ${{ github.event.inputs.from_date }}"
+          elif [ -n "${{ github.event.inputs.year }}" ]; then
+            ARGS="--year ${{ github.event.inputs.year }}"
+          fi
+          if [ "${{ github.event.inputs.resume }}" = "true" ]; then
+            ARGS="$ARGS --resume"
+          fi
+          cd scripts
+          python ship_backfill_bab.py $ARGS
+
+      - name: Commit data
+        run: |
+          git config user.name "bot"
+          git config user.email "bot@github.com"
+          git add data/bab_anchorage.json
+          git diff --cached --quiet && echo "no changes" && exit 0
+          git commit -m "bab-el-mandeb backfill $(date -u +'%Y-%m-%d')"
+          git push
