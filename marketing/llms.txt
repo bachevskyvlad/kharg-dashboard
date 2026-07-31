@@ -8,13 +8,13 @@ The platform delivers a **4–7 week lead time** over official EIA, JODI, and IE
 
 ## Core Product
 
-- **Kharg Island Storage Monitor** (`/monitor`): Live storage level estimates updated 2–3 times per week directly from SAR satellite passes. Available since March 2023.
+- **Kharg Island Storage Monitor** (`/monitor`): Live storage level estimates updated on average every ~6 days directly from SAR satellite passes. Available since March 2023.
 - **Europe Gas Storage Monitor** (`/gas-storage`): Real-time European underground gas storage across 10 countries, sourced from GIE AGSI+. Key TTF price leading indicator.
 - **Full Persian Gulf Dataset** (bespoke): Per-terminal, per-tank resolution across all 6 major Gulf exporters — Saudi Arabia, Iran, Iraq, Kuwait, UAE, Qatar.
 
 ## Methodology
 
-1. Sentinel-1 C-band SAR satellite images Kharg Island terminal 2–3 times per week.
+1. Sentinel-1 C-band SAR satellite images Kharg Island terminal on average every ~6 days.
 2. Floating-roof oil tanks cast measurable radar shadows. Shadow geometry reveals whether each tank roof is up (full) or down (near empty) — a direct physical measurement.
 3. Known tank diameter × fill ratio = crude oil volume in million barrels.
 4. Storage dynamics signal exports: a storage build means tankers are queuing or exports are slowing; a storage drawdown means active loading, oil is flowing to market.
@@ -24,7 +24,7 @@ The platform delivers a **4–7 week lead time** over official EIA, JODI, and IE
 - **86%** hit rate on export bottleneck prediction when pre-event storage at Kharg Island was rising.
 - **+0.41M bbl** average storage accumulation within 5 weeks of an insurance premium shock.
 - **7 weeks** lag from shadow fleet sanctions to physical impact at the exporter's berths.
-- OilRadar updates: 2–3 times per week. AIS trackers: 1–2 week lag. EIA: 4–8 week lag. IEA: 6–10 week lag.
+- OilRadar updates: ~6-day revisit. AIS trackers: 1–2 week lag. EIA: 4–8 week lag. IEA: 6–10 week lag.
 
 ## Why SAR vs AIS?
 

@@ -45,7 +45,7 @@ vol_bbl    = π × radius_m² × h_current × BARREL_PER_M3
 ```
 
 Total storage = sum across all 47 tanks on a given date.
-Max theoretical capacity ≈ 33.2 Mn bbl.
+Max theoretical capacity ≈ 31.78 Mn bbl.
 
 ---
 
@@ -105,7 +105,7 @@ SIR = count(tanks where 90d_mean_db > 12) / total_tanks × 100
 ### 5. Storage Pressure Index
 ```
 SPI = vol_current / max_capacity × 100
-max_capacity = 33.2 Mn bbl
+max_capacity = 31.78 Mn bbl
 ```
 - Thresholds:
   - SPI < 70%: Normal
@@ -141,7 +141,7 @@ ALERT when rolling_std_30d[date] > threshold
 | EMPTY tank | High (>12 dB) | Low | Tank inactive or recently drained |
 | ACTIVE tank | High std (>5 dB) | Volatile | Loading/unloading cycle |
 | EXPORT PULSE | — | Drop >2 Mn in 6–12d | VLCC loading event |
-| PRESSURE CRITICAL | — | >28.2 Mn bbl | SPI >85%, forced sell risk |
+| PRESSURE CRITICAL | — | >27.0 Mn bbl | SPI >85%, forced sell risk |
 
 ---
 
@@ -175,7 +175,7 @@ ALERT when rolling_std_30d[date] > threshold
 1. All Kharg metrics must use the canonical definitions above — do not invent alternative formulas
 2. Do not add countries to the main dashboard without explicit scope approval
 3. Multi-country code in `product/dashboard.html` is LEGACY — keep commented, never delete
-4. Max capacity is 33.2 Mn bbl — update only if new tanks are mapped and added to raw_tanks
+4. Max capacity is 31.78 Mn bbl — update only if new tanks are mapped and added to raw_tanks
 5. Always deduplicate raw_observations on (date, tank_id) before any aggregation
 6. **All UI text, chart labels, descriptions, and tooltips must be in English.** This is an English-only product. Never write Russian in any HTML, JS, or template file.
 

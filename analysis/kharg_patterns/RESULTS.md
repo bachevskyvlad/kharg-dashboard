@@ -12,7 +12,7 @@ Weekly grid: 236 weeks · terminal mean 18.5 Mn bbl (min 15.4, max 26.2)
 | 2025 | 17.5 | 15.4 | 19.8 |
 | 2026 | 21.4 | 17.9 | 26.2 |
 
-→ Terminal average has **risen 2.7 Mn bbl** from 2022 to 2026 (18.7→21.4). Peak year: 2026 (21.4). Structural fill vs capacity (~33.2): 64% now vs 56% at start.
+→ Terminal average has **risen 2.7 Mn bbl** from 2022 to 2026 (18.7→21.4). Peak year: 2026 (21.4). Structural fill vs capacity (~31.78): 67% now vs 59% at start.
 
 ## 2. Seasonality (month-of-year)
 | month | avg level (Mn bbl) | avg net change |

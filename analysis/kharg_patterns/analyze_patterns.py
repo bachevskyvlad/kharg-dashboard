@@ -154,8 +154,8 @@ def main():
     direction = "risen" if chg>0 else "fallen"
     log(f"\n→ Terminal average has **{direction} {abs(chg):.1f} Mn bbl** from {yrs[0]} to {yrs[-1]} "
         f"({yr['mean'].iloc[0]:.1f}→{yr['mean'].iloc[-1]:.1f}). Peak year: {yr['mean'].idxmax()} "
-        f"({yr['mean'].max():.1f}). Structural fill vs capacity (~33.2): "
-        f"{100*yr['mean'].iloc[-1]/33.2:.0f}% now vs {100*yr['mean'].iloc[0]/33.2:.0f}% at start.\n")
+        f"({yr['mean'].max():.1f}). Structural fill vs capacity (~31.78): "
+        f"{100*yr['mean'].iloc[-1]/31.78:.0f}% now vs {100*yr['mean'].iloc[0]/31.78:.0f}% at start.\n")
 
     # ============ 2. SEASONALITY ============
     log("## 2. Seasonality (month-of-year)")

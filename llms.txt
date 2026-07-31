@@ -11,7 +11,7 @@ OilRadar processes Sentinel-1 SAR (Synthetic Aperture Radar) satellite imagery t
 ## Key Facts
 
 - **Lead time:** 4–7 weeks ahead of EIA, JODI, and IEA reports
-- **Update frequency:** 2–3 times per week (Sentinel-1 pass schedule)
+- **Update frequency:** on average every ~6 days (Sentinel-1 pass schedule)
 - **Primary coverage:** Kharg Island export terminal, Iran — 47 tanks, operational since March 2023
 - **Iran focus:** Kharg handles ~90% of Iranian crude exports (~3.5 Mb/d at peak)
 - **New metrics (2026):** Fill Rate, Storage Pressure Index, Export Pulse Score, Structural Idle Ratio, Tank Activity Index, Volatility Spike Alert
@@ -23,7 +23,7 @@ OilRadar processes Sentinel-1 SAR (Synthetic Aperture Radar) satellite imagery t
 
 ## How It Works
 
-1. Sentinel-1 C-band radar images the terminal 2–3 times per week, penetrating clouds and darkness
+1. Sentinel-1 C-band radar images the terminal on average every ~6 days, penetrating clouds and darkness
 2. Floating roof tanks cast measurable radar shadows — shadow geometry reveals whether each roof is up (full) or down (near empty)
 3. Known tank diameter × fill ratio = approximate crude volume in million barrels
 4. Storage dynamics (build vs. drawdown) reveal the export signal 4–7 weeks before market consensus
@@ -36,7 +36,7 @@ Kharg Island (Iran) handles approximately 90% of Iranian crude oil exports. It i
 
 | Source | Lag to market-moving signal |
 |---|---|
-| OilRadar (SAR) | 2–3 updates per week |
+| OilRadar (SAR) | ~6-day revisit |
 | AIS trackers | 1–2 weeks |
 | Shipping agents | 2–4 weeks |
 | EIA / JODI | 4–8 weeks |
@@ -44,7 +44,7 @@ Kharg Island (Iran) handles approximately 90% of Iranian crude oil exports. It i
 
 ## Products
 
-- **Kharg Monitor** (`https://oilradar.io/monitor`): Live storage level dashboard updated 2–3x per week via Sentinel-1 SAR
+- **Kharg Monitor** (`https://oilradar.io/monitor`): Live storage level dashboard updated on average every ~6 days via Sentinel-1 SAR
 - **Europe Gas Storage Monitor** (`https://oilradar.io/gas-storage`): Real-time GIE AGSI+ data across 10 European countries — primary leading indicator for TTF pricing and winter supply risk
 - **Custom Country Coverage** (on request): Same SAR methodology applied to additional terminals — Saudi Arabia, Iraq (Basra), Kuwait, UAE (Fujairah), Qatar. Scoped per engagement.
 
