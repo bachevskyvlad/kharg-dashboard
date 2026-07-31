@@ -28,10 +28,11 @@ config.sh_token_url     = "https://identity.dataspace.copernicus.eu/auth/realms/
 config.sh_base_url      = "https://sh.dataspace.copernicus.eu"
 
 # Bab-el-Mandeb anchorage: Gulf of Aden approaches + strait entrance
-# Ships queue east of the strait (43.2–44.8°E) before transiting north into Red Sea
-BAB_CENTER = (44.0, 12.4)
-OFFSET_LON = 0.48  # ~53km east–west
-OFFSET_LAT = 0.38  # ~42km north–south
+# Gulf of Aden anchorage — ships queue here before transiting north into Red Sea
+# IRTC Point A is ~45°E; main holding area: 44.5–46.5°E, 11.3–12.3°N
+BAB_CENTER = (45.5, 11.8)
+OFFSET_LON = 1.0   # ~111km east–west
+OFFSET_LAT = 0.50  # ~55km north–south
 
 bbox = BBox(
     bbox=[
@@ -43,18 +44,16 @@ bbox = BBox(
     crs=CRS.WGS84
 )
 
-RESOLUTION = 45  # 45m → image ~2325×1860px, within API 2500px limit
+RESOLUTION = 80  # 80m → image ~2450×1100px, within API 2500px limit
 size = bbox_to_dimensions(bbox, resolution=RESOLUTION)
 
 # Land exclusions — Perim Island and coastal margins
 # Perim Island: 12.655°N, 43.424°E (~4km × 2km)
 LAND_BOXES = [
-    # Perim Island (Yemen): lon_min, lat_min, lon_max, lat_max
-    (43.38, 12.62, 43.48, 12.70),
-    # Yemen coast north of strait
-    (43.05, 12.70, 44.55, 13.00),
-    # Djibouti/Eritrea coast south of strait
-    (43.05, 11.80, 43.55, 12.15),
+    # Somalia/Gulf of Aden north coast (Yemen east)
+    (44.0, 12.15, 46.5, 12.50),
+    # Somalia/Berbera coast (south shore of Gulf of Aden)
+    (44.0, 11.10, 46.5, 11.35),
 ]
 
 START_DATE = datetime(2017, 1, 1)

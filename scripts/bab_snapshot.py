@@ -26,8 +26,8 @@ config.sh_client_secret = "U1W6BcqS4bFEIJy2u9xXdlBMZPxtQMBU"
 config.sh_token_url     = "https://identity.dataspace.copernicus.eu/auth/realms/CDSE/protocol/openid-connect/token"
 config.sh_base_url      = "https://sh.dataspace.copernicus.eu"
 
-BAB_CENTER = (44.0, 12.4)
-OFFSET_LON, OFFSET_LAT = 0.48, 0.38
+BAB_CENTER = (45.5, 11.8)
+OFFSET_LON, OFFSET_LAT = 1.0, 0.50
 
 bbox = BBox(
     bbox=[
@@ -39,13 +39,14 @@ bbox = BBox(
     crs=CRS.WGS84
 )
 
-RESOLUTION = 45
+RESOLUTION = 80
 size = bbox_to_dimensions(bbox, resolution=RESOLUTION)
 
 LAND_BOXES = [
-    (43.38, 12.62, 43.48, 12.70),
-    (43.05, 12.70, 44.55, 13.00),
-    (43.05, 11.80, 43.55, 12.15),
+    # Yemen/Gulf of Aden north coast
+    (44.0, 12.15, 46.5, 12.50),
+    # Somalia/Berbera south coast
+    (44.0, 11.10, 46.5, 11.35),
 ]
 
 evalscript = """
