@@ -246,52 +246,52 @@ footer{border-top:1px solid var(--border);padding:32px 48px;display:flex;align-i
     <div class="panel reveal"><table class="data-table"><thead><tr><th>Country</th><th>Latest Date</th><th>% Full</th><th>Gas in Storage (TWh)</th><th>WoW Change</th><th>Trend</th><th>Signal</th></tr></thead><tbody id="dataTableBody"></tbody></table></div>
   </div>
 </div>
-<div style="max-width:1400px;margin:48px auto 0;padding:0 48px 48px;">
+<div class="page" style="margin-top:48px;padding-bottom:48px;">
   <div class="section-label">Common Questions — Gas Storage by Country</div>
   <div style="display:flex;flex-direction:column;gap:2px;">
     <details style="background:var(--panel);border:1px solid var(--border);padding:20px 24px;">
       <summary style="font-family:'DM Mono',monospace;font-size:11px;letter-spacing:1px;color:var(--white);cursor:pointer;list-style:none;">Is Europe ready for the gas season?</summary>
-      <p style="margin-top:12px;font-size:13px;line-height:1.8;color:var(--text);">Winter readiness is measured daily by comparing current underground storage to the 3-year seasonal average. This monitor shows AHEAD/BELOW AVERAGE per country and EU aggregate. Above 85% with positive YoY delta is historically comfortable. Data: GIE AGSI+, updated daily.</p>
+      <p style="margin-top:12px;font-size:13px;line-height:1.8;color:var(--text);">Winter readiness is measured daily by comparing current underground storage to the 3-year seasonal average. This monitor shows AHEAD/BELOW AVERAGE per country and EU aggregate. Above 85% with positive YoY delta is historically comfortable. Data: GIE AGSI+, updated daily. <span id="faq-eu-readiness"></span></p>
     </details>
     <details style="background:var(--panel);border:1px solid var(--border);padding:20px 24px;">
       <summary style="font-family:'DM Mono',monospace;font-size:11px;letter-spacing:1px;color:var(--white);cursor:pointer;list-style:none;">How much gas does Europe have in storage right now?</summary>
-      <p style="margin-top:12px;font-size:13px;line-height:1.8;color:var(--text);">The live EU aggregate storage level is shown at the top of this page in % and TWh. Covers 10 countries: Germany, France, Italy, Netherlands, Austria, Poland, Hungary, Spain, Ukraine, and EU aggregate. Updated daily at 08:00 UTC from GIE AGSI+.</p>
+      <p style="margin-top:12px;font-size:13px;line-height:1.8;color:var(--text);" data-faq-country="EU">The live EU aggregate storage level is shown at the top of this page in % and TWh. Covers 10 countries: Germany, France, Italy, Netherlands, Austria, Poland, Hungary, Spain, Ukraine, and EU aggregate. Updated daily at 08:00 UTC from GIE AGSI+.</p>
     </details>
     <details style="background:var(--panel);border:1px solid var(--border);padding:20px 24px;">
       <summary style="font-family:'DM Mono',monospace;font-size:11px;letter-spacing:1px;color:var(--white);cursor:pointer;list-style:none;">How much gas does Germany have in storage?</summary>
-      <p style="margin-top:12px;font-size:13px;line-height:1.8;color:var(--text);">Germany has the largest underground gas storage capacity in Europe. Current fill %, TWh, week-on-week change, and vs 3-year average are in the country table above. Germany's storage level is a primary driver of TTF natural gas prices.</p>
+      <p style="margin-top:12px;font-size:13px;line-height:1.8;color:var(--text);" data-faq-country="DE">Germany has the largest underground gas storage capacity in Europe. Germany's storage level is a primary driver of TTF natural gas prices.</p>
     </details>
     <details style="background:var(--panel);border:1px solid var(--border);padding:20px 24px;">
       <summary style="font-family:'DM Mono',monospace;font-size:11px;letter-spacing:1px;color:var(--white);cursor:pointer;list-style:none;">How much gas does France have in storage?</summary>
-      <p style="margin-top:12px;font-size:13px;line-height:1.8;color:var(--text);">France's current underground gas storage fill level in % and TWh, week-on-week change, and comparison to 3-year seasonal average are in the country table above. Updated daily from GIE AGSI+.</p>
+      <p style="margin-top:12px;font-size:13px;line-height:1.8;color:var(--text);" data-faq-country="FR">France's current underground gas storage fill level — updated daily from GIE AGSI+.</p>
     </details>
     <details style="background:var(--panel);border:1px solid var(--border);padding:20px 24px;">
       <summary style="font-family:'DM Mono',monospace;font-size:11px;letter-spacing:1px;color:var(--white);cursor:pointer;list-style:none;">How much gas does Italy have in storage?</summary>
-      <p style="margin-top:12px;font-size:13px;line-height:1.8;color:var(--text);">Italy's current underground gas storage fill level in % and TWh, week-on-week change, and comparison to 3-year seasonal average are in the country table above. Updated daily from GIE AGSI+.</p>
+      <p style="margin-top:12px;font-size:13px;line-height:1.8;color:var(--text);" data-faq-country="IT">Italy's current underground gas storage fill level — updated daily from GIE AGSI+.</p>
     </details>
     <details style="background:var(--panel);border:1px solid var(--border);padding:20px 24px;">
       <summary style="font-family:'DM Mono',monospace;font-size:11px;letter-spacing:1px;color:var(--white);cursor:pointer;list-style:none;">How much gas does the Netherlands have in storage?</summary>
-      <p style="margin-top:12px;font-size:13px;line-height:1.8;color:var(--text);">The Netherlands' current underground gas storage fill level in % and TWh, week-on-week change, and comparison to 3-year seasonal average are in the country table above. Updated daily from GIE AGSI+.</p>
+      <p style="margin-top:12px;font-size:13px;line-height:1.8;color:var(--text);" data-faq-country="NL">The Netherlands' current underground gas storage fill level — updated daily from GIE AGSI+.</p>
     </details>
     <details style="background:var(--panel);border:1px solid var(--border);padding:20px 24px;">
       <summary style="font-family:'DM Mono',monospace;font-size:11px;letter-spacing:1px;color:var(--white);cursor:pointer;list-style:none;">How much gas does Poland have in storage?</summary>
-      <p style="margin-top:12px;font-size:13px;line-height:1.8;color:var(--text);">Poland's current underground gas storage fill level in % and TWh, week-on-week change, and comparison to 3-year seasonal average are in the country table above. Updated daily from GIE AGSI+.</p>
+      <p style="margin-top:12px;font-size:13px;line-height:1.8;color:var(--text);" data-faq-country="PL">Poland's current underground gas storage fill level — updated daily from GIE AGSI+.</p>
     </details>
     <details style="background:var(--panel);border:1px solid var(--border);padding:20px 24px;">
       <summary style="font-family:'DM Mono',monospace;font-size:11px;letter-spacing:1px;color:var(--white);cursor:pointer;list-style:none;">How much gas does Austria have in storage?</summary>
-      <p style="margin-top:12px;font-size:13px;line-height:1.8;color:var(--text);">Austria's current underground gas storage fill level in % and TWh, week-on-week change, and comparison to 3-year seasonal average are in the country table above. Updated daily from GIE AGSI+.</p>
+      <p style="margin-top:12px;font-size:13px;line-height:1.8;color:var(--text);" data-faq-country="AT">Austria's current underground gas storage fill level — updated daily from GIE AGSI+.</p>
     </details>
     <details style="background:var(--panel);border:1px solid var(--border);padding:20px 24px;">
       <summary style="font-family:'DM Mono',monospace;font-size:11px;letter-spacing:1px;color:var(--white);cursor:pointer;list-style:none;">How much gas does Hungary have in storage?</summary>
-      <p style="margin-top:12px;font-size:13px;line-height:1.8;color:var(--text);">Hungary's current underground gas storage fill level in % and TWh, week-on-week change, and comparison to 3-year seasonal average are in the country table above. Updated daily from GIE AGSI+.</p>
+      <p style="margin-top:12px;font-size:13px;line-height:1.8;color:var(--text);" data-faq-country="HU">Hungary's current underground gas storage fill level — updated daily from GIE AGSI+.</p>
     </details>
     <details style="background:var(--panel);border:1px solid var(--border);padding:20px 24px;">
       <summary style="font-family:'DM Mono',monospace;font-size:11px;letter-spacing:1px;color:var(--white);cursor:pointer;list-style:none;">How much gas does Spain have in storage?</summary>
-      <p style="margin-top:12px;font-size:13px;line-height:1.8;color:var(--text);">Spain's current underground gas storage fill level in % and TWh, week-on-week change, and comparison to 3-year seasonal average are in the country table above. Updated daily from GIE AGSI+.</p>
+      <p style="margin-top:12px;font-size:13px;line-height:1.8;color:var(--text);" data-faq-country="ES">Spain's current underground gas storage fill level — updated daily from GIE AGSI+.</p>
     </details>
     <details style="background:var(--panel);border:1px solid var(--border);padding:20px 24px;">
       <summary style="font-family:'DM Mono',monospace;font-size:11px;letter-spacing:1px;color:var(--white);cursor:pointer;list-style:none;">How much gas does Ukraine have in storage?</summary>
-      <p style="margin-top:12px;font-size:13px;line-height:1.8;color:var(--text);">Ukraine's current underground gas storage fill level in % and TWh, week-on-week change, and comparison to 3-year seasonal average are in the country table above. Ukraine has significant storage capacity relevant to European supply security. Updated daily from GIE AGSI+.</p>
+      <p style="margin-top:12px;font-size:13px;line-height:1.8;color:var(--text);" data-faq-country="UA">Ukraine's current underground gas storage fill level. Ukraine has significant storage capacity relevant to European supply security. Updated daily from GIE AGSI+.</p>
     </details>
     <details style="background:var(--panel);border:1px solid var(--border);padding:20px 24px;">
       <summary style="font-family:'DM Mono',monospace;font-size:11px;letter-spacing:1px;color:var(--white);cursor:pointer;list-style:none;">How is Europe preparing for the heating season?</summary>
@@ -359,6 +359,10 @@ const tbody=document.getElementById("dataTableBody");
 countryKeys.forEach(code=>{const d=parsed[code];const arr=d.data;if(!arr.length)return;const last=arr[arr.length-1];const prev=arr[arr.length-2];const wow=prev&&last.full!==null&&prev.full!==null?(last.full-prev.full).toFixed(1):null;const[sig,sigCls]=signalText(last.full,wow?parseFloat(wow):0);const wowStr=wow!==null?`<td class="${parseFloat(wow)>=0?"up":"down"}">${parseFloat(wow)>=0?"+":""}${wow}%</td>`:`<td class="accent">—</td>`;tbody.innerHTML+=`<tr><td class="accent">${d.name}</td><td>${fmt(last.date)}</td><td style="color:${colorFill(last.full)}">${last.full?.toFixed(1)??"—"}%</td><td>${last.gasInStorage?.toFixed(0)??"—"} TWh</td>${wowStr}<td>${last.trend||"—"}</td><td><span class="signal-badge ${sigCls}" style="font-size:9px;padding:3px 8px;">${sig}</span></td></tr>`;});
 const obs=new IntersectionObserver(entries=>{entries.forEach(e=>{if(e.isIntersecting)e.target.classList.add("on");});},{threshold:0.08});
 document.querySelectorAll(".reveal").forEach(el=>obs.observe(el));
+// Populate FAQ answers with live values
+const faqCountries={EU:"Europe",DE:"Germany",FR:"France",IT:"Italy",NL:"Netherlands",PL:"Poland",AT:"Austria",HU:"Hungary",ES:"Spain",UA:"Ukraine"};
+Object.entries(faqCountries).forEach(([code,name])=>{const el=document.querySelector(`[data-faq-country="${code}"]`);if(!el||!parsed[code]||!parsed[code].data.length)return;const last=parsed[code].data[parsed[code].data.length-1];if(last.full===null)return;const extra=code==="DE"?" Germany's storage level is a primary driver of TTF natural gas prices.":code==="UA"?" Ukraine has significant storage capacity relevant to European supply security.":"";el.textContent=`${name} currently has ${last.full.toFixed(1)}% of underground gas storage capacity filled as of ${fmt(last.date)} (${last.gasInStorage?.toFixed(0)??'—'} TWh). Source: GIE AGSI+, updated daily.${extra}`;});
+const euEl=document.getElementById("faq-eu-readiness");if(euEl&&eu.data.length){const last=eu.data[eu.data.length-1];euEl.textContent=`Currently Europe has ${last.full.toFixed(1)}% storage filled (${last.gasInStorage?.toFixed(0)??'—'} TWh) as of ${fmt(last.date)}.`;}
 }catch(err){document.getElementById("loadingState").style.display="flex";document.getElementById("mainContent").style.display="none";document.getElementById("loadingState").innerHTML=`<div class="loading-text" style="color:var(--red)">JS error: ${err.message}<br><small style="opacity:.6">${err.stack||""}</small></div>`;}
 }
 init();
