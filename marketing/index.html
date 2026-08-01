@@ -24,7 +24,7 @@
 <meta name="twitter:description" content="47 floating-roof tanks at Kharg Island tracked by SAR satellite. 4–7 week lead over EIA.">
 <meta name="twitter:image" content="https://oilradar.io/assets/images/og-image.png">
 <script type="application/ld+json">
-{"@context":"https://schema.org","@type":"Organization","name":"OilRadar","url":"https://oilradar.io","description":"Satellite intelligence platform tracking Iran crude oil exports from Kharg Island using Sentinel-1 SAR imagery. 4–7 week lead over EIA and JODI.","contactPoint":{"@type":"ContactPoint","contactType":"sales","url":"https://calendly.com/bachevsky/intro"},"founders":[{"@type":"Person","name":"Vladislav Bachevsky","jobTitle":"Founder","sameAs":"https://www.linkedin.com/in/bachevsky/"}]}
+{"@context":"https://schema.org","@type":"Organization","name":"OilRadar","url":"https://oilradar.io","description":"Satellite intelligence platform tracking Iran crude oil exports from Kharg Island using Sentinel-1 SAR imagery. 4–7 week lead over EIA and JODI.","contactPoint":{"@type":"ContactPoint","contactType":"sales","url":"https://calendly.com/bachevsky/60min"},"founders":[{"@type":"Person","name":"Vladislav Bachevsky","jobTitle":"Founder","sameAs":"https://www.linkedin.com/in/bachevsky/"}]}
 </script>
 <script type="application/ld+json">
 {"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{"@type":"Question","name":"What is OilRadar?","acceptedAnswer":{"@type":"Answer","text":"OilRadar tracks crude oil storage at Kharg Island, Iran using Sentinel-1 SAR satellite imagery. Kharg handles ~90% of Iranian crude exports. We deliver storage signals 4–7 weeks before EIA and JODI reports."}},{"@type":"Question","name":"What is Kharg Island?","acceptedAnswer":{"@type":"Answer","text":"Kharg Island handles approximately 90% of Iran's crude oil exports. Storage builds at Kharg signal export friction; drawdowns signal active VLCC loading."}},{"@type":"Question","name":"How does OilRadar track oil storage?","acceptedAnswer":{"@type":"Answer","text":"We use Sentinel-1 SAR radar. The signal bounces off the internal walls of floating-roof tanks. A low roof returns a brighter reflection. We invert this — inverse crescent radiometry — to calculate fill volume across all 47 tanks."}}]}
@@ -156,7 +156,7 @@ footer{background:var(--panel);border-top:1px solid var(--border);padding:40px 6
     <h1 class="hero-title">See Kharg<br>Oil Movement<br><span>Before The Market</span></h1>
     <p class="hero-sub">We track every crude oil tank at Kharg Island — the terminal that handles <strong>~90% of Iran's exports</strong> through the Strait of Hormuz — using SAR satellite radar. Storage signals arrive <strong>4–7 weeks before EIA and JODI</strong> report them.</p>
     <div class="hero-ctas">
-      <a href="https://calendly.com/bachevsky/intro" target="_blank" class="btn-primary">Request Data Access</a>
+      <a href="https://calendly.com/bachevsky/60min" target="_blank" class="btn-primary">Request Data Access</a>
       <a href="/monitor" class="btn-outline">View Live Monitor</a>
     </div>
   </div>
@@ -224,7 +224,7 @@ footer{background:var(--panel);border-top:1px solid var(--border);padding:40px 6
         <div class="chart-lock-overlay">
           <div class="lock-icon">🔒</div>
           <div class="lock-label">Latest<br>2 weeks</div>
-          <a href="https://calendly.com/bachevsky/intro" target="_blank" class="lock-cta-btn">Get Access</a>
+          <a href="https://calendly.com/bachevsky/60min" target="_blank" class="lock-cta-btn">Get Access</a>
         </div>
       </div>
     </div>
@@ -260,7 +260,7 @@ footer{background:var(--panel);border-top:1px solid var(--border);padding:40px 6
           <li>Per-tank activity — identify which tanks are cycling vs idle</li>
           <li>REST API — full dataset, JSON &amp; CSV, date-range filtering</li>
         </ul>
-        <a href="https://calendly.com/bachevsky/intro" target="_blank" class="btn-primary">Request Data Access</a>
+        <a href="https://calendly.com/bachevsky/60min" target="_blank" class="btn-primary">Request Data Access</a>
       </div>
     </div>
   </div>
@@ -283,7 +283,7 @@ footer{background:var(--panel);border-top:1px solid var(--border);padding:40px 6
     <a href="/monitor" class="footer-link">Kharg Monitor</a>
     <a href="/gas-storage" class="footer-link">Gas Storage</a>
     <a href="/team" class="footer-link">About</a>
-    <a href="https://calendly.com/bachevsky/intro" target="_blank" class="footer-link">Request Access</a>
+    <a href="https://calendly.com/bachevsky/60min" target="_blank" class="footer-link">Request Access</a>
   </div>
   <div class="footer-copy">Kharg Island Crude Oil Intelligence · Sentinel-1 SAR · oilradar.io<br><span style="opacity:0.85;">We take on new desks selectively.</span></div>
 </footer>
@@ -325,7 +325,7 @@ async function loadLandingChart() {
       `<div>Latest shown: <strong style="color:#3b82f6">${latest.toFixed(2)} Mb</strong></div>` +
       `<div>Day-over-Day: <strong style="color:${diff > 0 ? '#f59e0b' : '#3b82f6'}">${sign}${diff} Mb (${pctSign}${pctVal}%)</strong></div>` +
       `<div>Status: <strong>${trend}</strong></div>` +
-      `<div style="color:var(--muted);font-size:11px;">Latest 2 weeks gated — <a href="https://calendly.com/bachevsky/intro" target="_blank" style="color:var(--accent);">request access</a></div>`;
+      `<div style="color:var(--muted);font-size:11px;">Latest 2 weeks gated — <a href="https://calendly.com/bachevsky/60min" target="_blank" style="color:var(--accent);">request access</a></div>`;
 
     window.addEventListener('DOMContentLoaded', () => {}, false);
 
