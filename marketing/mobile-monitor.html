@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Kharg Oil Terminal Monitor — Live SAR Data | OilRadar</title>
+<meta name="description" content="Live Kharg Island crude oil storage levels via Sentinel-1 SAR satellite. 4–7 week lead over EIA reports. Updated every ~6 days.">
+<meta name="robots" content="index, follow">
+<link rel="canonical" href="https://oilradar.io/monitor">
+<link rel="icon" type="image/x-icon" href="/assets/images/favicon.ico">
+<link rel="apple-touch-icon" sizes="180x180" href="/assets/images/apple-touch-icon.png">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://oilradar.io/monitor">
+<meta property="og:title" content="Kharg Island Storage Monitor — Live SAR Oil Data | OilRadar">
+<meta property="og:description" content="Live satellite monitoring of crude oil storage at Kharg Island, Iran. Sentinel-1 SAR imagery updated on average every ~6 days.">
+<meta property="og:image" content="https://oilradar.io/assets/images/og-image.png">
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-TZQ5VH3GPY"></script>
+<script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','G-TZQ5VH3GPY');</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@300;400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+<noscript><link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@300;400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"></noscript>
+<style>
+:root{
+  --black:#080a0d;--deep:#0d1117;--panel:#111820;--border:#1e2d3d;
+  --accent:#3b82f6;--gold:#f59e0b;--red:#ef4444;--text:#c8d6e5;--muted:#5a7a94;--dim:#64748b;--white:#f0f4f8;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:var(--black);color:var(--text);font-family:'DM Sans',sans-serif;overflow-x:hidden;min-height:100vh;display:flex;flex-direction:column;}
+
+nav{position:fixed;top:0;left:0;right:0;z-index:200;display:flex;align-items:center;justify-content:space-between;padding:0 16px;height:56px;background:rgba(8,10,13,0.97);backdrop-filter:blur(16px);border-bottom:1px solid var(--border);}
+.logo{font-family:'Bebas Neue',sans-serif;font-size:20px;letter-spacing:4px;color:var(--accent);text-decoration:none;}
+.nav-right{display:flex;align-items:center;gap:8px;}
+.btn-schedule{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:1px;text-transform:uppercase;background:transparent;color:var(--accent);padding:8px 12px;border:1px solid var(--accent);text-decoration:none;white-space:nowrap;min-height:36px;display:flex;align-items:center;}
+.btn-dashboard{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:1px;text-transform:uppercase;background:var(--accent);color:#fff;padding:8px 12px;text-decoration:none;white-space:nowrap;min-height:36px;display:flex;align-items:center;}
+@media(max-width:380px){.btn-schedule{display:none;}}
+
+main{flex:1;padding:56px 0 0;}
+
+/* LIVE STATS BAR */
+.stats-bar{display:grid;grid-template-columns:1fr 1fr 1fr;border-bottom:1px solid var(--border);}
+.stat-item{background:var(--panel);padding:16px 10px;border-right:1px solid var(--border);text-align:center;}
+.stat-item:last-child{border-right:none;}
+.stat-label{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:6px;}
+.stat-value{font-family:'DM Mono',monospace;font-size:clamp(14px,4vw,18px);font-weight:500;font-variant-numeric:tabular-nums;}
+.stat-value.blue{color:var(--accent);}
+.stat-value.gold{color:var(--gold);}
+
+/* SIGNAL BANNER */
+.signal-banner{padding:12px 16px;display:flex;align-items:center;justify-content:space-between;gap:8px;border-bottom:1px solid var(--border);}
+.signal-banner.building{background:rgba(245,158,11,0.08);border-bottom-color:rgba(245,158,11,0.2);}
+.signal-banner.drawdown{background:rgba(59,130,246,0.08);border-bottom-color:rgba(59,130,246,0.2);}
+.signal-text{font-family:'DM Mono',monospace;font-size:13px;letter-spacing:2px;text-transform:uppercase;font-weight:500;}
+.signal-sub{font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);}
+
+/* CHART */
+.chart-section{padding:20px 16px;border-bottom:1px solid var(--border);}
+.section-label{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:3px;text-transform:uppercase;color:var(--accent);margin-bottom:8px;}
+.chart-wrap{background:var(--panel);border:1px solid var(--border);padding:14px 12px;position:relative;}
+.chart-stat-row{font-family:'DM Mono',monospace;font-size:11px;color:var(--text);margin-bottom:12px;padding:10px 12px;background:rgba(59,130,246,0.06);border-left:2px solid var(--accent);display:flex;flex-direction:column;gap:4px;}
+.chart-lock{margin-top:10px;padding:10px 12px;background:rgba(59,130,246,0.06);border:1px dashed var(--border);text-align:center;}
+.chart-lock p{font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);margin-bottom:8px;}
+.btn-access{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:1px;text-transform:uppercase;background:var(--accent);color:#fff;padding:10px 16px;text-decoration:none;display:inline-block;}
+
+/* EXPLANATION CARDS */
+.explain-section{padding:20px 16px 32px;}
+.explain-cards{display:flex;flex-direction:column;gap:2px;}
+.explain-card{background:var(--panel);border:1px solid var(--border);border-left:2px solid rgba(59,130,246,0.3);padding:20px 16px;}
+.explain-card h4{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:10px;}
+.explain-card p{font-size:13px;line-height:1.75;color:var(--text);}
+.explain-card p.sub{color:var(--muted);font-size:12px;margin-top:8px;}
+.explain-card strong{color:var(--white);font-weight:500;}
+
+/* ACCESS CARD */
+.access-card{background:rgba(59,130,246,0.06);border:1px solid rgba(59,130,246,0.25);padding:20px 16px;}
+.access-card h4{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:10px;}
+.access-card p{font-size:13px;line-height:1.75;color:var(--text);margin-bottom:16px;}
+
+footer{background:var(--panel);border-top:1px solid var(--border);padding:24px 16px;padding-bottom:calc(24px + env(safe-area-inset-bottom));display:flex;align-items:center;justify-content:space-between;margin-top:auto;}
+.footer-logo{font-family:'Bebas Neue',sans-serif;font-size:20px;letter-spacing:5px;color:var(--accent);}
+.footer-copy{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:1px;color:var(--muted);text-align:right;opacity:0.6;}
+</style>
+</head>
+<body>
+
+<nav>
+  <a href="/" class="logo">OilRadar</a>
+  <div class="nav-right">
+    <a href="https://calendly.com/bachevsky/60min" target="_blank" class="btn-schedule">Schedule a Call</a>
+    <a href="https://app.oilradar.io/dashboard" target="_blank" class="btn-dashboard">Dashboard &rarr;</a>
+  </div>
+</nav>
+
+<main>
+
+  <!-- LIVE STATS BAR -->
+  <div class="stats-bar">
+    <div class="stat-item">
+      <div class="stat-label">Storage</div>
+      <div class="stat-value blue" id="statStorage">—</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-label">Fill Rate 7d</div>
+      <div class="stat-value" id="statFillRate">—</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-label">Utilization</div>
+      <div class="stat-value" id="statUtil">—</div>
+    </div>
+  </div>
+
+  <!-- SIGNAL BANNER -->
+  <div class="signal-banner" id="signalBanner">
+    <div>
+      <div class="signal-text" id="signalText">Loading…</div>
+      <div class="signal-sub" id="signalSub">Kharg Island · SAR extraction</div>
+    </div>
+    <div id="signalDelta" style="font-family:'DM Mono',monospace;font-size:12px;text-align:right;"></div>
+  </div>
+
+  <!-- CHART -->
+  <section class="chart-section">
+    <div class="section-label">Storage Volume — SAR Extraction</div>
+    <div class="chart-wrap">
+      <div class="chart-stat-row" id="latestStat">Loading data…</div>
+      <canvas id="dailyChart" height="180"></canvas>
+      <div class="chart-lock">
+        <p>🔒 Latest 2 weeks gated — reserved for subscribers</p>
+        <a href="https://calendly.com/bachevsky/intro" target="_blank" class="btn-access">Request Data Access</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- EXPLANATION -->
+  <section class="explain-section">
+    <div class="section-label">Methodology</div>
+    <div class="explain-cards">
+
+      <div class="explain-card">
+        <h4>🛰️ How The Radar Works</h4>
+        <p>Kharg Island tanks use <strong>floating roofs</strong> that lower as oil is pumped out and rise as tanks fill. Sentinel-1 SAR signals bounce off the internal walls. A low roof returns a brighter radar reflection. We invert this radiometric signal to calculate physical volume in millions of barrels.</p>
+        <p class="sub">On average, the satellite passes over the region every ~6 days.</p>
+      </div>
+
+      <div class="explain-card">
+        <h4>📊 What BUILD / DRAWDOWN Means</h4>
+        <p>A <strong>BUILDING</strong> signal means crude is accumulating at Kharg — exports are constrained or demand from buyers is soft. A <strong>DRAWDOWN</strong> signal means tankers are loading — Iranian crude is entering the global market.</p>
+      </div>
+
+      <div class="explain-card">
+        <h4>⏱️ Lead Over EIA &amp; JODI</h4>
+        <p>Official agencies publish storage data with a 4–7 week lag. SAR-derived signals from Kharg are available within days of each satellite pass — giving traders and analysts a meaningful head start on Iranian crude supply dynamics.</p>
+      </div>
+
+      <div class="access-card">
+        <h4>Need Custom Coverage?</h4>
+        <p>Track a specific terminal, get data access, or discuss coverage for other regions — Saudi Arabia, Iraq Basra, UAE Fujairah, and more.</p>
+        <a href="https://calendly.com/bachevsky/intro" target="_blank" class="btn-access">Request Data Access</a>
+      </div>
+
+    </div>
+  </section>
+
+</main>
+
+<footer>
+  <div class="footer-logo">OilRadar</div>
+  <div class="footer-copy">Kharg Island · Sentinel-1 SAR<br>© 2024–2026 OilRadar</div>
+</footer>
+
+<script src="/public/vendor/chart.min.js"></script>
+<script>
+const NAMEPLATE_MB = 31.78;
+
+async function loadCharts() {
+  try {
+    const res = await fetch('/data/data_daily.json');
+    const d = await res.json();
+
+    const latest = d.dates[d.dates.length - 1];
+    const cutoff = new Date(latest);
+    cutoff.setMonth(cutoff.getMonth() - 6);
+    const cutoffStr = cutoff.toISOString().slice(0, 10);
+    const lockDate = new Date(latest);
+    lockDate.setDate(lockDate.getDate() - 14);
+    const lockStr = lockDate.toISOString().slice(0, 10);
+    const startIdx = d.dates.findIndex(dt => dt >= cutoffStr);
+    const endIdx = d.dates.findIndex(dt => dt > lockStr);
+    const sliceEnd = endIdx === -1 ? d.dates.length : endIdx;
+    const dates6m = d.dates.slice(startIdx, sliceEnd);
+    const values6m = d.values.slice(startIdx, sliceEnd);
+
+    const latestVal = values6m[values6m.length - 1];
+    const prevVal = values6m[values6m.length - 2];
+    const diff = (latestVal - prevVal).toFixed(2);
+    const sign = diff > 0 ? '+' : '';
+    const latestUtil = (latestVal / NAMEPLATE_MB * 100).toFixed(1);
+    const fr7d = values6m.length >= 8 ? (values6m[values6m.length - 1] - values6m[values6m.length - 8]) / 7 : null;
+    const frSign = fr7d !== null ? (fr7d > 0 ? '+' : '') : '';
+    const isBuilding = diff > 0;
+
+    // Update stats bar
+    document.getElementById('statStorage').textContent = latestVal.toFixed(2) + ' Mb';
+    document.getElementById('statStorage').className = 'stat-value blue';
+    if (fr7d !== null) {
+      document.getElementById('statFillRate').textContent = frSign + fr7d.toFixed(3) + ' Mb/d';
+      document.getElementById('statFillRate').style.color = fr7d > 0 ? '#f59e0b' : '#3b82f6';
+    }
+    document.getElementById('statUtil').textContent = latestUtil + '%';
+    document.getElementById('statUtil').style.color = latestUtil >= 85 ? '#dc2626' : latestUtil >= 70 ? '#f59e0b' : '#3b82f6';
+
+    // Signal banner
+    const banner = document.getElementById('signalBanner');
+    const signalEl = document.getElementById('signalText');
+    if (isBuilding) {
+      banner.className = 'signal-banner building';
+      signalEl.textContent = '▲ BUILDING';
+      signalEl.style.color = '#f59e0b';
+    } else {
+      banner.className = 'signal-banner drawdown';
+      signalEl.textContent = '▼ DRAWDOWN';
+      signalEl.style.color = '#3b82f6';
+    }
+    document.getElementById('signalDelta').innerHTML = '<span style="color:' + (isBuilding ? '#f59e0b' : '#3b82f6') + '">' + sign + diff + ' Mb</span><br><span style="color:#5a7a94;font-size:9px">day-over-day</span>';
+
+    // Stat row
+    document.getElementById('latestStat').innerHTML =
+      '<div>Storage: <strong style="color:#3b82f6">' + latestVal.toFixed(2) + ' Mb</strong></div>' +
+      (fr7d !== null ? '<div>Fill Rate 7d: <strong style="color:' + (fr7d > 0 ? '#f59e0b' : '#3b82f6') + '">' + frSign + fr7d.toFixed(3) + ' Mb/d</strong></div>' : '') +
+      '<div>Utilization: <strong style="color:' + (latestUtil >= 85 ? '#dc2626' : latestUtil >= 70 ? '#f59e0b' : '#3b82f6') + '">' + latestUtil + '%</strong></div>';
+
+    new Chart(document.getElementById('dailyChart'), {
+      type: 'line',
+      data: {
+        labels: dates6m,
+        datasets: [{
+          data: values6m,
+          borderColor: '#3b82f6',
+          borderWidth: 2,
+          backgroundColor: 'rgba(59,130,246,0.10)',
+          fill: true,
+          pointRadius: 0,
+          tension: 0.1
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: true,
+        interaction: { intersect: false, mode: 'index' },
+        scales: {
+          x: { ticks: { color: '#5a7a94', font: { family: 'DM Mono, monospace', size: 9 }, maxTicksLimit: 4 }, grid: { color: 'rgba(255,255,255,0.05)' } },
+          y: { ticks: { color: '#5a7a94', font: { family: 'DM Mono, monospace', size: 9 }, callback: v => v.toFixed(0) + ' Mb' }, grid: { color: 'rgba(255,255,255,0.05)' } }
+        },
+        plugins: {
+          legend: { display: false },
+          tooltip: { backgroundColor: '#111820', borderColor: 'rgba(255,255,255,0.1)', borderWidth: 1, titleColor: '#5a7a94', bodyColor: '#3b82f6', callbacks: { label: ctx => ' ' + ctx.parsed.y.toFixed(2) + ' Mb' } }
+        }
+      }
+    });
+  } catch(e) {
+    document.getElementById('latestStat').innerHTML = '<span style="color:#dc2626">Error loading data: ' + e.message + '</span>';
+  }
+}
+
+loadCharts();
+</script>
+</body>
+</html>

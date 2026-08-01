@@ -1,0 +1,7 @@
+export async function onRequest(context) {
+  const ua = context.request.headers.get('User-Agent') || '';
+  const isMobile = /Mobi|Android|iPhone|iPad/i.test(ua);
+  const url = new URL(context.request.url);
+  url.pathname = isMobile ? '/marketing/mobile-bab-el-mandeb.html' : '/marketing/bab-el-mandeb.html';
+  return context.env.ASSETS.fetch(url.toString());
+}

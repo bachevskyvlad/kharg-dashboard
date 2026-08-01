@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>OilRadar — Iranian Crude Oil Intelligence via Satellite</title>
+<meta name="description" content="Real-time crude oil storage intelligence at Kharg Island, Iran — ~90% of Iranian exports. Sentinel-1 SAR satellite data. 4–7 week lead over EIA and JODI reports.">
+<meta name="robots" content="index, follow">
+<link rel="canonical" href="https://oilradar.io/">
+<link rel="icon" type="image/x-icon" href="/assets/images/favicon.ico">
+<link rel="apple-touch-icon" sizes="180x180" href="/assets/images/apple-touch-icon.png">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://oilradar.io/">
+<meta property="og:title" content="OilRadar — Iranian Crude Oil Intelligence via Satellite">
+<meta property="og:description" content="Satellite tracking of Kharg Island — ~90% of Iran's crude exports. 4–7 week lead over EIA and JODI.">
+<meta property="og:image" content="https://oilradar.io/assets/images/og-image.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:site" content="@IberianLobos">
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-TZQ5VH3GPY"></script>
+<script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','G-TZQ5VH3GPY');</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@300;400;500&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+<noscript><link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@300;400;500&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet"></noscript>
+<style>
+:root{
+  --black:#080a0d;--deep:#0d1117;--panel:#111820;--border:#1e2d3d;
+  --accent:#3b82f6;--gold:#f59e0b;--text:#c8d6e5;--muted:#5a7a94;--white:#f0f4f8;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+html{scroll-behavior:smooth;}
+body{background:var(--black);color:var(--text);font-family:'DM Sans',-apple-system,sans-serif;overflow-x:hidden;min-height:100vh;}
+
+/* NAV */
+nav{position:fixed;top:0;left:0;right:0;z-index:200;display:flex;align-items:center;justify-content:space-between;padding:0 16px;height:56px;background:rgba(8,10,13,0.97);backdrop-filter:blur(16px);border-bottom:1px solid var(--border);}
+.logo{font-family:'Bebas Neue',sans-serif;font-size:20px;letter-spacing:4px;color:var(--accent);text-decoration:none;}
+.nav-right{display:flex;align-items:center;gap:8px;}
+.btn-schedule{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:1px;text-transform:uppercase;background:transparent;color:var(--accent);padding:8px 14px;border:1px solid var(--accent);cursor:pointer;text-decoration:none;transition:all .2s;white-space:nowrap;}
+.btn-dashboard{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:1px;text-transform:uppercase;background:var(--accent);color:#fff;padding:8px 14px;border:1px solid var(--accent);cursor:pointer;text-decoration:none;transition:opacity .2s;white-space:nowrap;}
+@media(max-width:380px){.btn-schedule{display:none;}}
+
+/* CONTENT */
+main{padding-top:56px;}
+
+/* HERO */
+.hero{padding:40px 16px 32px;border-bottom:1px solid var(--border);}
+.hero-label{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:3px;text-transform:uppercase;color:var(--accent);margin-bottom:16px;}
+.hero-title{font-family:'Bebas Neue',sans-serif;font-size:clamp(52px,15vw,80px);line-height:.92;color:var(--text);margin-bottom:20px;}
+.hero-title span{color:var(--accent);}
+.hero-sub{font-size:14px;font-weight:300;color:var(--muted);line-height:1.75;margin-bottom:28px;}
+.hero-sub strong{color:var(--text);font-weight:500;}
+.hero-ctas{display:flex;flex-direction:column;gap:10px;}
+.btn-primary{font-family:'DM Mono',monospace;font-size:11px;letter-spacing:2px;text-transform:uppercase;background:var(--accent);color:#fff;padding:15px 20px;text-decoration:none;display:block;text-align:center;transition:opacity .2s;min-height:44px;display:flex;align-items:center;justify-content:center;}
+.btn-outline{font-family:'DM Mono',monospace;font-size:11px;letter-spacing:2px;text-transform:uppercase;background:transparent;color:var(--accent);padding:14px 20px;border:1px solid var(--accent);text-decoration:none;display:block;text-align:center;transition:all .2s;min-height:44px;display:flex;align-items:center;justify-content:center;}
+
+/* STATS STRIP */
+.stats-strip{display:grid;grid-template-columns:1fr 1fr 1fr;border-bottom:1px solid var(--border);}
+.stat-item{padding:24px 12px;border-right:1px solid var(--border);text-align:center;}
+.stat-item:last-child{border-right:none;}
+.stat-emoji{font-size:24px;margin-bottom:8px;display:block;}
+.stat-val{font-family:'Bebas Neue',sans-serif;font-size:clamp(28px,8vw,40px);color:var(--accent);line-height:1;margin-bottom:6px;}
+.stat-label{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:1px;text-transform:uppercase;color:var(--muted);line-height:1.6;}
+
+/* SECTION */
+.section{padding:32px 16px;}
+.section-label{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:3px;text-transform:uppercase;color:var(--accent);margin-bottom:10px;display:block;}
+.section-title{font-family:'Bebas Neue',sans-serif;font-size:clamp(32px,10vw,48px);line-height:1;color:var(--text);margin-bottom:24px;}
+
+/* VALUE PROPS */
+.value-cards{display:flex;flex-direction:column;gap:2px;}
+.value-card{background:var(--panel);border:1px solid var(--border);padding:24px 20px;}
+.value-icon{font-size:28px;margin-bottom:12px;display:block;}
+.value-card h3{font-family:'DM Mono',monospace;font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--text);margin-bottom:8px;}
+.value-card p{font-size:13px;color:var(--muted);line-height:1.75;}
+
+/* CHART */
+.chart-section{padding:32px 16px;background:var(--deep);border-top:1px solid var(--border);border-bottom:1px solid var(--border);}
+.chart-wrap{background:var(--panel);border:1px solid var(--border);padding:16px 14px;position:relative;}
+#chartStat{font-family:'DM Mono',monospace;font-size:11px;color:var(--text);margin-bottom:14px;padding:10px 12px;background:rgba(59,130,246,0.06);border-left:2px solid var(--accent);display:flex;flex-direction:column;gap:4px;}
+.chart-lock{margin-top:12px;padding:12px;background:rgba(59,130,246,0.06);border:1px dashed var(--border);text-align:center;}
+.chart-lock p{font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);margin-bottom:8px;}
+
+/* PRODUCTS */
+.products-section{padding:32px 16px;}
+.product-cards{display:flex;flex-direction:column;gap:2px;}
+.product-card{background:var(--panel);border:1px solid var(--border);padding:24px 20px;}
+.product-card.featured{border-color:var(--accent);background:rgba(59,130,246,0.06);}
+.product-badge{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:12px;}
+.product-card.featured .product-badge{color:var(--accent);}
+.product-card h3{font-family:'Bebas Neue',sans-serif;font-size:28px;color:var(--text);margin-bottom:12px;}
+.product-card p{font-size:13px;color:var(--muted);line-height:1.8;margin-bottom:20px;}
+.product-card ul{list-style:none;margin-bottom:20px;display:flex;flex-direction:column;gap:8px;}
+.product-card ul li{font-family:'DM Mono',monospace;font-size:11px;color:var(--muted);display:flex;gap:8px;line-height:1.5;}
+.product-card ul li::before{content:'→';color:var(--accent);flex-shrink:0;}
+
+/* CTA BLOCK */
+.cta-block{padding:32px 16px;border-top:1px solid var(--border);text-align:center;}
+.cta-block h2{font-family:'Bebas Neue',sans-serif;font-size:clamp(32px,10vw,48px);color:var(--text);margin-bottom:12px;line-height:1;}
+.cta-block p{font-size:13px;color:var(--muted);line-height:1.7;margin-bottom:24px;}
+
+/* FOOTER */
+footer{background:var(--panel);border-top:1px solid var(--border);padding:28px 16px;padding-bottom:calc(28px + env(safe-area-inset-bottom));text-align:center;}
+.footer-logo{font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:6px;color:var(--accent);margin-bottom:8px;}
+.footer-copy{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:1px;color:var(--muted);opacity:0.6;margin-top:4px;}
+</style>
+</head>
+<body>
+
+<nav>
+  <a href="/" class="logo">OilRadar</a>
+  <div class="nav-right">
+    <a href="https://calendly.com/bachevsky/60min" target="_blank" class="btn-schedule">Schedule a Call</a>
+    <a href="https://app.oilradar.io/dashboard" target="_blank" class="btn-dashboard">Dashboard &rarr;</a>
+  </div>
+</nav>
+
+<main>
+
+  <!-- HERO -->
+  <section class="hero">
+    <div class="hero-label">Kharg Island · Iran · Sentinel-1 SAR</div>
+    <h1 class="hero-title">See Kharg<br>Oil Movement<br><span>Before The Market</span></h1>
+    <p class="hero-sub">We track every crude oil tank at Kharg Island — the terminal that handles <strong>~90% of Iran's exports</strong> — using SAR satellite radar. Storage signals arrive <strong>4–7 weeks before EIA and JODI</strong> report them.</p>
+    <div class="hero-ctas">
+      <a href="https://calendly.com/bachevsky/intro" target="_blank" class="btn-primary">Request Data Access</a>
+      <a href="/monitor" class="btn-outline">View Live Monitor</a>
+    </div>
+  </section>
+
+  <!-- STATS -->
+  <div class="stats-strip">
+    <div class="stat-item">
+      <span class="stat-emoji">🛢️</span>
+      <div class="stat-val">~90%</div>
+      <div class="stat-label">Iran crude through Kharg</div>
+    </div>
+    <div class="stat-item">
+      <span class="stat-emoji">⚡</span>
+      <div class="stat-val">4–7wk</div>
+      <div class="stat-label">Lead over EIA &amp; JODI</div>
+    </div>
+    <div class="stat-item">
+      <span class="stat-emoji">🛰️</span>
+      <div class="stat-val">47</div>
+      <div class="stat-label">Tanks tracked continuously</div>
+    </div>
+  </div>
+
+  <!-- VALUE PROPS -->
+  <section class="section">
+    <span class="section-label">What You See</span>
+    <h2 class="section-title">Kharg Terminal.<br>Live Intelligence.</h2>
+    <div class="value-cards">
+      <div class="value-card">
+        <span class="value-icon">🛢️</span>
+        <h3>Terminal Operations</h3>
+        <p>Fill levels across all 47 storage tanks updated every satellite pass. Know whether Kharg is accumulating or drawing down — before anyone reports it.</p>
+      </div>
+      <div class="value-card">
+        <span class="value-icon">⚡</span>
+        <h3>Storage Velocity</h3>
+        <p>Rate of inflow and outflow in Mb/day. Export Pulse alerts when the drawdown pattern matches an active VLCC loading event.</p>
+      </div>
+      <div class="value-card">
+        <span class="value-icon">🚢</span>
+        <h3>Tanker Queue</h3>
+        <p>Weekly vessel counts at Kharg anchorage by class — VLCC, Suezmax, Aframax. Queue buildup is an early signal of constrained export flow.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- CHART -->
+  <section class="chart-section">
+    <span class="section-label">Kharg Island · SAR Extraction</span>
+    <h2 class="section-title">Storage Dynamics</h2>
+    <div class="chart-wrap">
+      <div id="chartStat">Loading data...</div>
+      <canvas id="landingChart" height="180"></canvas>
+      <div class="chart-lock">
+        <p>🔒 Latest 2 weeks gated for subscribers</p>
+        <a href="https://calendly.com/bachevsky/intro" target="_blank" class="btn-primary" style="font-size:10px;padding:12px 16px;">Get Access</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- PRODUCTS -->
+  <section class="products-section">
+    <span class="section-label">What You Get</span>
+    <h2 class="section-title">Choose Your Access</h2>
+    <div class="product-cards">
+      <div class="product-card">
+        <div class="product-badge">Free · Public</div>
+        <h3>Live Monitor</h3>
+        <p>Storage chart and per-tank fill map updated each satellite pass.</p>
+        <ul>
+          <li>Aggregate storage volume — last 6 months</li>
+          <li>BUILDING / DRAWDOWN regime signal</li>
+          <li>Fill Rate 7d · Utilization % · Days to capacity</li>
+        </ul>
+        <a href="/monitor" class="btn-outline">View Monitor →</a>
+      </div>
+      <div class="product-card featured">
+        <div class="product-badge">Data Access</div>
+        <h3>Full Intelligence Feed</h3>
+        <p>Operational intelligence on Kharg Island. Full history from 2017.</p>
+        <ul>
+          <li>Export Pulse detection — statistical signal of active VLCC loading</li>
+          <li>Storage Pressure Index — elevated SPI historically precedes forced price concessions within 4–8 weeks</li>
+          <li>Tanker Queue Index — vessel backlog at anchorage since 2017</li>
+          <li>REST API — full dataset, JSON &amp; CSV, date-range filtering</li>
+        </ul>
+        <a href="https://calendly.com/bachevsky/intro" target="_blank" class="btn-primary">Request Data Access</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA -->
+  <section class="cta-block">
+    <h2>Track Iran<br>Crude Flow Now</h2>
+    <p>Schedule a call to discuss data access for your desk. We take on new clients selectively.</p>
+    <a href="https://calendly.com/bachevsky/60min" target="_blank" class="btn-primary">Schedule a Call</a>
+  </section>
+
+</main>
+
+<footer>
+  <div class="footer-logo">OilRadar</div>
+  <div class="footer-copy">Kharg Island Crude Oil Intelligence · Sentinel-1 SAR · oilradar.io<br>© 2024–2026 OilRadar. All rights reserved.</div>
+</footer>
+
+<script src="/public/vendor/chart.min.js"></script>
+<script>
+async function loadLandingChart() {
+  try {
+    const res = await fetch('/data/data_daily.json?v=' + Date.now());
+    const d = await res.json();
+    const latestDate = new Date(d.dates[d.dates.length - 1]);
+    const cutoff = new Date(latestDate);
+    cutoff.setDate(cutoff.getDate() - 14);
+    const cutoffStr = cutoff.toISOString().slice(0, 10);
+    const filtered = d.dates.reduce((acc, dt, i) => {
+      if (dt >= '2026-01-01' && dt <= cutoffStr) {
+        acc.dates.push(dt);
+        acc.values.push(d.values[i]);
+      }
+      return acc;
+    }, { dates: [], values: [] });
+    const vals = filtered.values;
+    const latest = vals[vals.length - 1];
+    const prev = vals[vals.length - 2];
+    const diff = (latest - prev).toFixed(2);
+    const sign = diff > 0 ? '+' : '';
+    const trend = diff > 0
+      ? '<span style="color:#f59e0b">▲ BUILDING</span>'
+      : '<span style="color:#3b82f6">▼ DRAWDOWN</span>';
+    document.getElementById('chartStat').innerHTML =
+      '<div>Storage: <strong style="color:#3b82f6">' + latest.toFixed(2) + ' Mb</strong></div>' +
+      '<div>Day Δ: <strong style="color:' + (diff > 0 ? '#f59e0b' : '#3b82f6') + '">' + sign + diff + ' Mb</strong></div>' +
+      '<div>Status: ' + trend + '</div>';
+    const ctx = document.getElementById('landingChart');
+    if (!ctx) return;
+    new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: filtered.dates,
+        datasets: [{
+          data: filtered.values,
+          borderColor: '#3b82f6',
+          borderWidth: 2,
+          backgroundColor: 'rgba(59,130,246,0.10)',
+          fill: true,
+          pointRadius: 0,
+          tension: 0.1
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: true,
+        interaction: { intersect: false, mode: 'index' },
+        scales: {
+          x: { ticks: { color: '#5a7a94', font: { family: 'DM Mono, monospace', size: 9 }, maxTicksLimit: 5 }, grid: { color: 'rgba(255,255,255,0.05)' } },
+          y: { ticks: { color: '#5a7a94', font: { family: 'DM Mono, monospace', size: 9 }, callback: v => v.toFixed(0) + ' Mb' }, grid: { color: 'rgba(255,255,255,0.05)' } }
+        },
+        plugins: {
+          legend: { display: false },
+          tooltip: { backgroundColor: '#111820', borderColor: 'rgba(255,255,255,0.1)', borderWidth: 1, titleColor: '#5a7a94', bodyColor: '#3b82f6', callbacks: { label: ctx => ' ' + ctx.parsed.y.toFixed(2) + ' Mb' } }
+        }
+      }
+    });
+  } catch(e) {
+    document.getElementById('chartStat').innerHTML = '<span style="color:#dc2626">Error loading data.</span>';
+  }
+}
+document.addEventListener('DOMContentLoaded', loadLandingChart);
+</script>
+</body>
+</html>
