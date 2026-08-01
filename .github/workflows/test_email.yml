@@ -1,0 +1,21 @@
+name: Test Email
+
+on:
+  workflow_dispatch:
+
+jobs:
+  send:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Send email
+        run: |
+          curl -s -X POST "https://app.oilradar.io/auth/notify-sar" \
+            -H "Content-Type: application/json" \
+            -H "Authorization: Bearer ${{ secrets.NOTIFY_SECRET }}" \
+            -d '{
+              "pass_date": "2026-08-01",
+              "vol_current": 21.185,
+              "vol_prev": 21.294,
+              "prev_date": "2026-07-26",
+              "fill_rate_7d": -0.0156
+            }'
