@@ -33,12 +33,56 @@ export default {
     if (path === '/api/v1/storage/metrics')   return apiStorageMetricsFn.onRequest(context);
     if (path === '/api/v1/tanks')             return apiTanksFn.onRequest(context);
 
+    const ua = request.headers.get('User-Agent') || '';
+    const isMobile = /Mobi|Android|iPhone|iPad/i.test(ua);
+
     // app.oilradar.io → serve product pages
     const host = request.headers.get('host') || url.hostname;
     if (host === 'app.oilradar.io' && (path === '/' || path === '')) {
       const appUrl = new URL(request.url);
       appUrl.pathname = '/product/index.html';
       return env.ASSETS.fetch(new Request(appUrl.toString()));
+    }
+
+    // Mobile device routing — serve mobile HTML for all public pages
+    if (isMobile) {
+      const mobileMap = {
+        '/dashboard':     '/product/mobile.html',
+        '/':              '/marketing/mobile-index.html',
+        '/monitor':       '/marketing/mobile-monitor.html',
+        '/gas-storage':   '/marketing/mobile-gas-storage.html',
+        '/team':          '/marketing/mobile-team.html',
+        '/tanks':         '/marketing/mobile-tanks.html',
+        '/anchorage':     '/marketing/mobile-anchorage.html',
+        '/bab-el-mandeb': '/marketing/mobile-bab-el-mandeb.html',
+      };
+      const mobilePath = mobileMap[path];
+      if (mobilePath) {
+        const mUrl = new URL(request.url);
+        mUrl.pathname = mobilePath;
+        return env.ASSETS.fetch(new Request(mUrl.toString()));
+      }
+    }
+
+    // Desktop routing
+    const desktopMap = {
+      '/':              '/marketing/index.html',
+      '/monitor':       '/marketing/monitor.html',
+      '/gas-storage':   '/marketing/gas-storage.html',
+      '/team':          '/marketing/team.html',
+      '/tanks':         '/marketing/tanks.html',
+      '/anchorage':     '/marketing/anchorage.html',
+      '/bab-el-mandeb': '/marketing/bab-el-mandeb.html',
+      '/dashboard':     '/product/dashboard.html',
+      '/dashboard.html':'/product/dashboard.html',
+      '/app':           '/product/index.html',
+      '/tutorial':      '/product/tutorial.html',
+    };
+    const desktopPath = desktopMap[path];
+    if (desktopPath) {
+      const dUrl = new URL(request.url);
+      dUrl.pathname = desktopPath;
+      return env.ASSETS.fetch(new Request(dUrl.toString()));
     }
 
     return env.ASSETS.fetch(request);
