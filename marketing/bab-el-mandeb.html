@@ -27,6 +27,8 @@ nav{position:fixed;top:0;left:0;right:0;z-index:100;display:flex;align-items:cen
 .nav-link:hover,.nav-link.active{color:var(--accent);}
 .nav-cta{font-family:'DM Mono',monospace;font-size:11px;letter-spacing:2px;text-transform:uppercase;background:transparent;border:1px solid var(--accent);color:var(--accent);padding:8px 20px;cursor:pointer;transition:all .2s;text-decoration:none;}
 .nav-cta:hover{background:var(--accent);color:var(--white);}
+.nav-cta-solid{background:var(--accent);color:var(--white)!important;border-color:var(--accent);}
+.nav-cta-solid:hover{opacity:.85;background:var(--accent);}
 main{flex:1;padding:100px 32px 80px;width:100%;}
 .section-label{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:4px;text-transform:uppercase;color:var(--accent);margin-bottom:8px;}
 .section-title{font-family:'Bebas Neue',sans-serif;font-size:clamp(36px,4vw,56px);line-height:1;color:var(--text);margin-bottom:6px;}
@@ -84,7 +86,8 @@ footer{background:var(--panel);border-top:1px solid var(--border);padding:32px 4
     <a href="/anchorage" class="nav-link">Kharg</a>
     <a href="/bab-el-mandeb" class="nav-link active">Bab-el-Mandeb</a>
     <a href="/team" class="nav-link">Team</a>
-    <a href="https://calendly.com/bachevsky/intro" class="nav-cta">Request Access</a>
+    <a href="https://calendly.com/bachevsky/60min" target="_blank" class="nav-cta">Schedule a Call</a>
+    <a href="https://app.oilradar.io/dashboard" target="_blank" class="nav-cta nav-cta-solid">Dashboard &rarr;</a>
   </div>
 </nav>
 
