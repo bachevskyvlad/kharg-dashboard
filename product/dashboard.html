@@ -863,7 +863,7 @@
                 <div style="font-size:1.1rem">🔒</div>
                 <div style="font-size:0.85rem;font-weight:600;color:var(--text)">Weekly breakdown — paid plan only</div>
                 <div style="font-size:0.72rem;color:var(--muted);text-align:center;max-width:280px">Pass-by-pass vessel counts are available on the full plan.</div>
-                <a href="https://calendly.com/bachevsky/60min" target="_blank" style="background:var(--accent);color:#fff;padding:0.5rem 1.25rem;font-size:0.75rem;text-decoration:none;margin-top:0.25rem">Request full access →</a>
+                <a href="https://calendly.com/bachevsky/intro" target="_blank" style="background:var(--accent);color:#fff;padding:0.5rem 1.25rem;font-size:0.75rem;text-decoration:none;margin-top:0.25rem">Request full access →</a>
             </div>
         </div>
     </div>
@@ -1031,7 +1031,7 @@ function applyTierRestrictions() {
             <div class="paywall-icon">🔒</div>
             <div class="paywall-title">Raw data — paid plan only</div>
             <div class="paywall-sub">Pass-by-pass tank-level breakdown and CSV export are available on the full plan.</div>
-            <a class="paywall-cta" href="https://calendly.com/bachevsky/60min" target="_blank">Request full access</a>`;
+            <a class="paywall-cta" href="https://calendly.com/bachevsky/intro" target="_blank">Request full access</a>`;
         card.appendChild(overlay);
     }
 }
@@ -1039,7 +1039,7 @@ function applyTierRestrictions() {
 function showUpgradeToast(feature) {
     const t = document.createElement('div');
     t.style.cssText = 'position:fixed;bottom:1.5rem;right:1.5rem;background:#3b82f6;color:#fff;padding:0.65rem 1.1rem;border-radius:6px;font-size:0.75rem;z-index:9999;box-shadow:0 4px 12px rgba(0,0,0,0.15)';
-    t.innerHTML = `${feature} is available on the full plan. <a href="https://calendly.com/bachevsky/60min" target="_blank" style="color:#93c5fd;text-decoration:underline">Request access →</a>`;
+    t.innerHTML = `${feature} is available on the full plan. <a href="https://calendly.com/bachevsky/intro" target="_blank" style="color:#93c5fd;text-decoration:underline">Request access →</a>`;
     document.body.appendChild(t);
     setTimeout(() => t.remove(), 5000);
 }
