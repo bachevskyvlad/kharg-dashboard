@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>OilRadar — Kharg Island</title>
+<meta name="robots" content="noindex, nofollow">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-TZQ5VH3GPY"></script>
+<script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','G-TZQ5VH3GPY');</script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+:root{
+  --bg:#0a0e17;
+  --surface:#111827;
+  --surface2:#1a2233;
+  --border:rgba(255,255,255,0.07);
+  --muted:#94a3b8;
+  --dim:#64748b;
+  --text:#e2e8f0;
+  --accent:#3b82f6;
+  --green:#34d399;
+  --red:#f87171;
+  --yellow:#fbbf24;
+}
+html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;overflow-x:hidden;}
+body{display:flex;flex-direction:column;}
+
+/* TOP BAR */
+.topbar{
+  position:fixed;top:0;left:0;right:0;z-index:100;
+  height:56px;
+  background:rgba(10,14,23,0.97);
+  border-bottom:1px solid var(--border);
+  backdrop-filter:blur(12px);
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0 16px;
+}
+.topbar-logo{font-family:'Space Grotesk',sans-serif;font-size:17px;font-weight:700;letter-spacing:2px;color:var(--accent);text-decoration:none;}
+.topbar-right{display:flex;align-items:center;gap:12px;}
+.topbar-date{font-size:11px;color:var(--dim);font-variant-numeric:tabular-nums;}
+.logout-btn{font-size:11px;color:var(--muted);background:none;border:1px solid var(--border);padding:5px 10px;border-radius:4px;cursor:pointer;font-family:'Inter',sans-serif;}
+
+/* SCROLL CONTENT */
+.content{
+  margin-top:56px;
+  margin-bottom:60px;
+  padding:16px 14px;
+  display:flex;flex-direction:column;gap:12px;
+}
+
+/* SIGNAL BANNER */
+.signal-banner{
+  padding:12px 14px;
+  border-radius:8px;
+  font-size:13px;
+  line-height:1.5;
+  border-left:3px solid var(--accent);
+  background:var(--surface);
+}
+.signal-banner.draw{border-left-color:var(--green);}
+.signal-banner.build{border-left-color:var(--red);}
+.signal-label{font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--dim);margin-bottom:4px;}
+
+/* KPI GRID */
+.kpi-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.kpi-card{background:var(--surface);border-radius:10px;padding:14px 14px 12px;border:1px solid var(--border);}
+.kpi-card.full{grid-column:1/-1;}
+.kpi-label{font-size:9px;letter-spacing:1.5px;text-transform:uppercase;color:var(--dim);margin-bottom:6px;}
+.kpi-value{font-family:'Space Grotesk',sans-serif;font-size:28px;font-weight:700;line-height:1;font-variant-numeric:tabular-nums;}
+.kpi-sub{font-size:11px;color:var(--dim);margin-top:4px;}
+.kpi-pill{display:inline-block;font-size:9px;letter-spacing:1px;text-transform:uppercase;font-weight:600;padding:2px 7px;border-radius:3px;margin-top:6px;}
+.pill-normal{background:rgba(52,211,153,0.15);color:var(--green);}
+.pill-elevated{background:rgba(251,191,36,0.15);color:var(--yellow);}
+.pill-critical{background:rgba(248,113,113,0.15);color:var(--red);}
+.kpi-value.green{color:var(--green);}
+.kpi-value.red{color:var(--red);}
+.kpi-value.yellow{color:var(--yellow);}
+
+/* UTILIZATION BAR */
+.util-bar-wrap{margin-top:10px;}
+.util-bar-track{height:5px;background:var(--surface2);border-radius:3px;position:relative;overflow:hidden;}
+.util-bar-fill{height:100%;border-radius:3px;transition:width .6s ease;}
+.util-bar-mark{position:absolute;right:15%;top:-2px;width:1px;height:9px;background:rgba(248,113,113,0.5);}
+
+/* CHART CARD */
+.chart-card{background:var(--surface);border-radius:10px;padding:14px;border:1px solid var(--border);}
+.chart-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;}
+.chart-title{font-size:11px;letter-spacing:1px;text-transform:uppercase;color:var(--muted);}
+.period-tabs{display:flex;gap:4px;}
+.period-tab{font-size:10px;padding:4px 8px;border-radius:4px;border:1px solid var(--border);background:none;color:var(--dim);cursor:pointer;font-family:'Inter',sans-serif;}
+.period-tab.active{background:var(--accent);color:#fff;border-color:var(--accent);}
+.chart-wrap{position:relative;height:160px;}
+
+/* SECTION TITLE */
+.section-title{font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--dim);padding:4px 0 2px;}
+
+/* FLOWS ROW */
+.flows-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;}
+.flow-card{background:var(--surface);border-radius:8px;padding:10px 10px 8px;border:1px solid var(--border);text-align:center;}
+.flow-val{font-family:'Space Grotesk',sans-serif;font-size:18px;font-weight:700;font-variant-numeric:tabular-nums;}
+.flow-lbl{font-size:9px;letter-spacing:1px;text-transform:uppercase;color:var(--dim);margin-top:3px;}
+
+/* BOTTOM TAB BAR */
+.tabbar{
+  position:fixed;bottom:0;left:0;right:0;z-index:100;
+  height:60px;
+  background:rgba(13,19,32,0.98);
+  border-top:1px solid var(--border);
+  display:flex;align-items:stretch;
+}
+.tab{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;cursor:pointer;color:var(--dim);font-size:9px;letter-spacing:1px;text-transform:uppercase;border:none;background:none;font-family:'Inter',sans-serif;transition:color .15s;}
+.tab.active{color:var(--accent);}
+.tab svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round;}
+
+/* SECTIONS */
+.tab-section{display:none;}
+.tab-section.visible{display:contents;}
+
+/* SKELETON */
+.skeleton{background:linear-gradient(90deg,var(--surface) 25%,var(--surface2) 50%,var(--surface) 75%);background-size:200% 100%;animation:shimmer 1.4s infinite;border-radius:6px;height:28px;}
+@keyframes shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
+
+/* SAFE AREA */
+@supports(padding-bottom: env(safe-area-inset-bottom)){
+  .tabbar{padding-bottom:env(safe-area-inset-bottom);height:calc(60px + env(safe-area-inset-bottom));}
+  .content{margin-bottom:calc(60px + env(safe-area-inset-bottom));}
+}
+</style>
+</head>
+<body>
+
+<!-- TOP BAR -->
+<div class="topbar">
+  <a href="/mobile" class="topbar-logo">OILRADAR</a>
+  <div class="topbar-right">
+    <span class="topbar-date" id="lastUpdate">—</span>
+    <button class="logout-btn" onclick="logout()">Logout</button>
+  </div>
+</div>
+
+<!-- CONTENT -->
+<div class="content">
+
+  <!-- OVERVIEW SECTION -->
+  <div class="tab-section visible" id="sec-overview">
+
+    <div class="signal-banner" id="signalBanner">
+      <div class="signal-label">Signal</div>
+      <span id="signalText">Loading…</span>
+    </div>
+
+    <div class="kpi-grid">
+      <div class="kpi-card">
+        <div class="kpi-label">Storage</div>
+        <div class="kpi-value" id="kpiStorage">—</div>
+        <div class="kpi-sub">of 31.78 Mb</div>
+        <div class="util-bar-wrap">
+          <div class="util-bar-track">
+            <div class="util-bar-fill" id="utilBarFill" style="width:0%;background:var(--accent);"></div>
+            <div class="util-bar-mark"></div>
+          </div>
+        </div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">Utilization</div>
+        <div class="kpi-value" id="kpiUtil">—</div>
+        <div class="kpi-sub" id="kpiUtilSub">% of capacity</div>
+        <div class="kpi-pill" id="kpiPill">—</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">7-Day Change</div>
+        <div class="kpi-value" id="kpi7d">—</div>
+        <div class="kpi-sub" id="kpi7dSub">Mb</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">Fill Rate /day</div>
+        <div class="kpi-value" id="kpiFill">—</div>
+        <div class="kpi-sub">Mb/day (7d avg)</div>
+      </div>
+      <div class="kpi-card full">
+        <div class="kpi-label">Days to Empty / Full</div>
+        <div class="kpi-value" id="kpiDays">—</div>
+        <div class="kpi-sub" id="kpiDaysSub">at current rate</div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- CHART SECTION -->
+  <div class="tab-section" id="sec-chart">
+    <div class="chart-card">
+      <div class="chart-header">
+        <span class="chart-title">Volume History</span>
+        <div class="period-tabs">
+          <button class="period-tab" data-p="30" onclick="setPeriod(30,this)">1M</button>
+          <button class="period-tab active" data-p="90" onclick="setPeriod(90,this)">3M</button>
+          <button class="period-tab" data-p="180" onclick="setPeriod(180,this)">6M</button>
+          <button class="period-tab" data-p="365" onclick="setPeriod(365,this)">1Y</button>
+          <button class="period-tab" data-p="0" onclick="setPeriod(0,this)">ALL</button>
+        </div>
+      </div>
+      <div class="chart-wrap">
+        <canvas id="volChart"></canvas>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- BOTTOM TAB BAR -->
+<div class="tabbar">
+  <button class="tab active" id="tab-overview" onclick="switchTab('overview')">
+    <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+    Overview
+  </button>
+  <button class="tab" id="tab-chart" onclick="switchTab('chart')">
+    <svg viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+    Chart
+  </button>
+  <button class="tab" onclick="window.location.href='/dashboard'">
+    <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="9" y1="9" x2="15" y2="9"/><line x1="9" y1="12" x2="15" y2="12"/><line x1="9" y1="15" x2="12" y2="15"/></svg>
+    Full
+  </button>
+</div>
+
+<script>
+const SUPABASE_URL = 'https://yoekhkczwdeyauwarsyy.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_7j07_zzdqTGM1LXf7-o9Tg_JJRbJQSM';
+const CAPACITY = 31.78;
+
+let allDates = [], allValues = [], volChart = null;
+
+async function checkAuth() {
+  try {
+    const r = await fetch('/auth/check');
+    const d = await r.json();
+    if (!d.authenticated) { window.location.href = '/app'; return; }
+  } catch(e) { window.location.href = '/app'; return; }
+  loadData();
+}
+
+async function loadData() {
+  try {
+    const daily = await fetch(`/data/data_daily.json?v=${Date.now()}`).then(r => r.json());
+    allDates = daily.dates;
+    allValues = daily.values;
+
+    const vol = allValues[allValues.length - 1];
+    const vol7ago = allValues.length >= 8 ? allValues[allValues.length - 8] : allValues[0];
+    const change7d = vol - vol7ago;
+    const fillRate = change7d / 7;
+    const util = (vol / CAPACITY) * 100;
+    const lastDate = allDates[allDates.length - 1];
+
+    // Last update
+    document.getElementById('lastUpdate').textContent = lastDate;
+
+    // Storage
+    document.getElementById('kpiStorage').textContent = vol.toFixed(2) + ' Mb';
+
+    // Utilization
+    const utilEl = document.getElementById('kpiUtil');
+    utilEl.textContent = util.toFixed(1) + '%';
+    document.getElementById('utilBarFill').style.width = Math.min(util, 100) + '%';
+    document.getElementById('utilBarFill').style.background = util >= 85 ? 'var(--red)' : util >= 70 ? 'var(--yellow)' : 'var(--accent)';
+
+    const pillEl = document.getElementById('kpiPill');
+    if (util >= 85) { pillEl.className = 'kpi-pill pill-critical'; pillEl.textContent = 'CRITICAL'; }
+    else if (util >= 70) { pillEl.className = 'kpi-pill pill-elevated'; pillEl.textContent = 'ELEVATED'; }
+    else { pillEl.className = 'kpi-pill pill-normal'; pillEl.textContent = 'NORMAL'; }
+
+    // 7d change
+    const c7el = document.getElementById('kpi7d');
+    c7el.textContent = (change7d >= 0 ? '+' : '') + change7d.toFixed(2);
+    c7el.className = 'kpi-value ' + (change7d > 0 ? 'red' : 'green');
+    document.getElementById('kpi7dSub').textContent = change7d >= 0 ? '▲ Build' : '▼ Draw';
+
+    // Fill rate
+    const frEl = document.getElementById('kpiFill');
+    frEl.textContent = (fillRate >= 0 ? '+' : '') + fillRate.toFixed(3);
+    frEl.className = 'kpi-value ' + (fillRate > 0 ? 'red' : 'green');
+
+    // Days to empty/full
+    const daysEl = document.getElementById('kpiDays');
+    if (Math.abs(fillRate) < 0.001) {
+      daysEl.textContent = '∞';
+      document.getElementById('kpiDaysSub').textContent = 'rate near zero';
+    } else if (fillRate < 0) {
+      const d = Math.abs(vol / fillRate);
+      daysEl.textContent = Math.round(d) + 'd';
+      daysEl.className = 'kpi-value green';
+      document.getElementById('kpiDaysSub').textContent = 'to empty at ' + fillRate.toFixed(3) + ' Mb/day';
+    } else {
+      const d = (CAPACITY - vol) / fillRate;
+      daysEl.textContent = Math.round(d) + 'd';
+      daysEl.className = 'kpi-value red';
+      document.getElementById('kpiDaysSub').textContent = 'to full at +' + fillRate.toFixed(3) + ' Mb/day';
+    }
+
+    // Signal banner
+    const banner = document.getElementById('signalBanner');
+    const signalText = document.getElementById('signalText');
+    if (fillRate < 0) {
+      banner.className = 'signal-banner draw';
+      signalText.innerHTML = `Storage at <strong>${vol.toFixed(2)} Mb</strong> (${util.toFixed(1)}% utilization) — <span style="color:var(--green)">drawing ${Math.abs(change7d).toFixed(2)} Mb over 7d</span>. Terminal is exporting.`;
+    } else {
+      banner.className = 'signal-banner build';
+      signalText.innerHTML = `Storage at <strong>${vol.toFixed(2)} Mb</strong> (${util.toFixed(1)}% utilization) — <span style="color:var(--red)">building +${change7d.toFixed(2)} Mb over 7d</span>. Export constrained.`;
+    }
+
+    buildChart(90);
+  } catch(e) {
+    console.error(e);
+  }
+}
+
+function buildChart(days) {
+  let dates = allDates, vals = allValues;
+  if (days > 0) {
+    const cutoff = new Date();
+    cutoff.setDate(cutoff.getDate() - days);
+    const idx = dates.findIndex(d => new Date(d) >= cutoff);
+    if (idx > 0) { dates = dates.slice(idx); vals = vals.slice(idx); }
+  }
+
+  // Thin labels for mobile
+  const step = Math.max(1, Math.floor(dates.length / 5));
+  const labels = dates.map((d, i) => i % step === 0 ? d.slice(5) : '');
+
+  const ctx = document.getElementById('volChart').getContext('2d');
+  if (volChart) volChart.destroy();
+
+  volChart = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [{
+        data: vals,
+        borderColor: '#3b82f6',
+        borderWidth: 1.5,
+        backgroundColor: 'rgba(59,130,246,0.08)',
+        fill: true,
+        pointRadius: 0,
+        tension: 0.2,
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      interaction: { intersect: false, mode: 'index' },
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          backgroundColor: '#111827',
+          borderColor: 'rgba(255,255,255,0.1)',
+          borderWidth: 1,
+          titleColor: '#94a3b8',
+          bodyColor: '#3b82f6',
+          callbacks: {
+            title: ctx => allDates[ctx[0].dataIndex + (allDates.length - vals.length)] || '',
+            label: ctx => ` ${ctx.parsed.y.toFixed(2)} Mb`,
+          }
+        }
+      },
+      scales: {
+        x: {
+          ticks: { color: '#64748b', font: { size: 9 }, maxRotation: 0, autoSkip: false },
+          grid: { color: 'rgba(255,255,255,0.04)' },
+        },
+        y: {
+          ticks: { color: '#64748b', font: { size: 9 }, callback: v => v.toFixed(0) + ' Mb' },
+          grid: { color: 'rgba(255,255,255,0.04)' },
+        }
+      }
+    }
+  });
+}
+
+function setPeriod(days, btn) {
+  document.querySelectorAll('.period-tab').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  buildChart(days);
+}
+
+function switchTab(tab) {
+  document.querySelectorAll('.tab-section').forEach(s => s.classList.remove('visible'));
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('sec-' + tab).classList.add('visible');
+  document.getElementById('tab-' + tab).classList.add('active');
+  if (tab === 'chart' && volChart) setTimeout(() => volChart.resize(), 50);
+}
+
+function logout() { window.location.href = '/auth/logout'; }
+
+checkAuth();
+</script>
+</body>
+</html>
