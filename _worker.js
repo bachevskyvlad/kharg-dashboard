@@ -34,7 +34,8 @@ export default {
     if (path === '/api/v1/tanks')             return apiTanksFn.onRequest(context);
 
     const ua = request.headers.get('User-Agent') || '';
-    const isMobile = /Mobi|Android|iPhone|iPad/i.test(ua);
+    const forceDesktop = url.searchParams.get('desktop') === '1';
+    const isMobile = !forceDesktop && /Mobi|Android|iPhone|iPad/i.test(ua);
 
     // app.oilradar.io → serve product pages
     const host = request.headers.get('host') || url.hostname;

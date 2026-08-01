@@ -32,43 +32,19 @@
 html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;overflow-x:hidden;}
 body{display:flex;flex-direction:column;}
 
-/* TOP BAR */
-.topbar{
-  position:fixed;top:0;left:0;right:0;z-index:100;
-  height:56px;
-  background:rgba(10,14,23,0.97);
-  border-bottom:1px solid var(--border);
-  backdrop-filter:blur(12px);
-  display:flex;align-items:center;justify-content:space-between;
-  padding:0 16px;
-}
+.topbar{position:fixed;top:0;left:0;right:0;z-index:100;height:56px;background:rgba(10,14,23,0.97);border-bottom:1px solid var(--border);backdrop-filter:blur(12px);display:flex;align-items:center;justify-content:space-between;padding:0 16px;}
 .topbar-logo{font-family:'Space Grotesk',sans-serif;font-size:17px;font-weight:700;letter-spacing:2px;color:var(--accent);text-decoration:none;}
 .topbar-right{display:flex;align-items:center;gap:12px;}
 .topbar-date{font-size:11px;color:var(--dim);font-variant-numeric:tabular-nums;}
 .logout-btn{font-size:11px;color:var(--muted);background:none;border:1px solid var(--border);padding:5px 10px;border-radius:4px;cursor:pointer;font-family:'Inter',sans-serif;}
 
-/* SCROLL CONTENT */
-.content{
-  margin-top:56px;
-  margin-bottom:60px;
-  padding:16px 14px;
-  display:flex;flex-direction:column;gap:12px;
-}
+.content{margin-top:56px;margin-bottom:60px;padding:14px 14px;display:flex;flex-direction:column;gap:12px;overflow-y:auto;}
 
-/* SIGNAL BANNER */
-.signal-banner{
-  padding:12px 14px;
-  border-radius:8px;
-  font-size:13px;
-  line-height:1.5;
-  border-left:3px solid var(--accent);
-  background:var(--surface);
-}
+.signal-banner{padding:12px 14px;border-radius:8px;font-size:13px;line-height:1.5;border-left:3px solid var(--accent);background:var(--surface);}
 .signal-banner.draw{border-left-color:var(--green);}
 .signal-banner.build{border-left-color:var(--red);}
 .signal-label{font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--dim);margin-bottom:4px;}
 
-/* KPI GRID */
 .kpi-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
 .kpi-card{background:var(--surface);border-radius:10px;padding:14px 14px 12px;border:1px solid var(--border);}
 .kpi-card.full{grid-column:1/-1;}
@@ -83,51 +59,56 @@ body{display:flex;flex-direction:column;}
 .kpi-value.red{color:var(--red);}
 .kpi-value.yellow{color:var(--yellow);}
 
-/* UTILIZATION BAR */
 .util-bar-wrap{margin-top:10px;}
 .util-bar-track{height:5px;background:var(--surface2);border-radius:3px;position:relative;overflow:hidden;}
 .util-bar-fill{height:100%;border-radius:3px;transition:width .6s ease;}
 .util-bar-mark{position:absolute;right:15%;top:-2px;width:1px;height:9px;background:rgba(248,113,113,0.5);}
 
-/* CHART CARD */
+.section-head{font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--dim);padding:8px 0 4px;}
+
 .chart-card{background:var(--surface);border-radius:10px;padding:14px;border:1px solid var(--border);}
-.chart-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;}
+.chart-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;}
 .chart-title{font-size:11px;letter-spacing:1px;text-transform:uppercase;color:var(--muted);}
 .period-tabs{display:flex;gap:4px;}
 .period-tab{font-size:10px;padding:4px 8px;border-radius:4px;border:1px solid var(--border);background:none;color:var(--dim);cursor:pointer;font-family:'Inter',sans-serif;}
 .period-tab.active{background:var(--accent);color:#fff;border-color:var(--accent);}
-.chart-wrap{position:relative;height:160px;}
+.chart-wrap{position:relative;height:180px;}
 
-/* SECTION TITLE */
-.section-title{font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--dim);padding:4px 0 2px;}
+.metrics-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;}
+.metric-card{background:var(--surface);border-radius:8px;padding:12px 10px;border:1px solid var(--border);text-align:center;}
+.metric-val{font-family:'Space Grotesk',sans-serif;font-size:20px;font-weight:700;font-variant-numeric:tabular-nums;line-height:1;}
+.metric-lbl{font-size:9px;letter-spacing:1px;text-transform:uppercase;color:var(--dim);margin-top:4px;}
 
-/* FLOWS ROW */
-.flows-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;}
-.flow-card{background:var(--surface);border-radius:8px;padding:10px 10px 8px;border:1px solid var(--border);text-align:center;}
-.flow-val{font-family:'Space Grotesk',sans-serif;font-size:18px;font-weight:700;font-variant-numeric:tabular-nums;}
-.flow-lbl{font-size:9px;letter-spacing:1px;text-transform:uppercase;color:var(--dim);margin-top:3px;}
+.signal-history{background:var(--surface);border-radius:10px;border:1px solid var(--border);overflow:hidden;}
+.sh-row{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border-bottom:1px solid var(--border);font-size:12px;}
+.sh-row:last-child{border-bottom:none;}
+.sh-date{color:var(--dim);font-size:11px;font-variant-numeric:tabular-nums;}
+.sh-badge{font-size:9px;letter-spacing:1px;text-transform:uppercase;font-weight:600;padding:2px 6px;border-radius:3px;}
+.sh-badge.draw{background:rgba(52,211,153,0.15);color:var(--green);}
+.sh-badge.build{background:rgba(248,113,113,0.15);color:var(--red);}
+.sh-val{font-family:'Space Grotesk',sans-serif;font-size:13px;font-weight:600;font-variant-numeric:tabular-nums;}
 
-/* BOTTOM TAB BAR */
-.tabbar{
-  position:fixed;bottom:0;left:0;right:0;z-index:100;
-  height:60px;
-  background:rgba(13,19,32,0.98);
-  border-top:1px solid var(--border);
-  display:flex;align-items:stretch;
-}
+.pulse-list{background:var(--surface);border-radius:10px;border:1px solid var(--border);overflow:hidden;}
+.pulse-row{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border-bottom:1px solid var(--border);}
+.pulse-row:last-child{border-bottom:none;}
+.pulse-date{font-size:11px;color:var(--dim);font-variant-numeric:tabular-nums;}
+.pulse-vol{font-family:'Space Grotesk',sans-serif;font-size:13px;font-weight:600;color:var(--green);}
+.pulse-days{font-size:11px;color:var(--dim);}
+
+.info-card{background:var(--surface);border-radius:10px;padding:14px;border:1px solid var(--border);}
+.info-row{display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid var(--border);font-size:12px;}
+.info-row:last-child{border-bottom:none;}
+.info-key{color:var(--dim);}
+.info-val{font-family:'Space Grotesk',sans-serif;font-weight:600;font-variant-numeric:tabular-nums;}
+
+.tabbar{position:fixed;bottom:0;left:0;right:0;z-index:100;height:60px;background:rgba(13,19,32,0.98);border-top:1px solid var(--border);display:flex;align-items:stretch;}
 .tab{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;cursor:pointer;color:var(--dim);font-size:9px;letter-spacing:1px;text-transform:uppercase;border:none;background:none;font-family:'Inter',sans-serif;transition:color .15s;}
 .tab.active{color:var(--accent);}
 .tab svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round;}
 
-/* SECTIONS */
 .tab-section{display:none;}
-.tab-section.visible{display:contents;}
+.tab-section.active{display:contents;}
 
-/* SKELETON */
-.skeleton{background:linear-gradient(90deg,var(--surface) 25%,var(--surface2) 50%,var(--surface) 75%);background-size:200% 100%;animation:shimmer 1.4s infinite;border-radius:6px;height:28px;}
-@keyframes shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
-
-/* SAFE AREA */
 @supports(padding-bottom: env(safe-area-inset-bottom)){
   .tabbar{padding-bottom:env(safe-area-inset-bottom);height:calc(60px + env(safe-area-inset-bottom));}
   .content{margin-bottom:calc(60px + env(safe-area-inset-bottom));}
@@ -136,20 +117,18 @@ body{display:flex;flex-direction:column;}
 </head>
 <body>
 
-<!-- TOP BAR -->
 <div class="topbar">
-  <a href="/mobile" class="topbar-logo">OILRADAR</a>
+  <a href="/dashboard" class="topbar-logo">OILRADAR</a>
   <div class="topbar-right">
     <span class="topbar-date" id="lastUpdate">—</span>
     <button class="logout-btn" onclick="logout()">Logout</button>
   </div>
 </div>
 
-<!-- CONTENT -->
 <div class="content">
 
-  <!-- OVERVIEW SECTION -->
-  <div class="tab-section visible" id="sec-overview">
+  <!-- OVERVIEW TAB -->
+  <div class="tab-section active" id="sec-overview">
 
     <div class="signal-banner" id="signalBanner">
       <div class="signal-label">Signal</div>
@@ -160,7 +139,7 @@ body{display:flex;flex-direction:column;}
       <div class="kpi-card">
         <div class="kpi-label">Storage</div>
         <div class="kpi-value" id="kpiStorage">—</div>
-        <div class="kpi-sub">of 31.78 Mb</div>
+        <div class="kpi-sub" id="kpiStorageSub">of — Mb</div>
         <div class="util-bar-wrap">
           <div class="util-bar-track">
             <div class="util-bar-fill" id="utilBarFill" style="width:0%;background:var(--accent);"></div>
@@ -171,7 +150,7 @@ body{display:flex;flex-direction:column;}
       <div class="kpi-card">
         <div class="kpi-label">Utilization</div>
         <div class="kpi-value" id="kpiUtil">—</div>
-        <div class="kpi-sub" id="kpiUtilSub">% of capacity</div>
+        <div class="kpi-sub">% of capacity</div>
         <div class="kpi-pill" id="kpiPill">—</div>
       </div>
       <div class="kpi-card">
@@ -191,9 +170,45 @@ body{display:flex;flex-direction:column;}
       </div>
     </div>
 
+    <div class="section-head">Intelligence Metrics</div>
+    <div class="metrics-grid">
+      <div class="metric-card">
+        <div class="metric-val" id="metSPI">—</div>
+        <div class="metric-lbl">SPI</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-val" id="metSIR">4.3%</div>
+        <div class="metric-lbl">SIR</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-val" id="metPulses">—</div>
+        <div class="metric-lbl">Pulses 30d</div>
+      </div>
+    </div>
+
+    <div class="section-head">Terminal Details</div>
+    <div class="info-card">
+      <div class="info-row"><span class="info-key">Tanks monitored</span><span class="info-val">47</span></div>
+      <div class="info-row"><span class="info-key">Max capacity</span><span class="info-val">33.2 Mb</span></div>
+      <div class="info-row"><span class="info-key">Satellite</span><span class="info-val">Sentinel-1 IW</span></div>
+      <div class="info-row"><span class="info-key">Lead time vs EIA</span><span class="info-val">4–7 weeks</span></div>
+      <div class="info-row"><span class="info-key">Last SAR pass</span><span class="info-val" id="infoLastPass">—</span></div>
+      <div class="info-row"><span class="info-key">30d change</span><span class="info-val" id="info30d">—</span></div>
+    </div>
+
+    <div class="section-head">Recent Signal History</div>
+    <div class="signal-history" id="signalHistory">
+      <div class="sh-row"><span class="sh-date">Loading…</span></div>
+    </div>
+
+    <div class="section-head">Export Pulses (detected VLCCs)</div>
+    <div class="pulse-list" id="pulseList">
+      <div class="pulse-row"><span class="pulse-date">Detecting…</span></div>
+    </div>
+
   </div>
 
-  <!-- CHART SECTION -->
+  <!-- CHART TAB -->
   <div class="tab-section" id="sec-chart">
     <div class="chart-card">
       <div class="chart-header">
@@ -210,11 +225,20 @@ body{display:flex;flex-direction:column;}
         <canvas id="volChart"></canvas>
       </div>
     </div>
+
+    <div class="section-head">30-Day Rolling Change</div>
+    <div class="chart-card">
+      <div class="chart-header">
+        <span class="chart-title">Daily Δ (Mb/day)</span>
+      </div>
+      <div class="chart-wrap">
+        <canvas id="deltaChart"></canvas>
+      </div>
+    </div>
   </div>
 
 </div>
 
-<!-- BOTTOM TAB BAR -->
 <div class="tabbar">
   <button class="tab active" id="tab-overview" onclick="switchTab('overview')">
     <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
@@ -224,18 +248,15 @@ body{display:flex;flex-direction:column;}
     <svg viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
     Chart
   </button>
-  <button class="tab" onclick="window.location.href='/dashboard'">
+  <button class="tab" onclick="window.location.href='/dashboard?desktop=1'">
     <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="9" y1="9" x2="15" y2="9"/><line x1="9" y1="12" x2="15" y2="12"/><line x1="9" y1="15" x2="12" y2="15"/></svg>
     Full
   </button>
 </div>
 
 <script>
-const SUPABASE_URL = 'https://yoekhkczwdeyauwarsyy.supabase.co';
-const SUPABASE_KEY = 'sb_publishable_7j07_zzdqTGM1LXf7-o9Tg_JJRbJQSM';
-const CAPACITY = 31.78;
-
-let allDates = [], allValues = [], volChart = null;
+const CAPACITY = 33.2;
+let allDates = [], allValues = [], volChart = null, deltaChart = null;
 
 async function checkAuth() {
   try {
@@ -248,29 +269,32 @@ async function checkAuth() {
 
 async function loadData() {
   try {
-    const daily = await fetch(`/data/data_daily.json?v=${Date.now()}`).then(r => r.json());
+    const daily = await fetch('/data/data_daily.json?v=' + Date.now()).then(r => r.json());
     allDates = daily.dates;
     allValues = daily.values;
 
-    const vol = allValues[allValues.length - 1];
-    const vol7ago = allValues.length >= 8 ? allValues[allValues.length - 8] : allValues[0];
-    const change7d = vol - vol7ago;
+    const n = allValues.length;
+    const vol = allValues[n - 1];
+    const vol7 = n >= 8 ? allValues[n - 8] : allValues[0];
+    const vol30 = n >= 31 ? allValues[n - 31] : allValues[0];
+    const change7d = vol - vol7;
+    const change30d = vol - vol30;
     const fillRate = change7d / 7;
     const util = (vol / CAPACITY) * 100;
-    const lastDate = allDates[allDates.length - 1];
+    const lastDate = allDates[n - 1];
 
-    // Last update
     document.getElementById('lastUpdate').textContent = lastDate;
+    document.getElementById('infoLastPass').textContent = lastDate;
 
     // Storage
     document.getElementById('kpiStorage').textContent = vol.toFixed(2) + ' Mb';
+    document.getElementById('kpiStorageSub').textContent = 'of ' + CAPACITY + ' Mb';
+    document.getElementById('utilBarFill').style.width = Math.min(util, 100) + '%';
+    document.getElementById('utilBarFill').style.background = util >= 85 ? 'var(--red)' : util >= 70 ? 'var(--yellow)' : 'var(--accent)';
 
     // Utilization
     const utilEl = document.getElementById('kpiUtil');
     utilEl.textContent = util.toFixed(1) + '%';
-    document.getElementById('utilBarFill').style.width = Math.min(util, 100) + '%';
-    document.getElementById('utilBarFill').style.background = util >= 85 ? 'var(--red)' : util >= 70 ? 'var(--yellow)' : 'var(--accent)';
-
     const pillEl = document.getElementById('kpiPill');
     if (util >= 85) { pillEl.className = 'kpi-pill pill-critical'; pillEl.textContent = 'CRITICAL'; }
     else if (util >= 70) { pillEl.className = 'kpi-pill pill-elevated'; pillEl.textContent = 'ELEVATED'; }
@@ -287,19 +311,17 @@ async function loadData() {
     frEl.textContent = (fillRate >= 0 ? '+' : '') + fillRate.toFixed(3);
     frEl.className = 'kpi-value ' + (fillRate > 0 ? 'red' : 'green');
 
-    // Days to empty/full
+    // Days
     const daysEl = document.getElementById('kpiDays');
     if (Math.abs(fillRate) < 0.001) {
       daysEl.textContent = '∞';
       document.getElementById('kpiDaysSub').textContent = 'rate near zero';
     } else if (fillRate < 0) {
-      const d = Math.abs(vol / fillRate);
-      daysEl.textContent = Math.round(d) + 'd';
+      daysEl.textContent = Math.round(Math.abs(vol / fillRate)) + 'd';
       daysEl.className = 'kpi-value green';
       document.getElementById('kpiDaysSub').textContent = 'to empty at ' + fillRate.toFixed(3) + ' Mb/day';
     } else {
-      const d = (CAPACITY - vol) / fillRate;
-      daysEl.textContent = Math.round(d) + 'd';
+      daysEl.textContent = Math.round((CAPACITY - vol) / fillRate) + 'd';
       daysEl.className = 'kpi-value red';
       document.getElementById('kpiDaysSub').textContent = 'to full at +' + fillRate.toFixed(3) + ' Mb/day';
     }
@@ -315,69 +337,121 @@ async function loadData() {
       signalText.innerHTML = `Storage at <strong>${vol.toFixed(2)} Mb</strong> (${util.toFixed(1)}% utilization) — <span style="color:var(--red)">building +${change7d.toFixed(2)} Mb over 7d</span>. Export constrained.`;
     }
 
-    buildChart(90);
-  } catch(e) {
-    console.error(e);
-  }
+    // SPI
+    const spi = (vol / CAPACITY * 100).toFixed(1);
+    const spiEl = document.getElementById('metSPI');
+    spiEl.textContent = spi + '%';
+    spiEl.style.color = spi >= 85 ? 'var(--red)' : spi >= 70 ? 'var(--yellow)' : 'var(--green)';
+
+    // 30d info
+    const c30El = document.getElementById('info30d');
+    c30El.textContent = (change30d >= 0 ? '+' : '') + change30d.toFixed(2) + ' Mb';
+    c30El.style.color = change30d > 0 ? 'var(--red)' : 'var(--green)';
+
+    // Signal history (last 10 weekly snapshots)
+    buildSignalHistory();
+
+    // Export pulses
+    buildPulses();
+
+    // Charts
+    buildVolChart(90);
+    buildDeltaChart();
+
+  } catch(e) { console.error(e); }
 }
 
-function buildChart(days) {
+function buildSignalHistory() {
+  const rows = [];
+  const step = Math.max(1, Math.floor(allDates.length / 12));
+  for (let i = allDates.length - 1; i >= 0 && rows.length < 10; i -= step) {
+    const v = allValues[i];
+    const prev = i >= 7 ? allValues[i - 7] : allValues[0];
+    const chg = v - prev;
+    rows.push({ date: allDates[i], vol: v, chg });
+  }
+  document.getElementById('signalHistory').innerHTML = rows.map(r => `
+    <div class="sh-row">
+      <span class="sh-date">${r.date}</span>
+      <span class="sh-badge ${r.chg < 0 ? 'draw' : 'build'}">${r.chg < 0 ? 'DRAW' : 'BUILD'}</span>
+      <span class="sh-val" style="color:${r.chg < 0 ? 'var(--green)' : 'var(--red)'}">${r.chg >= 0 ? '+' : ''}${r.chg.toFixed(2)} Mb</span>
+    </div>`).join('');
+}
+
+function buildPulses() {
+  const pulses = [];
+  for (let i = allDates.length - 1; i >= 6 && pulses.length < 6; i--) {
+    for (let w = 6; w <= 12; w++) {
+      if (i - w < 0) continue;
+      const drop = allValues[i - w] - allValues[i];
+      if (drop >= 2.0) {
+        const alreadyCovered = pulses.some(p => Math.abs(new Date(p.date) - new Date(allDates[i])) < 14 * 86400000);
+        if (!alreadyCovered) {
+          pulses.push({ date: allDates[i], vol: drop, days: w });
+          break;
+        }
+      }
+    }
+  }
+  document.getElementById('metPulses').textContent = pulses.length;
+  if (!pulses.length) {
+    document.getElementById('pulseList').innerHTML = '<div class="pulse-row"><span class="pulse-date">No export pulses detected in available data</span></div>';
+    return;
+  }
+  document.getElementById('pulseList').innerHTML = pulses.map(p => `
+    <div class="pulse-row">
+      <span class="pulse-date">${p.date}</span>
+      <span class="pulse-vol">−${p.vol.toFixed(2)} Mb</span>
+      <span class="pulse-days">over ${p.days}d</span>
+    </div>`).join('');
+}
+
+function buildVolChart(days) {
   let dates = allDates, vals = allValues;
   if (days > 0) {
-    const cutoff = new Date();
-    cutoff.setDate(cutoff.getDate() - days);
+    const cutoff = new Date(); cutoff.setDate(cutoff.getDate() - days);
     const idx = dates.findIndex(d => new Date(d) >= cutoff);
     if (idx > 0) { dates = dates.slice(idx); vals = vals.slice(idx); }
   }
-
-  // Thin labels for mobile
-  const step = Math.max(1, Math.floor(dates.length / 5));
+  const step = Math.max(1, Math.floor(dates.length / 6));
   const labels = dates.map((d, i) => i % step === 0 ? d.slice(5) : '');
-
   const ctx = document.getElementById('volChart').getContext('2d');
   if (volChart) volChart.destroy();
-
   volChart = new Chart(ctx, {
     type: 'line',
-    data: {
-      labels,
-      datasets: [{
-        data: vals,
-        borderColor: '#3b82f6',
-        borderWidth: 1.5,
-        backgroundColor: 'rgba(59,130,246,0.08)',
-        fill: true,
-        pointRadius: 0,
-        tension: 0.2,
-      }]
-    },
+    data: { labels, datasets: [{ data: vals, borderColor: '#3b82f6', borderWidth: 1.5, backgroundColor: 'rgba(59,130,246,0.08)', fill: true, pointRadius: 0, tension: 0.2 }] },
     options: {
-      responsive: true,
-      maintainAspectRatio: false,
+      responsive: true, maintainAspectRatio: false,
       interaction: { intersect: false, mode: 'index' },
-      plugins: {
-        legend: { display: false },
-        tooltip: {
-          backgroundColor: '#111827',
-          borderColor: 'rgba(255,255,255,0.1)',
-          borderWidth: 1,
-          titleColor: '#94a3b8',
-          bodyColor: '#3b82f6',
-          callbacks: {
-            title: ctx => allDates[ctx[0].dataIndex + (allDates.length - vals.length)] || '',
-            label: ctx => ` ${ctx.parsed.y.toFixed(2)} Mb`,
-          }
-        }
-      },
+      plugins: { legend: { display: false }, tooltip: { backgroundColor: '#111827', borderColor: 'rgba(255,255,255,0.1)', borderWidth: 1, titleColor: '#94a3b8', bodyColor: '#3b82f6', callbacks: { label: ctx => ' ' + ctx.parsed.y.toFixed(2) + ' Mb' } } },
       scales: {
-        x: {
-          ticks: { color: '#64748b', font: { size: 9 }, maxRotation: 0, autoSkip: false },
-          grid: { color: 'rgba(255,255,255,0.04)' },
-        },
-        y: {
-          ticks: { color: '#64748b', font: { size: 9 }, callback: v => v.toFixed(0) + ' Mb' },
-          grid: { color: 'rgba(255,255,255,0.04)' },
-        }
+        x: { ticks: { color: '#64748b', font: { size: 9 }, maxRotation: 0, autoSkip: false }, grid: { color: 'rgba(255,255,255,0.04)' } },
+        y: { ticks: { color: '#64748b', font: { size: 9 }, callback: v => v.toFixed(0) + ' Mb' }, grid: { color: 'rgba(255,255,255,0.04)' } }
+      }
+    }
+  });
+}
+
+function buildDeltaChart() {
+  const n = allValues.length;
+  const cutoff = 90;
+  const start = Math.max(1, n - cutoff);
+  const dates = allDates.slice(start);
+  const deltas = [];
+  for (let i = start; i < n; i++) deltas.push(+(allValues[i] - allValues[i-1]).toFixed(3));
+  const step = Math.max(1, Math.floor(dates.length / 6));
+  const labels = dates.map((d, i) => i % step === 0 ? d.slice(5) : '');
+  const ctx = document.getElementById('deltaChart').getContext('2d');
+  if (deltaChart) deltaChart.destroy();
+  deltaChart = new Chart(ctx, {
+    type: 'bar',
+    data: { labels, datasets: [{ data: deltas, backgroundColor: deltas.map(v => v < 0 ? 'rgba(52,211,153,0.6)' : 'rgba(248,113,113,0.6)'), borderWidth: 0 }] },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false }, tooltip: { backgroundColor: '#111827', borderColor: 'rgba(255,255,255,0.1)', borderWidth: 1, callbacks: { label: ctx => ' ' + (ctx.parsed.y >= 0 ? '+' : '') + ctx.parsed.y.toFixed(3) + ' Mb/day' } } },
+      scales: {
+        x: { ticks: { color: '#64748b', font: { size: 9 }, maxRotation: 0, autoSkip: false }, grid: { display: false } },
+        y: { ticks: { color: '#64748b', font: { size: 9 }, callback: v => v.toFixed(2) }, grid: { color: 'rgba(255,255,255,0.04)' } }
       }
     }
   });
@@ -386,15 +460,17 @@ function buildChart(days) {
 function setPeriod(days, btn) {
   document.querySelectorAll('.period-tab').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
-  buildChart(days);
+  buildVolChart(days);
 }
 
 function switchTab(tab) {
-  document.querySelectorAll('.tab-section').forEach(s => s.classList.remove('visible'));
+  document.querySelectorAll('.tab-section').forEach(s => s.classList.remove('active'));
   document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-  document.getElementById('sec-' + tab).classList.add('visible');
+  document.getElementById('sec-' + tab).classList.add('active');
   document.getElementById('tab-' + tab).classList.add('active');
-  if (tab === 'chart' && volChart) setTimeout(() => volChart.resize(), 50);
+  if (tab === 'chart') {
+    setTimeout(() => { if (volChart) volChart.resize(); if (deltaChart) deltaChart.resize(); }, 50);
+  }
 }
 
 function logout() { window.location.href = '/auth/logout'; }
