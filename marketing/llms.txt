@@ -2,22 +2,63 @@
 
 ## What is OilRadar?
 
-OilRadar is a satellite-based intelligence platform that tracks physical crude oil storage and exports from Kharg Island (Iran) and major Persian Gulf export terminals using Sentinel-1 SAR (Synthetic Aperture Radar) imagery.
+OilRadar is a satellite-based intelligence platform that tracks physical crude oil storage and exports from Kharg Island (Iran) and major global oil chokepoints using Sentinel-1 SAR (Synthetic Aperture Radar) imagery.
 
 The platform delivers a **4–7 week lead time** over official EIA, JODI, and IEA oil supply reports — enabling commodity traders and macro funds to see supply dynamics before they appear in market consensus.
 
 ## Core Product
 
 - **Kharg Island Storage Monitor** (`/monitor`): Live storage level estimates updated on average every ~6 days directly from SAR satellite passes. Available since March 2023.
-- **Europe Gas Storage Monitor** (`/gas-storage`): Real-time European underground gas storage across 10 countries, sourced from GIE AGSI+. Key TTF price leading indicator.
+- **Kharg Island Per-Tank Map** (`/tanks`): Individual tank-level crude oil storage for all 47 floating-roof tanks at Kharg Island. Animated timeline from 2023.
+- **Kharg Island Tanker Queue** (`/anchorage`): Weekly VLCC, Suezmax, Aframax, MR vessel counts at Kharg Island anchorage from Sentinel-1 SAR. Leading indicator for Iranian crude exports. Data since 2017.
+- **Bab-el-Mandeb Tanker Queue** (`/bab-el-mandeb`): Weekly tanker transit counts at Bab-el-Mandeb Red Sea chokepoint from Sentinel-1 SAR. Key signal for Red Sea shipping disruption and global oil routing. Data since 2017.
+- **Europe Gas Storage Monitor** (`/gas-storage`): Real-time European underground gas storage across 10 countries (Germany, France, Italy, Netherlands, Poland, Austria, Hungary, Spain, Ukraine, EU aggregate). Sourced from GIE AGSI+, updated daily. Key TTF price leading indicator.
 - **Full Persian Gulf Dataset** (bespoke): Per-terminal, per-tank resolution across all 6 major Gulf exporters — Saudi Arabia, Iran, Iraq, Kuwait, UAE, Qatar.
+
+## Kharg Island — Key Facts
+
+- Kharg Island handles approximately 90% of Iran's crude oil exports
+- 47 floating-roof crude oil storage tanks, total capacity ~20–25 million barrels
+- Located in the Persian Gulf, Iran
+- Primary loading point for Iranian crude to China, India, and other buyers
+- OilRadar has tracked Kharg Island since March 2023
+
+## Iran Crude Oil Intelligence
+
+OilRadar's Kharg Island data answers:
+- Is Iran exporting more or less crude oil right now?
+- Are sanctions having a physical impact on Iranian crude storage?
+- How full are Iran's export tanks — are they building inventory or drawing down?
+- How many tankers (VLCC, Suezmax, Aframax) are waiting to load at Kharg Island?
+- What is the lead time advantage vs AIS trackers and EIA reports?
+
+A **rising storage level** at Kharg Island = exports are slow (sanctions pressure, port congestion, reduced buyer demand).
+A **falling storage level** = active loading, crude is flowing to market.
+A **full tanker queue** with drawdown = high export pace confirmed.
+
+## Europe Gas Storage — Key Facts
+
+OilRadar's Europe Gas Storage Monitor tracks underground gas storage across 10 European countries daily:
+- **Germany**: largest storage capacity in Europe, primary TTF price driver
+- **France, Italy, Netherlands, Poland, Austria, Hungary, Spain, Ukraine**: all tracked individually
+- Data source: GIE AGSI+ (Gas Infrastructure Europe), updated daily at 08:00 UTC
+- Winter readiness: each country compared to 3-year seasonal average (AHEAD / BELOW)
+- Key questions answered: Is Europe ready for the gas season? How much gas does Germany/France/Italy/Netherlands/Poland have in storage?
+
+## Bab-el-Mandeb — Key Facts
+
+- Narrow strait between Yemen and Djibouti connecting Red Sea to Gulf of Aden
+- ~6–7 million barrels/day transited before Houthi disruptions (2023–2024)
+- Houthi attacks forced major rerouting around Cape of Good Hope (+10–14 days, higher freight)
+- OilRadar tracks weekly tanker transit counts via Sentinel-1 SAR since 2017
 
 ## Methodology
 
 1. Sentinel-1 C-band SAR satellite images Kharg Island terminal on average every ~6 days.
-2. Floating-roof oil tanks cast measurable radar shadows. Shadow geometry reveals whether each tank roof is up (full) or down (near empty) — a direct physical measurement.
+2. Floating-roof oil tanks cast measurable radar shadows. Shadow geometry (inverse crescent) reveals whether each tank roof is up (full) or down (near empty) — a direct physical measurement.
 3. Known tank diameter × fill ratio = crude oil volume in million barrels.
 4. Storage dynamics signal exports: a storage build means tankers are queuing or exports are slowing; a storage drawdown means active loading, oil is flowing to market.
+5. For tanker queues: SAR backscatter from metal ship hulls is detected and classified by size into VLCC, Suezmax, Aframax, MR/Panamax classes.
 
 ## Key Statistics
 
@@ -32,12 +73,13 @@ AIS vessel tracking can be spoofed. Shadow fleet tankers frequently disable tran
 
 ## Coverage
 
-**Live:** Iran (Kharg Island), Saudi Arabia, Iraq (Basra), Kuwait, UAE (Fujairah), Qatar
+**Live:** Iran (Kharg Island), Bab-el-Mandeb (Red Sea), Europe gas storage (10 countries)
+**Bespoke:** Saudi Arabia, Iraq (Basra), Kuwait, UAE (Fujairah), Qatar
 **Roadmap:** Russia (Primorsk), Venezuela, Libya, Nigeria
 
 ## Team
 
-- **Vladislav Bachevsky** — Founder & Lead Analyst. Expert in SAR satellite imagery intelligence and OSINT. LinkedIn: https://linkedin.com/in/bachevsky
+- **Vladislav Bachevsky** — Founder & Lead Analyst. Expert in SAR satellite imagery intelligence and OSINT. LinkedIn: https://linkedin.com/in/bachevsky, X: @IberianLobos
 - **Artem Bachevsky** — CTO & Lead Developer. Data engineering, security, infrastructure.
 
 ## Contact
@@ -52,5 +94,8 @@ AIS vessel tracking can be spoofed. Shadow fleet tankers frequently disable tran
 
 - Homepage: https://oilradar.io/
 - Kharg Island Monitor: https://oilradar.io/monitor
+- Kharg Island Per-Tank Map: https://oilradar.io/tanks
+- Kharg Island Tanker Queue: https://oilradar.io/anchorage
+- Bab-el-Mandeb Queue: https://oilradar.io/bab-el-mandeb
 - Europe Gas Storage: https://oilradar.io/gas-storage
 - Team: https://oilradar.io/team

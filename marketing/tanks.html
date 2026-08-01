@@ -3,10 +3,76 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Kharg Island Per-Tank Storage Dynamics | OilRadar</title>
-<meta name="description" content="Per-tank storage level dynamics at Kharg Island oil export terminal. SAR satellite data for all 47 floating-roof tanks.">
+<title>Kharg Island Tank-Level Oil Storage Map — 47 Tanks Live | OilRadar</title>
+<meta name="description" content="Per-tank oil storage levels at Kharg Island — all 47 floating-roof tanks monitored via Sentinel-1 SAR satellite. Animated timeline from 2023. Physical crude oil intelligence before EIA reports.">
+<meta name="keywords" content="Kharg Island tanks, Kharg Island 47 tanks, floating roof tank, Iran oil storage tanks, Kharg tank map, SAR oil tank monitoring, Sentinel-1 floating roof, Iran crude storage per tank, Kharg Island satellite map, oil tank level satellite, Iranian crude oil storage capacity, tank farm satellite imagery, OSINT oil storage, crude oil storage Iran">
 <meta name="robots" content="index, follow">
 <link rel="canonical" href="https://oilradar.io/tanks">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://oilradar.io/tanks">
+<meta property="og:title" content="Kharg Island 47-Tank Storage Map — Live SAR Data | OilRadar">
+<meta property="og:description" content="Per-tank oil storage levels at Kharg Island — all 47 floating-roof tanks monitored via Sentinel-1 SAR. Animated historical timeline from 2023.">
+<meta property="og:image" content="https://oilradar.io/assets/images/og-image.png">
+<meta property="og:site_name" content="OilRadar">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:site" content="@IberianLobos">
+<meta name="twitter:creator" content="@IberianLobos">
+<meta name="twitter:title" content="Kharg Island 47 Tanks — Live SAR Storage Map | OilRadar">
+<meta name="twitter:description" content="All 47 floating-roof tanks at Kharg Island monitored individually via Sentinel-1 SAR. Physical crude oil storage intelligence.">
+<meta name="twitter:image" content="https://oilradar.io/assets/images/og-image.png">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "Dataset",
+  "name": "Kharg Island Per-Tank Oil Storage — Sentinel-1 SAR",
+  "description": "Individual tank-level crude oil storage estimates for all 47 floating-roof tanks at Kharg Island, Iran. Derived from Sentinel-1 SAR inverse crescent radiometry. Animated timeline from 2023.",
+  "url": "https://oilradar.io/tanks",
+  "creator": {"@type": "Organization", "name": "OilRadar", "url": "https://oilradar.io"},
+  "temporalCoverage": "2023/..",
+  "spatialCoverage": {"@type": "Place", "name": "Kharg Island, Iran"},
+  "measurementTechnique": "Sentinel-1 SAR inverse crescent radiometry on floating-roof tanks",
+  "variableMeasured": "Crude oil volume per tank (million barrels)"
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+    {"@type": "ListItem", "position": 1, "name": "Home", "item": "https://oilradar.io/"},
+    {"@type": "ListItem", "position": 2, "name": "Kharg Island Monitor", "item": "https://oilradar.io/monitor"},
+    {"@type": "ListItem", "position": 3, "name": "Per-Tank Map", "item": "https://oilradar.io/tanks"}
+  ]
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "How many oil storage tanks are at Kharg Island?",
+      "acceptedAnswer": {"@type": "Answer", "text": "Kharg Island has 47 active floating-roof crude oil storage tanks across the terminal complex. OilRadar monitors each tank individually using Sentinel-1 SAR satellite imagery, measuring fill level via inverse crescent radiometry on the radar shadow cast by the floating roof."}
+    },
+    {
+      "@type": "Question",
+      "name": "How is per-tank oil storage measured by satellite?",
+      "acceptedAnswer": {"@type": "Answer", "text": "Floating-roof oil tanks have a roof that rises and falls with the oil level inside. When Sentinel-1 SAR images the tank, the floating roof casts a radar shadow (an inverse crescent shape) whose geometry reveals the roof position — and therefore how full the tank is. Known tank diameter × measured fill ratio = crude oil volume in million barrels."}
+    },
+    {
+      "@type": "Question",
+      "name": "What is the total crude oil storage capacity at Kharg Island?",
+      "acceptedAnswer": {"@type": "Answer", "text": "Kharg Island's 47 floating-roof tanks have a combined crude oil storage capacity of approximately 20–25 million barrels. This makes it one of the largest single crude oil export terminal storage complexes in the world. Current aggregate fill level and per-tank breakdown are shown on this page."}
+    },
+    {
+      "@type": "Question",
+      "name": "Why monitor individual tanks at Kharg Island?",
+      "acceptedAnswer": {"@type": "Answer", "text": "Tank-level resolution reveals which sections of the terminal are filling or emptying — a key signal for identifying loading operations, pipeline inflows, and export bottlenecks before they appear in aggregate data. Individual tank dynamics provide 2–4 weeks of lead time over AIS-based export trackers and 4–7 weeks over EIA reports."}
+    }
+  ]
+}
+</script>
 <link rel="icon" type="image/x-icon" href="/assets/images/favicon.ico">
 <link rel="icon" type="image/png" sizes="32x32" href="/assets/images/favicon-32x32.png">
 <link rel="icon" type="image/png" sizes="16x16" href="/assets/images/favicon-16x16.png">
@@ -414,5 +480,13 @@ async function init() {
 
 init();
 </script>
+<noscript>
+<div style="display:none" aria-hidden="true">
+OilRadar Kharg Island Per-Tank Storage Map. All 47 floating-roof crude oil storage tanks at Kharg Island, Iran monitored individually via Sentinel-1 SAR satellite imagery.
+Methodology: Inverse crescent radiometry on SAR backscatter — the floating roof casts a measurable radar shadow revealing exact fill level per tank. Known tank diameter × fill ratio = crude oil volume in million barrels.
+Total storage capacity: approximately 20–25 million barrels across 47 tanks. Animated timeline from 2023 to present. Data provides 4–7 weeks lead time over EIA and JODI official reports.
+Data source: Sentinel-1 SAR, processed by OilRadar.
+</div>
+</noscript>
 </body>
 </html>
