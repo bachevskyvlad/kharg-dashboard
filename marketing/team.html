@@ -35,11 +35,35 @@
   "worksFor": {"@type": "Organization", "name": "OilRadar", "url": "https://oilradar.io"}
 }
 </script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "Who built OilRadar?",
+      "acceptedAnswer": {"@type": "Answer", "text": "OilRadar was founded and is run by Vladislav Bachevsky — a satellite intelligence analyst specializing in SAR imagery and OSINT for physical oil markets. SAR signal processing, pipeline engineering, and market interpretation are all done in-house by one person, with no committee or consensus view."}
+    },
+    {
+      "@type": "Question",
+      "name": "How does OilRadar track Iranian crude oil exports?",
+      "acceptedAnswer": {"@type": "Answer", "text": "OilRadar uses Sentinel-1 C-band SAR satellite imagery to monitor all 47 floating-roof crude oil storage tanks at Kharg Island, Iran — the terminal handling ~90% of Iranian crude exports. Inverse crescent radiometry on SAR backscatter reveals each tank's fill level directly from physics, with no surveys, AIS data, or field access required."}
+    },
+    {
+      "@type": "Question",
+      "name": "How early does OilRadar signal lead official data?",
+      "acceptedAnswer": {"@type": "Answer", "text": "OilRadar's SAR-derived storage signal arrives 4–7 weeks before EIA and JODI publish their monthly oil supply figures. The platform updates every ~6 days on Sentinel-1 revisit, versus a 4–8 week lag for EIA and 6–10 week lag for IEA."}
+    }
+  ]
+}
+</script>
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-TZQ5VH3GPY"></script>
 <script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','G-TZQ5VH3GPY');</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@300;400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@300;400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+<noscript><link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@300;400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"></noscript>
 <style>
   :root{--black:#080a0d;--deep:#0d1117;--panel:#111820;--border:#1e2d3d;--accent:#3b82f6;--text:#c8d6e5;--muted:#5a7a94;--white:#f0f4f8;}
   *{margin:0;padding:0;box-sizing:border-box;}
@@ -136,5 +160,10 @@
   </div>
   <div class="footer-text">Satellite Intelligence for Physical Oil Markets<br><span style="opacity:0.7;">We take on new desks selectively.</span></div>
 </footer>
+<noscript>
+<div style="display:none" aria-hidden="true">
+OilRadar — founded and run by Vladislav Bachevsky, satellite intelligence analyst. Sentinel-1 SAR processing, pipeline engineering, market interpretation — all in-house. 47 floating-roof tanks at Kharg Island, Iran. Signal arrives 4–7 weeks before EIA or JODI. Methodology: inverse crescent radiometry on SAR backscatter. Not survey-based, not AIS-dependent.
+</div>
+</noscript>
 </body>
 </html>
