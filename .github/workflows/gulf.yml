@@ -84,22 +84,3 @@ jobs:
           git commit -m "auto update gulf $(date -u +'%Y-%m-%d')"
           git pull --rebase --autostash origin main
           git push
-      - name: Telegram - Gulf data pushed
-        if: success()
-        run: |
-          LATEST=$(jq -r '.weekly.storage_by_country.Iran[-1] // "?"' data/fragility.json 2>/dev/null || echo "?")
-          PREV=$(jq -r '.weekly.storage_by_country.Iran[-2] // "?"' data/fragility.json 2>/dev/null || echo "?")
-          LAST_DATE=$(jq -r '.weekly.dates[-1] // "?"' data/fragility.json 2>/dev/null || echo "?")
-          if [ "$LATEST" != "?" ] && [ "$PREV" != "?" ]; then
-            CHANGE=$(awk "BEGIN {printf \"%+.2f\", $LATEST - $PREV}")
-          else
-            CHANGE="?"
-          fi
-          curl -s -X POST "https://api.telegram.org/bot7745904293:AAHV2qN_5_XNxpg6Ir3iV3XmEKpokthi308/sendMessage" \
-            -d chat_id="204715787" \
-            -d parse_mode="HTML" \
-            --data-urlencode text="&#128640; <b>Gulf data updated</b>
-          &#128197; <code>$(date -u +'%Y-%m-%d %H:%M UTC')</code>
-          &#128201; Kharg: <b>${LATEST} Mn Bbl</b> (${CHANGE} vs prev week)
-          &#128198; Last data point: <code>${LAST_DATE}</code>
-          &#128279; <a href='https://app.oilradar.io/dashboard'>app.oilradar.io/dashboard</a>"

@@ -155,15 +155,6 @@ jobs:
           git commit -m "auto update kharg $(date -u +'%Y-%m-%d')"
           git pull --rebase --autostash origin main
           git push
-      - name: Telegram - Dashboard pushed
-        if: success()
-        run: |
-          curl -s -X POST "https://api.telegram.org/bot7745904293:AAHV2qN_5_XNxpg6Ir3iV3XmEKpokthi308/sendMessage" \
-            -d chat_id="204715787" \
-            -d parse_mode="HTML" \
-            --data-urlencode text="&#128640; <b>Kharg data updated</b>
-          &#128197; <code>$(date -u +'%Y-%m-%d %H:%M UTC')</code>
-          &#128279; <a href='https://oilradar.io/monitor'>oilradar.io/monitor</a>"
       - name: Telegram - Commit FAILED
         if: failure()
         run: |
