@@ -296,25 +296,45 @@
             html, body { height: auto; overflow: auto; }
             body { flex-direction: column; }
 
-            /* Sidebar → top bar */
+            /* Sidebar → sticky top bar with dropdown */
             .sidebar {
-                position: sticky; top: 0;
-                width: 100%; min-width: 0; height: auto;
+                position: sticky; top: 0; z-index: 200;
+                width: 100%; min-width: 0; height: 52px;
                 flex-direction: row; align-items: center;
                 border-right: none; border-bottom: 1px solid var(--border);
-                overflow-x: auto;
+                overflow: visible;
             }
-            .sidebar-logo { padding: 0.7rem 1rem; border-bottom: none; border-right: 1px solid var(--border); white-space: nowrap; }
+            .sidebar-logo { padding: 0.7rem 1rem; border-bottom: none; border-right: 1px solid var(--border); white-space: nowrap; flex-shrink: 0; }
             .logo-sub { display: none; }
-            .sidebar-nav { display: flex; flex: 1; padding: 0; }
-            .nav-item {
-                border-left: none; border-bottom: 2px solid transparent;
-                padding: 0.85rem 0.9rem; white-space: nowrap; font-size: 0.72rem;
+            .sidebar-nav { display: none; }
+            .sidebar-footer { display: none; }
+
+            /* Hamburger button */
+            .mob-menu-btn {
+                display: flex; align-items: center; justify-content: center;
+                margin-left: auto; margin-right: 12px;
+                width: 36px; height: 36px;
+                background: none; border: 1px solid var(--border);
+                color: var(--accent); cursor: pointer; flex-shrink: 0;
             }
-            .nav-item.active { border-left-color: transparent; border-bottom-color: var(--accent); }
-            .sidebar-footer { padding: 0.5rem 0.75rem; border-top: none; border-left: 1px solid var(--border); }
-            .user-email { display: none; }
-            .logout-btn { width: auto; white-space: nowrap; }
+            .mob-menu-btn svg { width: 18px; height: 18px; }
+
+            /* Dropdown */
+            .mob-dropdown {
+                display: none; position: absolute; top: 52px; right: 0; left: 0;
+                background: var(--sidebar); border-bottom: 1px solid var(--border);
+                flex-direction: column; z-index: 199;
+            }
+            .mob-dropdown.open { display: flex; }
+            .mob-dropdown .nav-item {
+                border-left: none; border-bottom: 1px solid var(--border);
+                padding: 0.9rem 1.25rem; font-size: 0.78rem; white-space: nowrap;
+            }
+            .mob-dropdown .nav-item.active { border-left: 3px solid var(--accent); background: rgba(59,130,246,0.08); }
+            .mob-dropdown-footer {
+                padding: 0.75rem 1.25rem; border-top: 1px solid var(--border);
+                display: flex; align-items: center; justify-content: flex-end;
+            }
 
             /* Main */
             .main { margin-left: 0; height: auto; }
@@ -480,6 +500,23 @@
     <div class="sidebar-footer">
         <span class="user-email" id="userEmail">Loading…</span>
         <button class="logout-btn" onclick="logout()">Logout</button>
+    </div>
+
+    <!-- Mobile hamburger button (only visible on mobile via CSS) -->
+    <button class="mob-menu-btn" id="mobMenuBtn" onclick="toggleMobMenu()" aria-label="Menu">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+    </button>
+
+    <!-- Mobile dropdown -->
+    <div class="mob-dropdown" id="mobDropdown">
+        <div class="nav-item active" id="mob-nav-overview" onclick="showSection('overview');closeMobMenu()"><span class="nav-icon">◎</span> Overview</div>
+        <div class="nav-item" id="mob-nav-flows" onclick="showSection('flows');closeMobMenu()"><span class="nav-icon">⇅</span> Gross Flows</div>
+        <div class="nav-item" id="mob-nav-map" onclick="showSection('map');closeMobMenu()"><span class="nav-icon">⊞</span> Per-Tank Map</div>
+        <div class="nav-item" id="mob-nav-anchorage" onclick="showSection('anchorage');closeMobMenu()"><span class="nav-icon">⚓</span> Tanker Queue</div>
+        <div class="nav-item" id="mob-nav-api" onclick="showSection('api');closeMobMenu()"><span class="nav-icon">⌥</span> API</div>
+        <div class="mob-dropdown-footer">
+            <button class="logout-btn" onclick="logout()">Logout</button>
+        </div>
     </div>
 </aside>
 
@@ -1014,6 +1051,10 @@ function showSection(id) {
     document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
     document.getElementById('sec-' + id).classList.add('active');
     event.currentTarget.classList.add('active');
+    // Sync mobile dropdown active state
+    document.querySelectorAll('.mob-dropdown .nav-item').forEach(n => n.classList.remove('active'));
+    const mobNav = document.getElementById('mob-nav-' + id);
+    if (mobNav) mobNav.classList.add('active');
     if (id === 'map' && !window._mapInited) { initTankMap(); window._mapInited = true; }
     if (id === 'anchorage') { initAnchorage(); }
     if (id === 'flows') {
@@ -1022,8 +1063,21 @@ function showSection(id) {
     }
 }
 
+function toggleMobMenu() {
+    document.getElementById('mobDropdown').classList.toggle('open');
+}
+function closeMobMenu() {
+    document.getElementById('mobDropdown').classList.remove('open');
+}
+document.addEventListener('click', function(e) {
+    if (!e.target.closest('.sidebar')) {
+        const d = document.getElementById('mobDropdown');
+        if (d) d.classList.remove('open');
+    }
+});
+
 // ── Constants ──────────────────────────────────────────────────────────────
-const MAX_CAP = 31.78;
+const MAX_CAP = 33.2;
 const PULSE_THRESHOLD = 2.0;
 const PULSE_WIN_MIN = 6;
 const PULSE_WIN_MAX = 12;
