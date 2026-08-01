@@ -33,11 +33,13 @@ body{background:var(--black);color:var(--text);font-family:'DM Sans',sans-serif;
 nav{position:fixed;top:0;left:0;right:0;z-index:200;display:flex;align-items:center;justify-content:space-between;padding:0 16px;height:56px;background:rgba(6,8,9,0.97);backdrop-filter:blur(16px);border-bottom:1px solid var(--border);}
 .logo{font-family:'Bebas Neue',sans-serif;font-size:20px;letter-spacing:4px;color:var(--white);text-decoration:none;}
 .logo em{color:var(--accent);font-style:normal;}
-.nav-right{display:flex;align-items:center;gap:8px;}
-.btn-schedule{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:1px;text-transform:uppercase;background:transparent;color:var(--accent);padding:8px 12px;border:1px solid var(--accent);text-decoration:none;white-space:nowrap;min-height:36px;display:flex;align-items:center;}
-.btn-dashboard{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:1px;text-transform:uppercase;background:var(--accent);color:#fff;padding:8px 12px;text-decoration:none;white-space:nowrap;min-height:36px;display:flex;align-items:center;}
-@media(max-width:380px){.btn-schedule{display:none;}}
-
+.nav-right{position:relative;}
+.hamburger{background:none;border:1px solid rgba(59,130,246,0.3);width:40px;height:40px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--accent);flex-shrink:0;}
+.hamburger svg{width:20px;height:20px;}
+.nav-dropdown{display:none;position:absolute;right:0;top:calc(100% + 8px);background:#111827;border:1px solid rgba(59,130,246,0.2);min-width:190px;z-index:300;flex-direction:column;box-shadow:0 8px 24px rgba(0,0,0,0.5);}
+.nav-dropdown.open{display:flex;}
+.nav-dropdown a{font-family:'DM Mono',monospace;font-size:11px;letter-spacing:1px;text-transform:uppercase;color:var(--accent);text-decoration:none;padding:13px 16px;border-bottom:1px solid rgba(255,255,255,0.06);}
+.nav-dropdown a:last-child{border-bottom:none;background:var(--accent);color:#fff !important;}
 main{flex:1;padding-top:56px;}
 
 /* HERO */
@@ -124,9 +126,14 @@ footer{background:var(--panel);border-top:1px solid var(--border);padding:24px 1
 
 <nav>
   <a href="/" class="logo">Oil<em>Radar</em></a>
-  <div class="nav-right">
-    <a href="https://calendly.com/bachevsky/60min" target="_blank" class="btn-schedule">Schedule a Call</a>
-    <a href="https://app.oilradar.io/dashboard" target="_blank" class="btn-dashboard">Dashboard &rarr;</a>
+    <div class="nav-right">
+    <button class="hamburger" onclick="toggleMenu()" aria-label="Menu">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+    </button>
+    <div class="nav-dropdown" id="navDropdown">
+      <a href="https://calendly.com/bachevsky/60min" target="_blank">Schedule a Call</a>
+      <a href="https://app.oilradar.io/dashboard" target="_blank">Dashboard &rarr;</a>
+    </div>
   </div>
 </nav>
 
