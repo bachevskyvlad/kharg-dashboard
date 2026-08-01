@@ -9,9 +9,7 @@ The platform delivers a **4–7 week lead time** over official EIA, JODI, and IE
 ## Core Product
 
 - **Kharg Island Storage Monitor** (`/monitor`): Live storage level estimates updated on average every ~6 days directly from SAR satellite passes. Available since March 2023.
-- **Kharg Island Per-Tank Map** (`/tanks`): Individual tank-level crude oil storage for all 47 floating-roof tanks at Kharg Island. Animated timeline from 2023.
 - **Kharg Island Tanker Queue** (`/anchorage`): Weekly VLCC, Suezmax, Aframax, MR vessel counts at Kharg Island anchorage from Sentinel-1 SAR. Leading indicator for Iranian crude exports. Data since 2017.
-- **Bab-el-Mandeb Tanker Queue** (`/bab-el-mandeb`): Weekly tanker transit counts at Bab-el-Mandeb Red Sea chokepoint from Sentinel-1 SAR. Key signal for Red Sea shipping disruption and global oil routing. Data since 2017.
 - **Europe Gas Storage Monitor** (`/gas-storage`): Real-time European underground gas storage across 10 countries (Germany, France, Italy, Netherlands, Poland, Austria, Hungary, Spain, Ukraine, EU aggregate). Sourced from GIE AGSI+, updated daily. Key TTF price leading indicator.
 - **Full Persian Gulf Dataset** (bespoke): Per-terminal, per-tank resolution across all 6 major Gulf exporters — Saudi Arabia, Iran, Iraq, Kuwait, UAE, Qatar.
 
@@ -73,7 +71,7 @@ AIS vessel tracking can be spoofed. Shadow fleet tankers frequently disable tran
 
 ## Coverage
 
-**Live:** Iran (Kharg Island), Bab-el-Mandeb (Red Sea), Europe gas storage (10 countries)
+**Live:** Iran (Kharg Island), Kharg Tanker Queue, Europe gas storage (10 countries)
 **Bespoke:** Saudi Arabia, Iraq (Basra), Kuwait, UAE (Fujairah), Qatar
 **Roadmap:** Russia (Primorsk), Venezuela, Libya, Nigeria
 
@@ -94,8 +92,6 @@ AIS vessel tracking can be spoofed. Shadow fleet tankers frequently disable tran
 
 - Homepage: https://oilradar.io/
 - Kharg Island Monitor: https://oilradar.io/monitor
-- Kharg Island Per-Tank Map: https://oilradar.io/tanks
 - Kharg Island Tanker Queue: https://oilradar.io/anchorage
-- Bab-el-Mandeb Queue: https://oilradar.io/bab-el-mandeb
 - Europe Gas Storage: https://oilradar.io/gas-storage
 - Team: https://oilradar.io/team
