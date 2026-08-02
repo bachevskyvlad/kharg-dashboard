@@ -1,0 +1,481 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>OilRadar — Kharg Island</title>
+<meta name="robots" content="noindex, nofollow">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-TZQ5VH3GPY"></script>
+<script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','G-TZQ5VH3GPY');</script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+:root{
+  --bg:#0a0e17;
+  --surface:#111827;
+  --surface2:#1a2233;
+  --border:rgba(255,255,255,0.07);
+  --muted:#94a3b8;
+  --dim:#64748b;
+  --text:#e2e8f0;
+  --accent:#3b82f6;
+  --green:#34d399;
+  --red:#f87171;
+  --yellow:#fbbf24;
+}
+html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;overflow-x:hidden;}
+body{display:flex;flex-direction:column;}
+
+.topbar{position:fixed;top:0;left:0;right:0;z-index:100;height:56px;background:rgba(10,14,23,0.97);border-bottom:1px solid var(--border);backdrop-filter:blur(12px);display:flex;align-items:center;justify-content:space-between;padding:0 16px;}
+.topbar-logo{font-family:'Space Grotesk',sans-serif;font-size:17px;font-weight:700;letter-spacing:2px;color:var(--accent);text-decoration:none;}
+.topbar-right{display:flex;align-items:center;gap:12px;}
+.topbar-date{font-size:11px;color:var(--dim);font-variant-numeric:tabular-nums;}
+.logout-btn{font-size:11px;color:var(--muted);background:none;border:1px solid var(--border);padding:5px 10px;border-radius:4px;cursor:pointer;font-family:'Inter',sans-serif;}
+
+.content{margin-top:56px;margin-bottom:60px;padding:14px 14px;display:flex;flex-direction:column;gap:12px;overflow-y:auto;}
+
+.signal-banner{padding:12px 14px;border-radius:8px;font-size:13px;line-height:1.5;border-left:3px solid var(--accent);background:var(--surface);}
+.signal-banner.draw{border-left-color:var(--green);}
+.signal-banner.build{border-left-color:var(--red);}
+.signal-label{font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--dim);margin-bottom:4px;}
+
+.kpi-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.kpi-card{background:var(--surface);border-radius:10px;padding:14px 14px 12px;border:1px solid var(--border);}
+.kpi-card.full{grid-column:1/-1;}
+.kpi-label{font-size:9px;letter-spacing:1.5px;text-transform:uppercase;color:var(--dim);margin-bottom:6px;}
+.kpi-value{font-family:'Space Grotesk',sans-serif;font-size:28px;font-weight:700;line-height:1;font-variant-numeric:tabular-nums;}
+.kpi-sub{font-size:11px;color:var(--dim);margin-top:4px;}
+.kpi-pill{display:inline-block;font-size:9px;letter-spacing:1px;text-transform:uppercase;font-weight:600;padding:2px 7px;border-radius:3px;margin-top:6px;}
+.pill-normal{background:rgba(52,211,153,0.15);color:var(--green);}
+.pill-elevated{background:rgba(251,191,36,0.15);color:var(--yellow);}
+.pill-critical{background:rgba(248,113,113,0.15);color:var(--red);}
+.kpi-value.green{color:var(--green);}
+.kpi-value.red{color:var(--red);}
+.kpi-value.yellow{color:var(--yellow);}
+
+.util-bar-wrap{margin-top:10px;}
+.util-bar-track{height:5px;background:var(--surface2);border-radius:3px;position:relative;overflow:hidden;}
+.util-bar-fill{height:100%;border-radius:3px;transition:width .6s ease;}
+.util-bar-mark{position:absolute;right:15%;top:-2px;width:1px;height:9px;background:rgba(248,113,113,0.5);}
+
+.section-head{font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--dim);padding:8px 0 4px;}
+
+.chart-card{background:var(--surface);border-radius:10px;padding:14px;border:1px solid var(--border);}
+.chart-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;}
+.chart-title{font-size:11px;letter-spacing:1px;text-transform:uppercase;color:var(--muted);}
+.period-tabs{display:flex;gap:4px;}
+.period-tab{font-size:10px;padding:4px 8px;border-radius:4px;border:1px solid var(--border);background:none;color:var(--dim);cursor:pointer;font-family:'Inter',sans-serif;}
+.period-tab.active{background:var(--accent);color:#fff;border-color:var(--accent);}
+.chart-wrap{position:relative;height:180px;}
+
+.metrics-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;}
+.metric-card{background:var(--surface);border-radius:8px;padding:12px 10px;border:1px solid var(--border);text-align:center;}
+.metric-val{font-family:'Space Grotesk',sans-serif;font-size:20px;font-weight:700;font-variant-numeric:tabular-nums;line-height:1;}
+.metric-lbl{font-size:9px;letter-spacing:1px;text-transform:uppercase;color:var(--dim);margin-top:4px;}
+
+.signal-history{background:var(--surface);border-radius:10px;border:1px solid var(--border);overflow:hidden;}
+.sh-row{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border-bottom:1px solid var(--border);font-size:12px;}
+.sh-row:last-child{border-bottom:none;}
+.sh-date{color:var(--dim);font-size:11px;font-variant-numeric:tabular-nums;}
+.sh-badge{font-size:9px;letter-spacing:1px;text-transform:uppercase;font-weight:600;padding:2px 6px;border-radius:3px;}
+.sh-badge.draw{background:rgba(52,211,153,0.15);color:var(--green);}
+.sh-badge.build{background:rgba(248,113,113,0.15);color:var(--red);}
+.sh-val{font-family:'Space Grotesk',sans-serif;font-size:13px;font-weight:600;font-variant-numeric:tabular-nums;}
+
+.pulse-list{background:var(--surface);border-radius:10px;border:1px solid var(--border);overflow:hidden;}
+.pulse-row{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border-bottom:1px solid var(--border);}
+.pulse-row:last-child{border-bottom:none;}
+.pulse-date{font-size:11px;color:var(--dim);font-variant-numeric:tabular-nums;}
+.pulse-vol{font-family:'Space Grotesk',sans-serif;font-size:13px;font-weight:600;color:var(--green);}
+.pulse-days{font-size:11px;color:var(--dim);}
+
+.info-card{background:var(--surface);border-radius:10px;padding:14px;border:1px solid var(--border);}
+.info-row{display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid var(--border);font-size:12px;}
+.info-row:last-child{border-bottom:none;}
+.info-key{color:var(--dim);}
+.info-val{font-family:'Space Grotesk',sans-serif;font-weight:600;font-variant-numeric:tabular-nums;}
+
+.tabbar{position:fixed;bottom:0;left:0;right:0;z-index:100;height:60px;background:rgba(13,19,32,0.98);border-top:1px solid var(--border);display:flex;align-items:stretch;}
+.tab{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;cursor:pointer;color:var(--dim);font-size:9px;letter-spacing:1px;text-transform:uppercase;border:none;background:none;font-family:'Inter',sans-serif;transition:color .15s;}
+.tab.active{color:var(--accent);}
+.tab svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round;}
+
+.tab-section{display:none;}
+.tab-section.active{display:contents;}
+
+@supports(padding-bottom: env(safe-area-inset-bottom)){
+  .tabbar{padding-bottom:env(safe-area-inset-bottom);height:calc(60px + env(safe-area-inset-bottom));}
+  .content{margin-bottom:calc(60px + env(safe-area-inset-bottom));}
+}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <a href="/zh/dashboard" class="topbar-logo">OILRADAR</a>
+  <div class="topbar-right">
+    <span class="topbar-date" id="lastUpdate">—</span>
+    <button class="logout-btn" onclick="logout()">退出</button>
+  </div>
+</div>
+
+<div class="content">
+
+  <!-- OVERVIEW TAB -->
+  <div class="tab-section active" id="sec-overview">
+
+    <div class="signal-banner" id="signalBanner">
+      <div class="signal-label">信号</div>
+      <span id="signalText">加载中…</span>
+    </div>
+
+    <div class="kpi-grid">
+      <div class="kpi-card">
+        <div class="kpi-label">储量</div>
+        <div class="kpi-value" id="kpiStorage">—</div>
+        <div class="kpi-sub" id="kpiStorageSub">/ — Mb</div>
+        <div class="util-bar-wrap">
+          <div class="util-bar-track">
+            <div class="util-bar-fill" id="utilBarFill" style="width:0%;background:var(--accent);"></div>
+            <div class="util-bar-mark"></div>
+          </div>
+        </div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">利用率</div>
+        <div class="kpi-value" id="kpiUtil">—</div>
+        <div class="kpi-sub">% 容量</div>
+        <div class="kpi-pill" id="kpiPill">—</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">7日变化</div>
+        <div class="kpi-value" id="kpi7d">—</div>
+        <div class="kpi-sub" id="kpi7dSub">Mb</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">填充速率/日</div>
+        <div class="kpi-value" id="kpiFill">—</div>
+        <div class="kpi-sub">Mb/天（7日均值）</div>
+      </div>
+      <div class="kpi-card full">
+        <div class="kpi-label">距空仓天数 / 距满仓天数</div>
+        <div class="kpi-value" id="kpiDays">—</div>
+        <div class="kpi-sub" id="kpiDaysSub">按当前速率</div>
+      </div>
+    </div>
+
+    <div class="section-head">情报指标</div>
+    <div class="metrics-grid">
+      <div class="metric-card">
+        <div class="metric-val" id="metSPI">—</div>
+        <div class="metric-lbl">SPI</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-val" id="metSIR">4.3%</div>
+        <div class="metric-lbl">SIR</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-val" id="metPulses">—</div>
+        <div class="metric-lbl">30日脉冲</div>
+      </div>
+    </div>
+
+    <div class="section-head">码头详情</div>
+    <div class="info-card">
+      <div class="info-row"><span class="info-key">监测储罐数</span><span class="info-val">47</span></div>
+      <div class="info-row"><span class="info-key">最大容量</span><span class="info-val">33.2 Mb</span></div>
+      <div class="info-row"><span class="info-key">卫星</span><span class="info-val">Sentinel-1 IW</span></div>
+      <div class="info-row"><span class="info-key">领先 EIA 时间</span><span class="info-val">4–7 周</span></div>
+      <div class="info-row"><span class="info-key">最近 SAR 过境</span><span class="info-val" id="infoLastPass">—</span></div>
+      <div class="info-row"><span class="info-key">30日变化</span><span class="info-val" id="info30d">—</span></div>
+    </div>
+
+    <div class="section-head">近期信号历史</div>
+    <div class="signal-history" id="signalHistory">
+      <div class="sh-row"><span class="sh-date">加载中…</span></div>
+    </div>
+
+    <div class="section-head">出口脉冲（检测到的VLCC）</div>
+    <div class="pulse-list" id="pulseList">
+      <div class="pulse-row"><span class="pulse-date">检测中…</span></div>
+    </div>
+
+  </div>
+
+  <!-- CHART TAB -->
+  <div class="tab-section" id="sec-chart">
+    <div class="chart-card">
+      <div class="chart-header">
+        <span class="chart-title">储量历史</span>
+        <div class="period-tabs">
+          <button class="period-tab" data-p="30" onclick="setPeriod(30,this)">1M</button>
+          <button class="period-tab active" data-p="90" onclick="setPeriod(90,this)">3M</button>
+          <button class="period-tab" data-p="180" onclick="setPeriod(180,this)">6M</button>
+          <button class="period-tab" data-p="365" onclick="setPeriod(365,this)">1Y</button>
+          <button class="period-tab" data-p="0" onclick="setPeriod(0,this)">全部</button>
+        </div>
+      </div>
+      <div class="chart-wrap">
+        <canvas id="volChart"></canvas>
+      </div>
+    </div>
+
+    <div class="section-head">30日滚动变化</div>
+    <div class="chart-card">
+      <div class="chart-header">
+        <span class="chart-title">日变化量 (Mb/天)</span>
+      </div>
+      <div class="chart-wrap">
+        <canvas id="deltaChart"></canvas>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<div class="tabbar">
+  <button class="tab active" id="tab-overview" onclick="switchTab('overview')">
+    <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+    概览
+  </button>
+  <button class="tab" id="tab-chart" onclick="switchTab('chart')">
+    <svg viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+    图表
+  </button>
+  <button class="tab" onclick="window.location.href='/zh/dashboard?desktop=1'">
+    <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="9" y1="9" x2="15" y2="9"/><line x1="9" y1="12" x2="15" y2="12"/><line x1="9" y1="15" x2="12" y2="15"/></svg>
+    完整
+  </button>
+</div>
+
+<script>
+const CAPACITY = 33.2;
+let allDates = [], allValues = [], volChart = null, deltaChart = null;
+
+async function checkAuth() {
+  try {
+    const r = await fetch('/auth/check');
+    const d = await r.json();
+    if (!d.authenticated) { window.location.href = '/zh/app'; return; }
+  } catch(e) { window.location.href = '/zh/app'; return; }
+  loadData();
+}
+
+async function loadData() {
+  try {
+    const daily = await fetch('/data/data_daily.json?v=' + Date.now()).then(r => r.json());
+    allDates = daily.dates;
+    allValues = daily.values;
+
+    const n = allValues.length;
+    const vol = allValues[n - 1];
+    const vol7 = n >= 8 ? allValues[n - 8] : allValues[0];
+    const vol30 = n >= 31 ? allValues[n - 31] : allValues[0];
+    const change7d = vol - vol7;
+    const change30d = vol - vol30;
+    const fillRate = change7d / 7;
+    const util = (vol / CAPACITY) * 100;
+    const lastDate = allDates[n - 1];
+
+    document.getElementById('lastUpdate').textContent = lastDate;
+    document.getElementById('infoLastPass').textContent = lastDate;
+
+    // Storage
+    document.getElementById('kpiStorage').textContent = vol.toFixed(2) + ' Mb';
+    document.getElementById('kpiStorageSub').textContent = '/ ' + CAPACITY + ' Mb';
+    document.getElementById('utilBarFill').style.width = Math.min(util, 100) + '%';
+    document.getElementById('utilBarFill').style.background = util >= 85 ? 'var(--red)' : util >= 70 ? 'var(--yellow)' : 'var(--accent)';
+
+    // Utilization
+    const utilEl = document.getElementById('kpiUtil');
+    utilEl.textContent = util.toFixed(1) + '%';
+    const pillEl = document.getElementById('kpiPill');
+    if (util >= 85) { pillEl.className = 'kpi-pill pill-critical'; pillEl.textContent = '临界'; }
+    else if (util >= 70) { pillEl.className = 'kpi-pill pill-elevated'; pillEl.textContent = '偏高'; }
+    else { pillEl.className = 'kpi-pill pill-normal'; pillEl.textContent = '正常'; }
+
+    // 7d change
+    const c7el = document.getElementById('kpi7d');
+    c7el.textContent = (change7d >= 0 ? '+' : '') + change7d.toFixed(2);
+    c7el.className = 'kpi-value ' + (change7d > 0 ? 'red' : 'green');
+    document.getElementById('kpi7dSub').textContent = change7d >= 0 ? '▲ 蓄积' : '▼ 下降';
+
+    // Fill rate
+    const frEl = document.getElementById('kpiFill');
+    frEl.textContent = (fillRate >= 0 ? '+' : '') + fillRate.toFixed(3);
+    frEl.className = 'kpi-value ' + (fillRate > 0 ? 'red' : 'green');
+
+    // Days
+    const daysEl = document.getElementById('kpiDays');
+    if (Math.abs(fillRate) < 0.001) {
+      daysEl.textContent = '∞';
+      document.getElementById('kpiDaysSub').textContent = '速率接近零';
+    } else if (fillRate < 0) {
+      daysEl.textContent = Math.round(Math.abs(vol / fillRate)) + 'd';
+      daysEl.className = 'kpi-value green';
+      document.getElementById('kpiDaysSub').textContent = '距空仓，当前速率 ' + fillRate.toFixed(3) + ' Mb/天';
+    } else {
+      daysEl.textContent = Math.round((CAPACITY - vol) / fillRate) + 'd';
+      daysEl.className = 'kpi-value red';
+      document.getElementById('kpiDaysSub').textContent = '距满仓，当前速率 +' + fillRate.toFixed(3) + ' Mb/天';
+    }
+
+    // Signal banner
+    const banner = document.getElementById('signalBanner');
+    const signalText = document.getElementById('signalText');
+    if (fillRate < 0) {
+      banner.className = 'signal-banner draw';
+      signalText.innerHTML = `储量 <strong>${vol.toFixed(2)} Mb</strong>（利用率 ${util.toFixed(1)}%）— <span style="color:var(--green)">7日下降 ${Math.abs(change7d).toFixed(2)} Mb</span>。码头正在出口。`;
+    } else {
+      banner.className = 'signal-banner build';
+      signalText.innerHTML = `储量 <strong>${vol.toFixed(2)} Mb</strong>（利用率 ${util.toFixed(1)}%）— <span style="color:var(--red)">7日蓄积 +${change7d.toFixed(2)} Mb</span>。出口受限。`;
+    }
+
+    // SPI
+    const spi = (vol / CAPACITY * 100).toFixed(1);
+    const spiEl = document.getElementById('metSPI');
+    spiEl.textContent = spi + '%';
+    spiEl.style.color = spi >= 85 ? 'var(--red)' : spi >= 70 ? 'var(--yellow)' : 'var(--green)';
+
+    // 30d info
+    const c30El = document.getElementById('info30d');
+    c30El.textContent = (change30d >= 0 ? '+' : '') + change30d.toFixed(2) + ' Mb';
+    c30El.style.color = change30d > 0 ? 'var(--red)' : 'var(--green)';
+
+    // Signal history (last 10 weekly snapshots)
+    buildSignalHistory();
+
+    // Export pulses
+    buildPulses();
+
+    // Charts
+    buildVolChart(90);
+    buildDeltaChart();
+
+  } catch(e) { console.error(e); }
+}
+
+function buildSignalHistory() {
+  const rows = [];
+  const step = Math.max(1, Math.floor(allDates.length / 12));
+  for (let i = allDates.length - 1; i >= 0 && rows.length < 10; i -= step) {
+    const v = allValues[i];
+    const prev = i >= 7 ? allValues[i - 7] : allValues[0];
+    const chg = v - prev;
+    rows.push({ date: allDates[i], vol: v, chg });
+  }
+  document.getElementById('signalHistory').innerHTML = rows.map(r => `
+    <div class="sh-row">
+      <span class="sh-date">${r.date}</span>
+      <span class="sh-badge ${r.chg < 0 ? 'draw' : 'build'}">${r.chg < 0 ? '下降' : '蓄积'}</span>
+      <span class="sh-val" style="color:${r.chg < 0 ? 'var(--green)' : 'var(--red)'}">${r.chg >= 0 ? '+' : ''}${r.chg.toFixed(2)} Mb</span>
+    </div>`).join('');
+}
+
+function buildPulses() {
+  const pulses = [];
+  for (let i = allDates.length - 1; i >= 6 && pulses.length < 6; i--) {
+    for (let w = 6; w <= 12; w++) {
+      if (i - w < 0) continue;
+      const drop = allValues[i - w] - allValues[i];
+      if (drop >= 2.0) {
+        const alreadyCovered = pulses.some(p => Math.abs(new Date(p.date) - new Date(allDates[i])) < 14 * 86400000);
+        if (!alreadyCovered) {
+          pulses.push({ date: allDates[i], vol: drop, days: w });
+          break;
+        }
+      }
+    }
+  }
+  document.getElementById('metPulses').textContent = pulses.length;
+  if (!pulses.length) {
+    document.getElementById('pulseList').innerHTML = '<div class="pulse-row"><span class="pulse-date">在可用数据中未检测到出口脉冲</span></div>';
+    return;
+  }
+  document.getElementById('pulseList').innerHTML = pulses.map(p => `
+    <div class="pulse-row">
+      <span class="pulse-date">${p.date}</span>
+      <span class="pulse-vol">−${p.vol.toFixed(2)} Mb</span>
+      <span class="pulse-days">历时 ${p.days} 天</span>
+    </div>`).join('');
+}
+
+function buildVolChart(days) {
+  let dates = allDates, vals = allValues;
+  if (days > 0) {
+    const cutoff = new Date(); cutoff.setDate(cutoff.getDate() - days);
+    const idx = dates.findIndex(d => new Date(d) >= cutoff);
+    if (idx > 0) { dates = dates.slice(idx); vals = vals.slice(idx); }
+  }
+  const step = Math.max(1, Math.floor(dates.length / 6));
+  const labels = dates.map((d, i) => i % step === 0 ? d.slice(5) : '');
+  const ctx = document.getElementById('volChart').getContext('2d');
+  if (volChart) volChart.destroy();
+  volChart = new Chart(ctx, {
+    type: 'line',
+    data: { labels, datasets: [{ data: vals, borderColor: '#3b82f6', borderWidth: 1.5, backgroundColor: 'rgba(59,130,246,0.08)', fill: true, pointRadius: 0, tension: 0.2 }] },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      interaction: { intersect: false, mode: 'index' },
+      plugins: { legend: { display: false }, tooltip: { backgroundColor: '#111827', borderColor: 'rgba(255,255,255,0.1)', borderWidth: 1, titleColor: '#94a3b8', bodyColor: '#3b82f6', callbacks: { label: ctx => ' ' + ctx.parsed.y.toFixed(2) + ' Mb' } } },
+      scales: {
+        x: { ticks: { color: '#64748b', font: { size: 9 }, maxRotation: 0, autoSkip: false }, grid: { color: 'rgba(255,255,255,0.04)' } },
+        y: { ticks: { color: '#64748b', font: { size: 9 }, callback: v => v.toFixed(0) + ' Mb' }, grid: { color: 'rgba(255,255,255,0.04)' } }
+      }
+    }
+  });
+}
+
+function buildDeltaChart() {
+  const n = allValues.length;
+  const cutoff = 90;
+  const start = Math.max(1, n - cutoff);
+  const dates = allDates.slice(start);
+  const deltas = [];
+  for (let i = start; i < n; i++) deltas.push(+(allValues[i] - allValues[i-1]).toFixed(3));
+  const step = Math.max(1, Math.floor(dates.length / 6));
+  const labels = dates.map((d, i) => i % step === 0 ? d.slice(5) : '');
+  const ctx = document.getElementById('deltaChart').getContext('2d');
+  if (deltaChart) deltaChart.destroy();
+  deltaChart = new Chart(ctx, {
+    type: 'bar',
+    data: { labels, datasets: [{ data: deltas, backgroundColor: deltas.map(v => v < 0 ? 'rgba(52,211,153,0.6)' : 'rgba(248,113,113,0.6)'), borderWidth: 0 }] },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false }, tooltip: { backgroundColor: '#111827', borderColor: 'rgba(255,255,255,0.1)', borderWidth: 1, callbacks: { label: ctx => ' ' + (ctx.parsed.y >= 0 ? '+' : '') + ctx.parsed.y.toFixed(3) + ' Mb/天' } } },
+      scales: {
+        x: { ticks: { color: '#64748b', font: { size: 9 }, maxRotation: 0, autoSkip: false }, grid: { display: false } },
+        y: { ticks: { color: '#64748b', font: { size: 9 }, callback: v => v.toFixed(2) }, grid: { color: 'rgba(255,255,255,0.04)' } }
+      }
+    }
+  });
+}
+
+function setPeriod(days, btn) {
+  document.querySelectorAll('.period-tab').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  buildVolChart(days);
+}
+
+function switchTab(tab) {
+  document.querySelectorAll('.tab-section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('sec-' + tab).classList.add('active');
+  document.getElementById('tab-' + tab).classList.add('active');
+  if (tab === 'chart') {
+    setTimeout(() => { if (volChart) volChart.resize(); if (deltaChart) deltaChart.resize(); }, 50);
+  }
+}
+
+function logout() { window.location.href = '/auth/logout'; }
+
+checkAuth();
+</script>
+</body>
+</html>

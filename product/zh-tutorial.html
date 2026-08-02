@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>教程 — OilRadar</title>
+<meta name="robots" content="noindex, nofollow">
+<link rel="icon" type="image/x-icon" href="/assets/images/favicon.ico">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-TZQ5VH3GPY"></script>
+<script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','G-TZQ5VH3GPY');</script>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #0a0e17;
+    --sidebar: #0d1320;
+    --surface: #111827;
+    --border: rgba(255,255,255,0.07);
+    --muted: #94a3b8;
+    --dim: #64748b;
+    --text: #e2e8f0;
+    --accent: #3b82f6;
+    --green: #34d399;
+    --red: #f87171;
+    --yellow: #fbbf24;
+  }
+  body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); display: flex; min-height: 100vh; }
+
+  /* ── SIDEBAR ── */
+  .sidebar {
+    width: 200px; min-width: 200px;
+    background: var(--sidebar); border-right: 1px solid var(--border);
+    display: flex; flex-direction: column;
+    height: 100vh; position: fixed; top: 0; left: 0; z-index: 200;
+  }
+  .sidebar-logo { padding: 1.5rem 1.25rem 1rem; border-bottom: 1px solid var(--border); }
+  .logo-mark { font-family: 'Space Grotesk', sans-serif; font-size: 0.9rem; font-weight: 700; letter-spacing: 0.2em; color: var(--accent); }
+  .logo-sub { font-size: 0.58rem; color: var(--muted); margin-top: 0.3rem; letter-spacing: 0.04em; line-height: 1.5; }
+  .sidebar-nav { flex: 1; padding: 1rem 0; display: flex; flex-direction: column; }
+  .nav-item {
+    display: flex; align-items: center; gap: 0.7rem;
+    padding: 0.65rem 1.25rem; font-size: 0.78rem;
+    color: var(--dim); cursor: pointer; border-left: 2px solid transparent;
+    transition: all 0.15s; text-decoration: none;
+  }
+  .nav-item:hover { color: var(--text); background: rgba(255,255,255,0.04); }
+  .nav-item.active { color: var(--text); border-left-color: var(--accent); background: rgba(59,130,246,0.1); }
+  .nav-icon { font-size: 0.8rem; opacity: 0.7; }
+  .sidebar-footer {
+    padding: 1rem 1.25rem; border-top: 1px solid var(--border);
+    display: flex; flex-direction: column; gap: 0.5rem;
+  }
+  .back-btn {
+    background: transparent; border: 1px solid var(--border);
+    color: var(--dim); padding: 0.4rem 0.75rem; border-radius: 5px;
+    font-size: 0.72rem; cursor: pointer; font-family: inherit;
+    transition: all 0.15s; text-align: center; text-decoration: none; display: block;
+  }
+  .back-btn:hover { border-color: rgba(0,0,0,0.2); color: var(--text); }
+  .lang-link {
+    text-align: center; font-size: 0.68rem; color: var(--dim);
+    text-decoration: none; border: 1px solid var(--border);
+    padding: 0.3rem 0.5rem; border-radius: 4px; transition: color .15s, border-color .15s;
+  }
+  .lang-link:hover { color: var(--text); border-color: rgba(255,255,255,0.2); }
+
+  /* ── MAIN ── */
+  .main { margin-left: 200px; flex: 1; overflow-y: auto; }
+  .content { max-width: 720px; padding: 3rem 2.5rem 5rem; }
+
+  /* Header */
+  .page-eyebrow {
+    font-size: 0.55rem; letter-spacing: 0.18em; text-transform: uppercase;
+    color: var(--accent); font-weight: 600; margin-bottom: 0.65rem;
+  }
+  .page-title { font-family: 'Space Grotesk', sans-serif; font-size: 1.6rem; font-weight: 700; line-height: 1.2; margin-bottom: 0.75rem; }
+  .page-subtitle { font-size: 0.85rem; color: var(--dim); line-height: 1.7; max-width: 560px; }
+  .page-subtitle strong { color: var(--text); font-weight: 600; }
+
+  /* Cadence banner */
+  .cadence-banner {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 8px;
+    padding: 1rem 1.4rem; display: flex; align-items: center; gap: 1.25rem;
+    margin: 2rem 0;
+  }
+  .cadence-num { font-family: 'Space Grotesk', sans-serif; font-size: 1.4rem; font-weight: 700; color: var(--accent); white-space: nowrap; flex-shrink: 0; }
+  .cadence-text { font-size: 0.78rem; color: var(--dim); line-height: 1.6; }
+  .cadence-text strong { color: var(--text); }
+
+  /* Section label */
+  .section-label { font-size: 0.55rem; letter-spacing: 0.18em; text-transform: uppercase; color: var(--muted); font-weight: 600; margin-bottom: 1.1rem; }
+
+  /* Dashboard section cards */
+  .section-cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.75rem; margin-bottom: 2.5rem; }
+  .section-card { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 1.1rem; }
+  .sc-num { font-size: 0.52rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--accent); font-weight: 600; margin-bottom: 0.35rem; }
+  .sc-name { font-family: 'Space Grotesk', sans-serif; font-size: 0.9rem; font-weight: 600; margin-bottom: 0.35rem; }
+  .sc-desc { font-size: 0.72rem; color: var(--dim); line-height: 1.55; }
+
+  /* Divider */
+  .divider { height: 1px; background: var(--border); margin: 2.5rem 0; }
+
+  /* Metric card */
+  .metric-card {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 8px;
+    overflow: hidden; margin-bottom: 0.9rem;
+  }
+  .metric-inner { padding: 1.4rem 1.5rem 1.4rem 1.6rem; border-left: 3px solid; }
+  .metric-inner.blue  { border-left-color: var(--accent); }
+  .metric-inner.red   { border-left-color: var(--red); }
+  .metric-inner.green { border-left-color: var(--green); }
+  .metric-inner.amber { border-left-color: var(--yellow); }
+
+  .metric-tag { font-size: 0.52rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted); font-weight: 600; margin-bottom: 0.4rem; }
+  .metric-title { font-family: 'Space Grotesk', sans-serif; font-size: 1rem; font-weight: 700; margin-bottom: 0.6rem; }
+  .metric-body { font-size: 0.8rem; color: var(--dim); line-height: 1.7; margin-bottom: 1.1rem; }
+  .metric-body strong { color: var(--text); font-weight: 600; }
+
+  /* Interpretation columns */
+  .interp { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
+  .interp-col { background: var(--bg); border: 1px solid var(--border); border-radius: 5px; padding: 0.85rem 1rem; }
+  .interp-arrow { font-size: 0.55rem; letter-spacing: 0.12em; text-transform: uppercase; font-weight: 700; margin-bottom: 0.4rem; }
+  .interp-arrow.up   { color: var(--red); }
+  .interp-arrow.down { color: var(--green); }
+  .interp-text { font-size: 0.75rem; color: var(--dim); line-height: 1.55; }
+  .interp-text strong { color: var(--text); font-weight: 600; }
+
+  /* Threshold chips */
+  .threshold-row { display: flex; gap: 0.5rem; margin-top: 1rem; flex-wrap: wrap; }
+  .threshold-chip { font-size: 0.6rem; letter-spacing: 0.08em; padding: 0.3rem 0.65rem; border-radius: 3px; border: 1px solid; }
+  .threshold-chip.normal   { color: var(--green); border-color: rgba(5,150,105,0.3); background: rgba(5,150,105,0.06); }
+  .threshold-chip.elevated { color: var(--yellow); border-color: rgba(217,119,6,0.3); background: rgba(217,119,6,0.06); }
+  .threshold-chip.critical { color: var(--red); border-color: rgba(220,38,38,0.3); background: rgba(220,38,38,0.06); }
+
+  /* Footnote */
+  .footnote { font-size: 0.7rem; color: var(--muted); line-height: 1.7; }
+
+  /* Mobile */
+  @media (max-width: 820px) {
+    body { flex-direction: column; }
+    .sidebar { position: sticky; top: 0; width: 100%; min-width: 0; height: auto; flex-direction: row; align-items: center; border-right: none; border-bottom: 1px solid var(--border); overflow-x: auto; }
+    .sidebar-logo { padding: 0.7rem 1rem; border-bottom: none; border-right: 1px solid var(--border); white-space: nowrap; }
+    .logo-sub { display: none; }
+    .sidebar-nav { flex-direction: row; flex: 1; padding: 0; }
+    .nav-item { border-left: none; border-bottom: 2px solid transparent; padding: 0.85rem 0.9rem; white-space: nowrap; font-size: 0.72rem; }
+    .nav-item.active { border-left-color: transparent; border-bottom-color: var(--accent); }
+    .sidebar-footer { padding: 0.5rem 0.75rem; border-top: none; border-left: 1px solid var(--border); }
+    .main { margin-left: 0; }
+    .content { padding: 1.5rem 1.25rem 3rem; }
+    .section-cards { grid-template-columns: 1fr; }
+    .interp { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<aside class="sidebar">
+  <div class="sidebar-logo">
+    <div class="logo-mark">OILRADAR</div>
+    <div class="logo-sub">Kharg Island<br>伊朗原油码头</div>
+  </div>
+  <nav class="sidebar-nav">
+    <a class="nav-item" href="/zh/dashboard"><span class="nav-icon">◎</span> 概览</a>
+    <a class="nav-item" href="/zh/dashboard"><span class="nav-icon">⇅</span> 总流量</a>
+    <a class="nav-item" href="/zh/dashboard"><span class="nav-icon">⊞</span> 单罐地图</a>
+    <a class="nav-item active" href="/zh/tutorial"><span class="nav-icon">?</span> 教程</a>
+  </nav>
+  <div class="sidebar-footer">
+    <a class="back-btn" href="/zh/dashboard">← 返回仪表盘</a>
+    <a class="lang-link" href="/tutorial">EN</a>
+  </div>
+</aside>
+
+<div class="main">
+  <div class="content">
+
+    <div class="page-eyebrow">OilRadar · Kharg Island</div>
+    <h1 class="page-title">如何读懂仪表盘</h1>
+    <p class="page-subtitle">
+      OilRadar 利用 Sentinel-1 雷达卫星图像追踪<strong>Kharg Island</strong>（处理伊朗约90%原油出口的码头）的原油储量。
+      本页说明各项指标的含义及解读方法。
+    </p>
+
+    <div class="cadence-banner">
+      <div class="cadence-num">~6d</div>
+      <div class="cadence-text">
+        <strong>数据每约6天更新一次</strong> — 即 Sentinel-1 卫星经过 Kharg Island 的重访周期。
+        每次新过境均自动处理；新数据可用时您将收到邮件通知。
+      </div>
+    </div>
+
+    <!-- Dashboard sections -->
+    <div class="section-label">仪表盘板块</div>
+    <div class="section-cards">
+      <div class="section-card">
+        <div class="sc-num">板块 01</div>
+        <div class="sc-name">概览</div>
+        <div class="sc-desc">一览储量水平、填充速率及当前信号。</div>
+      </div>
+      <div class="section-card">
+        <div class="sc-num">板块 02</div>
+        <div class="sc-name">总流量</div>
+        <div class="sc-desc">流入与流出速率 — 码头蓄积或下降的速度。</div>
+      </div>
+      <div class="section-card">
+        <div class="sc-num">板块 03</div>
+        <div class="sc-name">单罐地图</div>
+        <div class="sc-desc">任意卫星过境日期全部47个储罐的单独储量水平。</div>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- How it works -->
+    <div class="section-label">工作原理</div>
+
+    <div class="metric-card">
+      <div class="metric-inner blue">
+        <div class="metric-tag">SAR 物理原理</div>
+        <div class="metric-title">雷达卫星为何能测量油位</div>
+        <div class="metric-body">
+          Kharg Island 的每个储罐都有一个<strong>浮顶</strong> — 一块直接漂浮在油面上的钢制浮筒。罐满时浮顶靠近顶部，罐空时靠近底部。
+          <br><br>
+          Sentinel-1 用<strong>微波雷达脉冲</strong>照射储罐。浮顶在储罐远端罐壁上投下阴影。卫星测量反射信号的强度：
+          浮顶高（罐满）投下的阴影小，返回信号弱；
+          浮顶低（罐空）暴露更多罐壁，返回信号强。
+          <br><br>
+          这种反向关系 — <strong>雷达回波越低 = 油越多</strong> — 是本仪表盘所有数据的物理基础。OilRadar 在每次卫星过境时，将全部47个储罐的雷达后向散射（dB）转换为油位高度，再换算为体积（Mb）。
+        </div>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- Metrics -->
+    <div class="section-label">指标说明</div>
+
+    <div class="metric-card">
+      <div class="metric-inner blue">
+        <div class="metric-tag">主要信号</div>
+        <div class="metric-title">储量水平</div>
+        <div class="metric-body">
+          Kharg Island 全部47个浮顶储罐持有的原油总量，以码头<strong>最大容量31.78 Mb</strong>的百分比表示。
+          这是核心数据 — 其他所有指标均是对此数据的诠释。
+        </div>
+        <div class="threshold-row">
+          <span class="threshold-chip normal">&lt; 70% · 正常</span>
+          <span class="threshold-chip elevated">70–85% · 偏高</span>
+          <span class="threshold-chip critical">≥ 85% · 临界</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="metric-card">
+      <div class="metric-inner blue">
+        <div class="metric-tag">变化速率</div>
+        <div class="metric-title">填充速率</div>
+        <div class="metric-body">
+          储量变化速度 — 以7日滚动窗口的<strong>百万桶/日（Mb/d）</strong>计量。正数表示油在积累，负数表示储罐在排放。
+        </div>
+        <div class="interp">
+          <div class="interp-col">
+            <div class="interp-arrow up">上升 ↑</div>
+            <div class="interp-text">伊朗<strong>积累</strong>原油的速度快于出口速度。出口放缓 — 装船减少或制裁收紧。</div>
+          </div>
+          <div class="interp-col">
+            <div class="interp-arrow down">下降 ↓</div>
+            <div class="interp-text">储罐<strong>排放</strong> — 出口步伐加快。油轮在装货；伊朗正在向市场推油。</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="metric-card">
+      <div class="metric-inner red">
+        <div class="metric-tag">方向信号</div>
+        <div class="metric-title">蓄积 / 下降</div>
+        <div class="metric-body">
+          一个连续条纹标签，汇总<strong>连续过境期间储量的走向</strong>。
+          <strong>蓄积</strong>表示近期观测中储量持续上升。
+          <strong>下降</strong>表示储量持续下降。
+          标签旁边的数字统计连续保持该趋势的过境次数。
+        </div>
+        <div class="interp">
+          <div class="interp-col">
+            <div class="interp-arrow" style="color:var(--red);">蓄积</div>
+            <div class="interp-text">持续积累。若持续数周，伊朗可能难以找到买家或油轮 — 对油价为<strong>利空信号</strong>。</div>
+          </div>
+          <div class="interp-col">
+            <div class="interp-arrow" style="color:var(--green);">下降</div>
+            <div class="interp-text">持续出口流动。储罐清空表明装货活跃 — <strong>利多信号</strong>，与出口活动相符。</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="metric-card">
+      <div class="metric-inner green">
+        <div class="metric-tag">事件检测</div>
+        <div class="metric-title">出口脉冲</div>
+        <div class="metric-body">
+          当储量在<strong>6–12天窗口内下降≥ 2 Mb</strong>时触发的离散事件标志。
+          每个事件对应码头一次可能的<strong>VLCC油轮装货</strong>。
+          AIS船舶追踪通常在7–14天后确认该事件。
+        </div>
+        <div class="interp">
+          <div class="interp-col">
+            <div class="interp-arrow" style="color:var(--dim);">次数多</div>
+            <div class="interp-text">短期内多次大规模装货事件 — <strong>出口活动增加</strong>，可能进入持续下降周期。</div>
+          </div>
+          <div class="interp-col">
+            <div class="interp-arrow" style="color:var(--muted);">零次 / 罕见</div>
+            <div class="interp-text">未检测到大幅离散下降 — 表明<strong>无重大VLCC装货</strong>，与蓄积阶段相符。</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="metric-card">
+      <div class="metric-inner amber">
+        <div class="metric-tag">单罐</div>
+        <div class="metric-title">储罐活跃度指数（TAI）</div>
+        <div class="metric-body">
+          衡量单个储罐在<strong>30日滚动窗口</strong>内雷达后向散射变化幅度的指标。
+          变化大意味着该罐活跃循环（装货和补充）；变化小意味着该罐闲置或处于固定液位。
+          可在单罐地图板块查看。
+        </div>
+        <div class="interp">
+          <div class="interp-col">
+            <div class="interp-arrow" style="color:var(--yellow);">活跃度高</div>
+            <div class="interp-text">储罐<strong>频繁循环</strong> — 主要装货罐。此处变化通常比整体储量变动提前1–2次过境。</div>
+          </div>
+          <div class="interp-col">
+            <div class="interp-arrow" style="color:var(--muted);">低 / 零</div>
+            <div class="interp-text">储罐<strong>静止</strong> — 可能长期处于满罐（战略储备）或停用状态。不参与当前出口流动。</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="metric-card">
+      <div class="metric-inner" style="border-top-color:#3b82f6">
+        <div class="metric-tag">锚地 · 船舶</div>
+        <div class="metric-title">油轮队列指数（TQI）</div>
+        <div class="metric-body">
+          由<strong>Sentinel-1 SAR船舶检测</strong>得出的 Kharg 锚地每周船舶数量。
+          每次周度过境按船长分类：VLCC ≥290m、Suezmax 260–290m、Aframax 220–260m、MR/Panamax 100–220m。
+          <strong>队列指数（TQI）</strong> = 最新周度数量 ÷ 历史第95百分位 × 100。
+          TQI超过85表明锚地队列接近历史最高值 — 是出口压力加大和可能出现装货延误的领先指标。
+        </div>
+        <div class="interp">
+          <div class="interp-col">
+            <div class="interp-arrow" style="color:#ef4444;">TQI &gt; 85</div>
+            <div class="interp-text"><strong>高压</strong> — 队列接近历史最高值。油轮积压增加；可能即将出现装货延误或出口激增。</div>
+          </div>
+          <div class="interp-col">
+            <div class="interp-arrow" style="color:#3b82f6;">TQI &lt; 50</div>
+            <div class="interp-text"><strong>活动低迷</strong> — 锚地低于正常水平。等待油轮减少；与买家受制裁压力或出口量低迷相符。</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <div class="footnote">
+      <span style="letter-spacing:0.08em;font-size:0.6rem;text-transform:uppercase;">数据来源</span>
+      &nbsp;·&nbsp;
+      Sentinel-1 C波段 SAR · ESA Copernicus · 降轨 · 约6日重访 ·
+      47个浮顶储罐 · 反向月牙形辐射测量法
+    </div>
+
+  </div>
+</div>
+
+</body>
+</html>
