@@ -56,6 +56,11 @@ export default {
         '/tanks':         '/marketing/mobile-tanks.html',
         '/anchorage':     '/marketing/mobile-anchorage.html',
         '/bab-el-mandeb': '/marketing/mobile-bab-el-mandeb.html',
+        '/zh':            '/marketing/zh-index.html',
+        '/zh/monitor':    '/marketing/zh-monitor.html',
+        '/zh/gas-storage':'/marketing/zh-gas-storage.html',
+        '/zh/team':       '/marketing/zh-team.html',
+        '/zh/anchorage':  '/marketing/zh-anchorage.html',
       };
       const mobilePath = mobileMap[path];
       if (mobilePath) {
@@ -78,6 +83,11 @@ export default {
       '/dashboard.html':'/product/dashboard.html',
       '/app':           '/product/index.html',
       '/tutorial':      '/product/tutorial.html',
+      '/zh':            '/marketing/zh-index.html',
+      '/zh/monitor':    '/marketing/zh-monitor.html',
+      '/zh/gas-storage':'/marketing/zh-gas-storage.html',
+      '/zh/team':       '/marketing/zh-team.html',
+      '/zh/anchorage':  '/marketing/zh-anchorage.html',
     };
     const desktopPath = desktopMap[path];
     if (desktopPath) {
