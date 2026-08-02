@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>哈尔格岛原油终端实时监控 — 卫星SAR数据 | OilRadar</title>
+<meta name="description" content="哈尔格岛实时原油终端数据 — 通过Sentinel-1 SAR卫星追踪哈尔格岛原油储量和出口信号。平均每约6天更新一次，领先EIA报告4–7周。">
+<meta name="keywords" content="哈尔格岛原油, 哈尔格岛储量监控, 伊朗原油终端, SAR卫星石油数据, Sentinel-1石油储量, 伊朗原油出口实时, Kharg Island oil monitor">
+<meta name="robots" content="index, follow">
+<link rel="canonical" href="https://oilradar.io/zh/monitor">
+<link rel="icon" type="image/x-icon" href="/assets/images/favicon.ico">
+<link rel="icon" type="image/png" sizes="32x32" href="/assets/images/favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="/assets/images/favicon-16x16.png">
+<link rel="apple-touch-icon" sizes="180x180" href="/assets/images/apple-touch-icon.png">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://oilradar.io/zh/monitor">
+<meta property="og:title" content="哈尔格岛储量监控 — 实时SAR石油数据 | OilRadar">
+<meta property="og:description" content="通过Sentinel-1 SAR卫星实时监控伊朗哈尔格岛原油储量。平均每约6天更新一次。">
+<meta property="og:image" content="https://oilradar.io/assets/images/og-image.png">
+<meta property="og:site_name" content="OilRadar">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:site" content="@IberianLobos">
+<meta name="twitter:title" content="哈尔格岛原油储量监控 | OilRadar">
+<meta name="twitter:description" content="哈尔格岛原油终端实时SAR卫星数据，平均每约6天更新一次。">
+<meta name="twitter:image" content="https://oilradar.io/assets/images/og-image.png">
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-TZQ5VH3GPY"></script>
+<script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','G-TZQ5VH3GPY');</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@300;400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+<noscript><link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@300;400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"></noscript>
+<link rel="stylesheet" href="/public/vendor/leaflet.css"/>
+<style>
+  :root{--bg:#0a0e17;--deep:#0d1320;--panel:#111827;--border:rgba(255,255,255,0.07);--accent:#3b82f6;--accent2:#ef4444;--gold:#f59e0b;--text:#e2e8f0;--muted:#94a3b8;--dim:#64748b;--white:#f8fafc;}
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;overflow-x:hidden;min-height:100vh;display:flex;flex-direction:column;}
+  nav{position:fixed;top:0;left:0;right:0;z-index:100;display:flex;align-items:center;justify-content:space-between;padding:16px 32px;background:rgba(10,14,23,0.97);backdrop-filter:blur(12px);border-bottom:1px solid var(--border);}
+  .logo{font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:4px;color:var(--accent);text-decoration:none;}
+  .nav-links{display:flex;align-items:center;gap:24px;}
+  .nav-link{font-family:'DM Mono',monospace;font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);text-decoration:none;transition:color .2s;}
+  .nav-link:hover{color:var(--accent);}
+  .nav-cta{font-family:'DM Mono',monospace;font-size:11px;letter-spacing:2px;text-transform:uppercase;background:transparent;border:1px solid var(--accent);color:var(--accent);padding:8px 20px;cursor:pointer;transition:all .2s;text-decoration:none;}
+  .nav-cta:hover{background:var(--accent);color:var(--white);}
+  .lang-switch{border-left:1px solid var(--border);padding-left:16px;margin-left:4px;}
+  main{flex:1;padding:100px 16px 80px;max-width:2400px;margin:0 auto;width:100%;}
+  .section-label{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:4px;text-transform:uppercase;color:var(--accent);margin-bottom:16px;}
+  .section-title{font-family:'Bebas Neue',sans-serif;font-size:clamp(40px,5vw,60px);line-height:1;color:var(--text);margin-bottom:40px;}
+  .monitor-wrap{background:var(--panel);border:1px solid var(--border);padding:28px 32px;box-shadow:0 1px 3px rgba(0,0,0,0.05);margin-bottom:24px;}
+  .monitor-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;}
+  .monitor-title{font-family:'DM Mono',monospace;font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--accent);}
+  .monitor-stat{font-family:'DM Mono',monospace;font-size:14px;color:var(--text);margin-bottom:20px;padding:12px 16px;background:rgba(59,130,246,0.06);border-left:2px solid var(--accent);display:flex;gap:24px;flex-wrap:wrap;}
+  .chart-wrapper{height:560px;width:100%;position:relative;}
+  .chart-lock-overlay{position:absolute;top:0;right:0;width:12%;height:100%;background:linear-gradient(to right,transparent,rgba(250,250,248,0.95) 35%,rgba(250,250,248,0.99));display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;pointer-events:none;z-index:10;}
+  .chart-lock-overlay a{pointer-events:all;}
+  .explanation-grid{display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-top:28px;}
+  .explain-card{border:1px solid rgba(59,130,246,0.2);padding:24px;}
+  .explain-card.alert{border-color:rgba(239,68,68,0.3);background:rgba(239,68,68,0.05);}
+  .explain-card h4{font-family:'DM Mono',monospace;font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:12px;}
+  .explain-card.alert h4{color:var(--accent2);}
+  .explain-card p{font-size:13px;line-height:1.7;color:var(--text);}
+  .explain-card p.muted{color:var(--muted);font-size:12px;margin-top:12px;}
+  .explain-card strong{color:var(--text);font-weight:600;}
+  .linkedin-block{margin-top:20px;padding-top:20px;border-top:1px solid rgba(239,68,68,0.2);}
+  .linkedin-block p{font-size:12px;color:var(--muted);}
+  .linkedin-link{color:var(--accent);text-decoration:none;border-bottom:1px dashed var(--accent);}
+  .map-wrap{border:1px solid var(--border);margin-bottom:16px;position:relative;overflow:hidden;}
+  .map-header{background:var(--panel);padding:12px 20px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--border);}
+  .map-title{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:3px;text-transform:uppercase;color:var(--muted);}
+  #map{height:860px;width:100%;background:var(--bg);}
+  .loading-msg{font-family:'DM Mono',monospace;font-size:12px;color:var(--muted);padding:40px;text-align:center;position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);z-index:500;background:rgba(250,250,248,0.95);border:1px solid var(--border);}
+  .controls-wrap{background:var(--panel);border:1px solid var(--border);padding:20px 24px;margin-bottom:16px;display:flex;align-items:center;gap:12px;}
+  #playBtn{font-family:'DM Mono',monospace;font-size:11px;letter-spacing:3px;text-transform:uppercase;background:var(--accent);color:#ffffff;border:none;padding:10px 20px;cursor:pointer;transition:opacity .2s;white-space:nowrap;}
+  #playBtn:hover{opacity:.85;}
+  #playBtn.playing{background:var(--accent2);}
+  .arrow-btn{font-family:'DM Mono',monospace;font-size:14px;background:transparent;color:var(--accent);border:1px solid var(--border);padding:8px 14px;cursor:pointer;transition:all .2s;white-space:nowrap;line-height:1;}
+  .arrow-btn:hover{border-color:var(--accent);background:rgba(59,130,246,0.1);}
+  .slider-wrap{flex:1;display:flex;flex-direction:column;gap:6px;}
+  #dateSlider{width:100%;accent-color:var(--accent);height:4px;}
+  .slider-dates{display:flex;justify-content:space-between;font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);}
+  .cur-date-label{font-family:'DM Mono',monospace;font-size:13px;color:var(--accent);white-space:nowrap;min-width:100px;text-align:right;}
+  .legend-wrap{display:flex;align-items:center;gap:16px;padding:12px 0;}
+  .legend-label{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:3px;text-transform:uppercase;color:var(--muted);white-space:nowrap;}
+  .legend-bar{flex:1;height:10px;background:linear-gradient(to right,#ef4444,#f59e0b,#3b82f6);border:1px solid var(--border);max-width:300px;}
+  .legend-ticks{display:flex;justify-content:space-between;font-family:'DM Mono',monospace;font-size:9px;color:var(--muted);width:300px;}
+  .leaflet-container{background:#f5f3f0;}
+  .leaflet-control-attribution{background:rgba(10,14,23,0.9)!important;color:#64748b!important;font-size:9px!important;}
+  .leaflet-control-attribution a{color:#64748b!important;}
+  .leaflet-control-zoom a{background:var(--panel)!important;color:var(--accent)!important;border-color:var(--border)!important;}
+  .tank-div-icon{pointer-events:auto;}
+  .tank-div-icon:hover{z-index:1000!important;}
+  .tank-popup .leaflet-popup-content-wrapper{background:var(--panel);border:1px solid var(--border);border-radius:0;box-shadow:0 4px 12px rgba(0,0,0,0.1);color:var(--text);}
+  .tank-popup .leaflet-popup-tip{background:var(--panel);}
+  .tank-popup .leaflet-popup-content{font-family:'DM Mono',monospace;font-size:11px;margin:10px 14px;}
+  .tp-id{color:var(--accent);font-size:13px;margin-bottom:6px;letter-spacing:2px;}
+  .tp-row{color:var(--muted);margin-top:3px;}
+  .tp-row span{color:var(--text);}
+  footer{background:var(--panel);border-top:1px solid var(--border);padding:32px 48px;display:flex;align-items:center;justify-content:space-between;margin-top:auto;}
+  .footer-logo{font-family:'Bebas Neue',sans-serif;font-size:24px;letter-spacing:6px;color:var(--accent);}
+  .footer-right{display:flex;align-items:center;gap:32px;}
+  .footer-link{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);text-decoration:none;}
+  .footer-text{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:2px;color:var(--muted);}
+  @media(max-width:900px){nav{padding:16px 16px}main{padding:90px 16px 60px}.explanation-grid{grid-template-columns:1fr}.monitor-stat{flex-direction:column;gap:8px}footer{flex-direction:column;gap:16px;text-align:center}.footer-right{flex-direction:column;gap:12px}.controls-wrap{flex-wrap:wrap}}
+</style>
+<script src="/public/vendor/chart.min.js"></script>
+<script src="/public/vendor/leaflet.js"></script>
+</head>
+<body>
+<nav>
+  <a href="/zh" class="logo">OilRadar</a>
+  <div class="nav-links">
+    <a href="/zh/anchorage" class="nav-link">锚地</a>
+    <a href="/zh/team" class="nav-link">团队</a>
+    <a href="/zh" class="nav-link">&larr; 主页</a>
+    <a href="https://calendly.com/bachevsky/intro" target="_blank" class="nav-link">预约通话</a>
+    <a id="dashboardCta" href="https://app.oilradar.io/dashboard" target="_blank" class="nav-cta">仪表盘 &rarr;</a>
+    <a href="/monitor" class="nav-link lang-switch">EN</a>
+  </div>
+</nav>
+<main>
+  <h1 class="section-title">伊朗原油出口动态</h1>
+  <p style="font-family:'DM Sans',sans-serif;font-size:15px;line-height:1.7;color:var(--muted);max-width:680px;margin-bottom:10px;margin-top:-24px;">哈尔格岛处理伊朗约90%的原油出口。当储量增加时，原油在积累——出口受到限制。当储量下降时，油轮正在装载，实物供应正进入全球市场。</p>
+  <p style="font-family:'DM Mono',monospace;font-size:10px;letter-spacing:2px;text-transform:uppercase;color:rgba(107,114,128,0.55);margin-bottom:36px;">公开预览。完整信号仅向审核通过的用户开放。</p>
+
+  <div class="monitor-wrap">
+    <div class="monitor-header"><div class="monitor-title">储量 — SAR 提取</div></div>
+    <div class="monitor-stat" id="latestStat">加载中...</div>
+    <div class="chart-wrapper"><canvas id="dailyChart"></canvas><div class="chart-lock-overlay"><span style="font-size:22px">🔒</span><span style="font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);text-align:center;line-height:1.4;">最近<br>2周</span><a href="https://calendly.com/bachevsky/intro" target="_blank" style="font-family:'DM Mono',monospace;font-size:9px;letter-spacing:1px;text-transform:uppercase;background:#3b82f6;color:#fff;padding:7px 10px;text-decoration:none;border:none;margin-top:4px;">获取访问权限</a></div></div>
+  </div>
+
+  <div style="margin-top:48px;margin-bottom:16px;font-family:'Bebas Neue',sans-serif;font-size:clamp(28px,3.5vw,44px);line-height:1;color:var(--text);letter-spacing:1px;">单罐储量视图</div>
+  <div class="map-wrap">
+    <div class="map-header">
+      <span class="map-title">哈尔格岛出口终端 &middot; 浮顶储罐 &middot; 填充水平</span>
+      <span style="font-family:'DM Mono',monospace;font-size:9px;color:var(--dim);">卫星: ESRI World Imagery</span>
+    </div>
+    <div id="map"><div class="loading-msg" id="mapLoadingMsg">加载中&hellip;</div></div>
+  </div>
+  <div class="controls-wrap">
+    <button id="playBtn">&#9654; 播放</button>
+    <button class="arrow-btn" id="prevBtn">&#8592;</button>
+    <div class="slider-wrap">
+      <input type="range" id="dateSlider" min="0" value="0" step="1">
+      <div class="slider-dates"><span id="sliderStart">&mdash;</span><span id="sliderEnd">&mdash;</span><span style="font-family:'DM Mono',monospace;font-size:9px;color:var(--dim);margin-left:auto;">🔒 实时信号仅向合作伙伴开放 — <a href="https://calendly.com/bachevsky/intro" target="_blank" style="color:var(--accent);">申请数据访问</a></span></div>
+    </div>
+    <button class="arrow-btn" id="nextBtn">&#8594;</button>
+    <div class="cur-date-label" id="curDateLabel">&mdash;</div>
+  </div>
+  <div class="legend-wrap">
+    <span class="legend-label">填充水平</span>
+    <div class="legend-bar"></div>
+    <div class="legend-ticks"><span>0%</span><span>25%</span><span>50%</span><span>75%</span><span>100%</span></div>
+  </div>
+
+  <div class="explanation-grid" style="margin-top:32px;grid-template-columns:1fr 1fr;">
+    <div class="explain-card"><h4>🛰️ 雷达工作原理</h4><p>哈尔格岛的原油储罐使用<strong>浮顶</strong>，随着原油抽出而下降，随着储罐填充而上升。Sentinel-1 SAR信号从内壁反弹。较低的顶部返回更亮的雷达反射。我们反转这个辐射测量信号，以百万桶为单位计算物理容量。</p><p class="muted">平均每约6天，卫星过境该地区一次。</p></div>
+    <div class="explain-card" style="border-color:rgba(59,130,246,0.2);display:flex;flex-direction:column;justify-content:center;align-items:flex-start;gap:16px;">
+      <div>
+        <div style="font-family:'DM Mono',monospace;font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:12px;">需要定制覆盖？</div>
+        <p style="font-size:14px;line-height:1.7;color:var(--text);">追踪特定终端，获取数据访问，或讨论其他地区的覆盖——沙特阿拉伯、伊拉克巴士拉、阿联酋富查伊拉等。</p>
+      </div>
+      <a href="https://calendly.com/bachevsky/intro" target="_blank" style="font-family:'DM Mono',monospace;font-size:12px;letter-spacing:2px;text-transform:uppercase;background:var(--accent);color:#ffffff;padding:14px 28px;text-decoration:none;display:inline-block;transition:all .2s;border:none;">申请数据访问</a>
+    </div>
+  </div>
+</main>
+
+<footer>
+  <div class="footer-logo">OilRadar</div>
+  <div class="footer-right">
+    <a href="/zh/gas-storage" class="footer-link">天然气储量</a>
+    <a href="/zh/anchorage" class="footer-link">油轮队列</a>
+    <a href="/zh/team" class="footer-link">团队</a>
+    <div class="footer-text">哈尔格岛原油终端 · Sentinel-1 SAR<br>物理石油市场卫星情报<br><span style="opacity:0.7;">我们谨慎选择合作伙伴。</span></div>
+  </div>
+</footer>
+
+<script>
+const SUPABASE_URL='https://yoekhkczwdeyauwarsyy.supabase.co';
+const SUPABASE_KEY='sb_publishable_7j07_zzdqTGM1LXf7-o9Tg_JJRbJQSM';
+const H_MIN=2;
+const BARREL_PER_M3=6.2898;
+
+const TANKS={
+  't60_0':{lat:29.2217338,lon:50.3165482,r:20,rm:60,hm:18},
+  't60_1':{lat:29.2216388,lon:50.3150432,r:20,rm:60,hm:18},
+  't60_2':{lat:29.2218405,lon:50.3135291,r:20,rm:60,hm:18},
+  't60_3':{lat:29.2231568,lon:50.3158490,r:20,rm:60,hm:18},
+  't60_4':{lat:29.2228980,lon:50.3144195,r:20,rm:60,hm:18},
+  't55_5':{lat:29.2359691,lon:50.3126204,r:16,rm:55,hm:17},
+  't55_6':{lat:29.2364507,lon:50.3109394,r:16,rm:55,hm:17},
+  't55_7':{lat:29.2379533,lon:50.3108495,r:16,rm:55,hm:17},
+  't55_8':{lat:29.2390690,lon:50.3096822,r:16,rm:55,hm:17},
+  't55_9':{lat:29.2389264,lon:50.3068140,r:16,rm:55,hm:17},
+  't55_10':{lat:29.2376082,lon:50.3072679,r:16,rm:55,hm:17},
+  't55_11':{lat:29.2362776,lon:50.3077246,r:16,rm:55,hm:17},
+  't55_12':{lat:29.2363283,lon:50.3093038,r:16,rm:55,hm:17},
+  't55_13':{lat:29.2349727,lon:50.3081865,r:16,rm:55,hm:17},
+  't55_14':{lat:29.2351137,lon:50.3098199,r:16,rm:55,hm:17},
+  't55_15':{lat:29.2336438,lon:50.3086380,r:16,rm:55,hm:17},
+  't55_16':{lat:29.2338308,lon:50.3102809,r:16,rm:55,hm:17},
+  't55_17':{lat:29.2314405,lon:50.3087404,r:16,rm:55,hm:17},
+  't55_18':{lat:29.2317836,lon:50.3103855,r:16,rm:55,hm:17},
+  't55_19':{lat:29.2320764,lon:50.3122342,r:16,rm:55,hm:17},
+  't55_20':{lat:29.2302153,lon:50.3101615,r:16,rm:55,hm:17},
+  't55_21':{lat:29.2288712,lon:50.3099660,r:16,rm:55,hm:17},
+  't40_22':{lat:29.2295289,lon:50.3121871,r:12,rm:40,hm:14},
+  't40_23':{lat:29.2297632,lon:50.3135015,r:12,rm:40,hm:14},
+  't40_24':{lat:29.2299639,lon:50.3148147,r:12,rm:40,hm:14},
+  't40_25':{lat:29.2284236,lon:50.3124414,r:12,rm:40,hm:14},
+  't40_26':{lat:29.2286165,lon:50.3137337,r:12,rm:40,hm:14},
+  't40_27':{lat:29.2288114,lon:50.3150200,r:12,rm:40,hm:14},
+  't40_28':{lat:29.2272092,lon:50.3126984,r:12,rm:40,hm:14},
+  't40_29':{lat:29.2274357,lon:50.3139937,r:12,rm:40,hm:14},
+  't40_30':{lat:29.2276408,lon:50.3152672,r:12,rm:40,hm:14},
+  't55_31':{lat:29.2323461,lon:50.3137663,r:16,rm:55,hm:17},
+  't40_32':{lat:29.2307178,lon:50.3119291,r:12,rm:40,hm:14},
+  't40_33':{lat:29.2309474,lon:50.3132419,r:12,rm:40,hm:14},
+  't40_34':{lat:29.2311351,lon:50.3145438,r:12,rm:40,hm:14},
+  't25_35':{lat:29.2262112,lon:50.3128809,r:8,rm:25,hm:12},
+  't25_36':{lat:29.2263835,lon:50.3138099,r:8,rm:25,hm:12},
+  't25_37':{lat:29.2265429,lon:50.3147481,r:8,rm:25,hm:12},
+  't25_38':{lat:29.2266891,lon:50.3156504,r:8,rm:25,hm:12},
+  't25_39':{lat:29.2251564,lon:50.3131064,r:8,rm:25,hm:12},
+  't25_40':{lat:29.2253231,lon:50.3140568,r:8,rm:25,hm:12},
+  't25_41':{lat:29.2254742,lon:50.3149628,r:8,rm:25,hm:12},
+  't25_42':{lat:29.2256154,lon:50.3158865,r:8,rm:25,hm:12},
+  't25_43':{lat:29.2243535,lon:50.3132813,r:8,rm:25,hm:12},
+  't25_44':{lat:29.2245129,lon:50.3142241,r:8,rm:25,hm:12},
+  't25_45':{lat:29.2246562,lon:50.3151350,r:8,rm:25,hm:12},
+  't25_46':{lat:29.2248181,lon:50.3160634,r:8,rm:25,hm:12},
+};
+
+const NAMEPLATE_MMBBL = Object.values(TANKS).reduce(
+  (sum, t) => sum + Math.PI * t.rm * t.rm * t.hm, 0
+) * BARREL_PER_M3 / 1e6;
+
+function getColor(ratio){if(ratio===null||ratio===undefined)return'#1e2d3d';ratio=Math.max(0,Math.min(1,ratio));if(ratio<0.5){const t=ratio*2;return`rgb(${Math.round(255+(240-255)*t)},${Math.round(71+(165-71)*t)},${Math.round(87+(0-87)*t)})`;}else{const t=(ratio-0.5)*2;return`rgb(${Math.round(240+(59-240)*t)},${Math.round(165+(130-165)*t)},${Math.round(0+246*t)})`;} }
+function calcFillRatio(dbMean,p5,p95){if(p95===p5)return 0.5;return Math.max(0,Math.min(1,(p95-dbMean)/(p95-p5)));}
+function calcMnBbl(ratio,r_m,h_max){const h=H_MIN+ratio*(h_max-H_MIN);return Math.PI*r_m*r_m*h*BARREL_PER_M3/1e6;}
+function percentile(arr,p){if(!arr.length)return 0;const sorted=[...arr].sort((a,b)=>a-b);const idx=(p/100)*(sorted.length-1);const lo=Math.floor(idx),hi=Math.ceil(idx);return sorted[lo]+(sorted[hi]-sorted[lo])*(idx-lo);}
+
+function makeTankIcon(id,info,ratio){
+  const r=info.r,size=r*2+4,cx=r+2,cy=r+2;
+  const fillH=ratio!==null&&ratio!==undefined?ratio*r*2:0;
+  const color=getColor(ratio);
+  const borderColor=ratio!==null&&ratio!==undefined?color:'rgba(0,0,0,0.15)';
+  const borderOpacity=ratio!==null&&ratio!==undefined?0.8:0.4;
+  const num=id.replace(/^t\d+_/,'');
+  const fontSize=Math.max(6,r*0.38);
+  const svg=`<svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" xmlns="http://www.w3.org/2000/svg" style="display:block;overflow:visible">
+    <defs><clipPath id="iclip-${id}"><circle cx="${cx}" cy="${cy}" r="${r}"/></clipPath></defs>
+    <circle cx="${cx}" cy="${cy}" r="${r}" fill="rgba(255,255,255,0.9)"/>
+    <rect x="${cx-r}" y="${cy+r-fillH}" width="${r*2}" height="${fillH}" fill="${color}" clip-path="url(#iclip-${id})" opacity="0.85"/>
+    <circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${borderColor}" stroke-width="1.5" opacity="${borderOpacity}"/>
+    <text x="${cx}" y="${cy+fontSize*0.4}" text-anchor="middle" fill="#64748b" font-size="${fontSize}" font-family="DM Mono,monospace" font-weight="400">${num}</text>
+  </svg>`;
+  return L.divIcon({html:svg,iconSize:[size,size],iconAnchor:[cx,cy],className:'tank-div-icon'});
+}
+
+async function fetchTankData(){
+  const headers={'apikey':SUPABASE_KEY,'Authorization':`Bearer ${SUPABASE_KEY}`};
+  let all=[],offset=0;
+  while(true){
+    const url=`${SUPABASE_URL}/rest/v1/raw_observations?select=date,tank_id,db_mean&order=date&limit=1000&offset=${offset}`;
+    const res=await fetch(url,{headers});
+    if(!res.ok)throw new Error(`Supabase ${res.status}`);
+    const batch=await res.json();
+    all=all.concat(batch);
+    if(batch.length<1000)break;
+    offset+=1000;
+  }
+  return all;
+}
+
+async function initMap(){
+  const map=L.map('map',{center:[29.230,50.311],zoom:15,zoomControl:true,attributionControl:true});
+  L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',{attribution:'Tiles &copy; Esri',maxZoom:19}).addTo(map);
+  map.attributionControl.setPrefix('<a href="https://leafletjs.com" target="_blank">Leaflet</a>');
+  const markers={};
+  Object.entries(TANKS).forEach(([id,info])=>{
+    const marker=L.marker([info.lat,info.lon],{icon:makeTankIcon(id,info,null),zIndexOffset:info.rm});
+    marker.bindPopup('',{className:'tank-popup',maxWidth:200,offset:[0,-(info.r+4)]});
+    marker.on('click',()=>{
+      const state=window._tankState&&window._tankState[id];
+      const content=state
+        ?`<div class="tp-id">${id}</div>
+           <div class="tp-row">直径: <span>${info.rm*2}m</span></div>
+           <div class="tp-row">最大高度: <span>${info.hm}m</span></div>
+           <div class="tp-row">填充率: <span>${state.ratio!==null?(state.ratio*100).toFixed(1)+'%':'N/A'}</span></div>
+           <div class="tp-row">容量: <span>${state.mnBbl!==null?state.mnBbl.toFixed(3)+' Mb':'N/A'}</span></div>
+           <div class="tp-row">SAR dB: <span>${state.dbMean!==null?state.dbMean.toFixed(2):'N/A'}</span></div>`
+        :`<div class="tp-id">${id}</div><div class="tp-row">暂无数据</div>`;
+      marker.getPopup().setContent(content);
+    });
+    marker.addTo(map);
+    markers[id]=marker;
+  });
+  let raw;
+  try{raw=await fetchTankData();}
+  catch(e){document.getElementById('mapLoadingMsg').innerHTML=`<span style="color:#ef4444">错误: ${e.message}</span>`;return;}
+  document.getElementById('mapLoadingMsg').style.display='none';
+  const data=raw.filter(r=>TANKS[r.tank_id]);
+  const dbByTank={};
+  data.forEach(r=>{if(!dbByTank[r.tank_id])dbByTank[r.tank_id]=[];dbByTank[r.tank_id].push(r.db_mean);});
+  const calibration={};
+  Object.entries(dbByTank).forEach(([id,vals])=>{calibration[id]={p5:percentile(vals,5),p95:percentile(vals,95)};});
+  const byDate={};
+  data.forEach(r=>{if(!byDate[r.date])byDate[r.date]={};byDate[r.date][r.tank_id]=r;});
+  const allDates=Object.keys(byDate).sort();
+  const lockCutoff=new Date();lockCutoff.setDate(lockCutoff.getDate()-14);
+  const lockCutoffStr=lockCutoff.toISOString().slice(0,10);
+  const dates=allDates.filter(d=>d>='2026-01-01'&&d<=lockCutoffStr);
+  if(!dates.length){document.getElementById('mapLoadingMsg').innerHTML='<span style="color:#ef4444">暂无数据。</span>';return;}
+  function renderDate(dateStr){
+    const dateData=byDate[dateStr]||{};
+    window._tankState={};
+    Object.entries(TANKS).forEach(([id,info])=>{
+      const obs=dateData[id];
+      let ratio=null,dbMean=null,mnBbl=null;
+      if(obs&&calibration[id]){const{p5,p95}=calibration[id];ratio=calcFillRatio(obs.db_mean,p5,p95);mnBbl=calcMnBbl(ratio,info.rm,info.hm);dbMean=obs.db_mean;}
+      window._tankState[id]={ratio,dbMean,mnBbl};
+      markers[id].setIcon(makeTankIcon(id,info,ratio));
+    });
+    document.getElementById('curDateLabel').textContent=dateStr;
+  }
+  const slider=document.getElementById('dateSlider');
+  slider.max=dates.length-1;
+  slider.value=dates.length-1;
+  document.getElementById('sliderStart').textContent=dates[0];
+  document.getElementById('sliderEnd').textContent=dates[dates.length-1];
+  renderDate(dates[dates.length-1]);
+  slider.addEventListener('input',()=>renderDate(dates[+slider.value]));
+  document.getElementById('prevBtn').addEventListener('click',()=>{
+    const v=Math.max(0,+slider.value-1);slider.value=v;renderDate(dates[v]);
+  });
+  document.getElementById('nextBtn').addEventListener('click',()=>{
+    const v=Math.min(dates.length-1,+slider.value+1);slider.value=v;renderDate(dates[v]);
+  });
+  let playing=false,playTimer=null;
+  const playBtn=document.getElementById('playBtn');
+  playBtn.addEventListener('click',()=>{
+    playing=!playing;
+    if(playing){
+      playBtn.textContent='⏹ 停止';playBtn.classList.add('playing');
+      if(+slider.value>=dates.length-1)slider.value=0;
+      playTimer=setInterval(()=>{
+        const next=+slider.value+1;
+        if(next>=dates.length){clearInterval(playTimer);playing=false;playBtn.textContent='▶ 播放';playBtn.classList.remove('playing');return;}
+        slider.value=next;renderDate(dates[next]);
+      },400);
+    }else{clearInterval(playTimer);playBtn.textContent='▶ 播放';playBtn.classList.remove('playing');}
+  });
+}
+
+async function loadCharts(){
+  try{
+    const res=await fetch('/data/data_daily.json');
+    const d=await res.json();
+
+    const latest=d.dates[d.dates.length-1];
+    const cutoff=new Date(latest);
+    cutoff.setMonth(cutoff.getMonth()-6);
+    const cutoffStr=cutoff.toISOString().slice(0,10);
+    const lockDate=new Date(latest);
+    lockDate.setDate(lockDate.getDate()-14);
+    const lockStr=lockDate.toISOString().slice(0,10);
+    const startIdx=d.dates.findIndex(dt=>dt>=cutoffStr);
+    const endIdx=d.dates.findIndex(dt=>dt>lockStr);
+    const sliceEnd=endIdx===-1?d.dates.length:endIdx;
+    const dates6m=d.dates.slice(startIdx,sliceEnd);
+    const values6m=d.values.slice(startIdx,sliceEnd);
+
+    const latestVal=values6m[values6m.length-1];
+    const prevVal=values6m[values6m.length-2];
+    const diff=(latestVal-prevVal).toFixed(2);
+    const sign=diff>0?'+':'';
+    const pct=prevVal!==0?(((latestVal-prevVal)/prevVal)*100).toFixed(1):'0.0';
+    const pctSign=pct>0?'+':'';
+    const trend=diff>0?'<span style="color:#f59e0b">▲ 蓄积</span>':'<span style="color:#3b82f6">▼ 下降</span>';
+    const latestUtil=(latestVal/NAMEPLATE_MMBBL*100).toFixed(1);
+    const MAX_CAP=31.78;
+    const fr7d=values6m.length>=8?(values6m[values6m.length-1]-values6m[values6m.length-8])/7:null;
+    const fr7dStr=fr7d!==null?`<div>7日填充率: <strong style="color:${fr7d>0?'#f59e0b':'#3b82f6'}">${fr7d>0?'+':''}${fr7d.toFixed(3)} Mb/d</strong></div>`:'';
+    let daysStr='';
+    if(fr7d!==null&&fr7d>0.005){const d=Math.round((MAX_CAP-latestVal)/fr7d);daysStr=`<div>距满仓天数: <strong style="color:#f59e0b">${d}天</strong></div>`;}
+    else if(fr7d!==null&&fr7d<-0.005){const d=Math.round(latestVal/Math.abs(fr7d));daysStr=`<div>距空仓天数: <strong style="color:#3b82f6">${d}天</strong></div>`;}
+
+    document.getElementById('latestStat').innerHTML=
+      `<div>储量: <strong style="color:#3b82f6;">${latestVal.toFixed(2)} Mb</strong></div>`+
+      fr7dStr+
+      daysStr+
+      `<div>利用率: <strong style="color:${latestUtil>=85?'#dc2626':latestUtil>=70?'#f59e0b':'#3b82f6'}">${latestUtil}%</strong></div>`+
+      `<div>状态: <strong>${trend}</strong></div>`;
+
+    const gridColor='rgba(255,255,255,0.05)';
+    const tickFont={family:'DM Mono, monospace',size:10};
+    const isMobile=window.innerWidth<640;
+    const tickOpts={color:'#64748b',font:tickFont,maxTicksLimit:isMobile?4:8,maxRotation:0,autoSkip:true};
+
+    new Chart(document.getElementById('dailyChart'),{type:'line',data:{labels:dates6m,datasets:[{label:'储量 (Mb)',data:values6m,borderColor:'#3b82f6',borderWidth:2,backgroundColor:'rgba(59,130,246,0.10)',fill:true,pointRadius:2,pointBackgroundColor:'#0a0e17',pointBorderColor:'#3b82f6',tension:0.1}]},options:{responsive:true,maintainAspectRatio:false,interaction:{intersect:false,mode:'index'},scales:{x:{ticks:{...tickOpts},grid:{color:gridColor}},y:{ticks:{color:'#64748b',font:{family:'DM Mono, monospace',size:11},callback:v=>v.toFixed(1)+' Mb'},grid:{color:gridColor}}},plugins:{legend:{display:false},tooltip:{backgroundColor:'#111827',borderColor:'rgba(255,255,255,0.1)',borderWidth:1,titleColor:'#94a3b8',bodyColor:'#3b82f6',callbacks:{label:ctx=>` ${ctx.parsed.y.toFixed(2)} Mb`}}}}});
+
+  }catch(e){
+    document.getElementById('latestStat').innerHTML=`<span style="color:#ff4757">错误: ${e.message||e}</span>`;
+    console.error(e);
+  }
+}
+
+loadCharts();
+initMap();
+</script>
+<script>
+(function(){
+  var el = document.getElementById('dashboardCta');
+  if(!el) return;
+  fetch('https://app.oilradar.io/auth/check', { credentials: 'include' })
+    .then(function(r){ return r.json(); })
+    .then(function(d){
+      if(d && d.authenticated){
+        el.href = 'https://app.oilradar.io/dashboard';
+        el.removeAttribute('target');
+      }
+    })
+    .catch(function(){});
+})();
+</script>
+<noscript>
+<div style="display:none" aria-hidden="true">
+OilRadar 哈尔格岛监控。伊朗哈尔格岛原油储量实时情报——47座浮顶储罐通过Sentinel-1 SAR卫星追踪，平均每约6天更新一次。
+储量上升 = 出口放缓（制裁压力、拥堵、需求减少）。储量下降 = 活跃装载，原油进入市场。
+</div>
+</noscript>
+</body>
+</html>

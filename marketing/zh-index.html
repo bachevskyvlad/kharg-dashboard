@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OilRadar — 伊朗原油卫星情报 | 哈尔格岛原油储量追踪</title>
+<meta name="description" content="哈尔格岛伊朗原油储量实时情报 — 覆盖伊朗约90%的出口。Sentinel-1 SAR卫星数据，领先EIA和JODI报告4–7周。">
+<meta name="keywords" content="哈尔格岛原油, 伊朗原油出口卫星, 伊朗原油储量追踪, Kharg Island oil, SAR卫星伊朗石油, 伊朗原油情报, Sentinel-1伊朗石油">
+<meta name="robots" content="index, follow">
+<link rel="canonical" href="https://oilradar.io/zh">
+<link rel="icon" type="image/x-icon" href="/assets/images/favicon.ico">
+<link rel="icon" type="image/png" sizes="32x32" href="/assets/images/favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="/assets/images/favicon-16x16.png">
+<link rel="apple-touch-icon" sizes="180x180" href="/assets/images/apple-touch-icon.png">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://oilradar.io/zh">
+<meta property="og:title" content="OilRadar — 伊朗原油卫星情报">
+<meta property="og:description" content="卫星追踪哈尔格岛 — 约90%的伊朗原油出口。领先EIA和JODI报告4–7周。">
+<meta property="og:image" content="https://oilradar.io/assets/images/og-image.png">
+<meta property="og:site_name" content="OilRadar">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:site" content="@IberianLobos">
+<meta name="twitter:title" content="OilRadar — 伊朗原油卫星情报">
+<meta name="twitter:description" content="哈尔格岛47座浮顶储罐由SAR卫星追踪，领先EIA报告4–7周。">
+<meta name="twitter:image" content="https://oilradar.io/assets/images/og-image.png">
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"Organization","name":"OilRadar","url":"https://oilradar.io","description":"通过Sentinel-1 SAR卫星图像追踪哈尔格岛伊朗原油出口的卫星情报平台，领先EIA和JODI报告4–7周。","contactPoint":{"@type":"ContactPoint","contactType":"sales","url":"https://calendly.com/bachevsky/intro"},"founders":[{"@type":"Person","name":"Vladislav Bachevsky","jobTitle":"Founder","sameAs":"https://www.linkedin.com/in/bachevsky/"}]}
+</script>
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-TZQ5VH3GPY"></script>
+<script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','G-TZQ5VH3GPY');</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@300;400;500&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+<noscript><link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@300;400;500&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet"></noscript>
+<style>
+:root{--bg:#0a0e17;--deep:#0d1320;--panel:#111827;--border:rgba(255,255,255,0.07);--accent:#3b82f6;--accent2:#ef4444;--gold:#f59e0b;--text:#e2e8f0;--muted:#94a3b8;--dim:#64748b;--white:#f8fafc;}
+*{margin:0;padding:0;box-sizing:border-box;}
+html{scroll-behavior:smooth;}
+body{background:var(--bg);color:var(--text);font-family:'DM Sans',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;overflow-x:hidden;}
+
+/* NAV */
+nav{position:fixed;top:0;left:0;right:0;z-index:200;display:flex;align-items:center;justify-content:space-between;padding:14px 48px;background:rgba(10,14,23,0.97);backdrop-filter:blur(16px);border-bottom:1px solid var(--border);}
+.logo{font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:4px;color:var(--accent);text-decoration:none;}
+.nav-right{display:flex;align-items:center;gap:28px;}
+.nav-link{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);text-decoration:none;transition:color .2s;}
+.nav-link:hover{color:var(--accent);}
+.nav-cta{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:2px;text-transform:uppercase;background:var(--accent);color:#ffffff;padding:9px 22px;border:none;cursor:pointer;text-decoration:none;transition:opacity .2s;}
+.nav-cta:hover{opacity:.85;}
+.lang-switch{border-left:1px solid var(--border);padding-left:16px;margin-left:4px;color:var(--muted)!important;}
+.lang-switch.active-lang{color:var(--accent)!important;font-weight:700;}
+@media(max-width:768px){nav{padding:14px 20px;}.nav-right .nav-link{display:none;}}
+
+/* HERO */
+#hero{min-height:100vh;display:grid;grid-template-columns:1fr 1fr;align-items:center;padding:0;background:var(--bg);overflow:hidden;}
+.hero-content{padding:120px 64px 80px;max-width:740px;}
+.hero-img{height:100vh;overflow:hidden;position:relative;}
+.hero-img img{width:100%;height:100%;object-fit:cover;object-position:center;filter:brightness(0.85) saturate(0.9);}
+.hero-img::before{content:'';position:absolute;top:0;left:0;width:40%;height:100%;background:linear-gradient(to right,var(--bg),transparent);z-index:1;}
+.hero-label{font-family:'DM Mono',monospace;font-size:11px;letter-spacing:4px;text-transform:uppercase;color:var(--accent);margin-bottom:24px;}
+h1.hero-title{font-family:'Bebas Neue',sans-serif;font-size:clamp(64px,7vw,120px);line-height:.9;color:var(--text);margin-bottom:32px;}
+h1.hero-title span{color:var(--accent);}
+.hero-sub{font-size:17px;font-weight:300;color:var(--muted);max-width:560px;line-height:1.75;margin-bottom:44px;}
+.hero-sub strong{color:var(--text);font-weight:500;}
+.hero-ctas{display:flex;gap:12px;flex-wrap:wrap;}
+.btn-primary{font-family:'DM Mono',monospace;font-size:11px;letter-spacing:3px;text-transform:uppercase;background:var(--accent);color:#ffffff;padding:14px 32px;border:none;cursor:pointer;text-decoration:none;display:inline-block;transition:opacity .2s;}
+.btn-primary:hover{opacity:.85;}
+.btn-outline{font-family:'DM Mono',monospace;font-size:11px;letter-spacing:3px;text-transform:uppercase;background:transparent;color:var(--accent);padding:13px 32px;border:1px solid var(--accent);cursor:pointer;text-decoration:none;display:inline-block;transition:all .2s;}
+.btn-outline:hover{background:rgba(59,130,246,0.12);}
+@media(max-width:900px){#hero{grid-template-columns:1fr;}.hero-img{display:none;}.hero-content{padding:100px 24px 60px;}}
+
+/* STATS STRIP */
+.stats-strip{display:grid;grid-template-columns:repeat(3,1fr);background:var(--panel);border-top:1px solid var(--border);border-bottom:1px solid var(--border);}
+.stat-item{padding:40px 48px;border-right:1px solid var(--border);text-align:center;}
+.stat-item:last-child{border-right:none;}
+.stat-emoji{font-size:36px;margin-bottom:14px;display:block;}
+.stat-val{font-family:'Bebas Neue',sans-serif;font-size:56px;color:var(--accent);line-height:1;margin-bottom:10px;}
+.stat-label{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);line-height:1.7;}
+@media(max-width:768px){.stats-strip{grid-template-columns:1fr;}.stat-item{border-right:none;border-bottom:1px solid var(--border);padding:32px 24px;}}
+
+/* SHARED SECTION */
+.section-label{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:4px;text-transform:uppercase;color:var(--accent);margin-bottom:16px;display:block;}
+.section-title{font-family:'Bebas Neue',sans-serif;font-size:clamp(40px,4vw,64px);line-height:1;color:var(--text);margin-bottom:32px;}
+
+/* HOW IT WORKS */
+#how{padding:100px 64px;background:var(--deep);text-align:center;}
+.how-inner{width:100%;}
+.how-steps{display:grid;grid-template-columns:repeat(3,1fr);gap:2px;margin-top:48px;}
+.how-step{background:var(--panel);border:1px solid var(--border);padding:36px 28px;text-align:center;}
+.how-step-icon{font-size:32px;margin-bottom:16px;display:block;}
+.how-step h3{font-family:'DM Mono',monospace;font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--text);margin-bottom:10px;}
+.how-step p{font-size:13px;color:var(--muted);line-height:1.8;}
+@media(max-width:900px){#how{padding:70px 24px;}.how-steps{grid-template-columns:1fr;}}
+
+/* CHART */
+#chart-section{padding:100px 64px;background:var(--bg);text-align:center;}
+.chart-section-inner{width:100%;}
+.chart-outer{position:relative;margin-top:40px;text-align:left;}
+.chart-canvas-wrap{background:var(--panel);border:1px solid var(--border);padding:28px 32px;position:relative;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,0.3);}
+.chart-lock-overlay{position:absolute;top:0;right:0;width:10%;height:100%;background:linear-gradient(to right,transparent,rgba(10,14,23,0.97) 40%);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;z-index:10;}
+.lock-icon{font-size:20px;}
+.lock-label{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);text-align:center;line-height:1.5;}
+.lock-cta-btn{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:2px;text-transform:uppercase;background:var(--accent);color:#ffffff;padding:8px 14px;text-decoration:none;display:inline-block;margin-top:4px;white-space:nowrap;}
+#chartStat{font-family:'DM Mono',monospace;font-size:13px;color:var(--text);margin-bottom:20px;padding:12px 16px;background:rgba(59,130,246,0.06);border-left:2px solid var(--accent);display:flex;gap:24px;flex-wrap:wrap;}
+@media(max-width:768px){#chart-section{padding:70px 24px;}.chart-lock-overlay{width:18%;}}
+
+/* PRODUCTS */
+#products{padding:100px 64px;background:var(--deep);text-align:center;}
+.products-inner{width:100%;}
+.products-grid{display:grid;grid-template-columns:1fr 1fr;gap:2px;margin-top:48px;text-align:left;}
+.product-card{background:var(--panel);border:1px solid var(--border);padding:48px 40px;}
+.product-card.featured{border-color:var(--accent);background:rgba(59,130,246,0.06);}
+.product-badge{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:3px;text-transform:uppercase;color:var(--muted);margin-bottom:16px;}
+.product-card.featured .product-badge{color:var(--accent);}
+.product-card h3{font-family:'Bebas Neue',sans-serif;font-size:36px;color:var(--text);margin-bottom:16px;}
+.product-card p{font-size:14px;color:var(--muted);line-height:1.85;margin-bottom:32px;}
+.product-card ul{list-style:none;margin-bottom:32px;display:flex;flex-direction:column;gap:10px;}
+.product-card ul li{font-family:'DM Mono',monospace;font-size:11px;color:var(--muted);display:flex;gap:10px;}
+.product-card ul li::before{content:'→';color:var(--accent);flex-shrink:0;}
+@media(max-width:768px){#products{padding:70px 24px;}.products-grid{grid-template-columns:1fr;}.product-card{padding:32px 24px;}}
+
+/* LEGAL */
+#legal{background:var(--bg);padding:60px 64px;border-top:1px solid var(--border);}
+.legal-inner{max-width:900px;}
+.legal-inner h2{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:4px;text-transform:uppercase;color:var(--muted);margin-bottom:20px;}
+.legal-inner p{font-size:11px;color:var(--dim);line-height:1.9;margin-bottom:10px;}
+@media(max-width:768px){#legal{padding:40px 24px;}}
+
+/* FOOTER */
+footer{background:var(--panel);border-top:1px solid var(--border);padding:40px 64px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:20px;}
+.footer-logo{font-family:'Bebas Neue',sans-serif;font-size:24px;letter-spacing:6px;color:var(--accent);}
+.footer-links{display:flex;gap:24px;flex-wrap:wrap;}
+.footer-link{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);text-decoration:none;transition:color .2s;}
+.footer-link:hover{color:var(--accent);}
+.footer-copy{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:1px;color:var(--dim);opacity:0.6;}
+@media(max-width:768px){footer{padding:32px 24px;flex-direction:column;gap:16px;}}
+</style>
+</head>
+<body>
+
+<nav>
+  <a href="/zh" class="logo">OilRadar</a>
+  <div class="nav-right">
+    <a href="/zh/monitor" class="nav-link">实时监控</a>
+    <a href="/zh/anchorage" class="nav-link">锚地</a>
+    <a href="/zh/team" class="nav-link">关于我们</a>
+    <a href="https://calendly.com/bachevsky/intro" target="_blank" class="nav-link">预约通话</a>
+    <a id="dashboardCta" href="https://app.oilradar.io/dashboard" target="_blank" class="nav-cta">仪表盘 &rarr;</a>
+    <a href="/" class="nav-link lang-switch">EN</a>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section id="hero">
+  <div class="hero-content">
+    <div class="hero-label">哈尔格岛 · 伊朗 · Sentinel-1 SAR</div>
+    <h1 class="hero-title">提前掌握<br>哈尔格岛<br><span>原油动态</span></h1>
+    <p class="hero-sub">我们追踪哈尔格岛所有原油储罐——该终端处理<strong>约90%的伊朗出口原油</strong>，经由霍尔木兹海峡出口——使用SAR卫星雷达。储量信号比EIA和JODI报告<strong>提前4–7周</strong>。</p>
+    <div class="hero-ctas">
+      <a href="https://calendly.com/bachevsky/intro" target="_blank" class="btn-primary">申请数据访问</a>
+      <a href="/zh/monitor" class="btn-outline">查看实时监控</a>
+    </div>
+  </div>
+  <div class="hero-img">
+    <picture>
+      <source srcset="/assets/images/harg-satellite.webp" type="image/webp">
+      <img src="/assets/images/harg-satellite .png" alt="Kharg Island satellite view — floating-roof crude oil storage tanks" width="960" height="1080">
+    </picture>
+  </div>
+</section>
+
+<!-- STATS -->
+<div class="stats-strip">
+  <div class="stat-item">
+    <span class="stat-emoji">🛢️</span>
+    <div class="stat-val">~90%</div>
+    <div class="stat-label">伊朗原油出口<br>经由哈尔格岛</div>
+  </div>
+  <div class="stat-item">
+    <span class="stat-emoji">⚡</span>
+    <div class="stat-val">4–7wk</div>
+    <div class="stat-label">领先 EIA<br>和 JODI 报告</div>
+  </div>
+  <div class="stat-item">
+    <span class="stat-emoji">🛰️</span>
+    <div class="stat-val">47</div>
+    <div class="stat-label">浮顶储罐<br>持续追踪</div>
+  </div>
+</div>
+
+<!-- HOW IT WORKS -->
+<section id="how">
+  <div class="how-inner">
+    <span class="section-label">您所看到的</span>
+    <h2 class="section-title">哈尔格终端<br>实时情报</h2>
+    <div class="how-steps">
+      <div class="how-step">
+        <span class="how-step-icon">🛢️</span>
+        <h3>终端运营</h3>
+        <p>每次卫星过境后更新全部47座储罐的填充水平。在任何人报告之前，了解哈尔格岛是否处于蓄积或下降状态。</p>
+      </div>
+      <div class="how-step">
+        <span class="how-step-icon">⚡</span>
+        <h3>储量速度</h3>
+        <p>Mb/天的流入和流出速率。出口脉冲在下降模式与活跃VLCC装载事件匹配时发出警报。</p>
+      </div>
+      <div class="how-step">
+        <span class="how-step-icon">🚢</span>
+        <h3>油轮队列</h3>
+        <p>哈尔格锚地按船级划分的每周船只数量——VLCC、Suezmax、Aframax。队列积压是出口流量受限的早期信号。</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CHART -->
+<section id="chart-section">
+  <div class="chart-section-inner">
+    <span class="section-label">哈尔格岛 · SAR 提取</span>
+    <h2 class="section-title">储量动态<br>完整历史</h2>
+    <div class="chart-outer">
+      <div class="chart-canvas-wrap">
+        <div id="chartStat">加载中...</div>
+        <canvas id="landingChart" height="100"></canvas>
+        <div class="chart-lock-overlay">
+          <div class="lock-icon">🔒</div>
+          <div class="lock-label">最近<br>2周</div>
+          <a href="https://calendly.com/bachevsky/intro" target="_blank" class="lock-cta-btn">获取访问权限</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- PRODUCTS -->
+<section id="products">
+  <div class="products-inner">
+    <span class="section-label">您所获得的</span>
+    <h2 class="section-title">选择您的访问级别</h2>
+    <div class="products-grid">
+      <div class="product-card">
+        <div class="product-badge">免费 · 公开</div>
+        <h3>实时监控</h3>
+        <p>每次卫星过境后更新储量图表和单罐填充地图。最近2周仅对付费订阅用户开放。</p>
+        <ul>
+          <li>总储量 — 近6个月</li>
+          <li>单罐填充水平地图 — 全部47座储罐</li>
+          <li>蓄积 / 下降状态信号</li>
+          <li>7日填充率 · 利用率% · 距满仓天数</li>
+        </ul>
+        <a href="/zh/monitor" class="btn-outline">查看实时监控 →</a>
+      </div>
+      <div class="product-card featured">
+        <div class="product-badge">数据访问</div>
+        <h3>完整情报订阅</h3>
+        <p>哈尔格岛运营情报——正在发生什么、为何重要、下一步可能如何。完整历史数据自2017年起。</p>
+        <ul>
+          <li>出口脉冲检测——活跃VLCC装载事件的统计信号</li>
+          <li>储量压力指数——历史上高SPI预示4–8周内价格受迫性让步</li>
+          <li>油轮队列指数——2017年起锚地积压船数，VLCC·Suezmax·Aframax分类</li>
+          <li>单罐活动——识别哪些储罐在循环使用，哪些处于闲置</li>
+          <li>REST API——完整数据集，JSON和CSV，按日期范围筛选</li>
+        </ul>
+        <a href="https://calendly.com/bachevsky/intro" target="_blank" class="btn-primary">申请数据访问</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- LEGAL -->
+<section id="legal">
+  <div class="legal-inner">
+    <h2>法律声明</h2>
+    <p><strong>本平台不提供投资建议。</strong>OilRadar提供卫星衍生的物理数据和情报产品。本网站上的任何内容均不构成投资建议、财务建议或交易建议。所有数据仅供信息和研究目的使用。</p>
+    <p><strong>数据准确性。</strong>储量估算来源于使用逆月牙辐射测量法的Sentinel-1 SAR卫星图像。测量结果是基于雷达后向散射和已知储罐几何形状的近似值。信号质量可能受天气、卫星过境角度和地表条件影响。</p>
+    <p><strong>制裁合规。</strong>OilRadar使用公开可用的ESA哥白尼图像提供观测卫星数据。用户独自负责确保其对我们数据的使用符合所有适用的法律法规。</p>
+    <p style="margin-top:16px;opacity:0.4;">© 2024–2026 OilRadar. 版权所有。</p>
+  </div>
+</section>
+
+<footer>
+  <div class="footer-logo">OilRadar</div>
+  <div class="footer-links">
+    <a href="/zh/monitor" class="footer-link">哈尔格监控</a>
+    <a href="/zh/gas-storage" class="footer-link">天然气储量</a>
+    <a href="/zh/team" class="footer-link">关于我们</a>
+    <a href="https://calendly.com/bachevsky/intro" target="_blank" class="footer-link">申请访问</a>
+  </div>
+  <div class="footer-copy">哈尔格岛原油情报 · Sentinel-1 SAR · oilradar.io<br><span style="opacity:0.85;">我们谨慎选择合作伙伴。</span></div>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js" defer></script>
+<script>
+async function loadLandingChart() {
+  try {
+    const res = await fetch(`/data/data_daily.json?v=${Date.now()}`);
+    const d = await res.json();
+
+    // 2026 only, exclude last 14 days
+    const latestDate = new Date(d.dates[d.dates.length - 1]);
+    const cutoff = new Date(latestDate);
+    cutoff.setDate(cutoff.getDate() - 14);
+    const cutoffStr = cutoff.toISOString().slice(0, 10);
+
+    const filtered = d.dates.reduce((acc, dt, i) => {
+      if (dt >= '2026-01-01' && dt <= cutoffStr) {
+        acc.dates.push(dt);
+        acc.values.push(d.values[i]);
+      }
+      return acc;
+    }, { dates: [], values: [] });
+
+    const vals = filtered.values;
+    const latest = vals[vals.length - 1];
+    const prev = vals[vals.length - 2];
+    const diff = (latest - prev).toFixed(2);
+    const sign = diff > 0 ? '+' : '';
+    const pct = prevVal => prevVal !== 0 ? (((latest - prevVal) / prevVal) * 100).toFixed(1) : '0.0';
+    const pctVal = pct(prev);
+    const pctSign = pctVal > 0 ? '+' : '';
+    const trend = diff > 0
+      ? '<span style="color:#f59e0b">▲ 蓄积</span>'
+      : '<span style="color:#3b82f6">▼ 下降</span>';
+
+    document.getElementById('chartStat').innerHTML =
+      `<div>最新显示: <strong style="color:#3b82f6">${latest.toFixed(2)} Mb</strong></div>` +
+      `<div>日环比: <strong style="color:${diff > 0 ? '#f59e0b' : '#3b82f6'}">${sign}${diff} Mb (${pctSign}${pctVal}%)</strong></div>` +
+      `<div>状态: <strong>${trend}</strong></div>` +
+      `<div style="color:var(--muted);font-size:11px;">最近2周已锁定 — <a href="https://calendly.com/bachevsky/intro" target="_blank" style="color:var(--accent);">申请访问权限</a></div>`;
+
+    window.addEventListener('DOMContentLoaded', () => {}, false);
+
+    const ctx = document.getElementById('landingChart');
+    if (!ctx) return;
+    new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: filtered.dates,
+        datasets: [{
+          label: '储量 (Mb)',
+          data: filtered.values,
+          borderColor: '#3b82f6',
+          borderWidth: 2,
+          backgroundColor: 'rgba(59,130,246,0.10)',
+          fill: true,
+          pointRadius: 2,
+          pointBackgroundColor: '#0a0e17',
+          pointBorderColor: '#3b82f6',
+          tension: 0.1
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: true,
+        interaction: { intersect: false, mode: 'index' },
+        scales: {
+          x: {
+            ticks: { color: '#64748b', font: { family: 'DM Mono, monospace', size: 10 }, maxTicksLimit: 10 },
+            grid: { color: 'rgba(255,255,255,0.05)' }
+          },
+          y: {
+            ticks: { color: '#64748b', font: { family: 'DM Mono, monospace', size: 11 }, callback: v => v.toFixed(1) + ' Mb' },
+            grid: { color: 'rgba(255,255,255,0.05)' }
+          }
+        },
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            backgroundColor: '#111827', borderColor: 'rgba(255,255,255,0.1)', borderWidth: 1,
+            titleColor: '#94a3b8', bodyColor: '#3b82f6',
+            callbacks: { label: ctx => ` ${ctx.parsed.y.toFixed(2)} Mb` }
+          }
+        }
+      }
+    });
+  } catch(e) {
+    document.getElementById('chartStat').innerHTML = '<span style="color:#dc2626">数据加载错误。</span>';
+    console.error(e);
+  }
+}
+
+document.addEventListener('DOMContentLoaded', loadLandingChart);
+</script>
+<script>
+(function(){
+  var el = document.getElementById('dashboardCta');
+  if(!el) return;
+  fetch('https://app.oilradar.io/auth/check', { credentials: 'include' })
+    .then(function(r){ return r.json(); })
+    .then(function(d){
+      if(d && d.authenticated){
+        el.href = 'https://app.oilradar.io/dashboard';
+        el.removeAttribute('target');
+      }
+    })
+    .catch(function(){});
+})();
+</script>
+<noscript>
+<div style="display:none" aria-hidden="true">
+OilRadar — 物理原油供应的卫星情报。追踪哈尔格岛（伊朗主要原油出口终端，约90%的伊朗出口），使用Sentinel-1 SAR卫星图像。
+47座浮顶储罐单独监控。每约6天更新一次储量水平。比EIA、JODI和IEA官方报告提前4–7周。
+</div>
+</noscript>
+</body>
+</html>
