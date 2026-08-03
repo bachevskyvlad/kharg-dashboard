@@ -48,7 +48,7 @@ export default {
     // Mobile device routing — serve mobile HTML for all public pages
     if (isMobile) {
       const mobileMap = {
-        '/dashboard':     '/product/mobile.html',
+        '/dashboard':     '/product/dashboard.html',
         '/':              '/marketing/mobile-index.html',
         '/monitor':       '/marketing/mobile-monitor.html',
         '/gas-storage':   '/marketing/mobile-gas-storage.html',
@@ -61,7 +61,7 @@ export default {
         '/zh/gas-storage':'/marketing/zh-gas-storage.html',
         '/zh/team':       '/marketing/zh-team.html',
         '/zh/anchorage':  '/marketing/zh-anchorage.html',
-        '/zh/dashboard':  '/product/mobile.html',
+        '/zh/dashboard':  '/product/zh-dashboard.html',
       };
       const mobilePath = mobileMap[path];
       if (mobilePath) {

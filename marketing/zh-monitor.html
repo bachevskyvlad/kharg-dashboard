@@ -117,7 +117,7 @@ body{font-family:"PingFang SC","Microsoft YaHei","微软雅黑","Hiragino Sans G
     <a href="/zh/team" class="nav-link">团队</a>
     <a href="/zh" class="nav-link">&larr; 主页</a>
     <a href="javascript:openWechat()" class="nav-link">微信联系我们</a>
-    <a id="dashboardCta" href="https://app.oilradar.io/dashboard" target="_blank" class="nav-cta">仪表盘 &rarr;</a>
+    <a id="dashboardCta" href="https://app.oilradar.io/zh/dashboard" target="_blank" class="nav-cta">仪表盘 &rarr;</a>
     <a href="/monitor" class="nav-link lang-switch">EN</a>
   </div>
 </nav>
@@ -424,7 +424,7 @@ initMap();
     .then(function(r){ return r.json(); })
     .then(function(d){
       if(d && d.authenticated){
-        el.href = 'https://app.oilradar.io/dashboard';
+        el.href = 'https://app.oilradar.io/zh/dashboard';
         el.removeAttribute('target');
       }
     })
