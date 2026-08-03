@@ -1,6 +1,8 @@
 name: Kharg — Ship Backfill
 
 on:
+  schedule:
+    - cron: '0 7 * * 1'   # every Monday 07:00 UTC — after ship_detect (06:00)
   workflow_dispatch:
     inputs:
       year:
@@ -31,12 +33,12 @@ jobs:
           CLIENT_ID: ${{ secrets.CLIENT_ID }}
           CLIENT_SECRET: ${{ secrets.CLIENT_SECRET }}
         run: |
-          ARGS=""
+          ARGS="--resume"
           if [ -n "${{ github.event.inputs.year }}" ]; then
             ARGS="--year ${{ github.event.inputs.year }}"
           fi
-          if [ "${{ github.event.inputs.resume }}" = "true" ]; then
-            ARGS="$ARGS --resume"
+          if [ "${{ github.event.inputs.resume }}" = "false" ]; then
+            ARGS="${ARGS/--resume/}"
           fi
           cd scripts
           python ship_backfill.py $ARGS
