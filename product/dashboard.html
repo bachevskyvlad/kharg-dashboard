@@ -291,6 +291,10 @@
         .aq-rbtn:hover { border-color: var(--accent); color: var(--accent); }
         .aq-rbtn-active { background: var(--accent) !important; border-color: var(--accent) !important; color: #fff !important; }
 
+        /* Hide mobile-only elements on desktop */
+        .mob-menu-btn { display: none; }
+        .mob-dropdown { display: none; }
+
         /* ── MOBILE / TABLET ── */
         @media (max-width: 820px) {
             html, body { height: auto; overflow: auto; }
