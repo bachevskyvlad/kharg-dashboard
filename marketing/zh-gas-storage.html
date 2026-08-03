@@ -3,9 +3,9 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>欧洲天然气储量 — GIE AGSI+实时数据（按国家）| OilRadar</title>
-<meta name="description" content="欧洲准备好迎接天然气季节了吗？德国、法国、意大利、荷兰、波兰等10个国家的实时地下天然气储量。GIE AGSI+数据每日更新，与3年平均值对比冬季储备状况。">
-<meta name="keywords" content="欧洲天然气储量, 欧洲天然气储量追踪, 欧洲冬季天然气, 欧盟天然气储量, 天然气储量情报, GIE AGSI天然气数据">
+<title>欧洲天然气储量监控 | OilRadar能源数据</title>
+<meta name="description" content="实时追踪欧洲天然气储量数据。覆盖10个国家，GIE AGSI+数据源，每日更新。">
+<meta name="keywords" content="欧洲天然气储量,天然气监控,GIE AGSI,欧洲能源数据,天然气库存">
 <meta name="robots" content="index, follow">
 <link rel="canonical" href="https://oilradar.io/zh/gas-storage">
 <link rel="alternate" hreflang="en" href="https://oilradar.io/gas-storage">
@@ -27,13 +27,6 @@
 <meta name="twitter:title" content="欧洲天然气储量监控 | OilRadar">
 <meta name="twitter:description" content="10个国家实时欧洲地下天然气储量，追踪TTF价格驱动因素和冬季供应风险。">
 <meta name="twitter:image" content="https://oilradar.io/assets/images/og-image.png">
-<script async src="https://www.googletagmanager.com/gtag/js?id=G-TZQ5VH3GPY"></script>
-<script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','G-TZQ5VH3GPY');</script>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@300;400;500&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap">
-<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@300;400;500&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
-<noscript><link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@300;400;500&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet"></noscript>
 <style>
 :root{--black:#060809;--deep:#0a0f14;--panel:#0f1823;--border:#1a2a3a;--accent:#2d7ff9;--accent-glow:rgba(45,127,249,0.10);--red:#e83a3a;--gold:#d4970a;--green:#1a9e5c;--text:#b8cad8;--muted:#4a6678;--white:#eef2f7;}
 *{margin:0;padding:0;box-sizing:border-box;}html{scroll-behavior:smooth;}
@@ -111,6 +104,13 @@ footer{border-top:1px solid var(--border);padding:32px 48px;display:flex;align-i
 .reveal.on{opacity:1;transform:translateY(0);}
 @media(max-width:960px){.page{padding:72px 20px 40px;}nav{padding:0 20px;}.grid-main{grid-template-columns:1fr;}.hero{flex-direction:column;align-items:flex-start;}.hero-right{flex-wrap:wrap;}footer{flex-direction:column;text-align:center;}.footer-center{flex-direction:column;gap:12px;}}
 </style>
+<style>
+body{font-family:"PingFang SC","Microsoft YaHei","微软雅黑","Hiragino Sans GB",sans-serif!important;}
+.logo,.section-title,.hero-title,.footer-logo,.stat-val{font-family:"PingFang SC","Microsoft YaHei",sans-serif!important;}
+</style>
+<meta name="360-site-verification" content="oilradar">
+<meta name="sogou_site_verification" content="oilradar">
+<meta name="baidu_union_verify" content="oilradar">
 </head>
 <body>
 <nav>
@@ -178,7 +178,7 @@ footer{border-top:1px solid var(--border);padding:32px 48px;display:flex;align-i
   </div>
   <a class="footer-link" href="https://calendly.com/bachevsky/intro" target="_blank">申请数据访问</a>
 </footer>
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="/public/vendor/chart.min.js"></script>
 <script>
 const DATA_URL="/data/gas_storage.json?v="+Date.now();
 const C={accent:"#2d7ff9",red:"#e83a3a",gold:"#d4970a",green:"#1a9e5c",muted:"#4a6678",text:"#b8cad8",white:"#eef2f7",panel:"#0f1823",border:"#1a2a3a"};

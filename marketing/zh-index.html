@@ -3,9 +3,9 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>OilRadar — 伊朗原油卫星情报 | 哈尔格岛原油储量追踪</title>
-<meta name="description" content="哈尔格岛伊朗原油储量实时情报 — 覆盖伊朗约90%的出口。Sentinel-1 SAR卫星数据，领先EIA和JODI报告4–7周。">
-<meta name="keywords" content="伊朗原油, 伊朗石油出口, 哈尔格岛原油储量, 伊朗制裁石油, 卫星石油数据, 霍尔木兹海峡原油, 波斯湾原油情报, 影子舰队伊朗, 伊朗石油市场, 哈尔格岛卫星监控, Sentinel-1伊朗原油, 伊朗原油出口追踪, 卫星原油情报, 伊朗原油储量追踪">
+<title>OilRadar — 伊朗原油卫星情报 | 哈尔格岛石油储量实时监控</title>
+<meta name="description" content="通过Sentinel-1 SAR卫星雷达实时追踪伊朗哈尔格岛原油储量。哈尔格岛处理伊朗约90%的原油出口。比EIA和JODI报告提前4-7周获得储量信号。">
+<meta name="keywords" content="哈尔格岛,伊朗原油出口,伊朗石油储量,卫星油罐监控,SAR雷达石油,原油情报,伊朗石油制裁,波斯湾石油终端,原油储量追踪">
 <meta name="robots" content="index, follow">
 <link rel="canonical" href="https://oilradar.io/zh">
 <link rel="alternate" hreflang="en" href="https://oilradar.io/">
@@ -30,12 +30,6 @@
 <script type="application/ld+json">
 {"@context":"https://schema.org","@type":"Organization","name":"OilRadar","url":"https://oilradar.io","description":"通过Sentinel-1 SAR卫星图像追踪哈尔格岛伊朗原油出口的卫星情报平台，领先EIA和JODI报告4–7周。","contactPoint":{"@type":"ContactPoint","contactType":"sales","url":"https://calendly.com/bachevsky/intro"},"founders":[{"@type":"Person","name":"Vladislav Bachevsky","jobTitle":"Founder","sameAs":"https://www.linkedin.com/in/bachevsky/"}]}
 </script>
-<script async src="https://www.googletagmanager.com/gtag/js?id=G-TZQ5VH3GPY"></script>
-<script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','G-TZQ5VH3GPY');</script>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@300;400;500&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
-<noscript><link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@300;400;500&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet"></noscript>
 <style>
 :root{--bg:#0a0e17;--deep:#0d1320;--panel:#111827;--border:rgba(255,255,255,0.07);--accent:#3b82f6;--accent2:#ef4444;--gold:#f59e0b;--text:#e2e8f0;--muted:#94a3b8;--dim:#64748b;--white:#f8fafc;}
 *{margin:0;padding:0;box-sizing:border-box;}
@@ -138,6 +132,13 @@ footer{background:var(--panel);border-top:1px solid var(--border);padding:40px 6
 .footer-copy{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:1px;color:var(--dim);opacity:0.6;}
 @media(max-width:768px){footer{padding:32px 24px;flex-direction:column;gap:16px;}}
 </style>
+<style>
+body{font-family:"PingFang SC","Microsoft YaHei","微软雅黑","Hiragino Sans GB",sans-serif!important;}
+.logo,.section-title,.hero-title,.footer-logo,.stat-val{font-family:"PingFang SC","Microsoft YaHei",sans-serif!important;}
+</style>
+<meta name="360-site-verification" content="oilradar">
+<meta name="sogou_site_verification" content="oilradar">
+<meta name="baidu_union_verify" content="oilradar">
 </head>
 <body>
 
@@ -292,7 +293,7 @@ footer{background:var(--panel);border-top:1px solid var(--border);padding:40px 6
   <div class="footer-copy">哈尔格岛原油情报 · Sentinel-1 SAR · oilradar.io<br><span style="opacity:0.85;">我们谨慎选择合作伙伴。</span></div>
 </footer>
 
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js" defer></script>
+<script src="/public/vendor/chart.min.js" defer></script>
 <script>
 async function loadLandingChart() {
   try {
