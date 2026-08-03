@@ -15,7 +15,7 @@ import * as apiTanksFn from './functions/api/v1/tanks.js';
 export default {
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
-    const path = url.pathname;
+    const path = url.pathname.replace(/\/$/, '') || '/';
     const context = { request, env, ctx, params: {} };
 
     if (path === '/auth/login')      return loginFn.onRequest(context);
