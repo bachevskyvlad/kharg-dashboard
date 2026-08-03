@@ -61,6 +61,7 @@ export default {
         '/zh/gas-storage':'/marketing/zh-gas-storage.html',
         '/zh/team':       '/marketing/zh-team.html',
         '/zh/anchorage':  '/marketing/zh-anchorage.html',
+        '/zh/dashboard':  '/product/mobile.html',
       };
       const mobilePath = mobileMap[path];
       if (mobilePath) {
@@ -88,6 +89,7 @@ export default {
       '/zh/gas-storage':'/marketing/zh-gas-storage.html',
       '/zh/team':       '/marketing/zh-team.html',
       '/zh/anchorage':  '/marketing/zh-anchorage.html',
+      '/zh/dashboard':  '/product/zh-dashboard.html',
     };
     const desktopPath = desktopMap[path];
     if (desktopPath) {

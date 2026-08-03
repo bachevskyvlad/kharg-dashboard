@@ -1,0 +1,2326 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>哈尔格岛情报 — OilRadar</title>
+    <meta name="robots" content="noindex, nofollow">
+    <link rel="icon" type="image/x-icon" href="/assets/images/favicon.ico">
+    <link rel="icon" type="image/png" sizes="32x32" href="/assets/images/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/assets/images/favicon-16x16.png">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        :root {
+            --bg: #0a0e17;
+            --sidebar: #0d1320;
+            --surface: #111827;
+            --border: rgba(255,255,255,0.07);
+            --muted: #94a3b8;
+            --dim: #64748b;
+            --text: #e2e8f0;
+            --accent: #3b82f6;
+            --green: #34d399;
+            --red: #f87171;
+            --yellow: #fbbf24;
+        }
+        html, body { height: 100%; overflow: hidden; }
+        body { font-family: "PingFang SC","Microsoft YaHei","微软雅黑",sans-serif !important; background: var(--bg); color: var(--text); display: flex; }
+
+        /* ── SIDEBAR ── */
+        .sidebar {
+            width: 200px;
+            min-width: 200px;
+            background: var(--sidebar);
+            border-right: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            position: fixed;
+            top: 0; left: 0;
+            z-index: 200;
+        }
+        .sidebar-logo {
+            padding: 1.5rem 1.25rem 1rem;
+            border-bottom: 1px solid var(--border);
+        }
+        .logo-mark { font-size: 0.9rem; font-weight: 700; letter-spacing: 0.2em; color: var(--accent); }
+        .logo-sub { font-size: 0.58rem; color: var(--muted); margin-top: 0.3rem; letter-spacing: 0.04em; line-height: 1.5; }
+
+        .sidebar-nav { flex: 1; padding: 0.75rem 0; overflow-y: auto; }
+        .nav-group-label {
+            padding: 0.55rem 1.25rem 0.2rem;
+            font-size: 0.58rem; letter-spacing: 0.12em; text-transform: uppercase;
+            color: var(--dim); font-weight: 600;
+        }
+        .nav-item {
+            display: flex; align-items: center; gap: 0.7rem;
+            padding: 0.55rem 1.25rem;
+            font-size: 0.78rem; color: var(--muted);
+            cursor: pointer; transition: all 0.15s;
+            border-left: 2px solid transparent;
+            letter-spacing: 0.02em;
+        }
+        .nav-item:hover { color: var(--text); background: rgba(255,255,255,0.04); }
+        .nav-item.active { color: var(--text); border-left-color: var(--accent); background: rgba(59,130,246,0.1); }
+        .nav-icon { font-size: 0.85rem; opacity: 0.7; }
+        .nav-divider { margin: 0.5rem 1.25rem; border: none; border-top: 1px solid var(--border); }
+
+        .sidebar-footer {
+            padding: 1rem 1.25rem;
+            border-top: 1px solid var(--border);
+        }
+        .user-email { font-size: 0.65rem; color: var(--muted); display: block; margin-bottom: 0.6rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .logout-btn { background: none; border: 1px solid rgba(220,38,38,0.2); color: var(--red); padding: 0.3rem 0.75rem; border-radius: 4px; font-size: 0.68rem; cursor: pointer; width: 100%; font-family: inherit; transition: border-color 0.2s; }
+        .logout-btn:hover { border-color: rgba(220,38,38,0.5); }
+
+        /* ── MAIN ── */
+        .main { margin-left: 200px; flex: 1; height: 100vh; overflow-y: auto; display: flex; flex-direction: column; }
+
+        /* ── STICKY KEY METRICS BAR ── */
+        .kpi-bar {
+            position: sticky; top: 0; z-index: 100;
+            background: rgba(250,250,248,0.97); backdrop-filter: blur(8px);
+            border-bottom: 1px solid var(--border);
+            display: flex; align-items: stretch;
+            padding: 0;
+            min-height: 70px;
+        }
+        .kpi-stat {
+            flex: 1; padding: 0.9rem 1.25rem;
+            border-right: 1px solid var(--border);
+            display: flex; flex-direction: column; justify-content: center;
+        }
+        .kpi-stat:last-child { border-right: none; }
+        .kpi-label { font-size: 0.55rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.12em; font-weight: 600; margin-bottom: 0.35rem; }
+        .kpi-value { font-family: 'Space Grotesk', sans-serif; font-size: 1.4rem; font-weight: 700; line-height: 1; color: var(--text); }
+        .kpi-unit { font-size: 0.7rem; color: var(--muted); font-weight: 400; }
+        .kpi-sub { font-size: 0.62rem; color: var(--dim); margin-top: 0.25rem; }
+
+        /* Alert */
+        .alert-wrap { padding: 0 2rem; }
+        .alert-banner { border-radius: 6px; padding: 0.65rem 1rem; margin: 1.25rem 0 0; display: none; font-size: 0.78rem; align-items: center; gap: 0.6rem; }
+        .alert-banner.visible { display: flex; }
+        .alert-banner.pulse { background: rgba(5,150,105,0.07); border: 1px solid rgba(5,150,105,0.25); color: #065f46; }
+        .alert-banner.critical { background: rgba(220,38,38,0.07); border: 1px solid rgba(220,38,38,0.25); color: #991b1b; }
+
+        /* ── SECTIONS ── */
+        .section { display: none; flex: 1; padding: 2rem; }
+        .section.active { display: block; }
+
+        /* Period + granularity controls */
+        .ctrl-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; gap: 1rem; flex-wrap: wrap; }
+        .ctrl-group { display: flex; gap: 0.5rem; align-items: center; }
+        .ctrl-label { font-size: 0.6rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.1em; }
+        .btn-group { display: flex; background: var(--surface); border: 1px solid var(--border); border-radius: 5px; overflow: hidden; }
+        .tbtn { background: transparent; border: none; border-right: 1px solid var(--border); color: var(--muted); padding: 0.3rem 0.7rem; font-size: 0.72rem; cursor: pointer; font-family: inherit; transition: all 0.15s; }
+        .tbtn:last-child { border-right: none; }
+        .tbtn:hover { color: var(--text); background: rgba(0,0,0,0.03); }
+        .tbtn.active { background: rgba(29,78,216,0.08); color: var(--accent); }
+        .export-btn { background: transparent; border: 1px solid var(--border); color: var(--dim); padding: 0.32rem 0.85rem; border-radius: 5px; font-size: 0.72rem; cursor: pointer; font-family: inherit; transition: all 0.2s; }
+        .export-btn:hover { border-color: rgba(0,0,0,0.2); color: var(--text); }
+        .export-btn.locked { border-color: rgba(217,119,6,0.4); color: var(--yellow); cursor: default; }
+        .export-btn.locked:hover { border-color: rgba(217,119,6,0.6); color: var(--yellow); }
+
+        /* Paywall overlay */
+        .paywall-wrap { position: relative; }
+        .paywall-blur { filter: blur(4px); pointer-events: none; user-select: none; }
+        .paywall-overlay {
+            position: absolute; inset: 0;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            background: rgba(250,250,248,0.85); backdrop-filter: blur(2px);
+            border-radius: 10px; z-index: 10; gap: 0.6rem;
+        }
+        .paywall-icon { font-size: 1.5rem; }
+        .paywall-title { font-family: 'Space Grotesk', sans-serif; font-size: 0.85rem; font-weight: 600; color: var(--text); }
+        .paywall-sub { font-size: 0.72rem; color: var(--muted); text-align: center; max-width: 280px; line-height: 1.5; }
+        .paywall-cta { background: var(--accent); color: #fff; border: none; padding: 0.45rem 1.1rem; border-radius: 5px; font-size: 0.72rem; font-weight: 600; cursor: pointer; font-family: inherit; text-decoration: none; margin-top: 0.2rem; }
+        .paywall-cta:hover { opacity: 0.88; }
+
+        /* Cards */
+        .cards { display: grid; gap: 1px; background: var(--border); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; margin-bottom: 1.25rem; }
+        .c4 { grid-template-columns: repeat(4, 1fr); }
+        .c3 { grid-template-columns: repeat(3, 1fr); }
+        .c2 { grid-template-columns: repeat(2, 1fr); }
+        @media (max-width: 1200px) { .c4 { grid-template-columns: repeat(2, 1fr); } }
+        .card { background: var(--surface); padding: 1.4rem 1.6rem; }
+        .card.red { background: rgba(248,113,113,0.08); }
+        .card.green { background: rgba(52,211,153,0.07); }
+        .card.yellow { background: rgba(251,191,36,0.07); }
+        .card.orange { background: rgba(251,146,60,0.07); }
+        .card-label { font-size: 0.58rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.12em; margin-bottom: 0.8rem; font-weight: 600; }
+        .card-val { font-family: 'Space Grotesk', sans-serif; font-size: 2rem; font-weight: 700; line-height: 1; color: var(--text); }
+        .card-val.lg { font-size: 1.5rem; letter-spacing: 0.02em; }
+        .cu { font-size: 0.8rem; color: var(--muted); font-weight: 400; margin-left: 0.15rem; }
+        .card-sub { font-size: 0.68rem; color: var(--muted); margin-top: 0.5rem; }
+        .badge { display: inline-block; padding: 0.15rem 0.5rem; border-radius: 3px; font-size: 0.58rem; font-weight: 700; letter-spacing: 0.07em; margin-top: 0.5rem; text-transform: uppercase; }
+        .bg { background: rgba(5,150,105,0.1); color: var(--green); }
+        .by { background: rgba(217,119,6,0.1); color: var(--yellow); }
+        .br { background: rgba(220,38,38,0.1); color: var(--red); }
+        .bb { background: rgba(29,78,216,0.1); color: var(--accent); }
+        .bo { background: rgba(234,88,12,0.1); color: #ea580c; }
+
+        /* Chart cards */
+        .chart-card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 1.4rem 1.6rem; margin-bottom: 1.25rem; box-shadow: 0 1px 3px rgba(255,255,255,0.05); }
+        .chart-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.1rem; }
+        .chart-ttl { font-size: 0.65rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.1em; font-weight: 600; }
+        .chart-meta { font-size: 0.58rem; color: var(--muted); text-align: right; line-height: 1.7; }
+        .ch { position: relative; }
+        .ch-240 { height: 240px; }
+        .ch-280 { height: 280px; }
+        .ch-300 { height: 300px; }
+        .ch-320 { height: 320px; }
+
+        /* Signal line */
+        .signal { font-size: 0.78rem; color: var(--dim); font-style: italic; line-height: 1.65; margin-bottom: 1.5rem; padding: 0.75rem 1rem; background: rgba(0,0,0,0.02); border-left: 2px solid rgba(0,0,0,0.1); border-radius: 0 4px 4px 0; }
+        .signal .hl { color: var(--text); font-style: normal; font-weight: 500; }
+        .signal .good { color: var(--green); font-style: normal; font-weight: 600; }
+        .signal .warn { color: var(--yellow); font-style: normal; font-weight: 600; }
+        .signal .bad { color: var(--red); font-style: normal; font-weight: 600; }
+
+        /* Section header */
+        .sec-title { font-family: 'Space Grotesk', sans-serif; font-size: 1.05rem; font-weight: 600; color: var(--text); margin-bottom: 0.5rem; }
+
+        /* ── SIGNAL RESEARCH ── */
+        .es-block { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 1.25rem 1.6rem; margin-bottom: 1.25rem; }
+        .es-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1.1rem; gap: 1rem; }
+        .es-label { font-size: 0.58rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.12em; font-weight: 600; }
+        .es-composite { display: flex; flex-direction: column; align-items: flex-end; gap: 0.15rem; flex-shrink: 0; }
+        .es-pct { font-family: 'Space Grotesk', sans-serif; font-size: 1.6rem; font-weight: 700; color: var(--dim); line-height: 1; }
+        .es-pct.active { color: var(--yellow); }
+        .es-pct.hot { color: var(--red); }
+        .es-pct-sub { font-size: 0.58rem; color: var(--dim); white-space: nowrap; }
+        .es-pct-sm { font-family: 'Space Grotesk', sans-serif; font-size: 1.3rem; font-weight: 700; color: var(--dim); line-height: 1; }
+        .es-row.on  .es-pct-sm { color: var(--yellow); }
+        .es-row.hot .es-pct-sm { color: var(--red); }
+        .es-grid { display: flex; flex-wrap: wrap; gap: 1px; background: var(--border); border: 1px solid var(--border); border-radius: 6px; overflow: hidden; }
+        .es-row { flex: 1 1 calc(50% - 1px); min-width: 280px; background: var(--surface); padding: 1rem 1.1rem; display: flex; flex-direction: column; gap: 0.5rem; transition: background 0.15s; }
+        .es-row.on  { background: rgba(251,191,36,0.05); }
+        .es-row.hot { background: rgba(248,113,113,0.07); }
+        .es-row-head { display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; }
+        .es-row-name { font-size: 0.65rem; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; }
+        .es-state { font-size: 0.58rem; font-weight: 700; letter-spacing: 0.1em; padding: 2px 7px; border-radius: 3px; background: rgba(255,255,255,0.04); color: var(--dim); text-transform: uppercase; }
+        .es-row.on  .es-state { background: rgba(251,191,36,0.15); color: var(--yellow); }
+        .es-row.hot .es-state { background: rgba(248,113,113,0.15); color: var(--red); }
+        .es-row-desc { font-size: 0.68rem; color: var(--muted); line-height: 1.55; }
+        .es-row-foot { display: flex; align-items: baseline; justify-content: space-between; margin-top: 0.2rem; }
+        .es-row-p { font-family: 'Space Grotesk', sans-serif; font-size: 1.4rem; font-weight: 700; color: var(--dim); line-height: 1; }
+        .es-row.on  .es-row-p { color: var(--yellow); }
+        .es-row.hot .es-row-p { color: var(--red); }
+        .es-row-lift { font-size: 0.6rem; color: var(--dim); text-align: right; line-height: 1.5; }
+        .es-row-trigger { font-family: monospace; font-size: 0.6rem; color: var(--dim); }
+        @media (max-width: 820px) { .es-grid { grid-template-columns: 1fr; } }
+
+        /* Tooltip */
+        .es-tip { position: fixed; z-index: 9999; background: #0d1320; border: 1px solid rgba(255,255,255,0.12); border-radius: 6px; padding: 0.65rem 0.85rem; font-size: 0.7rem; color: #94a3b8; line-height: 1.55; max-width: 280px; pointer-events: none; opacity: 0; transition: opacity 0.12s; box-shadow: 0 4px 16px rgba(0,0,0,0.4); }
+
+        /* Pulse log */
+        .pulse-log { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 1.25rem 1.6rem; margin-bottom: 1.25rem; }
+        .pulse-log-label { font-size: 0.58rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.12em; font-weight: 600; margin-bottom: 0.9rem; }
+        .pulse-row { display: flex; justify-content: space-between; align-items: center; padding: 0.45rem 0; border-bottom: 1px solid rgba(255,255,255,0.05); }
+        .pulse-row:last-child { border-bottom: none; }
+        .pulse-dates { font-family: monospace; font-size: 0.7rem; color: var(--dim); }
+        .pulse-vol { font-family: 'Space Grotesk', sans-serif; font-size: 0.85rem; font-weight: 600; color: var(--green); }
+
+        /* Gross Flows table */
+        .flows-table { width: 100%; border-collapse: collapse; font-size: 0.76rem; }
+        .flows-table th { font-size: 0.55rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.1em; padding: 0.5rem 0.75rem; border-bottom: 1px solid var(--border); text-align: left; font-weight: 600; }
+        .flows-table td { padding: 0.55rem 0.75rem; border-bottom: 1px solid rgba(255,255,255,0.04); font-variant-numeric: tabular-nums; }
+        .flows-table tr:last-child td { border-bottom: none; }
+        .flows-table td.mono { font-family: monospace; color: var(--dim); font-size: 0.72rem; }
+        .flows-table td.out { color: var(--green); font-family: 'Space Grotesk', sans-serif; font-weight: 600; }
+        .flows-table td.inp { color: var(--red); font-family: 'Space Grotesk', sans-serif; font-weight: 600; }
+        .flows-table td.net-pos { color: var(--red); font-family: 'Space Grotesk', sans-serif; }
+        .flows-table td.net-neg { color: var(--green); font-family: 'Space Grotesk', sans-serif; }
+        .flows-table td.tanks { color: var(--muted); font-size: 0.68rem; }
+        .flows-table tr:hover td { background: rgba(0,0,0,0.02); }
+        .flows-total td { background: rgba(0,0,0,0.025) !important; font-weight: 600; border-top: 1px solid var(--border); }
+        .flows-loading { color: var(--muted); font-size: 0.78rem; padding: 2rem 0; text-align: center; }
+        .period-badge { display: inline-block; padding: 0.15rem 0.5rem; border-radius: 3px; font-size: 0.6rem; font-weight: 600; margin-left: 0.5rem; vertical-align: middle; }
+
+        /* Map */
+        .map-card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 1.4rem 1.6rem; box-shadow: 0 1px 3px rgba(0,0,0,0.06); }
+        #tankMap { height: calc(100vh - 280px); min-height: 400px; border-radius: 7px; }
+        .map-controls { display: flex; align-items: center; gap: 0.75rem; margin-top: 0.9rem; }
+        .map-date { font-family: monospace; font-size: 0.7rem; color: var(--dim); min-width: 90px; }
+        .map-slider { flex: 1; accent-color: var(--accent); }
+        .map-btn { background: transparent; border: 1px solid var(--border); color: var(--muted); padding: 0.28rem 0.65rem; border-radius: 4px; font-size: 0.75rem; cursor: pointer; }
+        .tank-div-icon { background: none !important; border: none !important; }
+        /* API section */
+        .api-ep { background: var(--surface); border: 1px solid var(--border); padding: 1rem 1.25rem; }
+        .api-ep-head { display: flex; align-items: baseline; gap: 0.75rem; flex-wrap: wrap; margin-bottom: 0.6rem; }
+        .api-method { font-family: monospace; font-size: 0.68rem; font-weight: 700; color: var(--accent); letter-spacing: 1px; }
+        .api-path { font-family: monospace; font-size: 0.78rem; color: var(--text); }
+        .api-desc { font-size: 0.72rem; color: var(--muted); }
+        .api-pre { font-family: monospace; font-size: 0.68rem; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.06); padding: 0.6rem 0.9rem; color: #94a3b8; white-space: pre-wrap; word-break: break-all; margin-bottom: 0.5rem; }
+        .api-fields { font-size: 0.65rem; color: var(--dim); font-family: monospace; letter-spacing: 0.5px; }
+        /* API redesign */
+        .api-key-box { background: var(--surface); border: 1px solid var(--border); padding: 1rem 1.25rem; margin-bottom: 1.25rem; }
+        .api-key-row { display: flex; align-items: center; gap: 0.5rem; }
+        .api-key-val { font-family: monospace; font-size: 0.72rem; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--muted); background: rgba(0,0,0,0.2); border: 1px solid var(--border); padding: 0.45rem 0.75rem; }
+        .api-btn-primary { background: var(--accent); border: none; color: #fff; padding: 0.45rem 1rem; font-size: 0.68rem; cursor: pointer; font-family: monospace; letter-spacing: 1px; white-space: nowrap; flex-shrink: 0; }
+        .api-btn-ghost { background: transparent; border: 1px solid var(--border); color: var(--muted); padding: 0.45rem 0.75rem; font-size: 0.68rem; cursor: pointer; font-family: monospace; letter-spacing: 1px; white-space: nowrap; flex-shrink: 0; transition: border-color .15s, color .15s; }
+        .api-btn-ghost:hover { border-color: var(--accent); color: var(--accent); }
+        .api-btn-ghost.copied { border-color: var(--green) !important; color: var(--green) !important; }
+        .api-ref-table { width: 100%; border-collapse: collapse; font-size: 0.72rem; margin-bottom: 1.25rem; }
+        .api-ref-table th { text-align: left; font-size: 0.6rem; letter-spacing: 1px; text-transform: uppercase; color: var(--dim); padding: 0 0.75rem 0.5rem; border-bottom: 1px solid var(--border); font-weight: 400; }
+        .api-ref-table td { padding: 0.55rem 0.75rem; border-bottom: 1px solid rgba(255,255,255,0.04); vertical-align: top; }
+        .api-ref-table tr:last-child td { border-bottom: none; }
+        .api-ref-table tr { cursor: pointer; }
+        .api-ref-table tr:hover td { background: rgba(255,255,255,0.02); }
+        .api-ref-table tr.ep-active td { background: rgba(59,130,246,0.06); }
+        .api-ref-table tr.ep-active td:first-child { border-left: 2px solid var(--accent); }
+        .ep-method { font-family: monospace; font-size: 0.65rem; font-weight: 700; color: var(--accent); letter-spacing: 1px; }
+        .ep-path-cell { font-family: monospace; font-size: 0.73rem; color: var(--text); }
+        .ep-desc-cell { font-size: 0.7rem; color: var(--muted); }
+        .ep-fields-cell { font-family: monospace; font-size: 0.62rem; color: var(--dim); }
+        .api-curl-block { background: var(--surface); border: 1px solid var(--border); padding: 1rem 1.25rem; }
+        .api-curl-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.75rem; }
+        .api-curl-title { font-size: 0.65rem; letter-spacing: 1px; text-transform: uppercase; color: var(--dim); }
+        .api-curl-pre { font-family: monospace; font-size: 0.7rem; background: rgba(0,0,0,0.35); border: 1px solid rgba(255,255,255,0.06); padding: 0.75rem 1rem; color: #94a3b8; white-space: pre-wrap; word-break: break-all; margin: 0; line-height: 1.6; }
+
+        /* Anchorage range buttons */
+        .aq-rbtn { font-family: monospace; font-size: 0.68rem; letter-spacing: 1px; text-transform: uppercase; background: transparent; border: 1px solid var(--border); color: var(--muted); padding: 4px 10px; cursor: pointer; transition: all .15s; }
+        .aq-rbtn:hover { border-color: var(--accent); color: var(--accent); }
+        .aq-rbtn-active { background: var(--accent) !important; border-color: var(--accent) !important; color: #fff !important; }
+
+        /* Hide mobile-only elements on desktop */
+        .mob-menu-btn { display: none; }
+        .mob-dropdown { display: none; }
+
+        /* ── MOBILE / TABLET ── */
+        @media (max-width: 820px) {
+            html, body { height: auto; overflow: auto; }
+            body { flex-direction: column; }
+
+            /* Sidebar → sticky top bar with dropdown */
+            .sidebar {
+                position: sticky; top: 0; z-index: 200;
+                width: 100%; min-width: 0; height: 52px;
+                flex-direction: row; align-items: center;
+                border-right: none; border-bottom: 1px solid var(--border);
+                overflow: visible;
+            }
+            .sidebar-logo { padding: 0.7rem 1rem; border-bottom: none; border-right: 1px solid var(--border); white-space: nowrap; flex-shrink: 0; }
+            .logo-sub { display: none; }
+            .sidebar-nav { display: none; }
+            .sidebar-footer { display: none; }
+
+            /* Hamburger button */
+            .mob-menu-btn {
+                display: flex; align-items: center; justify-content: center;
+                margin-left: auto; margin-right: 12px;
+                width: 36px; height: 36px;
+                background: none; border: 1px solid var(--border);
+                color: var(--accent); cursor: pointer; flex-shrink: 0;
+            }
+            .mob-menu-btn svg { width: 18px; height: 18px; }
+
+            /* Dropdown */
+            .mob-dropdown {
+                display: none; position: absolute; top: 52px; right: 0; left: 0;
+                background: var(--sidebar); border-bottom: 1px solid var(--border);
+                flex-direction: column; z-index: 199;
+            }
+            .mob-dropdown.open { display: flex; }
+            .mob-dropdown .nav-item {
+                border-left: none; border-bottom: 1px solid var(--border);
+                padding: 0.9rem 1.25rem; font-size: 0.78rem; white-space: nowrap;
+            }
+            .mob-dropdown .nav-item.active { border-left: 3px solid var(--accent); background: rgba(59,130,246,0.08); }
+            .mob-dropdown-footer {
+                padding: 0.75rem 1.25rem; border-top: 1px solid var(--border);
+                display: flex; align-items: center; justify-content: flex-end;
+            }
+
+            /* Main */
+            .main { margin-left: 0; height: auto; }
+
+            /* KPI bar → 2-col grid */
+            .kpi-bar { position: static; display: grid; grid-template-columns: repeat(2, 1fr); min-height: 0; }
+            .kpi-stat { border-right: 1px solid var(--border); border-bottom: 1px solid var(--border); padding: 0.7rem 0.9rem; }
+            .kpi-stat:nth-child(2n) { border-right: none; }
+            .kpi-value { font-size: 1.15rem; }
+
+            /* Sections */
+            .section { padding: 1.1rem; }
+            .alert-wrap { padding: 0 1.1rem; }
+            .ctrl-row { flex-direction: column; align-items: flex-start; margin-bottom: 1.25rem; }
+
+            /* Card grids → single column */
+            .c4, .c3, .c2 { grid-template-columns: 1fr; }
+            .card { padding: 1.1rem 1.2rem; }
+            .card-val { font-size: 1.6rem; }
+            .card-val.lg { font-size: 1.25rem; }
+
+            /* Charts + map */
+            .ch-300 { height: 240px; }
+            .ch-240 { height: 200px; }
+            .map-card { padding: 1rem 1.1rem; }
+            #tankMap { height: 60vh; min-height: 300px; }
+            .map-controls { flex-wrap: wrap; }
+        }
+
+        @media (max-width: 480px) {
+            /* keep 2-col KPI grid — 1-col stacks too tall — just tighten */
+            .kpi-stat { padding: 0.6rem 0.75rem; }
+            .kpi-label { font-size: 0.5rem; margin-bottom: 0.25rem; }
+            .kpi-value { font-size: 1.05rem; }
+            .kpi-unit { font-size: 0.6rem; }
+            .kpi-sub { font-size: 0.56rem; }
+            .section { padding: 0.9rem; }
+        }
+
+        /* ── ONBOARDING MODAL ── */
+        .ob-overlay {
+            position: fixed; inset: 0;
+            background: rgba(5,8,16,0.78);
+            backdrop-filter: blur(4px);
+            display: flex; align-items: center; justify-content: center;
+            z-index: 9999; padding: 1rem;
+            transition: opacity 0.25s;
+        }
+        .ob-overlay.hidden { opacity: 0; pointer-events: none; }
+        .ob-modal {
+            background: #111827; border: 1px solid #1e293b; border-radius: 10px;
+            width: 100%; max-width: 460px; overflow: hidden;
+            box-shadow: 0 24px 64px rgba(0,0,0,0.6);
+        }
+        .ob-step { display: none; padding: 2rem 2rem 1.5rem; }
+        .ob-step.active { display: block; }
+        .ob-eyebrow {
+            font-family: 'Courier New', monospace; font-size: 0.58rem;
+            letter-spacing: 0.18em; text-transform: uppercase;
+            color: #3b82f6; margin-bottom: 0.75rem;
+        }
+        .ob-title { font-size: 1.15rem; font-weight: 600; color: #f1f5f9; line-height: 1.3; margin-bottom: 0.75rem; }
+        .ob-body { font-size: 0.82rem; color: #94a3b8; line-height: 1.65; }
+        .ob-body strong { color: #e2e8f0; font-weight: 600; }
+        .ob-visual { margin: 1.25rem 0 0; }
+        .ob-sar-rows {
+            background: #0d1220; border: 1px solid #1e293b; border-radius: 6px;
+            padding: 1rem 1.25rem; display: flex; flex-direction: column; gap: 0.7rem;
+        }
+        .ob-sar-row { display: flex; align-items: flex-start; gap: 0.75rem; }
+        .ob-sar-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; margin-top: 0.3rem; }
+        .ob-sar-text { font-size: 0.72rem; color: #94a3b8; line-height: 1.5; }
+        .ob-sar-text strong { color: #e2e8f0; }
+        .ob-cadence {
+            background: #0d1220; border: 1px solid #1e293b; border-radius: 6px;
+            padding: 1rem 1.25rem; display: flex; align-items: center; gap: 1.25rem;
+        }
+        .ob-cadence-num { font-family: 'Courier New', monospace; font-size: 1.8rem; font-weight: 700; color: #3b82f6; white-space: nowrap; flex-shrink: 0; line-height: 1; }
+        .ob-cadence-label { font-size: 0.55rem; letter-spacing: 0.1em; text-transform: uppercase; color: #475569; font-weight: 600; margin-bottom: 0.25rem; }
+        .ob-cadence-desc { font-size: 0.72rem; color: #94a3b8; line-height: 1.5; }
+        .ob-cadence-sub { font-family: 'Courier New', monospace; font-size: 0.6rem; color: #334155; margin-top: 0.5rem; }
+        .ob-signal-row { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
+        .ob-signal-pill {
+            background: #0d1220; border: 1px solid #1e293b; border-radius: 6px; padding: 0.9rem 1rem;
+        }
+        .ob-signal-pill.build { border-left: 3px solid #f87171; }
+        .ob-signal-pill.draw  { border-left: 3px solid #34d399; }
+        .ob-pill-label { font-size: 0.52rem; letter-spacing: 0.1em; text-transform: uppercase; color: #475569; font-weight: 600; margin-bottom: 0.35rem; }
+        .ob-pill-val { font-size: 0.9rem; font-weight: 700; margin-bottom: 0.25rem; }
+        .ob-signal-pill.build .ob-pill-val { color: #f87171; }
+        .ob-signal-pill.draw  .ob-pill-val { color: #34d399; }
+        .ob-pill-desc { font-size: 0.65rem; color: #64748b; line-height: 1.45; }
+        .ob-section-list { display: flex; flex-direction: column; gap: 0.5rem; }
+        .ob-section-row {
+            background: #0d1220; border: 1px solid #1e293b; border-radius: 5px;
+            padding: 0.7rem 1rem; display: flex; align-items: center; gap: 0.9rem;
+        }
+        .ob-section-num { font-family: 'Courier New', monospace; font-size: 0.6rem; color: #3b82f6; font-weight: 700; width: 16px; flex-shrink: 0; }
+        .ob-section-name { font-size: 0.78rem; font-weight: 600; color: #e2e8f0; margin-bottom: 0.1rem; }
+        .ob-section-desc { font-size: 0.65rem; color: #64748b; }
+        .ob-footer {
+            padding: 1.25rem 2rem 1.5rem;
+            display: flex; align-items: center; justify-content: space-between;
+            border-top: 1px solid #1e293b;
+        }
+        .ob-dots { display: flex; gap: 6px; align-items: center; }
+        .ob-dot { width: 6px; height: 6px; border-radius: 50%; background: #1e293b; transition: all 0.2s; cursor: pointer; }
+        .ob-dot.active { background: #3b82f6; width: 18px; border-radius: 3px; }
+        .ob-btn-row { display: flex; gap: 0.6rem; }
+        .ob-skip {
+            background: none; border: none; color: #475569; font-size: 0.75rem;
+            cursor: pointer; padding: 0.5rem 0.75rem; border-radius: 4px;
+            font-family: inherit; transition: color 0.15s;
+        }
+        .ob-skip:hover { color: #94a3b8; }
+        .ob-next {
+            background: #3b82f6; border: none; color: #fff; font-size: 0.75rem;
+            font-weight: 600; cursor: pointer; padding: 0.5rem 1.1rem;
+            border-radius: 4px; font-family: inherit; transition: background 0.15s;
+            letter-spacing: 0.02em;
+        }
+        .ob-next:hover { background: #1e40af; }
+        .ob-next.finish { background: #34d399; }
+        .ob-next.finish:hover { background: #047857; }
+    </style>
+</head>
+<body>
+
+<!-- ── SIDEBAR ── -->
+<aside class="sidebar">
+    <div class="sidebar-logo">
+        <div class="logo-mark">OILRADAR</div>
+        <div class="logo-sub">哈尔格岛<br>伊朗原油终端</div>
+    </div>
+    <nav class="sidebar-nav">
+        <div class="nav-group-label">原油</div>
+        <div class="nav-item active" onclick="showSection('overview')">
+            <span class="nav-icon">◎</span> 概览
+        </div>
+        <div class="nav-item" onclick="showSection('flows')">
+            <span class="nav-icon">⇅</span> 总流量
+        </div>
+        <div class="nav-item" onclick="showSection('map')">
+            <span class="nav-icon">⊞</span> 单罐地图
+        </div>
+        <div class="nav-item" id="nav-signals" onclick="showSection('signals')" style="opacity:0.35;pointer-events:none">
+            <span class="nav-icon">⚡</span> 出口信号 <span id="signals-badge" style="display:none;background:var(--accent);color:#fff;font-size:0.6rem;font-weight:700;padding:1px 6px;border-radius:10px;margin-left:4px"></span>
+        </div>
+        <hr class="nav-divider">
+        <div class="nav-group-label">船舶</div>
+        <div class="nav-item" onclick="showSection('anchorage')">
+            <span class="nav-icon">⚓</span> 油轮队列
+        </div>
+        <hr class="nav-divider">
+        <div class="nav-group-label">文档</div>
+        <div class="nav-item" onclick="showSection('api')">
+            <span class="nav-icon">⌥</span> API
+        </div>
+        <div class="nav-item" onclick="window.open('/tutorial','_blank')" style="color:var(--muted);font-size:0.72rem;">
+            <span class="nav-icon">?</span> 教程
+        </div>
+    </nav>
+    <div class="sidebar-footer">
+        <span class="user-email" id="userEmail">加载中…</span>
+        <button class="logout-btn" onclick="logout()">退出登录</button>
+        <a href="/dashboard" style="display:block;margin-top:0.5rem;font-size:0.62rem;color:var(--muted);text-decoration:none;text-align:center;padding:0.2rem 0.5rem;border:1px solid var(--border);border-radius:3px;transition:color 0.15s" onmouseover="this.style.color='var(--text)'" onmouseout="this.style.color='var(--muted)'">EN</a>
+    </div>
+
+    <!-- Mobile hamburger button (only visible on mobile via CSS) -->
+    <button class="mob-menu-btn" id="mobMenuBtn" onclick="toggleMobMenu()" aria-label="Menu">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+    </button>
+
+    <!-- Mobile dropdown -->
+    <div class="mob-dropdown" id="mobDropdown">
+        <div class="nav-item active" id="mob-nav-overview" onclick="showSection('overview');closeMobMenu()"><span class="nav-icon">◎</span> 概览</div>
+        <div class="nav-item" id="mob-nav-flows" onclick="showSection('flows');closeMobMenu()"><span class="nav-icon">⇅</span> 总流量</div>
+        <div class="nav-item" id="mob-nav-map" onclick="showSection('map');closeMobMenu()"><span class="nav-icon">⊞</span> 单罐地图</div>
+        <div class="nav-item" id="mob-nav-anchorage" onclick="showSection('anchorage');closeMobMenu()"><span class="nav-icon">⚓</span> 油轮队列</div>
+        <div class="nav-item" id="mob-nav-api" onclick="showSection('api');closeMobMenu()"><span class="nav-icon">⌥</span> API</div>
+        <div class="mob-dropdown-footer">
+            <button class="logout-btn" onclick="logout()">退出登录</button>
+        </div>
+    </div>
+</aside>
+
+<!-- ── MAIN ── -->
+<div class="main">
+
+    <div class="alert-wrap">
+        <div class="alert-banner" id="alertBanner"><span>⚡</span><span id="alertText"></span></div>
+    </div>
+
+    <!-- ── SECTION: OVERVIEW ── -->
+    <div class="section active" id="sec-overview">
+        <div class="ctrl-row">
+            <div class="ctrl-group">
+                <span class="ctrl-label">周期</span>
+                <div class="btn-group">
+                    <button class="tbtn" data-range="30" onclick="setRange(30)">1M</button>
+                    <button class="tbtn active" data-range="90" onclick="setRange(90)">3M</button>
+                    <button class="tbtn" data-range="180" onclick="setRange(180)">6M</button>
+                    <button class="tbtn" data-range="365" onclick="setRange(365)">1Y</button>
+                    <button class="tbtn" data-range="1095" onclick="setRange(1095)">3Y</button>
+                    <button class="tbtn" data-range="0" onclick="setRange(0)">ALL</button>
+                </div>
+            </div>
+            <div class="ctrl-group">
+                <span class="ctrl-label">粒度</span>
+                <div class="btn-group">
+                    <button class="tbtn active" data-gran="daily" onclick="setGran('daily')">日</button>
+                    <button class="tbtn" data-gran="weekly" onclick="setGran('weekly')">周</button>
+                    <button class="tbtn" data-gran="monthly" onclick="setGran('monthly')">月</button>
+                </div>
+            </div>
+            <button class="export-btn" onclick="exportCSV()">导出CSV</button>
+        </div>
+
+        <div class="sec-title">库存水平与速度</div>
+        <div class="signal" id="sig1">加载中…</div>
+
+        <div class="cards c4">
+            <div class="card" id="cVol">
+                <div class="card-label">当前储量</div>
+                <div class="card-val" id="mVol">--<span class="cu"> Mb</span></div>
+                <div class="card-sub">容量31.78 Mb</div>
+            </div>
+            <div class="card" id="cUtil">
+                <div class="card-label">利用率</div>
+                <div class="card-val" id="mUtil">--<span class="cu">%</span></div>
+                <div class="badge" id="mUtilBadge"></div>
+            </div>
+            <div class="card" id="cRate">
+                <div class="card-label">7日变化</div>
+                <div class="card-val" id="mRate">--<span class="cu"> Mb</span></div>
+                <div class="card-sub" id="mRateSub"></div>
+            </div>
+            <div class="card" id="cDays">
+                <div class="card-label" id="mDaysLabel">距满仓天数</div>
+                <div class="card-val" id="mDays">--<span class="cu"> d</span></div>
+                <div class="card-sub" id="mDaysSub"></div>
+            </div>
+        </div>
+
+        <div class="chart-card">
+            <div class="chart-head">
+                <div class="chart-ttl">储量历史</div>
+            </div>
+            <div class="ch ch-300"><canvas id="mainChart"></canvas></div>
+        </div>
+
+        <div class="chart-card">
+            <div class="chart-head">
+                <div class="chart-ttl">储量变化</div>
+                <div class="chart-meta">红=蓄积 · 绿=下降</div>
+            </div>
+            <div class="ch ch-240"><canvas id="fillRateChart"></canvas></div>
+        </div>
+
+        <div class="chart-card">
+            <div class="chart-head">
+                <div class="chart-ttl">终端填充水平</div>
+                <div class="chart-meta">占31.78 Mb容量的%</div>
+            </div>
+            <div class="ch ch-240"><canvas id="spiChart"></canvas></div>
+        </div>
+    </div>
+
+    <!-- ── SECTION: GROSS FLOWS ── -->
+    <div class="section" id="sec-flows">
+        <div class="ctrl-row">
+            <div class="ctrl-group">
+                <span class="ctrl-label">周期</span>
+                <div class="btn-group">
+                    <button class="tbtn" data-frange="30" onclick="setFlowsRange(30)">1M</button>
+                    <button class="tbtn active" data-frange="90" onclick="setFlowsRange(90)">3M</button>
+                    <button class="tbtn" data-frange="180" onclick="setFlowsRange(180)">6M</button>
+                    <button class="tbtn" data-frange="365" onclick="setFlowsRange(365)">1Y</button>
+                    <button class="tbtn" data-frange="1095" onclick="setFlowsRange(1095)">3Y</button>
+                    <button class="tbtn" data-frange="0" onclick="setFlowsRange(0)">ALL</button>
+                </div>
+            </div>
+            <div class="ctrl-group">
+                <span class="ctrl-label">分组方式</span>
+                <div class="btn-group">
+                    <button class="tbtn active" data-fgran="pass" onclick="setFlowsGran('pass')">轨道</button>
+                    <button class="tbtn" data-fgran="weekly" onclick="setFlowsGran('weekly')">周</button>
+                    <button class="tbtn" data-fgran="monthly" onclick="setFlowsGran('monthly')">月</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="sec-title">总流量 — 单次轨道罐级核算</div>
+        <div class="signal" id="sigFlows">加载总流量数据中…</div>
+
+        <div class="cards c3" style="margin-bottom:1.25rem">
+            <div class="card green">
+                <div class="card-label">总流出量</div>
+                <div class="card-val" id="fTotalOut" style="color:#34d399">--<span class="cu"> Mb</span></div>
+                <div class="card-sub" id="fTotalOutSub">所有轨道全部储罐流出量之和</div>
+            </div>
+            <div class="card red">
+                <div class="card-label">总流入量</div>
+                <div class="card-val" id="fTotalIn" style="color:#f87171">--<span class="cu"> Mb</span></div>
+                <div class="card-sub" id="fTotalInSub">所有轨道全部储罐流入量之和</div>
+            </div>
+            <div class="card">
+                <div class="card-label">净变化量</div>
+                <div class="card-val" id="fNet">--<span class="cu"> Mb</span></div>
+                <div class="card-sub" id="fNetSub">总流出 − 总流入</div>
+            </div>
+        </div>
+
+        <div class="chart-card">
+            <div class="chart-head">
+                <div class="chart-ttl">出口覆盖率 <span id="fECR" style="font-size:0.85rem;font-weight:400;margin-left:0.5rem">--</span></div>
+                <div class="chart-meta" id="fECRSub">流出÷流入 · 每次SAR轨道</div>
+            </div>
+            <div class="ch ch-280"><canvas id="flowsECRChart"></canvas></div>
+            <div style="font-size:0.7rem;color:var(--muted);padding:0.9rem 0 0.25rem;line-height:1.7">
+                <b style="color:var(--dim)">出口覆盖率</b> — 本次轨道中从终端流出的石油量与从上游油田流入的石油量之比。<br><br>
+                <b style="color:#34d399">ECR &gt; 1.2（绿色）</b> — 出口超过上游流入；终端正在动用储备。<br><br>
+                <b style="color:var(--dim)">ECR ≈ 1（灰色，0.85–1.2）</b> — 上游流入与出口大致相等；石油直接流转。<br><br>
+                <b style="color:#f87171">ECR &lt; 0.85（红色）</b> — 上游流入明显超过出口；石油正在储罐中积累。
+            </div>
+        </div>
+
+        <div class="chart-card">
+            <div class="chart-head">
+                <div class="chart-ttl">距空仓天数 <span id="fTurnover" style="font-size:0.85rem;font-weight:400;margin-left:0.5rem">--</span></div>
+                <div class="chart-meta" id="fTurnoverSub">按当前出口速率 · 距储量耗尽天数</div>
+            </div>
+            <div class="ch ch-280"><canvas id="flowsTurnoverChart"></canvas></div>
+            <div style="font-size:0.7rem;color:var(--muted);padding:0.75rem 0 0.25rem;line-height:1.6">
+                按当前出口速率，终端储量耗尽所需天数。<br><br>
+                <b style="color:var(--dim)">&lt; 40天</b> — 出口速度快于储量；积极装载，高吞吐量。<br>
+                <b style="color:var(--dim)">&gt; 90天</b> — 出口速度慢于储量；石油积压，可能出口放缓。
+            </div>
+        </div>
+
+        <div class="chart-card">
+            <div class="chart-head">
+                <div class="chart-ttl">出口速度与生产流入</div>
+                <div class="chart-meta">每次SAR轨道Mb/d · 出口为负 · 流入为正</div>
+            </div>
+            <div class="ch ch-320"><canvas id="flowsDivergentChart"></canvas></div>
+            <div style="font-size:0.7rem;color:var(--muted);padding:0.9rem 0 0.25rem;line-height:1.7">
+                <b style="color:#34d399">出口速度（绿色）</b> — 石油离开终端装入油轮的速率，Mb/d。<br><br>
+                <b style="color:#f87171">生产流入（红色）</b> — 石油从上游油田流入储罐的速率，Mb/d。<br><br>
+                <b style="color:var(--dim)">注意：</b> SAR测量储罐液位，而非直接测量流量。每次轨道低于1.5 Mb的变动可能是操作噪音，而非真实的出口或生产事件。
+            </div>
+        </div>
+
+        <div class="chart-card paywall-wrap" style="padding:0;overflow:hidden" id="paywallTableCard">
+            <div class="chart-head" style="padding:1.1rem 1.4rem 0.75rem">
+                <div class="chart-ttl">逐次轨道明细</div>
+                <div class="chart-meta">每次SAR观测轨道 · ~6天重访</div>
+            </div>
+            <div style="overflow-x:auto" id="paywallTableInner">
+                <table class="flows-table">
+                    <thead><tr>
+                        <th>周期</th>
+                        <th>天数</th>
+                        <th style="color:#34d399">总流出</th>
+                        <th style="color:#34d399">流出Mb/d</th>
+                        <th>流出储罐</th>
+                        <th style="color:#f87171">总流入</th>
+                        <th style="color:#f87171">流入Mb/d</th>
+                        <th>流入储罐</th>
+                        <th>净变化</th>
+                    </tr></thead>
+                    <tbody id="flowsTableBody"><tr><td colspan="9" class="flows-loading">加载中…</td></tr></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── SECTION: PER-TANK MAP ── -->
+    <div class="section" id="sec-map">
+        <div class="sec-title" style="margin-bottom:0.4rem">单罐储量</div>
+        <div class="map-card">
+            <div id="tankMap">
+                <div id="mapLoading" style="display:flex;align-items:center;justify-content:center;height:100%;color:var(--muted);font-size:0.85rem;">加载卫星数据中…</div>
+            </div>
+            <div class="map-controls">
+                <button class="map-btn" id="mapPrev">←</button>
+                <input type="range" class="map-slider" id="mapSlider" min="0" value="0" step="1">
+                <button class="map-btn" id="mapNext">→</button>
+                <span class="map-date" id="mapDateLabel">—</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="section" id="sec-api">
+        <div class="sec-title" style="margin-bottom:0.4rem">API访问</div>
+        <div class="signal" style="margin-bottom:1.5rem">通过 <code style="background:rgba(255,255,255,0.06);padding:1px 5px;font-size:0.78rem">X-API-Key: &lt;key&gt;</code> 请求头或 <code style="background:rgba(255,255,255,0.06);padding:1px 5px;font-size:0.78rem">?api_key=</code> 查询参数传递密钥。所有端点支持 <code style="background:rgba(255,255,255,0.06);padding:1px 5px;font-size:0.78rem">?from=YYYY-MM-DD</code>、<code style="background:rgba(255,255,255,0.06);padding:1px 5px;font-size:0.78rem">?to=YYYY-MM-DD</code> 及 <code style="background:rgba(255,255,255,0.06);padding:1px 5px;font-size:0.78rem">?format=csv</code>。</div>
+
+        <!-- API Key -->
+        <div class="api-key-box">
+            <div style="font-size:0.6rem;letter-spacing:1px;text-transform:uppercase;color:var(--dim);margin-bottom:0.5rem">您的API密钥</div>
+            <div class="api-key-row">
+                <span id="api-key-display" class="api-key-val">点击生成获取您的密钥</span>
+                <button class="api-btn-primary" onclick="generateKey()" id="api-gen-btn">生成</button>
+                <button class="api-btn-ghost" id="api-copy-btn" onclick="copyKey()" style="display:none">复制密钥</button>
+            </div>
+            <div style="font-size:0.62rem;color:var(--dim);margin-top:0.45rem">确定性密钥 — 每次相同。请保密。</div>
+        </div>
+
+        <!-- Endpoint reference table -->
+        <div style="overflow-x:auto;margin-bottom:1.25rem;">
+        <table class="api-ref-table" id="api-ref-table">
+            <thead>
+                <tr>
+                    <th style="width:3rem"></th>
+                    <th>端点</th>
+                    <th>描述</th>
+                    <th>响应字段</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr class="ep-row ep-active" data-ep="tq" onclick="selectEp('tq')">
+                    <td><span class="ep-method">GET</span></td>
+                    <td class="ep-path-cell">/api/v1/tanker-queue</td>
+                    <td class="ep-desc-cell">哈尔格锚地每周船舶数量 · 2017年至今</td>
+                    <td class="ep-fields-cell">date · vlcc · suezmax · aframax · mr · total</td>
+                </tr>
+                <tr class="ep-row" data-ep="sd" onclick="selectEp('sd')">
+                    <td><span class="ep-method">GET</span></td>
+                    <td class="ep-path-cell">/api/v1/storage/daily</td>
+                    <td class="ep-desc-cell">每日储量 · Mb</td>
+                    <td class="ep-fields-cell">date · vol_mn_bbl</td>
+                </tr>
+                <tr class="ep-row" data-ep="sw" onclick="selectEp('sw')">
+                    <td><span class="ep-method">GET</span></td>
+                    <td class="ep-path-cell">/api/v1/storage/weekly</td>
+                    <td class="ep-desc-cell">每周平滑储量 · SMA-13 · Mb</td>
+                    <td class="ep-fields-cell">date · vol_mn_bbl</td>
+                </tr>
+                <tr class="ep-row" data-ep="sm" onclick="selectEp('sm')">
+                    <td><span class="ep-method">GET</span></td>
+                    <td class="ep-path-cell">/api/v1/storage/metrics</td>
+                    <td class="ep-desc-cell">每日指标：填充率、信号、30天变化</td>
+                    <td class="ep-fields-cell">date · vol_mn_bbl · vol_5d_ma · day_change · signal · pct_change_30d</td>
+                </tr>
+                <tr class="ep-row" data-ep="tk" onclick="selectEp('tk')">
+                    <td><span class="ep-method">GET</span></td>
+                    <td class="ep-path-cell">/api/v1/tanks</td>
+                    <td class="ep-desc-cell">单罐储量 · 全部47个储罐 · 每次SAR轨道</td>
+                    <td class="ep-fields-cell">date · tank_id · vol_mn_bbl &nbsp;·&nbsp; ?tank_id=t60_0</td>
+                </tr>
+            </tbody>
+        </table>
+        </div>
+
+        <!-- Single curl block -->
+        <div class="api-curl-block">
+            <div class="api-curl-header">
+                <span class="api-curl-title" id="curl-ep-label">GET /api/v1/tanker-queue</span>
+                <button class="api-btn-ghost" id="curl-copy-btn" onclick="copyCurl()">复制</button>
+            </div>
+            <pre class="api-curl-pre" id="curl-single"></pre>
+        </div>
+    </div>
+
+    <!-- LEGACY BLOCK (disabled) -->
+    <!--
+    LEGACY: Multi-country Gulf coverage — disabled 2026-06-24
+    -->
+
+    <div class="section" id="sec-anchorage">
+        <div class="sec-title" style="margin-bottom:0.4rem">油轮队列 — 哈尔格锚地 · 完整历史 2017年至今</div>
+
+        <div style="background:var(--surface);border:1px solid var(--border);padding:1.25rem 1.5rem 1rem;margin-bottom:1.25rem;">
+            <div style="display:flex;gap:2rem;flex-wrap:wrap;">
+                <div>
+                    <div style="font-size:0.65rem;letter-spacing:1px;text-transform:uppercase;color:var(--muted);margin-bottom:0.25rem">队列指数</div>
+                    <div style="font-size:2rem;font-weight:700;color:var(--accent)" id="aq-tqi">—</div>
+                    <div style="font-size:0.7rem;color:var(--muted)" id="aq-tqi-label">最新 / p95</div>
+                </div>
+                <div>
+                    <div style="font-size:0.65rem;letter-spacing:1px;text-transform:uppercase;color:var(--muted);margin-bottom:0.25rem">当前总计</div>
+                    <div style="font-size:2rem;font-weight:700;color:var(--text)" id="aq-total">—</div>
+                    <div style="font-size:0.7rem;color:var(--muted)" id="aq-date">艘</div>
+                </div>
+                <div>
+                    <div style="font-size:0.65rem;letter-spacing:1px;text-transform:uppercase;color:var(--muted);margin-bottom:0.25rem">历史平均</div>
+                    <div style="font-size:2rem;font-weight:700;color:var(--green)" id="aq-avg">—</div>
+                    <div style="font-size:0.7rem;color:var(--muted)">艘/周（2017年起）</div>
+                </div>
+            </div>
+        </div>
+
+        <div style="background:var(--surface);border:1px solid var(--border);padding:1.25rem 1.5rem 1rem;margin-bottom:1.25rem;">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;flex-wrap:wrap;gap:0.5rem;">
+                <div style="font-size:0.7rem;letter-spacing:1px;text-transform:uppercase;color:var(--accent)">每周出口船舶数量</div>
+                <div style="display:flex;gap:4px" id="aq-range-btns">
+                    <button class="aq-rbtn" data-r="1m">1M</button>
+                    <button class="aq-rbtn aq-rbtn-active" data-r="3m">3M</button>
+                    <button class="aq-rbtn" data-r="6m">6M</button>
+                    <button class="aq-rbtn" data-r="1y">1Y</button>
+                    <button class="aq-rbtn" data-r="all">ALL</button>
+                </div>
+            </div>
+            <canvas id="aqChart" style="width:100%;display:block;height:280px"></canvas>
+        </div>
+
+        <div style="position:relative;" id="aq-table-wrap">
+            <div style="background:var(--surface);border:1px solid var(--border);padding:1.25rem 1.5rem 1rem;">
+                <div style="font-size:0.7rem;letter-spacing:1px;text-transform:uppercase;color:var(--accent);margin-bottom:1rem">每周明细</div>
+                <div style="overflow-x:auto;">
+                    <table id="aq-table" style="width:100%;border-collapse:collapse;font-size:0.75rem;font-family:monospace;">
+                        <thead>
+                            <tr style="color:var(--dim);text-align:right;border-bottom:1px solid var(--border);">
+                                <th style="text-align:left;padding:0.4rem 0.6rem;font-weight:500">日期</th>
+                                <th style="padding:0.4rem 0.6rem;font-weight:500">VLCC</th>
+                                <th style="padding:0.4rem 0.6rem;font-weight:500">Suezmax</th>
+                                <th style="padding:0.4rem 0.6rem;font-weight:500">Aframax</th>
+                                <th style="padding:0.4rem 0.6rem;font-weight:500">MR</th>
+                                <th style="padding:0.4rem 0.6rem;font-weight:500">总计</th>
+                            </tr>
+                        </thead>
+                        <tbody id="aq-table-body"></tbody>
+                    </table>
+                </div>
+            </div>
+            <div id="aq-paywall" style="display:none;position:absolute;inset:0;backdrop-filter:blur(6px);background:rgba(10,14,23,0.7);align-items:center;justify-content:center;flex-direction:column;gap:0.75rem;">
+                <div style="font-size:1.1rem">🔒</div>
+                <div style="font-size:0.85rem;font-weight:600;color:var(--text)">每周明细 — 仅限付费计划</div>
+                <div style="font-size:0.72rem;color:var(--muted);text-align:center;max-width:280px">逐次轨道船舶数量可在完整计划中查看。</div>
+                <a href="https://calendly.com/bachevsky/intro" target="_blank" style="background:var(--accent);color:#fff;padding:0.5rem 1.25rem;font-size:0.75rem;text-decoration:none;margin-top:0.25rem">申请完整权限 →</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── SECTION: EXPORT SIGNALS ── -->
+    <div class="section" id="sec-signals">
+        <div class="sec-title" style="margin-bottom:0.25rem">出口信号</div>
+        <div class="signal" style="margin-bottom:1.5rem;line-height:1.6">
+            四项独立研究发现。每项描述一种储量状态，历史上该状态先于下次SAR轨道的下降事件出现。
+            任意单次观测发生出口下降的基准概率：<span class="hl">15%</span>。
+            当某信号<span style="color:var(--accent);font-weight:600">激活</span>时，观测概率上升 — 见下方各信号说明。
+            当多个信号同时激活时，顶部显示综合概率。
+        </div>
+
+        <!-- Composite score -->
+        <div style="background:var(--surface);border:1px solid var(--border);padding:1.1rem 1.5rem;margin-bottom:1.25rem;display:flex;align-items:center;gap:1.5rem;flex-wrap:wrap;">
+            <div>
+                <div style="font-size:0.58rem;letter-spacing:0.12em;text-transform:uppercase;color:var(--muted);margin-bottom:0.3rem">综合下降概率</div>
+                <div style="display:flex;align-items:baseline;gap:0.5rem">
+                    <span id="esPct" class="es-pct">—</span>
+                    <span style="font-size:0.7rem;color:var(--muted)">出口概率</span>
+                </div>
+            </div>
+            <div style="flex:1;min-width:200px;font-size:0.72rem;color:var(--muted);line-height:1.5">
+                信号叠加时综合概率上升。显示最强组合。
+                无激活信号时基准为15%。
+            </div>
+        </div>
+
+        <!-- How to read -->
+        <div style="background:rgba(255,255,255,0.03);border:1px solid var(--border);border-left:3px solid var(--accent);padding:0.9rem 1.2rem;margin-bottom:1.25rem;font-size:0.74rem;line-height:1.6;color:var(--muted)">
+            <span style="color:var(--text);font-weight:600">如何解读：</span>
+            每张卡片显示一种市场状态及该状态为真时出口下降的历史概率。
+            激活表示当前条件成立。这不保证出口发生 — 而是基于历史观测概率偏高。
+        </div>
+
+        <!-- 2×2 signal grid -->
+        <div class="es-grid">
+
+            <!-- Storage Pressure -->
+            <div class="es-row" id="esr-pressure">
+                <div class="es-header">
+                    <div>
+                        <div class="es-label">储量压力</div>
+                        <div style="font-size:0.8rem;color:var(--text);margin-top:0.3rem;line-height:1.4">
+                            当储罐充满≥65%时，伊朗面临出口商业压力 — 储存成本上升，削减产量代价高昂。
+                        </div>
+                    </div>
+                    <div class="es-composite">
+                        <div class="es-state" id="ess-pressure">inactive</div>
+                        <div class="es-pct-sm" id="esp-pressure">—</div>
+                    </div>
+                </div>
+                <div style="display:flex;justify-content:space-between;align-items:center;font-size:0.7rem;padding-top:0.6rem;border-top:1px solid var(--border)">
+                    <span style="color:var(--muted)">Condition</span>
+                    <span id="est-pressure" style="font-family:monospace;color:var(--text)">—</span>
+                </div>
+            </div>
+
+            <!-- Berth Staging -->
+            <div class="es-row" id="esr-staging">
+                <div class="es-header">
+                    <div>
+                        <div class="es-label">泊位备货</div>
+                        <div style="font-size:0.8rem;color:var(--text);margin-top:0.3rem;line-height:1.4">
+                            装载泊位储罐（t60_0、t40_22）的填充速度快于终端平均水平 — 油轮可能已就位，装载即将开始。
+                        </div>
+                    </div>
+                    <div class="es-composite">
+                        <div class="es-state" id="ess-staging">inactive</div>
+                        <div class="es-pct-sm" id="esp-staging">—</div>
+                    </div>
+                </div>
+                <div style="display:flex;justify-content:space-between;align-items:center;font-size:0.7rem;padding-top:0.6rem;border-top:1px solid var(--border)">
+                    <span style="color:var(--muted)">Condition</span>
+                    <span id="est-staging" style="font-family:monospace;color:var(--text)">—</span>
+                </div>
+            </div>
+
+            <!-- Pendulum Rhythm -->
+            <div class="es-row" id="esr-pendulum">
+                <div class="es-header">
+                    <div>
+                        <div class="es-label">钟摆节律</div>
+                        <div style="font-size:0.8rem;color:var(--text);margin-top:0.3rem;line-height:1.4">
+                            急剧蓄积（7天内超过+1.5 Mb）历史上先于6–12天内类似幅度的下降 — 终端在填满后"呼气"。
+                        </div>
+                    </div>
+                    <div class="es-composite">
+                        <div class="es-state" id="ess-pendulum">inactive</div>
+                        <div class="es-pct-sm" id="esp-pendulum">—</div>
+                    </div>
+                </div>
+                <div style="display:flex;justify-content:space-between;align-items:center;font-size:0.7rem;padding-top:0.6rem;border-top:1px solid var(--border)">
+                    <span style="color:var(--muted)">Condition</span>
+                    <span id="est-pendulum" style="font-family:monospace;color:var(--text)">—</span>
+                </div>
+            </div>
+
+            <!-- Accumulation Streak -->
+            <div class="es-row" id="esr-streak">
+                <div class="es-header">
+                    <div>
+                        <div class="es-label">持续蓄积</div>
+                        <div style="font-size:0.8rem;color:var(--text);margin-top:0.3rem;line-height:1.4">
+                            连续18天以上净蓄积历史上标志着压力峰值。出口往往在接下来的10–14天内跟进。
+                        </div>
+                    </div>
+                    <div class="es-composite">
+                        <div class="es-state" id="ess-streak">inactive</div>
+                        <div class="es-pct-sm" id="esp-streak">—</div>
+                    </div>
+                </div>
+                <div style="display:flex;justify-content:space-between;align-items:center;font-size:0.7rem;padding-top:0.6rem;border-top:1px solid var(--border)">
+                    <span style="color:var(--muted)">Condition</span>
+                    <span id="est-streak" style="font-family:monospace;color:var(--text)">—</span>
+                </div>
+            </div>
+
+        </div><!-- /es-grid -->
+
+        <div style="font-size:0.65rem;color:var(--dim);margin-top:1rem;line-height:1.5">
+            概率来自2017年至今的卫星观测历史。每个信号的样本量：40–120个合格事件。
+            出口信号是研究成果，不构成交易信号。历史发生率不保证未来结果。
+        </div>
+    </div>
+
+</div><!-- /main -->
+
+<script>
+// ── Auth ──────────────────────────────────────────────────────────────────
+let _userTier = 'paid';
+
+async function checkAuth() {
+    try {
+        const r = await fetch('/auth/check');
+        const d = await r.json();
+        if (!d.authenticated) { window.location.href = '/app'; return; }
+        _userTier = d.tier || 'paid';
+        const label = _userTier === 'trial' ? `${d.email} · Trial` : d.email;
+        document.getElementById('userEmail').textContent = label;
+        applyTierRestrictions();
+    } catch { window.location.href = '/app'; }
+}
+
+function applyTierRestrictions() {
+    if (_userTier !== 'trial') return;
+
+    // Lock Export CSV button
+    const btn = document.querySelector('.export-btn');
+    if (btn) {
+        btn.classList.add('locked');
+        btn.title = '原始数据导出 — 仅限付费计划';
+        btn.onclick = () => showUpgradeToast('CSV导出');
+    }
+
+    // Blur pass-by-pass table with overlay
+    const inner = document.getElementById('paywallTableInner');
+    const card = document.getElementById('paywallTableCard');
+    if (inner && card) {
+        inner.classList.add('paywall-blur');
+        const overlay = document.createElement('div');
+        overlay.className = 'paywall-overlay';
+        overlay.innerHTML = `
+            <div class="paywall-icon">🔒</div>
+            <div class="paywall-title">原始数据 — 仅限付费计划</div>
+            <div class="paywall-sub">逐次轨道罐级明细和CSV导出可在完整计划中使用。</div>
+            <a class="paywall-cta" href="https://calendly.com/bachevsky/intro" target="_blank">申请完整权限</a>`;
+        card.appendChild(overlay);
+    }
+}
+
+function showUpgradeToast(feature) {
+    const t = document.createElement('div');
+    t.style.cssText = 'position:fixed;bottom:1.5rem;right:1.5rem;background:#3b82f6;color:#fff;padding:0.65rem 1.1rem;border-radius:6px;font-size:0.75rem;z-index:9999;box-shadow:0 4px 12px rgba(0,0,0,0.15)';
+    t.innerHTML = `${feature}可在完整计划中使用。 <a href="https://calendly.com/bachevsky/intro" target="_blank" style="color:#93c5fd;text-decoration:underline">申请访问 →</a>`;
+    document.body.appendChild(t);
+    setTimeout(() => t.remove(), 5000);
+}
+function logout() { window.location.href = '/auth/logout'; }
+
+// ── Navigation ─────────────────────────────────────────────────────────────
+function showSection(id) {
+    document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+    document.getElementById('sec-' + id).classList.add('active');
+    event.currentTarget.classList.add('active');
+    // Sync mobile dropdown active state
+    document.querySelectorAll('.mob-dropdown .nav-item').forEach(n => n.classList.remove('active'));
+    const mobNav = document.getElementById('mob-nav-' + id);
+    if (mobNav) mobNav.classList.add('active');
+    if (id === 'map' && !window._mapInited) { initTankMap(); window._mapInited = true; }
+    if (id === 'anchorage') { initAnchorage(); }
+    if (id === 'flows') {
+        if (!window._flowsInited) { window._flowsInited = true; _flowsRange = 90; loadFlows(); }
+        else if (_flowsData) { renderFlows(_flowsData); }
+    }
+}
+
+function toggleMobMenu() {
+    document.getElementById('mobDropdown').classList.toggle('open');
+}
+function closeMobMenu() {
+    document.getElementById('mobDropdown').classList.remove('open');
+}
+document.addEventListener('click', function(e) {
+    if (!e.target.closest('.sidebar')) {
+        const d = document.getElementById('mobDropdown');
+        if (d) d.classList.remove('open');
+    }
+});
+
+// ── Constants ──────────────────────────────────────────────────────────────
+const MAX_CAP = 33.2;
+const PULSE_THRESHOLD = 2.0;
+const PULSE_WIN_MIN = 6;
+const PULSE_WIN_MAX = 12;
+
+let allDates = [], allValues = [];
+let currentRange = 90;
+let currentGran = 'daily';
+let charts = {};
+
+async function loadData() {
+    const daily = await fetch(`/data/data_daily.json?v=${Date.now()}`).then(r => r.json());
+    allDates = daily.dates;
+    allValues = daily.values;
+    render();
+    // Fetch staging signal async — re-render Export Setup when ready
+    loadStagingSignal().then(s => {
+        window._stagingData = s;
+        render();
+    });
+}
+
+// ── Aggregation ────────────────────────────────────────────────────────────
+function aggregateWeekly(dates, values) {
+    const weeks = {};
+    dates.forEach((d, i) => {
+        const dt = new Date(d);
+        const day = dt.getDay() || 7;
+        const monday = new Date(dt);
+        monday.setDate(dt.getDate() - day + 1);
+        const key = monday.toISOString().slice(0, 10);
+        weeks[key] = values[i];
+    });
+    const keys = Object.keys(weeks).sort();
+    return { dates: keys, values: keys.map(k => weeks[k]) };
+}
+
+function aggregateMonthly(dates, values) {
+    const months = {};
+    dates.forEach((d, i) => { months[d.slice(0, 7)] = values[i]; });
+    const keys = Object.keys(months).sort();
+    return { dates: keys, values: keys.map(k => months[k]) };
+}
+
+function applyGran(dates, values) {
+    if (currentGran === 'weekly') return aggregateWeekly(dates, values);
+    if (currentGran === 'monthly') return aggregateMonthly(dates, values);
+    return { dates, values };
+}
+
+function setRange(days) {
+    currentRange = days;
+    document.querySelectorAll('.tbtn[data-range]').forEach(b =>
+        b.classList.toggle('active', parseInt(b.dataset.range) === days));
+    render();
+}
+
+function setGran(g) {
+    currentGran = g;
+    document.querySelectorAll('.tbtn[data-gran]').forEach(b =>
+        b.classList.toggle('active', b.dataset.gran === g));
+    render();
+}
+
+function getSliceRaw() {
+    if (currentRange === 0) {
+        const idx = allDates.findIndex(d => d >= '2017-01-01');
+        return idx >= 0
+            ? { dates: allDates.slice(idx), values: allValues.slice(idx) }
+            : { dates: allDates, values: allValues };
+    }
+    const cutoff = new Date();
+    cutoff.setDate(cutoff.getDate() - currentRange);
+    const cutStr = cutoff.toISOString().slice(0, 10);
+    const idx = allDates.findIndex(d => d >= cutStr);
+    return { dates: allDates.slice(idx), values: allValues.slice(idx) };
+}
+
+function getSlice() {
+    const raw = getSliceRaw();
+    return applyGran(raw.dates, raw.values);
+}
+
+// ── Computations ───────────────────────────────────────────────────────────
+function computeFillRate(dates, values, win = 7) {
+    return dates.map((_, i) => {
+        const t0 = new Date(dates[i]);
+        let best = -1, bestDiff = Infinity;
+        for (let j = i - 1; j >= 0; j--) {
+            const dt = (t0 - new Date(dates[j])) / 86400000;
+            if (dt <= 0) continue;
+            const diff = Math.abs(dt - win);
+            if (diff < bestDiff) { bestDiff = diff; best = j; }
+            if (dt > win * 2) break;
+        }
+        if (best < 0) return null;
+        return (values[i] - values[best]) / ((t0 - new Date(dates[best])) / 86400000);
+    });
+}
+
+function detectPulses(dates, values) {
+    const events = [];
+    for (let i = 0; i < dates.length; i++) {
+        const t0 = new Date(dates[i]);
+        for (let j = i + 1; j < dates.length; j++) {
+            const days = (new Date(dates[j]) - t0) / 86400000;
+            if (days < PULSE_WIN_MIN) continue;
+            if (days > PULSE_WIN_MAX) break;
+            const delta = values[i] - values[j];
+            if (delta >= PULSE_THRESHOLD) {
+                events.push({ start: dates[i], end: dates[j], delta, days: Math.round(days) });
+                i = j; break;
+            }
+        }
+    }
+    return events;
+}
+
+function computeMonthly(dates, values) {
+    const months = {};
+    dates.forEach((d, i) => {
+        const m = d.slice(0, 7);
+        if (!months[m]) months[m] = { first: values[i], last: values[i] };
+        months[m].last = values[i];
+    });
+    return Object.entries(months).map(([m, { first, last }]) => ({ month: m, change: last - first }));
+}
+
+function computeStreak(dates, values) {
+    const n = values.length;
+    if (n < 4) return { type: 'UNKNOWN', days: 0, change: 0, startDate: '' };
+    const recentDelta = values[n - 1] - values[Math.max(0, n - 5)];
+    const type = recentDelta >= 0 ? 'BUILD' : 'DRAW';
+    let start = n - 1;
+    for (let i = n - 1; i > 0; i--) {
+        const d = values[i] - values[i - 1];
+        if (type === 'BUILD' && d < -0.05) break;
+        if (type === 'DRAW' && d > 0.05) break;
+        start = i - 1;
+    }
+    return { type, days: Math.round((new Date(dates[n-1]) - new Date(dates[start])) / 86400000), change: values[n-1] - values[start], startDate: dates[start] };
+}
+
+function hl(t, c) { return `<span class="${c}">${t}</span>`; }
+
+// ── Render ─────────────────────────────────────────────────────────────────
+function render() {
+    // Always compute fill rate on daily data for accuracy
+    const rawSlice = getSliceRaw();
+    const allFR = computeFillRate(allDates, allValues);
+    const rawFR = computeFillRate(rawSlice.dates, rawSlice.values);
+    const latestFR = rawFR[rawFR.length - 1];
+
+    // Granularity-adjusted slice for charts
+    const { dates, values } = getSlice();
+    const n = values.length;
+    if (!n) return;
+
+    const latest = values[n - 1];
+    const util = (latest / MAX_CAP) * 100;
+    const spiSeries = values.map(v => (v / MAX_CAP) * 100);
+    // Use raw daily data for pulse detection
+    const pulses = detectPulses(rawSlice.dates, rawSlice.values);
+    const streak = computeStreak(rawSlice.dates, rawSlice.values);
+    const change30pct = ((latest - values[Math.max(0, n - 30)]) / values[Math.max(0, n - 30)]) * 100;
+
+    // Fill rate for chart (based on current granularity)
+    const chartFR = computeFillRate(dates, values);
+
+    // 90d baseline surprise
+    const baseline90 = allFR.filter(r => r !== null).slice(-90);
+    const avgFR90 = baseline90.length ? baseline90.reduce((a, b) => a + b, 0) / baseline90.length : 0;
+    const surprise = latestFR !== null ? latestFR - avgFR90 : null;
+
+    // Days calc
+    const fr7d = latestFR !== null ? latestFR * 7 : null;
+    let daysVal = null, daysLabel = '距满仓天数', daysSub = '';
+    if (latestFR !== null && latestFR > 0.005) {
+        daysVal = Math.round((MAX_CAP - latest) / latestFR);
+        daysSub = `+${fr7d.toFixed(2)} Mb/7天`;
+    } else if (latestFR !== null && latestFR < -0.005) {
+        daysVal = Math.round(latest / Math.abs(latestFR));
+        daysLabel = '距空仓天数';
+        daysSub = `${fr7d.toFixed(2)} Mb/7天`;
+    }
+
+    // ── OVERVIEW CARDS ──
+    document.getElementById('mVol').innerHTML = latest.toFixed(1) + '<span class="cu"> Mb</span>';
+    document.getElementById('mUtil').innerHTML = util.toFixed(1) + '<span class="cu">%</span>';
+    const ub = document.getElementById('mUtilBadge');
+    if (util > 85) { ub.textContent = '临界'; ub.className = 'badge br'; document.getElementById('cUtil').className = 'card red'; }
+    else if (util > 70) { ub.textContent = '偏高'; ub.className = 'badge by'; document.getElementById('cUtil').className = 'card yellow'; }
+    else { ub.textContent = '正常'; ub.className = 'badge bg'; document.getElementById('cUtil').className = 'card'; }
+
+    if (latestFR !== null) {
+        const rs = latestFR >= 0 ? '+' : '';
+        document.getElementById('mRate').innerHTML = rs + (latestFR * 7).toFixed(2) + '<span class="cu"> Mb</span>';
+        document.getElementById('mRate').style.color = latestFR >= 0 ? '#f87171' : '#34d399';
+        document.getElementById('mRateSub').textContent = latestFR >= 0 ? '▲ 蓄积' : '▼ 下降';
+        document.getElementById('cRate').className = latestFR >= 0 ? 'card red' : 'card green';
+    }
+
+    document.getElementById('mDaysLabel').textContent = daysLabel;
+    if (daysVal !== null) {
+        document.getElementById('mDays').innerHTML = daysVal + '<span class="cu"> d</span>';
+        document.getElementById('mDays').style.color = daysVal < 30 ? '#f87171' : daysVal < 60 ? '#fbbf24' : '#f1f5f9';
+        document.getElementById('cDays').className = daysVal < 30 ? 'card orange' : daysVal < 60 ? 'card yellow' : 'card';
+    } else { document.getElementById('mDays').innerHTML = '—'; }
+    document.getElementById('mDaysSub').textContent = daysSub;
+
+    // ── ALERT ──
+    const banner = document.getElementById('alertBanner');
+    banner.className = 'alert-banner';
+    if (util > 85) {
+        banner.classList.add('visible', 'critical');
+        document.getElementById('alertText').textContent = `储量临界 — 利用率${util.toFixed(1)}%。历史上通常在4–8周内出现被迫价格妥协。`;
+    }
+
+    // Overview signal
+    const utilWord = util > 85 ? hl('临界', 'bad') : util > 70 ? hl('偏高', 'warn') : hl('正常', 'good');
+    const rateWord = latestFR !== null && latestFR >= 0 ? hl('蓄积', 'bad') : hl('下降', 'good');
+    const capNote = daysVal !== null && latestFR > 0
+        ? (daysVal < 30 ? ` 终端将在 ${hl(daysVal + '天', 'bad')} 内装满 — ${hl('强制出售风险迫在眉睫。', 'bad')}` : daysVal < 60 ? ` 约 ${hl(daysVal + '天', 'warn')} 后达到容量上限。` : '')
+        : '';
+    document.getElementById('sig1').innerHTML = `储量 ${hl(latest.toFixed(2) + ' Mb', 'hl')} (利用率 ${hl(util.toFixed(0) + '%', 'hl')}) — ${utilWord}。终端${rateWord} ${hl(Math.abs(fr7d !== null ? fr7d : 0).toFixed(2) + ' Mb/7天', 'hl')}。${capNote}`;
+
+    // Export Setup (staging injected async after initial render)
+    renderExportSetup(util, fr7d, streak, window._stagingData || null);
+
+    // Charts
+    destroyCharts();
+    renderMainChart(dates, values);
+    renderFillRateChart(dates, chartFR);
+    renderSPIChart(dates, spiSeries);
+    renderMonthlyChart(rawSlice.dates, rawSlice.values);
+}
+
+// ── EXPORT SETUP ──────────────────────────────────────────────────────────────
+function tPct(arr, p) {
+    const s = [...arr].sort((a, b) => a - b);
+    const i = (p / 100) * (s.length - 1);
+    const lo = Math.floor(i), hi = Math.ceil(i);
+    return s[lo] + (s[hi] - s[lo]) * (i - lo);
+}
+function tRatio(db, p5, p95) {
+    return Math.min(1, Math.max(0, (p95 - db) / (p95 - p5)));
+}
+
+async function loadStagingSignal() {
+    try {
+        const headers = { apikey: SUPABASE_KEY, Authorization: 'Bearer ' + SUPABASE_KEY };
+        const url = `${SUPABASE_URL}/rest/v1/raw_observations?select=date,tank_id,db_mean&tank_id=in.(t60_0,t40_22)&order=date.desc&limit=120`;
+        const raw = await fetch(url, { headers }).then(r => r.json());
+        if (!Array.isArray(raw) || raw.length < 4) return null;
+        const byTank = { t60_0: [], t40_22: [] };
+        raw.forEach(r => { if (byTank[r.tank_id]) byTank[r.tank_id].push(r); });
+        Object.values(byTank).forEach(arr => arr.sort((a, b) => (a.date < b.date ? -1 : 1)));
+        const calibrate = arr => ({ p5: tPct(arr.map(r => r.db_mean), 5), p95: tPct(arr.map(r => r.db_mean), 95) });
+        const cal60 = calibrate(byTank.t60_0);
+        const cal40 = calibrate(byTank.t40_22);
+        const t60 = byTank.t60_0, t40 = byTank.t40_22;
+        if (t60.length < 2 || t40.length < 2) return null;
+        const r60prev = tRatio(t60[t60.length - 2].db_mean, cal60.p5, cal60.p95);
+        const r60last = tRatio(t60[t60.length - 1].db_mean, cal60.p5, cal60.p95);
+        const r40prev = tRatio(t40[t40.length - 2].db_mean, cal40.p5, cal40.p95);
+        const r40last = tRatio(t40[t40.length - 1].db_mean, cal40.p5, cal40.p95);
+        const t60delta = r60last - r60prev;   // positive = filling
+        const t40filling = r40last > r40prev;
+        return { t60delta, t40filling, t60pct: Math.round(t60delta * 100), active: t60delta >= 0.10 && t40filling };
+    } catch { return null; }
+}
+
+function renderExportSetup(util, fr7d, streak, staging) {
+    // ── Signal evaluation ──
+    const pressureActive = util >= 65;
+    const pressureP = util >= 80 ? 30 : util >= 70 ? 28 : util >= 65 ? 19 : 0;
+
+    const pendulumActive = fr7d !== null && fr7d > 1.5;  // big build last period
+    const pendulumP = 45;
+
+    const stagingActive = staging && staging.active;
+    const stagingP = 29;
+
+    const streakActive = streak.type === 'BUILD' && (streak.days || 0) >= 18;
+    const streakP = 28;
+
+    // Composite: pick the strongest active combination
+    let compositeP = null;
+    if (pressureActive && stagingActive) compositeP = 48;          // ×3.2
+    else if (pressureActive && pendulumActive) compositeP = 40;    // ×2.6
+    else if (pendulumActive) compositeP = 45;                      // ×2.9
+    else if (stagingActive) compositeP = 29;                       // ×1.9
+    else if (streakActive) compositeP = 28;                        // ×1.8
+    else if (pressureActive) compositeP = pressureP;
+
+    // ── Render composite ──
+    const pctEl = document.getElementById('esPct');
+    if (compositeP !== null) {
+        pctEl.textContent = compositeP + '%';
+        pctEl.className = 'es-pct' + (compositeP >= 40 ? ' hot' : ' active');
+    } else {
+        pctEl.textContent = '—';
+        pctEl.className = 'es-pct';
+    }
+
+    // ── Pressure row ──
+    setEsRow('pressure', pressureActive, false, pressureP + '%',
+        pressureActive ? 'util ' + util.toFixed(0) + '%' : 'util <65%',
+        pressureActive ? 'active' : '—');
+
+    // ── Staging row ──
+    const stagingHot = stagingActive && pressureActive;
+    const stagingTrigger = staging
+        ? (stagingActive ? 't60_0 +' + staging.t60pct + 'pp · t40_22 ↑' : 't60_0 ' + (staging.t60pct >= 0 ? '+' : '') + staging.t60pct + 'pp · watching')
+        : 'loading…';
+    setEsRow('staging', stagingActive, stagingHot, stagingP + '%', stagingTrigger,
+        staging ? (stagingActive ? 'active' : '—') : 'loading');
+
+    // ── Pendulum row ──
+    const pendulumHot = pendulumActive && pressureActive;
+    setEsRow('pendulum', pendulumActive, pendulumHot, pendulumP + '%',
+        fr7d !== null ? (fr7d > 0 ? '+' + fr7d.toFixed(1) + ' Mb last 7d' : fr7d.toFixed(1) + ' Mb last 7d') : '—',
+        pendulumActive ? 'active' : '—');
+
+    // ── Streak row ──
+    const streakDays = streak.days || 0;
+    const streakTrigger = streak.type === 'BUILD'
+        ? streakDays + 'd build streak'
+        : streak.type === 'DRAW' ? streakDays + 'd drawdown streak' : '—';
+    setEsRow('streak', streakActive, false, streakP + '%', streakTrigger,
+        streakActive ? 'active' : '—');
+
+    // ── Nav badge + enable/disable ──
+    const activeCount = [pressureActive, stagingActive, pendulumActive, streakActive].filter(Boolean).length;
+    const navEl = document.getElementById('nav-signals');
+    const badge = document.getElementById('signals-badge');
+    if (activeCount > 0) {
+        navEl.style.opacity = '1';
+        navEl.style.pointerEvents = 'auto';
+        badge.style.display = 'inline';
+        badge.textContent = activeCount;
+    } else {
+        navEl.style.opacity = '0.35';
+        navEl.style.pointerEvents = 'none';
+        badge.style.display = 'none';
+    }
+}
+
+function setEsRow(id, active, hot, p, trigger, status) {
+    const row = document.getElementById('esr-' + id);
+    row.style.display = active ? '' : 'none';
+    row.className = 'es-row' + (hot ? ' hot' : active ? ' on' : '');
+    const trigEl = document.getElementById('est-' + id);
+    if (trigEl) trigEl.textContent = trigger;
+    document.getElementById('esp-' + id).textContent = active ? p : '—';
+    const stateEl = document.getElementById('ess-' + id);
+    stateEl.textContent = active ? (hot ? 'active ↑' : 'active') : status === 'loading' ? 'loading…' : 'inactive';
+}
+
+// Tooltip wiring
+(function () {
+    const tip = document.getElementById('esTip');
+    document.querySelectorAll('[data-tip]').forEach(el => {
+        el.addEventListener('mouseenter', e => {
+            tip.textContent = el.getAttribute('data-tip');
+            tip.style.opacity = '1';
+            moveTip(e);
+        });
+        el.addEventListener('mousemove', moveTip);
+        el.addEventListener('mouseleave', () => { tip.style.opacity = '0'; });
+    });
+    function moveTip(e) {
+        const x = e.clientX + 14, y = e.clientY + 14;
+        const w = tip.offsetWidth || 260;
+        tip.style.left = (x + w > window.innerWidth ? e.clientX - w - 10 : x) + 'px';
+        tip.style.top = (y + 120 > window.innerHeight ? e.clientY - 120 : y) + 'px';
+    }
+})();
+
+function destroyCharts() {
+    Object.entries(charts).forEach(([k, c]) => {
+        if (k === 'flowsDivergent' || k === 'flowsECR' || k === 'flowsTurnover') return;
+        c?.destroy();
+        delete charts[k];
+    });
+}
+
+const _isNarrow = window.matchMedia('(max-width: 820px)').matches;
+const gX = { ticks: { color: '#64748b', maxTicksLimit: _isNarrow ? 5 : 10, maxRotation: _isNarrow ? 45 : 45, autoSkip: true, font: { size: _isNarrow ? 9 : 10 } }, grid: { color: 'rgba(255,255,255,0.05)' } };
+const gY = { ticks: { color: '#64748b', font: { size: 10 }, callback: v => Math.round(v) }, grid: { color: 'rgba(255,255,255,0.05)' } };
+
+function renderMainChart(dates, values) {
+    charts.main = new Chart(document.getElementById('mainChart').getContext('2d'), {
+        type: 'line',
+        data: { labels: dates, datasets: [
+            { label: '储量 (Mb)', data: values, borderColor: '#3b82f6', backgroundColor: 'rgba(59,130,246,0.1)', fill: true, tension: 0.3, pointRadius: 0, borderWidth: 2 },
+            { label: '85% threshold', data: dates.map(() => MAX_CAP * 0.85), borderColor: 'rgba(220,38,38,0.3)', borderDash: [6,4], pointRadius: 0, fill: false, borderWidth: 1 }
+        ]},
+        options: { responsive: true, maintainAspectRatio: false, interaction: { intersect: false, mode: 'index' },
+            plugins: { legend: { labels: { color: '#6b7280', boxWidth: 10, font: { size: 10 } } },
+                tooltip: { backgroundColor: '#111827', borderColor: 'rgba(255,255,255,0.1)', borderWidth: 1, titleColor: '#e2e8f0', bodyColor: '#94a3b8', filter: item => item.datasetIndex === 0, callbacks: { label: ctx => ` ${ctx.parsed.y.toFixed(2)} Mb` } } },
+            scales: { x: gX, y: gY } }
+    });
+}
+
+function renderFillRateChart(dates, rates) {
+    charts.fr = new Chart(document.getElementById('fillRateChart').getContext('2d'), {
+        type: 'bar',
+        data: { labels: dates, datasets: [{ label: '变化 (Mb · 7d)', data: rates ? rates.map(r => r === null ? null : r * 7) : rates,
+            backgroundColor: rates.map(r => r === null ? 'transparent' : r >= 0 ? 'rgba(220,38,38,0.6)' : 'rgba(5,150,105,0.6)'), borderWidth: 0 }]},
+        options: { responsive: true, maintainAspectRatio: false,
+            plugins: { legend: { labels: { color: '#6b7280', boxWidth: 10, font: { size: 10 } } },
+                tooltip: { backgroundColor: '#111827', borderColor: 'rgba(255,255,255,0.1)', borderWidth: 1, titleColor: '#e2e8f0', bodyColor: '#94a3b8' } },
+            scales: { x: gX, y: { ...gY, ticks: { ...gY.ticks, callback: v => v.toFixed(2) + ' Mb' } } } }
+    });
+}
+
+function renderSPIChart(dates, spi) {
+    const validSpi = spi.filter(v => v != null);
+    const spiMin = Math.max(0, Math.floor(Math.min(...validSpi) - 3));
+    const spiMax = Math.min(100, Math.ceil(Math.max(...validSpi) + 3));
+    charts.spi = new Chart(document.getElementById('spiChart').getContext('2d'), {
+        type: 'line',
+        data: { labels: dates, datasets: [
+            { label: 'Fill Level (%)', data: spi, borderColor: '#fbbf24', backgroundColor: 'rgba(217,119,6,0.06)', fill: true, tension: 0.3, pointRadius: 0, borderWidth: 2 },
+            { label: '85% alert', data: dates.map(() => 85), borderColor: 'rgba(220,38,38,0.3)', borderDash: [6,4], pointRadius: 0, fill: false, borderWidth: 1 }
+        ]},
+        options: { responsive: true, maintainAspectRatio: false, interaction: { intersect: false, mode: 'index' },
+            plugins: { legend: { labels: { color: '#6b7280', boxWidth: 10, font: { size: 10 } } },
+                tooltip: { backgroundColor: '#111827', borderColor: 'rgba(255,255,255,0.1)', borderWidth: 1, titleColor: '#e2e8f0', bodyColor: '#94a3b8', filter: item => item.datasetIndex === 0 } },
+            scales: { x: gX, y: { min: spiMin, max: spiMax, ticks: { color: '#64748b', callback: v => v + '%', font: { size: 10 } }, grid: gY.grid } } }
+    });
+}
+
+function renderMonthlyChart(dates, values) {
+    const monthly = computeMonthly(dates, values);
+    const data = monthly.map(m => parseFloat(m.change.toFixed(2)));
+    charts.monthly = new Chart(document.getElementById('monthlyChart').getContext('2d'), {
+        type: 'bar',
+        data: { labels: monthly.map(m => m.month), datasets: [{ label: 'Monthly Balance (Mb)', data,
+            backgroundColor: data.map(v => v >= 0 ? 'rgba(220,38,38,0.6)' : 'rgba(5,150,105,0.6)'), borderWidth: 0, borderRadius: 3 }]},
+        options: { responsive: true, maintainAspectRatio: false, interaction: { intersect: false, mode: 'index' },
+            plugins: { legend: { labels: { color: '#6b7280', boxWidth: 10, font: { size: 10 } } },
+                tooltip: { backgroundColor: '#111827', borderColor: 'rgba(255,255,255,0.1)', borderWidth: 1, titleColor: '#e2e8f0', bodyColor: '#94a3b8',
+                    callbacks: { label: ctx => ctx.parsed.y >= 0 ? ` +${Math.round(ctx.parsed.y)} Mb (build)` : ` ${Math.round(ctx.parsed.y)} Mb (draw)` } } },
+            scales: { x: gX, y: { ...gY, ticks: { ...gY.ticks, callback: v => Math.round(v) } } } }
+    });
+}
+
+
+function exportCSV() {
+    const raw = getSliceRaw();
+    const frs = computeFillRate(raw.dates, raw.values);
+    let csv = 'Date,Storage_Mb,Fill_Rate_Mb_per_day,Utilization_pct\n';
+    for (let i = 0; i < raw.dates.length; i++)
+        csv += `${raw.dates[i]},${raw.values[i].toFixed(2)},${frs[i] !== null ? frs[i].toFixed(2) : ''},${(raw.values[i]/MAX_CAP*100).toFixed(2)}\n`;
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv' }));
+    a.download = `kharg_${raw.dates[raw.dates.length-1]}.csv`;
+    a.click();
+}
+
+// ── Gross Flows ────────────────────────────────────────────────────────────
+let _flowsData = null;
+let _flowsRange = 90;
+let _flowsGran = 'pass';
+const FLOWS_CACHE_KEY = 'oilradar_flows_v3';
+const FLOWS_CACHE_TTL = 6 * 3600 * 1000; // 6 hours
+
+function setFlowsRange(days) {
+    _flowsRange = days;
+    document.querySelectorAll('.tbtn[data-frange]').forEach(b =>
+        b.classList.toggle('active', parseInt(b.dataset.frange) === days));
+    if (_flowsData) renderFlows(_flowsData);
+}
+
+function setFlowsGran(g) {
+    _flowsGran = g;
+    document.querySelectorAll('.tbtn[data-fgran]').forEach(b =>
+        b.classList.toggle('active', b.dataset.fgran === g));
+    if (_flowsData) renderFlows(_flowsData);
+}
+
+async function loadFlows() {
+    if (_flowsData) { renderFlows(_flowsData); return; }
+
+    try {
+        const cached = localStorage.getItem(FLOWS_CACHE_KEY);
+        if (cached) {
+            const { ts, data } = JSON.parse(cached);
+            if (Date.now() - ts < FLOWS_CACHE_TTL) { _flowsData = data; renderFlows(data); return; }
+        }
+    } catch {}
+
+    document.getElementById('sigFlows').textContent = '加载总流量数据中…';
+    const headers = { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` };
+
+    try {
+        const res = await fetch(
+            `${SUPABASE_URL}/rest/v1/kharg_gross_flows?select=date_from,date_to,days,gross_out_mb,gross_in_mb,net_mb,tanks_draining,tanks_filling&order=date_to`,
+            { headers }
+        );
+        const all = await res.json();
+        _flowsData = all;
+        try { localStorage.setItem(FLOWS_CACHE_KEY, JSON.stringify({ ts: Date.now(), data: all })); } catch {}
+        renderFlows(all);
+    } catch(e) {
+        document.getElementById('sigFlows').textContent = '加载数据出错: ' + e.message;
+    }
+}
+
+function renderFlows(raw) {
+    // Filter by range
+    let data = raw;
+    if (_flowsRange > 0) {
+        const cutoff = new Date();
+        cutoff.setDate(cutoff.getDate() - _flowsRange);
+        const cutStr = cutoff.toISOString().slice(0, 10);
+        data = raw.filter(r => r.date_to >= cutStr);
+    } else {
+        data = raw.filter(r => r.date_from >= '2017-01-01');
+    }
+
+    // Normalise to passes array (field names from kharg_gross_flows)
+    const passes = data.map(r => ({
+        d0: r.date_from, d1: r.date_to,
+        days: r.days,
+        grossOut: parseFloat(r.gross_out_mb),
+        grossIn:  parseFloat(r.gross_in_mb),
+        net:      parseFloat(r.net_mb),
+        tanksOut: r.tanks_draining,
+        tanksIn:  r.tanks_filling
+    }));
+
+    if (!passes.length) {
+        document.getElementById('sigFlows').textContent = '所选周期内暂无数据。';
+        return;
+    }
+
+    // Summary KPIs
+    const totalOut = passes.reduce((s, p) => s + p.grossOut, 0);
+    const totalIn  = passes.reduce((s, p) => s + p.grossIn,  0);
+    const totalNet = totalIn - totalOut;
+
+    document.getElementById('fTotalOut').innerHTML = totalOut.toFixed(2) + '<span class="cu"> Mb</span>';
+    document.getElementById('fTotalIn').innerHTML  = totalIn.toFixed(2)  + '<span class="cu"> Mb</span>';
+    const netEl = document.getElementById('fNet');
+    const netSign = totalNet >= 0 ? '+' : '';
+    netEl.innerHTML = netSign + totalNet.toFixed(2) + '<span class="cu"> Mb</span>';
+    netEl.style.color = totalNet >= 0 ? '#f87171' : '#34d399';
+    document.getElementById('fNetSub').textContent = totalNet >= 0 ? '▲ 周期内净蓄积' : '▼ 周期内净下降';
+    document.getElementById('fTotalOutSub').textContent = `${passes.length} SAR passes · avg ${(totalOut/passes.length).toFixed(2)} Mb/pass`;
+    document.getElementById('fTotalInSub').textContent  = `avg inflow ${(totalIn/passes.length).toFixed(2)} Mb/pass`;
+
+    // Signal text
+    const maxOut = passes.reduce((m, p) => p.grossOut > m.grossOut ? p : m, passes[0]);
+    document.getElementById('sigFlows').innerHTML =
+        `总流出量追踪实际罐级下降 — 而非终端净变化。` +
+        `峰值下降轨道：<span class="hl">${maxOut.d0} → ${maxOut.d1}</span> · ` +
+        `<span class="good">−${maxOut.grossOut.toFixed(2)} Mb</span> 总流出，${maxOut.tanksOut}个储罐同时排空。`;
+
+    // Apply grouping (weekly / monthly) on top of per-pass data
+    let buckets = passes;
+    if (_flowsGran === 'weekly' || _flowsGran === 'monthly') {
+        const bucketKey = p => {
+            const d = new Date(p.d1);
+            if (_flowsGran === 'monthly') return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+            const jan1 = new Date(d.getFullYear(), 0, 1);
+            const week = Math.ceil(((d - jan1) / 86400000 + jan1.getDay() + 1) / 7);
+            return `${d.getFullYear()}-W${String(week).padStart(2,'0')}`;
+        };
+        const grouped = {};
+        passes.forEach(p => {
+            const k = bucketKey(p);
+            if (!grouped[k]) grouped[k] = { d0: p.d0, d1: p.d1, days: 0, grossOut: 0, grossIn: 0, net: 0, tanksOut: 0, tanksIn: 0, count: 0 };
+            const g = grouped[k];
+            g.d1 = p.d1;
+            g.days += p.days;
+            g.grossOut += p.grossOut;
+            g.grossIn  += p.grossIn;
+            g.net      += p.net;
+            g.tanksOut = Math.max(g.tanksOut, p.tanksOut);
+            g.tanksIn  = Math.max(g.tanksIn,  p.tanksIn);
+            g.count++;
+        });
+        buckets = Object.values(grouped).sort((a,b) => a.d1 < b.d1 ? -1 : 1);
+    }
+
+    // ECR — Export Coverage Ratio per bucket
+    const ecrData = buckets.map(p => p.grossIn > 0 ? +(p.grossOut / p.grossIn).toFixed(2) : null);
+    const ecrAvg = (() => { const v = ecrData.filter(x => x !== null); return v.length ? (v.reduce((a,b)=>a+b,0)/v.length).toFixed(2) : null; })();
+    const ecrEl = document.getElementById('fECR');
+    if (ecrAvg !== null) {
+        const e = parseFloat(ecrAvg);
+        ecrEl.innerHTML = ecrAvg + '<span style="font-size:0.75rem;color:var(--muted)">x avg</span>';
+        ecrEl.style.color = e > 1.2 ? '#34d399' : e < 0.85 ? '#f87171' : '#D4D9E4';
+        document.getElementById('fECRSub').textContent = e > 1.2 ? '▲ 储备下降模式' : e < 0.85 ? '▼ 蓄积模式' : '≈ 直通/平衡';
+    }
+    charts.flowsECR && charts.flowsECR.destroy();
+    charts.flowsECR = new Chart(document.getElementById('flowsECRChart').getContext('2d'), {
+        type: 'bar',
+        data: { labels: buckets.map(p => p.d1), datasets: [{ label: 'ECR', data: ecrData,
+            backgroundColor: ecrData.map(v => v === null ? 'transparent' : v > 1.2 ? 'rgba(5,150,105,0.7)' : v < 0.85 ? 'rgba(220,38,38,0.7)' : 'rgba(156,163,175,0.5)'),
+            borderWidth: 0, borderRadius: 2 }] },
+        options: { responsive: true, maintainAspectRatio: false,
+            plugins: { legend: { display: false },
+                tooltip: { backgroundColor: '#111827', borderColor: 'rgba(255,255,255,0.1)', borderWidth: 1, titleColor: '#e2e8f0', bodyColor: '#94a3b8',
+                    callbacks: { title: ctx => { const p = buckets[ctx[0].dataIndex]; return p.d1; },
+                        label: ctx => ` ECR: ${ctx.parsed.y.toFixed(2)}x · ${ctx.parsed.y > 1.2 ? 'reserve drawdown' : ctx.parsed.y < 0.85 ? 'accumulation' : 'balanced'}` } } },
+            scales: { x: gX, y: { ...gY, ticks: { ...gY.ticks, callback: v => v.toFixed(1) + 'x' } } } }
+    });
+
+    // Storage Turnover per bucket
+    const currentVol = allValues.length ? allValues[allValues.length - 1] : null;
+    const turnoverData = buckets.map(p => {
+        const throughput = p.days > 0 ? (p.grossOut + p.grossIn) / p.days : null;
+        return (currentVol && throughput) ? +(currentVol / throughput).toFixed(1) : null;
+    });
+    const lastTurnover = turnoverData.filter(v => v !== null).slice(-1)[0];
+    if (lastTurnover != null) {
+        document.getElementById('fTurnover').innerHTML = Math.round(lastTurnover) + '<span style="font-size:0.75rem;color:var(--muted)">d</span>';
+        document.getElementById('fTurnoverSub').textContent = lastTurnover < 40 ? '快速排空 — 积极装载' : lastTurnover > 90 ? '缓慢排空 — 出口低于平均水平' : '按当前出口速率 · 距储量耗尽天数';
+    }
+    charts.flowsTurnover && charts.flowsTurnover.destroy();
+    charts.flowsTurnover = new Chart(document.getElementById('flowsTurnoverChart').getContext('2d'), {
+        type: 'bar',
+        data: { labels: buckets.map(p => p.d1), datasets: [{ label: 'Turnover (days)', data: turnoverData,
+            backgroundColor: turnoverData.map(v => v === null ? 'transparent' : v < 40 ? 'rgba(5,150,105,0.7)' : v > 90 ? 'rgba(220,38,38,0.7)' : 'rgba(156,163,175,0.5)'),
+            borderWidth: 0, borderRadius: 2 }] },
+        options: { responsive: true, maintainAspectRatio: false,
+            plugins: { legend: { display: false },
+                tooltip: { backgroundColor: '#111827', borderColor: 'rgba(255,255,255,0.1)', borderWidth: 1, titleColor: '#e2e8f0', bodyColor: '#94a3b8',
+                    callbacks: { title: ctx => { const p = buckets[ctx[0].dataIndex]; return p.d1; },
+                        label: ctx => ` Turnover: ${Math.round(ctx.parsed.y)}d · ${ctx.parsed.y < 40 ? 'high activity' : ctx.parsed.y > 90 ? 'low activity' : 'normal'}` } } },
+            scales: { x: gX, y: { ...gY, ticks: { ...gY.ticks, callback: v => Math.round(v) + 'd' } } } }
+    });
+
+    // Divergent chart — export below zero (green), inflow above zero (red)
+    charts.flowsDivergent && charts.flowsDivergent.destroy();
+    const expVelData = buckets.map(p => p.days > 0 ? +(-p.grossOut / p.days).toFixed(2) : null);
+    const infVelData = buckets.map(p => p.days > 0 ? +(p.grossIn  / p.days).toFixed(2) : null);
+    charts.flowsDivergent = new Chart(document.getElementById('flowsDivergentChart').getContext('2d'), {
+        type: 'bar',
+        data: {
+            labels: buckets.map(p => p.d1),
+            datasets: [
+                { label: 'Export Velocity', data: expVelData,
+                  backgroundColor: 'rgba(5,150,105,0.75)', borderWidth: 0, borderRadius: 2 },
+                { label: 'Production Inflow', data: infVelData,
+                  backgroundColor: 'rgba(220,38,38,0.75)', borderWidth: 0, borderRadius: 2 }
+            ]
+        },
+        options: {
+            responsive: true, maintainAspectRatio: false,
+            interaction: { intersect: false, mode: 'index' },
+            plugins: {
+                legend: { labels: { color: '#6b7280', boxWidth: 10, font: { size: 10 } } },
+                tooltip: { backgroundColor: '#111827', borderColor: 'rgba(255,255,255,0.1)', borderWidth: 1, titleColor: '#e2e8f0', bodyColor: '#94a3b8',
+                    callbacks: {
+                        title: ctx => { const p = buckets[ctx[0].dataIndex]; return p.d1; },
+                        label: ctx => {
+                            const p = buckets[ctx.dataIndex];
+                            if (ctx.datasetIndex === 0) return ` Export: −${p.grossOut.toFixed(2)} Mb · ${(p.grossOut/p.days).toFixed(2)} Mb/d · ${p.tanksOut} tanks draining`;
+                            return ` Inflow: +${p.grossIn.toFixed(2)} Mb · ${(p.grossIn/p.days).toFixed(2)} Mb/d · ${p.tanksIn} tanks filling`;
+                        }
+                    }
+                }
+            },
+            scales: {
+                x: gX,
+                y: { ...gY,
+                    ticks: { ...gY.ticks, callback: v => v.toFixed(2) + ' Mb/d' },
+                    grid: { ...gY.grid, color: ctx => ctx.tick.value === 0 ? 'rgba(0,0,0,0.2)' : 'rgba(255,255,255,0.05)' }
+                }
+            }
+        }
+    });
+
+
+    // Table
+    const tbody = document.getElementById('flowsTableBody');
+    const rows = [...passes].reverse();
+    tbody.innerHTML = rows.map(p => {
+        const netSign = p.net >= 0 ? '+' : '';
+        const netClass = p.net >= 0 ? 'net-pos' : 'net-neg';
+        const outRate = p.days > 0 ? (p.grossOut / p.days).toFixed(2) : '—';
+        const inRate  = p.days > 0 ? (p.grossIn  / p.days).toFixed(2) : '—';
+        return `<tr>
+            <td class="mono">${p.d0} → ${p.d1}</td>
+            <td class="tanks">${p.days}d</td>
+            <td class="out">−${p.grossOut.toFixed(2)}</td>
+            <td class="out" style="font-size:0.7rem">${outRate}</td>
+            <td class="tanks">${p.tanksOut} tanks</td>
+            <td class="inp">+${p.grossIn.toFixed(2)}</td>
+            <td class="inp" style="font-size:0.7rem">${inRate}</td>
+            <td class="tanks">${p.tanksIn} tanks</td>
+            <td class="${netClass}">${netSign}${p.net.toFixed(2)}</td>
+        </tr>`;
+    }).join('') + `<tr class="flows-total">
+        <td class="mono">TOTAL · ${passes.length} passes</td>
+        <td></td>
+        <td class="out">−${totalOut.toFixed(2)}</td>
+        <td></td>
+        <td></td>
+        <td class="inp">+${totalIn.toFixed(2)}</td>
+        <td></td>
+        <td></td>
+        <td class="${totalNet >= 0 ? 'net-pos' : 'net-neg'}">${totalNet >= 0 ? '+' : ''}${totalNet.toFixed(2)}</td>
+    </tr>`;
+}
+
+checkAuth();
+loadData();
+
+// ── Per-Tank Map ───────────────────────────────────────────────────────────
+const SUPABASE_URL = 'https://yoekhkczwdeyauwarsyy.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_7j07_zzdqTGM1LXf7-o9Tg_JJRbJQSM';
+const H_MIN = 2, BBL = 6.2898;
+
+const TANKS = {
+    't60_0':{lat:29.2217338,lon:50.3165482,r:20,rm:60,hm:18},'t60_1':{lat:29.2216388,lon:50.3150432,r:20,rm:60,hm:18},'t60_2':{lat:29.2218405,lon:50.3135291,r:20,rm:60,hm:18},'t60_3':{lat:29.2231568,lon:50.3158490,r:20,rm:60,hm:18},'t60_4':{lat:29.2228980,lon:50.3144195,r:20,rm:60,hm:18},
+    't55_5':{lat:29.2359691,lon:50.3126204,r:16,rm:55,hm:17},'t55_6':{lat:29.2364507,lon:50.3109394,r:16,rm:55,hm:17},'t55_7':{lat:29.2379533,lon:50.3108495,r:16,rm:55,hm:17},'t55_8':{lat:29.2390690,lon:50.3096822,r:16,rm:55,hm:17},'t55_9':{lat:29.2389264,lon:50.3068140,r:16,rm:55,hm:17},'t55_10':{lat:29.2376082,lon:50.3072679,r:16,rm:55,hm:17},'t55_11':{lat:29.2362776,lon:50.3077246,r:16,rm:55,hm:17},'t55_12':{lat:29.2363283,lon:50.3093038,r:16,rm:55,hm:17},'t55_13':{lat:29.2349727,lon:50.3081865,r:16,rm:55,hm:17},'t55_14':{lat:29.2351137,lon:50.3098199,r:16,rm:55,hm:17},'t55_15':{lat:29.2336438,lon:50.3086380,r:16,rm:55,hm:17},'t55_16':{lat:29.2338308,lon:50.3102809,r:16,rm:55,hm:17},'t55_17':{lat:29.2314405,lon:50.3087404,r:16,rm:55,hm:17},'t55_18':{lat:29.2317836,lon:50.3103855,r:16,rm:55,hm:17},'t55_19':{lat:29.2320764,lon:50.3122342,r:16,rm:55,hm:17},'t55_20':{lat:29.2302153,lon:50.3101615,r:16,rm:55,hm:17},'t55_21':{lat:29.2288712,lon:50.3099660,r:16,rm:55,hm:17},
+    't40_22':{lat:29.2295289,lon:50.3121871,r:12,rm:40,hm:14},'t40_23':{lat:29.2297632,lon:50.3135015,r:12,rm:40,hm:14},'t40_24':{lat:29.2299639,lon:50.3148147,r:12,rm:40,hm:14},'t40_25':{lat:29.2284236,lon:50.3124414,r:12,rm:40,hm:14},'t40_26':{lat:29.2286165,lon:50.3137337,r:12,rm:40,hm:14},'t40_27':{lat:29.2288114,lon:50.3150200,r:12,rm:40,hm:14},'t40_28':{lat:29.2272092,lon:50.3126984,r:12,rm:40,hm:14},'t40_29':{lat:29.2274357,lon:50.3139937,r:12,rm:40,hm:14},'t40_30':{lat:29.2276408,lon:50.3152672,r:12,rm:40,hm:14},'t55_31':{lat:29.2323461,lon:50.3137663,r:16,rm:55,hm:17},'t40_32':{lat:29.2307178,lon:50.3119291,r:12,rm:40,hm:14},'t40_33':{lat:29.2309474,lon:50.3132419,r:12,rm:40,hm:14},'t40_34':{lat:29.2311351,lon:50.3145438,r:12,rm:40,hm:14},
+    't25_35':{lat:29.2262112,lon:50.3128809,r:8,rm:25,hm:12},'t25_36':{lat:29.2263835,lon:50.3138099,r:8,rm:25,hm:12},'t25_37':{lat:29.2265429,lon:50.3147481,r:8,rm:25,hm:12},'t25_38':{lat:29.2266891,lon:50.3156504,r:8,rm:25,hm:12},'t25_39':{lat:29.2251564,lon:50.3131064,r:8,rm:25,hm:12},'t25_40':{lat:29.2253231,lon:50.3140568,r:8,rm:25,hm:12},'t25_41':{lat:29.2254742,lon:50.3149628,r:8,rm:25,hm:12},'t25_42':{lat:29.2256154,lon:50.3158865,r:8,rm:25,hm:12},'t25_43':{lat:29.2243535,lon:50.3132813,r:8,rm:25,hm:12},'t25_44':{lat:29.2245129,lon:50.3142241,r:8,rm:25,hm:12},'t25_45':{lat:29.2246562,lon:50.3151350,r:8,rm:25,hm:12},'t25_46':{lat:29.2248181,lon:50.3160634,r:8,rm:25,hm:12}
+};
+
+function tankColor(r) {
+    if (r === null) return '#1e2d3d';
+    r = Math.max(0, Math.min(1, r));
+    if (r < 0.5) { const t = r*2; return `rgb(${Math.round(255+(240-255)*t)},${Math.round(71+(165-71)*t)},${Math.round(87-87*t)})`; }
+    const t = (r-0.5)*2; return `rgb(${Math.round(240+(59-240)*t)},${Math.round(165+(130-165)*t)},${Math.round(246*t)})`;
+}
+function calcRatio(db, p5, p95) { return p95 === p5 ? 0.5 : Math.max(0, Math.min(1, (p95-db)/(p95-p5))); }
+function calcMb(ratio, rm, hm) { return Math.PI*rm*rm*(H_MIN+ratio*(hm-H_MIN))*BBL/1e6; }
+function pct(arr, p) { const s=[...arr].sort((a,b)=>a-b); const i=(p/100)*(s.length-1); const lo=Math.floor(i),hi=Math.ceil(i); return s[lo]+(s[hi]-s[lo])*(i-lo); }
+function makeTankSVG(id, info, ratio) {
+    const r=info.r, sz=r*2+4, cx=r+2, cy=r+2, fh=ratio!==null?ratio*r*2:0, col=tankColor(ratio), num=id.replace(/^t\d+_/,''), fs=Math.max(6,r*0.38);
+    return L.divIcon({ html: `<svg width="${sz}" height="${sz}" viewBox="0 0 ${sz} ${sz}" xmlns="http://www.w3.org/2000/svg" style="display:block;overflow:visible"><defs><clipPath id="c-${id}"><circle cx="${cx}" cy="${cy}" r="${r}"/></clipPath></defs><circle cx="${cx}" cy="${cy}" r="${r}" fill="rgba(8,10,13,0.85)"/><rect x="${cx-r}" y="${cy+r-fh}" width="${r*2}" height="${fh}" fill="${col}" clip-path="url(#c-${id})" opacity="0.9"/><circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${ratio!==null?col:'#1e2d3d'}" stroke-width="1.5" opacity="${ratio!==null?0.7:0.3}"/><text x="${cx}" y="${cy+fs*0.4}" text-anchor="middle" fill="#8ab0cc" font-size="${fs}" font-family="monospace">${num}</text></svg>`,
+        iconSize:[sz,sz], iconAnchor:[cx,cy], className:'tank-div-icon' });
+}
+
+async function initTankMap() {
+    const map = L.map('tankMap', { center:[29.228,50.312], zoom:14, zoomControl:true, attributionControl:false });
+    L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { maxZoom:19 }).addTo(map);
+    const markers = {};
+    Object.entries(TANKS).forEach(([id, info]) => {
+        const m = L.marker([info.lat, info.lon], { icon: makeTankSVG(id, info, null) });
+        m.bindPopup('', { maxWidth:220, offset:[0,-(info.r+4)] });
+        m.on('click', () => {
+            const s = window._ds && window._ds[id];
+            m.getPopup().setContent(s ? `<b style="font-family:monospace">${id}</b><br>填充率: ${s.ratio!==null?(s.ratio*100).toFixed(1)+'%':'N/A'}<br>储量: ${s.mb!==null?s.mb.toFixed(2)+' Mb':'N/A'}` : `<b>${id}</b><br>暂无数据`);
+        });
+        m.addTo(map); markers[id] = m;
+    });
+    const headers = { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` };
+    let all = [], offset = 0;
+    try {
+        while (true) {
+            const batch = await fetch(`${SUPABASE_URL}/rest/v1/raw_observations?select=date,tank_id,db_mean&order=date&limit=1000&offset=${offset}`, { headers }).then(r => r.json());
+            all = all.concat(batch); if (batch.length < 1000) break; offset += 1000;
+        }
+    } catch { document.getElementById('mapLoading').textContent = '地图数据加载出错。'; return; }
+    document.getElementById('mapLoading').style.display = 'none';
+    const data = all.filter(r => TANKS[r.tank_id]);
+    const dbByTank = {};
+    data.forEach(r => { if (!dbByTank[r.tank_id]) dbByTank[r.tank_id]=[]; dbByTank[r.tank_id].push(r.db_mean); });
+    const cal = {};
+    Object.entries(dbByTank).forEach(([id, vals]) => { cal[id] = { p5: pct(vals,5), p95: pct(vals,95) }; });
+    const byDate = {};
+    data.forEach(r => { if (!byDate[r.date]) byDate[r.date]={}; byDate[r.date][r.tank_id]=r; });
+    const dates = Object.keys(byDate).sort();
+    function renderDate(dt) {
+        const dd = byDate[dt]||{}; window._ds={};
+        Object.entries(TANKS).forEach(([id, info]) => {
+            const obs=dd[id]; let ratio=null, mb=null;
+            if (obs && cal[id]) { ratio=calcRatio(obs.db_mean,cal[id].p5,cal[id].p95); mb=calcMb(ratio,info.rm,info.hm); }
+            window._ds[id]={ratio,mb}; markers[id].setIcon(makeTankSVG(id,info,ratio));
+        });
+        document.getElementById('mapDateLabel').textContent = dt;
+    }
+    const slider = document.getElementById('mapSlider');
+    slider.max = dates.length-1; slider.value = dates.length-1;
+    renderDate(dates[dates.length-1]);
+    slider.addEventListener('input', () => renderDate(dates[+slider.value]));
+    document.getElementById('mapPrev').addEventListener('click', () => { const v=Math.max(0,+slider.value-1); slider.value=v; renderDate(dates[v]); });
+    document.getElementById('mapNext').addEventListener('click', () => { const v=Math.min(dates.length-1,+slider.value+1); slider.value=v; renderDate(dates[v]); });
+}
+</script>
+
+<div class="es-tip" id="esTip"></div>
+
+<!-- ── ONBOARDING MODAL ── -->
+<div class="ob-overlay" id="obOverlay">
+  <div class="ob-modal">
+
+    <div class="ob-step active" id="ob-step-1">
+      <div class="ob-eyebrow">第1步，共4步</div>
+      <div class="ob-title">雷达卫星如何测量石油</div>
+      <div class="ob-body">
+        Sentinel-1向储罐发射雷达脉冲。每个储罐都有一个<strong>浮顶</strong>，随油面升降 — 满时高，空时低。
+        浮顶在远侧罐壁投射阴影；卫星读取该阴影。
+      </div>
+      <div class="ob-visual">
+        <div class="ob-sar-rows">
+          <div class="ob-sar-row">
+            <div class="ob-sar-dot" style="background:#3b82f6;"></div>
+            <div class="ob-sar-text"><strong>满罐</strong> — 浮顶高，阴影小 → 雷达回波弱</div>
+          </div>
+          <div class="ob-sar-row">
+            <div class="ob-sar-dot" style="background:#475569;"></div>
+            <div class="ob-sar-text"><strong>空罐</strong> — 浮顶低，阴影大 → 雷达回波强</div>
+          </div>
+          <div class="ob-sar-row">
+            <div class="ob-sar-dot" style="background:#34d399;"></div>
+            <div class="ob-sar-text"><strong>dB越低=石油越多。</strong> OilRadar将此转换为全部47个储罐的Mb数据。</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="ob-step" id="ob-step-2">
+      <div class="ob-eyebrow">第2步，共4步</div>
+      <div class="ob-title">数据每约6天更新一次</div>
+      <div class="ob-body">
+        OilRadar每约6天处理一次新的<strong>Sentinel-1 SAR卫星轨道</strong>飞越哈尔格岛的数据。每次轨道刷新所有储量数据 —
+        新数据处理完成后您将立即收到电子邮件。
+      </div>
+      <div class="ob-visual">
+        <div class="ob-cadence">
+          <div class="ob-cadence-num">~6天</div>
+          <div>
+            <div class="ob-cadence-label">重访周期</div>
+            <div class="ob-cadence-desc">Sentinel-1 C波段SAR · 降轨<br>47个浮顶储罐 · 哈尔格岛</div>
+            <div class="ob-cadence-sub">每次新轨道您将收到电子邮件</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="ob-step" id="ob-step-3">
+      <div class="ob-eyebrow">第3步，共4步</div>
+      <div class="ob-title">两种信号：蓄积与下降</div>
+      <div class="ob-body">
+        每次轨道根据储量相较上次观测的变动方向产生两种信号之一。
+      </div>
+      <div class="ob-visual">
+        <div class="ob-signal-row">
+          <div class="ob-signal-pill build">
+            <div class="ob-pill-label">信号</div>
+            <div class="ob-pill-val">蓄积</div>
+            <div class="ob-pill-desc">储量上升 — 伊朗积累石油，出口放缓</div>
+          </div>
+          <div class="ob-signal-pill draw">
+            <div class="ob-pill-label">信号</div>
+            <div class="ob-pill-val">下降</div>
+            <div class="ob-pill-desc">储量下降 — 储罐排空，出口速度加快</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="ob-step" id="ob-step-4">
+      <div class="ob-eyebrow">第4步，共4步</div>
+      <div class="ob-title">三个部分供探索</div>
+      <div class="ob-body">
+        仪表板分为三个视图 — 每个视图以不同细节层次展示相同数据。
+      </div>
+      <div class="ob-visual">
+        <div class="ob-section-list">
+          <div class="ob-section-row">
+            <div class="ob-section-num">01</div>
+            <div>
+              <div class="ob-section-name">概览</div>
+              <div class="ob-section-desc">一目了然的储量水平、填充率和当前信号</div>
+            </div>
+          </div>
+          <div class="ob-section-row">
+            <div class="ob-section-num">02</div>
+            <div>
+              <div class="ob-section-name">总流量</div>
+              <div class="ob-section-desc">流入和流出速率 — 终端蓄积或下降的速度</div>
+            </div>
+          </div>
+          <div class="ob-section-row">
+            <div class="ob-section-num">03</div>
+            <div>
+              <div class="ob-section-name">单罐地图</div>
+              <div class="ob-section-desc">任意卫星轨道日期全部47个储罐的各自填充水平</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="ob-footer">
+      <div class="ob-dots">
+        <div class="ob-dot active" onclick="obGoTo(1)"></div>
+        <div class="ob-dot" onclick="obGoTo(2)"></div>
+        <div class="ob-dot" onclick="obGoTo(3)"></div>
+        <div class="ob-dot" onclick="obGoTo(4)"></div>
+      </div>
+      <div class="ob-btn-row">
+        <button class="ob-skip" id="obSkip" onclick="obDismiss()">跳过</button>
+        <button class="ob-next" id="obNext" onclick="obNext()">下一步 →</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function() {
+  const OB_KEY = 'oilradar_v1_onboarded';
+  if (localStorage.getItem(OB_KEY)) {
+    document.getElementById('obOverlay').style.display = 'none';
+    return;
+  }
+  let obCurrent = 1;
+  const obTotal = 4;
+
+  window.obGoTo = function(n) {
+    document.getElementById(`ob-step-${obCurrent}`).classList.remove('active');
+    document.querySelectorAll('.ob-dot')[obCurrent - 1].classList.remove('active');
+    obCurrent = n;
+    document.getElementById(`ob-step-${obCurrent}`).classList.add('active');
+    document.querySelectorAll('.ob-dot')[obCurrent - 1].classList.add('active');
+    const btn = document.getElementById('obNext');
+    const skip = document.getElementById('obSkip');
+    if (obCurrent === obTotal) {
+      btn.textContent = '开始使用';
+      btn.classList.add('finish');
+      skip.style.display = 'none';
+    } else {
+      btn.textContent = '下一步 →';
+      btn.classList.remove('finish');
+      skip.style.display = '';
+    }
+  };
+
+  window.obNext = function() {
+    if (obCurrent < obTotal) obGoTo(obCurrent + 1);
+    else obDismiss();
+  };
+
+  // onboarding sections list — add Tanker Queue
+  const obSections = document.querySelector('.ob-section-list');
+  if (obSections) {
+    const row = document.createElement('div'); row.className = 'ob-section-row';
+    row.innerHTML = '<div class="ob-section-num">04</div><div><div class="ob-section-name">油轮队列</div><div class="ob-section-desc">哈尔格锚地每周船舶数量 — 2017年起完整SAR历史</div></div>';
+    obSections.appendChild(row);
+  }
+
+  // API section init
+  if (document.getElementById('sec-api')) {
+    const origShow = window.showSection;
+    window.showSection = function(id) {
+      origShow && origShow.call(this, ...arguments);
+      if (id === 'api' && !window._apiKeyLoaded) { window._apiKeyLoaded = true; }
+    };
+  }
+
+  window.obDismiss = function() {
+    localStorage.setItem(OB_KEY, '1');
+    const el = document.getElementById('obOverlay');
+    el.classList.add('hidden');
+    setTimeout(() => el.style.display = 'none', 260);
+  };
+})();
+</script>
+
+<script>
+// ── API Section ────────────────────────────────────────────────────────────
+let _apiKey = null;
+let _selectedEp = 'tq';
+
+const EP_MAP = {
+  tq: { path: '/api/v1/tanker-queue?from=2024-01-01',  label: 'GET /api/v1/tanker-queue' },
+  sd: { path: '/api/v1/storage/daily?from=2024-01-01',  label: 'GET /api/v1/storage/daily' },
+  sw: { path: '/api/v1/storage/weekly',                 label: 'GET /api/v1/storage/weekly' },
+  sm: { path: '/api/v1/storage/metrics?from=2024-01-01',label: 'GET /api/v1/storage/metrics' },
+  tk: { path: '/api/v1/tanks?from=2025-01-01',          label: 'GET /api/v1/tanks' },
+};
+
+function buildCurl(ep, key) {
+  const base = 'https://app.oilradar.io';
+  const k = key || '<YOUR_API_KEY>';
+  return `curl -H "X-API-Key: ${k}" \\\n  "${base}${EP_MAP[ep].path}"`;
+}
+
+function renderCurlBlock() {
+  const pre = document.getElementById('curl-single');
+  const lbl = document.getElementById('curl-ep-label');
+  if (pre) pre.textContent = buildCurl(_selectedEp, _apiKey);
+  if (lbl) lbl.textContent = EP_MAP[_selectedEp].label;
+}
+
+function selectEp(ep) {
+  _selectedEp = ep;
+  document.querySelectorAll('.ep-row').forEach(r => r.classList.toggle('ep-active', r.dataset.ep === ep));
+  renderCurlBlock();
+}
+
+async function generateKey() {
+  const btn = document.getElementById('api-gen-btn');
+  if (btn) btn.textContent = '生成中…';
+  try {
+    const res = await fetch('/api/key');
+    const data = await res.json();
+    if (data.error) { alert(data.error); if (btn) btn.textContent = 'GENERATE'; return; }
+    _apiKey = data.api_key;
+    const disp = document.getElementById('api-key-display');
+    disp.textContent = _apiKey;
+    disp.style.color = 'var(--text)';
+    document.getElementById('api-copy-btn').style.display = 'inline-block';
+    renderCurlBlock();
+  } catch(e) { alert('Failed to generate key'); }
+  if (btn) btn.textContent = '重新生成';
+}
+
+function copyKey() {
+  if (!_apiKey) return;
+  navigator.clipboard.writeText(_apiKey).then(() => {
+    flashCopy('api-copy-btn', '已复制 ✓', '复制密钥');
+  });
+}
+
+function copyCurl() {
+  const pre = document.getElementById('curl-single');
+  if (!pre) return;
+  navigator.clipboard.writeText(pre.textContent).then(() => {
+    flashCopy('curl-copy-btn', '已复制 ✓', '复制');
+  });
+}
+
+function flashCopy(id, msg, orig) {
+  const btn = document.getElementById(id);
+  if (!btn) return;
+  btn.textContent = msg;
+  btn.classList.add('copied');
+  setTimeout(() => { btn.textContent = orig; btn.classList.remove('copied'); }, 1500);
+}
+
+// Init curl block on load
+renderCurlBlock();
+</script>
+
+<script>
+// ── Tanker Queue (Anchorage) ───────────────────────────────────────────────
+let _aqInited = false;
+let _aqRecords = [];
+let _aqRange = '3m';
+
+function aqFilter(records, range) {
+  if (range === 'all') return records;
+  const now = new Date();
+  let months = range === '1m' ? 1 : range === '3m' ? 3 : range === '6m' ? 6 : 12;
+  const cut = new Date(now);
+  cut.setMonth(cut.getMonth() - months);
+  const cutStr = cut.toISOString().slice(0,10);
+  return records.filter(r => r.date >= cutStr);
+}
+
+const AQ_COLORS = { vlcc:'#ef4444', suezmax:'#f97316', aframax:'#eab308', mr:'#22c55e' };
+const AQ_LAYERS = ['mr','aframax','suezmax','vlcc'];
+
+function aqCumulative(r, upTo) {
+  let s = 0;
+  for (const k of AQ_LAYERS) { if (k === upTo) { s += r[k]; break; } s += r[k]; }
+  return s;
+}
+
+function aqDrawFrame(ctx, data, W, H, hoverIdx) {
+  const PAD = { t: 16, r: 16, b: 32, l: 36 };
+  const cw = W - PAD.l - PAD.r, ch = H - PAD.t - PAD.b;
+  const maxVal = Math.max(...data.map(r => r.total), 1);
+  const yScale = v => PAD.t + ch - (v / maxVal) * ch;
+  const xScale = i => PAD.l + (data.length > 1 ? (i / (data.length - 1)) * cw : cw / 2);
+
+  ctx.clearRect(0, 0, W, H);
+
+  // grid
+  ctx.strokeStyle = 'rgba(255,255,255,0.05)'; ctx.lineWidth = 1;
+  [0.25,0.5,0.75,1].forEach(f => {
+    const y = yScale(maxVal * f);
+    ctx.beginPath(); ctx.moveTo(PAD.l, y); ctx.lineTo(PAD.l + cw, y); ctx.stroke();
+    ctx.fillStyle = '#64748b'; ctx.font = '10px monospace'; ctx.textAlign = 'right';
+    ctx.fillText(Math.round(maxVal * f), PAD.l - 4, y + 3);
+  });
+
+  // stacked area layers
+  for (let li = 0; li < AQ_LAYERS.length; li++) {
+    const key = AQ_LAYERS[li];
+    ctx.beginPath();
+    data.forEach((r, i) => {
+      if (i === 0) ctx.moveTo(xScale(i), yScale(aqCumulative(r, key)));
+      else ctx.lineTo(xScale(i), yScale(aqCumulative(r, key)));
+    });
+    for (let i = data.length - 1; i >= 0; i--) {
+      ctx.lineTo(xScale(i), yScale(aqCumulative(data[i], key) - data[i][key]));
+    }
+    ctx.closePath();
+    ctx.fillStyle = AQ_COLORS[key] + 'cc';
+    ctx.fill();
+  }
+
+  // x labels
+  ctx.textAlign = 'center'; ctx.fillStyle = '#64748b'; ctx.font = '10px monospace';
+  const years = [...new Set(data.map(r => r.date.slice(0,4)))];
+  years.forEach(yr => {
+    const idx = data.findIndex(r => r.date.startsWith(yr));
+    if (idx >= 0) ctx.fillText(yr, xScale(idx), H - 6);
+  });
+
+  // hover crosshair
+  if (hoverIdx >= 0 && hoverIdx < data.length) {
+    const x = xScale(hoverIdx);
+    ctx.strokeStyle = 'rgba(255,255,255,0.2)'; ctx.lineWidth = 1;
+    ctx.setLineDash([3,3]);
+    ctx.beginPath(); ctx.moveTo(x, PAD.t); ctx.lineTo(x, PAD.t + ch); ctx.stroke();
+    ctx.setLineDash([]);
+    // dot at top of stack
+    const r = data[hoverIdx];
+    const topY = yScale(r.total);
+    ctx.beginPath(); ctx.arc(x, topY, 3, 0, Math.PI*2);
+    ctx.fillStyle = '#fff'; ctx.fill();
+  }
+}
+
+function aqDraw() {
+  const data = aqFilter(_aqRecords, _aqRange);
+  if (!data.length) return;
+  const canvas = document.getElementById('aqChart');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  const dpr = window.devicePixelRatio || 1;
+  const W = canvas.offsetWidth, H = 280;
+  canvas.width = W * dpr; canvas.height = H * dpr;
+  canvas.style.height = H + 'px';
+  ctx.scale(dpr, dpr);
+  aqDrawFrame(ctx, data, W, H, -1);
+  canvas._aqData = data;
+
+  // tooltip setup (once)
+  if (!canvas._aqTooltipBound) {
+    canvas._aqTooltipBound = true;
+    let tip = document.getElementById('aqTip');
+    if (!tip) {
+      tip = document.createElement('div');
+      tip.id = 'aqTip';
+      tip.style.cssText = 'position:fixed;pointer-events:none;display:none;background:#1e293b;border:1px solid rgba(255,255,255,0.12);padding:8px 12px;font-size:0.72rem;font-family:monospace;color:#e2e8f0;z-index:999;min-width:140px;';
+      document.body.appendChild(tip);
+    }
+    canvas.addEventListener('mousemove', e => {
+      const d = canvas._aqData;
+      if (!d || !d.length) return;
+      const rect = canvas.getBoundingClientRect();
+      const PAD = { l: 36, r: 16 };
+      const cw = canvas.offsetWidth - PAD.l - PAD.r;
+      const mx = e.clientX - rect.left - PAD.l;
+      const idx = Math.round((mx / cw) * (d.length - 1));
+      if (idx < 0 || idx >= d.length) { tip.style.display='none'; return; }
+      const r = d[idx];
+      tip.style.display = 'block';
+      tip.style.left = (e.clientX + 14) + 'px';
+      tip.style.top  = (e.clientY - 10) + 'px';
+      tip.innerHTML = `<div style="color:#94a3b8;margin-bottom:4px">${r.date}</div>
+        <div style="display:flex;align-items:center;gap:6px;margin-bottom:2px"><span style="width:8px;height:8px;background:#ef4444;display:inline-block"></span>VLCC: <b>${r.vlcc}</b></div>
+        <div style="display:flex;align-items:center;gap:6px;margin-bottom:2px"><span style="width:8px;height:8px;background:#f97316;display:inline-block"></span>Suezmax: <b>${r.suezmax}</b></div>
+        <div style="display:flex;align-items:center;gap:6px;margin-bottom:2px"><span style="width:8px;height:8px;background:#eab308;display:inline-block"></span>Aframax: <b>${r.aframax}</b></div>
+        <div style="display:flex;align-items:center;gap:6px;margin-bottom:2px"><span style="width:8px;height:8px;background:#22c55e;display:inline-block"></span>MR: <b>${r.mr}</b></div>
+        <div style="border-top:1px solid rgba(255,255,255,0.08);margin-top:4px;padding-top:4px">Total: <b>${r.total}</b></div>`;
+      const ctx2 = canvas.getContext('2d');
+      const dpr2 = window.devicePixelRatio || 1;
+      ctx2.setTransform(dpr2, 0, 0, dpr2, 0, 0);
+      aqDrawFrame(ctx2, d, canvas.offsetWidth, 280, idx);
+    });
+    canvas.addEventListener('mouseleave', () => {
+      tip.style.display = 'none';
+      const d = canvas._aqData;
+      if (!d) return;
+      const ctx2 = canvas.getContext('2d');
+      const dpr2 = window.devicePixelRatio || 1;
+      ctx2.setTransform(dpr2, 0, 0, dpr2, 0, 0);
+      aqDrawFrame(ctx2, d, canvas.offsetWidth, 280, -1);
+    });
+  }
+}
+
+async function initAnchorage() {
+  if (_aqInited) { aqDraw(); return; }
+  try {
+    const res = await fetch('/data/anchorage.json');
+    const json = await res.json();
+    _aqRecords = (json.records || []).filter(r => r.total !== undefined);
+  } catch(e) { return; }
+
+  // KPIs
+  if (_aqRecords.length) {
+    const totals = _aqRecords.map(r => r.total);
+    const sorted = [...totals].sort((a,b) => a-b);
+    const p95 = sorted[Math.floor(sorted.length * 0.95)] || sorted[sorted.length-1];
+    const mean = totals.reduce((a,b) => a+b,0) / totals.length;
+    const latest = _aqRecords[_aqRecords.length - 1];
+    const tqi = Math.round(latest.total / p95 * 100);
+    document.getElementById('aq-tqi').textContent = tqi;
+    document.getElementById('aq-tqi-label').textContent = tqi >= 85 ? '高压' : tqi >= 70 ? '偏高' : '正常';
+    document.getElementById('aq-tqi').style.color = tqi >= 85 ? '#ef4444' : tqi >= 70 ? '#f97316' : 'var(--accent)';
+    document.getElementById('aq-total').textContent = latest.total;
+    document.getElementById('aq-date').textContent = latest.date;
+    document.getElementById('aq-avg').textContent = mean.toFixed(1);
+
+    // Weekly table — last 52 weeks, newest first
+    const tbody = document.getElementById('aq-table-body');
+    if (tbody) {
+      const rows = [..._aqRecords].reverse().slice(0, 52);
+      tbody.innerHTML = rows.map(r => `<tr style="border-bottom:1px solid rgba(255,255,255,0.04);">
+        <td style="padding:0.35rem 0.6rem;color:var(--muted)">${r.date}</td>
+        <td style="padding:0.35rem 0.6rem;text-align:right;color:#ef4444">${r.vlcc}</td>
+        <td style="padding:0.35rem 0.6rem;text-align:right;color:#f97316">${r.suezmax}</td>
+        <td style="padding:0.35rem 0.6rem;text-align:right;color:#eab308">${r.aframax}</td>
+        <td style="padding:0.35rem 0.6rem;text-align:right;color:#22c55e">${r.mr}</td>
+        <td style="padding:0.35rem 0.6rem;text-align:right;font-weight:600">${r.total}</td>
+      </tr>`).join('');
+    }
+
+    // Paywall for trial users
+    if (_userTier === 'trial') {
+      const pw = document.getElementById('aq-paywall');
+      if (pw) pw.style.display = 'flex';
+    }
+  }
+
+  // range buttons
+  document.querySelectorAll('.aq-rbtn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.aq-rbtn').forEach(b => b.classList.remove('aq-rbtn-active'));
+      btn.classList.add('aq-rbtn-active');
+      _aqRange = btn.dataset.r;
+      aqDraw();
+    });
+  });
+
+  _aqInited = true;
+  aqDraw();
+}
+</script>
+</body>
+</html>
