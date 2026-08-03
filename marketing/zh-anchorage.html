@@ -110,7 +110,7 @@ body{font-family:"PingFang SC","Microsoft YaHei","微软雅黑","Hiragino Sans G
     <a href="/zh/monitor" class="nav-link">监控</a>
     <a href="/zh/anchorage" class="nav-link active">锚地</a>
     <a href="/zh/team" class="nav-link">团队</a>
-    <a href="https://calendly.com/bachevsky/intro" target="_blank" class="nav-cta">预约通话</a>
+    <a href="javascript:openWechat()" class="nav-cta">微信联系我们</a>
     <a href="https://app.oilradar.io/dashboard" target="_blank" class="nav-cta nav-cta-solid">仪表盘 &rarr;</a>
     <a href="/anchorage" class="nav-link lang-switch">EN</a>
   </div>
@@ -477,5 +477,18 @@ OilRadar 哈尔格岛油轮队列监控。2017年至今，每周通过Sentinel-1
 油轮队列指数（TQI）是船只总数和船级构成的综合信号。上升的TQI加上高VLCC和Suezmax数量表明即将增加的伊朗原油出口需求，领先EIA和JODI官方数据2–4周。
 </div>
 </noscript>
+<!-- WeChat Modal -->
+<div id="wcModal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.75);z-index:9999;align-items:center;justify-content:center;">
+  <div style="background:#fff;border-radius:12px;padding:32px 28px;text-align:center;max-width:280px;position:relative;">
+    <button onclick="document.getElementById('wcModal').style.display='none'" style="position:absolute;top:10px;right:14px;background:none;border:none;font-size:20px;cursor:pointer;color:#999;">✕</button>
+    <img src="/assets/images/wechat-qr.jpg" alt="WeChat QR" style="width:200px;height:200px;object-fit:contain;margin-bottom:12px;">
+    <div style="font-size:13px;color:#333;font-family:PingFang SC,Microsoft YaHei,sans-serif;">微信扫码添加好友</div>
+    <div style="font-size:11px;color:#999;margin-top:4px;font-family:monospace;">wxid_5w6frqnhwr1j12</div>
+  </div>
+</div>
+<script>
+function openWechat(){var m=document.getElementById('wcModal');m.style.display='flex';}
+document.addEventListener('click',function(e){var m=document.getElementById('wcModal');if(m&&e.target===m)m.style.display='none';});
+</script>
 </body>
 </html>

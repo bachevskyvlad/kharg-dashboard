@@ -863,7 +863,7 @@
                 <div style="font-size:1.1rem">🔒</div>
                 <div style="font-size:0.85rem;font-weight:600;color:var(--text)">每周明细 — 仅限付费计划</div>
                 <div style="font-size:0.72rem;color:var(--muted);text-align:center;max-width:280px">逐次轨道船舶数量可在完整计划中查看。</div>
-                <a href="https://calendly.com/bachevsky/intro" target="_blank" style="background:var(--accent);color:#fff;padding:0.5rem 1.25rem;font-size:0.75rem;text-decoration:none;margin-top:0.25rem">申请完整权限 →</a>
+                <a href="javascript:openWechat()" style="background:var(--accent);color:#fff;padding:0.5rem 1.25rem;font-size:0.75rem;text-decoration:none;margin-top:0.25rem">微信联系我们 →</a>
             </div>
         </div>
     </div>
@@ -1031,7 +1031,7 @@ function applyTierRestrictions() {
             <div class="paywall-icon">🔒</div>
             <div class="paywall-title">原始数据 — 仅限付费计划</div>
             <div class="paywall-sub">逐次轨道罐级明细和CSV导出可在完整计划中使用。</div>
-            <a class="paywall-cta" href="https://calendly.com/bachevsky/intro" target="_blank">申请完整权限</a>`;
+            <a class="paywall-cta" href="javascript:openWechat()">微信联系我们</a>`;
         card.appendChild(overlay);
     }
 }
@@ -1039,7 +1039,7 @@ function applyTierRestrictions() {
 function showUpgradeToast(feature) {
     const t = document.createElement('div');
     t.style.cssText = 'position:fixed;bottom:1.5rem;right:1.5rem;background:#3b82f6;color:#fff;padding:0.65rem 1.1rem;border-radius:6px;font-size:0.75rem;z-index:9999;box-shadow:0 4px 12px rgba(0,0,0,0.15)';
-    t.innerHTML = `${feature}可在完整计划中使用。 <a href="https://calendly.com/bachevsky/intro" target="_blank" style="color:#93c5fd;text-decoration:underline">申请访问 →</a>`;
+    t.innerHTML = `${feature}可在完整计划中使用。 <a href="javascript:openWechat()" style="color:#93c5fd;text-decoration:underline">微信联系 →</a>`;
     document.body.appendChild(t);
     setTimeout(() => t.remove(), 5000);
 }
@@ -2321,6 +2321,19 @@ async function initAnchorage() {
   _aqInited = true;
   aqDraw();
 }
+</script>
+<!-- WeChat Modal -->
+<div id="wcModal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.75);z-index:9999;align-items:center;justify-content:center;">
+  <div style="background:#fff;border-radius:12px;padding:32px 28px;text-align:center;max-width:280px;position:relative;">
+    <button onclick="document.getElementById('wcModal').style.display='none'" style="position:absolute;top:10px;right:14px;background:none;border:none;font-size:20px;cursor:pointer;color:#999;">✕</button>
+    <img src="/assets/images/wechat-qr.jpg" alt="WeChat QR" style="width:200px;height:200px;object-fit:contain;margin-bottom:12px;">
+    <div style="font-size:13px;color:#333;font-family:PingFang SC,Microsoft YaHei,sans-serif;">微信扫码添加好友</div>
+    <div style="font-size:11px;color:#999;margin-top:4px;font-family:monospace;">wxid_5w6frqnhwr1j12</div>
+  </div>
+</div>
+<script>
+function openWechat(){var m=document.getElementById('wcModal');m.style.display='flex';}
+document.addEventListener('click',function(e){var m=document.getElementById('wcModal');if(m&&e.target===m)m.style.display='none';});
 </script>
 </body>
 </html>

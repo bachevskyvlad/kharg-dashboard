@@ -116,7 +116,7 @@ body{font-family:"PingFang SC","Microsoft YaHei","微软雅黑","Hiragino Sans G
     <a href="/zh/anchorage" class="nav-link">锚地</a>
     <a href="/zh/team" class="nav-link">团队</a>
     <a href="/zh" class="nav-link">&larr; 主页</a>
-    <a href="https://calendly.com/bachevsky/intro" target="_blank" class="nav-link">预约通话</a>
+    <a href="javascript:openWechat()" class="nav-link">微信联系我们</a>
     <a id="dashboardCta" href="https://app.oilradar.io/dashboard" target="_blank" class="nav-cta">仪表盘 &rarr;</a>
     <a href="/monitor" class="nav-link lang-switch">EN</a>
   </div>
@@ -129,7 +129,7 @@ body{font-family:"PingFang SC","Microsoft YaHei","微软雅黑","Hiragino Sans G
   <div class="monitor-wrap">
     <div class="monitor-header"><div class="monitor-title">储量 — SAR 提取</div></div>
     <div class="monitor-stat" id="latestStat">加载中...</div>
-    <div class="chart-wrapper"><canvas id="dailyChart"></canvas><div class="chart-lock-overlay"><span style="font-size:22px">🔒</span><span style="font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);text-align:center;line-height:1.4;">最近<br>2周</span><a href="https://calendly.com/bachevsky/intro" target="_blank" style="font-family:'DM Mono',monospace;font-size:9px;letter-spacing:1px;text-transform:uppercase;background:#3b82f6;color:#fff;padding:7px 10px;text-decoration:none;border:none;margin-top:4px;">获取访问权限</a></div></div>
+    <div class="chart-wrapper"><canvas id="dailyChart"></canvas><div class="chart-lock-overlay"><span style="font-size:22px">🔒</span><span style="font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);text-align:center;line-height:1.4;">最近<br>2周</span><a href="javascript:openWechat()" style="font-family:'DM Mono',monospace;font-size:9px;letter-spacing:1px;text-transform:uppercase;background:#3b82f6;color:#fff;padding:7px 10px;text-decoration:none;border:none;margin-top:4px;">微信联系我们</a></div></div>
   </div>
 
   <div style="margin-top:48px;margin-bottom:16px;font-family:'Bebas Neue',sans-serif;font-size:clamp(28px,3.5vw,44px);line-height:1;color:var(--text);letter-spacing:1px;">单罐储量视图</div>
@@ -145,7 +145,7 @@ body{font-family:"PingFang SC","Microsoft YaHei","微软雅黑","Hiragino Sans G
     <button class="arrow-btn" id="prevBtn">&#8592;</button>
     <div class="slider-wrap">
       <input type="range" id="dateSlider" min="0" value="0" step="1">
-      <div class="slider-dates"><span id="sliderStart">&mdash;</span><span id="sliderEnd">&mdash;</span><span style="font-family:'DM Mono',monospace;font-size:9px;color:var(--dim);margin-left:auto;">🔒 实时信号仅向合作伙伴开放 — <a href="https://calendly.com/bachevsky/intro" target="_blank" style="color:var(--accent);">申请数据访问</a></span></div>
+      <div class="slider-dates"><span id="sliderStart">&mdash;</span><span id="sliderEnd">&mdash;</span><span style="font-family:'DM Mono',monospace;font-size:9px;color:var(--dim);margin-left:auto;">🔒 实时信号仅向合作伙伴开放 — <a href="javascript:openWechat()" style="color:var(--accent);">微信联系我们</a></span></div>
     </div>
     <button class="arrow-btn" id="nextBtn">&#8594;</button>
     <div class="cur-date-label" id="curDateLabel">&mdash;</div>
@@ -163,7 +163,7 @@ body{font-family:"PingFang SC","Microsoft YaHei","微软雅黑","Hiragino Sans G
         <div style="font-family:'DM Mono',monospace;font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:12px;">需要定制覆盖？</div>
         <p style="font-size:14px;line-height:1.7;color:var(--text);">追踪特定终端，获取数据访问，或讨论其他地区的覆盖——沙特阿拉伯、伊拉克巴士拉、阿联酋富查伊拉等。</p>
       </div>
-      <a href="https://calendly.com/bachevsky/intro" target="_blank" style="font-family:'DM Mono',monospace;font-size:12px;letter-spacing:2px;text-transform:uppercase;background:var(--accent);color:#ffffff;padding:14px 28px;text-decoration:none;display:inline-block;transition:all .2s;border:none;">申请数据访问</a>
+      <a href="javascript:openWechat()" style="font-family:'DM Mono',monospace;font-size:12px;letter-spacing:2px;text-transform:uppercase;background:var(--accent);color:#ffffff;padding:14px 28px;text-decoration:none;display:inline-block;transition:all .2s;border:none;">微信联系我们</a>
     </div>
   </div>
   <div style="margin-top:48px;padding:24px 28px;border:1px solid var(--border);background:var(--deep);">
@@ -437,5 +437,18 @@ OilRadar 哈尔格岛监控。伊朗哈尔格岛原油储量实时情报——47
 储量上升 = 出口放缓（制裁压力、拥堵、需求减少）。储量下降 = 活跃装载，原油进入市场。
 </div>
 </noscript>
+<!-- WeChat Modal -->
+<div id="wcModal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.75);z-index:9999;align-items:center;justify-content:center;">
+  <div style="background:#fff;border-radius:12px;padding:32px 28px;text-align:center;max-width:280px;position:relative;">
+    <button onclick="document.getElementById('wcModal').style.display='none'" style="position:absolute;top:10px;right:14px;background:none;border:none;font-size:20px;cursor:pointer;color:#999;">✕</button>
+    <img src="/assets/images/wechat-qr.jpg" alt="WeChat QR" style="width:200px;height:200px;object-fit:contain;margin-bottom:12px;">
+    <div style="font-size:13px;color:#333;font-family:PingFang SC,Microsoft YaHei,sans-serif;">微信扫码添加好友</div>
+    <div style="font-size:11px;color:#999;margin-top:4px;font-family:monospace;">wxid_5w6frqnhwr1j12</div>
+  </div>
+</div>
+<script>
+function openWechat(){var m=document.getElementById('wcModal');m.style.display='flex';}
+document.addEventListener('click',function(e){var m=document.getElementById('wcModal');if(m&&e.target===m)m.style.display='none';});
+</script>
 </body>
 </html>

@@ -81,7 +81,7 @@ body{font-family:"PingFang SC","Microsoft YaHei","微软雅黑","Hiragino Sans G
   <a href="/zh" class="logo">OilRadar</a>
   <div style="display:flex;gap:12px;align-items:center;">
     <a href="/zh" style="font-family:'DM Mono',monospace;font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);text-decoration:none;">&larr; 主页</a>
-    <a href="https://calendly.com/bachevsky/intro" target="_blank" class="nav-cta">预约通话</a>
+    <a href="javascript:openWechat()" class="nav-cta">微信联系我们</a>
     <a href="https://app.oilradar.io/dashboard" target="_blank" class="nav-cta" style="background:var(--accent);color:#fff!important;">仪表盘 &rarr;</a>
     <a href="/team" class="lang-switch">EN</a>
   </div>
@@ -121,8 +121,8 @@ body{font-family:"PingFang SC","Microsoft YaHei","微软雅黑","Hiragino Sans G
   <hr class="divider">
   <div class="cta-block">
     <h3>想聊数据？</h3>
-    <p>定制终端覆盖、数据访问，或仅仅讨论伊朗原油供应——预约通话。</p>
-    <a href="https://calendly.com/bachevsky/intro" target="_blank" class="btn">申请数据访问</a>
+    <p>定制终端覆盖、数据访问，或仅仅讨论伊朗原油供应——微信联系我们。</p>
+    <a href="javascript:openWechat()" class="btn">微信联系我们</a>
   </div>
 </main>
 <footer>
@@ -141,5 +141,18 @@ body{font-family:"PingFang SC","Microsoft YaHei","微软雅黑","Hiragino Sans G
 OilRadar — 由Vladislav Bachevsky创立并运营，卫星情报分析师。Sentinel-1 SAR处理、数据管道工程、市场解读——全部内部完成。哈尔格岛47座浮顶储罐，伊朗。信号比EIA或JODI提前4–7周。方法论：SAR后向散射的逆月牙辐射测量法。不依赖调查，不依赖AIS。
 </div>
 </noscript>
+<!-- WeChat Modal -->
+<div id="wcModal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.75);z-index:9999;align-items:center;justify-content:center;">
+  <div style="background:#fff;border-radius:12px;padding:32px 28px;text-align:center;max-width:280px;position:relative;">
+    <button onclick="document.getElementById('wcModal').style.display='none'" style="position:absolute;top:10px;right:14px;background:none;border:none;font-size:20px;cursor:pointer;color:#999;">✕</button>
+    <img src="/assets/images/wechat-qr.jpg" alt="WeChat QR" style="width:200px;height:200px;object-fit:contain;margin-bottom:12px;">
+    <div style="font-size:13px;color:#333;font-family:PingFang SC,Microsoft YaHei,sans-serif;">微信扫码添加好友</div>
+    <div style="font-size:11px;color:#999;margin-top:4px;font-family:monospace;">wxid_5w6frqnhwr1j12</div>
+  </div>
+</div>
+<script>
+function openWechat(){var m=document.getElementById('wcModal');m.style.display='flex';}
+document.addEventListener('click',function(e){var m=document.getElementById('wcModal');if(m&&e.target===m)m.style.display='none';});
+</script>
 </body>
 </html>

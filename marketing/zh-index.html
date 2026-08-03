@@ -148,7 +148,7 @@ body{font-family:"PingFang SC","Microsoft YaHei","微软雅黑","Hiragino Sans G
     <a href="/zh/monitor" class="nav-link">实时监控</a>
     <a href="/zh/anchorage" class="nav-link">锚地</a>
     <a href="/zh/team" class="nav-link">关于我们</a>
-    <a href="https://calendly.com/bachevsky/intro" target="_blank" class="nav-link">预约通话</a>
+    <a href="javascript:openWechat()" class="nav-link">微信联系我们</a>
     <a id="dashboardCta" href="https://app.oilradar.io/dashboard" target="_blank" class="nav-cta">仪表盘 &rarr;</a>
     <a href="/" class="nav-link lang-switch">EN</a>
   </div>
@@ -161,7 +161,7 @@ body{font-family:"PingFang SC","Microsoft YaHei","微软雅黑","Hiragino Sans G
     <h1 class="hero-title">提前掌握<br>哈尔格岛<br><span>原油动态</span></h1>
     <p class="hero-sub">我们追踪哈尔格岛所有原油储罐——该终端处理<strong>约90%的伊朗出口原油</strong>，经由霍尔木兹海峡出口——使用SAR卫星雷达。储量信号比EIA和JODI报告<strong>提前4–7周</strong>。</p>
     <div class="hero-ctas">
-      <a href="https://calendly.com/bachevsky/intro" target="_blank" class="btn-primary">申请数据访问</a>
+      <a href="javascript:openWechat()" class="btn-primary">微信联系我们</a>
       <a href="/zh/monitor" class="btn-outline">查看实时监控</a>
     </div>
   </div>
@@ -229,7 +229,7 @@ body{font-family:"PingFang SC","Microsoft YaHei","微软雅黑","Hiragino Sans G
         <div class="chart-lock-overlay">
           <div class="lock-icon">🔒</div>
           <div class="lock-label">最近<br>2周</div>
-          <a href="https://calendly.com/bachevsky/intro" target="_blank" class="lock-cta-btn">获取访问权限</a>
+          <a href="javascript:openWechat()" class="lock-cta-btn">微信联系我们</a>
         </div>
       </div>
     </div>
@@ -265,7 +265,7 @@ body{font-family:"PingFang SC","Microsoft YaHei","微软雅黑","Hiragino Sans G
           <li>单罐活动——识别哪些储罐在循环使用，哪些处于闲置</li>
           <li>REST API——完整数据集，JSON和CSV，按日期范围筛选</li>
         </ul>
-        <a href="https://calendly.com/bachevsky/intro" target="_blank" class="btn-primary">申请数据访问</a>
+        <a href="javascript:openWechat()" class="btn-primary">微信联系我们</a>
       </div>
     </div>
   </div>
@@ -295,7 +295,7 @@ body{font-family:"PingFang SC","Microsoft YaHei","微软雅黑","Hiragino Sans G
     <a href="/zh/monitor" class="footer-link">哈尔格监控</a>
     <a href="/zh/gas-storage" class="footer-link">天然气储量</a>
     <a href="/zh/team" class="footer-link">关于我们</a>
-    <a href="https://calendly.com/bachevsky/intro" target="_blank" class="footer-link">申请访问</a>
+    <a href="javascript:openWechat()" class="footer-link">申请访问</a>
   </div>
   <div class="footer-copy">哈尔格岛原油情报 · Sentinel-1 SAR · oilradar.io<br><span style="opacity:0.85;">我们谨慎选择合作伙伴。</span></div>
 </footer>
@@ -337,7 +337,7 @@ async function loadLandingChart() {
       `<div>最新显示: <strong style="color:#3b82f6">${latest.toFixed(2)} Mb</strong></div>` +
       `<div>日环比: <strong style="color:${diff > 0 ? '#f59e0b' : '#3b82f6'}">${sign}${diff} Mb (${pctSign}${pctVal}%)</strong></div>` +
       `<div>状态: <strong>${trend}</strong></div>` +
-      `<div style="color:var(--muted);font-size:11px;">最近2周已锁定 — <a href="https://calendly.com/bachevsky/intro" target="_blank" style="color:var(--accent);">申请访问权限</a></div>`;
+      `<div style="color:var(--muted);font-size:11px;">最近2周已锁定 — <a href="javascript:openWechat()" style="color:var(--accent);">申请访问权限</a></div>`;
 
     window.addEventListener('DOMContentLoaded', () => {}, false);
 
@@ -413,5 +413,18 @@ OilRadar — 物理原油供应的卫星情报。追踪哈尔格岛（伊朗主�
 47座浮顶储罐单独监控。每约6天更新一次储量水平。比EIA、JODI和IEA官方报告提前4–7周。
 </div>
 </noscript>
+<!-- WeChat Modal -->
+<div id="wcModal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.75);z-index:9999;align-items:center;justify-content:center;">
+  <div style="background:#fff;border-radius:12px;padding:32px 28px;text-align:center;max-width:280px;position:relative;">
+    <button onclick="document.getElementById('wcModal').style.display='none'" style="position:absolute;top:10px;right:14px;background:none;border:none;font-size:20px;cursor:pointer;color:#999;">✕</button>
+    <img src="/assets/images/wechat-qr.jpg" alt="WeChat QR" style="width:200px;height:200px;object-fit:contain;margin-bottom:12px;">
+    <div style="font-size:13px;color:#333;font-family:PingFang SC,Microsoft YaHei,sans-serif;">微信扫码添加好友</div>
+    <div style="font-size:11px;color:#999;margin-top:4px;font-family:monospace;">wxid_5w6frqnhwr1j12</div>
+  </div>
+</div>
+<script>
+function openWechat(){var m=document.getElementById('wcModal');m.style.display='flex';}
+document.addEventListener('click',function(e){var m=document.getElementById('wcModal');if(m&&e.target===m)m.style.display='none';});
+</script>
 </body>
 </html>
