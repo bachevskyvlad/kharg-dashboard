@@ -129,25 +129,23 @@ def detect_ships(arr):
     return counts, threshold
 
 def get_sar_pass_dates(start, end):
-    """Query catalog for actual Sentinel-1 descending pass dates over anchorage area."""
+    """Get SAR pass dates from data_daily.json (same dates as oil storage pipeline)."""
+    data_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'data', 'data_daily.json')
     try:
-        catalog = SentinelHubCatalog(config=config)
-        scenes = list(catalog.search(
-            S1_CDSE,
-            bbox=bbox,
-            time=(start.strftime('%Y-%m-%d'), end.strftime('%Y-%m-%d')),
-            filter="sat:orbit_state = 'descending'",
-            fields={"include": ["properties.datetime"]}
-        ))
-        import pandas as pd
-        raw_dates = sorted(pd.to_datetime(s["properties"]["datetime"]) for s in scenes)
-        deduped = []
-        for d in raw_dates:
-            if not deduped or (d - deduped[-1]).total_seconds() > 43200:
-                deduped.append(d)
-        return sorted({d.normalize().tz_localize(None).to_pydatetime().date() for d in deduped})
+        with open(data_file) as f:
+            data = json.load(f)
+        from datetime import date as date_type
+        dates = []
+        for d in data.get('dates', []):
+            try:
+                dt = datetime.strptime(d, '%Y-%m-%d').date()
+                if start.date() <= dt <= end.date():
+                    dates.append(dt)
+            except Exception:
+                continue
+        return sorted(dates)
     except Exception as e:
-        print(f"Catalog error: {e}")
+        print(f"Could not read data_daily.json: {e}")
         return []
 
 def fetch_pass(pass_date):
