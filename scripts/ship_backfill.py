@@ -16,7 +16,7 @@ import numpy as np
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from sentinelhub import (
-    SHConfig, BBox, CRS, DataCollection, SentinelHubRequest,
+    SHConfig, BBox, CRS, DataCollection, SentinelHubRequest, SentinelHubCatalog,
     MimeType, bbox_to_dimensions, MosaickingOrder
 )
 from scipy import ndimage
@@ -128,12 +128,36 @@ def detect_ships(arr):
 
     return counts, threshold
 
-def fetch_week(date_from, date_to):
+def get_sar_pass_dates(start, end):
+    """Query catalog for actual Sentinel-1 descending pass dates over anchorage area."""
+    try:
+        catalog = SentinelHubCatalog(config=config)
+        scenes = list(catalog.search(
+            S1_CDSE,
+            bbox=bbox,
+            time=(start.strftime('%Y-%m-%d'), end.strftime('%Y-%m-%d')),
+            filter="sat:orbit_state = 'descending'",
+            fields={"include": ["properties.datetime"]}
+        ))
+        import pandas as pd
+        raw_dates = sorted(pd.to_datetime(s["properties"]["datetime"]) for s in scenes)
+        deduped = []
+        for d in raw_dates:
+            if not deduped or (d - deduped[-1]).total_seconds() > 43200:
+                deduped.append(d)
+        return sorted({d.normalize().tz_localize(None).to_pydatetime().date() for d in deduped})
+    except Exception as e:
+        print(f"Catalog error: {e}")
+        return []
+
+def fetch_pass(pass_date):
+    """Fetch SAR image for a single pass date (±0 day window)."""
+    d = pass_date.strftime('%Y-%m-%d') if hasattr(pass_date, 'strftime') else str(pass_date)
     request = SentinelHubRequest(
         evalscript=evalscript,
         input_data=[SentinelHubRequest.input_data(
             data_collection=S1_CDSE,
-            time_interval=(date_from.strftime('%Y-%m-%d'), date_to.strftime('%Y-%m-%d')),
+            time_interval=(d, d),
             mosaicking_order=MosaickingOrder.MOST_RECENT,
             other_args={"dataFilter": {"polarization": "DV"}},
         )],
@@ -193,27 +217,26 @@ def main():
         start = START_DATE
         end   = today
 
-    current = start
-    total_weeks = (end - start).days // 7
+    print(f"Querying Sentinel Hub catalog for SAR pass dates {start.date()} → {end.date()}...")
+    pass_dates = get_sar_pass_dates(start, end)
+    print(f"Found {len(pass_dates)} SAR passes")
+
     processed = 0
+    for pass_date in pass_dates:
+        date_key = str(pass_date)
+        processed += 1
 
-    while current <= end:
-        week_end = current + timedelta(days=6)
-        date_key = current.strftime('%Y-%m-%d')
+        # With --resume, skip already-processed dates UNLESS within last 14 days
+        if args.resume and date_key in records:
+            days_ago = (today.date() - pass_date).days if hasattr(pass_date, 'year') else (today - datetime.strptime(date_key, '%Y-%m-%d')).days
+            if days_ago > 14:
+                continue
 
-        # With --resume, skip already-processed dates UNLESS they're within 14 days
-        # (recent weeks may have new SAR passes that weren't available on first run)
-        if args.resume and date_key in records and (datetime.utcnow() - current).days > 14:
-            current += timedelta(days=7)
-            continue
+        print(f"[{processed}/{len(pass_dates)}] {date_key}", end=' ', flush=True)
 
-        print(f"[{processed}/{total_weeks}] {date_key} → {week_end.strftime('%Y-%m-%d')}", end=' ', flush=True)
-
-        arr = fetch_week(current, week_end)
+        arr = fetch_pass(pass_date)
         if arr is None:
             print("no data")
-            current += timedelta(days=7)
-            processed += 1
             continue
 
         counts, thr = detect_ships(arr)
@@ -221,10 +244,10 @@ def main():
         print(f"thr={thr:.2f} total={total_export} "
               f"(V:{counts['vlcc']} S:{counts['suezmax']} A:{counts['aframax']} MR:{counts['mr']})")
 
-        # Skip zero-detection results for recent dates — SAR data likely not yet available
-        if total_export == 0 and (datetime.utcnow() - current).days < 14:
-            print(f"  → skipping {date_key}: zero detections within 14-day window (data may not be available yet)")
-            current += timedelta(days=7)
+        # Skip zero detections for recent passes — data may not be fully available
+        days_ago = (today.date() - pass_date).days if hasattr(pass_date, 'year') else (today - datetime.strptime(date_key, '%Y-%m-%d')).days
+        if total_export == 0 and days_ago < 14:
+            print(f"  → skipping {date_key}: zero detections, SAR data may not be available yet")
             continue
 
         records[date_key] = {
@@ -236,12 +259,8 @@ def main():
             'total':   total_export,
         }
 
-        # save incrementally every 10 records
         if processed % 10 == 0:
             save_records(records)
-
-        current += timedelta(days=7)
-        processed += 1
 
     save_records(records)
     print(f"\nDone. {len(records)} records saved to {OUT_FILE}")

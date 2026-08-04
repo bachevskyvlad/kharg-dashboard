@@ -44,7 +44,7 @@ bbox = BBox(
     crs=CRS.WGS84
 )
 
-RESOLUTION = 90  # 90m → image ~2420×1100px, within API 2500px limit
+RESOLUTION = 80  # 80m → image ~2450×1100px, within API 2500px limit
 size = bbox_to_dimensions(bbox, resolution=RESOLUTION)
 
 # Land exclusions — Perim Island and coastal margins
@@ -89,7 +89,7 @@ def adaptive_threshold(arr):
     sea_pixels = valid[valid <= sea_level]
     if len(sea_pixels) < 100:
         return sea_level + 0.20
-    return float(np.clip(sea_level + 2.5 * sea_pixels.std(), 0.50, 0.88))
+    return float(np.clip(sea_level + 3.5 * sea_pixels.std(), 0.55, 0.92))
 
 def detect_ships(arr):
     h, w = arr.shape
@@ -111,7 +111,7 @@ def detect_ships(arr):
     for i in range(1, num + 1):
         comp = (labeled == i)
         area = comp.sum()
-        if area < 2 or area > 500:
+        if area < 3 or area > 400:
             continue
         ys, xs = np.where(comp)
         length_px = max(xs.max() - xs.min(), ys.max() - ys.min()) + 1
