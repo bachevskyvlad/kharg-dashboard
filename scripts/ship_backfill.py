@@ -201,7 +201,9 @@ def main():
         week_end = current + timedelta(days=6)
         date_key = current.strftime('%Y-%m-%d')
 
-        if args.resume and date_key in records:
+        # With --resume, skip already-processed dates UNLESS they're within 14 days
+        # (recent weeks may have new SAR passes that weren't available on first run)
+        if args.resume and date_key in records and (datetime.utcnow() - current).days > 14:
             current += timedelta(days=7)
             continue
 
