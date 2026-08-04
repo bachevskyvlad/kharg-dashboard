@@ -219,6 +219,12 @@ def main():
         print(f"thr={thr:.2f} total={total_export} "
               f"(V:{counts['vlcc']} S:{counts['suezmax']} A:{counts['aframax']} MR:{counts['mr']})")
 
+        # Skip zero-detection results for recent dates — SAR data likely not yet available
+        if total_export == 0 and (datetime.utcnow() - current).days < 14:
+            print(f"  → skipping {date_key}: zero detections within 14-day window (data may not be available yet)")
+            current += timedelta(days=7)
+            continue
+
         records[date_key] = {
             'date': date_key,
             'vlcc':    counts['vlcc'],
