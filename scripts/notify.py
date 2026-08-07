@@ -83,8 +83,12 @@ def send_sar_alert(daily_total, new_dates):
             },
             method="POST",
         )
-        with urllib.request.urlopen(req, timeout=15) as resp:
-            print(f"  SAR alert emails: {resp.read().decode()}")
+        try:
+            with urllib.request.urlopen(req, timeout=15) as resp:
+                print(f"  SAR alert emails: {resp.read().decode()}")
+        except urllib.error.HTTPError as e:
+            body = e.read().decode(errors='replace')
+            print(f"  [!] SAR alert email failed: HTTP {e.code} — {body}")
 
     except Exception as e:
         print(f"  [!] SAR alert email failed (non-critical): {e}")
