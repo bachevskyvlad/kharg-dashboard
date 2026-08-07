@@ -1,0 +1,37 @@
+name: Send SAR Alert Email
+
+on:
+  workflow_dispatch:
+    inputs:
+      pass_date:
+        description: 'SAR pass date (YYYY-MM-DD)'
+        required: true
+      vol_current:
+        description: 'Current volume (Mb)'
+        required: true
+      vol_prev:
+        description: 'Previous volume (Mb)'
+        required: true
+      prev_date:
+        description: 'Previous pass date (YYYY-MM-DD)'
+        required: true
+      fill_rate_7d:
+        description: 'Fill rate 7d (Mb/day, negative = drawdown)'
+        required: true
+
+jobs:
+  send:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Send email via notify-sar
+        run: |
+          curl -sf -X POST "https://app.oilradar.io/auth/notify-sar" \
+            -H "Authorization: Bearer ${{ secrets.NOTIFY_SECRET }}" \
+            -H "Content-Type: application/json" \
+            -d '{
+              "pass_date":    "${{ github.event.inputs.pass_date }}",
+              "vol_current":  ${{ github.event.inputs.vol_current }},
+              "vol_prev":     ${{ github.event.inputs.vol_prev }},
+              "prev_date":    "${{ github.event.inputs.prev_date }}",
+              "fill_rate_7d": ${{ github.event.inputs.fill_rate_7d }}
+            }' && echo "Email sent OK" || echo "Failed — check NOTIFY_SECRET vs CF env"
