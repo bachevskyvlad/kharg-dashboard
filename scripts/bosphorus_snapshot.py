@@ -114,12 +114,12 @@ def build_land_mask(h, w):
 
     _draw(land)
     mask = np.array(mask_img) > 0
-    # Expand mask ~12px (~420m) into sea to absorb coastal clutter
-    mask = ndimage.binary_dilation(mask, iterations=12)
+    # Expand mask ~15px (~525m) into sea to absorb coastal clutter
+    mask = ndimage.binary_dilation(mask, iterations=15)
 
     # Also mask Bosphorus strait channel — ships there are in transit, not anchorage
-    x0, y1 = lon_lat_to_px(28.95, 41.10)
-    x1, y0 = lon_lat_to_px(29.10, 41.22)
+    x0, y1 = lon_lat_to_px(28.94, 41.10)
+    x1, y0 = lon_lat_to_px(29.12, 41.25)
     mask[max(0, y0):min(h, y1+1), max(0, x0):min(w, x1+1)] = True
 
     return mask
