@@ -352,9 +352,6 @@ def main():
         BBOX_COORDS = REGION['bbox']
         bbox        = BBox(bbox=BBOX_COORDS, crs=CRS.WGS84)
         size        = bbox_to_dimensions(bbox, resolution=RESOLUTION)
-        S1_CDSE     = DataCollection.SENTINEL1_IW.define_from(
-            f"s1iw_{REGION_ID}", service_url="https://sh.dataspace.copernicus.eu"
-        )
         print(f"Region: {REGION['label']}")
         print(f"Image size: {size[0]}×{size[1]}px at {RESOLUTION}m/px", flush=True)
     HISTORY_PATH = os.path.join(OUT_DIR, f'bosphorus_{REGION_ID}_history.json')
