@@ -39,10 +39,10 @@ REGIONS = {
         'dilation': 25,
     },
     'marmara': {
-        'bbox':     [28.40, 40.78, 29.40, 41.08],
+        'bbox':     [28.40, 40.82, 29.40, 41.08],
         'label':    'Bosphorus Marmara anchorage',
         'desc':     'Vessels queuing southbound into the Marmara Sea',
-        'dilation': 35,
+        'dilation': 70,
     },
 }
 
