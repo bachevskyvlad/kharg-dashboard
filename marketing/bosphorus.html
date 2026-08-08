@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bosphorus Vessel Queue — OilRadar Intelligence</title>
+<meta name="description" content="Satellite-derived vessel queue at the Bosphorus Black Sea anchorage. SAR queue index vs 10-year historical baseline, updated every 6 days.">
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-TZQ5VH3GPY"></script>
+<script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','G-TZQ5VH3GPY');</script>
+<style>
+:root {
+  --bg:          #070b10;
+  --surface:     #0d1420;
+  --surface-2:   #121c2e;
+  --border:      #192436;
+  --border-2:    #0f1a28;
+  --text:        #cfdff2;
+  --text-2:      #8aabcc;
+  --muted:       #3d5878;
+  --accent:      #0fb8d0;
+  --accent-dim:  #0a8fa0;
+  --hi:          #f59e0b;
+  --ok:          #22c55e;
+  --lo:          #4a6a9a;
+  --mono: "Courier New", Courier, monospace;
+  --sans: system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--sans);
+  font-size: 15px;
+  line-height: 1.6;
+  min-height: 100vh;
+}
+
+/* HEADER */
+.hdr {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 16px 32px;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface);
+  position: sticky; top: 0; z-index: 10;
+}
+.hdr-logo {
+  font-family: var(--mono); font-size: 13px; letter-spacing: .12em;
+  text-transform: uppercase; color: var(--accent); text-decoration: none;
+}
+.hdr-logo em { color: var(--muted); font-style: normal; }
+.hdr-nav { display: flex; gap: 28px; }
+.hdr-nav a {
+  font-family: var(--mono); font-size: 11px; letter-spacing: .1em;
+  text-transform: uppercase; color: var(--muted); text-decoration: none;
+  transition: color .15s;
+}
+.hdr-nav a:hover { color: var(--text); }
+
+/* PAGE */
+.page { max-width: 1160px; margin: 0 auto; padding: 0 24px 80px; }
+
+/* HERO */
+.hero { padding: 56px 0 48px; border-bottom: 1px solid var(--border); }
+.hero-eye {
+  font-family: var(--mono); font-size: 11px; letter-spacing: .18em;
+  text-transform: uppercase; color: var(--accent); margin-bottom: 24px;
+}
+.hero-body {
+  display: grid; grid-template-columns: auto 1fr;
+  gap: 0 64px; align-items: end;
+}
+.idx-label {
+  font-family: var(--mono); font-size: 11px; letter-spacing: .14em;
+  text-transform: uppercase; color: var(--muted); margin-bottom: 6px;
+}
+.idx-val {
+  font-size: clamp(88px, 13vw, 164px);
+  font-weight: 700; line-height: .88;
+  letter-spacing: -.04em;
+  font-variant-numeric: tabular-nums;
+  color: var(--text); transition: color .5s;
+}
+.idx-val.hi { color: var(--hi); }
+.idx-val.ok { color: var(--ok); }
+.idx-val.lo { color: var(--lo); }
+
+.hero-right {
+  display: flex; flex-direction: column; gap: 18px;
+  padding-bottom: 10px;
+}
+.idx-badge {
+  display: inline-flex; align-items: center; gap: 8px;
+  font-family: var(--mono); font-size: 12px; letter-spacing: .1em;
+  text-transform: uppercase; padding: 6px 14px;
+  border: 1px solid currentColor; border-radius: 2px;
+  width: fit-content;
+}
+.idx-badge::before {
+  content: ''; width: 6px; height: 6px; border-radius: 50%;
+  background: currentColor;
+}
+.idx-badge.hi { color: var(--hi); background: rgba(245,158,11,.08); }
+.idx-badge.ok { color: var(--ok); background: rgba(34,197,94,.08); }
+.idx-badge.lo { color: var(--lo); background: rgba(74,106,154,.08); }
+
+.hero-desc { font-size: 14px; color: var(--muted); max-width: 440px; line-height: 1.75; }
+.hero-ts { font-family: var(--mono); font-size: 11px; color: var(--muted); letter-spacing: .06em; }
+
+/* STATS ROW */
+.stats {
+  display: grid; grid-template-columns: repeat(4,1fr);
+  border-bottom: 1px solid var(--border);
+}
+.stat {
+  padding: 28px 24px; border-right: 1px solid var(--border);
+}
+.stat:last-child { border-right: none; }
+.stat-lbl {
+  font-family: var(--mono); font-size: 10px; letter-spacing: .16em;
+  text-transform: uppercase; color: var(--muted); margin-bottom: 8px;
+}
+.stat-v {
+  font-size: 34px; font-weight: 700; font-variant-numeric: tabular-nums;
+  letter-spacing: -.02em; line-height: 1; color: var(--text);
+}
+.stat-sub { font-family: var(--mono); font-size: 11px; color: var(--muted); margin-top: 6px; }
+
+/* SECTIONS */
+.sec { padding: 44px 0; border-bottom: 1px solid var(--border); }
+.sec-ttl {
+  font-family: var(--mono); font-size: 11px; letter-spacing: .18em;
+  text-transform: uppercase; color: var(--accent); margin-bottom: 22px;
+}
+
+/* CHART */
+.chart-wrap {
+  width: 100%; overflow-x: auto;
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 2px; padding: 20px 16px 8px;
+}
+#chart { width: 100%; height: auto; display: block; }
+
+/* BREAKDOWN */
+.bdgrid {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 14px;
+}
+.bc {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 2px; padding: 20px 22px;
+}
+.bc-hd {
+  display: flex; justify-content: space-between; align-items: baseline;
+  margin-bottom: 10px;
+}
+.bc-name {
+  font-family: var(--mono); font-size: 11px; letter-spacing: .1em;
+  text-transform: uppercase; color: var(--text-2);
+}
+.bc-size { font-family: var(--mono); font-size: 10px; color: var(--muted); }
+.bc-count {
+  font-size: 40px; font-weight: 700; font-variant-numeric: tabular-nums;
+  line-height: 1; margin-bottom: 12px;
+}
+.bar-track {
+  height: 3px; background: var(--border-2); border-radius: 2px; overflow: hidden;
+}
+.bar-fill { height: 100%; border-radius: 2px; transition: width .7s ease; }
+
+/* METHODOLOGY */
+.meth { padding: 44px 0 0; display: grid; grid-template-columns: 1fr 1fr; gap: 48px; }
+.meth-blk h3 {
+  font-family: var(--mono); font-size: 11px; letter-spacing: .14em;
+  text-transform: uppercase; color: var(--accent-dim); margin-bottom: 12px;
+}
+.meth-blk p { font-size: 13px; color: var(--muted); line-height: 1.8; }
+.meth-blk p + p { margin-top: 10px; }
+
+/* FOOTER */
+.ftr {
+  border-top: 1px solid var(--border); margin-top: 60px;
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 22px 32px;
+  font-family: var(--mono); font-size: 11px; color: var(--muted);
+}
+.ftr a { color: var(--accent-dim); text-decoration: none; }
+.ftr a:hover { color: var(--accent); }
+
+.placeholder {
+  display: flex; align-items: center; justify-content: center;
+  height: 180px; font-family: var(--mono); font-size: 12px;
+  color: var(--muted); letter-spacing: .08em;
+}
+
+@media (max-width: 740px) {
+  .hero-body { grid-template-columns: 1fr; }
+  .stats { grid-template-columns: repeat(2,1fr); }
+  .bdgrid { grid-template-columns: 1fr; }
+  .meth { grid-template-columns: 1fr; }
+  .hdr { padding: 12px 16px; }
+  .page { padding: 0 16px 60px; }
+}
+</style>
+</head>
+<body>
+
+<header class="hdr">
+  <a class="hdr-logo" href="https://oilradar.io"><em>Oil</em>Radar</a>
+  <nav class="hdr-nav">
+    <a href="https://oilradar.io/monitor">Kharg Island</a>
+    <a href="https://calendly.com/bachevsky/60min">Request Access</a>
+  </nav>
+</header>
+
+<div class="page">
+
+  <section class="hero">
+    <div class="hero-eye">Bosphorus Black Sea Anchorage &nbsp;·&nbsp; Sentinel-1 SAR &nbsp;·&nbsp; Live Queue Intelligence</div>
+    <div class="hero-body">
+      <div>
+        <div class="idx-label">Queue Index</div>
+        <div class="idx-val" id="idx">—</div>
+      </div>
+      <div class="hero-right">
+        <div class="idx-badge" id="badge">Loading…</div>
+        <p class="hero-desc">
+          Index compares today's vessel count to the 10-year average for this calendar month.
+          100 = historical norm. Above 130 signals elevated congestion; below 70 is unusually light.
+        </p>
+        <div class="hero-ts" id="ts">Retrieving latest pass…</div>
+      </div>
+    </div>
+  </section>
+
+  <div class="stats">
+    <div class="stat">
+      <div class="stat-lbl">Vessels detected</div>
+      <div class="stat-v" id="s-total">—</div>
+      <div class="stat-sub" id="s-date">latest SAR pass</div>
+    </div>
+    <div class="stat">
+      <div class="stat-lbl">Monthly avg</div>
+      <div class="stat-v" id="s-avg">—</div>
+      <div class="stat-sub" id="s-avgp">10-yr baseline</div>
+    </div>
+    <div class="stat">
+      <div class="stat-lbl">Passes in record</div>
+      <div class="stat-v" id="s-passes">—</div>
+      <div class="stat-sub" id="s-span">history span</div>
+    </div>
+    <div class="stat">
+      <div class="stat-lbl">Revisit cycle</div>
+      <div class="stat-v">~6d</div>
+      <div class="stat-sub">Sentinel-1 C-band SAR</div>
+    </div>
+  </div>
+
+  <section class="sec">
+    <div class="sec-ttl">Vessel queue — historical record</div>
+    <div class="chart-wrap">
+      <div class="placeholder" id="chart-ph">Awaiting historical data…</div>
+      <svg id="chart" viewBox="0 0 1000 220" preserveAspectRatio="xMidYMid meet"
+           aria-label="Vessel count over time" style="display:none"></svg>
+    </div>
+  </section>
+
+  <section class="sec">
+    <div class="sec-ttl">Vessel class breakdown — latest pass</div>
+    <div class="bdgrid" id="bd">
+      <div class="placeholder">Loading…</div>
+    </div>
+  </section>
+
+  <div class="meth">
+    <div class="meth-blk">
+      <h3>Detection method</h3>
+      <p>Each SAR image (Sentinel-1 IW mode, VV polarisation, 35 m/px) is processed with an adaptive backscatter threshold calibrated to local sea clutter. Compact bright objects above threshold are classified as vessels; length is estimated from the bounding box of each detected blob.</p>
+      <p>Land and coastal clutter are masked using the Natural Earth 10 m coastline with an ~875 m sea buffer. The Bosphorus transit channel is excluded — only the Black Sea waiting anchorage is counted.</p>
+    </div>
+    <div class="meth-blk">
+      <h3>Queue index</h3>
+      <p>Queue Index = (vessels on pass date) ÷ (10-year average for that calendar month) × 100. A value of 100 is exactly average for the season. Vessel classes follow standard maritime size conventions by detected length.</p>
+      <p>Capesize ≥ 290 m · Post-Panamax ≥ 260 m · Panamax ≥ 220 m · Handymax ≥ 100 m. Vessels under 100 m (coastal and small craft) are excluded from the count.</p>
+    </div>
+  </div>
+
+</div>
+
+<footer class="ftr">
+  <span>OilRadar — Satellite Maritime Intelligence</span>
+  <a href="https://oilradar.io">oilradar.io</a>
+</footer>
+
+<script>
+const CLS = {
+  capesize:    { label: 'Capesize',     size: '≥ 290 m', color: '#ef4444' },
+  postpanamax: { label: 'Post-Panamax', size: '≥ 260 m', color: '#f97316' },
+  panamax:     { label: 'Panamax',      size: '≥ 220 m', color: '#eab308' },
+  handymax:    { label: 'Handymax',     size: '≥ 100 m', color: '#22c55e' },
+};
+
+function state(i) { return i >= 130 ? 'hi' : i >= 70 ? 'ok' : 'lo'; }
+function stateLabel(i) {
+  return i >= 130 ? 'Above average — elevated congestion'
+       : i >= 70  ? 'Normal traffic'
+       : 'Below average — light traffic';
+}
+
+function monthlyAvgs(passes) {
+  const b = {};
+  for (const p of passes) {
+    const m = p.date.slice(5,7);
+    if (!b[m]) b[m] = {s:0,n:0};
+    b[m].s += p.total; b[m].n++;
+  }
+  const out = {};
+  for (const m in b) out[m] = b[m].s / b[m].n;
+  return out;
+}
+
+function renderHero(latest, avgs) {
+  const m = latest.date.slice(5,7);
+  const avg = avgs[m] || latest.total;
+  const idx = Math.round(latest.total / avg * 100);
+  const st = state(idx);
+
+  const el = document.getElementById('idx');
+  el.textContent = idx;
+  el.className = 'idx-val ' + st;
+
+  const badge = document.getElementById('badge');
+  badge.textContent = stateLabel(idx);
+  badge.className = 'idx-badge ' + st;
+
+  document.getElementById('ts').textContent =
+    'Latest pass: ' + latest.date + '  ·  Sentinel-1 SAR';
+}
+
+function renderStats(passes, latest, avgs) {
+  const m = latest.date.slice(5,7);
+  const avg = avgs[m] || latest.total;
+  const mname = new Date(latest.date + 'T12:00:00Z')
+    .toLocaleString('en',{month:'long'});
+  document.getElementById('s-total').textContent = latest.total;
+  document.getElementById('s-date').textContent = latest.date;
+  document.getElementById('s-avg').textContent = Math.round(avg);
+  document.getElementById('s-avgp').textContent = mname + ' · 10-yr avg';
+  document.getElementById('s-passes').textContent = passes.length;
+  const y0 = passes[0].date.slice(0,4);
+  const y1 = passes[passes.length-1].date.slice(0,4);
+  document.getElementById('s-span').textContent = y0 === y1 ? y0 : y0 + '–' + y1;
+}
+
+function renderChart(passes) {
+  document.getElementById('chart-ph').style.display = 'none';
+  const svg = document.getElementById('chart');
+  svg.style.display = 'block';
+
+  const W=1000,H=220,ML=44,MR=16,MT=18,MB=30;
+  const cw=W-ML-MR, ch=H-MT-MB;
+  const vals = passes.map(p=>p.total);
+  const maxV = Math.max(...vals,1);
+
+  const xs = i => ML + (i/Math.max(passes.length-1,1))*cw;
+  const ys = v => MT + ch - (v/maxV)*ch;
+
+  let grid='', xax='';
+  const ticks = [];
+  for (let v=0; v<=maxV+4; v+=10) { if(v<=maxV+4) ticks.push(v); }
+  for (const v of ticks) {
+    const y=ys(v);
+    grid += `<line x1="${ML}" y1="${y}" x2="${W-MR}" y2="${y}" stroke="#192436" stroke-width="1"/>`;
+    grid += `<text x="${ML-6}" y="${y+4}" text-anchor="end" fill="#3d5878" font-size="9" font-family="Courier New,monospace">${v}</text>`;
+  }
+  const years = {};
+  passes.forEach((p,i)=>{
+    const yr=p.date.slice(0,4);
+    if(!years[yr]){ years[yr]=i; xax+=`<text x="${xs(i)}" y="${H-6}" text-anchor="middle" fill="#3d5878" font-size="9" font-family="Courier New,monospace">${yr}</text>`; }
+  });
+
+  const n=passes.length;
+  let aD=`M${xs(0)},${MT+ch} L${xs(0)},${ys(vals[0])}`;
+  for(let i=1;i<n;i++) aD+=` L${xs(i)},${ys(vals[i])}`;
+  aD+=` L${xs(n-1)},${MT+ch} Z`;
+
+  let lD=`M${xs(0)},${ys(vals[0])}`;
+  for(let i=1;i<n;i++) lD+=` L${xs(i)},${ys(vals[i])}`;
+
+  const lx=xs(n-1), ly=ys(vals[n-1]);
+
+  svg.innerHTML = `
+    <defs>
+      <linearGradient id="ag" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="#0fb8d0" stop-opacity=".22"/>
+        <stop offset="100%" stop-color="#0fb8d0" stop-opacity=".02"/>
+      </linearGradient>
+    </defs>
+    ${grid}
+    <path d="${aD}" fill="url(#ag)"/>
+    <path d="${lD}" fill="none" stroke="#0fb8d0" stroke-width="1.5" stroke-linejoin="round"/>
+    ${xax}
+    <circle cx="${lx}" cy="${ly}" r="4.5" fill="#0fb8d0" stroke="#0d1420" stroke-width="2"/>
+    <text x="${lx}" y="${ly-11}" text-anchor="middle" fill="#0fb8d0" font-size="10" font-family="Courier New,monospace">${vals[n-1]}</text>
+  `;
+}
+
+function renderBreakdown(latest) {
+  const total = latest.total||1;
+  document.getElementById('bd').innerHTML = Object.entries(CLS).map(([k,m])=>{
+    const cnt = latest[k]||0;
+    const pct = Math.round(cnt/total*100);
+    return `
+      <div class="bc">
+        <div class="bc-hd">
+          <span class="bc-name">${m.label}</span>
+          <span class="bc-size">${m.size}</span>
+        </div>
+        <div class="bc-count" style="color:${m.color}">${cnt}</div>
+        <div class="bar-track"><div class="bar-fill" style="width:${pct}%;background:${m.color}"></div></div>
+      </div>`;
+  }).join('');
+}
+
+async function init(){
+  try {
+    const r = await fetch('/data/bosphorus_history.json');
+    if(!r.ok) throw 0;
+    const data = await r.json();
+    const passes = data.passes||[];
+    if(!passes.length) throw 0;
+    const avgs = monthlyAvgs(passes);
+    const latest = passes[passes.length-1];
+    renderHero(latest, avgs);
+    renderStats(passes, latest, avgs);
+    renderChart(passes);
+    renderBreakdown(latest);
+  } catch {
+    document.getElementById('idx').textContent = '—';
+    document.getElementById('badge').textContent = 'Data loading';
+    document.getElementById('ts').textContent = 'Historical backfill in progress — check back shortly';
+    document.getElementById('chart-ph').textContent = 'Historical data will appear after the 10-year backfill completes.';
+    document.getElementById('bd').innerHTML = '<div class="placeholder">No data yet</div>';
+  }
+}
+init();
+</script>
+
+</body>
+</html>

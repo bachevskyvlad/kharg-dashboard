@@ -1,5 +1,5 @@
 """
-Sentinel-1 SAR ship detection at the Bosphorus Black Sea anchorage.
+Sentinel-1 SAR vessel detection at the Bosphorus Black Sea anchorage.
 Ships queue here waiting for passage into the strait.
 
 Center: ~41.35N, 29.10E (Black Sea entrance anchorage)
@@ -8,9 +8,11 @@ Area covers: main anchorage + approach lanes north of strait entrance
 Usage:
   python bosphorus_snapshot.py                    # latest available pass
   python bosphorus_snapshot.py --date 2026-08-01  # specific date
+  python bosphorus_snapshot.py --backfill 10      # last N passes
+  python bosphorus_snapshot.py --backfill-all     # all available (10yr)
 """
 
-import sys, os, argparse
+import sys, os, argparse, json
 from datetime import datetime, timedelta
 import numpy as np
 
@@ -29,17 +31,29 @@ config.sh_client_secret = "U1W6BcqS4bFEIJy2u9xXdlBMZPxtQMBU"
 config.sh_token_url     = "https://identity.dataspace.copernicus.eu/auth/realms/CDSE/protocol/openid-connect/token"
 config.sh_base_url      = "https://sh.dataspace.copernicus.eu"
 
-# Black Sea anchorage — wide zone north of Bosphorus entrance
-# Covers: full Black Sea waiting area + lateral anchorage zones
-BBOX_COORDS = [28.70, 41.10, 29.40, 41.70]
+REGIONS = {
+    'black_sea': {
+        'bbox':  [28.70, 41.10, 29.40, 41.70],
+        'label': 'Bosphorus Black Sea anchorage',
+        'desc':  'Vessels queuing northbound into the Black Sea',
+    },
+    'marmara': {
+        'bbox':  [28.40, 40.78, 29.40, 41.08],
+        'label': 'Bosphorus Marmara anchorage',
+        'desc':  'Vessels queuing southbound into the Marmara Sea',
+    },
+}
+
+# Region is set in main() via --region arg; defaults to black_sea
+REGION_ID   = 'black_sea'
+REGION      = REGIONS[REGION_ID]
+BBOX_COORDS = REGION['bbox']
 
 bbox = BBox(bbox=BBOX_COORDS, crs=CRS.WGS84)
-RESOLUTION = 35  # 35m — wide zone fits within 2500px limit
+RESOLUTION = 35
 size = bbox_to_dimensions(bbox, resolution=RESOLUTION)
+print(f"Region: {REGION['label']}", flush=True)
 print(f"Image size: {size[0]}×{size[1]}px at {RESOLUTION}m/px", flush=True)
-
-# Land mask boxes — only the narrow strait body and immediate shores
-# Keep minimal: false land masking kills valid ship detections
 
 S1_CDSE = DataCollection.SENTINEL1_IW.define_from(
     "s1iw_bosphorus", service_url="https://sh.dataspace.copernicus.eu"
@@ -57,15 +71,22 @@ function evaluatePixel(s) {
 }
 """
 
+# Vessel size classes — general maritime terminology
 CLASS_COLORS = {
-    'vlcc':    (239, 68,  68),
-    'suezmax': (249, 115, 22),
-    'aframax': (234, 179, 8),
-    'mr':      (34,  197, 94),
-    'small':   (148, 163, 184),
+    'capesize':    (239, 68,  68),   # ≥290m
+    'postpanamax': (249, 115, 22),   # ≥260m
+    'panamax':     (234, 179, 8),    # ≥220m
+    'handymax':    (34,  197, 94),   # ≥100m
+}
+CLASS_LABELS = {
+    'capesize':    'Capesize  ≥290m',
+    'postpanamax': 'Post-Panamax ≥260m',
+    'panamax':     'Panamax  ≥220m',
+    'handymax':    'Handymax ≥100m',
 }
 
 OUT_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'data')
+HISTORY_PATH = os.path.join(OUT_DIR, 'bosphorus_history.json')  # updated in main() for marmara
 
 
 def lon_lat_to_px(lon, lat):
@@ -114,10 +135,10 @@ def build_land_mask(h, w):
 
     _draw(land)
     mask = np.array(mask_img) > 0
-    # Expand mask ~15px (~525m) into sea to absorb coastal clutter
+    # ~875m coastal buffer to absorb clutter
     mask = ndimage.binary_dilation(mask, iterations=25)
 
-    # Also mask Bosphorus strait channel — ships there are in transit, not anchorage
+    # Mask Bosphorus strait channel — ships there are in transit, not anchorage
     x0, y1 = lon_lat_to_px(28.94, 41.10)
     x1, y0 = lon_lat_to_px(29.12, 41.25)
     mask[max(0, y0):min(h, y1+1), max(0, x0):min(w, x1+1)] = True
@@ -126,12 +147,11 @@ def build_land_mask(h, w):
 
 
 def classify_ship(length_m):
-    if length_m >= 290:  return 'vlcc'
-    if length_m >= 260:  return 'suezmax'
-    if length_m >= 220:  return 'aframax'
-    if length_m >= 100:  return 'mr'
-    if length_m >= 40:   return 'small'
-    return None
+    if length_m >= 290:  return 'capesize'
+    if length_m >= 260:  return 'postpanamax'
+    if length_m >= 220:  return 'panamax'
+    if length_m >= 100:  return 'handymax'
+    return None  # <100m coastal/small vessels excluded
 
 
 def detect_ships(arr):
@@ -197,14 +217,13 @@ def annotate_image(img, ships, date_str, threshold):
     for cls, color in CLASS_COLORS.items():
         count = sum(1 for s in ships if s['class'] == cls)
         draw.rectangle([legend_x, legend_y, legend_x+12, legend_y+12], fill=color)
-        draw.text((legend_x+16, legend_y), f"{cls.upper()}: {count}", fill=(220, 220, 220), font=font_sm)
+        draw.text((legend_x+16, legend_y), f"{CLASS_LABELS[cls]}: {count}", fill=(220, 220, 220), font=font_sm)
         legend_y += 18
 
     counts = {cls: sum(1 for s in ships if s['class'] == cls) for cls in CLASS_COLORS}
     total = len(ships)
-    queue_index = counts['vlcc'] + counts['suezmax'] + counts['aframax'] + counts['mr']
-    info = (f"{date_str}  |  Bosphorus Black Sea anchorage  |  "
-            f"{total} vessels  |  Queue index: {queue_index}  |  thr={threshold:.3f}  |  Sentinel-1 IW 35m")
+    info = (f"{date_str}  |  {REGION['label']}  |  "
+            f"{total} vessels  |  thr={threshold:.3f}  |  Sentinel-1 IW 35m")
     h = img.height
     draw.rectangle([0, h-20, img.width, h], fill=(0, 0, 0))
     draw.text((8, h-16), info, fill=(150, 150, 150), font=font_sm)
@@ -239,8 +258,37 @@ def get_sar_dates(days_back=14, limit=None):
         return []
 
 
+def load_history():
+    if os.path.exists(HISTORY_PATH):
+        with open(HISTORY_PATH) as f:
+            return json.load(f)
+    return {"updated": "", "passes": []}
+
+
+def save_history(new_results):
+    os.makedirs(OUT_DIR, exist_ok=True)
+    hist = load_history()
+    existing = {p['date']: p for p in hist['passes']}
+    for r in new_results:
+        existing[r['date']] = {
+            'date': r['date'],
+            'total': r['total'],
+            'capesize':    r['counts']['capesize'],
+            'postpanamax': r['counts']['postpanamax'],
+            'panamax':     r['counts']['panamax'],
+            'handymax':    r['counts']['handymax'],
+            'threshold':   round(r['threshold'], 3),
+        }
+    passes = sorted(existing.values(), key=lambda x: x['date'])
+    hist['updated'] = datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%SZ')
+    hist['passes'] = passes
+    with open(HISTORY_PATH, 'w') as f:
+        json.dump(hist, f, separators=(',', ':'))
+    print(f"History saved: {len(passes)} passes → {HISTORY_PATH}")
+
+
 def run_date(date_str):
-    """Fetch SAR, detect ships, save PNG. Returns result dict."""
+    """Fetch SAR, detect vessels, save PNG. Returns result dict."""
     print(f"\nFetching SAR image for {date_str}…")
     request = SentinelHubRequest(
         evalscript=evalscript,
@@ -262,7 +310,7 @@ def run_date(date_str):
     else:
         arr = raw.reshape(raw.shape[-2], raw.shape[-1])
 
-    nanmax = float(np.nanmax(arr)) if np.any(np.isfinite(arr)) else 0.0
+    nanmax  = float(np.nanmax(arr)) if np.any(np.isfinite(arr)) else 0.0
     nanmean = float(np.nanmean(arr)) if np.any(np.isfinite(arr)) else 0.0
     nan_pct = (~np.isfinite(arr)).sum() / arr.size * 100
     print(f"  shape={arr.shape}  max={nanmax:.3f}  mean={nanmean:.4f}  nan={nan_pct:.0f}%")
@@ -273,46 +321,91 @@ def run_date(date_str):
 
     ships, threshold, land_mask = detect_ships(arr)
     counts = {cls: sum(1 for s in ships if s['class'] == cls) for cls in CLASS_COLORS}
-    queue_index = counts['vlcc'] + counts['suezmax'] + counts['aframax'] + counts['mr']
 
     img = arr_to_image(arr, land_mask)
     img = annotate_image(img, ships, date_str, threshold)
     os.makedirs(OUT_DIR, exist_ok=True)
-    out_path = os.path.join(OUT_DIR, f"bosphorus_{date_str}.png")
+    out_path = os.path.join(OUT_DIR, f"bosphorus_{REGION_ID}_{date_str}.png")
     img.save(out_path)
 
-    return {'date': date_str, 'total': len(ships), 'queue_index': queue_index,
-            'counts': counts, 'threshold': threshold, 'path': out_path}
+    return {'date': date_str, 'total': len(ships), 'counts': counts,
+            'threshold': threshold, 'path': out_path}
 
 
 def main():
+    global REGION_ID, REGION, BBOX_COORDS, bbox, size, S1_CDSE, HISTORY_PATH
+
     parser = argparse.ArgumentParser()
     parser.add_argument('--date', type=str, default=None)
     parser.add_argument('--backfill', type=int, default=None,
                         help='Process last N SAR passes')
+    parser.add_argument('--backfill-all', action='store_true',
+                        help='Process all available SAR passes (~10 years)')
+    parser.add_argument('--region', type=str, default='black_sea',
+                        choices=list(REGIONS.keys()),
+                        help='Anchorage region: black_sea (default) or marmara')
     args = parser.parse_args()
 
-    if args.backfill:
-        n = args.backfill
-        print(f"Querying catalog for last {n} SAR passes (up to 90 days back)…")
-        dates = get_sar_dates(days_back=90, limit=n)
+    if args.region != REGION_ID:
+        REGION_ID   = args.region
+        REGION      = REGIONS[REGION_ID]
+        BBOX_COORDS = REGION['bbox']
+        bbox        = BBox(bbox=BBOX_COORDS, crs=CRS.WGS84)
+        size        = bbox_to_dimensions(bbox, resolution=RESOLUTION)
+        S1_CDSE     = DataCollection.SENTINEL1_IW.define_from(
+            f"s1iw_{REGION_ID}", service_url="https://sh.dataspace.copernicus.eu"
+        )
+        print(f"Region: {REGION['label']}")
+        print(f"Image size: {size[0]}×{size[1]}px at {RESOLUTION}m/px", flush=True)
+    HISTORY_PATH = os.path.join(OUT_DIR, f'bosphorus_{REGION_ID}_history.json')
+
+    if args.backfill_all or args.backfill:
+        if args.backfill_all:
+            days_back = 3660  # ~10 years
+            limit = None
+            print("Querying catalog for all SAR passes (~10 years)…")
+        else:
+            n = args.backfill
+            days_back = 90
+            limit = n
+            print(f"Querying catalog for last {n} SAR passes (up to 90 days back)…")
+
+        dates = get_sar_dates(days_back=days_back, limit=limit)
         if not dates:
             print("No SAR passes found.")
             return
-        print(f"Found {len(dates)} passes: {dates}")
+        print(f"Found {len(dates)} passes: {dates[0]} … {dates[-1]}")
+
+        # Skip dates already in history to resume interrupted runs
+        hist = load_history()
+        done = {p['date'] for p in hist['passes']}
+        pending = [d for d in dates if d not in done]
+        print(f"Already processed: {len(done)}  Pending: {len(pending)}")
+
         results = []
-        for d in dates:
+        for d in pending:
             r = run_date(d)
             if r:
                 results.append(r)
-        print(f"\n{'='*60}")
-        print(f"{'Date':<12} {'Total':>6} {'QueueIdx':>9} {'VLCC':>5} {'SMAX':>5} {'AFRX':>5} {'MR':>5} {'SML':>5}  thr")
-        print(f"{'-'*60}")
-        for r in results:
+
+        if results:
+            save_history(results)
+
+        print(f"\n{'='*65}")
+        print(f"{'Date':<12} {'Total':>6} {'Cape':>5} {'PostP':>5} {'Pan':>5} {'Hmax':>5}  thr")
+        print(f"{'-'*65}")
+        all_results = sorted(
+            [{'date': p['date'], 'total': p['total'],
+              'counts': {k: p[k] for k in CLASS_COLORS},
+              'threshold': p['threshold']}
+             for p in load_history()['passes']],
+            key=lambda x: x['date']
+        )
+        for r in all_results[-20:]:
             c = r['counts']
-            print(f"{r['date']:<12} {r['total']:>6} {r['queue_index']:>9} "
-                  f"{c['vlcc']:>5} {c['suezmax']:>5} {c['aframax']:>5} "
-                  f"{c['mr']:>5} {c['small']:>5}  {r['threshold']:.3f}")
+            print(f"{r['date']:<12} {r['total']:>6} "
+                  f"{c['capesize']:>5} {c['postpanamax']:>5} "
+                  f"{c['panamax']:>5} {c['handymax']:>5}  {r['threshold']:.3f}")
         return
 
     if args.date:
@@ -329,11 +422,11 @@ def main():
     r = run_date(date_str)
     if not r:
         return
+    save_history([r])
     print(f"\n=== Bosphorus Queue — {r['date']} ===")
     print(f"Total vessels:  {r['total']}")
-    print(f"Queue index:    {r['queue_index']}  (VLCC+Suezmax+Aframax+MR)")
     for cls in CLASS_COLORS:
-        print(f"  {cls.upper():10s}: {r['counts'][cls]}")
+        print(f"  {cls:15s}: {r['counts'][cls]}")
     print(f"Threshold:      {r['threshold']:.3f}")
     print(f"\nSaved: {r['path']}")
 

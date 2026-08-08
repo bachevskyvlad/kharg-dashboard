@@ -11,11 +11,19 @@ on:
         description: 'Number of last SAR passes to process (blank = single latest)'
         required: false
         default: ''
+      backfill_all:
+        description: 'Process all available passes (~10 years). Set to "true" to enable.'
+        required: false
+        default: ''
+      region:
+        description: 'Anchorage region: black_sea (default) or marmara'
+        required: false
+        default: 'black_sea'
 
 jobs:
   snapshot:
     runs-on: ubuntu-latest
-    timeout-minutes: 60
+    timeout-minutes: 360
     steps:
       - uses: actions/checkout@v4
 
@@ -28,26 +36,32 @@ jobs:
 
       - name: Run snapshot
         run: |
-          if [ -n "${{ github.event.inputs.backfill }}" ]; then
-            python scripts/bosphorus_snapshot.py --backfill "${{ github.event.inputs.backfill }}"
+          REGION="${{ github.event.inputs.region }}"
+          REGION="${REGION:-black_sea}"
+          if [ "${{ github.event.inputs.backfill_all }}" = "true" ]; then
+            python scripts/bosphorus_snapshot.py --backfill-all --region "$REGION"
+          elif [ -n "${{ github.event.inputs.backfill }}" ]; then
+            python scripts/bosphorus_snapshot.py --backfill "${{ github.event.inputs.backfill }}" --region "$REGION"
           elif [ -n "${{ github.event.inputs.date }}" ]; then
-            python scripts/bosphorus_snapshot.py --date "${{ github.event.inputs.date }}"
+            python scripts/bosphorus_snapshot.py --date "${{ github.event.inputs.date }}" --region "$REGION"
           else
-            python scripts/bosphorus_snapshot.py
+            python scripts/bosphorus_snapshot.py --region "$REGION"
           fi
 
-      - name: Upload PNG
+      - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
           name: bosphorus-snapshot
-          path: data/bosphorus_*.png
+          path: |
+            data/bosphorus_*.png
+            data/bosphorus_*_history.json
           if-no-files-found: warn
 
-      - name: Commit PNG to repo
+      - name: Commit to repo
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add data/bosphorus_*.png
-          git diff --cached --quiet || git commit -m "chore: add bosphorus snapshot $(date -u +%Y-%m-%d)"
+          git add data/bosphorus_*.png data/bosphorus_*_history.json
+          git diff --cached --quiet || git commit -m "chore: bosphorus snapshot $(date -u +%Y-%m-%d)"
           git pull --rebase origin main
           git push origin main
