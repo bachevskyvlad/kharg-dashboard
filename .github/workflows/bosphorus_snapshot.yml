@@ -1,0 +1,38 @@
+name: Bosphorus — SAR Snapshot
+
+on:
+  workflow_dispatch:
+    inputs:
+      date:
+        description: 'SAR date YYYY-MM-DD (blank = latest)'
+        required: false
+        default: ''
+
+jobs:
+  snapshot:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install sentinelhub numpy scipy pillow pandas
+
+      - name: Run snapshot
+        run: |
+          if [ -n "${{ github.event.inputs.date }}" ]; then
+            python scripts/bosphorus_snapshot.py --date "${{ github.event.inputs.date }}"
+          else
+            python scripts/bosphorus_snapshot.py
+          fi
+
+      - name: Upload PNG
+        uses: actions/upload-artifact@v4
+        with:
+          name: bosphorus-snapshot
+          path: data/bosphorus_*.png
+          if-no-files-found: warn
