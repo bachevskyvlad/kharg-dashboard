@@ -29,23 +29,23 @@ config.sh_client_secret = "U1W6BcqS4bFEIJy2u9xXdlBMZPxtQMBU"
 config.sh_token_url     = "https://identity.dataspace.copernicus.eu/auth/realms/CDSE/protocol/openid-connect/token"
 config.sh_base_url      = "https://sh.dataspace.copernicus.eu"
 
-# Black Sea anchorage — ships queue north of Bosphorus entrance
-# Covers: Büyükdere + main Black Sea waiting area
-BBOX_COORDS = [28.88, 41.28, 29.22, 41.58]
+# Black Sea anchorage — wide zone north of Bosphorus entrance
+# Covers: full Black Sea waiting area + lateral anchorage zones
+BBOX_COORDS = [28.70, 41.10, 29.40, 41.70]
 
 bbox = BBox(bbox=BBOX_COORDS, crs=CRS.WGS84)
-RESOLUTION = 25  # 25m — focused zone fits within 2500px limit
+RESOLUTION = 35  # 35m — wide zone fits within 2500px limit
 size = bbox_to_dimensions(bbox, resolution=RESOLUTION)
 print(f"Image size: {size[0]}×{size[1]}px at {RESOLUTION}m/px", flush=True)
 
 # Land mask boxes — Istanbul Black Sea entrance coastline
 LAND_BOXES = [
     # European shore (west)
-    (28.88, 41.28, 29.00, 41.58),
-    # Asian shore (east, south portion)
-    (29.10, 41.28, 29.22, 41.38),
-    # Bosphorus strait northern mouth
-    (28.97, 41.28, 29.10, 41.45),
+    (28.70, 41.10, 28.98, 41.70),
+    # Asian shore (east)
+    (29.12, 41.10, 29.40, 41.50),
+    # Bosphorus strait body
+    (28.95, 41.10, 29.15, 41.50),
 ]
 
 S1_CDSE = DataCollection.SENTINEL1_IW.define_from(
