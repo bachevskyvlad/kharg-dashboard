@@ -31,23 +31,21 @@ config.sh_base_url      = "https://sh.dataspace.copernicus.eu"
 
 # Black Sea anchorage — ships queue north of Bosphorus entrance
 # Covers: Büyükdere + main Black Sea waiting area
-BBOX_COORDS = [28.90, 41.10, 29.50, 41.80]
+BBOX_COORDS = [28.88, 41.28, 29.22, 41.58]
 
 bbox = BBox(bbox=BBOX_COORDS, crs=CRS.WGS84)
-RESOLUTION = 35  # 35m — fits within Sentinel Hub 2500px limit for this bbox
+RESOLUTION = 25  # 25m — focused zone fits within 2500px limit
 size = bbox_to_dimensions(bbox, resolution=RESOLUTION)
 print(f"Image size: {size[0]}×{size[1]}px at {RESOLUTION}m/px", flush=True)
 
-# Land mask boxes — Istanbul coastline + Bosphorus strait itself
+# Land mask boxes — Istanbul Black Sea entrance coastline
 LAND_BOXES = [
-    # Istanbul European shore (west strip)
-    (28.90, 41.10, 29.00, 41.80),
-    # Istanbul Asian shore south (east, below 41.35)
-    (29.05, 41.10, 29.50, 41.30),
-    # Bosphorus strait channel
-    (28.97, 41.10, 29.08, 41.45),
-    # Istanbul city south band (avoid urban FP near strait mouth)
-    (28.90, 41.10, 29.50, 41.18),
+    # European shore (west)
+    (28.88, 41.28, 29.00, 41.58),
+    # Asian shore (east, south portion)
+    (29.10, 41.28, 29.22, 41.38),
+    # Bosphorus strait northern mouth
+    (28.97, 41.28, 29.10, 41.45),
 ]
 
 S1_CDSE = DataCollection.SENTINEL1_IW.define_from(
