@@ -24,7 +24,7 @@ jobs:
           python-version: '3.11'
 
       - name: Install dependencies
-        run: pip install sentinelhub numpy scipy pillow pandas
+        run: pip install sentinelhub numpy scipy pillow pandas cartopy
 
       - name: Run snapshot
         run: |

@@ -40,39 +40,6 @@ print(f"Image size: {size[0]}×{size[1]}px at {RESOLUTION}m/px", flush=True)
 
 # Land mask boxes — only the narrow strait body and immediate shores
 # Keep minimal: false land masking kills valid ship detections
-# Coastline polygon — traces the Black Sea shore of Istanbul + Bosphorus + Asian coast.
-# Points go clockwise: bottom edge → Asian coast → strait → European coast → bottom edge.
-# Ships anchor north of this line; everything inside the polygon is masked as land.
-LAND_POLYGON = [
-    # Bottom-left corner
-    (28.70, 41.10),
-    # European (Istanbul) Black Sea coast, west → east
-    (28.70, 41.185),
-    (28.75, 41.182),
-    (28.80, 41.183),
-    (28.85, 41.187),
-    (28.90, 41.188),
-    (28.93, 41.183),
-    (28.96, 41.175),  # Rumeli Kavagi
-    # Bosphorus strait — European side drops south, then Asian side rises north
-    (28.97, 41.165),
-    (28.98, 41.135),  # strait narrows
-    (29.02, 41.125),
-    (29.06, 41.130),
-    (29.07, 41.155),
-    (29.08, 41.175),  # Anadolu Kavagi
-    # Asian (Anatolia) Black Sea coast, west → east
-    (29.10, 41.195),
-    (29.15, 41.215),
-    (29.20, 41.215),
-    (29.25, 41.200),
-    (29.30, 41.190),
-    (29.35, 41.185),
-    (29.40, 41.180),
-    # Bottom-right corner and back
-    (29.40, 41.10),
-    (28.70, 41.10),
-]
 
 S1_CDSE = DataCollection.SENTINEL1_IW.define_from(
     "s1iw_bosphorus", service_url="https://sh.dataspace.copernicus.eu"
@@ -122,10 +89,30 @@ def adaptive_threshold(arr):
 
 
 def build_land_mask(h, w):
-    # Convert coastline polygon to pixel coords and fill with PIL
-    px_coords = [lon_lat_to_px(lon, lat) for lon, lat in LAND_POLYGON]
+    import cartopy.io.shapereader as shpreader
+    from shapely.geometry import box as shapely_box
+    from shapely.ops import unary_union
+
+    bbox_geom = shapely_box(BBOX_COORDS[0], BBOX_COORDS[1], BBOX_COORDS[2], BBOX_COORDS[3])
+    land_shp = shpreader.natural_earth(resolution='10m', category='physical', name='land')
+    reader = shpreader.Reader(land_shp)
+    polys = [g.intersection(bbox_geom) for g in reader.geometries() if g.intersects(bbox_geom)]
+    if not polys:
+        return np.zeros((h, w), dtype=bool)
+    land = unary_union(polys)
+
     mask_img = Image.new('L', (w, h), 0)
-    ImageDraw.Draw(mask_img).polygon(px_coords, fill=255)
+    draw = ImageDraw.Draw(mask_img)
+
+    def _draw(geom):
+        if geom.geom_type == 'Polygon':
+            pts = [lon_lat_to_px(x, y) for x, y in geom.exterior.coords]
+            draw.polygon(pts, fill=255)
+        elif geom.geom_type == 'MultiPolygon':
+            for part in geom.geoms:
+                _draw(part)
+
+    _draw(land)
     return np.array(mask_img) > 0
 
 
