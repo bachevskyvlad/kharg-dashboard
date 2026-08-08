@@ -89,7 +89,7 @@ def adaptive_threshold(arr):
     sea_pixels = valid[valid <= sea_level]
     if len(sea_pixels) < 100:
         return sea_level + 0.20
-    return float(np.clip(sea_level + 3.0 * sea_pixels.std(), 0.50, 0.90))
+    return float(np.clip(sea_level + 1.8 * sea_pixels.std(), 0.35, 0.90))
 
 
 def build_land_mask(h, w):
