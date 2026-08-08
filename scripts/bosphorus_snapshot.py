@@ -338,6 +338,8 @@ def _git_commit_history():
     import subprocess
     repo_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     rel_path  = os.path.relpath(HISTORY_PATH, repo_root)
+    subprocess.run(['git', '-C', repo_root, 'config', 'user.name', 'github-actions[bot]'], check=False)
+    subprocess.run(['git', '-C', repo_root, 'config', 'user.email', 'github-actions[bot]@users.noreply.github.com'], check=False)
     subprocess.run(['git', '-C', repo_root, 'add', rel_path], check=False)
     diff = subprocess.run(['git', '-C', repo_root, 'diff', '--cached', '--quiet'])
     if diff.returncode == 0:
