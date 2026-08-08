@@ -34,7 +34,7 @@ config.sh_base_url      = "https://sh.dataspace.copernicus.eu"
 BBOX_COORDS = [28.90, 41.10, 29.50, 41.80]
 
 bbox = BBox(bbox=BBOX_COORDS, crs=CRS.WGS84)
-RESOLUTION = 25  # 25m — good for individual ship detection
+RESOLUTION = 35  # 35m — fits within Sentinel Hub 2500px limit for this bbox
 size = bbox_to_dimensions(bbox, resolution=RESOLUTION)
 print(f"Image size: {size[0]}×{size[1]}px at {RESOLUTION}m/px", flush=True)
 
