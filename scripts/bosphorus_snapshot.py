@@ -113,7 +113,10 @@ def build_land_mask(h, w):
                 _draw(part)
 
     _draw(land)
-    return np.array(mask_img) > 0
+    mask = np.array(mask_img) > 0
+    # Expand mask ~4px (~140m) into sea to absorb coastal clutter
+    mask = ndimage.binary_dilation(mask, iterations=4)
+    return mask
 
 
 def classify_ship(length_m):
