@@ -41,12 +41,12 @@ print(f"Image size: {size[0]}×{size[1]}px at {RESOLUTION}m/px", flush=True)
 # Land mask boxes — only the narrow strait body and immediate shores
 # Keep minimal: false land masking kills valid ship detections
 LAND_BOXES = [
-    # European shore — Istanbul city sprawl (bright urban SAR returns)
-    (28.70, 41.10, 29.00, 41.22),
-    # Bosphorus strait mouth — only the actual strait entrance, NOT the anchorage
-    (28.97, 41.10, 29.10, 41.20),
-    # Asian shore south of anchorage
-    (29.08, 41.10, 29.40, 41.22),
+    # European shore — Istanbul urban + coast, up to Black Sea shoreline
+    (28.70, 41.10, 28.97, 41.28),
+    # Bosphorus strait mouth (narrow channel only)
+    (28.95, 41.10, 29.08, 41.20),
+    # Asian shore — Beykoz + Anadolu Kavagi coast
+    (29.06, 41.10, 29.40, 41.28),
 ]
 
 S1_CDSE = DataCollection.SENTINEL1_IW.define_from(
