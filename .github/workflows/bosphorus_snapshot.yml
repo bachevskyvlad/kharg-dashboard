@@ -36,3 +36,11 @@ jobs:
           name: bosphorus-snapshot
           path: data/bosphorus_*.png
           if-no-files-found: warn
+
+      - name: Commit PNG to repo
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add data/bosphorus_*.png
+          git diff --cached --quiet || git commit -m "chore: add bosphorus snapshot $(date -u +%Y-%m-%d)"
+          git push
