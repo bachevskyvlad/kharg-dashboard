@@ -333,6 +333,26 @@ def run_date(date_str):
             'threshold': threshold, 'path': out_path}
 
 
+def _git_commit_history():
+    """Commit history JSON to repo every N passes so runs are resumable."""
+    import subprocess
+    repo_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    rel_path  = os.path.relpath(HISTORY_PATH, repo_root)
+    subprocess.run(['git', '-C', repo_root, 'add', rel_path], check=False)
+    diff = subprocess.run(['git', '-C', repo_root, 'diff', '--cached', '--quiet'])
+    if diff.returncode == 0:
+        return
+    subprocess.run([
+        'git', '-C', repo_root, 'commit', '-m',
+        f'chore: bosphorus {REGION_ID} progress snapshot',
+    ], check=False)
+    push = subprocess.run(['git', '-C', repo_root, 'push', 'origin', 'HEAD:main'])
+    if push.returncode != 0:
+        subprocess.run(['git', '-C', repo_root, 'pull', '--rebase', 'origin', 'main'], check=False)
+        subprocess.run(['git', '-C', repo_root, 'push', 'origin', 'HEAD:main'], check=False)
+    print(f"[git] Progress committed to main ({HISTORY_PATH})")
+
+
 def main():
     global REGION_ID, REGION, BBOX_COORDS, bbox, size, S1_CDSE, HISTORY_PATH
 
@@ -381,13 +401,19 @@ def main():
         print(f"Already processed: {len(done)}  Pending: {len(pending)}")
 
         results = []
-        for d in pending:
+        for i, d in enumerate(pending):
             r = run_date(d)
             if r:
                 results.append(r)
+            # Commit progress every 25 passes so interrupted runs can resume
+            if results and (i + 1) % 25 == 0:
+                save_history(results)
+                _git_commit_history()
+                results = []
 
         if results:
             save_history(results)
+            _git_commit_history()
 
         print(f"\n{'='*65}")
         print(f"{'Date':<12} {'Total':>6} {'Cape':>5} {'PostP':>5} {'Pan':>5} {'Hmax':>5}  thr")
