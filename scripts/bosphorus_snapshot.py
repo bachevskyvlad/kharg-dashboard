@@ -40,10 +40,38 @@ print(f"Image size: {size[0]}×{size[1]}px at {RESOLUTION}m/px", flush=True)
 
 # Land mask boxes — only the narrow strait body and immediate shores
 # Keep minimal: false land masking kills valid ship detections
-LAND_BOXES = [
-    # Full southern band: Istanbul + Bosphorus + Asian coast
-    # Anchorage zone is entirely north of 41.35N — nothing valid south of this
-    (28.70, 41.10, 29.40, 41.35),
+# Coastline polygon — traces the Black Sea shore of Istanbul + Bosphorus + Asian coast.
+# Points go clockwise: bottom edge → Asian coast → strait → European coast → bottom edge.
+# Ships anchor north of this line; everything inside the polygon is masked as land.
+LAND_POLYGON = [
+    # Bottom-left corner
+    (28.70, 41.10),
+    # European (Istanbul) Black Sea coast, west → east
+    (28.70, 41.185),
+    (28.75, 41.182),
+    (28.80, 41.183),
+    (28.85, 41.187),
+    (28.90, 41.188),
+    (28.93, 41.183),
+    (28.96, 41.175),  # Rumeli Kavagi
+    # Bosphorus strait — European side drops south, then Asian side rises north
+    (28.97, 41.165),
+    (28.98, 41.135),  # strait narrows
+    (29.02, 41.125),
+    (29.06, 41.130),
+    (29.07, 41.155),
+    (29.08, 41.175),  # Anadolu Kavagi
+    # Asian (Anatolia) Black Sea coast, west → east
+    (29.10, 41.195),
+    (29.15, 41.215),
+    (29.20, 41.215),
+    (29.25, 41.200),
+    (29.30, 41.190),
+    (29.35, 41.185),
+    (29.40, 41.180),
+    # Bottom-right corner and back
+    (29.40, 41.10),
+    (28.70, 41.10),
 ]
 
 S1_CDSE = DataCollection.SENTINEL1_IW.define_from(
@@ -94,12 +122,11 @@ def adaptive_threshold(arr):
 
 
 def build_land_mask(h, w):
-    mask = np.zeros((h, w), dtype=bool)
-    for (lon0, lat0, lon1, lat1) in LAND_BOXES:
-        ix0, iy1 = lon_lat_to_px(lon0, lat0)
-        ix1, iy0 = lon_lat_to_px(lon1, lat1)
-        mask[max(0, iy0):min(h, iy1+1), max(0, ix0):min(w, ix1+1)] = True
-    return mask
+    # Convert coastline polygon to pixel coords and fill with PIL
+    px_coords = [lon_lat_to_px(lon, lat) for lon, lat in LAND_POLYGON]
+    mask_img = Image.new('L', (w, h), 0)
+    ImageDraw.Draw(mask_img).polygon(px_coords, fill=255)
+    return np.array(mask_img) > 0
 
 
 def classify_ship(length_m):
