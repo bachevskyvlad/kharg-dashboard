@@ -85,11 +85,16 @@ def adaptive_threshold(arr):
     valid = arr[np.isfinite(arr) & (arr > 0.01)]
     if len(valid) == 0:
         return 0.75
+    # If image has too many NaN pixels (>40%), use conservative threshold
+    nan_frac = (~np.isfinite(arr)).sum() / arr.size
     sea_level = np.percentile(valid, 70)
     sea_pixels = valid[valid <= sea_level]
     if len(sea_pixels) < 100:
         return sea_level + 0.20
-    return float(np.clip(sea_level + 1.8 * sea_pixels.std(), 0.35, 0.90))
+    thr = sea_level + 2.5 * sea_pixels.std()
+    # Raise floor when image is noisy (high NaN fraction = partial coverage/noise)
+    min_thr = 0.55 if nan_frac > 0.15 else 0.42
+    return float(np.clip(thr, min_thr, 0.90))
 
 
 def build_land_mask(h, w):
@@ -125,7 +130,7 @@ def detect_ships(arr):
     for i in range(1, num + 1):
         comp = (labeled == i)
         area = comp.sum()
-        if area < 2 or area > 600:
+        if area < 5 or area > 600:
             continue
         ys, xs = np.where(comp)
         length_px = max(xs.max() - xs.min(), ys.max() - ys.min()) + 1
@@ -241,9 +246,12 @@ def run_date(date_str):
     else:
         arr = raw.reshape(raw.shape[-2], raw.shape[-1])
 
-    print(f"  shape={arr.shape}  max={arr.max():.3f}  mean={arr.mean():.4f}")
+    nanmax = float(np.nanmax(arr)) if np.any(np.isfinite(arr)) else 0.0
+    nanmean = float(np.nanmean(arr)) if np.any(np.isfinite(arr)) else 0.0
+    nan_pct = (~np.isfinite(arr)).sum() / arr.size * 100
+    print(f"  shape={arr.shape}  max={nanmax:.3f}  mean={nanmean:.4f}  nan={nan_pct:.0f}%")
 
-    if arr.max() < 0.01:
+    if nanmax < 0.01:
         print("  No data for this date.")
         return None
 
