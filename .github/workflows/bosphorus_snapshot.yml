@@ -61,7 +61,10 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add data/bosphorus_*.png data/bosphorus_*_history.json
+          cp data/bosphorus_*_history.json /tmp/ 2>/dev/null || true
+          git fetch origin main
+          git reset --hard origin/main
+          cp /tmp/bosphorus_*_history.json data/ 2>/dev/null || true
+          git add data/bosphorus_*_history.json
           git diff --cached --quiet || git commit -m "chore: bosphorus snapshot $(date -u +%Y-%m-%d)"
-          git pull --rebase origin main
-          git push origin main
+          git push origin HEAD:main
