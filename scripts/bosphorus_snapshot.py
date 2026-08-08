@@ -189,11 +189,12 @@ def annotate_image(img, ships, date_str, threshold):
     return img
 
 
-def get_latest_sar_date():
-    """Find latest Sentinel-1 descending pass over the area."""
+def get_sar_dates(days_back=14, limit=None):
+    """Return sorted list of unique SAR pass dates (YYYY-MM-DD strings)."""
     try:
+        import pandas as pd
         catalog = SentinelHubCatalog(config=config)
-        start = (datetime.utcnow() - timedelta(days=14)).strftime('%Y-%m-%d')
+        start = (datetime.utcnow() - timedelta(days=days_back)).strftime('%Y-%m-%d')
         end   = datetime.utcnow().strftime('%Y-%m-%d')
         scenes = list(catalog.search(
             S1_CDSE, bbox=bbox,
@@ -201,31 +202,25 @@ def get_latest_sar_date():
             fields={"include": ["properties.datetime"]}
         ))
         if not scenes:
-            return None
-        import pandas as pd
-        dates = sorted(pd.to_datetime(s["properties"]["datetime"]) for s in scenes)
-        return dates[-1].strftime('%Y-%m-%d')
+            return []
+        raw_dates = sorted(pd.to_datetime(s["properties"]["datetime"]) for s in scenes)
+        # Deduplicate by date string (multiple scenes per pass)
+        seen, unique = set(), []
+        for d in reversed(raw_dates):
+            ds = d.strftime('%Y-%m-%d')
+            if ds not in seen:
+                seen.add(ds)
+                unique.append(ds)
+        unique.reverse()
+        return unique if limit is None else unique[-limit:]
     except Exception as e:
         print(f"Catalog error: {e}")
-        return None
+        return []
 
 
-def main():
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--date', type=str, default=None)
-    args = parser.parse_args()
-
-    if args.date:
-        date_str = args.date
-    else:
-        print("Querying catalog for latest SAR pass…")
-        date_str = get_latest_sar_date()
-        if not date_str:
-            # fallback: try last 7 days window
-            date_str = (datetime.utcnow() - timedelta(days=7)).strftime('%Y-%m-%d')
-        print(f"Latest pass: {date_str}")
-
-    print(f"Fetching SAR image for {date_str}…")
+def run_date(date_str):
+    """Fetch SAR, detect ships, save PNG. Returns result dict."""
+    print(f"\nFetching SAR image for {date_str}…")
     request = SentinelHubRequest(
         evalscript=evalscript,
         input_data=[SentinelHubRequest.input_data(
@@ -237,7 +232,6 @@ def main():
         responses=[SentinelHubRequest.output_response("default", MimeType.TIFF)],
         bbox=bbox, size=size, config=config,
     )
-
     data = request.get_data()
     raw = np.array(data[0])
     if raw.ndim == 3:
@@ -247,31 +241,77 @@ def main():
     else:
         arr = raw.reshape(raw.shape[-2], raw.shape[-1])
 
-    print(f"Image shape: {arr.shape}  max={arr.max():.3f}  mean={arr.mean():.4f}")
+    print(f"  shape={arr.shape}  max={arr.max():.3f}  mean={arr.mean():.4f}")
 
     if arr.max() < 0.01:
-        print("No data returned for this date.")
-        return
+        print("  No data for this date.")
+        return None
 
     ships, threshold, land_mask = detect_ships(arr)
-
     counts = {cls: sum(1 for s in ships if s['class'] == cls) for cls in CLASS_COLORS}
     queue_index = counts['vlcc'] + counts['suezmax'] + counts['aframax'] + counts['mr']
 
-    print(f"\n=== Bosphorus Queue — {date_str} ===")
-    print(f"Total vessels:  {len(ships)}")
-    print(f"Queue index:    {queue_index}  (VLCC+Suezmax+Aframax+MR)")
-    for cls in CLASS_COLORS:
-        print(f"  {cls.upper():10s}: {counts[cls]}")
-    print(f"Threshold:      {threshold:.3f}")
-
     img = arr_to_image(arr, land_mask)
     img = annotate_image(img, ships, date_str, threshold)
-
     os.makedirs(OUT_DIR, exist_ok=True)
     out_path = os.path.join(OUT_DIR, f"bosphorus_{date_str}.png")
     img.save(out_path)
-    print(f"\nSaved: {out_path}")
+
+    return {'date': date_str, 'total': len(ships), 'queue_index': queue_index,
+            'counts': counts, 'threshold': threshold, 'path': out_path}
+
+
+def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--date', type=str, default=None)
+    parser.add_argument('--backfill', type=int, default=None,
+                        help='Process last N SAR passes')
+    args = parser.parse_args()
+
+    if args.backfill:
+        n = args.backfill
+        print(f"Querying catalog for last {n} SAR passes (up to 90 days back)…")
+        dates = get_sar_dates(days_back=90, limit=n)
+        if not dates:
+            print("No SAR passes found.")
+            return
+        print(f"Found {len(dates)} passes: {dates}")
+        results = []
+        for d in dates:
+            r = run_date(d)
+            if r:
+                results.append(r)
+        print(f"\n{'='*60}")
+        print(f"{'Date':<12} {'Total':>6} {'QueueIdx':>9} {'VLCC':>5} {'SMAX':>5} {'AFRX':>5} {'MR':>5} {'SML':>5}  thr")
+        print(f"{'-'*60}")
+        for r in results:
+            c = r['counts']
+            print(f"{r['date']:<12} {r['total']:>6} {r['queue_index']:>9} "
+                  f"{c['vlcc']:>5} {c['suezmax']:>5} {c['aframax']:>5} "
+                  f"{c['mr']:>5} {c['small']:>5}  {r['threshold']:.3f}")
+        return
+
+    if args.date:
+        date_str = args.date
+    else:
+        print("Querying catalog for latest SAR pass…")
+        dates = get_sar_dates(days_back=14, limit=1)
+        if dates:
+            date_str = dates[-1]
+        else:
+            date_str = (datetime.utcnow() - timedelta(days=7)).strftime('%Y-%m-%d')
+        print(f"Latest pass: {date_str}")
+
+    r = run_date(date_str)
+    if not r:
+        return
+    print(f"\n=== Bosphorus Queue — {r['date']} ===")
+    print(f"Total vessels:  {r['total']}")
+    print(f"Queue index:    {r['queue_index']}  (VLCC+Suezmax+Aframax+MR)")
+    for cls in CLASS_COLORS:
+        print(f"  {cls.upper():10s}: {r['counts'][cls]}")
+    print(f"Threshold:      {r['threshold']:.3f}")
+    print(f"\nSaved: {r['path']}")
 
 
 if __name__ == '__main__':
