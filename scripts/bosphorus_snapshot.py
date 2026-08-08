@@ -33,14 +33,16 @@ config.sh_base_url      = "https://sh.dataspace.copernicus.eu"
 
 REGIONS = {
     'black_sea': {
-        'bbox':  [28.70, 41.10, 29.40, 41.70],
-        'label': 'Bosphorus Black Sea anchorage',
-        'desc':  'Vessels queuing northbound into the Black Sea',
+        'bbox':     [28.70, 41.10, 29.40, 41.70],
+        'label':    'Bosphorus Black Sea anchorage',
+        'desc':     'Vessels queuing northbound into the Black Sea',
+        'dilation': 25,
     },
     'marmara': {
-        'bbox':  [28.40, 40.78, 29.40, 41.08],
-        'label': 'Bosphorus Marmara anchorage',
-        'desc':  'Vessels queuing southbound into the Marmara Sea',
+        'bbox':     [28.40, 40.78, 29.40, 41.08],
+        'label':    'Bosphorus Marmara anchorage',
+        'desc':     'Vessels queuing southbound into the Marmara Sea',
+        'dilation': 35,
     },
 }
 
@@ -135,8 +137,7 @@ def build_land_mask(h, w):
 
     _draw(land)
     mask = np.array(mask_img) > 0
-    # ~875m coastal buffer to absorb clutter
-    mask = ndimage.binary_dilation(mask, iterations=25)
+    mask = ndimage.binary_dilation(mask, iterations=REGION['dilation'])
 
     # Mask Bosphorus strait channel — ships there are in transit, not anchorage
     x0, y1 = lon_lat_to_px(28.94, 41.10)
