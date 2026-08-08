@@ -36,6 +36,28 @@ body {
   min-height: 100vh;
 }
 
+/* SWITCHER */
+.switcher {
+  display: flex; gap: 0;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface);
+  margin: 0 -24px;
+  padding: 0 24px;
+}
+.sw-btn {
+  display: flex; flex-direction: column; gap: 2px;
+  padding: 14px 28px 14px 16px;
+  background: none; border: none; border-bottom: 2px solid transparent;
+  color: var(--muted); cursor: pointer; text-align: left;
+  font-family: var(--mono); font-size: 12px; letter-spacing: .08em;
+  text-transform: uppercase; transition: color .15s, border-color .15s;
+  margin-bottom: -1px;
+}
+.sw-btn:hover { color: var(--text-2); }
+.sw-btn.active { color: var(--accent); border-bottom-color: var(--accent); }
+.sw-arrow { font-size: 14px; }
+.sw-sub { font-size: 10px; letter-spacing: .06em; text-transform: none; color: inherit; opacity: .7; }
+
 /* HEADER */
 .hdr {
   display: flex; align-items: center; justify-content: space-between;
@@ -214,8 +236,20 @@ body {
 
 <div class="page">
 
+  <!-- REGION SWITCHER -->
+  <div class="switcher">
+    <button class="sw-btn active" id="sw-north" data-region="black_sea">
+      <span class="sw-arrow">↑</span> North anchorage
+      <span class="sw-sub">Black Sea · waiting to transit south</span>
+    </button>
+    <button class="sw-btn" id="sw-south" data-region="marmara">
+      <span class="sw-arrow">↓</span> South anchorage
+      <span class="sw-sub">Marmara Sea · waiting to transit north</span>
+    </button>
+  </div>
+
   <section class="hero">
-    <div class="hero-eye">Bosphorus Black Sea Anchorage &nbsp;·&nbsp; Sentinel-1 SAR &nbsp;·&nbsp; Live Queue Intelligence</div>
+    <div class="hero-eye" id="hero-eye">Bosphorus Black Sea Anchorage &nbsp;·&nbsp; Sentinel-1 SAR &nbsp;·&nbsp; Live Queue Intelligence</div>
     <div class="hero-body">
       <div>
         <div class="idx-label">Queue Index</div>
@@ -298,6 +332,14 @@ const CLS = {
   panamax:     { label: 'Panamax',      size: '≥ 220 m', color: '#eab308' },
   handymax:    { label: 'Handymax',     size: '≥ 100 m', color: '#22c55e' },
 };
+const REGIONS = {
+  black_sea: { label: 'Bosphorus Black Sea Anchorage', eye: 'North Anchorage · Black Sea · Sentinel-1 SAR' },
+  marmara:   { label: 'Bosphorus Marmara Anchorage',   eye: 'South Anchorage · Marmara Sea · Sentinel-1 SAR' },
+};
+
+// Cache loaded data per region
+const cache = {};
+let activeRegion = 'black_sea';
 
 function state(i) { return i >= 130 ? 'hi' : i >= 70 ? 'ok' : 'lo'; }
 function stateLabel(i) {
@@ -318,131 +360,128 @@ function monthlyAvgs(passes) {
   return out;
 }
 
-function renderHero(latest, avgs) {
+function renderAll(region, passes) {
+  const avgs = monthlyAvgs(passes);
+  const latest = passes[passes.length-1];
+
+  // eyebrow
+  document.getElementById('hero-eye').textContent = REGIONS[region].eye;
+
+  // hero
   const m = latest.date.slice(5,7);
   const avg = avgs[m] || latest.total;
   const idx = Math.round(latest.total / avg * 100);
   const st = state(idx);
-
   const el = document.getElementById('idx');
-  el.textContent = idx;
-  el.className = 'idx-val ' + st;
-
+  el.textContent = idx; el.className = 'idx-val ' + st;
   const badge = document.getElementById('badge');
-  badge.textContent = stateLabel(idx);
-  badge.className = 'idx-badge ' + st;
+  badge.textContent = stateLabel(idx); badge.className = 'idx-badge ' + st;
+  document.getElementById('ts').textContent = 'Latest pass: ' + latest.date + '  ·  Sentinel-1 SAR';
 
-  document.getElementById('ts').textContent =
-    'Latest pass: ' + latest.date + '  ·  Sentinel-1 SAR';
-}
-
-function renderStats(passes, latest, avgs) {
-  const m = latest.date.slice(5,7);
-  const avg = avgs[m] || latest.total;
-  const mname = new Date(latest.date + 'T12:00:00Z')
-    .toLocaleString('en',{month:'long'});
+  // stats
+  const mname = new Date(latest.date + 'T12:00:00Z').toLocaleString('en',{month:'long'});
   document.getElementById('s-total').textContent = latest.total;
   document.getElementById('s-date').textContent = latest.date;
   document.getElementById('s-avg').textContent = Math.round(avg);
   document.getElementById('s-avgp').textContent = mname + ' · 10-yr avg';
   document.getElementById('s-passes').textContent = passes.length;
-  const y0 = passes[0].date.slice(0,4);
-  const y1 = passes[passes.length-1].date.slice(0,4);
+  const y0 = passes[0].date.slice(0,4), y1 = passes[passes.length-1].date.slice(0,4);
   document.getElementById('s-span').textContent = y0 === y1 ? y0 : y0 + '–' + y1;
+
+  // chart
+  renderChart(passes);
+
+  // breakdown
+  const total = latest.total||1;
+  document.getElementById('bd').innerHTML = Object.entries(CLS).map(([k,meta])=>{
+    const cnt = latest[k]||0, pct = Math.round(cnt/total*100);
+    return `<div class="bc">
+      <div class="bc-hd"><span class="bc-name">${meta.label}</span><span class="bc-size">${meta.size}</span></div>
+      <div class="bc-count" style="color:${meta.color}">${cnt}</div>
+      <div class="bar-track"><div class="bar-fill" style="width:${pct}%;background:${meta.color}"></div></div>
+    </div>`;
+  }).join('');
+}
+
+function renderEmpty(msg) {
+  document.getElementById('idx').textContent = '—';
+  document.getElementById('idx').className = 'idx-val';
+  document.getElementById('badge').textContent = 'No data yet';
+  document.getElementById('badge').className = 'idx-badge lo';
+  document.getElementById('ts').textContent = msg;
+  document.getElementById('chart-ph').style.display = 'flex';
+  document.getElementById('chart-ph').textContent = 'Data loading — check back after backfill completes.';
+  document.getElementById('chart').style.display = 'none';
+  document.getElementById('bd').innerHTML = '<div class="placeholder">No data yet</div>';
+  ['s-total','s-date','s-avg','s-avgp','s-passes','s-span'].forEach(id => {
+    document.getElementById(id).textContent = '—';
+  });
 }
 
 function renderChart(passes) {
   document.getElementById('chart-ph').style.display = 'none';
   const svg = document.getElementById('chart');
   svg.style.display = 'block';
-
   const W=1000,H=220,ML=44,MR=16,MT=18,MB=30;
   const cw=W-ML-MR, ch=H-MT-MB;
   const vals = passes.map(p=>p.total);
   const maxV = Math.max(...vals,1);
-
   const xs = i => ML + (i/Math.max(passes.length-1,1))*cw;
   const ys = v => MT + ch - (v/maxV)*ch;
-
   let grid='', xax='';
-  const ticks = [];
-  for (let v=0; v<=maxV+4; v+=10) { if(v<=maxV+4) ticks.push(v); }
-  for (const v of ticks) {
+  for (let v=0; v<=maxV+4; v+=10) {
     const y=ys(v);
     grid += `<line x1="${ML}" y1="${y}" x2="${W-MR}" y2="${y}" stroke="#192436" stroke-width="1"/>`;
     grid += `<text x="${ML-6}" y="${y+4}" text-anchor="end" fill="#3d5878" font-size="9" font-family="Courier New,monospace">${v}</text>`;
   }
-  const years = {};
-  passes.forEach((p,i)=>{
-    const yr=p.date.slice(0,4);
-    if(!years[yr]){ years[yr]=i; xax+=`<text x="${xs(i)}" y="${H-6}" text-anchor="middle" fill="#3d5878" font-size="9" font-family="Courier New,monospace">${yr}</text>`; }
-  });
-
+  const years={};
+  passes.forEach((p,i)=>{ const yr=p.date.slice(0,4); if(!years[yr]){ years[yr]=i; xax+=`<text x="${xs(i)}" y="${H-6}" text-anchor="middle" fill="#3d5878" font-size="9" font-family="Courier New,monospace">${yr}</text>`; }});
   const n=passes.length;
   let aD=`M${xs(0)},${MT+ch} L${xs(0)},${ys(vals[0])}`;
   for(let i=1;i<n;i++) aD+=` L${xs(i)},${ys(vals[i])}`;
   aD+=` L${xs(n-1)},${MT+ch} Z`;
-
   let lD=`M${xs(0)},${ys(vals[0])}`;
   for(let i=1;i<n;i++) lD+=` L${xs(i)},${ys(vals[i])}`;
-
   const lx=xs(n-1), ly=ys(vals[n-1]);
-
   svg.innerHTML = `
-    <defs>
-      <linearGradient id="ag" x1="0" y1="0" x2="0" y2="1">
-        <stop offset="0%" stop-color="#0fb8d0" stop-opacity=".22"/>
-        <stop offset="100%" stop-color="#0fb8d0" stop-opacity=".02"/>
-      </linearGradient>
-    </defs>
+    <defs><linearGradient id="ag" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#0fb8d0" stop-opacity=".22"/>
+      <stop offset="100%" stop-color="#0fb8d0" stop-opacity=".02"/>
+    </linearGradient></defs>
     ${grid}
     <path d="${aD}" fill="url(#ag)"/>
     <path d="${lD}" fill="none" stroke="#0fb8d0" stroke-width="1.5" stroke-linejoin="round"/>
     ${xax}
     <circle cx="${lx}" cy="${ly}" r="4.5" fill="#0fb8d0" stroke="#0d1420" stroke-width="2"/>
-    <text x="${lx}" y="${ly-11}" text-anchor="middle" fill="#0fb8d0" font-size="10" font-family="Courier New,monospace">${vals[n-1]}</text>
-  `;
+    <text x="${lx}" y="${ly-11}" text-anchor="middle" fill="#0fb8d0" font-size="10" font-family="Courier New,monospace">${vals[n-1]}</text>`;
 }
 
-function renderBreakdown(latest) {
-  const total = latest.total||1;
-  document.getElementById('bd').innerHTML = Object.entries(CLS).map(([k,m])=>{
-    const cnt = latest[k]||0;
-    const pct = Math.round(cnt/total*100);
-    return `
-      <div class="bc">
-        <div class="bc-hd">
-          <span class="bc-name">${m.label}</span>
-          <span class="bc-size">${m.size}</span>
-        </div>
-        <div class="bc-count" style="color:${m.color}">${cnt}</div>
-        <div class="bar-track"><div class="bar-fill" style="width:${pct}%;background:${m.color}"></div></div>
-      </div>`;
-  }).join('');
-}
-
-async function init(){
+async function loadRegion(region) {
+  if (cache[region]) return cache[region];
   try {
-    const r = await fetch('/data/bosphorus_history.json');
-    if(!r.ok) throw 0;
+    const r = await fetch(`/data/bosphorus_${region}_history.json`);
+    if (!r.ok) throw 0;
     const data = await r.json();
     const passes = data.passes||[];
-    if(!passes.length) throw 0;
-    const avgs = monthlyAvgs(passes);
-    const latest = passes[passes.length-1];
-    renderHero(latest, avgs);
-    renderStats(passes, latest, avgs);
-    renderChart(passes);
-    renderBreakdown(latest);
-  } catch {
-    document.getElementById('idx').textContent = '—';
-    document.getElementById('badge').textContent = 'Data loading';
-    document.getElementById('ts').textContent = 'Historical backfill in progress — check back shortly';
-    document.getElementById('chart-ph').textContent = 'Historical data will appear after the 10-year backfill completes.';
-    document.getElementById('bd').innerHTML = '<div class="placeholder">No data yet</div>';
-  }
+    if (!passes.length) throw 0;
+    cache[region] = passes;
+    return passes;
+  } catch { return null; }
 }
-init();
+
+async function switchTo(region) {
+  activeRegion = region;
+  document.querySelectorAll('.sw-btn').forEach(b => b.classList.toggle('active', b.dataset.region === region));
+  const passes = await loadRegion(region);
+  if (passes) renderAll(region, passes);
+  else renderEmpty('Backfill in progress — check back shortly');
+}
+
+document.querySelectorAll('.sw-btn').forEach(btn => {
+  btn.addEventListener('click', () => switchTo(btn.dataset.region));
+});
+
+switchTo('black_sea');
 </script>
 
 </body>
