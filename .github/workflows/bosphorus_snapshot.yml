@@ -43,4 +43,5 @@ jobs:
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add data/bosphorus_*.png
           git diff --cached --quiet || git commit -m "chore: add bosphorus snapshot $(date -u +%Y-%m-%d)"
-          git push
+          git pull --rebase origin main
+          git push origin main
