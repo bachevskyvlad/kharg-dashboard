@@ -180,7 +180,9 @@ footer{background:var(--panel);border-top:1px solid var(--border);padding:32px 4
         <button class="filter-btn" data-range="6">6M</button>
         <button class="filter-btn" data-range="12">1Y</button>
         <button class="filter-btn" data-range="0">All</button>
+        <button class="filter-btn" id="outlier-btn" title="Show/hide statistical outliers (sea clutter)">±σ</button>
       </div>
+      <div id="outlier-note" style="font-family:'DM Mono',monospace;font-size:9px;letter-spacing:1px;color:#64748b;margin-top:6px;width:100%;"></div>
     </div>
     <div class="chart-area"><canvas id="chartTotal"></canvas></div>
   </div>
@@ -243,11 +245,22 @@ const REGION_META = {
   marmara:   { label:'South Anchorage · Marmara Sea · Sentinel-1 SAR' },
 };
 
-let activeRegion = 'black_sea';
-let activeRange  = 3;
+let activeRegion  = 'black_sea';
+let activeRange   = 3;
+let showOutliers  = false;
 const cache = {};
-let chartTotal   = null;
-let chartClasses = null;
+let chartTotal    = null;
+let chartClasses  = null;
+
+// Outlier detection: median + 4×MAD (robust to heavy-tailed distributions)
+function computeOutlierCap(passes){
+  const totals = passes.map(p => p.total).sort((a,b)=>a-b);
+  const n = totals.length;
+  const med = n % 2 === 0 ? (totals[n/2-1]+totals[n/2])/2 : totals[(n-1)/2];
+  const mad = [...totals].map(t => Math.abs(t - med)).sort((a,b)=>a-b);
+  const medMad = n % 2 === 0 ? (mad[n/2-1]+mad[n/2])/2 : mad[(n-1)/2];
+  return Math.round(med + 4 * medMad * 1.4826);
+}
 
 function state(i){ return i >= 130 ? 'hi' : i >= 70 ? 'ok' : 'lo'; }
 function stateLabel(i){
@@ -271,9 +284,27 @@ function filterByRange(passes, months){
 }
 
 function renderPage(region, allPasses){
-  const avgs   = monthlyAvgs(allPasses);
+  const cap    = computeOutlierCap(allPasses);
+  const clean  = allPasses.filter(p => p.total <= cap);
+  const avgs   = monthlyAvgs(clean);
   const latest = allPasses[allPasses.length - 1];
-  const filtered = filterByRange(allPasses, activeRange);
+
+  // Apply range filter then optionally outlier filter
+  let filtered = filterByRange(allPasses, activeRange);
+  const rangeOutliers = filtered.filter(p => p.total > cap).length;
+  if(!showOutliers) filtered = filtered.filter(p => p.total <= cap);
+
+  // Update outlier note
+  const note = document.getElementById('outlier-note');
+  if(note){
+    if(!showOutliers && rangeOutliers > 0){
+      note.textContent = `${rangeOutliers} pass${rangeOutliers>1?'es':''} excluded as probable sea clutter (>${cap} vessels). Click ±σ to show.`;
+    } else if(showOutliers && rangeOutliers > 0){
+      note.textContent = `${rangeOutliers} outlier pass${rangeOutliers>1?'es':''} shown (>${cap} vessels — probable sea clutter).`;
+    } else {
+      note.textContent = '';
+    }
+  }
 
   // hero label
   document.getElementById('hero-label').textContent = REGION_META[region].label;
@@ -464,6 +495,14 @@ document.querySelectorAll('.filter-btn').forEach(btn => {
     const passes = cache[activeRegion];
     if(passes) renderPage(activeRegion, passes);
   });
+});
+
+// Outlier toggle
+document.getElementById('outlier-btn').addEventListener('click', () => {
+  showOutliers = !showOutliers;
+  document.getElementById('outlier-btn').classList.toggle('active', showOutliers);
+  const passes = cache[activeRegion];
+  if(passes) renderPage(activeRegion, passes);
 });
 
 switchTo('black_sea');
