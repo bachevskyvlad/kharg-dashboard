@@ -23,7 +23,7 @@ config.sh_base_url      = "https://sh.dataspace.copernicus.eu"
 
 ZONES = {
     "aegean_entrance": {
-        "bbox":     [25.65, 39.88, 26.15, 40.12],  # open Aegean, west of strait entrance
+        "bbox":     [25.62, 39.70, 26.22, 39.98],  # centered ~39.83N 25.92E
         "label":    "Dardanelles — Aegean entrance",
         "dilation": 30,
     },
