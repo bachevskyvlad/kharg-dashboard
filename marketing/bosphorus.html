@@ -3,486 +3,470 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Bosphorus Vessel Queue — OilRadar Intelligence</title>
-<meta name="description" content="Satellite-derived vessel queue at the Bosphorus Black Sea anchorage. SAR queue index vs 10-year historical baseline, updated every 6 days.">
+<title>Bosphorus Vessel Queue — Sentinel-1 SAR Intelligence | OilRadar</title>
+<meta name="description" content="Live Bosphorus Strait vessel queue data — track tanker congestion at the Black Sea and Marmara anchorages via Sentinel-1 SAR satellite. Updated every ~6 days.">
+<link rel="icon" type="image/x-icon" href="/assets/images/favicon.ico">
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-TZQ5VH3GPY"></script>
 <script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','G-TZQ5VH3GPY');</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@300;400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+<noscript><link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@300;400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"></noscript>
+<script src="/public/vendor/chart.min.js"></script>
 <style>
-:root {
-  --bg:          #070b10;
-  --surface:     #0d1420;
-  --surface-2:   #121c2e;
-  --border:      #192436;
-  --border-2:    #0f1a28;
-  --text:        #cfdff2;
-  --text-2:      #8aabcc;
-  --muted:       #3d5878;
-  --accent:      #0fb8d0;
-  --accent-dim:  #0a8fa0;
-  --hi:          #f59e0b;
-  --ok:          #22c55e;
-  --lo:          #4a6a9a;
-  --mono: "Courier New", Courier, monospace;
-  --sans: system-ui, -apple-system, "Segoe UI", sans-serif;
-}
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-html { scroll-behavior: smooth; }
-body {
-  background: var(--bg);
-  color: var(--text);
-  font-family: var(--sans);
-  font-size: 15px;
-  line-height: 1.6;
-  min-height: 100vh;
-}
+:root{--bg:#0a0e17;--deep:#0d1320;--panel:#111827;--border:rgba(255,255,255,0.07);--accent:#3b82f6;--accent2:#ef4444;--gold:#f59e0b;--ok:#22c55e;--text:#e2e8f0;--muted:#94a3b8;--dim:#64748b;--white:#f8fafc;}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;overflow-x:hidden;min-height:100vh;display:flex;flex-direction:column;}
+nav{position:fixed;top:0;left:0;right:0;z-index:100;display:flex;align-items:center;justify-content:space-between;padding:16px 32px;background:rgba(10,14,23,0.97);backdrop-filter:blur(12px);border-bottom:1px solid var(--border);}
+.logo{font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:4px;color:var(--accent);text-decoration:none;}
+.nav-links{display:flex;align-items:center;gap:24px;}
+.nav-link{font-family:'DM Mono',monospace;font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);text-decoration:none;transition:color .2s;}
+.nav-link:hover{color:var(--accent);}
+.nav-cta{font-family:'DM Mono',monospace;font-size:11px;letter-spacing:2px;text-transform:uppercase;background:transparent;border:1px solid var(--accent);color:var(--accent);padding:8px 20px;cursor:pointer;transition:all .2s;text-decoration:none;}
+.nav-cta:hover{background:var(--accent);color:var(--white);}
+main{flex:1;padding:100px 32px 80px;max-width:1400px;margin:0 auto;width:100%;}
 
 /* SWITCHER */
-.switcher {
-  display: flex; gap: 0;
-  border-bottom: 1px solid var(--border);
-  background: var(--surface);
-  margin: 0 -24px;
-  padding: 0 24px;
-}
-.sw-btn {
-  display: flex; flex-direction: column; gap: 2px;
-  padding: 14px 28px 14px 16px;
-  background: none; border: none; border-bottom: 2px solid transparent;
-  color: var(--muted); cursor: pointer; text-align: left;
-  font-family: var(--mono); font-size: 12px; letter-spacing: .08em;
-  text-transform: uppercase; transition: color .15s, border-color .15s;
-  margin-bottom: -1px;
-}
-.sw-btn:hover { color: var(--text-2); }
-.sw-btn.active { color: var(--accent); border-bottom-color: var(--accent); }
-.sw-arrow { font-size: 14px; }
-.sw-sub { font-size: 10px; letter-spacing: .06em; text-transform: none; color: inherit; opacity: .7; }
-
-/* HEADER */
-.hdr {
-  display: flex; align-items: center; justify-content: space-between;
-  padding: 16px 32px;
-  border-bottom: 1px solid var(--border);
-  background: var(--surface);
-  position: sticky; top: 0; z-index: 10;
-}
-.hdr-logo {
-  font-family: var(--mono); font-size: 13px; letter-spacing: .12em;
-  text-transform: uppercase; color: var(--accent); text-decoration: none;
-}
-.hdr-logo em { color: var(--muted); font-style: normal; }
-.hdr-nav { display: flex; gap: 28px; }
-.hdr-nav a {
-  font-family: var(--mono); font-size: 11px; letter-spacing: .1em;
-  text-transform: uppercase; color: var(--muted); text-decoration: none;
-  transition: color .15s;
-}
-.hdr-nav a:hover { color: var(--text); }
-
-/* PAGE */
-.page { max-width: 1160px; margin: 0 auto; padding: 0 24px 80px; }
+.switcher{display:flex;gap:0;border-bottom:1px solid var(--border);background:var(--panel);margin:0 -32px 40px;padding:0 32px;}
+.sw-btn{display:flex;flex-direction:column;gap:3px;padding:16px 32px 16px 0;background:none;border:none;border-bottom:2px solid transparent;color:var(--muted);cursor:pointer;text-align:left;margin-bottom:-1px;transition:color .15s,border-color .15s;}
+.sw-btn:hover{color:var(--text);}
+.sw-btn.active{color:var(--accent);border-bottom-color:var(--accent);}
+.sw-name{font-family:'DM Mono',monospace;font-size:11px;letter-spacing:3px;text-transform:uppercase;}
+.sw-sub{font-family:'DM Sans',sans-serif;font-size:12px;color:inherit;opacity:.65;}
 
 /* HERO */
-.hero { padding: 56px 0 48px; border-bottom: 1px solid var(--border); }
-.hero-eye {
-  font-family: var(--mono); font-size: 11px; letter-spacing: .18em;
-  text-transform: uppercase; color: var(--accent); margin-bottom: 24px;
-}
-.hero-body {
-  display: grid; grid-template-columns: auto 1fr;
-  gap: 0 64px; align-items: end;
-}
-.idx-label {
-  font-family: var(--mono); font-size: 11px; letter-spacing: .14em;
-  text-transform: uppercase; color: var(--muted); margin-bottom: 6px;
-}
-.idx-val {
-  font-size: clamp(88px, 13vw, 164px);
-  font-weight: 700; line-height: .88;
-  letter-spacing: -.04em;
-  font-variant-numeric: tabular-nums;
-  color: var(--text); transition: color .5s;
-}
-.idx-val.hi { color: var(--hi); }
-.idx-val.ok { color: var(--ok); }
-.idx-val.lo { color: var(--lo); }
+.hero-row{display:grid;grid-template-columns:auto 1fr;gap:0 64px;align-items:end;margin-bottom:40px;}
+.section-label{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:4px;text-transform:uppercase;color:var(--accent);margin-bottom:12px;}
+.section-title{font-family:'Bebas Neue',sans-serif;font-size:clamp(40px,5vw,64px);line-height:1;color:var(--text);letter-spacing:1px;}
+.queue-idx{font-family:'Bebas Neue',sans-serif;font-size:clamp(96px,14vw,180px);line-height:.88;letter-spacing:-2px;color:var(--text);transition:color .4s;}
+.queue-idx.hi{color:var(--accent2);}
+.queue-idx.ok{color:var(--ok);}
+.queue-idx.lo{color:var(--muted);}
+.hero-right{display:flex;flex-direction:column;gap:16px;padding-bottom:12px;}
+.status-badge{display:inline-flex;align-items:center;gap:8px;font-family:'DM Mono',monospace;font-size:11px;letter-spacing:2px;text-transform:uppercase;padding:7px 16px;border:1px solid currentColor;width:fit-content;}
+.status-badge::before{content:'';width:6px;height:6px;border-radius:50%;background:currentColor;}
+.status-badge.hi{color:var(--accent2);}
+.status-badge.ok{color:var(--ok);}
+.status-badge.lo{color:var(--muted);}
+.hero-desc{font-size:14px;color:var(--muted);max-width:460px;line-height:1.75;}
+.hero-ts{font-family:'DM Mono',monospace;font-size:11px;color:var(--dim);letter-spacing:1px;}
 
-.hero-right {
-  display: flex; flex-direction: column; gap: 18px;
-  padding-bottom: 10px;
-}
-.idx-badge {
-  display: inline-flex; align-items: center; gap: 8px;
-  font-family: var(--mono); font-size: 12px; letter-spacing: .1em;
-  text-transform: uppercase; padding: 6px 14px;
-  border: 1px solid currentColor; border-radius: 2px;
-  width: fit-content;
-}
-.idx-badge::before {
-  content: ''; width: 6px; height: 6px; border-radius: 50%;
-  background: currentColor;
-}
-.idx-badge.hi { color: var(--hi); background: rgba(245,158,11,.08); }
-.idx-badge.ok { color: var(--ok); background: rgba(34,197,94,.08); }
-.idx-badge.lo { color: var(--lo); background: rgba(74,106,154,.08); }
+/* STATS */
+.stat-row{display:grid;grid-template-columns:repeat(4,1fr);border:1px solid var(--border);margin-bottom:32px;}
+.stat-cell{padding:24px 28px;border-right:1px solid var(--border);}
+.stat-cell:last-child{border-right:none;}
+.stat-lbl{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:3px;text-transform:uppercase;color:var(--muted);margin-bottom:10px;}
+.stat-val{font-family:'Bebas Neue',sans-serif;font-size:clamp(32px,3vw,44px);line-height:1;color:var(--text);letter-spacing:1px;}
+.stat-sub{font-family:'DM Mono',monospace;font-size:10px;color:var(--dim);margin-top:6px;}
 
-.hero-desc { font-size: 14px; color: var(--muted); max-width: 440px; line-height: 1.75; }
-.hero-ts { font-family: var(--mono); font-size: 11px; color: var(--muted); letter-spacing: .06em; }
+/* MONITOR PANEL */
+.monitor-wrap{background:var(--panel);border:1px solid var(--border);padding:28px 32px;margin-bottom:24px;}
+.monitor-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:12px;}
+.monitor-title{font-family:'DM Mono',monospace;font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--accent);}
+.chart-area{height:320px;position:relative;}
 
-/* STATS ROW */
-.stats {
-  display: grid; grid-template-columns: repeat(4,1fr);
-  border-bottom: 1px solid var(--border);
-}
-.stat {
-  padding: 28px 24px; border-right: 1px solid var(--border);
-}
-.stat:last-child { border-right: none; }
-.stat-lbl {
-  font-family: var(--mono); font-size: 10px; letter-spacing: .16em;
-  text-transform: uppercase; color: var(--muted); margin-bottom: 8px;
-}
-.stat-v {
-  font-size: 34px; font-weight: 700; font-variant-numeric: tabular-nums;
-  letter-spacing: -.02em; line-height: 1; color: var(--text);
-}
-.stat-sub { font-family: var(--mono); font-size: 11px; color: var(--muted); margin-top: 6px; }
+/* DATE FILTER */
+.filter-group{display:flex;gap:4px;}
+.filter-btn{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:2px;text-transform:uppercase;background:transparent;border:1px solid var(--border);color:var(--muted);padding:5px 12px;cursor:pointer;transition:all .2s;}
+.filter-btn:hover{border-color:var(--accent);color:var(--text);}
+.filter-btn.active{background:var(--accent);color:var(--white);border-color:var(--accent);}
 
-/* SECTIONS */
-.sec { padding: 44px 0; border-bottom: 1px solid var(--border); }
-.sec-ttl {
-  font-family: var(--mono); font-size: 11px; letter-spacing: .18em;
-  text-transform: uppercase; color: var(--accent); margin-bottom: 22px;
-}
+/* CLASS BREAKDOWN */
+.class-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--border);border:1px solid var(--border);margin-bottom:24px;}
+.class-cell{background:var(--panel);padding:24px 24px 20px;}
+.class-name{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:3px;text-transform:uppercase;color:var(--muted);margin-bottom:4px;}
+.class-size{font-family:'DM Mono',monospace;font-size:9px;color:var(--dim);margin-bottom:14px;}
+.class-count{font-family:'Bebas Neue',sans-serif;font-size:clamp(40px,4vw,56px);line-height:1;letter-spacing:1px;margin-bottom:14px;}
+.bar-track{height:3px;background:rgba(255,255,255,0.06);}
+.bar-fill{height:100%;transition:width .6s ease;}
 
-/* CHART */
-.chart-wrap {
-  width: 100%; overflow-x: auto;
-  background: var(--surface); border: 1px solid var(--border);
-  border-radius: 2px; padding: 20px 16px 8px;
-}
-#chart { width: 100%; height: auto; display: block; }
+/* EXPLAIN GRID */
+.explain-grid{display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-top:32px;}
+.explain-card{border:1px solid rgba(59,130,246,0.15);padding:24px;background:var(--deep);}
+.explain-card h4{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:3px;text-transform:uppercase;color:var(--muted);margin-bottom:12px;}
+.explain-card p{font-size:13px;line-height:1.75;color:var(--text);}
+.explain-card p+p{margin-top:8px;}
+.explain-card p.muted{color:var(--muted);font-size:12px;margin-top:10px;}
 
-/* BREAKDOWN */
-.bdgrid {
-  display: grid; grid-template-columns: 1fr 1fr; gap: 14px;
-}
-.bc {
-  background: var(--surface); border: 1px solid var(--border);
-  border-radius: 2px; padding: 20px 22px;
-}
-.bc-hd {
-  display: flex; justify-content: space-between; align-items: baseline;
-  margin-bottom: 10px;
-}
-.bc-name {
-  font-family: var(--mono); font-size: 11px; letter-spacing: .1em;
-  text-transform: uppercase; color: var(--text-2);
-}
-.bc-size { font-family: var(--mono); font-size: 10px; color: var(--muted); }
-.bc-count {
-  font-size: 40px; font-weight: 700; font-variant-numeric: tabular-nums;
-  line-height: 1; margin-bottom: 12px;
-}
-.bar-track {
-  height: 3px; background: var(--border-2); border-radius: 2px; overflow: hidden;
-}
-.bar-fill { height: 100%; border-radius: 2px; transition: width .7s ease; }
+footer{background:var(--panel);border-top:1px solid var(--border);padding:32px 48px;display:flex;align-items:center;justify-content:space-between;margin-top:auto;}
+.footer-logo{font-family:'Bebas Neue',sans-serif;font-size:24px;letter-spacing:6px;color:var(--accent);}
+.footer-right{display:flex;align-items:center;gap:32px;}
+.footer-link{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);text-decoration:none;}
+.footer-link:hover{color:var(--accent);}
+.footer-text{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:1px;color:var(--dim);}
 
-/* METHODOLOGY */
-.meth { padding: 44px 0 0; display: grid; grid-template-columns: 1fr 1fr; gap: 48px; }
-.meth-blk h3 {
-  font-family: var(--mono); font-size: 11px; letter-spacing: .14em;
-  text-transform: uppercase; color: var(--accent-dim); margin-bottom: 12px;
-}
-.meth-blk p { font-size: 13px; color: var(--muted); line-height: 1.8; }
-.meth-blk p + p { margin-top: 10px; }
-
-/* FOOTER */
-.ftr {
-  border-top: 1px solid var(--border); margin-top: 60px;
-  display: flex; justify-content: space-between; align-items: center;
-  padding: 22px 32px;
-  font-family: var(--mono); font-size: 11px; color: var(--muted);
-}
-.ftr a { color: var(--accent-dim); text-decoration: none; }
-.ftr a:hover { color: var(--accent); }
-
-.placeholder {
-  display: flex; align-items: center; justify-content: center;
-  height: 180px; font-family: var(--mono); font-size: 12px;
-  color: var(--muted); letter-spacing: .08em;
-}
-
-@media (max-width: 740px) {
-  .hero-body { grid-template-columns: 1fr; }
-  .stats { grid-template-columns: repeat(2,1fr); }
-  .bdgrid { grid-template-columns: 1fr; }
-  .meth { grid-template-columns: 1fr; }
-  .hdr { padding: 12px 16px; }
-  .page { padding: 0 16px 60px; }
+@media(max-width:900px){
+  nav{padding:14px 16px;}main{padding:90px 16px 60px;}
+  .switcher{margin:0 -16px 32px;padding:0 16px;}
+  .hero-row{grid-template-columns:1fr;gap:24px;}
+  .stat-row{grid-template-columns:1fr 1fr;}
+  .class-grid{grid-template-columns:1fr 1fr;}
+  .explain-grid{grid-template-columns:1fr;}
+  footer{flex-direction:column;gap:16px;text-align:center;padding:24px 16px;}
+  .footer-right{flex-direction:column;gap:12px;}
 }
 </style>
 </head>
 <body>
+<nav>
+  <a href="/" class="logo">OilRadar</a>
+  <div class="nav-links">
+    <a href="/monitor" class="nav-link">Kharg Island</a>
+    <a href="/anchorage" class="nav-link">Anchorage</a>
+    <a href="/team" class="nav-link">Team</a>
+    <a href="https://calendly.com/bachevsky/60min" target="_blank" class="nav-cta">Request Access</a>
+  </div>
+</nav>
 
-<header class="hdr">
-  <a class="hdr-logo" href="https://oilradar.io"><em>Oil</em>Radar</a>
-  <nav class="hdr-nav">
-    <a href="https://oilradar.io/monitor">Kharg Island</a>
-    <a href="https://calendly.com/bachevsky/60min">Request Access</a>
-  </nav>
-</header>
+<main>
 
-<div class="page">
-
-  <!-- REGION SWITCHER -->
   <div class="switcher">
     <button class="sw-btn active" id="sw-north" data-region="black_sea">
-      <span class="sw-arrow">↑</span> North anchorage
-      <span class="sw-sub">Black Sea · waiting to transit south</span>
+      <span class="sw-name">↑ North Anchorage</span>
+      <span class="sw-sub">Black Sea · vessels waiting to transit south</span>
     </button>
     <button class="sw-btn" id="sw-south" data-region="marmara">
-      <span class="sw-arrow">↓</span> South anchorage
-      <span class="sw-sub">Marmara Sea · waiting to transit north</span>
+      <span class="sw-name">↓ South Anchorage</span>
+      <span class="sw-sub">Marmara Sea · vessels waiting to transit north</span>
     </button>
   </div>
 
-  <section class="hero">
-    <div class="hero-eye" id="hero-eye">Bosphorus Black Sea Anchorage &nbsp;·&nbsp; Sentinel-1 SAR &nbsp;·&nbsp; Live Queue Intelligence</div>
-    <div class="hero-body">
-      <div>
-        <div class="idx-label">Queue Index</div>
-        <div class="idx-val" id="idx">—</div>
-      </div>
-      <div class="hero-right">
-        <div class="idx-badge" id="badge">Loading…</div>
-        <p class="hero-desc">
-          Index compares today's vessel count to the 10-year average for this calendar month.
-          100 = historical norm. Above 130 signals elevated congestion; below 70 is unusually light.
-        </p>
-        <div class="hero-ts" id="ts">Retrieving latest pass…</div>
-      </div>
+  <div class="hero-row">
+    <div>
+      <div class="section-label" id="hero-label">North Anchorage &middot; Black Sea &middot; Sentinel-1 SAR</div>
+      <div class="section-title">Queue Index</div>
+      <div class="queue-idx" id="queue-idx">—</div>
     </div>
-  </section>
+    <div class="hero-right">
+      <div class="status-badge ok" id="status-badge">Loading…</div>
+      <p class="hero-desc">
+        Index compares today's vessel count to the 10-year average for this calendar month.
+        100 = historical norm. Above 130 signals elevated congestion; below 70 is unusually light.
+      </p>
+      <div class="hero-ts" id="hero-ts">Retrieving latest pass…</div>
+    </div>
+  </div>
 
-  <div class="stats">
-    <div class="stat">
+  <div class="stat-row">
+    <div class="stat-cell">
       <div class="stat-lbl">Vessels detected</div>
-      <div class="stat-v" id="s-total">—</div>
+      <div class="stat-val" id="s-total">—</div>
       <div class="stat-sub" id="s-date">latest SAR pass</div>
     </div>
-    <div class="stat">
+    <div class="stat-cell">
       <div class="stat-lbl">Monthly avg</div>
-      <div class="stat-v" id="s-avg">—</div>
+      <div class="stat-val" id="s-avg">—</div>
       <div class="stat-sub" id="s-avgp">10-yr baseline</div>
     </div>
-    <div class="stat">
+    <div class="stat-cell">
       <div class="stat-lbl">Passes in record</div>
-      <div class="stat-v" id="s-passes">—</div>
+      <div class="stat-val" id="s-passes">—</div>
       <div class="stat-sub" id="s-span">history span</div>
     </div>
-    <div class="stat">
+    <div class="stat-cell">
       <div class="stat-lbl">Revisit cycle</div>
-      <div class="stat-v">~6d</div>
+      <div class="stat-val">~6d</div>
       <div class="stat-sub">Sentinel-1 C-band SAR</div>
     </div>
   </div>
 
-  <section class="sec">
-    <div class="sec-ttl">Vessel queue — historical record</div>
-    <div class="chart-wrap">
-      <div class="placeholder" id="chart-ph">Awaiting historical data…</div>
-      <svg id="chart" viewBox="0 0 1000 220" preserveAspectRatio="xMidYMid meet"
-           aria-label="Vessel count over time" style="display:none"></svg>
+  <!-- VESSEL COUNT CHART -->
+  <div class="monitor-wrap">
+    <div class="monitor-header">
+      <div class="monitor-title" id="chart1-title">Vessel Count — Historical Record</div>
+      <div class="filter-group" id="filter-group">
+        <button class="filter-btn" data-range="1">1M</button>
+        <button class="filter-btn active" data-range="3">3M</button>
+        <button class="filter-btn" data-range="6">6M</button>
+        <button class="filter-btn" data-range="12">1Y</button>
+        <button class="filter-btn" data-range="0">All</button>
+      </div>
     </div>
-  </section>
+    <div class="chart-area"><canvas id="chartTotal"></canvas></div>
+  </div>
 
-  <section class="sec">
-    <div class="sec-ttl">Vessel class breakdown — latest pass</div>
-    <div class="bdgrid" id="bd">
-      <div class="placeholder">Loading…</div>
+  <!-- CLASS BREAKDOWN TITLE -->
+  <div class="section-label" style="margin-bottom:12px;margin-top:40px;">Vessel class breakdown — latest pass</div>
+
+  <!-- CLASS CARDS -->
+  <div class="class-grid" id="class-grid">
+    <div class="class-cell"><div class="class-name">Capesize</div><div class="class-size">≥ 290 m</div><div class="class-count" style="color:#ef4444">—</div><div class="bar-track"><div class="bar-fill" id="bar-capesize" style="width:0%;background:#ef4444"></div></div></div>
+    <div class="class-cell"><div class="class-name">Post-Panamax</div><div class="class-size">≥ 260 m</div><div class="class-count" style="color:#f97316">—</div><div class="bar-track"><div class="bar-fill" id="bar-postpanamax" style="width:0%;background:#f97316"></div></div></div>
+    <div class="class-cell"><div class="class-name">Panamax</div><div class="class-size">≥ 220 m</div><div class="class-count" style="color:#f59e0b">—</div><div class="bar-track"><div class="bar-fill" id="bar-panamax" style="width:0%;background:#f59e0b"></div></div></div>
+    <div class="class-cell"><div class="class-name">Handymax</div><div class="class-size">≥ 100 m</div><div class="class-count" style="color:#22c55e">—</div><div class="bar-track"><div class="bar-fill" id="bar-handymax" style="width:0%;background:#22c55e"></div></div></div>
+  </div>
+
+  <!-- CLASS COUNT STACKED CHART -->
+  <div class="monitor-wrap">
+    <div class="monitor-header">
+      <div class="monitor-title">Absolute Count by Vessel Class</div>
     </div>
-  </section>
+    <div class="chart-area"><canvas id="chartClasses"></canvas></div>
+  </div>
 
-  <div class="meth">
-    <div class="meth-blk">
-      <h3>Detection method</h3>
+  <div class="explain-grid">
+    <div class="explain-card">
+      <h4>Detection method</h4>
       <p>Each SAR image (Sentinel-1 IW mode, VV polarisation, 35 m/px) is processed with an adaptive backscatter threshold calibrated to local sea clutter. Compact bright objects above threshold are classified as vessels; length is estimated from the bounding box of each detected blob.</p>
-      <p>Land and coastal clutter are masked using the Natural Earth 10 m coastline with an ~875 m sea buffer. The Bosphorus transit channel is excluded — only the Black Sea waiting anchorage is counted.</p>
+      <p class="muted">Land and coastal clutter are masked with a ~875 m sea buffer (Black Sea) and ~1.75 km (Marmara). The Bosphorus transit channel is excluded — only the waiting anchorage is counted.</p>
     </div>
-    <div class="meth-blk">
-      <h3>Queue index</h3>
-      <p>Queue Index = (vessels on pass date) ÷ (10-year average for that calendar month) × 100. A value of 100 is exactly average for the season. Vessel classes follow standard maritime size conventions by detected length.</p>
-      <p>Capesize ≥ 290 m · Post-Panamax ≥ 260 m · Panamax ≥ 220 m · Handymax ≥ 100 m. Vessels under 100 m (coastal and small craft) are excluded from the count.</p>
+    <div class="explain-card" style="border-color:rgba(59,130,246,0.25);display:flex;flex-direction:column;justify-content:center;gap:16px;">
+      <div>
+        <h4>Need custom coverage?</h4>
+        <p style="font-size:14px;line-height:1.7;">Track a specific chokepoint, get data access, or discuss coverage for other straits and anchorages — Suez, Malacca, Fujairah, and more.</p>
+      </div>
+      <a href="https://calendly.com/bachevsky/60min" target="_blank" style="font-family:'DM Mono',monospace;font-size:11px;letter-spacing:2px;text-transform:uppercase;background:var(--accent);color:#ffffff;padding:14px 28px;text-decoration:none;display:inline-block;transition:opacity .2s;" onmouseover="this.style.opacity='.85'" onmouseout="this.style.opacity='1'">Request Data Access</a>
     </div>
   </div>
 
-</div>
+</main>
 
-<footer class="ftr">
-  <span>OilRadar — Satellite Maritime Intelligence</span>
-  <a href="https://oilradar.io">oilradar.io</a>
+<footer>
+  <div class="footer-logo">OilRadar</div>
+  <div class="footer-right">
+    <a href="/monitor" class="footer-link">Kharg Island</a>
+    <a href="/anchorage" class="footer-link">Tanker Queue</a>
+    <a href="/team" class="footer-link">Team</a>
+    <div class="footer-text">Satellite Intelligence for Physical Oil Markets</div>
+  </div>
 </footer>
 
 <script>
 const CLS = {
-  capesize:    { label: 'Capesize',     size: '≥ 290 m', color: '#ef4444' },
-  postpanamax: { label: 'Post-Panamax', size: '≥ 260 m', color: '#f97316' },
-  panamax:     { label: 'Panamax',      size: '≥ 220 m', color: '#eab308' },
-  handymax:    { label: 'Handymax',     size: '≥ 100 m', color: '#22c55e' },
+  capesize:    { label:'Capesize',     size:'≥ 290 m', color:'#ef4444' },
+  postpanamax: { label:'Post-Panamax', size:'≥ 260 m', color:'#f97316' },
+  panamax:     { label:'Panamax',      size:'≥ 220 m', color:'#f59e0b' },
+  handymax:    { label:'Handymax',     size:'≥ 100 m', color:'#22c55e' },
 };
-const REGIONS = {
-  black_sea: { label: 'Bosphorus Black Sea Anchorage', eye: 'North Anchorage · Black Sea · Sentinel-1 SAR' },
-  marmara:   { label: 'Bosphorus Marmara Anchorage',   eye: 'South Anchorage · Marmara Sea · Sentinel-1 SAR' },
+const REGION_META = {
+  black_sea: { label:'North Anchorage · Black Sea · Sentinel-1 SAR' },
+  marmara:   { label:'South Anchorage · Marmara Sea · Sentinel-1 SAR' },
 };
 
-// Cache loaded data per region
-const cache = {};
 let activeRegion = 'black_sea';
+let activeRange  = 3;
+const cache = {};
+let chartTotal   = null;
+let chartClasses = null;
 
-function state(i) { return i >= 130 ? 'hi' : i >= 70 ? 'ok' : 'lo'; }
-function stateLabel(i) {
+function state(i){ return i >= 130 ? 'hi' : i >= 70 ? 'ok' : 'lo'; }
+function stateLabel(i){
   return i >= 130 ? 'Above average — elevated congestion'
        : i >= 70  ? 'Normal traffic'
        : 'Below average — light traffic';
 }
-
-function monthlyAvgs(passes) {
-  const b = {};
-  for (const p of passes) {
-    const m = p.date.slice(5,7);
-    if (!b[m]) b[m] = {s:0,n:0};
-    b[m].s += p.total; b[m].n++;
-  }
-  const out = {};
-  for (const m in b) out[m] = b[m].s / b[m].n;
+function monthlyAvgs(passes){
+  const b={};
+  for(const p of passes){ const m=p.date.slice(5,7); if(!b[m])b[m]={s:0,n:0}; b[m].s+=p.total; b[m].n++; }
+  const out={};
+  for(const m in b) out[m]=b[m].s/b[m].n;
   return out;
 }
-
-function renderAll(region, passes) {
-  const avgs = monthlyAvgs(passes);
-  const latest = passes[passes.length-1];
-
-  // eyebrow
-  document.getElementById('hero-eye').textContent = REGIONS[region].eye;
-
-  // hero
-  const m = latest.date.slice(5,7);
-  const avg = avgs[m] || latest.total;
-  const idx = Math.round(latest.total / avg * 100);
-  const st = state(idx);
-  const el = document.getElementById('idx');
-  el.textContent = idx; el.className = 'idx-val ' + st;
-  const badge = document.getElementById('badge');
-  badge.textContent = stateLabel(idx); badge.className = 'idx-badge ' + st;
-  document.getElementById('ts').textContent = 'Latest pass: ' + latest.date + '  ·  Sentinel-1 SAR';
-
-  // stats
-  const mname = new Date(latest.date + 'T12:00:00Z').toLocaleString('en',{month:'long'});
-  document.getElementById('s-total').textContent = latest.total;
-  document.getElementById('s-date').textContent = latest.date;
-  document.getElementById('s-avg').textContent = Math.round(avg);
-  document.getElementById('s-avgp').textContent = mname + ' · 10-yr avg';
-  document.getElementById('s-passes').textContent = passes.length;
-  const y0 = passes[0].date.slice(0,4), y1 = passes[passes.length-1].date.slice(0,4);
-  document.getElementById('s-span').textContent = y0 === y1 ? y0 : y0 + '–' + y1;
-
-  // chart
-  renderChart(passes);
-
-  // breakdown
-  const total = latest.total||1;
-  document.getElementById('bd').innerHTML = Object.entries(CLS).map(([k,meta])=>{
-    const cnt = latest[k]||0, pct = Math.round(cnt/total*100);
-    return `<div class="bc">
-      <div class="bc-hd"><span class="bc-name">${meta.label}</span><span class="bc-size">${meta.size}</span></div>
-      <div class="bc-count" style="color:${meta.color}">${cnt}</div>
-      <div class="bar-track"><div class="bar-fill" style="width:${pct}%;background:${meta.color}"></div></div>
-    </div>`;
-  }).join('');
+function filterByRange(passes, months){
+  if(!months) return passes;
+  const cutoff = new Date();
+  cutoff.setMonth(cutoff.getMonth() - months);
+  const cutStr = cutoff.toISOString().slice(0,10);
+  return passes.filter(p => p.date >= cutStr);
 }
 
-function renderEmpty(msg) {
-  document.getElementById('idx').textContent = '—';
-  document.getElementById('idx').className = 'idx-val';
-  document.getElementById('badge').textContent = 'No data yet';
-  document.getElementById('badge').className = 'idx-badge lo';
-  document.getElementById('ts').textContent = msg;
-  document.getElementById('chart-ph').style.display = 'flex';
-  document.getElementById('chart-ph').textContent = 'Data loading — check back after backfill completes.';
-  document.getElementById('chart').style.display = 'none';
-  document.getElementById('bd').innerHTML = '<div class="placeholder">No data yet</div>';
-  ['s-total','s-date','s-avg','s-avgp','s-passes','s-span'].forEach(id => {
-    document.getElementById(id).textContent = '—';
+function renderPage(region, allPasses){
+  const avgs   = monthlyAvgs(allPasses);
+  const latest = allPasses[allPasses.length - 1];
+  const filtered = filterByRange(allPasses, activeRange);
+
+  // hero label
+  document.getElementById('hero-label').textContent = REGION_META[region].label;
+
+  // queue index
+  const m   = latest.date.slice(5,7);
+  const avg = avgs[m] || latest.total;
+  const idx = Math.round(latest.total / avg * 100);
+  const st  = state(idx);
+  const idxEl = document.getElementById('queue-idx');
+  idxEl.textContent = idx; idxEl.className = 'queue-idx ' + st;
+  const badge = document.getElementById('status-badge');
+  badge.textContent = stateLabel(idx); badge.className = 'status-badge ' + st;
+  document.getElementById('hero-ts').textContent = 'Latest pass: ' + latest.date + '  ·  Sentinel-1 SAR';
+
+  // stats
+  const mname = new Date(latest.date+'T12:00:00Z').toLocaleString('en',{month:'long'});
+  document.getElementById('s-total').textContent  = latest.total;
+  document.getElementById('s-date').textContent   = latest.date;
+  document.getElementById('s-avg').textContent    = Math.round(avg);
+  document.getElementById('s-avgp').textContent   = mname + ' · 10-yr avg';
+  document.getElementById('s-passes').textContent = allPasses.length;
+  const y0 = allPasses[0].date.slice(0,4), y1 = allPasses[allPasses.length-1].date.slice(0,4);
+  document.getElementById('s-span').textContent   = y0 === y1 ? y0 : y0 + '–' + y1;
+
+  // class cards
+  const total = latest.total || 1;
+  for(const [k, meta] of Object.entries(CLS)){
+    const cnt = latest[k] || 0;
+    const pct = Math.round(cnt / total * 100);
+    // find count element (first .class-count under the card containing the matching bar)
+    const bar = document.getElementById('bar-' + k);
+    if(bar){
+      bar.style.width = pct + '%';
+      const card = bar.closest('.class-cell');
+      if(card){
+        const countEl = card.querySelector('.class-count');
+        if(countEl) countEl.textContent = cnt;
+      }
+    }
+  }
+
+  renderChartTotal(filtered, avgs);
+  renderChartClasses(filtered);
+}
+
+function renderChartTotal(passes, avgs){
+  const labels = passes.map(p => p.date);
+  const totals = passes.map(p => p.total);
+  const avgLine = passes.map(p => Math.round(avgs[p.date.slice(5,7)] || 0));
+
+  if(chartTotal){ chartTotal.destroy(); chartTotal = null; }
+  const ctx = document.getElementById('chartTotal').getContext('2d');
+  chartTotal = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [
+        {
+          label: 'Total vessels',
+          data: totals,
+          backgroundColor: 'rgba(59,130,246,0.35)',
+          borderColor: 'rgba(59,130,246,0.8)',
+          borderWidth: 1,
+          borderRadius: 1,
+          order: 2,
+        },
+        {
+          label: 'Monthly avg (10yr)',
+          data: avgLine,
+          type: 'line',
+          borderColor: 'rgba(245,158,11,0.7)',
+          borderWidth: 1.5,
+          borderDash: [4,4],
+          pointRadius: 0,
+          tension: 0.3,
+          fill: false,
+          order: 1,
+        },
+      ],
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      interaction: { mode:'index', intersect:false },
+      plugins: {
+        legend: {
+          labels:{ color:'#94a3b8', font:{ family:"'DM Mono',monospace", size:10 }, boxWidth:12, padding:16 }
+        },
+        tooltip:{
+          backgroundColor:'#111827', borderColor:'rgba(255,255,255,0.07)', borderWidth:1,
+          titleColor:'#e2e8f0', bodyColor:'#94a3b8',
+          titleFont:{ family:"'DM Mono',monospace", size:11 },
+          bodyFont:{ family:"'DM Mono',monospace", size:10 },
+          padding:10,
+        },
+      },
+      scales:{
+        x:{ grid:{color:'rgba(255,255,255,0.04)'}, ticks:{ color:'#64748b', font:{family:"'DM Mono',monospace",size:9}, maxTicksLimit:12, maxRotation:0 } },
+        y:{ grid:{color:'rgba(255,255,255,0.04)'}, ticks:{ color:'#64748b', font:{family:"'DM Mono',monospace",size:9} }, beginAtZero:true },
+      },
+    },
   });
 }
 
-function renderChart(passes) {
-  document.getElementById('chart-ph').style.display = 'none';
-  const svg = document.getElementById('chart');
-  svg.style.display = 'block';
-  const W=1000,H=220,ML=44,MR=16,MT=18,MB=30;
-  const cw=W-ML-MR, ch=H-MT-MB;
-  const vals = passes.map(p=>p.total);
-  const maxV = Math.max(...vals,1);
-  const xs = i => ML + (i/Math.max(passes.length-1,1))*cw;
-  const ys = v => MT + ch - (v/maxV)*ch;
-  let grid='', xax='';
-  for (let v=0; v<=maxV+4; v+=10) {
-    const y=ys(v);
-    grid += `<line x1="${ML}" y1="${y}" x2="${W-MR}" y2="${y}" stroke="#192436" stroke-width="1"/>`;
-    grid += `<text x="${ML-6}" y="${y+4}" text-anchor="end" fill="#3d5878" font-size="9" font-family="Courier New,monospace">${v}</text>`;
-  }
-  const years={};
-  passes.forEach((p,i)=>{ const yr=p.date.slice(0,4); if(!years[yr]){ years[yr]=i; xax+=`<text x="${xs(i)}" y="${H-6}" text-anchor="middle" fill="#3d5878" font-size="9" font-family="Courier New,monospace">${yr}</text>`; }});
-  const n=passes.length;
-  let aD=`M${xs(0)},${MT+ch} L${xs(0)},${ys(vals[0])}`;
-  for(let i=1;i<n;i++) aD+=` L${xs(i)},${ys(vals[i])}`;
-  aD+=` L${xs(n-1)},${MT+ch} Z`;
-  let lD=`M${xs(0)},${ys(vals[0])}`;
-  for(let i=1;i<n;i++) lD+=` L${xs(i)},${ys(vals[i])}`;
-  const lx=xs(n-1), ly=ys(vals[n-1]);
-  svg.innerHTML = `
-    <defs><linearGradient id="ag" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0%" stop-color="#0fb8d0" stop-opacity=".22"/>
-      <stop offset="100%" stop-color="#0fb8d0" stop-opacity=".02"/>
-    </linearGradient></defs>
-    ${grid}
-    <path d="${aD}" fill="url(#ag)"/>
-    <path d="${lD}" fill="none" stroke="#0fb8d0" stroke-width="1.5" stroke-linejoin="round"/>
-    ${xax}
-    <circle cx="${lx}" cy="${ly}" r="4.5" fill="#0fb8d0" stroke="#0d1420" stroke-width="2"/>
-    <text x="${lx}" y="${ly-11}" text-anchor="middle" fill="#0fb8d0" font-size="10" font-family="Courier New,monospace">${vals[n-1]}</text>`;
+function renderChartClasses(passes){
+  const labels = passes.map(p => p.date);
+  const datasets = Object.entries(CLS).map(([k, meta]) => ({
+    label: meta.label,
+    data: passes.map(p => p[k] || 0),
+    backgroundColor: meta.color + '99',
+    borderColor: meta.color,
+    borderWidth: 0,
+    borderRadius: 1,
+    stack: 'stack',
+  }));
+
+  if(chartClasses){ chartClasses.destroy(); chartClasses = null; }
+  const ctx = document.getElementById('chartClasses').getContext('2d');
+  chartClasses = new Chart(ctx, {
+    type: 'bar',
+    data: { labels, datasets },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      interaction: { mode:'index', intersect:false },
+      plugins: {
+        legend: {
+          labels:{ color:'#94a3b8', font:{ family:"'DM Mono',monospace", size:10 }, boxWidth:12, padding:16 }
+        },
+        tooltip:{
+          backgroundColor:'#111827', borderColor:'rgba(255,255,255,0.07)', borderWidth:1,
+          titleColor:'#e2e8f0', bodyColor:'#94a3b8',
+          titleFont:{ family:"'DM Mono',monospace", size:11 },
+          bodyFont:{ family:"'DM Mono',monospace", size:10 },
+          padding:10,
+        },
+      },
+      scales:{
+        x:{ stacked:true, grid:{color:'rgba(255,255,255,0.04)'}, ticks:{ color:'#64748b', font:{family:"'DM Mono',monospace",size:9}, maxTicksLimit:12, maxRotation:0 } },
+        y:{ stacked:true, grid:{color:'rgba(255,255,255,0.04)'}, ticks:{ color:'#64748b', font:{family:"'DM Mono',monospace",size:9} }, beginAtZero:true },
+      },
+    },
+  });
 }
 
-async function loadRegion(region) {
-  if (cache[region]) return cache[region];
-  try {
+function renderEmpty(msg){
+  ['queue-idx','s-total','s-date','s-avg','s-avgp','s-passes','s-span'].forEach(id => {
+    const el = document.getElementById(id);
+    if(el) el.textContent = '—';
+  });
+  document.getElementById('status-badge').textContent = 'No data yet';
+  document.getElementById('status-badge').className   = 'status-badge lo';
+  document.getElementById('hero-ts').textContent      = msg;
+}
+
+async function loadRegion(region){
+  if(cache[region]) return cache[region];
+  try{
     const r = await fetch(`/data/bosphorus_${region}_history.json`);
-    if (!r.ok) throw 0;
+    if(!r.ok) throw 0;
     const data = await r.json();
-    const passes = data.passes||[];
-    if (!passes.length) throw 0;
+    const passes = data.passes || [];
+    if(!passes.length) throw 0;
     cache[region] = passes;
     return passes;
-  } catch { return null; }
+  } catch{ return null; }
 }
 
-async function switchTo(region) {
+async function switchTo(region){
   activeRegion = region;
   document.querySelectorAll('.sw-btn').forEach(b => b.classList.toggle('active', b.dataset.region === region));
+  document.getElementById('hero-label').textContent = REGION_META[region].label;
   const passes = await loadRegion(region);
-  if (passes) renderAll(region, passes);
+  if(passes) renderPage(region, passes);
   else renderEmpty('Backfill in progress — check back shortly');
 }
 
+// Region switcher
 document.querySelectorAll('.sw-btn').forEach(btn => {
   btn.addEventListener('click', () => switchTo(btn.dataset.region));
 });
 
+// Date range filter
+document.querySelectorAll('.filter-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    activeRange = parseInt(btn.dataset.range, 10);
+    const passes = cache[activeRegion];
+    if(passes) renderPage(activeRegion, passes);
+  });
+});
+
 switchTo('black_sea');
 </script>
-
 </body>
 </html>
