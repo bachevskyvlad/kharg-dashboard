@@ -259,6 +259,16 @@ footer{background:var(--panel);border-top:1px solid var(--border);padding:32px 4
   <h1 class="section-title">Dardanelles Vessel Queue</h1>
   <div class="section-sub" id="hero-ts">Loading…</div>
 
+  <!-- SAR IMAGE PANEL -->
+  <div class="monitor-wrap" style="padding:0;overflow:hidden;margin-bottom:24px;position:relative;">
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 20px;border-bottom:1px solid var(--border);">
+      <div style="font-family:'DM Mono',monospace;font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--accent);" id="sar-title">Aegean (Bozcaada) &nbsp;|&nbsp; Latest SAR pass</div>
+      <a id="sar-download" href="/data/dardanelles_sar_aegean_entrance.png" download style="font-family:'DM Mono',monospace;font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);text-decoration:none;padding:5px 12px;border:1px solid var(--border);transition:all .2s;" onmouseover="this.style.color='#e2e8f0';this.style.borderColor='rgba(255,255,255,0.2)'" onmouseout="this.style.color='';this.style.borderColor=''">↓ Download</a>
+    </div>
+    <img id="sar-img" src="/data/dardanelles_sar_aegean_entrance.png" alt="Dardanelles SAR vessel detection — Aegean entrance" style="width:100%;display:block;max-height:520px;object-fit:cover;object-position:center;">
+    <div style="position:absolute;bottom:0;left:0;right:0;padding:8px 16px;background:linear-gradient(transparent,rgba(10,14,23,0.85));font-family:'DM Mono',monospace;font-size:9px;letter-spacing:1px;color:var(--dim);">Sentinel-1 SAR · C-band IW · VV polarisation · 35 m/px · vessel detection by adaptive backscatter threshold</div>
+  </div>
+
   <div class="kpi-row">
     <div class="kpi-card">
       <div class="kpi-label">Queue Index</div>
@@ -619,12 +629,22 @@ async function loadRegion(region){
   }
 }
 
+const SAR_META = {
+  aegean_entrance: { src: '/data/dardanelles_sar_aegean_entrance.png', title: 'Aegean (Bozcaada) &nbsp;|&nbsp; Latest SAR pass', alt: 'Dardanelles SAR vessel detection — Aegean entrance' },
+  marmara_south:   { src: '/data/dardanelles_sar_marmara_south.png',   title: 'Marmara Sea (Şarköy) &nbsp;|&nbsp; Latest SAR pass', alt: 'Dardanelles SAR vessel detection — Marmara Sea' },
+};
+
 // Switcher
 document.querySelectorAll('.sw-btn').forEach(btn => {
   btn.addEventListener('click', () => {
     document.querySelectorAll('.sw-btn').forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
     activeRegion = btn.dataset.region;
+    const m = SAR_META[activeRegion];
+    document.getElementById('sar-img').src = m.src;
+    document.getElementById('sar-img').alt = m.alt;
+    document.getElementById('sar-title').innerHTML = m.title;
+    document.getElementById('sar-download').href = m.src;
     loadRegion(activeRegion);
   });
 });
