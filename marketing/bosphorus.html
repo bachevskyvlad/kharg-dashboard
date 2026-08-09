@@ -170,6 +170,15 @@ footer{background:var(--panel);border-top:1px solid var(--border);padding:32px 4
     </div>
   </div>
 
+  <!-- QUEUE INDEX CHART -->
+  <div class="monitor-wrap">
+    <div class="monitor-header">
+      <div class="monitor-title">Queue Index Over Time</div>
+      <div style="font-family:'DM Mono',monospace;font-size:9px;letter-spacing:1px;color:var(--dim);">100 = historical norm &nbsp;·&nbsp; &gt;130 elevated &nbsp;·&nbsp; &lt;70 light</div>
+    </div>
+    <div class="chart-area"><canvas id="chartIndex"></canvas></div>
+  </div>
+
   <!-- VESSEL COUNT CHART -->
   <div class="monitor-wrap">
     <div class="monitor-header">
@@ -249,6 +258,7 @@ let activeRegion  = 'black_sea';
 let activeRange   = 3;
 let showOutliers  = false;
 const cache = {};
+let chartIndex    = null;
 let chartTotal    = null;
 let chartClasses  = null;
 
@@ -347,8 +357,84 @@ function renderPage(region, allPasses){
     }
   }
 
+  renderChartIndex(filtered, avgs);
   renderChartTotal(filtered, avgs);
   renderChartClasses(filtered);
+}
+
+function renderChartIndex(passes, avgs){
+  const labels  = passes.map(p => p.date);
+  const indices = passes.map(p => {
+    const avg = avgs[p.date.slice(5,7)];
+    return avg ? Math.round(p.total / avg * 100) : null;
+  });
+  const colors = indices.map(v => v === null ? 'rgba(100,116,139,0.4)' : v >= 130 ? 'rgba(239,68,68,0.7)' : v >= 70 ? 'rgba(59,130,246,0.6)' : 'rgba(100,116,139,0.5)');
+
+  if(chartIndex){ chartIndex.destroy(); chartIndex = null; }
+  const ctx = document.getElementById('chartIndex').getContext('2d');
+  chartIndex = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [
+        {
+          label: 'Queue Index',
+          data: indices,
+          backgroundColor: colors,
+          borderWidth: 0,
+          borderRadius: 1,
+        },
+        {
+          label: 'Norm (100)',
+          data: labels.map(() => 100),
+          type: 'line',
+          borderColor: 'rgba(245,158,11,0.5)',
+          borderWidth: 1,
+          borderDash: [4,4],
+          pointRadius: 0,
+          fill: false,
+        },
+        {
+          label: 'Elevated (130)',
+          data: labels.map(() => 130),
+          type: 'line',
+          borderColor: 'rgba(239,68,68,0.35)',
+          borderWidth: 1,
+          borderDash: [2,4],
+          pointRadius: 0,
+          fill: false,
+        },
+      ],
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      interaction: { mode:'index', intersect:false },
+      plugins: {
+        legend: {
+          labels:{ color:'#94a3b8', font:{ family:"'DM Mono',monospace", size:10 }, boxWidth:12, padding:16 }
+        },
+        tooltip:{
+          backgroundColor:'#111827', borderColor:'rgba(255,255,255,0.07)', borderWidth:1,
+          titleColor:'#e2e8f0', bodyColor:'#94a3b8',
+          titleFont:{ family:"'DM Mono',monospace", size:11 },
+          bodyFont:{ family:"'DM Mono',monospace", size:10 },
+          padding:10,
+          callbacks:{
+            label: ctx => {
+              if(ctx.datasetIndex !== 0) return null;
+              const v = ctx.parsed.y;
+              const label = v >= 130 ? 'ELEVATED' : v >= 70 ? 'NORMAL' : 'LIGHT';
+              return `  Index: ${v}  (${label})`;
+            },
+          },
+        },
+      },
+      scales:{
+        x:{ grid:{color:'rgba(255,255,255,0.04)'}, ticks:{ color:'#64748b', font:{family:"'DM Mono',monospace",size:9}, maxTicksLimit:12, maxRotation:0 } },
+        y:{ grid:{color:'rgba(255,255,255,0.04)'}, ticks:{ color:'#64748b', font:{family:"'DM Mono',monospace",size:9} }, beginAtZero:true, suggestedMax:160 },
+      },
+    },
+  });
 }
 
 function renderChartTotal(passes, avgs){
