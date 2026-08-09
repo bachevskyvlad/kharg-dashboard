@@ -202,7 +202,15 @@ footer{border-top:1px solid var(--border);padding:32px 48px;display:flex;align-i
   <ul class="nav-links">
     <li><a href="https://oilradar.io/monitor">Kharg Monitor</a></li>
     <li><a href="#" class="active">Gas Storage</a></li>
-    <li><a href="/bosphorus">Bosphorus</a></li>
+    <li style="position:relative;list-style:none;" class="nav-dropdown-wrap">
+      <a href="/bosphorus">Straits ▾</a>
+      <div style="display:none;position:absolute;top:100%;left:0;background:#111827;border:1px solid rgba(255,255,255,0.1);min-width:200px;z-index:200;padding:6px 0;" class="straits-menu">
+        <a href="/bosphorus" style="display:flex;align-items:center;justify-content:space-between;padding:9px 16px;color:#94a3b8;text-decoration:none;font-size:10px;letter-spacing:1.5px;text-transform:uppercase;white-space:nowrap;">Bosphorus <span style="font-size:7px;background:rgba(34,197,94,.12);color:#22c55e;border:1px solid rgba(34,197,94,.25);padding:2px 6px;">FREE</span></a>
+        <span style="display:flex;align-items:center;justify-content:space-between;padding:9px 16px;color:#94a3b8;font-size:10px;letter-spacing:1.5px;text-transform:uppercase;white-space:nowrap;opacity:.4;">Bab-el-Mandeb <span style="font-size:7px;background:rgba(100,116,139,.1);color:#64748b;border:1px solid rgba(100,116,139,.2);padding:2px 6px;">SOON</span></span>
+        <span style="display:flex;align-items:center;justify-content:space-between;padding:9px 16px;color:#94a3b8;font-size:10px;letter-spacing:1.5px;text-transform:uppercase;white-space:nowrap;opacity:.4;">Hormuz <span style="font-size:7px;background:rgba(100,116,139,.1);color:#64748b;border:1px solid rgba(100,116,139,.2);padding:2px 6px;">SOON</span></span>
+      </div>
+    </li>
+    <script>document.querySelector('.nav-dropdown-wrap').addEventListener('mouseenter',function(){this.querySelector('.straits-menu').style.display='block'});document.querySelector('.nav-dropdown-wrap').addEventListener('mouseleave',function(){this.querySelector('.straits-menu').style.display='none'});</script>
     <li><a href="/team">Team</a></li>
     <li><a href="https://calendly.com/bachevsky/intro" target="_blank">Schedule a Call</a></li>
     <li><a href="https://app.oilradar.io/dashboard" target="_blank" style="background:var(--accent);color:#fff;padding:8px 16px;">Dashboard &rarr;</a></li>
