@@ -3,8 +3,127 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Bosphorus Vessel Queue — Sentinel-1 SAR Intelligence | OilRadar</title>
-<meta name="description" content="Live Bosphorus Strait vessel queue data — track tanker congestion at the Black Sea and Marmara anchorages via Sentinel-1 SAR satellite. Updated every ~6 days.">
+
+<!-- Primary SEO -->
+<title>Bosphorus Strait Vessel Queue & Traffic Monitor — Satellite SAR | OilRadar</title>
+<meta name="description" content="Real-time Bosphorus Strait vessel queue index tracking tanker congestion at Black Sea and Marmara Sea anchorages. Sentinel-1 SAR satellite data updated every ~6 days. Covers Turkish Straits traffic, waiting times, and vessel class breakdown since 2016.">
+<meta name="keywords" content="Bosphorus traffic, Bosphorus strait, Turkish straits, Istanbul strait traffic, Bosphorus shipping, Bosphorus vessel tracking, maritime logistics Black Sea, current waiting time Bosphorus strait, how many ships pass through the Bosphorus daily, Bosphorus strait shipping restrictions 2026, Montreux convention commercial ships, why is the Bosphorus strait congested">
+<link rel="canonical" href="https://oilradar.io/bosphorus">
+
+<!-- Open Graph -->
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://oilradar.io/bosphorus">
+<meta property="og:title" content="Bosphorus Strait Vessel Queue — Live SAR Traffic Monitor">
+<meta property="og:description" content="Satellite-derived vessel queue index for the Bosphorus Strait. Track tanker congestion, waiting times, and traffic intensity at the Turkish Straits chokepoint. 10-year historical record from Sentinel-1 SAR.">
+<meta property="og:site_name" content="OilRadar">
+<meta property="og:image" content="https://oilradar.io/assets/images/og-bosphorus.png">
+
+<!-- Twitter Card -->
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Bosphorus Strait Vessel Queue — Live SAR Traffic Monitor">
+<meta name="twitter:description" content="Satellite-derived vessel queue index for the Bosphorus Strait. Track tanker congestion, waiting times, and vessel class breakdown at the Turkish Straits chokepoint.">
+<meta name="twitter:image" content="https://oilradar.io/assets/images/og-bosphorus.png">
+
+<!-- LLM / AI crawler hints -->
+<meta name="robots" content="index, follow">
+<meta name="author" content="OilRadar">
+<meta name="subject" content="Bosphorus Strait vessel traffic, Turkish Straits congestion, tanker queue monitoring">
+<meta name="coverage" content="Worldwide">
+<meta name="classification" content="Maritime Intelligence, Satellite Data, Oil Market Analytics">
+
+<!-- JSON-LD Structured Data -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "WebPage",
+      "@id": "https://oilradar.io/bosphorus",
+      "url": "https://oilradar.io/bosphorus",
+      "name": "Bosphorus Strait Vessel Queue & Traffic Monitor",
+      "description": "Real-time Bosphorus Strait vessel queue index derived from Sentinel-1 SAR satellite data. Tracks tanker congestion at North Anchorage (Black Sea) and South Anchorage (Marmara Sea). Covers vessel classes from Handymax to Capesize. 10-year historical record from 2016.",
+      "publisher": {
+        "@type": "Organization",
+        "name": "OilRadar",
+        "url": "https://oilradar.io"
+      },
+      "about": {
+        "@type": "Thing",
+        "name": "Bosphorus Strait",
+        "description": "The Bosphorus Strait (Istanbul Strait) is a 31-kilometre waterway connecting the Black Sea to the Marmara Sea and onward through the Dardanelles to the Mediterranean. Governed by the 1936 Montreux Convention, it is one of the world's busiest shipping chokepoints, with over 40,000 vessel transits per year. Commercial tankers carrying crude oil, grain, and refined products must wait at the northern or southern anchorages before entering the transit channel.",
+        "sameAs": "https://en.wikipedia.org/wiki/Bosphorus"
+      },
+      "mainEntity": {
+        "@type": "Dataset",
+        "name": "Bosphorus Vessel Queue Index — Sentinel-1 SAR",
+        "description": "Vessel counts and queue index for the Bosphorus Strait anchorages derived from Sentinel-1 C-band SAR imagery. North Anchorage covers vessels waiting to transit south in the Black Sea. South Anchorage covers vessels waiting to transit north in the Marmara Sea. Queue Index = current vessel count / 10-year monthly average × 100. Values above 130 signal elevated congestion; below 70 indicate unusually light traffic.",
+        "temporalCoverage": "2016/2026",
+        "spatialCoverage": {
+          "@type": "Place",
+          "name": "Bosphorus Strait, Turkey",
+          "geo": {
+            "@type": "GeoCoordinates",
+            "latitude": "41.1",
+            "longitude": "29.05"
+          }
+        },
+        "measurementTechnique": "Sentinel-1 SAR C-band IW mode, VV polarisation, 35 m/px. Adaptive backscatter threshold, blob detection, vessel classification by bounding-box length.",
+        "license": "https://oilradar.io",
+        "creator": {
+          "@type": "Organization",
+          "name": "OilRadar"
+        }
+      }
+    },
+    {
+      "@type": "FAQPage",
+      "mainEntity": [
+        {
+          "@type": "Question",
+          "name": "How many ships pass through the Bosphorus daily?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "On average, approximately 110–120 vessels transit the Bosphorus Strait daily, totalling over 40,000 transits per year. This includes tankers, bulk carriers, container ships, and smaller vessels. Commercial tankers must navigate the 31-km channel under strict pilotage rules. SAR satellite data from OilRadar captures anchorage queues — typically 25–55 vessels waiting at any given time across both the Black Sea (North) and Marmara Sea (South) anchorages."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "What is the current waiting time at the Bosphorus Strait?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Current waiting times at the Bosphorus Strait anchorages vary by vessel class and direction. The OilRadar Queue Index provides a relative congestion score updated every ~6 days via Sentinel-1 SAR satellite passes. A Queue Index above 130 signals elevated congestion and typically corresponds to extended waiting times. The 10-year average (2016–2026) for August is approximately 39 vessels across both anchorages."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Why is the Bosphorus Strait congested?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Bosphorus Strait congestion is driven by three main factors: (1) the physical constraints of the channel — 31 km long with up to 45-degree turns, limiting simultaneous transits; (2) the Montreux Convention rules, which require advance notice and impose transit restrictions on warships and large tankers over 150,000 DWT; (3) seasonal factors, fog, and current conditions that trigger temporary closures and force vessels to wait at the North Anchorage (Black Sea) or South Anchorage (Marmara Sea). Spikes in Black Sea grain or crude oil exports also drive queue build-ups."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "What are the Montreux Convention rules for commercial ships?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "The 1936 Montreux Convention grants Turkey control over the Turkish Straits (Bosphorus and Dardanelles). For commercial vessels, transit is generally free and unrestricted. Merchant ships must give advance notice (8 hours for vessels over 150m). Tankers over 150,000 DWT require daytime-only passage. Turkey can suspend civilian transit in wartime. Pilotage is not mandatory for commercial ships but is strongly recommended. Transit fees are set by the Turkish Straits Vessel Traffic Services."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "What are Bosphorus Strait shipping restrictions in 2026?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "In 2026, the Bosphorus Strait continues to operate under the Montreux Convention framework. Key restrictions include: mandatory advance notice for vessels over 150m; daytime-only passage for VLCCs and tankers over 150,000 DWT; temporary closures during dense fog, strong current, or emergency incidents; and Turkish Straits VTS (Vessel Traffic Service) control for all transits. OilRadar monitors anchorage queue build-up at both the Black Sea and Marmara anchorages via Sentinel-1 SAR satellite data updated every ~6 days."
+          }
+        }
+      ]
+    }
+  ]
+}
+</script>
+
 <link rel="icon" type="image/x-icon" href="/assets/images/favicon.ico">
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-TZQ5VH3GPY"></script>
 <script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','G-TZQ5VH3GPY');</script>
@@ -196,9 +315,8 @@ footer{background:var(--panel);border-top:1px solid var(--border);padding:32px 4
 
   <div class="explain-grid">
     <div class="explain-card">
-      <h4>Detection method</h4>
-      <p>Each SAR image (Sentinel-1 IW mode, VV polarisation, 35 m/px) is processed with an adaptive backscatter threshold calibrated to local sea clutter. Compact bright objects above threshold are classified as vessels; length is estimated from the bounding box of each detected blob.</p>
-      <p class="muted">Land and coastal clutter are masked with a ~875 m sea buffer (Black Sea) and ~1.75 km (Marmara). The Bosphorus transit channel is excluded — only the waiting anchorage is counted.</p>
+      <h4>How it works</h4>
+      <p>Vessel counts are derived from <strong>Sentinel-1 SAR satellite</strong> imagery captured every ~6 days. Only vessels at anchor in the waiting areas are counted — the Bosphorus transit channel itself is excluded. Data covers both the Black Sea (North) and Marmara Sea (South) anchorages from 2016 to present.</p>
     </div>
     <div class="explain-card" style="border-color:rgba(59,130,246,0.25);display:flex;flex-direction:column;justify-content:center;gap:16px;">
       <div>
@@ -206,6 +324,32 @@ footer{background:var(--panel);border-top:1px solid var(--border);padding:32px 4
         <p style="font-size:14px;line-height:1.7;">Track a specific chokepoint, get data access, or discuss coverage for other straits and anchorages — Suez, Malacca, Fujairah, and more.</p>
       </div>
       <a href="https://calendly.com/bachevsky/intro" target="_blank" style="font-family:'DM Mono',monospace;font-size:11px;letter-spacing:2px;text-transform:uppercase;background:var(--accent);color:#ffffff;padding:14px 28px;text-decoration:none;display:inline-block;transition:opacity .2s;" onmouseover="this.style.opacity='.85'" onmouseout="this.style.opacity='1'">Request Data Access</a>
+    </div>
+  </div>
+
+  <!-- SEO / LLM context block -->
+  <div style="margin-top:48px;border-top:1px solid var(--border);padding-top:40px;">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:32px;margin-bottom:32px;">
+      <div>
+        <div style="font-family:'DM Mono',monospace;font-size:9px;letter-spacing:3px;text-transform:uppercase;color:var(--dim);margin-bottom:16px;">About the Bosphorus Vessel Queue</div>
+        <p style="font-size:13px;line-height:1.8;color:var(--muted);">The <strong style="color:var(--text);">Bosphorus Strait</strong> — also called the Istanbul Strait — is a 31-kilometre waterway connecting the <strong style="color:var(--text);">Black Sea</strong> to the <strong style="color:var(--text);">Marmara Sea</strong>. It is one of the world's busiest and most constrained shipping chokepoints, with over 40,000 vessel transits per year governed by the <strong style="color:var(--text);">1936 Montreux Convention</strong>.</p>
+        <p style="font-size:13px;line-height:1.8;color:var(--muted);margin-top:10px;">Commercial tankers, bulk carriers, and container ships must wait at the <strong style="color:var(--text);">North Anchorage</strong> (Black Sea, southbound) or <strong style="color:var(--text);">South Anchorage</strong> (Marmara Sea, northbound) before entering the transit channel. Current <strong style="color:var(--text);">Bosphorus waiting times</strong> and queue intensity are captured by Sentinel-1 SAR satellite passes every ~6 days.</p>
+      </div>
+      <div>
+        <div style="font-family:'DM Mono',monospace;font-size:9px;letter-spacing:3px;text-transform:uppercase;color:var(--dim);margin-bottom:16px;">Queue Index — Methodology</div>
+        <p style="font-size:13px;line-height:1.8;color:var(--muted);">The <strong style="color:var(--text);">Queue Index</strong> compares the current vessel count to the 10-year monthly average for that calendar month. A value of 100 equals historical norm. Above 130 signals elevated <strong style="color:var(--text);">Bosphorus traffic</strong> congestion; below 70 indicates unusually light <strong style="color:var(--text);">Turkish Straits</strong> traffic.</p>
+        <p style="font-size:13px;line-height:1.8;color:var(--muted);margin-top:10px;">Vessel classification by length: <strong style="color:var(--text);">Capesize ≥290 m</strong>, <strong style="color:var(--text);">Post-Panamax ≥260 m</strong>, <strong style="color:var(--text);">Panamax ≥220 m</strong>, <strong style="color:var(--text);">Handymax ≥100 m</strong>. Vessels under 100 m are excluded. Data covers both <strong style="color:var(--text);">Bosphorus shipping</strong> anchorages with a 10-year record from 2016.</p>
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:32px;">
+      <div>
+        <div style="font-family:'DM Mono',monospace;font-size:9px;letter-spacing:3px;text-transform:uppercase;color:var(--dim);margin-bottom:16px;">Why the Bosphorus Gets Congested</div>
+        <p style="font-size:13px;line-height:1.8;color:var(--muted);"><strong style="color:var(--text);">Bosphorus strait congestion</strong> is driven by three factors: physical constraints of the 31-km channel with up to 45-degree turns; <strong style="color:var(--text);">Montreux Convention</strong> rules requiring advance notice and restricting large tankers over 150,000 DWT to daytime passage; and seasonal fog, strong currents, and emergency closures that force vessels into extended anchorage waits. Spikes in Black Sea crude or grain exports amplify queue build-up at the North Anchorage.</p>
+      </div>
+      <div>
+        <div style="font-family:'DM Mono',monospace;font-size:9px;letter-spacing:3px;text-transform:uppercase;color:var(--dim);margin-bottom:16px;">Montreux Convention &amp; Transit Rules</div>
+        <p style="font-size:13px;line-height:1.8;color:var(--muted);">Under the <strong style="color:var(--text);">Montreux Convention rules for commercial ships</strong>, merchant vessels have free passage through the Turkish Straits. Ships over 150 m must provide 8 hours advance notice. VLCCs over 150,000 DWT are restricted to daytime transit only. <strong style="color:var(--text);">Turkish Straits transit fees</strong> and VTS rules are enforced by Turkish maritime authorities. Pilotage is not mandatory for commercial ships but strongly recommended for vessels over 200 m.</p>
+      </div>
     </div>
   </div>
 
