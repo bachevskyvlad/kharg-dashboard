@@ -23,13 +23,13 @@ config.sh_base_url      = "https://sh.dataspace.copernicus.eu"
 
 ZONES = {
     "aegean_entrance": {
-        "bbox":     [25.85, 39.90, 26.55, 40.30],
+        "bbox":     [25.60, 39.65, 26.40, 40.10],  # Bozcaada ~39.83N centre
         "label":    "Dardanelles — Aegean entrance",
         "dilation": 30,
     },
     "marmara_south": {
-        "bbox":     [26.90, 40.50, 27.80, 40.82],
-        "label":    "Dardanelles — Marmara south",
+        "bbox":     [27.10, 40.45, 28.10, 40.85],  # Marmara Sea NE of strait exit (Şarköy area)
+        "label":    "Dardanelles — Marmara Sea",
         "dilation": 30,
     },
 }
