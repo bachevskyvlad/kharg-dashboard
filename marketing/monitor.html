@@ -110,13 +110,13 @@
   .nav-dropdown-trigger{font-family:'DM Mono',monospace;font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);background:none;border:none;cursor:pointer;padding:0;display:flex;align-items:center;gap:5px;transition:color .2s;}
   .nav-dropdown-trigger:hover,.nav-dropdown:hover .nav-dropdown-trigger{color:var(--accent);}
   .nav-dropdown-trigger::after{content:'▾';font-size:9px;opacity:.6;}
-  .nav-dropdown-menu{display:none;position:absolute;top:calc(100% + 12px);left:50%;transform:translateX(-50%);background:#111827;border:1px solid rgba(255,255,255,0.1);min-width:200px;z-index:200;padding:6px 0;}
+  .nav-dropdown-menu{display:none;position:absolute;top:100%;left:50%;transform:translateX(-50%);background:#111827;border:1px solid rgba(255,255,255,0.1);min-width:200px;z-index:200;padding:12px 0 6px;}
   .nav-dropdown:hover .nav-dropdown-menu{display:block;}
   .nav-dropdown-item{display:flex;align-items:center;justify-content:space-between;padding:9px 16px;color:var(--muted);text-decoration:none;font-family:'DM Mono',monospace;font-size:10px;letter-spacing:1.5px;text-transform:uppercase;transition:color .15s,background .15s;white-space:nowrap;}
   .nav-dropdown-item:hover{color:var(--accent);background:rgba(59,130,246,0.05);}
   .nav-dropdown-item.active{color:var(--accent);}
   .nav-dropdown-item.soon{opacity:.4;pointer-events:none;}
-  .nav-badge-free{font-size:7px;letter-spacing:1px;background:rgba(34,197,94,.12);color:#22c55e;border:1px solid rgba(34,197,94,.25);padding:2px 6px;}
+  
   .nav-badge-soon{font-size:7px;letter-spacing:1px;background:rgba(100,116,139,.1);color:var(--dim);border:1px solid rgba(100,116,139,.2);padding:2px 6px;}
   .nav-cta{font-family:'DM Mono',monospace;font-size:11px;letter-spacing:2px;text-transform:uppercase;background:transparent;border:1px solid var(--accent);color:var(--accent);padding:8px 20px;cursor:pointer;transition:all .2s;text-decoration:none;}
   .nav-cta:hover{background:var(--accent);color:var(--white);}
@@ -199,7 +199,7 @@
 <body>
 <nav>
   <a href="/" class="logo">OilRadar</a>
-  <div class="nav-links"><a href="/anchorage" class="nav-link">Anchorage</a><div class="nav-dropdown"><button class="nav-dropdown-trigger">Straits</button><div class="nav-dropdown-menu"><a href="/bosphorus" class="nav-dropdown-item">Bosphorus <span class="nav-badge-free">FREE</span></a><span class="nav-dropdown-item soon">Bab-el-Mandeb <span class="nav-badge-soon">SOON</span></span><span class="nav-dropdown-item soon">Hormuz <span class="nav-badge-soon">SOON</span></span></div></div><a href="/team" class="nav-link">Team</a><a href="/" class="nav-link">&larr; Main</a><a href="https://calendly.com/bachevsky/intro" target="_blank" class="nav-link">Schedule a Call</a><a id="dashboardCta" href="https://app.oilradar.io/dashboard" target="_blank" class="nav-cta">Dashboard &rarr;</a><a href="/zh/monitor" class="nav-link" style="border-left:1px solid rgba(255,255,255,0.07);padding-left:16px;margin-left:4px;">中文</a></div>
+  <div class="nav-links"><a href="/anchorage" class="nav-link">Anchorage</a><div class="nav-dropdown"><button class="nav-dropdown-trigger">Straits</button><div class="nav-dropdown-menu"><a href="/bosphorus" class="nav-dropdown-item">Bosphorus</a><span class="nav-dropdown-item soon">Bab-el-Mandeb <span class="nav-badge-soon">SOON</span></span><span class="nav-dropdown-item soon">Hormuz <span class="nav-badge-soon">SOON</span></span></div></div><a href="/team" class="nav-link">Team</a><a href="/" class="nav-link">&larr; Main</a><a href="https://calendly.com/bachevsky/intro" target="_blank" class="nav-link">Schedule a Call</a><a id="dashboardCta" href="https://app.oilradar.io/dashboard" target="_blank" class="nav-cta">Dashboard &rarr;</a><a href="/zh/monitor" class="nav-link" style="border-left:1px solid rgba(255,255,255,0.07);padding-left:16px;margin-left:4px;">中文</a></div>
 </nav>
 <main>
   <h1 class="section-title">Iranian Crude Oil Export Dynamics</h1>
