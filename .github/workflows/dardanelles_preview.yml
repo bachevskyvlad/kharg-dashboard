@@ -22,9 +22,12 @@ jobs:
           CLIENT_SECRET: ${{ secrets.CLIENT_SECRET }}
         run: python scripts/dardanelles_preview.py
 
-      - name: Upload images
-        uses: actions/upload-artifact@v4
-        with:
-          name: dardanelles-preview
-          path: scripts/dardanelles_*.png
-          retention-days: 7
+      - name: Commit images to repo
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          cp scripts/dardanelles_*.png data/ 2>/dev/null || true
+          git add data/dardanelles_*.png
+          git diff --cached --quiet && echo "no changes" && exit 0
+          git commit -m "Add Dardanelles S2 preview images"
+          git push origin main
