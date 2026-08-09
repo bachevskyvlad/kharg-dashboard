@@ -40,7 +40,7 @@ main{flex:1;padding:100px 32px 80px;max-width:1400px;margin:0 auto;width:100%;}
 .section-sub{font-family:'DM Mono',monospace;font-size:11px;color:var(--dim);margin-bottom:28px;letter-spacing:.5px;}
 
 /* KPI ROW */
-.kpi-row{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:24px;}
+.kpi-row{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:24px;}
 @media(max-width:900px){.kpi-row{grid-template-columns:repeat(2,1fr);}}
 .kpi-card{background:var(--panel);border:1px solid var(--border);padding:20px 24px;}
 .kpi-label{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:3px;text-transform:uppercase;color:var(--muted);margin-bottom:10px;}
@@ -316,8 +316,6 @@ function renderPage(region, allPasses){
   document.getElementById('s-date').textContent   = latest.date;
   document.getElementById('s-avg').textContent    = Math.round(avg);
   document.getElementById('s-avgp').textContent   = mname + ' · 10-yr avg';
-  document.getElementById('s-passes').textContent = allPasses.length;
-  document.getElementById('s-span').textContent   = y0 === y1 ? y0 : y0 + '–' + y1;
 
   // class cards
   const total = latest.total || 1;
@@ -515,7 +513,7 @@ function renderChartClasses(passes){
 }
 
 function renderEmpty(msg){
-  ['queue-idx','s-total','s-avg','s-passes'].forEach(id=>{const el=document.getElementById(id);if(el)el.textContent='—';});
+  ['queue-idx','s-total','s-avg'].forEach(id=>{const el=document.getElementById(id);if(el)el.textContent='—';});
   document.getElementById('status-badge').textContent = 'No data yet';
   document.getElementById('status-badge').className   = 'status-pill pill-low';
   document.getElementById('hero-ts').textContent      = msg;
