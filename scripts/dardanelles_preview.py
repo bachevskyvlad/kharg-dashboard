@@ -28,7 +28,7 @@ ZONES = {
         "dilation": 30,
     },
     "marmara_south": {
-        "bbox":     [27.10, 40.45, 28.10, 40.85],  # Marmara Sea NE of strait exit (Şarköy area)
+        "bbox":     [26.70, 40.35, 27.45, 40.75],  # centred ~40.56N 27.08E (Marmara west)
         "label":    "Dardanelles — Marmara Sea",
         "dilation": 30,
     },
