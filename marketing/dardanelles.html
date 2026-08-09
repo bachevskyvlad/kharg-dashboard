@@ -6,8 +6,8 @@
 
 <!-- Primary SEO -->
 <title>Dardanelles Strait Vessel Queue & Traffic Monitor — Satellite SAR | OilRadar</title>
-<meta name="description" content="Real-time Dardanelles Strait vessel queue index tracking tanker congestion at Aegean entrance (Bozcaada) and Marmara Sea anchorages. Sentinel-1 SAR satellite data updated every ~6 days. Covers Turkish Straits traffic, waiting times, and vessel class breakdown since 2016.">
-<meta name="keywords" content="Dardanelles traffic, Dardanelles strait, Turkish straits, Çanakkale strait traffic, Dardanelles shipping, Dardanelles vessel tracking, maritime logistics Mediterranean, current waiting time Dardanelles strait, how many ships pass through the Dardanelles daily, Dardanelles strait shipping restrictions 2026, Montreux convention commercial ships, Bozcaada anchorage, Marmara Sea vessels, tanker queue Dardanelles">
+<meta name="description" content="Real-time Dardanelles Strait vessel queue index tracking tanker congestion at Aegean and Marmara Sea anchorages. Sentinel-1 SAR satellite data updated every ~6 days. Covers Turkish Straits traffic, waiting times, and vessel class breakdown since 2016.">
+<meta name="keywords" content="Dardanelles traffic, Dardanelles strait, Turkish straits, Çanakkale strait traffic, Dardanelles shipping, Dardanelles vessel tracking, maritime logistics Aegean, current waiting time Dardanelles strait, how many ships pass through the Dardanelles daily, Dardanelles strait shipping restrictions 2026, Montreux convention commercial ships, Dardanelles congestion">
 <link rel="canonical" href="https://oilradar.io/dardanelles">
 
 <!-- Open Graph -->
@@ -41,7 +41,7 @@
       "@id": "https://oilradar.io/dardanelles",
       "url": "https://oilradar.io/dardanelles",
       "name": "Dardanelles Strait Vessel Queue & Traffic Monitor",
-      "description": "Real-time Dardanelles Strait vessel queue index derived from Sentinel-1 SAR satellite data. Tracks tanker congestion at the Aegean entrance (Bozcaada anchorage) and Marmara Sea exit (Şarköy). Covers vessel classes from Handymax to Capesize. 10-year historical record from 2016.",
+      "description": "Real-time Dardanelles Strait vessel queue index derived from Sentinel-1 SAR satellite data. Tracks tanker congestion at West Anchorage (Aegean, Bozcaada) and East Anchorage (Marmara Sea, Şarköy). Covers vessel classes from Handymax to Capesize. 10-year historical record from 2016.",
       "publisher": {
         "@type": "Organization",
         "name": "OilRadar",
@@ -50,20 +50,20 @@
       "about": {
         "@type": "Thing",
         "name": "Dardanelles Strait",
-        "description": "The Dardanelles Strait (Çanakkale Boğazı) is a 61-kilometre waterway connecting the Aegean Sea to the Marmara Sea. Together with the Bosphorus it forms the Turkish Straits, governed by the 1936 Montreux Convention. It is one of the world's most constrained shipping chokepoints, carrying crude oil, grain, and bulk cargo between the Black Sea and the Mediterranean. Vessels wait at the Aegean anchorage (Bozcaada) or the Marmara anchorage (Şarköy) before entering the transit channel.",
+        "description": "The Dardanelles Strait (Çanakkale Strait) is a 61-kilometre waterway connecting the Aegean Sea to the Marmara Sea and onward through the Bosphorus to the Black Sea. Governed by the 1936 Montreux Convention, it is the southern entry point of the Turkish Straits and a critical chokepoint for tankers, bulk carriers, and container ships transiting between the Black Sea and the Mediterranean.",
         "sameAs": "https://en.wikipedia.org/wiki/Dardanelles"
       },
       "mainEntity": {
         "@type": "Dataset",
         "name": "Dardanelles Vessel Queue Index — Sentinel-1 SAR",
-        "description": "Vessel counts and queue index for the Dardanelles Strait anchorages derived from Sentinel-1 C-band SAR imagery. West Anchorage covers vessels at the Aegean entrance (Bozcaada) waiting to transit east. East Anchorage covers vessels at the Marmara Sea exit (Şarköy) waiting to transit west. Queue Index = current vessel count / 10-year monthly average × 100. Values above 130 signal elevated congestion; below 70 indicate unusually light traffic.",
+        "description": "Vessel counts and queue index for the Dardanelles Strait anchorages derived from Sentinel-1 C-band SAR imagery. West Anchorage (Aegean, Bozcaada) covers vessels waiting to transit east toward the Marmara Sea. East Anchorage (Marmara, Şarköy) covers vessels waiting to transit west toward the Aegean. Queue Index = current vessel count / 10-year monthly average × 100. Values above 130 signal elevated congestion; below 70 indicate unusually light traffic.",
         "temporalCoverage": "2016/2026",
         "spatialCoverage": {
           "@type": "Place",
           "name": "Dardanelles Strait, Turkey",
           "geo": {
             "@type": "GeoCoordinates",
-            "latitude": "40.1",
+            "latitude": "40.15",
             "longitude": "26.4"
           }
         },
@@ -83,7 +83,7 @@
           "name": "How many ships pass through the Dardanelles daily?",
           "acceptedAnswer": {
             "@type": "Answer",
-            "text": "On average, approximately 80–100 vessels transit the Dardanelles Strait daily, totalling over 35,000 transits per year. This includes tankers, bulk carriers, container ships, and smaller vessels. Like the Bosphorus, the Dardanelles is governed by the Montreux Convention. Vessels waiting at the Aegean entrance (Bozcaada anchorage) or the Marmara Sea exit (Şarköy anchorage) are tracked by OilRadar via Sentinel-1 SAR satellite passes every ~6 days."
+            "text": "On average, approximately 100–120 vessels transit the Dardanelles Strait daily, closely mirroring Bosphorus traffic as the two straits form the Turkish Straits system. Commercial tankers must navigate the 61-km channel before reaching the Bosphorus or the Aegean. SAR satellite data from OilRadar captures anchorage queues at the West Anchorage (Bozcaada, Aegean) and East Anchorage (Şarköy, Marmara Sea)."
           }
         },
         {
@@ -91,7 +91,7 @@
           "name": "What is the current waiting time at the Dardanelles Strait?",
           "acceptedAnswer": {
             "@type": "Answer",
-            "text": "Current waiting times at the Dardanelles anchorages vary by vessel class and transit direction. The OilRadar Queue Index provides a relative congestion score updated every ~6 days via Sentinel-1 SAR passes. A Queue Index above 130 signals elevated congestion. The 10-year average for the Aegean (West) anchorage runs approximately 15–25 vessels per pass; the Marmara (East) anchorage typically holds 8–18 vessels."
+            "text": "Current waiting times at the Dardanelles anchorages vary by vessel class and direction. The OilRadar Queue Index provides a relative congestion score updated every ~6 days via Sentinel-1 SAR satellite passes. A Queue Index above 130 signals elevated congestion. The 10-year monthly baseline is derived from SAR-detected vessel counts at both the Aegean (Bozcaada) and Marmara (Şarköy) anchorages."
           }
         },
         {
@@ -99,23 +99,15 @@
           "name": "Why is the Dardanelles Strait congested?",
           "acceptedAnswer": {
             "@type": "Answer",
-            "text": "Dardanelles congestion is driven by the same Montreux Convention framework as the Bosphorus: advance notice requirements, daytime-only restrictions for VLCCs over 150,000 DWT, seasonal fog and current closures, and surges in Black Sea crude oil and grain exports. The Dardanelles is the first chokepoint vessels encounter leaving the Aegean toward the Black Sea, making its Bozcaada anchorage a reliable early indicator of broader Turkish Straits traffic pressure."
+            "text": "Dardanelles congestion is driven by its role as the mandatory gateway for all Black Sea traffic entering or exiting the Mediterranean. Vessels transiting the Bosphorus must also pass through the Dardanelles, creating synchronized congestion. Channel width as narrow as 1.2 km, strong currents, and restricted visibility conditions force vessels to queue at the Aegean (Bozcaada) or Marmara (Şarköy) anchorages. Surges in Black Sea crude and grain exports compound queue build-up."
           }
         },
         {
           "@type": "Question",
-          "name": "What are the Montreux Convention rules for the Dardanelles?",
+          "name": "What are the Montreux Convention rules for Dardanelles transit?",
           "acceptedAnswer": {
             "@type": "Answer",
-            "text": "Under the 1936 Montreux Convention, the Dardanelles and Bosphorus are treated as a single system. Commercial vessels have free passage in peacetime. Ships over 150 m must give advance notice. VLCCs and tankers over 150,000 DWT are restricted to daytime passage only. Turkey controls transit rules and can suspend civilian passage in wartime. Turkish Straits VTS manages all transits through both straits."
-          }
-        },
-        {
-          "@type": "Question",
-          "name": "What are Dardanelles Strait shipping restrictions in 2026?",
-          "acceptedAnswer": {
-            "@type": "Answer",
-            "text": "In 2026, the Dardanelles Strait operates under the Montreux Convention framework. Key restrictions include: mandatory advance notice for vessels over 150 m; daytime-only passage for VLCCs over 150,000 DWT; temporary closures during fog, strong current, or emergencies; and Turkish Straits VTS control over all transits. OilRadar tracks anchorage queue build-up at both the Aegean and Marmara anchorages via Sentinel-1 SAR every ~6 days."
+            "text": "The 1936 Montreux Convention covers both the Bosphorus and Dardanelles as the Turkish Straits. For commercial vessels, transit is generally free and unrestricted. Merchant ships must give advance notice (8 hours for vessels over 150m). Tankers over 150,000 DWT require daytime-only passage. Turkey enforces transit rules via the Turkish Straits Vessel Traffic Services (VTS). Pilotage is not mandatory for commercial ships but strongly recommended."
           }
         }
       ]
@@ -150,6 +142,7 @@ nav{position:fixed;top:0;left:0;right:0;z-index:100;display:flex;align-items:cen
   .nav-dropdown-item:hover{color:var(--accent);background:rgba(59,130,246,0.05);}
   .nav-dropdown-item.active{color:var(--accent);}
   .nav-dropdown-item.soon{opacity:.4;pointer-events:none;}
+
   .nav-badge-soon{font-size:7px;letter-spacing:1px;background:rgba(100,116,139,.1);color:var(--dim);border:1px solid rgba(100,116,139,.2);padding:2px 6px;}
 .nav-cta{font-family:'DM Mono',monospace;font-size:11px;letter-spacing:2px;text-transform:uppercase;background:transparent;border:1px solid var(--accent);color:var(--accent);padding:8px 20px;cursor:pointer;transition:all .2s;text-decoration:none;}
 .nav-cta:hover{background:var(--accent);color:var(--white);}
@@ -167,15 +160,6 @@ main{flex:1;padding:100px 32px 80px;max-width:1400px;margin:0 auto;width:100%;}
 .section-label{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:4px;text-transform:uppercase;color:var(--accent);margin-bottom:8px;}
 .section-title{font-family:'Bebas Neue',sans-serif;font-size:clamp(36px,4vw,56px);line-height:1;color:var(--text);margin-bottom:6px;}
 .section-sub{font-family:'DM Mono',monospace;font-size:11px;color:var(--dim);margin-bottom:28px;letter-spacing:.5px;}
-
-/* SAR IMAGE PANEL */
-.sar-panel{background:var(--panel);border:1px solid var(--border);overflow:hidden;margin-bottom:24px;position:relative;}
-.sar-header{display:flex;align-items:center;justify-content:space-between;padding:14px 20px;border-bottom:1px solid var(--border);}
-.sar-title{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--accent);}
-.sar-dl{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);text-decoration:none;padding:5px 12px;border:1px solid var(--border);transition:all .2s;}
-.sar-dl:hover{color:var(--text);border-color:rgba(255,255,255,0.2);}
-.sar-img{width:100%;display:block;max-height:520px;object-fit:cover;object-position:center;}
-.sar-caption{position:absolute;bottom:0;left:0;right:0;padding:8px 16px;background:linear-gradient(transparent,rgba(10,14,23,0.85));font-family:'DM Mono',monospace;font-size:9px;letter-spacing:1px;color:var(--dim);}
 
 /* KPI ROW */
 .kpi-row{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:24px;}
@@ -220,6 +204,7 @@ main{flex:1;padding:100px 32px 80px;max-width:1400px;margin:0 auto;width:100%;}
 .explain-card h4{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:3px;text-transform:uppercase;color:var(--muted);margin-bottom:12px;}
 .explain-card p{font-size:13px;line-height:1.75;color:var(--text);}
 .explain-card p+p{margin-top:8px;}
+.explain-card p.muted{color:var(--muted);font-size:12px;margin-top:10px;}
 
 footer{background:var(--panel);border-top:1px solid var(--border);padding:32px 48px;display:flex;align-items:center;justify-content:space-between;margin-top:auto;}
 .footer-logo{font-family:'Bebas Neue',sans-serif;font-size:24px;letter-spacing:6px;color:var(--accent);}
@@ -231,6 +216,8 @@ footer{background:var(--panel);border-top:1px solid var(--border);padding:32px 4
 @media(max-width:900px){
   nav{padding:14px 16px;}main{padding:90px 16px 60px;}
   .switcher{margin:0 -16px 32px;padding:0 16px;}
+  .hero-row{grid-template-columns:1fr;gap:24px;}
+  .stat-row{grid-template-columns:1fr 1fr;}
   .class-grid{grid-template-columns:1fr 1fr;}
   .explain-grid{grid-template-columns:1fr;}
   footer{flex-direction:column;gap:16px;text-align:center;padding:24px 16px;}
@@ -254,11 +241,11 @@ footer{background:var(--panel);border-top:1px solid var(--border);padding:32px 4
 <main>
 
   <div class="switcher">
-    <button class="sw-btn active" id="sw-aegean" data-region="aegean_entrance">
+    <button class="sw-btn active" id="sw-west" data-region="aegean_entrance">
       <span class="sw-name">← West Anchorage</span>
       <span class="sw-sub">Aegean entrance · Bozcaada · vessels waiting to transit east</span>
     </button>
-    <button class="sw-btn" id="sw-marmara" data-region="marmara_south">
+    <button class="sw-btn" id="sw-east" data-region="marmara_south">
       <span class="sw-name">→ East Anchorage</span>
       <span class="sw-sub">Marmara exit · Şarköy · vessels waiting to transit west</span>
     </button>
@@ -266,32 +253,22 @@ footer{background:var(--panel);border-top:1px solid var(--border);padding:32px 4
 
   <div class="section-label" id="hero-label">West Anchorage &middot; Aegean Entrance &middot; Sentinel-1 SAR</div>
   <h1 class="section-title">Dardanelles Vessel Queue</h1>
-  <div class="section-sub" id="hero-ts">Loading&hellip;</div>
-
-  <!-- SAR IMAGE PANEL -->
-  <div class="sar-panel">
-    <div class="sar-header">
-      <div class="sar-title" id="sar-title">Aegean (Bozcaada) &nbsp;|&nbsp; Latest SAR pass</div>
-      <a class="sar-dl" id="sar-download" href="/data/dardanelles_sar_aegean_entrance.png" download>&#8595; Download</a>
-    </div>
-    <img class="sar-img" id="sar-img" src="/data/dardanelles_sar_aegean_entrance.png" alt="Dardanelles SAR vessel detection — Aegean entrance">
-    <div class="sar-caption">Sentinel-1 SAR &middot; C-band IW &middot; VV polarisation &middot; 35 m/px &middot; vessel detection by adaptive backscatter threshold</div>
-  </div>
+  <div class="section-sub" id="hero-ts">Loading…</div>
 
   <div class="kpi-row">
     <div class="kpi-card">
       <div class="kpi-label">Queue Index</div>
-      <div class="kpi-value blue" id="queue-idx">&mdash;</div>
-      <div id="status-badge" class="status-pill pill-normal">Loading&hellip;</div>
+      <div class="kpi-value blue" id="queue-idx">—</div>
+      <div id="status-badge" class="status-pill pill-normal">Loading…</div>
     </div>
     <div class="kpi-card">
       <div class="kpi-label">Vessels Detected</div>
-      <div class="kpi-value blue" id="s-total">&mdash;</div>
+      <div class="kpi-value blue" id="s-total">—</div>
       <div class="kpi-sub" id="s-date">latest SAR pass</div>
     </div>
     <div class="kpi-card">
       <div class="kpi-label">Monthly Avg</div>
-      <div class="kpi-value green" id="s-avg">&mdash;</div>
+      <div class="kpi-value green" id="s-avg">—</div>
       <div class="kpi-sub" id="s-avgp">10-yr baseline</div>
     </div>
   </div>
@@ -300,7 +277,7 @@ footer{background:var(--panel);border-top:1px solid var(--border);padding:32px 4
   <div class="monitor-wrap">
     <div class="monitor-header">
       <div class="monitor-title">Queue Index Over Time</div>
-      <div style="font-family:'DM Mono',monospace;font-size:9px;letter-spacing:1px;color:var(--dim);">100 = historical norm &nbsp;&middot;&nbsp; &gt;130 elevated &nbsp;&middot;&nbsp; &lt;70 light</div>
+      <div style="font-family:'DM Mono',monospace;font-size:9px;letter-spacing:1px;color:var(--dim);">100 = historical norm &nbsp;·&nbsp; &gt;130 elevated &nbsp;·&nbsp; &lt;70 light</div>
     </div>
     <div class="chart-area"><canvas id="chartIndex"></canvas></div>
   </div>
@@ -315,7 +292,7 @@ footer{background:var(--panel);border-top:1px solid var(--border);padding:32px 4
         <button class="filter-btn" data-range="6">6M</button>
         <button class="filter-btn" data-range="12">1Y</button>
         <button class="filter-btn" data-range="0">All</button>
-        <button class="filter-btn" id="outlier-btn" title="Show/hide statistical outliers (sea clutter)">&plusmn;&sigma;</button>
+        <button class="filter-btn" id="outlier-btn" title="Show/hide statistical outliers (sea clutter)">±σ</button>
       </div>
       <div id="outlier-note" style="font-family:'DM Mono',monospace;font-size:9px;letter-spacing:1px;color:#64748b;margin-top:6px;width:100%;"></div>
     </div>
@@ -327,10 +304,10 @@ footer{background:var(--panel);border-top:1px solid var(--border);padding:32px 4
 
   <!-- CLASS CARDS -->
   <div class="class-grid" id="class-grid">
-    <div class="class-cell"><div class="class-name">Capesize</div><div class="class-size">&ge; 290 m</div><div class="class-count" style="color:#ef4444">&mdash;</div><div class="bar-track"><div class="bar-fill" id="bar-capesize" style="width:0%;background:#ef4444"></div></div></div>
-    <div class="class-cell"><div class="class-name">Post-Panamax</div><div class="class-size">&ge; 260 m</div><div class="class-count" style="color:#f97316">&mdash;</div><div class="bar-track"><div class="bar-fill" id="bar-postpanamax" style="width:0%;background:#f97316"></div></div></div>
-    <div class="class-cell"><div class="class-name">Panamax</div><div class="class-size">&ge; 220 m</div><div class="class-count" style="color:#f59e0b">&mdash;</div><div class="bar-track"><div class="bar-fill" id="bar-panamax" style="width:0%;background:#f59e0b"></div></div></div>
-    <div class="class-cell"><div class="class-name">Handymax</div><div class="class-size">&ge; 100 m</div><div class="class-count" style="color:#22c55e">&mdash;</div><div class="bar-track"><div class="bar-fill" id="bar-handymax" style="width:0%;background:#22c55e"></div></div></div>
+    <div class="class-cell"><div class="class-name">Capesize</div><div class="class-size">≥ 290 m</div><div class="class-count" style="color:#ef4444">—</div><div class="bar-track"><div class="bar-fill" id="bar-capesize" style="width:0%;background:#ef4444"></div></div></div>
+    <div class="class-cell"><div class="class-name">Post-Panamax</div><div class="class-size">≥ 260 m</div><div class="class-count" style="color:#f97316">—</div><div class="bar-track"><div class="bar-fill" id="bar-postpanamax" style="width:0%;background:#f97316"></div></div></div>
+    <div class="class-cell"><div class="class-name">Panamax</div><div class="class-size">≥ 220 m</div><div class="class-count" style="color:#f59e0b">—</div><div class="bar-track"><div class="bar-fill" id="bar-panamax" style="width:0%;background:#f59e0b"></div></div></div>
+    <div class="class-cell"><div class="class-name">Handymax</div><div class="class-size">≥ 100 m</div><div class="class-count" style="color:#22c55e">—</div><div class="bar-track"><div class="bar-fill" id="bar-handymax" style="width:0%;background:#22c55e"></div></div></div>
   </div>
 
   <!-- CLASS COUNT STACKED CHART -->
@@ -344,7 +321,7 @@ footer{background:var(--panel);border-top:1px solid var(--border);padding:32px 4
   <div class="explain-grid">
     <div class="explain-card">
       <h4>How it works</h4>
-      <p>Vessel counts are derived from <strong>Sentinel-1 SAR satellite</strong> imagery captured every ~6 days. Only vessels at anchor in the waiting areas are counted — the Dardanelles transit channel itself is excluded. Data covers both the Aegean entrance (West) and Marmara Sea exit (East) anchorages from 2016 to present.</p>
+      <p>Vessel counts are derived from <strong>Sentinel-1 SAR satellite</strong> imagery captured every ~6 days. Only vessels at anchor in the waiting areas are counted — the Dardanelles transit channel itself is excluded. Data covers both the Aegean (West, Bozcaada) and Marmara Sea (East, Şarköy) anchorages from 2016 to present.</p>
     </div>
     <div class="explain-card" style="border-color:rgba(59,130,246,0.25);display:flex;flex-direction:column;justify-content:center;gap:16px;">
       <div>
@@ -360,23 +337,23 @@ footer{background:var(--panel);border-top:1px solid var(--border);padding:32px 4
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:32px;margin-bottom:32px;">
       <div>
         <div style="font-family:'DM Mono',monospace;font-size:9px;letter-spacing:3px;text-transform:uppercase;color:var(--dim);margin-bottom:16px;">About the Dardanelles Vessel Queue</div>
-        <p style="font-size:13px;line-height:1.8;color:var(--muted);">The <strong style="color:var(--text);">Dardanelles Strait</strong> — also called Çanakkale Boğazı — is a 61-kilometre waterway connecting the <strong style="color:var(--text);">Aegean Sea</strong> to the <strong style="color:var(--text);">Marmara Sea</strong>. Together with the Bosphorus it forms the Turkish Straits, one of the world's busiest and most constrained shipping chokepoints, with over 35,000 vessel transits per year governed by the <strong style="color:var(--text);">1936 Montreux Convention</strong>.</p>
-        <p style="font-size:13px;line-height:1.8;color:var(--muted);margin-top:10px;">Commercial tankers, bulk carriers, and container ships must wait at the <strong style="color:var(--text);">West Anchorage</strong> (Bozcaada, eastbound) or <strong style="color:var(--text);">East Anchorage</strong> (Şarköy, westbound) before entering the transit channel. Current <strong style="color:var(--text);">Dardanelles waiting times</strong> and queue intensity are captured by Sentinel-1 SAR satellite passes every ~6 days.</p>
+        <p style="font-size:13px;line-height:1.8;color:var(--muted);">The <strong style="color:var(--text);">Dardanelles Strait</strong> — also called the Çanakkale Strait — is a 61-kilometre waterway connecting the <strong style="color:var(--text);">Aegean Sea</strong> to the <strong style="color:var(--text);">Marmara Sea</strong>. Together with the Bosphorus it forms the <strong style="color:var(--text);">Turkish Straits</strong> system, the only sea route linking the <strong style="color:var(--text);">Black Sea</strong> to the Mediterranean and governed by the <strong style="color:var(--text);">1936 Montreux Convention</strong>.</p>
+        <p style="font-size:13px;line-height:1.8;color:var(--muted);margin-top:10px;">Commercial tankers, bulk carriers, and container ships must wait at the <strong style="color:var(--text);">West Anchorage</strong> (Bozcaada, Aegean, eastbound) or <strong style="color:var(--text);">East Anchorage</strong> (Şarköy, Marmara Sea, westbound) before entering the transit channel. Current <strong style="color:var(--text);">Dardanelles waiting times</strong> and queue intensity are captured by Sentinel-1 SAR satellite passes every ~6 days.</p>
       </div>
       <div>
         <div style="font-family:'DM Mono',monospace;font-size:9px;letter-spacing:3px;text-transform:uppercase;color:var(--dim);margin-bottom:16px;">Queue Index — Methodology</div>
         <p style="font-size:13px;line-height:1.8;color:var(--muted);">The <strong style="color:var(--text);">Queue Index</strong> compares the current vessel count to the 10-year monthly average for that calendar month. A value of 100 equals historical norm. Above 130 signals elevated <strong style="color:var(--text);">Dardanelles traffic</strong> congestion; below 70 indicates unusually light <strong style="color:var(--text);">Turkish Straits</strong> traffic.</p>
-        <p style="font-size:13px;line-height:1.8;color:var(--muted);margin-top:10px;">Vessel classification by length: <strong style="color:var(--text);">Capesize &ge;290 m</strong>, <strong style="color:var(--text);">Post-Panamax &ge;260 m</strong>, <strong style="color:var(--text);">Panamax &ge;220 m</strong>, <strong style="color:var(--text);">Handymax &ge;100 m</strong>. Vessels under 100 m are excluded. Data covers both <strong style="color:var(--text);">Dardanelles shipping</strong> anchorages with a 10-year record from 2016.</p>
+        <p style="font-size:13px;line-height:1.8;color:var(--muted);margin-top:10px;">Vessel classification by length: <strong style="color:var(--text);">Capesize ≥290 m</strong>, <strong style="color:var(--text);">Post-Panamax ≥260 m</strong>, <strong style="color:var(--text);">Panamax ≥220 m</strong>, <strong style="color:var(--text);">Handymax ≥100 m</strong>. Vessels under 100 m are excluded. Data covers both <strong style="color:var(--text);">Dardanelles shipping</strong> anchorages with a 10-year record from 2016.</p>
       </div>
     </div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:32px;">
       <div>
         <div style="font-family:'DM Mono',monospace;font-size:9px;letter-spacing:3px;text-transform:uppercase;color:var(--dim);margin-bottom:16px;">Why the Dardanelles Gets Congested</div>
-        <p style="font-size:13px;line-height:1.8;color:var(--muted);"><strong style="color:var(--text);">Dardanelles strait congestion</strong> is driven by the physical constraints of the 61-km channel, <strong style="color:var(--text);">Montreux Convention</strong> rules requiring advance notice and restricting VLCCs over 150,000 DWT to daytime passage, and seasonal fog and strong current closures. As the Aegean-side gateway to the Black Sea, the Bozcaada anchorage queue is a leading indicator of broader Turkish Straits traffic pressure — and of Black Sea crude and grain export surges.</p>
+        <p style="font-size:13px;line-height:1.8;color:var(--muted);"><strong style="color:var(--text);">Dardanelles strait congestion</strong> is driven by its position as the mandatory gateway for all Black Sea traffic. Channel width narrows to just 1.2 km at Çanakkale, with strong counter-currents and restricted visibility creating transit windows. <strong style="color:var(--text);">Montreux Convention</strong> rules require advance notice and restrict large tankers over 150,000 DWT to daytime passage. Surges in Black Sea crude oil and grain exports amplify queue build-up at both anchorages.</p>
       </div>
       <div>
         <div style="font-family:'DM Mono',monospace;font-size:9px;letter-spacing:3px;text-transform:uppercase;color:var(--dim);margin-bottom:16px;">Montreux Convention &amp; Transit Rules</div>
-        <p style="font-size:13px;line-height:1.8;color:var(--muted);">Under the <strong style="color:var(--text);">Montreux Convention rules for commercial ships</strong>, merchant vessels have free passage through the Turkish Straits. Ships over 150 m must provide 8 hours advance notice. VLCCs over 150,000 DWT are restricted to daytime transit only. <strong style="color:var(--text);">Turkish Straits transit fees</strong> and VTS rules are enforced by Turkish maritime authorities. The Dardanelles and Bosphorus are managed as a single system under the same regulatory framework.</p>
+        <p style="font-size:13px;line-height:1.8;color:var(--muted);">Under the <strong style="color:var(--text);">Montreux Convention rules for commercial ships</strong>, merchant vessels have free passage through the Turkish Straits. Ships over 150 m must provide 8 hours advance notice. VLCCs over 150,000 DWT are restricted to daytime transit only. <strong style="color:var(--text);">Turkish Straits transit fees</strong> and VTS rules are enforced by Turkish maritime authorities at both the Dardanelles and Bosphorus under a single regulatory framework.</p>
       </div>
     </div>
   </div>
@@ -402,21 +379,17 @@ const CLS = {
   handymax:    { label:'Handymax',     size:'≥ 100 m', color:'#22c55e' },
 };
 const REGION_META = {
-  aegean_entrance: { label:'West Anchorage · Aegean Entrance · Sentinel-1 SAR', sarTitle:'Aegean (Bozcaada) &nbsp;|&nbsp; Latest SAR pass', sarSrc:'/data/dardanelles_sar_aegean_entrance.png', sarAlt:'Dardanelles SAR vessel detection — Aegean entrance' },
-  marmara_south:   { label:'East Anchorage · Marmara Sea · Sentinel-1 SAR',     sarTitle:'Marmara Sea (Şarköy) &nbsp;|&nbsp; Latest SAR pass', sarSrc:'/data/dardanelles_sar_marmara_south.png',   sarAlt:'Dardanelles SAR vessel detection — Marmara Sea' },
-};
-const HISTORY_URLS = {
-  aegean_entrance: '/data/dardanelles_aegean_history.json',
-  marmara_south:   '/data/dardanelles_marmara_history.json',
+  aegean_entrance: { label:'West Anchorage · Aegean Entrance · Sentinel-1 SAR' },
+  marmara_south:   { label:'East Anchorage · Marmara Sea · Sentinel-1 SAR' },
 };
 
-let activeRegion = 'aegean_entrance';
-let activeRange  = 3;
-let showOutliers = false;
+let activeRegion  = 'aegean_entrance';
+let activeRange   = 3;
+let showOutliers  = false;
 const cache = {};
-let chartIndex   = null;
-let chartTotal   = null;
-let chartClasses = null;
+let chartIndex    = null;
+let chartTotal    = null;
+let chartClasses  = null;
 
 function computeOutlierCap(passes){
   const totals = passes.map(p => p.total).sort((a,b)=>a-b);
@@ -488,14 +461,17 @@ function renderPage(region, allPasses){
   document.getElementById('s-avgp').textContent   = mname + ' · 10-yr avg';
 
   const total = latest.total || 1;
-  for(const [k] of Object.entries(CLS)){
+  for(const [k, meta] of Object.entries(CLS)){
     const cnt = latest[k] || 0;
     const pct = Math.round(cnt / total * 100);
     const bar = document.getElementById('bar-' + k);
     if(bar){
       bar.style.width = pct + '%';
       const card = bar.closest('.class-cell');
-      if(card){ const countEl = card.querySelector('.class-count'); if(countEl) countEl.textContent = cnt; }
+      if(card){
+        const countEl = card.querySelector('.class-count');
+        if(countEl) countEl.textContent = cnt;
+      }
     }
   }
 
@@ -511,22 +487,31 @@ function renderChartIndex(passes, avgs){
     return avg ? Math.round(p.total / avg * 100) : null;
   });
   const colors = indices.map(v => v === null ? 'rgba(100,116,139,0.4)' : v >= 130 ? 'rgba(239,68,68,0.7)' : v >= 70 ? 'rgba(59,130,246,0.6)' : 'rgba(100,116,139,0.5)');
+
   if(chartIndex){ chartIndex.destroy(); chartIndex = null; }
   const ctx = document.getElementById('chartIndex').getContext('2d');
   chartIndex = new Chart(ctx, {
     type: 'bar',
-    data: { labels, datasets: [
-      { label:'Queue Index', data:indices, backgroundColor:colors, borderWidth:0, borderRadius:1 },
-      { label:'Norm (100)', data:labels.map(()=>100), type:'line', borderColor:'rgba(245,158,11,0.5)', borderWidth:1, borderDash:[4,4], pointRadius:0, fill:false },
-      { label:'Elevated (130)', data:labels.map(()=>130), type:'line', borderColor:'rgba(239,68,68,0.35)', borderWidth:1, borderDash:[2,4], pointRadius:0, fill:false },
-    ]},
+    data: {
+      labels,
+      datasets: [
+        { label:'Queue Index', data:indices, backgroundColor:colors, borderWidth:0, borderRadius:1 },
+        { label:'Norm (100)', data:labels.map(()=>100), type:'line', borderColor:'rgba(245,158,11,0.5)', borderWidth:1, borderDash:[4,4], pointRadius:0, fill:false },
+        { label:'Elevated (130)', data:labels.map(()=>130), type:'line', borderColor:'rgba(239,68,68,0.35)', borderWidth:1, borderDash:[2,4], pointRadius:0, fill:false },
+      ],
+    },
     options: {
       responsive:true, maintainAspectRatio:false,
       interaction:{ mode:'index', intersect:false },
       plugins:{
         legend:{ labels:{ color:'#94a3b8', font:{ family:"'DM Mono',monospace", size:10 }, boxWidth:12, padding:16 } },
-        tooltip:{ backgroundColor:'#111827', borderColor:'rgba(255,255,255,0.07)', borderWidth:1, titleColor:'#e2e8f0', bodyColor:'#94a3b8', titleFont:{ family:"'DM Mono',monospace", size:11 }, bodyFont:{ family:"'DM Mono',monospace", size:10 }, padding:10,
-          callbacks:{ label: ctx => { if(ctx.datasetIndex!==0) return null; const v=ctx.parsed.y; return `  Index: ${v}  (${v>=130?'ELEVATED':v>=70?'NORMAL':'LIGHT'})`; } }
+        tooltip:{
+          backgroundColor:'#111827', borderColor:'rgba(255,255,255,0.07)', borderWidth:1,
+          titleColor:'#e2e8f0', bodyColor:'#94a3b8',
+          titleFont:{ family:"'DM Mono',monospace", size:11 },
+          bodyFont:{ family:"'DM Mono',monospace", size:10 },
+          padding:10,
+          callbacks:{ label: ctx => { if(ctx.datasetIndex!==0) return null; const v=ctx.parsed.y; return `  Index: ${v}  (${v>=130?'ELEVATED':v>=70?'NORMAL':'LIGHT'})`; } },
         },
       },
       scales:{
@@ -538,18 +523,19 @@ function renderChartIndex(passes, avgs){
 }
 
 function renderChartTotal(passes, avgs){
-  const labels  = passes.map(p => p.date);
-  const totals  = passes.map(p => p.total);
+  const labels = passes.map(p => p.date);
+  const totals = passes.map(p => p.total);
   const avgLine = passes.map(p => Math.round(avgs[p.date.slice(5,7)] || 0));
+
   if(chartTotal){ chartTotal.destroy(); chartTotal = null; }
   const ctx = document.getElementById('chartTotal').getContext('2d');
   chartTotal = new Chart(ctx, {
-    type: 'bar',
-    data: { labels, datasets: [
+    type:'bar',
+    data:{ labels, datasets:[
       { label:'Total vessels', data:totals, backgroundColor:'rgba(59,130,246,0.35)', borderColor:'rgba(59,130,246,0.8)', borderWidth:1, borderRadius:1, order:2 },
       { label:'Monthly avg (10yr)', data:avgLine, type:'line', borderColor:'rgba(245,158,11,0.7)', borderWidth:1.5, borderDash:[4,4], pointRadius:0, tension:0.3, fill:false, order:1 },
     ]},
-    options: {
+    options:{
       responsive:true, maintainAspectRatio:false,
       interaction:{ mode:'index', intersect:false },
       plugins:{
@@ -565,22 +551,17 @@ function renderChartTotal(passes, avgs){
 }
 
 function renderChartClasses(passes){
-  const labels   = passes.map(p => p.date);
+  const labels = passes.map(p => p.date);
   const datasets = Object.entries(CLS).map(([k, meta]) => ({
-    label: meta.label,
-    data: passes.map(p => p[k] || 0),
-    backgroundColor: meta.color + '99',
-    borderColor: meta.color,
-    borderWidth: 0,
-    borderRadius: 1,
-    stack: 'stack',
+    label:meta.label, data:passes.map(p=>p[k]||0), backgroundColor:meta.color+'99', borderColor:meta.color, borderWidth:0, borderRadius:1, stack:'stack',
   }));
+
   if(chartClasses){ chartClasses.destroy(); chartClasses = null; }
   const ctx = document.getElementById('chartClasses').getContext('2d');
   chartClasses = new Chart(ctx, {
-    type: 'bar',
-    data: { labels, datasets },
-    options: {
+    type:'bar',
+    data:{ labels, datasets },
+    options:{
       responsive:true, maintainAspectRatio:false,
       interaction:{ mode:'index', intersect:false },
       plugins:{
@@ -596,7 +577,7 @@ function renderChartClasses(passes){
 }
 
 function renderEmpty(msg){
-  ['queue-idx','s-total','s-avg'].forEach(id=>{ const el=document.getElementById(id); if(el) el.textContent='—'; });
+  ['queue-idx','s-total','s-avg'].forEach(id=>{const el=document.getElementById(id);if(el)el.textContent='—';});
   document.getElementById('status-badge').textContent = 'No data yet';
   document.getElementById('status-badge').className   = 'status-pill pill-low';
   document.getElementById('hero-ts').textContent      = msg;
@@ -605,7 +586,10 @@ function renderEmpty(msg){
 async function loadRegion(region){
   if(cache[region]) return cache[region];
   try{
-    const r = await fetch(HISTORY_URLS[region]);
+    const url = region === 'aegean_entrance'
+      ? '/data/dardanelles_aegean_history.json'
+      : '/data/dardanelles_marmara_history.json';
+    const r = await fetch(url);
     if(!r.ok) throw 0;
     const data = await r.json();
     const passes = data.passes || [];
@@ -618,12 +602,7 @@ async function loadRegion(region){
 async function switchTo(region){
   activeRegion = region;
   document.querySelectorAll('.sw-btn').forEach(b => b.classList.toggle('active', b.dataset.region === region));
-  const m = REGION_META[region];
-  document.getElementById('hero-label').textContent  = m.label;
-  document.getElementById('sar-title').innerHTML     = m.sarTitle;
-  document.getElementById('sar-img').src             = m.sarSrc;
-  document.getElementById('sar-img').alt             = m.sarAlt;
-  document.getElementById('sar-download').href       = m.sarSrc;
+  document.getElementById('hero-label').textContent = REGION_META[region].label;
   const passes = await loadRegion(region);
   if(passes) renderPage(region, passes);
   else renderEmpty('Backfill in progress — check back shortly');
@@ -633,9 +612,9 @@ document.querySelectorAll('.sw-btn').forEach(btn => {
   btn.addEventListener('click', () => switchTo(btn.dataset.region));
 });
 
-document.querySelectorAll('.filter-btn[data-range]').forEach(btn => {
+document.querySelectorAll('.filter-btn').forEach(btn => {
   btn.addEventListener('click', () => {
-    document.querySelectorAll('.filter-btn[data-range]').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
     activeRange = parseInt(btn.dataset.range, 10);
     const passes = cache[activeRegion];
