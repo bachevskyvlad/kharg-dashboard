@@ -112,6 +112,20 @@
   .section-label{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:4px;text-transform:uppercase;color:var(--accent);margin-bottom:16px;}
   .section-title{font-family:'Bebas Neue',sans-serif;font-size:clamp(40px,5vw,60px);line-height:1;color:var(--text);margin-bottom:40px;}
   .monitor-wrap{background:var(--panel);border:1px solid var(--border);padding:28px 32px;box-shadow:0 1px 3px rgba(0,0,0,0.05);margin-bottom:24px;}
+  .kpi-row{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:24px;}
+  @media(max-width:900px){.kpi-row{grid-template-columns:repeat(2,1fr);}}
+  .kpi-card{background:var(--panel);border:1px solid var(--border);padding:20px 24px;}
+  .kpi-label{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:3px;text-transform:uppercase;color:var(--muted);margin-bottom:10px;}
+  .kpi-value{font-family:'DM Mono',monospace;font-size:36px;font-weight:500;line-height:1;font-variant-numeric:tabular-nums;margin-bottom:6px;}
+  .kpi-sub{font-family:'DM Mono',monospace;font-size:10px;color:var(--dim);}
+  .kpi-value.blue{color:var(--accent);}
+  .kpi-value.amber{color:#f59e0b;}
+  .kpi-value.green{color:#22c55e;}
+  .kpi-value.red{color:#ef4444;}
+  .status-pill{display:inline-block;padding:3px 10px;font-family:'DM Mono',monospace;font-size:9px;font-weight:500;letter-spacing:2px;text-transform:uppercase;margin-top:2px;}
+  .pill-build{background:rgba(239,68,68,.1);color:#ef4444;border:1px solid rgba(239,68,68,.2);}
+  .pill-draw{background:rgba(34,197,94,.1);color:#22c55e;border:1px solid rgba(34,197,94,.2);}
+  .pill-flat{background:rgba(59,130,246,.1);color:var(--accent);border:1px solid rgba(59,130,246,.2);}
   .monitor-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;}
   .monitor-title{font-family:'DM Mono',monospace;font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--accent);}
   .monitor-stat{font-family:'DM Mono',monospace;font-size:14px;color:var(--text);margin-bottom:20px;padding:12px 16px;background:rgba(59,130,246,0.06);border-left:2px solid var(--accent);display:flex;gap:24px;flex-wrap:wrap;}
@@ -178,11 +192,34 @@
 <main>
   <h1 class="section-title">Iranian Crude Oil Export Dynamics</h1>
   <p style="font-family:'DM Sans',sans-serif;font-size:15px;line-height:1.7;color:var(--muted);max-width:680px;margin-bottom:10px;margin-top:-24px;">Kharg Island handles roughly 90% of Iran's crude exports. When storage builds, oil is accumulating — exports are constrained. When it draws down, tankers are loading and physical supply is entering the global market.</p>
-  <p style="font-family:'DM Mono',monospace;font-size:10px;letter-spacing:2px;text-transform:uppercase;color:rgba(107,114,128,0.55);margin-bottom:36px;">Public preview. The full signal is by review.</p>
+  <p style="font-family:'DM Mono',monospace;font-size:10px;letter-spacing:2px;text-transform:uppercase;color:rgba(107,114,128,0.55);margin-bottom:28px;">Public preview. The full signal is by review.</p>
+
+  <div class="kpi-row">
+    <div class="kpi-card">
+      <div class="kpi-label">Storage</div>
+      <div class="kpi-value blue" id="kpi-storage">—</div>
+      <div class="kpi-sub">Mb current</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">Fill Rate 7d</div>
+      <div class="kpi-value blue" id="kpi-fillrate">—</div>
+      <div class="kpi-sub">Mb/day</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">Utilization</div>
+      <div class="kpi-value blue" id="kpi-util">—</div>
+      <div class="kpi-sub">of 33.2 Mb capacity</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">Status</div>
+      <div class="kpi-value blue" id="kpi-status-val">—</div>
+      <div id="kpi-status-pill" class="status-pill pill-flat">Loading…</div>
+    </div>
+  </div>
 
   <div class="monitor-wrap">
     <div class="monitor-header"><div class="monitor-title">Storage Volume — SAR Extraction</div></div>
-    <div class="monitor-stat" id="latestStat">Loading data...</div>
+    <div class="monitor-stat" id="latestStat" style="display:none"></div>
     <div class="chart-wrapper"><canvas id="dailyChart"></canvas><div class="chart-lock-overlay"><span style="font-size:22px">🔒</span><span style="font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);text-align:center;line-height:1.4;">Latest<br>2 weeks</span><a href="https://calendly.com/bachevsky/intro" target="_blank" style="font-family:'DM Mono',monospace;font-size:9px;letter-spacing:1px;text-transform:uppercase;background:#3b82f6;color:#fff;padding:7px 10px;text-decoration:none;border:none;margin-top:4px;">Get Access</a></div></div>
   </div>
 
@@ -453,6 +490,26 @@ async function loadCharts(){
       daysStr+
       `<div>Utilization: <strong style="color:${latestUtil>=85?'#dc2626':latestUtil>=70?'#f59e0b':'#3b82f6'}">${latestUtil}%</strong></div>`+
       `<div>Status: <strong>${trend}</strong></div>`;
+
+    // KPI cards
+    const isBuilding = fr7d === null ? null : fr7d > 0.005;
+    const utilNum = parseFloat(latestUtil);
+    const utilColor = utilNum >= 85 ? 'red' : utilNum >= 70 ? 'amber' : 'blue';
+    document.getElementById('kpi-storage').textContent = latestVal.toFixed(2) + ' Mb';
+    document.getElementById('kpi-storage').className = 'kpi-value blue';
+    if(fr7d !== null){
+      const frEl = document.getElementById('kpi-fillrate');
+      frEl.textContent = (fr7d > 0 ? '+' : '') + fr7d.toFixed(3) + ' Mb/d';
+      frEl.className = 'kpi-value ' + (fr7d > 0.005 ? 'amber' : fr7d < -0.005 ? 'blue' : 'blue');
+    }
+    const utilEl = document.getElementById('kpi-util');
+    utilEl.textContent = latestUtil + '%';
+    utilEl.className = 'kpi-value ' + utilColor;
+    const statusVal = document.getElementById('kpi-status-val');
+    const statusPill = document.getElementById('kpi-status-pill');
+    if(isBuilding === null){ statusVal.textContent = '—'; }
+    else if(isBuilding){ statusVal.textContent = 'BUILDING'; statusVal.className = 'kpi-value red'; statusPill.textContent = 'Accumulation'; statusPill.className = 'status-pill pill-build'; }
+    else { statusVal.textContent = 'DRAWDOWN'; statusVal.className = 'kpi-value green'; statusPill.textContent = 'Loading active'; statusPill.className = 'status-pill pill-draw'; }
 
     const gridColor='rgba(255,255,255,0.05)';
     const tickFont={family:'DM Mono, monospace',size:10};
