@@ -20,6 +20,10 @@ on:
           - latest
           - backfill-all
           - backfill-10
+      date:
+        description: 'Specific date YYYY-MM-DD (overrides mode=latest)'
+        required: false
+        default: ''
   schedule:
     - cron: '0 4 * * 2,5'  # Tue & Fri — matches ~6-day Sentinel-1 revisit
 
@@ -53,7 +57,10 @@ jobs:
         run: |
           MODE="${{ inputs.mode || 'latest' }}"
           REGION="${{ matrix.region }}"
-          if [ "$MODE" = "backfill-all" ]; then
+          DATE="${{ inputs.date }}"
+          if [ -n "$DATE" ]; then
+            python scripts/dardanelles_snapshot.py --date "$DATE" --region "$REGION"
+          elif [ "$MODE" = "backfill-all" ]; then
             python scripts/dardanelles_snapshot.py --backfill-all --region "$REGION"
           elif [ "$MODE" = "backfill-10" ]; then
             python scripts/dardanelles_snapshot.py --backfill 10 --region "$REGION"
