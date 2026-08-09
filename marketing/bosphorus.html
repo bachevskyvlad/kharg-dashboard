@@ -131,42 +131,42 @@ footer{background:var(--panel);border-top:1px solid var(--border);padding:32px 4
     </button>
   </div>
 
-  <div class="hero-row">
-    <div>
-      <div class="section-label" id="hero-label">North Anchorage &middot; Black Sea &middot; Sentinel-1 SAR</div>
-      <div class="section-title">Queue Index</div>
-      <div class="queue-idx" id="queue-idx">—</div>
-    </div>
-    <div class="hero-right">
+  <div class="monitor-wrap" style="margin-bottom:16px;">
+    <div class="monitor-header" style="margin-bottom:24px;">
+      <div class="monitor-title" id="hero-label">North Anchorage &middot; Black Sea &middot; Sentinel-1 SAR</div>
       <div class="status-badge ok" id="status-badge">Loading…</div>
-      <p class="hero-desc">
-        Index compares today's vessel count to the 10-year average for this calendar month.
-        100 = historical norm. Above 130 signals elevated congestion; below 70 is unusually light.
-      </p>
-      <div class="hero-ts" id="hero-ts">Retrieving latest pass…</div>
     </div>
-  </div>
-
-  <div class="stat-row">
-    <div class="stat-cell">
-      <div class="stat-lbl">Vessels detected</div>
-      <div class="stat-val" id="s-total">—</div>
-      <div class="stat-sub" id="s-date">latest SAR pass</div>
+    <div style="display:grid;grid-template-columns:auto 1fr;gap:0 48px;align-items:end;margin-bottom:28px;">
+      <div>
+        <div style="font-family:'DM Mono',monospace;font-size:10px;letter-spacing:3px;text-transform:uppercase;color:var(--muted);margin-bottom:8px;">Queue Index</div>
+        <div class="queue-idx" id="queue-idx">—</div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:12px;padding-bottom:8px;">
+        <p style="font-size:13px;color:var(--muted);max-width:480px;line-height:1.75;">Index compares today's vessel count to the 10-year average for this calendar month. 100 = historical norm. Above 130 signals elevated congestion; below 70 is unusually light.</p>
+        <div style="font-family:'DM Mono',monospace;font-size:11px;color:var(--dim);letter-spacing:1px;" id="hero-ts">Retrieving latest pass…</div>
+      </div>
     </div>
-    <div class="stat-cell">
-      <div class="stat-lbl">Monthly avg</div>
-      <div class="stat-val" id="s-avg">—</div>
-      <div class="stat-sub" id="s-avgp">10-yr baseline</div>
-    </div>
-    <div class="stat-cell">
-      <div class="stat-lbl">Passes in record</div>
-      <div class="stat-val" id="s-passes">—</div>
-      <div class="stat-sub" id="s-span">history span</div>
-    </div>
-    <div class="stat-cell">
-      <div class="stat-lbl">Revisit cycle</div>
-      <div class="stat-val">~6d</div>
-      <div class="stat-sub">Sentinel-1 C-band SAR</div>
+    <div class="monitor-stat" style="display:grid;grid-template-columns:repeat(4,1fr);gap:0;padding:0;background:none;border:none;border-top:1px solid var(--border);">
+      <div style="padding:16px 20px;border-right:1px solid var(--border);">
+        <div style="font-family:'DM Mono',monospace;font-size:9px;letter-spacing:3px;text-transform:uppercase;color:var(--muted);margin-bottom:8px;">Vessels detected</div>
+        <div style="font-family:'Bebas Neue',sans-serif;font-size:36px;line-height:1;letter-spacing:1px;color:var(--text);" id="s-total">—</div>
+        <div style="font-family:'DM Mono',monospace;font-size:10px;color:var(--dim);margin-top:4px;" id="s-date">latest SAR pass</div>
+      </div>
+      <div style="padding:16px 20px;border-right:1px solid var(--border);">
+        <div style="font-family:'DM Mono',monospace;font-size:9px;letter-spacing:3px;text-transform:uppercase;color:var(--muted);margin-bottom:8px;">Monthly avg</div>
+        <div style="font-family:'Bebas Neue',sans-serif;font-size:36px;line-height:1;letter-spacing:1px;color:var(--text);" id="s-avg">—</div>
+        <div style="font-family:'DM Mono',monospace;font-size:10px;color:var(--dim);margin-top:4px;" id="s-avgp">10-yr baseline</div>
+      </div>
+      <div style="padding:16px 20px;border-right:1px solid var(--border);">
+        <div style="font-family:'DM Mono',monospace;font-size:9px;letter-spacing:3px;text-transform:uppercase;color:var(--muted);margin-bottom:8px;">Passes in record</div>
+        <div style="font-family:'Bebas Neue',sans-serif;font-size:36px;line-height:1;letter-spacing:1px;color:var(--text);" id="s-passes">—</div>
+        <div style="font-family:'DM Mono',monospace;font-size:10px;color:var(--dim);margin-top:4px;" id="s-span">history span</div>
+      </div>
+      <div style="padding:16px 20px;">
+        <div style="font-family:'DM Mono',monospace;font-size:9px;letter-spacing:3px;text-transform:uppercase;color:var(--muted);margin-bottom:8px;">Revisit cycle</div>
+        <div style="font-family:'Bebas Neue',sans-serif;font-size:36px;line-height:1;letter-spacing:1px;color:var(--text);">~6D</div>
+        <div style="font-family:'DM Mono',monospace;font-size:10px;color:var(--dim);margin-top:4px;">Sentinel-1 C-band SAR</div>
+      </div>
     </div>
   </div>
 
