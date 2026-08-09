@@ -13,8 +13,8 @@ import pandas as pd
 
 warnings.filterwarnings('ignore')
 
-SH_CLIENT_ID = "sh-4a504e67-3704-4c78-bfbc-e5b92cb1d5b4"
-SH_CLIENT_SECRET = "U1W6BcqS4bFEIJy2u9xXdlBMZPxtQMBU"
+SH_CLIENT_ID = "sh-0f08bb88-cde8-4e6e-8eb9-1006acfe6be9"
+SH_CLIENT_SECRET = "erkNtZDw4z36UB0Xm7BrzcYixzaUGeW0"
 
 CDSE_TOKEN_URL = "https://identity.dataspace.copernicus.eu/auth/realms/CDSE/protocol/openid-connect/token"
 CDSE_BASE_URL = "https://sh.dataspace.copernicus.eu"

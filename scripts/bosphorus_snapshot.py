@@ -26,8 +26,8 @@ from scipy import ndimage
 from PIL import Image, ImageDraw, ImageFont
 
 config = SHConfig()
-config.sh_client_id     = "sh-4a504e67-3704-4c78-bfbc-e5b92cb1d5b4"
-config.sh_client_secret = "U1W6BcqS4bFEIJy2u9xXdlBMZPxtQMBU"
+config.sh_client_id     = "sh-0f08bb88-cde8-4e6e-8eb9-1006acfe6be9"
+config.sh_client_secret = "erkNtZDw4z36UB0Xm7BrzcYixzaUGeW0"
 config.sh_token_url     = "https://identity.dataspace.copernicus.eu/auth/realms/CDSE/protocol/openid-connect/token"
 config.sh_base_url      = "https://sh.dataspace.copernicus.eu"
 
