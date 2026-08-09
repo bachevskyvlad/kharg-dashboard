@@ -10,6 +10,7 @@ The platform delivers a **4–7 week lead time** over official EIA, JODI, and IE
 
 - **Kharg Island Storage Monitor** (`/monitor`): Live storage level estimates updated on average every ~6 days directly from SAR satellite passes. Available since March 2023.
 - **Kharg Island Tanker Queue** (`/anchorage`): Weekly VLCC, Suezmax, Aframax, MR vessel counts at Kharg Island anchorage from Sentinel-1 SAR. Leading indicator for Iranian crude exports. Data since 2017.
+- **Dardanelles Vessel Queue Monitor** (`/dardanelles`): Satellite-derived vessel queue index at the Dardanelles Strait. Tracks Capesize (≥290m), Post-Panamax (≥260m), Panamax (≥220m), and Handymax (≥100m) vessels at two anchorage zones — Aegean entrance (Bozcaada) and Marmara Sea exit (Şarköy). Sentinel-1 SAR, ~6-day revisit, data since 2016. Queue Index = current count vs 10-year monthly baseline × 100.
 - **Europe Gas Storage Monitor** (`/gas-storage`): Real-time European underground gas storage across 10 countries (Germany, France, Italy, Netherlands, Poland, Austria, Hungary, Spain, Ukraine, EU aggregate). Sourced from GIE AGSI+, updated daily. Key TTF price leading indicator.
 - **Full Persian Gulf Dataset** (bespoke): Per-terminal, per-tank resolution across all 6 major Gulf exporters — Saudi Arabia, Iran, Iraq, Kuwait, UAE, Qatar.
 
@@ -94,4 +95,5 @@ AIS vessel tracking can be spoofed. Shadow fleet tankers frequently disable tran
 - Kharg Island Monitor: https://oilradar.io/monitor
 - Kharg Island Tanker Queue: https://oilradar.io/anchorage
 - Europe Gas Storage: https://oilradar.io/gas-storage
+- Dardanelles Vessel Queue Monitor: https://oilradar.io/dardanelles
 - Team: https://oilradar.io/team

@@ -46,6 +46,7 @@ Kharg Island (Iran) handles approximately 90% of Iranian crude oil exports. It i
 
 - **Kharg Monitor** (`https://oilradar.io/monitor`): Live storage level dashboard updated on average every ~6 days via Sentinel-1 SAR
 - **Europe Gas Storage Monitor** (`https://oilradar.io/gas-storage`): Real-time GIE AGSI+ data across 10 European countries — primary leading indicator for TTF pricing and winter supply risk
+- **Dardanelles Vessel Queue Monitor** (`https://oilradar.io/dardanelles`): Satellite-derived vessel queue index for both Dardanelles anchorage zones — Aegean entrance (Bozcaada) and Marmara Sea exit (Şarköy). Tracks Capesize, Post-Panamax, Panamax, and Handymax vessels waiting to transit the Turkish Straits. Sentinel-1 SAR, ~6-day revisit, historical data since 2016.
 - **Custom Country Coverage** (on request): Same SAR methodology applied to additional terminals — Saudi Arabia, Iraq (Basra), Kuwait, UAE (Fujairah), Qatar. Scoped per engagement.
 
 ## Articles
@@ -70,4 +71,5 @@ Kharg Island (Iran) handles approximately 90% of Iranian crude oil exports. It i
 - [Home](https://oilradar.io/): Main landing — methodology, signal vs. EIA comparison, coverage, pricing tiers
 - [Kharg Island Storage Monitor](https://oilradar.io/monitor): Live SAR crude oil storage dashboard for Iran's primary export terminal
 - [Europe Gas Storage Monitor](https://oilradar.io/gas-storage): European underground gas storage levels across 10 countries with winter readiness signal
+- [Dardanelles Vessel Queue Monitor](https://oilradar.io/dardanelles): Satellite-derived vessel queue index at Dardanelles Strait — Aegean entrance anchorage (Bozcaada) and Marmara Sea exit (Şarköy). 10-year SAR history, vessel class breakdown (Capesize, Post-Panamax, Panamax, Handymax), Queue Index vs baseline.
 - [Team](https://oilradar.io/team): About the OilRadar team
