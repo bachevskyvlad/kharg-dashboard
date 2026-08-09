@@ -14,7 +14,7 @@ jobs:
           python-version: '3.11'
 
       - name: Install dependencies
-        run: pip install sentinelhub pillow numpy
+        run: pip install sentinelhub pillow numpy scipy cartopy
 
       - name: Fetch Sentinel-2 images
         env:
@@ -26,8 +26,8 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          cp scripts/dardanelles_*.png data/ 2>/dev/null || true
-          git add data/dardanelles_*.png
+          cp scripts/dardanelles_sar_*.png data/ 2>/dev/null || true
+          git add data/dardanelles_sar_*.png
           git diff --cached --quiet && echo "no changes" && exit 0
           git commit -m "Add Dardanelles S2 preview images"
           git push origin main
