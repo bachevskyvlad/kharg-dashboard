@@ -495,11 +495,11 @@ async function loadCharts(){
     const isBuilding = fr7d === null ? null : fr7d > 0.005;
     const utilNum = parseFloat(latestUtil);
     const utilColor = utilNum >= 85 ? 'red' : utilNum >= 70 ? 'amber' : 'blue';
-    document.getElementById('kpi-storage').textContent = latestVal.toFixed(2) + ' Mb';
+    document.getElementById('kpi-storage').textContent = latestVal.toFixed(1) + ' Mb';
     document.getElementById('kpi-storage').className = 'kpi-value blue';
     if(fr7d !== null){
       const frEl = document.getElementById('kpi-fillrate');
-      frEl.textContent = (fr7d > 0 ? '+' : '') + fr7d.toFixed(3) + ' Mb/d';
+      frEl.textContent = (fr7d > 0 ? '+' : '') + fr7d.toFixed(1) + ' Mb/d';
       frEl.className = 'kpi-value ' + (fr7d > 0.005 ? 'amber' : fr7d < -0.005 ? 'blue' : 'blue');
     }
     const utilEl = document.getElementById('kpi-util');
