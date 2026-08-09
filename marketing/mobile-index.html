@@ -36,9 +36,25 @@ body{background:var(--black);color:var(--text);font-family:'DM Sans',-apple-syst
 nav{position:fixed;top:0;left:0;right:0;z-index:200;display:flex;align-items:center;justify-content:space-between;padding:0 16px;height:56px;background:rgba(8,10,13,0.97);backdrop-filter:blur(16px);border-bottom:1px solid var(--border);}
 .logo{font-family:'Bebas Neue',sans-serif;font-size:20px;letter-spacing:4px;color:var(--accent);text-decoration:none;}
 .nav-right{display:flex;align-items:center;gap:8px;}
-.btn-schedule{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:1px;text-transform:uppercase;background:transparent;color:var(--accent);padding:8px 14px;border:1px solid var(--accent);cursor:pointer;text-decoration:none;transition:all .2s;white-space:nowrap;}
-.btn-dashboard{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:1px;text-transform:uppercase;background:var(--accent);color:#fff;padding:8px 14px;border:1px solid var(--accent);cursor:pointer;text-decoration:none;transition:opacity .2s;white-space:nowrap;}
-@media(max-width:380px){.btn-schedule{display:none;}}
+.btn-schedule{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:1px;text-transform:uppercase;background:transparent;color:var(--accent);padding:8px 12px;border:1px solid var(--accent);text-decoration:none;white-space:nowrap;min-height:36px;display:flex;align-items:center;}
+.btn-dashboard{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:1px;text-transform:uppercase;background:var(--accent);color:#fff;padding:8px 12px;border:1px solid var(--accent);text-decoration:none;white-space:nowrap;min-height:36px;display:flex;align-items:center;}
+.burger{background:none;border:none;cursor:pointer;padding:8px;display:flex;flex-direction:column;gap:5px;}
+.burger span{display:block;width:22px;height:2px;background:var(--text);transition:all .25s;}
+.burger.open span:nth-child(1){transform:translateY(7px) rotate(45deg);}
+.burger.open span:nth-child(2){opacity:0;}
+.burger.open span:nth-child(3){transform:translateY(-7px) rotate(-45deg);}
+.drawer{position:fixed;top:56px;left:0;right:0;bottom:0;background:rgba(8,10,13,0.98);z-index:199;display:none;flex-direction:column;overflow-y:auto;}
+.drawer.open{display:flex;}
+.drawer-link{font-family:'DM Mono',monospace;font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);text-decoration:none;padding:16px 20px;border-bottom:1px solid var(--border);display:block;}
+.drawer-link:hover,.drawer-link.active{color:var(--accent);}
+.drawer-section{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:3px;text-transform:uppercase;color:var(--dim);padding:18px 20px 8px;border-bottom:1px solid var(--border);}
+.drawer-sub{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);text-decoration:none;padding:13px 28px;border-bottom:1px solid var(--border);display:block;}
+.drawer-sub:hover{color:var(--accent);}
+.drawer-soon{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--dim);padding:13px 28px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;opacity:.45;}
+.drawer-badge{font-size:8px;background:rgba(100,116,139,.12);border:1px solid rgba(100,116,139,.2);padding:2px 6px;letter-spacing:1px;}
+.drawer-ctas{display:flex;flex-direction:column;gap:8px;padding:20px 16px;border-top:1px solid var(--border);margin-top:auto;}
+.drawer-btn-primary{font-family:'DM Mono',monospace;font-size:11px;letter-spacing:2px;text-transform:uppercase;background:var(--accent);color:#fff;padding:15px 20px;text-decoration:none;text-align:center;display:block;}
+.drawer-btn-outline{font-family:'DM Mono',monospace;font-size:11px;letter-spacing:2px;text-transform:uppercase;background:transparent;color:var(--accent);padding:14px 20px;border:1px solid var(--accent);text-decoration:none;text-align:center;display:block;}
 
 /* CONTENT */
 main{padding-top:56px;}
@@ -110,10 +126,29 @@ footer{background:var(--panel);border-top:1px solid var(--border);padding:28px 1
 <nav>
   <a href="/" class="logo">OilRadar</a>
   <div class="nav-right">
-    <a href="https://calendly.com/bachevsky/intro" target="_blank" class="btn-schedule">Request Access</a>
     <a href="https://app.oilradar.io/dashboard" target="_blank" class="btn-dashboard">Dashboard &rarr;</a>
+    <button class="burger" id="burger" aria-label="Menu"><span></span><span></span><span></span></button>
   </div>
 </nav>
+<div class="drawer" id="drawer">
+  <a href="/monitor" class="drawer-link">Live Monitor</a>
+  <a href="/anchorage" class="drawer-link">Anchorage</a>
+  <div class="drawer-section">Straits</div>
+  <a href="/bosphorus" class="drawer-sub">Bosphorus</a>
+  <a href="/dardanelles" class="drawer-sub">Dardanelles</a>
+  <span class="drawer-soon">Bab-el-Mandeb <span class="drawer-badge">SOON</span></span>
+  <span class="drawer-soon">Hormuz <span class="drawer-badge">SOON</span></span>
+  <a href="/gas-storage" class="drawer-link">Gas Storage</a>
+  <a href="/team" class="drawer-link">Team</a>
+  <div class="drawer-ctas">
+    <a href="https://calendly.com/bachevsky/intro" target="_blank" class="drawer-btn-outline">Request Access</a>
+    <a href="https://app.oilradar.io/dashboard" target="_blank" class="drawer-btn-primary">Dashboard &rarr;</a>
+  </div>
+</div>
+<script>
+var b=document.getElementById('burger'),d=document.getElementById('drawer');
+b.addEventListener('click',function(){b.classList.toggle('open');d.classList.toggle('open');});
+</script>
 
 <main>
 

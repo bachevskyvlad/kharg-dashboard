@@ -130,12 +130,31 @@ footer{background:var(--panel);border-top:1px solid var(--border);padding:24px 1
 <body>
 
 <nav>
-  <a href="/" class="logo">Oil<em>Radar</em></a>
+  <a href="/" class="logo">OilRadar</a>
   <div class="nav-right">
-    <a href="https://calendly.com/bachevsky/intro" target="_blank" class="btn-schedule">Request Access</a>
     <a href="https://app.oilradar.io/dashboard" target="_blank" class="btn-dashboard">Dashboard &rarr;</a>
+    <button class="burger" id="burger" aria-label="Menu"><span></span><span></span><span></span></button>
   </div>
 </nav>
+<div class="drawer" id="drawer">
+  <a href="/monitor" class="drawer-link">Live Monitor</a>
+  <a href="/anchorage" class="drawer-link">Anchorage</a>
+  <div class="drawer-section">Straits</div>
+  <a href="/bosphorus" class="drawer-sub">Bosphorus</a>
+  <a href="/dardanelles" class="drawer-sub">Dardanelles</a>
+  <span class="drawer-soon">Bab-el-Mandeb <span class="drawer-badge">SOON</span></span>
+  <span class="drawer-soon">Hormuz <span class="drawer-badge">SOON</span></span>
+  <a href="/gas-storage" class="drawer-link active">Gas Storage</a>
+  <a href="/team" class="drawer-link">Team</a>
+  <div class="drawer-ctas">
+    <a href="https://calendly.com/bachevsky/intro" target="_blank" class="drawer-btn-outline">Request Access</a>
+    <a href="https://app.oilradar.io/dashboard" target="_blank" class="drawer-btn-primary">Dashboard &rarr;</a>
+  </div>
+</div>
+<script>
+var b=document.getElementById('burger'),d=document.getElementById('drawer');
+b.addEventListener('click',function(){b.classList.toggle('open');d.classList.toggle('open');});
+</script>
 
 <main>
 
