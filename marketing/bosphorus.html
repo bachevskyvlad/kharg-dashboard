@@ -146,28 +146,7 @@ footer{background:var(--panel);border-top:1px solid var(--border);padding:32px 4
         <div style="font-family:'DM Mono',monospace;font-size:11px;color:var(--dim);letter-spacing:1px;" id="hero-ts">Retrieving latest pass…</div>
       </div>
     </div>
-    <div class="monitor-stat" style="display:grid;grid-template-columns:repeat(4,1fr);gap:0;padding:0;background:none;border:none;border-top:1px solid var(--border);">
-      <div style="padding:16px 20px;border-right:1px solid var(--border);">
-        <div style="font-family:'DM Mono',monospace;font-size:9px;letter-spacing:3px;text-transform:uppercase;color:var(--muted);margin-bottom:8px;">Vessels detected</div>
-        <div style="font-family:'Bebas Neue',sans-serif;font-size:36px;line-height:1;letter-spacing:1px;color:var(--text);" id="s-total">—</div>
-        <div style="font-family:'DM Mono',monospace;font-size:10px;color:var(--dim);margin-top:4px;" id="s-date">latest SAR pass</div>
-      </div>
-      <div style="padding:16px 20px;border-right:1px solid var(--border);">
-        <div style="font-family:'DM Mono',monospace;font-size:9px;letter-spacing:3px;text-transform:uppercase;color:var(--muted);margin-bottom:8px;">Monthly avg</div>
-        <div style="font-family:'Bebas Neue',sans-serif;font-size:36px;line-height:1;letter-spacing:1px;color:var(--text);" id="s-avg">—</div>
-        <div style="font-family:'DM Mono',monospace;font-size:10px;color:var(--dim);margin-top:4px;" id="s-avgp">10-yr baseline</div>
-      </div>
-      <div style="padding:16px 20px;border-right:1px solid var(--border);">
-        <div style="font-family:'DM Mono',monospace;font-size:9px;letter-spacing:3px;text-transform:uppercase;color:var(--muted);margin-bottom:8px;">Passes in record</div>
-        <div style="font-family:'Bebas Neue',sans-serif;font-size:36px;line-height:1;letter-spacing:1px;color:var(--text);" id="s-passes">—</div>
-        <div style="font-family:'DM Mono',monospace;font-size:10px;color:var(--dim);margin-top:4px;" id="s-span">history span</div>
-      </div>
-      <div style="padding:16px 20px;">
-        <div style="font-family:'DM Mono',monospace;font-size:9px;letter-spacing:3px;text-transform:uppercase;color:var(--muted);margin-bottom:8px;">Revisit cycle</div>
-        <div style="font-family:'Bebas Neue',sans-serif;font-size:36px;line-height:1;letter-spacing:1px;color:var(--text);">~6D</div>
-        <div style="font-family:'DM Mono',monospace;font-size:10px;color:var(--dim);margin-top:4px;">Sentinel-1 C-band SAR</div>
-      </div>
-    </div>
+    <div class="monitor-stat" id="hero-stat">Loading…</div>
   </div>
 
   <!-- QUEUE INDEX CHART -->
@@ -330,15 +309,15 @@ function renderPage(region, allPasses){
   badge.textContent = stateLabel(idx); badge.className = 'status-badge ' + st;
   document.getElementById('hero-ts').textContent = 'Latest pass: ' + latest.date + '  ·  Sentinel-1 SAR';
 
-  // stats
+  // stats bar (monitor-stat style)
   const mname = new Date(latest.date+'T12:00:00Z').toLocaleString('en',{month:'long'});
-  document.getElementById('s-total').textContent  = latest.total;
-  document.getElementById('s-date').textContent   = latest.date;
-  document.getElementById('s-avg').textContent    = Math.round(avg);
-  document.getElementById('s-avgp').textContent   = mname + ' · 10-yr avg';
-  document.getElementById('s-passes').textContent = allPasses.length;
   const y0 = allPasses[0].date.slice(0,4), y1 = allPasses[allPasses.length-1].date.slice(0,4);
-  document.getElementById('s-span').textContent   = y0 === y1 ? y0 : y0 + '–' + y1;
+  const span = y0 === y1 ? y0 : y0 + '–' + y1;
+  document.getElementById('hero-stat').innerHTML =
+    `<div>Vessels detected: <strong style="color:#3b82f6">${latest.total}</strong> <span style="color:var(--dim);font-size:11px;">${latest.date}</span></div>` +
+    `<div>Monthly avg (${mname}): <strong style="color:#3b82f6">${Math.round(avg)}</strong></div>` +
+    `<div>Passes in record: <strong style="color:#3b82f6">${allPasses.length}</strong> <span style="color:var(--dim);font-size:11px;">${span}</span></div>` +
+    `<div>Revisit cycle: <strong style="color:#3b82f6">~6D</strong> <span style="color:var(--dim);font-size:11px;">Sentinel-1 C-band SAR</span></div>`;
 
   // class cards
   const total = latest.total || 1;
@@ -536,10 +515,8 @@ function renderChartClasses(passes){
 }
 
 function renderEmpty(msg){
-  ['queue-idx','s-total','s-date','s-avg','s-avgp','s-passes','s-span'].forEach(id => {
-    const el = document.getElementById(id);
-    if(el) el.textContent = '—';
-  });
+  const qi = document.getElementById('queue-idx'); if(qi) qi.textContent = '—';
+  const hs = document.getElementById('hero-stat'); if(hs) hs.textContent = '—';
   document.getElementById('status-badge').textContent = 'No data yet';
   document.getElementById('status-badge').className   = 'status-badge lo';
   document.getElementById('hero-ts').textContent      = msg;
