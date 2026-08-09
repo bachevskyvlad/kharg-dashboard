@@ -2,6 +2,11 @@ name: Dardanelles — Sentinel-2 Preview
 
 on:
   workflow_dispatch:
+    inputs:
+      date:
+        description: 'Specific date YYYY-MM-DD (default: latest)'
+        required: false
+        default: ''
 
 jobs:
   preview:
@@ -20,7 +25,13 @@ jobs:
         env:
           CLIENT_ID: ${{ secrets.CLIENT_ID }}
           CLIENT_SECRET: ${{ secrets.CLIENT_SECRET }}
-        run: python scripts/dardanelles_preview.py
+        run: |
+          DATE="${{ inputs.date }}"
+          if [ -n "$DATE" ]; then
+            python scripts/dardanelles_preview.py --date "$DATE"
+          else
+            python scripts/dardanelles_preview.py
+          fi
 
       - name: Commit images to repo
         run: |

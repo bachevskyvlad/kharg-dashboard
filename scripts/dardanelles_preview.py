@@ -166,10 +166,19 @@ def draw_ships(img, ships):
     return img
 
 
+import argparse
+parser = argparse.ArgumentParser()
+parser.add_argument('--date', type=str, default=None, help='Specific date YYYY-MM-DD')
+args, _ = parser.parse_known_args()
+
 OUT_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'data')
 today = datetime.utcnow()
-date_from = (today - timedelta(days=14)).strftime('%Y-%m-%d')
-date_to   = today.strftime('%Y-%m-%d')
+if args.date:
+    date_from = args.date
+    date_to   = args.date
+else:
+    date_from = (today - timedelta(days=14)).strftime('%Y-%m-%d')
+    date_to   = today.strftime('%Y-%m-%d')
 print(f"SAR date range: {date_from} → {date_to}")
 
 for zone_id, zone in ZONES.items():
