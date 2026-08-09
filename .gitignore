@@ -1,3 +1,6 @@
+# Bosphorus SAR snapshots — large PNGs uploaded as workflow artifacts, not tracked in git
+data/bosphorus_*.png
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[codz]
