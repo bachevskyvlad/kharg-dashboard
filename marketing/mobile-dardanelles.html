@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Dardanelles Strait Vessel Queue — SAR Traffic Monitor | OilRadar</title>
+<meta name="description" content="Real-time Dardanelles Strait vessel queue index. Sentinel-1 SAR satellite data updated every ~6 days. West (Aegean) and East (Marmara) anchorages since 2016.">
+<meta name="robots" content="index, follow">
+<link rel="canonical" href="https://oilradar.io/dardanelles">
+<link rel="icon" type="image/x-icon" href="/assets/images/favicon.ico">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://oilradar.io/dardanelles">
+<meta property="og:title" content="Dardanelles Strait Vessel Queue — Live SAR Traffic Monitor">
+<meta property="og:description" content="Satellite-derived vessel queue index for the Dardanelles Strait. 10-year historical record from Sentinel-1 SAR.">
+<meta property="og:site_name" content="OilRadar">
+<meta name="twitter:card" content="summary_large_image">
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-TZQ5VH3GPY"></script>
+<script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','G-TZQ5VH3GPY');</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@300;400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+<noscript><link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@300;400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"></noscript>
+<style>
+:root{--bg:#0a0e17;--deep:#0d1320;--panel:#111827;--border:rgba(255,255,255,0.07);--accent:#3b82f6;--gold:#f59e0b;--ok:#22c55e;--text:#e2e8f0;--muted:#94a3b8;--dim:#64748b;--white:#f8fafc;}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;overflow-x:hidden;min-height:100vh;display:flex;flex-direction:column;}
+
+/* NAV */
+nav{position:fixed;top:0;left:0;right:0;z-index:200;display:flex;align-items:center;justify-content:space-between;padding:0 16px;height:56px;background:rgba(10,14,23,0.97);backdrop-filter:blur(12px);border-bottom:1px solid var(--border);}
+.logo{font-family:'Bebas Neue',sans-serif;font-size:20px;letter-spacing:4px;color:var(--accent);text-decoration:none;}
+.nav-right{display:flex;align-items:center;gap:8px;}
+.btn-dashboard{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:1px;text-transform:uppercase;background:var(--accent);color:#fff;padding:8px 12px;text-decoration:none;white-space:nowrap;min-height:36px;display:flex;align-items:center;}
+.burger{background:none;border:none;cursor:pointer;padding:8px;display:flex;flex-direction:column;gap:5px;}
+.burger span{display:block;width:22px;height:2px;background:var(--text);transition:all .25s;}
+.burger.open span:nth-child(1){transform:translateY(7px) rotate(45deg);}
+.burger.open span:nth-child(2){opacity:0;}
+.burger.open span:nth-child(3){transform:translateY(-7px) rotate(-45deg);}
+.drawer{position:fixed;top:56px;left:0;right:0;bottom:0;background:rgba(8,10,13,0.98);z-index:199;display:none;flex-direction:column;overflow-y:auto;}
+.drawer.open{display:flex;}
+.drawer-link{font-family:'DM Mono',monospace;font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);text-decoration:none;padding:16px 20px;border-bottom:1px solid var(--border);display:block;}
+.drawer-link:hover,.drawer-link.active{color:var(--accent);}
+.drawer-section{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:3px;text-transform:uppercase;color:var(--dim);padding:18px 20px 8px;border-bottom:1px solid var(--border);}
+.drawer-sub{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);text-decoration:none;padding:13px 28px;border-bottom:1px solid var(--border);display:block;}
+.drawer-sub:hover,.drawer-sub.active{color:var(--accent);}
+.drawer-soon{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--dim);padding:13px 28px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;opacity:.45;}
+.drawer-badge{font-size:8px;background:rgba(100,116,139,.12);border:1px solid rgba(100,116,139,.2);padding:2px 6px;letter-spacing:1px;}
+.drawer-ctas{display:flex;flex-direction:column;gap:8px;padding:20px 16px;border-top:1px solid var(--border);margin-top:auto;}
+.drawer-btn-primary{font-family:'DM Mono',monospace;font-size:11px;letter-spacing:2px;text-transform:uppercase;background:var(--accent);color:#fff;padding:15px 20px;text-decoration:none;text-align:center;display:block;}
+.drawer-btn-outline{font-family:'DM Mono',monospace;font-size:11px;letter-spacing:2px;text-transform:uppercase;background:transparent;color:var(--accent);padding:14px 20px;border:1px solid var(--accent);text-decoration:none;text-align:center;display:block;}
+
+main{flex:1;padding:56px 0 0;}
+
+/* SWITCHER */
+.switcher{display:flex;border-bottom:1px solid var(--border);background:var(--panel);}
+.sw-btn{flex:1;display:flex;flex-direction:column;gap:3px;padding:14px 14px 12px;background:none;border:none;border-bottom:2px solid transparent;color:var(--muted);cursor:pointer;text-align:left;margin-bottom:-1px;transition:color .15s,border-color .15s;}
+.sw-btn.active{color:var(--accent);border-bottom-color:var(--accent);}
+.sw-name{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:2px;text-transform:uppercase;}
+.sw-sub{font-family:'DM Sans',sans-serif;font-size:11px;color:inherit;opacity:.65;line-height:1.4;}
+
+/* PAGE HEADER */
+.page-header{padding:20px 16px 16px;border-bottom:1px solid var(--border);}
+.section-label{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:3px;text-transform:uppercase;color:var(--accent);margin-bottom:6px;}
+.page-title{font-family:'Bebas Neue',sans-serif;font-size:clamp(40px,12vw,56px);line-height:1;color:var(--text);margin-bottom:4px;}
+.page-sub{font-family:'DM Mono',monospace;font-size:10px;color:var(--dim);line-height:1.6;}
+
+/* KPI GRID */
+.kpi-grid{display:grid;grid-template-columns:1fr 1fr;gap:2px;border-bottom:1px solid var(--border);}
+.kpi-card{background:var(--panel);padding:16px 14px;}
+.kpi-label{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:8px;}
+.kpi-value{font-family:'DM Mono',monospace;font-size:clamp(28px,9vw,40px);font-weight:500;line-height:1;font-variant-numeric:tabular-nums;margin-bottom:4px;}
+.kpi-value.blue{color:var(--accent);}
+.kpi-value.green{color:var(--ok);}
+.kpi-sub{font-family:'DM Mono',monospace;font-size:9px;color:var(--dim);}
+.status-pill{display:inline-block;padding:3px 8px;font-family:'DM Mono',monospace;font-size:8px;letter-spacing:1px;text-transform:uppercase;margin-top:4px;}
+.pill-low{background:rgba(34,197,94,.1);color:var(--ok);border:1px solid rgba(34,197,94,.2);}
+.pill-normal{background:rgba(59,130,246,.1);color:var(--accent);border:1px solid rgba(59,130,246,.2);}
+.pill-elevated{background:rgba(249,115,22,.1);color:#f97316;border:1px solid rgba(249,115,22,.2);}
+.pill-high{background:rgba(239,68,68,.1);color:#ef4444;border:1px solid rgba(239,68,68,.2);}
+
+/* CHART */
+.chart-section{padding:20px 16px;border-bottom:1px solid var(--border);}
+.monitor-wrap{background:var(--panel);border:1px solid var(--border);padding:16px 14px;}
+.monitor-title{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--accent);margin-bottom:14px;}
+.range-btns{display:flex;gap:4px;flex-wrap:wrap;margin-bottom:14px;}
+.range-btn{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:1px;text-transform:uppercase;background:transparent;border:1px solid var(--border);color:var(--muted);padding:6px 10px;cursor:pointer;transition:all .15s;min-height:36px;}
+.range-btn.active{background:var(--accent);border-color:var(--accent);color:#fff;}
+
+/* CLASS GRID */
+.class-section{padding:20px 16px;border-bottom:1px solid var(--border);}
+.class-grid{display:grid;grid-template-columns:1fr 1fr;gap:2px;background:var(--border);}
+.class-cell{background:var(--panel);padding:16px 14px;}
+.class-name{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:2px;}
+.class-size{font-family:'DM Mono',monospace;font-size:9px;color:var(--dim);margin-bottom:10px;}
+.class-count{font-family:'Bebas Neue',sans-serif;font-size:clamp(32px,10vw,44px);line-height:1;margin-bottom:10px;}
+.bar-track{height:3px;background:rgba(255,255,255,0.06);}
+.bar-fill{height:100%;transition:width .5s ease;}
+
+footer{background:var(--panel);border-top:1px solid var(--border);padding:24px 16px;padding-bottom:calc(24px + env(safe-area-inset-bottom));display:flex;align-items:center;justify-content:space-between;margin-top:auto;}
+.footer-logo{font-family:'Bebas Neue',sans-serif;font-size:20px;letter-spacing:5px;color:var(--accent);}
+.footer-copy{font-family:'DM Mono',monospace;font-size:9px;color:var(--muted);opacity:0.6;text-align:right;}
+</style>
+</head>
+<body>
+
+<nav>
+  <a href="/" class="logo">OilRadar</a>
+  <div class="nav-right">
+    <a href="https://app.oilradar.io/dashboard" target="_blank" class="btn-dashboard">Dashboard &rarr;</a>
+    <button class="burger" id="burger" aria-label="Menu"><span></span><span></span><span></span></button>
+  </div>
+</nav>
+<div class="drawer" id="drawer">
+  <a href="/monitor" class="drawer-link">Live Monitor</a>
+  <a href="/anchorage" class="drawer-link">Anchorage</a>
+  <div class="drawer-section">Straits</div>
+  <a href="/bosphorus" class="drawer-sub">Bosphorus</a>
+  <a href="/dardanelles" class="drawer-sub active">Dardanelles</a>
+  <span class="drawer-soon">Bab-el-Mandeb <span class="drawer-badge">SOON</span></span>
+  <span class="drawer-soon">Hormuz <span class="drawer-badge">SOON</span></span>
+  <a href="/gas-storage" class="drawer-link">Gas Storage</a>
+  <a href="/team" class="drawer-link">Team</a>
+  <div class="drawer-ctas">
+    <a href="https://calendly.com/bachevsky/intro" target="_blank" class="drawer-btn-outline">Request Access</a>
+    <a href="https://app.oilradar.io/dashboard" target="_blank" class="drawer-btn-primary">Dashboard &rarr;</a>
+  </div>
+</div>
+<script>
+var b=document.getElementById('burger'),d=document.getElementById('drawer');
+b.addEventListener('click',function(){b.classList.toggle('open');d.classList.toggle('open');});
+</script>
+
+<main>
+
+  <div class="switcher">
+    <button class="sw-btn active" data-region="aegean_entrance">
+      <span class="sw-name">← West Anchorage</span>
+      <span class="sw-sub">Aegean · Bozcaada</span>
+    </button>
+    <button class="sw-btn" data-region="marmara_south">
+      <span class="sw-name">→ East Anchorage</span>
+      <span class="sw-sub">Marmara Sea · Şarköy</span>
+    </button>
+  </div>
+
+  <div class="page-header">
+    <div class="section-label" id="hero-label">West Anchorage &middot; Aegean Entrance &middot; Sentinel-1 SAR</div>
+    <div class="page-title">Dardanelles Queue</div>
+    <div class="page-sub" id="hero-ts">Loading&hellip;</div>
+  </div>
+
+  <div class="kpi-grid">
+    <div class="kpi-card">
+      <div class="kpi-label">Queue Index</div>
+      <div class="kpi-value blue" id="queue-idx">&mdash;</div>
+      <div id="status-badge"></div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">Vessels</div>
+      <div class="kpi-value blue" id="s-total">&mdash;</div>
+      <div class="kpi-sub" id="s-date">latest SAR pass</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">Monthly Avg</div>
+      <div class="kpi-value green" id="s-avg">&mdash;</div>
+      <div class="kpi-sub" id="s-avgp">10-yr baseline</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">Queue Index</div>
+      <div class="kpi-value blue" style="font-size:clamp(14px,4vw,18px);padding-top:4px;" id="index-note">&mdash;</div>
+      <div class="kpi-sub">100 = norm · &gt;130 elevated</div>
+    </div>
+  </div>
+
+  <section class="chart-section">
+    <div class="monitor-wrap">
+      <div class="monitor-title">Vessel Count — Historical</div>
+      <div class="range-btns">
+        <button class="range-btn" data-range="1">1M</button>
+        <button class="range-btn active" data-range="3">3M</button>
+        <button class="range-btn" data-range="6">6M</button>
+        <button class="range-btn" data-range="12">1Y</button>
+        <button class="range-btn" data-range="0">All</button>
+      </div>
+      <canvas id="chartTotal" style="height:220px;"></canvas>
+    </div>
+  </section>
+
+  <section class="class-section">
+    <div class="section-label" style="margin-bottom:12px;">Vessel class — latest pass</div>
+    <div class="class-grid">
+      <div class="class-cell"><div class="class-name">Capesize</div><div class="class-size">&ge;290 m</div><div class="class-count" id="cnt-capesize" style="color:#ef4444">&mdash;</div><div class="bar-track"><div class="bar-fill" id="bar-capesize" style="background:#ef4444;width:0%"></div></div></div>
+      <div class="class-cell"><div class="class-name">Post-Panamax</div><div class="class-size">&ge;260 m</div><div class="class-count" id="cnt-postpanamax" style="color:#f97316">&mdash;</div><div class="bar-track"><div class="bar-fill" id="bar-postpanamax" style="background:#f97316;width:0%"></div></div></div>
+      <div class="class-cell"><div class="class-name">Panamax</div><div class="class-size">&ge;220 m</div><div class="class-count" id="cnt-panamax" style="color:#f59e0b">&mdash;</div><div class="bar-track"><div class="bar-fill" id="bar-panamax" style="background:#f59e0b;width:0%"></div></div></div>
+      <div class="class-cell"><div class="class-name">Handymax</div><div class="class-size">&ge;100 m</div><div class="class-count" id="cnt-handymax" style="color:#22c55e">&mdash;</div><div class="bar-track"><div class="bar-fill" id="bar-handymax" style="background:#22c55e;width:0%"></div></div></div>
+    </div>
+  </section>
+
+</main>
+
+<footer>
+  <div class="footer-logo">OILRADAR</div>
+  <div class="footer-copy">Dardanelles · Sentinel-1 SAR<br>&copy; 2024–2026</div>
+</footer>
+
+<script src="/public/vendor/chart.min.js"></script>
+<script>
+const REGION_META = {
+  aegean_entrance: { label:'West Anchorage · Aegean Entrance · Sentinel-1 SAR', url:'/data/dardanelles_aegean_history.json' },
+  marmara_south:   { label:'East Anchorage · Marmara Sea · Sentinel-1 SAR', url:'/data/dardanelles_marmara_history.json' },
+};
+const CLS = ['capesize','postpanamax','panamax','handymax'];
+let activeRegion = 'aegean_entrance';
+let activeRange  = 3;
+const cache = {};
+let chart = null;
+
+function monthlyAvgs(passes){
+  const b={};
+  for(const p of passes){ const m=p.date.slice(5,7); if(!b[m])b[m]={s:0,n:0}; b[m].s+=p.total; b[m].n++; }
+  const out={};
+  for(const m in b) out[m]=b[m].s/b[m].n;
+  return out;
+}
+function filterRange(passes, months){
+  if(!months) return passes;
+  const cut = new Date(); cut.setMonth(cut.getMonth()-months);
+  const s = cut.toISOString().slice(0,10);
+  return passes.filter(p=>p.date>=s);
+}
+
+function renderPage(passes){
+  const avgs = monthlyAvgs(passes);
+  const latest = passes[passes.length-1];
+  const m = latest.date.slice(5,7);
+  const avg = avgs[m] || latest.total;
+  const idx = Math.round(latest.total/avg*100);
+  document.getElementById('hero-label').textContent = REGION_META[activeRegion].label;
+  document.getElementById('hero-ts').textContent = 'Latest pass: '+latest.date+' · Sentinel-1 SAR';
+  document.getElementById('queue-idx').textContent = idx;
+  document.getElementById('index-note').textContent = idx >= 130 ? 'ELEVATED' : idx >= 70 ? 'NORMAL' : 'LIGHT';
+  const badge = document.getElementById('status-badge');
+  const pc = idx>=130?'pill-high':idx>=70?'pill-normal':'pill-low';
+  const pl = idx>=130?'Above average':idx>=70?'Normal traffic':'Light traffic';
+  badge.innerHTML = '<span class="status-pill '+pc+'">'+pl+'</span>';
+  document.getElementById('s-total').textContent = latest.total;
+  document.getElementById('s-date').textContent = latest.date;
+  document.getElementById('s-avg').textContent = Math.round(avg);
+  document.getElementById('s-avgp').textContent = new Date(latest.date+'T12:00:00Z').toLocaleString('en',{month:'long'})+' · 10-yr avg';
+  const total = latest.total||1;
+  CLS.forEach(k=>{
+    const cnt = latest[k]||0;
+    document.getElementById('cnt-'+k).textContent = cnt;
+    document.getElementById('bar-'+k).style.width = Math.round(cnt/total*100)+'%';
+  });
+  renderChart(filterRange(passes, activeRange), avgs);
+}
+
+function renderChart(passes, avgs){
+  const labels = passes.map(p=>p.date.slice(5));
+  const totals = passes.map(p=>p.total);
+  const avgLine = passes.map(p=>Math.round(avgs[p.date.slice(5,7)]||0));
+  if(chart){chart.destroy();chart=null;}
+  chart = new Chart(document.getElementById('chartTotal').getContext('2d'),{
+    type:'bar',
+    data:{labels,datasets:[
+      {label:'Vessels',data:totals,backgroundColor:'rgba(59,130,246,0.35)',borderColor:'rgba(59,130,246,0.8)',borderWidth:1,order:2},
+      {label:'Monthly avg',data:avgLine,type:'line',borderColor:'rgba(245,158,11,0.7)',borderWidth:1.5,borderDash:[4,4],pointRadius:0,tension:0.3,fill:false,order:1},
+    ]},
+    options:{
+      responsive:true,maintainAspectRatio:false,
+      interaction:{mode:'index',intersect:false},
+      plugins:{legend:{labels:{color:'#94a3b8',font:{family:"'DM Mono',monospace",size:9},boxWidth:10,padding:12}},tooltip:{backgroundColor:'#111827',borderColor:'rgba(255,255,255,0.07)',borderWidth:1,titleColor:'#e2e8f0',bodyColor:'#94a3b8'}},
+      scales:{
+        x:{grid:{color:'rgba(255,255,255,0.04)'},ticks:{color:'#64748b',font:{family:"'DM Mono',monospace",size:9},maxTicksLimit:8,maxRotation:0}},
+        y:{grid:{color:'rgba(255,255,255,0.04)'},ticks:{color:'#64748b',font:{family:"'DM Mono',monospace",size:9}},beginAtZero:true},
+      },
+    },
+  });
+}
+
+async function loadRegion(region){
+  if(cache[region]) return cache[region];
+  try{
+    const r = await fetch(REGION_META[region].url);
+    if(!r.ok) throw 0;
+    const data = await r.json();
+    const passes = data.passes||[];
+    if(!passes.length) throw 0;
+    cache[region] = passes;
+    return passes;
+  }catch{return null;}
+}
+
+async function switchTo(region){
+  activeRegion=region;
+  document.querySelectorAll('.sw-btn').forEach(b=>b.classList.toggle('active',b.dataset.region===region));
+  const passes = await loadRegion(region);
+  if(passes) renderPage(passes);
+  else document.getElementById('hero-ts').textContent='Backfill in progress — check back shortly';
+}
+
+document.querySelectorAll('.sw-btn').forEach(btn=>btn.addEventListener('click',()=>switchTo(btn.dataset.region)));
+document.querySelectorAll('.range-btn').forEach(btn=>btn.addEventListener('click',()=>{
+  document.querySelectorAll('.range-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  activeRange=parseInt(btn.dataset.range,10);
+  const passes=cache[activeRegion];
+  if(passes) renderPage(passes);
+}));
+
+switchTo('aegean_entrance');
+</script>
+</body>
+</html>
