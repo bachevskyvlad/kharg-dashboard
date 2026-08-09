@@ -48,7 +48,8 @@ out_dir = os.path.dirname(os.path.abspath(__file__))
 for name, coords in ZONES.items():
     print(f"\nFetching {name} ...")
     bbox = BBox(bbox=coords, crs=CRS.WGS84)
-    size = bbox_to_dimensions(bbox, resolution=30)
+    size = bbox_to_dimensions(bbox, resolution=50)
+    size = (min(size[0], 2000), min(size[1], 2000))
     print(f"  Size: {size[0]}x{size[1]} px")
 
     req = SentinelHubRequest(
