@@ -252,8 +252,9 @@ footer{background:var(--panel);border-top:1px solid var(--border);padding:32px 4
   </div>
 
   <div class="section-label" id="hero-label">West Anchorage &middot; Aegean Entrance &middot; Sentinel-1 SAR</div>
-  <h1 class="section-title">Dardanelles Vessel Queue</h1>
-  <div class="section-sub" id="hero-ts">Loading…</div>
+  <h1 class="section-title">Dardanelles Strait Congestion Index</h1>
+  <div class="section-sub">Satellite vessel queue monitor · tanker traffic at the Aegean–Marmara chokepoint · updated every ~6 days</div>
+  <div class="section-sub" id="hero-ts" style="margin-top:4px;">Loading…</div>
 
   <div class="kpi-row">
     <div class="kpi-card">
@@ -399,6 +400,14 @@ function computeOutlierCap(passes){
   const medMad = n % 2 === 0 ? (mad[n/2-1]+mad[n/2])/2 : mad[(n-1)/2];
   return Math.round(med + 4 * medMad * 1.4826);
 }
+// Handymax-ratio clutter: small-object sea clutter shows as >75% Handymax
+// and total well above monthly norm — flag as clutter regardless of MAD cap
+function isHandymaxClutter(p, avgs){
+  if(!p.handymax || !p.total) return false;
+  const hmRatio = p.handymax / p.total;
+  const monthAvg = avgs[p.date.slice(5,7)] || 0;
+  return hmRatio > 0.75 && monthAvg > 0 && p.total > monthAvg * 1.5;
+}
 
 function state(i){ return i >= 130 ? 'hi' : i >= 70 ? 'ok' : 'lo'; }
 function stateLabel(i){
@@ -428,15 +437,16 @@ function renderPage(region, allPasses){
   const latest = allPasses[allPasses.length - 1];
 
   let filtered = filterByRange(allPasses, activeRange);
-  const rangeOutliers = filtered.filter(p => p.total > cap).length;
-  if(!showOutliers) filtered = filtered.filter(p => p.total <= cap);
+  const isOutlier = p => p.total > cap || isHandymaxClutter(p, avgs);
+  const rangeOutliers = filtered.filter(isOutlier).length;
+  if(!showOutliers) filtered = filtered.filter(p => !isOutlier(p));
 
   const note = document.getElementById('outlier-note');
   if(note){
     if(!showOutliers && rangeOutliers > 0){
-      note.textContent = `${rangeOutliers} pass${rangeOutliers>1?'es':''} excluded as probable sea clutter (>${cap} vessels). Click ±σ to show.`;
+      note.textContent = `${rangeOutliers} pass${rangeOutliers>1?'es':''} excluded as probable sea clutter. Click ±σ to show.`;
     } else if(showOutliers && rangeOutliers > 0){
-      note.textContent = `${rangeOutliers} outlier pass${rangeOutliers>1?'es':''} shown (>${cap} vessels — probable sea clutter).`;
+      note.textContent = `${rangeOutliers} outlier pass${rangeOutliers>1?'es':''} shown (probable sea clutter).`;
     } else {
       note.textContent = '';
     }
