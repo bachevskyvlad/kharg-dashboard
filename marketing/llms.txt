@@ -44,13 +44,6 @@ OilRadar's Europe Gas Storage Monitor tracks underground gas storage across 10 E
 - Winter readiness: each country compared to 3-year seasonal average (AHEAD / BELOW)
 - Key questions answered: Is Europe ready for the gas season? How much gas does Germany/France/Italy/Netherlands/Poland have in storage?
 
-## Bab-el-Mandeb — Key Facts
-
-- Narrow strait between Yemen and Djibouti connecting Red Sea to Gulf of Aden
-- ~6–7 million barrels/day transited before Houthi disruptions (2023–2024)
-- Houthi attacks forced major rerouting around Cape of Good Hope (+10–14 days, higher freight)
-- OilRadar tracks weekly tanker transit counts via Sentinel-1 SAR since 2017
-
 ## Methodology
 
 1. Sentinel-1 C-band SAR satellite images Kharg Island terminal on average every ~6 days.

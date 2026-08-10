@@ -31,22 +31,10 @@
     <priority>0.9</priority>
   </url>
   <url>
-    <loc>https://oilradar.io/bab-el-mandeb</loc>
-    <lastmod>2026-08-10</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
-  </url>
-  <url>
     <loc>https://oilradar.io/gas-storage</loc>
     <lastmod>2026-08-10</lastmod>
-    <changefreq>weekly</changefreq>
+    <changefreq>daily</changefreq>
     <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>https://oilradar.io/tanks</loc>
-    <lastmod>2026-08-10</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.7</priority>
   </url>
   <url>
     <loc>https://oilradar.io/team</loc>
