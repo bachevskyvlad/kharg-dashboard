@@ -30,11 +30,11 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Send via Resend API
-        env:
-          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
-          PASS_DATE: ${{ github.event.inputs.pass_date }}
-          VOL_CURRENT: ${{ github.event.inputs.vol_current }}
-          VOL_PREV: ${{ github.event.inputs.vol_prev }}
-          PREV_DATE: ${{ github.event.inputs.prev_date }}
-          FILL_RATE_7D: ${{ github.event.inputs.fill_rate_7d }}
-        run: python3 scripts/send_alert_manual.py
+        run: |
+          export RESEND_API_KEY="${{ secrets.RESEND_API_KEY }}"
+          export PASS_DATE="${{ github.event.inputs.pass_date }}"
+          export VOL_CURRENT="${{ github.event.inputs.vol_current }}"
+          export VOL_PREV="${{ github.event.inputs.vol_prev }}"
+          export PREV_DATE="${{ github.event.inputs.prev_date }}"
+          export FILL_RATE_7D="${{ github.event.inputs.fill_rate_7d }}"
+          python3 scripts/send_alert_manual.py
