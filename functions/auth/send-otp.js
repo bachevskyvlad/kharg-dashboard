@@ -30,17 +30,31 @@ export async function onRequest(context) {
   const email = (body.email || '').toLowerCase().trim();
   if (!email || !email.includes('@')) return jsonErr('Invalid email');
 
-  // Check authorization against CRM (Google Sheets)
+  // Check authorization: CRM (Google Sheets) with hardcoded fallback
+  const FALLBACK_WHITELIST = [
+    'vladislav.bachevsky@gmail.com',
+    'keepmeup2date@gmail.com',
+    'vvbobylev@gmail.com',
+    'fryday.kg@gmail.com',
+    'cyril@bluewaterstrategy.eu',
+    'paclonalytics@gmail.com',
+    'fairy1000@gmail.com',
+  ];
+
   if (env.GOOGLE_SA_KEY) {
     try {
       const existing = await getUserByEmail(env.GOOGLE_SA_KEY, email);
-      if (!existing) {
+      if (!existing && !FALLBACK_WHITELIST.includes(email)) {
         return jsonErr('This email is not on the authorized list. Contact us to request access.');
       }
     } catch (err) {
-      console.error('Sheets check failed:', err?.message);
-      return jsonErr('Authorization check failed. Please try again.');
+      console.error('Sheets check failed, using fallback:', err?.message);
+      if (!FALLBACK_WHITELIST.includes(email)) {
+        return jsonErr('This email is not on the authorized list. Contact us to request access.');
+      }
     }
+  } else if (!FALLBACK_WHITELIST.includes(email)) {
+    return jsonErr('This email is not on the authorized list. Contact us to request access.');
   }
 
   const secret = env.OTP_SECRET;
