@@ -1,14 +1,6 @@
-const APP_URL = "https://app.oilradar.io";
+import { getUserByEmail } from '../lib/sheets.js';
 
-const WHITELIST = [
-  'vladislav.bachevsky@gmail.com',
-  'keepmeup2date@gmail.com',
-  'vvbobylev@gmail.com',
-  'fryday.kg@gmail.com',
-  'cyril@bluewaterstrategy.eu',
-  'paclonalytics@gmail.com',
-  'fairy1000@gmail.com',
-];
+const APP_URL = "https://app.oilradar.io";
 
 async function generateOTP(secret, email) {
   const window = Math.floor(Date.now() / 600000); // 10-min window
@@ -38,8 +30,17 @@ export async function onRequest(context) {
   const email = (body.email || '').toLowerCase().trim();
   if (!email || !email.includes('@')) return jsonErr('Invalid email');
 
-  if (!WHITELIST.map(e => e.toLowerCase()).includes(email)) {
-    return jsonErr('This email is not on the authorized list. Contact us to request access.');
+  // Check authorization against CRM (Google Sheets)
+  if (env.GOOGLE_SA_KEY) {
+    try {
+      const existing = await getUserByEmail(env.GOOGLE_SA_KEY, email);
+      if (!existing) {
+        return jsonErr('This email is not on the authorized list. Contact us to request access.');
+      }
+    } catch (err) {
+      console.error('Sheets check failed:', err?.message);
+      return jsonErr('Authorization check failed. Please try again.');
+    }
   }
 
   const secret = env.OTP_SECRET;
