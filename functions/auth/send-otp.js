@@ -5,7 +5,9 @@ const WHITELIST = [
   'keepmeup2date@gmail.com',
   'vvbobylev@gmail.com',
   'fryday.kg@gmail.com',
-  'cyril@bluewaterstrategy.eu'
+  'cyril@bluewaterstrategy.eu',
+  'paclonalytics@gmail.com',
+  'fairy1000@gmail.com',
 ];
 
 async function generateOTP(secret, email) {
