@@ -1,17 +1,7 @@
 import { getUserByEmail, upsertUser } from '../lib/sheets.js';
+import { tgNotify, tgTime } from '../lib/telegram.js';
 
 const APP_URL = "https://app.oilradar.io";
-const TG_BOT = "7745904293:AAHV2qN_5_XNxpg6Ir3iV3XmEKpokthi308";
-const TG_CHAT = "204715787";
-
-async function tgLogin(email) {
-  const text = `🔐 Login\n${email}\n${new Date().toISOString().slice(0,16).replace('T',' ')} UTC`;
-  await fetch(`https://api.telegram.org/bot${TG_BOT}/sendMessage`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ chat_id: TG_CHAT, text })
-  }).catch(() => {});
-}
 
 async function computeOTP(secret, email, windowOffset = 0) {
   const window = Math.floor(Date.now() / 600000) + windowOffset;
@@ -52,6 +42,7 @@ export async function onRequest(context) {
   ]);
 
   if (!validCodes.includes(code)) {
+    tgNotify(`❌ OTP failed\n${email}\nWrong code\n${tgTime()}`).catch(() => {});
     return jsonErr('Invalid or expired code. Please request a new one.');
   }
 
@@ -69,7 +60,7 @@ export async function onRequest(context) {
   const sessionData = { email, name: email, tier, exp: Date.now() + (7 * 24 * 60 * 60 * 1000) };
   const sessionToken = btoa(JSON.stringify(sessionData));
 
-  context.ctx.waitUntil(tgLogin(email));
+  context.ctx.waitUntil(tgNotify(`✅ OTP login\n${email}\n${tgTime()}`));
 
   return new Response(JSON.stringify({ ok: true }), {
     status: 200,

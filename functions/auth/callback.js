@@ -1,16 +1,5 @@
 import { getUserByEmail, upsertUser } from '../lib/sheets.js';
-
-const TG_BOT = "7745904293:AAHV2qN_5_XNxpg6Ir3iV3XmEKpokthi308";
-const TG_CHAT = "204715787";
-
-async function tgLogin(email, name) {
-  const text = `🔐 Login\n${name} (${email})\n${new Date().toISOString().slice(0,16).replace('T',' ')} UTC`;
-  await fetch(`https://api.telegram.org/bot${TG_BOT}/sendMessage`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ chat_id: TG_CHAT, text })
-  }).catch(() => {});
-}
+import { tgNotify, tgTime } from '../lib/telegram.js';
 
 const GOOGLE_CLIENT_ID = "377241273746-2qhpgcaa0a9nkhjuiihfqqs35rvp5asv.apps.googleusercontent.com";
 const GOOGLE_CLIENT_SECRET = "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";
@@ -23,6 +12,7 @@ export async function onRequest(context) {
   const error = url.searchParams.get('error');
 
   if (error || !code) {
+    tgNotify(`❌ Google auth cancelled\n${error || 'no code'}\n${tgTime()}`).catch(() => {});
     return Response.redirect(`${APP_URL}/?error=auth_failed`, 302);
   }
 
@@ -36,21 +26,30 @@ export async function onRequest(context) {
       })
     });
     const tokens = await tokenResponse.json();
-    if (!tokens.access_token) return Response.redirect(`${APP_URL}/?error=auth_failed`, 302);
+    if (!tokens.access_token) {
+      tgNotify(`❌ Google token failed\nNo access_token\n${tgTime()}`).catch(() => {});
+      return Response.redirect(`${APP_URL}/?error=auth_failed`, 302);
+    }
 
     const userResponse = await fetch('https://www.googleapis.com/oauth2/v2/userinfo', {
       headers: { Authorization: `Bearer ${tokens.access_token}` }
     });
     const user = await userResponse.json();
     const email = user.email?.toLowerCase();
-    if (!email) return Response.redirect(`${APP_URL}/?error=auth_failed`, 302);
+    if (!email) {
+      tgNotify(`❌ Google login failed\nNo email returned\n${tgTime()}`).catch(() => {});
+      return Response.redirect(`${APP_URL}/?error=auth_failed`, 302);
+    }
 
     // Authorization: must exist in CRM sheet
     let tier = 'paid';
     if (env.GOOGLE_SA_KEY) {
       try {
         const existing = await getUserByEmail(env.GOOGLE_SA_KEY, email);
-        if (!existing) return Response.redirect(`${APP_URL}/?error=unauthorized`, 302);
+        if (!existing) {
+          tgNotify(`⛔ Google blocked\n${user.name || email} (${email})\nNot in CRM\n${tgTime()}`).catch(() => {});
+          return Response.redirect(`${APP_URL}/?error=unauthorized`, 302);
+        }
         const nameParts = (user.name || '').split(' ');
         tier = await upsertUser(env.GOOGLE_SA_KEY, {
           email,
@@ -58,7 +57,6 @@ export async function onRequest(context) {
           last_name: nameParts.slice(1).join(' ') || '',
         });
       } catch (sheetErr) {
-        // Sheets unavailable — allow login with paid tier, log error
         console.error('Sheets error:', sheetErr?.message);
       }
     }
@@ -66,7 +64,7 @@ export async function onRequest(context) {
     const sessionData = { email, name: user.name || email, tier, exp: Date.now() + (7 * 24 * 60 * 60 * 1000) };
     const sessionToken = btoa(JSON.stringify(sessionData));
 
-    context.ctx.waitUntil(tgLogin(email, user.name || email));
+    context.ctx.waitUntil(tgNotify(`✅ Google login\n${user.name || email} (${email})\n${tgTime()}`));
 
     return new Response(null, {
       status: 302,
@@ -76,6 +74,7 @@ export async function onRequest(context) {
       }
     });
   } catch (e) {
+    tgNotify(`❌ Google auth error\n${e?.message || 'unknown'}\n${tgTime()}`).catch(() => {});
     return Response.redirect(`${APP_URL}/?error=auth_failed`, 302);
   }
 }
