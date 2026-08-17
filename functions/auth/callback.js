@@ -12,7 +12,7 @@ export async function onRequest(context) {
   const error = url.searchParams.get('error');
 
   if (error || !code) {
-    tgNotify(`❌ Google auth cancelled\n${error || 'no code'}\n${tgTime()}`).catch(() => {});
+    context.ctx.waitUntil(tgNotify(`❌ Google auth cancelled\n${error || 'no code'}\n${tgTime()}`));
     return Response.redirect(`${APP_URL}/?error=auth_failed`, 302);
   }
 
@@ -27,7 +27,7 @@ export async function onRequest(context) {
     });
     const tokens = await tokenResponse.json();
     if (!tokens.access_token) {
-      tgNotify(`❌ Google token failed\nNo access_token\n${tgTime()}`).catch(() => {});
+      context.ctx.waitUntil(tgNotify(`❌ Google token failed\nNo access_token\n${tgTime()}`));
       return Response.redirect(`${APP_URL}/?error=auth_failed`, 302);
     }
 
@@ -37,7 +37,7 @@ export async function onRequest(context) {
     const user = await userResponse.json();
     const email = user.email?.toLowerCase();
     if (!email) {
-      tgNotify(`❌ Google login failed\nNo email returned\n${tgTime()}`).catch(() => {});
+      context.ctx.waitUntil(tgNotify(`❌ Google login failed\nNo email returned\n${tgTime()}`));
       return Response.redirect(`${APP_URL}/?error=auth_failed`, 302);
     }
 
@@ -47,7 +47,7 @@ export async function onRequest(context) {
       try {
         const existing = await getUserByEmail(env.GOOGLE_SA_KEY, email);
         if (!existing) {
-          tgNotify(`⛔ Google blocked\n${user.name || email} (${email})\nNot in CRM\n${tgTime()}`).catch(() => {});
+          context.ctx.waitUntil(tgNotify(`⛔ Google blocked\n${user.name || email} (${email})\nNot in CRM\n${tgTime()}`));
           return Response.redirect(`${APP_URL}/?error=unauthorized`, 302);
         }
         const nameParts = (user.name || '').split(' ');
@@ -74,7 +74,7 @@ export async function onRequest(context) {
       }
     });
   } catch (e) {
-    tgNotify(`❌ Google auth error\n${e?.message || 'unknown'}\n${tgTime()}`).catch(() => {});
+    context.ctx.waitUntil(tgNotify(`❌ Google auth error\n${e?.message || 'unknown'}\n${tgTime()}`));
     return Response.redirect(`${APP_URL}/?error=auth_failed`, 302);
   }
 }

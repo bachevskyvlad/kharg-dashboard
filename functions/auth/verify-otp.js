@@ -42,7 +42,7 @@ export async function onRequest(context) {
   ]);
 
   if (!validCodes.includes(code)) {
-    tgNotify(`❌ OTP failed\n${email}\nWrong code\n${tgTime()}`).catch(() => {});
+    context.ctx.waitUntil(tgNotify(`❌ OTP failed\n${email}\nWrong code\n${tgTime()}`));
     return jsonErr('Invalid or expired code. Please request a new one.');
   }
 

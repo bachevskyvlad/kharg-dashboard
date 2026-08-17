@@ -46,23 +46,23 @@ export async function onRequest(context) {
     try {
       const existing = await getUserByEmail(env.GOOGLE_SA_KEY, email);
       if (!existing && !FALLBACK_WHITELIST.includes(email)) {
-        tgNotify(`⛔ OTP blocked\n${email}\nNot in CRM or whitelist\n${tgTime()}`).catch(() => {});
+        context.ctx.waitUntil(tgNotify(`⛔ OTP blocked\n${email}\nNot in CRM or whitelist\n${tgTime()}`));
         return jsonErr('This email is not on the authorized list. Contact us to request access.');
       }
     } catch (err) {
       console.error('Sheets check failed, using fallback:', err?.message);
       if (!FALLBACK_WHITELIST.includes(email)) {
-        tgNotify(`⛔ OTP blocked\n${email}\nNot in whitelist (CRM unavailable)\n${tgTime()}`).catch(() => {});
+        context.ctx.waitUntil(tgNotify(`⛔ OTP blocked\n${email}\nNot in whitelist (CRM unavailable)\n${tgTime()}`));
         return jsonErr('This email is not on the authorized list. Contact us to request access.');
       }
     }
   } else if (!FALLBACK_WHITELIST.includes(email)) {
-    tgNotify(`⛔ OTP blocked\n${email}\nNot in whitelist\n${tgTime()}`).catch(() => {});
+    context.ctx.waitUntil(tgNotify(`⛔ OTP blocked\n${email}\nNot in whitelist\n${tgTime()}`));
     return jsonErr('This email is not on the authorized list. Contact us to request access.');
   }
 
   // Authorized — notify that OTP was requested
-  tgNotify(`📨 OTP sent\n${email}\n${tgTime()}`).catch(() => {});
+  context.ctx.waitUntil(tgNotify(`📨 OTP sent\n${email}\n${tgTime()}`));
 
   const secret = env.OTP_SECRET;
   const resendKey = env.RESEND_API_KEY;
