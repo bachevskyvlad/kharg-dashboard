@@ -108,10 +108,13 @@
             } catch {}
         })();
 
-        // Show error from URL params (Google OAuth errors)
+        // Show error from URL params (Google OAuth errors), then clean URL
         const urlParams = new URLSearchParams(window.location.search);
         const urlError = urlParams.get('error');
-        if (urlError) showMsg(urlError === 'unauthorized' ? '⚠️ Access denied. Your email is not on the authorized list.' : '⚠️ An error occurred. Please try again.', 'error');
+        if (urlError) {
+            showMsg(urlError === 'unauthorized' ? '⚠️ Access denied. Your email is not on the authorized list.' : '⚠️ An error occurred. Please try again.', 'error');
+            history.replaceState(null, '', window.location.pathname);
+        }
 
         function initiateLogin() { window.location.href = '/auth/login'; }
 
