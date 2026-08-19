@@ -85,16 +85,11 @@ jobs:
         run: |
           COUNT=$(python3 -c "import json; d=json.load(open('public/data_raw_cache.json')); print(len(set(r['date'] for r in d)))")
           echo "count=$COUNT" >> $GITHUB_OUTPUT
-      - name: Upload raw cache
-        uses: actions/upload-artifact@v4
+      - name: Cache volume graph for commit job
+        uses: actions/cache/save@v4
         with:
-          name: kharg-raw-cache
-          path: public/data_raw_cache.json
-      - name: Upload volume graph
-        uses: actions/upload-artifact@v4
-        with:
-          name: volume-graph
           path: public/volume_graph.png
+          key: kharg-volume-graph-${{ github.run_id }}
       - name: Telegram - Kharg SUCCESS
         if: success()
         run: |
@@ -137,11 +132,11 @@ jobs:
           python-version: "3.11"
       - name: Install supabase client
         run: pip install supabase
-      - name: Download volume graph
-        uses: actions/download-artifact@v4
+      - name: Restore volume graph from cache
+        uses: actions/cache/restore@v4
         with:
-          name: volume-graph
-          path: public/
+          path: public/volume_graph.png
+          key: kharg-volume-graph-${{ github.run_id }}
         continue-on-error: true
       - name: Export Kharg data from Supabase
         run: python scripts/export_from_supabase.py

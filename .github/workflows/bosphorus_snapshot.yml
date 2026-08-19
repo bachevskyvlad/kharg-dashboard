@@ -48,15 +48,6 @@ jobs:
             python scripts/bosphorus_snapshot.py --region "$REGION"
           fi
 
-      - name: Upload artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: bosphorus-snapshot
-          path: |
-            data/bosphorus_*.png
-            data/bosphorus_*_history.json
-          if-no-files-found: warn
-
       - name: Commit to repo
         run: |
           git config user.name "github-actions[bot]"
