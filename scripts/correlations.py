@@ -1,106 +1,116 @@
 """
 correlations.py — Pearson correlations between Kharg and Gulf terminals.
 
-Pulls daily (unsmoothed) volumes from:
-  volume_timeseries      — Kharg Island
-  terminal_volume_timeseries — Al Flaw, Lavan, Siri, Jask
-
-Aligns on common dates and prints:
-  1. Pearson r for each terminal vs Kharg
-  2. Cross-correlation (lag analysis) ±30 days
-  3. Rolling 365-day correlation over time
+Different terminals have different Sentinel-1 pass dates (different orbital
+swaths), so we resample all series to weekly means before correlating.
 """
 
 import pandas as pd
 import numpy as np
 from config import sb
 
-# ── Load Kharg daily volumes ───────────────────────────────────────────────────
-print("Loading Kharg volumes...")
-rows = []
-offset = 0
-while True:
-    batch = (sb.table("volume_timeseries")
-               .select("date,vol_mn_bbl")
-               .eq("aggregation", "daily")
-               .eq("smoothed", False)
-               .range(offset, offset + 999)
-               .execute().data)
-    rows.extend(batch)
-    if len(batch) < 1000:
-        break
-    offset += 1000
 
-kharg = pd.DataFrame(rows)
-kharg["date"] = pd.to_datetime(kharg["date"])
-kharg = kharg.set_index("date")["vol_mn_bbl"].rename("kharg").sort_index()
-print(f"  Kharg: {len(kharg)} dates ({kharg.index.min().date()} — {kharg.index.max().date()})")
+def load_kharg():
+    rows, offset = [], 0
+    while True:
+        batch = (sb.table("volume_timeseries")
+                   .select("date,vol_mn_bbl")
+                   .eq("aggregation", "daily")
+                   .eq("smoothed", False)
+                   .range(offset, offset + 999)
+                   .execute().data)
+        rows.extend(batch)
+        if len(batch) < 1000:
+            break
+        offset += 1000
+    df = pd.DataFrame(rows)
+    df["date"] = pd.to_datetime(df["date"])
+    return df.set_index("date")["vol_mn_bbl"].sort_index()
 
-# ── Load terminal volumes ──────────────────────────────────────────────────────
-print("Loading terminal volumes...")
-rows = []
-offset = 0
-while True:
-    batch = (sb.table("terminal_volume_timeseries")
-               .select("terminal_id,date,vol_mn_bbl")
-               .eq("aggregation", "daily")
-               .eq("smoothed", False)
-               .range(offset, offset + 999)
-               .execute().data)
-    rows.extend(batch)
-    if len(batch) < 1000:
-        break
-    offset += 1000
 
-tdf = pd.DataFrame(rows)
-tdf["date"] = pd.to_datetime(tdf["date"])
+def load_terminals():
+    rows, offset = [], 0
+    while True:
+        batch = (sb.table("terminal_volume_timeseries")
+                   .select("terminal_id,date,vol_mn_bbl")
+                   .eq("aggregation", "daily")
+                   .eq("smoothed", False)
+                   .range(offset, offset + 999)
+                   .execute().data)
+        rows.extend(batch)
+        if len(batch) < 1000:
+            break
+        offset += 1000
+    df = pd.DataFrame(rows)
+    df["date"] = pd.to_datetime(df["date"])
+    result = {}
+    for tid, grp in df.groupby("terminal_id"):
+        result[tid] = grp.set_index("date")["vol_mn_bbl"].sort_index()
+    return result
 
-terminals = {}
-for tid, grp in tdf.groupby("terminal_id"):
-    s = grp.set_index("date")["vol_mn_bbl"].sort_index()
-    terminals[tid] = s
+
+print("Loading data...")
+kharg_daily = load_kharg()
+terminals = load_terminals()
+
+print(f"  Kharg: {len(kharg_daily)} dates ({kharg_daily.index.min().date()} — {kharg_daily.index.max().date()})")
+for tid, s in terminals.items():
     print(f"  {tid}: {len(s)} dates ({s.index.min().date()} — {s.index.max().date()})")
 
-# ── Build aligned DataFrame ────────────────────────────────────────────────────
-df = pd.DataFrame({"kharg": kharg})
-for tid, s in terminals.items():
+# Resample everything to weekly means (Monday anchor)
+kharg_w = kharg_daily.resample("W-MON").mean()
+term_w = {tid: s.resample("W-MON").mean() for tid, s in terminals.items()}
+
+# Build aligned weekly DataFrame
+df = pd.DataFrame({"kharg": kharg_w})
+for tid, s in term_w.items():
     df[tid] = s
 df = df.dropna()
-print(f"\nCommon dates with all series: {len(df)}")
+print(f"\nCommon weekly dates (all series present): {len(df)}")
+if len(df) == 0:
+    # Fall back: allow pairwise NaN, don't require all
+    df = pd.DataFrame({"kharg": kharg_w})
+    for tid, s in term_w.items():
+        df[tid] = s
+    print("(Using pairwise complete obs)")
 
-# ── Pearson correlations ───────────────────────────────────────────────────────
-print("\n" + "="*50)
-print("PEARSON CORRELATION vs KHARG (contemporaneous)")
-print("="*50)
+# ── Pearson correlations vs Kharg ─────────────────────────────────────────────
+print("\n" + "="*55)
+print("PEARSON r vs KHARG (weekly volumes, contemporaneous)")
+print("="*55)
 for tid in terminals:
-    if tid in df.columns:
-        r = df["kharg"].corr(df[tid])
-        n = df[["kharg", tid]].dropna().__len__()
-        print(f"  {tid:20s}  r = {r:+.4f}  (n={n})")
+    sub = df[["kharg", tid]].dropna()
+    if len(sub) < 10:
+        print(f"  {tid:20s}  insufficient data (n={len(sub)})")
+        continue
+    r = sub["kharg"].corr(sub[tid])
+    print(f"  {tid:20s}  r = {r:+.4f}  (n={len(sub)} weeks)")
 
-# ── Pairwise between terminals ─────────────────────────────────────────────────
-print("\n" + "="*50)
+# ── Pairwise between terminals ──────────────────────────────────────────────
+print("\n" + "="*55)
 print("PAIRWISE CORRELATIONS BETWEEN TERMINALS")
-print("="*50)
+print("="*55)
 cols = list(terminals.keys())
 for i, a in enumerate(cols):
     for b in cols[i+1:]:
-        if a in df.columns and b in df.columns:
-            sub = df[[a, b]].dropna()
-            r = sub[a].corr(sub[b])
-            print(f"  {a:20s} vs {b:20s}  r = {r:+.4f}  (n={len(sub)})")
+        sub = df[[a, b]].dropna()
+        if len(sub) < 10:
+            print(f"  {a:20s} vs {b:20s}  n={len(sub)} (skip)")
+            continue
+        r = sub[a].corr(sub[b])
+        print(f"  {a:20s} vs {b:20s}  r = {r:+.4f}  (n={len(sub)})")
 
-# ── Lag analysis: Kharg vs each terminal ──────────────────────────────────────
-print("\n" + "="*50)
-print("LAG ANALYSIS (days): peak cross-correlation Kharg vs terminal")
+# ── Lag analysis: Kharg vs each terminal (±8 weeks) ────────────────────────
+print("\n" + "="*55)
+print("LAG ANALYSIS (±8 weeks): who leads whom?")
 print("  Positive lag = terminal LEADS Kharg")
-print("="*50)
+print("="*55)
 for tid in terminals:
-    if tid not in df.columns:
-        continue
     sub = df[["kharg", tid]].dropna()
+    if len(sub) < 20:
+        continue
     best_r, best_lag = 0, 0
-    for lag in range(-30, 31):
+    for lag in range(-8, 9):
         if lag == 0:
             r = sub["kharg"].corr(sub[tid])
         elif lag > 0:
@@ -109,26 +119,24 @@ for tid in terminals:
             r = sub["kharg"].iloc[:lag].corr(sub[tid].iloc[-lag:])
         if abs(r) > abs(best_r):
             best_r, best_lag = r, lag
-    direction = "terminal LEADS" if best_lag > 0 else ("KHARG LEADS" if best_lag < 0 else "simultaneous")
-    print(f"  {tid:20s}  best r={best_r:+.4f} at lag={best_lag:+3d}d  ({direction})")
+    direction = "terminal LEADS" if best_lag > 0 else ("Kharg LEADS" if best_lag < 0 else "simultaneous")
+    print(f"  {tid:20s}  best r={best_r:+.4f} at lag={best_lag:+2d}w  ({direction})")
 
-# ── Rolling 365-day correlation ────────────────────────────────────────────────
-print("\n" + "="*50)
-print("ROLLING 365-DAY CORRELATION vs KHARG (recent 3 years)")
-print("="*50)
+# ── Rolling 52-week correlation ──────────────────────────────────────────────
+print("\n" + "="*55)
+print("ROLLING 52-WEEK CORRELATION vs KHARG")
+print("="*55)
 for tid in terminals:
-    if tid not in df.columns:
+    sub = df[["kharg", tid]].dropna()
+    if len(sub) < 52:
+        print(f"  {tid}: insufficient data for rolling")
         continue
-    rolling_r = df["kharg"].rolling(365).corr(df[tid]).dropna()
-    recent = rolling_r.last("3Y")
-    if len(recent) == 0:
-        continue
+    rolling_r = sub["kharg"].rolling(52).corr(sub[tid]).dropna()
     print(f"  {tid}:")
-    print(f"    mean r (3y): {recent.mean():+.4f}")
-    print(f"    range:       [{recent.min():+.4f}, {recent.max():+.4f}]")
-    # year-by-year
-    for year in sorted(recent.index.year.unique())[-3:]:
-        yr = recent[recent.index.year == year]
-        print(f"    {year}: {yr.mean():+.4f}")
+    print(f"    overall mean r : {rolling_r.mean():+.4f}")
+    print(f"    range          : [{rolling_r.min():+.4f}, {rolling_r.max():+.4f}]")
+    for year in sorted(rolling_r.index.year.unique())[-4:]:
+        yr = rolling_r[rolling_r.index.year == year]
+        print(f"    {year}: mean r = {yr.mean():+.4f}")
 
 print("\nDone.")
