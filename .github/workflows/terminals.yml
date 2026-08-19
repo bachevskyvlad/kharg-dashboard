@@ -1,0 +1,42 @@
+name: Gulf Terminals SAR Pipeline
+
+on:
+  workflow_dispatch:
+    inputs:
+      terminal:
+        description: "Terminal to process (al_flaw / lavan / siri / jask / all)"
+        required: false
+        default: "all"
+      dry_run:
+        description: "Dry run (skip Supabase writes)"
+        required: false
+        default: "false"
+  schedule:
+    # Run weekly on Mondays at 06:00 UTC (after Kharg pipeline)
+    - cron: "0 6 * * 1"
+
+jobs:
+  run-terminals:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: scripts
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: pip install sentinelhub supabase numpy pandas matplotlib
+
+      - name: Run multi-terminal pipeline
+        env:
+          CLIENT_ID: ${{ secrets.CLIENT_ID }}
+          CLIENT_SECRET: ${{ secrets.CLIENT_SECRET }}
+        run: |
+          ARGS="--terminal ${{ inputs.terminal || 'all' }}"
+          if [ "${{ inputs.dry_run }}" = "true" ]; then ARGS="$ARGS --dry-run"; fi
+          python multi_terminal_pipeline.py $ARGS
