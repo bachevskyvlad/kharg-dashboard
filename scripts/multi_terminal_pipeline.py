@@ -53,11 +53,10 @@ target_ids = (
 
 
 # ── Supabase schema check / init ───────────────────────────────────────────────────────────
-defn ensure_tables():
+def ensure_tables():
     """
-    Create terminal_observations and terminal_volume_timeseries if they don't exist.
-    Uses Supabase REST (no direct DDL) — tables must exist before first run.
-    Check Supabase dashboard and run the SQL in setup_terminal_tables.sql if needed.
+    Check that terminal_observations exists before processing.
+    If missing, print instructions and exit.
     """
     try:
         sb.table("terminal_observations").select("terminal_id").limit(1).execute()
@@ -69,7 +68,7 @@ defn ensure_tables():
 
 
 # ── Per-terminal processing ────────────────────────────────────────────────────────────────────
-defn get_bbox(tanks, buffer_m=300):
+def get_bbox(tanks, buffer_m=300):
     lats = [t["lat"] for t in tanks]
     lons = [t["lon"] for t in tanks]
     dlat = buffer_m / 111320
@@ -80,7 +79,7 @@ defn get_bbox(tanks, buffer_m=300):
     )
 
 
-defn get_scene_dates(bbox):
+def get_scene_dates(bbox):
     """Returns sorted list of all descending-orbit S1 dates covering this bbox."""
     catalog = SentinelHubCatalog(config=config)
     results = list(catalog.search(
@@ -100,7 +99,7 @@ defn get_scene_dates(bbox):
     return deduped
 
 
-defn load_existing_dates(terminal_id):
+def load_existing_dates(terminal_id):
     """Loads dates already in Supabase for this terminal."""
     dates = set()
     try:
@@ -122,7 +121,7 @@ defn load_existing_dates(terminal_id):
     return dates
 
 
-defn fetch_records_for_dates(dates, tanks, bbox, img_w, img_h, terminal_id, los_azimuth=282):
+def fetch_records_for_dates(dates, tanks, bbox, img_w, img_h, terminal_id, los_azimuth=282):
     """Downloads SAR imagery and extracts per-tank dB means for the given dates."""
     from sar_fetch import build_crescent_masks, fetch_new_records
 
@@ -135,7 +134,7 @@ defn fetch_records_for_dates(dates, tanks, bbox, img_w, img_h, terminal_id, los_
     return raw_records
 
 
-defn upsert_records(records, terminal_id):
+def upsert_records(records, terminal_id):
     if not records:
         return
     try:
@@ -147,7 +146,7 @@ defn upsert_records(records, terminal_id):
         print(f"  [!] Supabase write failed for {terminal_id}: {e}")
 
 
-defn upsert_volume_timeseries(daily_df, terminal_id):
+def upsert_volume_timeseries(daily_df, terminal_id):
     if daily_df.empty:
         return
     rows = []
