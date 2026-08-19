@@ -86,7 +86,7 @@ def get_scene_dates(bbox):
         S1_CDSE,
         bbox=bbox,
         time=(START_DATE, pd.Timestamp.now()),
-        filter="sar:orbit_state = 'DESCENDING'",
+        filter="sat:orbit_state = 'DESCENDING'",
         fields={"include": ["properties.datetime"], "exclude": []}
     ))
     raw_dates = [pd.to_datetime(r["properties"]["datetime"]).normalize().tz_localize(None)
