@@ -40,3 +40,20 @@ jobs:
           ARGS="--terminal ${{ inputs.terminal || 'all' }}"
           if [ "${{ inputs.dry_run }}" = "true" ]; then ARGS="$ARGS --dry-run"; fi
           python multi_terminal_pipeline.py $ARGS
+
+      - name: Export terminal JSON files
+        if: ${{ inputs.dry_run != 'true' }}
+        env:
+          CLIENT_ID: ${{ secrets.CLIENT_ID }}
+          CLIENT_SECRET: ${{ secrets.CLIENT_SECRET }}
+        run: python export_terminal_json.py
+
+      - name: Commit & push JSON files
+        if: ${{ inputs.dry_run != 'true' }}
+        working-directory: ${{ github.workspace }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add data/terminals/
+          git diff --cached --quiet || git commit -m "chore: update terminal JSON data files"
+          git push
