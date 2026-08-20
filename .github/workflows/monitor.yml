@@ -131,7 +131,7 @@ jobs:
         with:
           python-version: "3.11"
       - name: Install supabase client
-        run: pip install supabase
+        run: pip install supabase pandas
       - name: Restore volume graph from cache
         uses: actions/cache/restore@v4
         with:
