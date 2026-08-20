@@ -1138,7 +1138,15 @@ async function loadData() {
     const capSub = document.querySelector('#cVol .card-sub');
     if (capSub) capSub.textContent = `of ${MAX_CAP.toFixed(2)} Mb capacity`;
     if (!allDates.length) {
-        document.getElementById('sig1').textContent = 'No data yet for this terminal — pipeline has not run.';
+        document.getElementById('sig1').textContent = 'No data yet — pipeline has not run for this terminal.';
+        document.getElementById('mVol').innerHTML  = '--<span class="cu"> Mb</span>';
+        document.getElementById('mUtil').innerHTML = '--<span class="cu">%</span>';
+        document.getElementById('mUtilBadge').textContent = '';
+        document.getElementById('mRate').innerHTML = '--<span class="cu"> Mb</span>';
+        document.getElementById('mRateSub').textContent   = '';
+        document.getElementById('mDays').innerHTML = '--<span class="cu"> d</span>';
+        document.getElementById('mDaysSub').textContent   = '';
+        document.getElementById('mDaysLabel').textContent = 'Days to Capacity';
         return;
     }
     render();
