@@ -174,6 +174,7 @@ def fetch_new_records(new_dates, tanks_data, super_bbox, img_width, img_height):
     For each date:
       - Requests a 1-day time window (the pass is a single scene, so this is safe)
       - Applies the crescent mask to the VV linear power image
+      - Filters NaN/Inf pixels (can occur at image edges or layover zones)
       - Computes mean linear → convert to dB
       - Stores as a record per (date, tank_id)
 
@@ -209,9 +210,13 @@ def fetch_new_records(new_dates, tanks_data, super_bbox, img_width, img_height):
             img_linear = data[0].squeeze()
             for tank in tanks_data:
                 pixels = img_linear[tank["crescent"]]
+                # Filter NaN/Inf pixels (can appear at image edges or layover zones)
+                pixels = pixels[np.isfinite(pixels)]
                 if pixels.size > 0:
                     mean_linear = np.mean(pixels)
                     db_mean = 10 * np.log10(np.clip(mean_linear, 1e-10, None))
+                    if not np.isfinite(db_mean):
+                        continue
                     new_records.append({
                         "date":     d_str,
                         "tank_id":  tank["id"],
