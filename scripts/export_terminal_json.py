@@ -27,6 +27,11 @@ sb = create_client(SUPABASE_URL, SUPABASE_KEY)
 
 IRAN_TERMINALS = ["lavan", "siri", "jask"]
 
+# Earliest date to include per terminal (terminal launch dates)
+TERMINAL_START = {
+    "jask": "2022-01-01",
+}
+
 TERMINAL_META = {
     "lavan":  {"name": "Lavan Island",  "max_capacity_mb": 7.5},
     "siri":   {"name": "Siri Island",   "max_capacity_mb": 3.2},
@@ -118,6 +123,8 @@ for tid in IRAN_TERMINALS:
     if df.empty:
         print(f"  [!] No data for {tid} — skipping")
         continue
+    if tid in TERMINAL_START:
+        df = df[df["date"] >= TERMINAL_START[tid]]
     write_json(to_json_payload(df, tid), f"{tid}_daily.json")
 
 # ── Iran total ─────────────────────────────────────────────────────────────────
@@ -127,6 +134,8 @@ all_dfs = {"kharg": kharg_df}
 for tid in IRAN_TERMINALS:
     df = fetch_terminal(tid)
     if not df.empty:
+        if tid in TERMINAL_START:
+            df = df[df["date"] >= TERMINAL_START[tid]]
         all_dfs[tid] = df
 
 # Outer join on date, sum non-null values

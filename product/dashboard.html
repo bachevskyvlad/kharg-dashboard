@@ -1324,8 +1324,8 @@ function render() {
     if (!n) return;
 
     const latest = values[n - 1];
-    const util = (latest / MAX_CAP) * 100;
-    const spiSeries = values.map(v => (v / MAX_CAP) * 100);
+    const util = Math.min(100, (latest / MAX_CAP) * 100);
+    const spiSeries = values.map(v => Math.min(100, (v / MAX_CAP) * 100));
     // Use raw daily data for pulse detection
     const pulses = detectPulses(rawSlice.dates, rawSlice.values);
     const streak = computeStreak(rawSlice.dates, rawSlice.values);
