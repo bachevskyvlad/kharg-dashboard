@@ -16,10 +16,14 @@ import json
 import os
 import sys
 import pandas as pd
+from supabase import create_client
 
-# Add scripts dir to path for config import
-sys.path.insert(0, os.path.dirname(__file__))
-from config import sb
+SUPABASE_URL = "https://yoekhkczwdeyauwarsyy.supabase.co"
+SUPABASE_KEY = os.environ.get(
+    "SUPABASE_KEY",
+    "sb_publishable_7j07_zzdqTGM1LXf7-o9Tg_JJRbJQSM",
+)
+sb = create_client(SUPABASE_URL, SUPABASE_KEY)
 
 IRAN_TERMINALS = ["lavan", "siri", "jask"]
 
