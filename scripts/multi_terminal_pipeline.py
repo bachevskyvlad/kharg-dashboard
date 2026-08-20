@@ -39,7 +39,7 @@ from terminals import TERMINALS
 from volume import compute_volumes, aggregate_daily
 
 
-# ── CLI args ──────────────────────────────────────────────────────────────────────────────
+# ── CLI args ──────────────────────────────────────────────────────────────────
 parser = argparse.ArgumentParser()
 parser.add_argument("--terminal", default="all", help="Terminal id or 'all'")
 parser.add_argument("--dry-run", action="store_true", help="Skip Supabase writes")
@@ -52,11 +52,12 @@ target_ids = (
 )
 
 
-# ── Supabase schema check / init ───────────────────────────────────────────────────────────
+# ── Supabase schema check / init ──────────────────────────────────────────────
 def ensure_tables():
     """
-    Check that terminal_observations exists before processing.
-    If missing, print instructions and exit.
+    Create terminal_observations and terminal_volume_timeseries if they don't exist.
+    Uses Supabase REST (no direct DDL) — tables must exist before first run.
+    Check Supabase dashboard and run the SQL in setup_terminal_tables.sql if needed.
     """
     try:
         sb.table("terminal_observations").select("terminal_id").limit(1).execute()
@@ -67,7 +68,7 @@ def ensure_tables():
         sys.exit(1)
 
 
-# ── Per-terminal processing ────────────────────────────────────────────────────────────────────
+# ── Per-terminal processing ───────────────────────────────────────────────────
 def get_bbox(tanks, buffer_m=300):
     lats = [t["lat"] for t in tanks]
     lons = [t["lon"] for t in tanks]
@@ -86,16 +87,18 @@ def get_scene_dates(bbox):
         S1_CDSE,
         bbox=bbox,
         time=(START_DATE, pd.Timestamp.now()),
-        filter="sat:orbit_state = 'DESCENDING'",
+        filter="sar:orbit_state = 'DESCENDING'",
         fields={"include": ["properties.datetime"], "exclude": []}
     ))
     raw_dates = [pd.to_datetime(r["properties"]["datetime"]).normalize().tz_localize(None)
                  for r in results]
+    # Deduplicate scenes that straddle UTC midnight (same physical pass)
     raw_dates.sort()
     deduped = []
     for d in raw_dates:
         if not deduped or (d - deduped[-1]).days > 0:
             deduped.append(d)
+        # Within 12h of previous = same pass, skip
     return deduped
 
 
@@ -121,6 +124,16 @@ def load_existing_dates(terminal_id):
     return dates
 
 
+def build_crescent_masks(tanks, bbox, img_w, img_h, los_azimuth=282, width_m=15):
+    """
+    Builds per-tank crescent masks for SAR extraction.
+    Same method as sar_fetch.build_crescent_masks but self-contained here.
+    """
+    from sar_fetch import build_crescent_masks as _build
+    # Delegate to the existing implementation — pass tanks in expected format
+    return _build(tanks, bbox, img_w, img_h)
+
+
 def fetch_records_for_dates(dates, tanks, bbox, img_w, img_h, terminal_id, los_azimuth=282):
     """Downloads SAR imagery and extracts per-tank dB means for the given dates."""
     from sar_fetch import build_crescent_masks, fetch_new_records
@@ -128,6 +141,7 @@ def fetch_records_for_dates(dates, tanks, bbox, img_w, img_h, terminal_id, los_a
     tanks_data = build_crescent_masks(tanks, bbox, img_w, img_h)
     raw_records = fetch_new_records(dates, tanks_data, bbox, img_w, img_h)
 
+    # Tag every record with terminal_id
     for r in raw_records:
         r["terminal_id"] = terminal_id
 
@@ -167,7 +181,7 @@ def upsert_volume_timeseries(daily_df, terminal_id):
         print(f"  [!] Volume upsert failed for {terminal_id}: {e}")
 
 
-# ── Main loop ───────────────────────────────────────────────────────────────────────────────────
+# ── Main loop ─────────────────────────────────────────────────────────────────
 ensure_tables()
 
 for terminal in TERMINALS:
@@ -191,6 +205,7 @@ for terminal in TERMINALS:
         print("  No new data — skipping.")
         continue
 
+    # Image dimensions from bbox
     lat0 = min(t["lat"] for t in tanks)
     width_m_geo  = (bbox.max_x - bbox.min_x) * 111320 * np.cos(np.deg2rad(lat0))
     height_m_geo = (bbox.max_y - bbox.min_y) * 111320
@@ -212,6 +227,7 @@ for terminal in TERMINALS:
     if not args.dry_run:
         upsert_records(records, tid)
 
+    # Compute volume for this terminal
     df = pd.DataFrame(records)
     df["date"] = pd.to_datetime(df["date"])
     df, _, _ = compute_volumes(df)

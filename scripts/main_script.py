@@ -26,6 +26,7 @@ Environment variables required (GitHub Actions secrets):
 
 import sys
 import os
+import json
 import warnings
 import numpy as np
 import pandas as pd
@@ -45,6 +46,7 @@ from export_data import (
     save_daily_json, save_weekly_json, refresh_gross_flows,
 )
 from notify import send_sar_alert
+from terminals import TERMINALS
 
 os.makedirs("public", exist_ok=True)
 
@@ -92,7 +94,152 @@ save_daily_json(daily_total,  DAILY_PATH,  sb)
 save_weekly_json(weekly_total, WEEKLY_PATH, sb)
 refresh_gross_flows(sb)
 
-print("\nPipeline complete!")
+print("\nKharg pipeline complete!")
+
+# ── Iranian terminals (Lavan, Siri, Jask) ────────────────────────────────────
+IRAN_TERMINAL_IDS = {"lavan", "siri", "jask"}
+TERMINAL_MAX_CAP = {"lavan": 7.5, "siri": 3.2, "jask": 9.8}
+TERMINALS_DIR = os.path.join(os.path.dirname(DAILY_PATH), "terminals")
+os.makedirs(TERMINALS_DIR, exist_ok=True)
+
+def _terminal_bbox(tanks, buffer_m=300):
+    from sentinelhub import BBox, CRS
+    lats = [t["lat"] for t in tanks]
+    lons = [t["lon"] for t in tanks]
+    dlat = buffer_m / 111320
+    dlon = buffer_m / (111320 * np.cos(np.deg2rad(min(lats))))
+    return BBox([min(lons)-dlon, min(lats)-dlat, max(lons)+dlon, max(lats)+dlat], crs=CRS.WGS84)
+
+def _load_terminal_dates(tid):
+    rows = []; offset = 0
+    while True:
+        batch = (sb.table("terminal_observations").select("date")
+                   .eq("terminal_id", tid).range(offset, offset+999).execute().data)
+        rows.extend(batch)
+        if len(batch) < 1000: break
+        offset += 1000
+    return {pd.to_datetime(r["date"]).normalize() for r in rows}
+
+def _upsert_terminal_obs(records, tid):
+    if not records: return
+    sb.table("terminal_observations").upsert(records, on_conflict="terminal_id,date,tank_id").execute()
+    print(f"  Supabase terminal_observations: {len(records)} rows ({tid})")
+
+def _upsert_terminal_vol(daily_df, tid):
+    if daily_df.empty: return
+    rows = [{"terminal_id": tid, "date": r["day"].strftime("%Y-%m-%d"),
+             "vol_mn_bbl": round(float(r["vol_mn_bbl"]), 3),
+             "aggregation": "daily", "smoothed": False}
+            for _, r in daily_df.iterrows()]
+    sb.table("terminal_volume_timeseries").upsert(
+        rows, on_conflict="terminal_id,date,aggregation,smoothed").execute()
+    print(f"  Supabase terminal_volume_timeseries: {len(rows)} rows ({tid})")
+
+def _write_terminal_json(daily_df, tid, name):
+    payload = {
+        "terminal": tid, "name": name,
+        "max_capacity_mb": TERMINAL_MAX_CAP.get(tid),
+        "dates":  daily_df["day"].dt.strftime("%Y-%m-%d").tolist(),
+        "values": daily_df["vol_mn_bbl"].round(3).tolist(),
+    }
+    path = os.path.join(TERMINALS_DIR, f"{tid}_daily.json")
+    with open(path, "w") as f:
+        json.dump(payload, f, separators=(",", ":"))
+    print(f"  Wrote {path} ({len(payload['dates'])} rows)")
+    return payload
+
+iran_series = {}  # tid → daily_df (for iran_total)
+
+for terminal in TERMINALS:
+    tid = terminal["id"]
+    if tid not in IRAN_TERMINAL_IDS:
+        continue
+
+    tanks = terminal["tanks"]
+    print(f"\n{'='*50}\nTerminal: {terminal['name']} ({tid}) — {len(tanks)} tanks")
+
+    bbox = _terminal_bbox(tanks)
+    lat0 = min(t["lat"] for t in tanks)
+    img_w = int((bbox.max_x - bbox.min_x) * 111320 * np.cos(np.deg2rad(lat0)) / RESOLUTION)
+    img_h = int((bbox.max_y - bbox.min_y) * 111320 / RESOLUTION)
+
+    try:
+        from sar_fetch import get_all_scene_dates as _get_dates
+        all_t_dates = _get_dates(bbox)
+    except Exception as e:
+        print(f"  [!] Catalog query failed: {e}"); continue
+
+    existing = _load_terminal_dates(tid)
+    new_t_dates = [d for d in all_t_dates if d not in existing]
+    print(f"  Sentinel Hub: {len(all_t_dates)} total | New: {len(new_t_dates)}")
+
+    new_records = []
+    if new_t_dates:
+        try:
+            t_data = build_crescent_masks(tanks, bbox, img_w, img_h)
+            raw = fetch_new_records(new_t_dates, t_data, bbox, img_w, img_h)
+            for r in raw:
+                r["terminal_id"] = tid
+            new_records = raw
+            print(f"  Extracted: {len(new_records)} records")
+            _upsert_terminal_obs(new_records, tid)
+        except Exception as e:
+            print(f"  [!] Fetch failed: {e}")
+
+    # Load full history from Supabase for volume computation
+    try:
+        all_obs = []; offset = 0
+        while True:
+            batch = (sb.table("terminal_observations")
+                       .select("date,tank_id,db_mean,radius_m,h_max")
+                       .eq("terminal_id", tid).range(offset, offset+999).execute().data)
+            all_obs.extend(batch)
+            if len(batch) < 1000: break
+            offset += 1000
+        if not all_obs:
+            # Fall back to just-fetched records if Supabase is empty
+            all_obs = [{"date": r["date"], "tank_id": r["tank_id"],
+                        "db_mean": r["db_mean"],
+                        "radius_m": r.get("radius_m", next((t["radius"] for t in tanks if t["id"]==r["tank_id"]), 40)),
+                        "h_max": r.get("h_max", next((t["h_max"] for t in tanks if t["id"]==r["tank_id"]), 14))}
+                       for r in new_records]
+        df_t = pd.DataFrame(all_obs)
+        df_t["date"] = pd.to_datetime(df_t["date"])
+        # Rename radius_m → radius for compute_volumes compatibility
+        if "radius_m" in df_t.columns and "radius" not in df_t.columns:
+            df_t = df_t.rename(columns={"radius_m": "radius"})
+        df_t, _, _ = compute_volumes(df_t)
+        daily_t = aggregate_daily(df_t)
+        _upsert_terminal_vol(daily_t, tid)
+        payload = _write_terminal_json(daily_t, tid, terminal["name"])
+        iran_series[tid] = daily_t
+    except Exception as e:
+        print(f"  [!] Volume computation failed: {e}")
+
+# ── Iran Total aggregate ───────────────────────────────────────────────────────
+if iran_series:
+    print("\nBuilding iran_total…")
+    # Also include Kharg
+    kharg_df = daily_total[["day", "vol_mn_bbl"]].rename(columns={"vol_mn_bbl": "kharg"})
+    merged = kharg_df.copy()
+    for tid, df_t in iran_series.items():
+        tmp = df_t[["day", "vol_mn_bbl"]].rename(columns={"vol_mn_bbl": tid})
+        merged = merged.merge(tmp, on="day", how="outer")
+    merged = merged.sort_values("day")
+    vol_cols = [c for c in merged.columns if c != "day"]
+    merged["vol_total"] = merged[vol_cols].sum(axis=1, min_count=1)
+    merged = merged.dropna(subset=["vol_total"])
+    total_max = 33.2 + sum(TERMINAL_MAX_CAP.get(t, 0) for t in iran_series)
+    iran_total_payload = {
+        "terminal": "iran_total", "name": "Iran Total",
+        "max_capacity_mb": round(total_max, 1),
+        "dates":  merged["day"].dt.strftime("%Y-%m-%d").tolist(),
+        "values": merged["vol_total"].round(3).tolist(),
+    }
+    path = os.path.join(TERMINALS_DIR, "iran_total_daily.json")
+    with open(path, "w") as f:
+        json.dump(iran_total_payload, f, separators=(",", ":"))
+    print(f"  Wrote {path} ({len(iran_total_payload['dates'])} rows)")
 
 # ── 9. SAR alert emails ───────────────────────────────────────────────────────
 send_sar_alert(daily_total, new_dates)
