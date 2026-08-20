@@ -1129,14 +1129,18 @@ let currentGran = 'daily';
 let charts = {};
 
 async function loadData() {
+    destroyCharts();
     const url = TERMINAL_DATA_URL[currentTerminal] || TERMINAL_DATA_URL.kharg;
     const daily = await fetch(`${url}?v=${Date.now()}`).then(r => r.json());
-    allDates = daily.dates;
-    allValues = daily.values;
+    allDates = daily.dates || [];
+    allValues = daily.values || [];
     MAX_CAP = TERMINAL_MAX_CAP[currentTerminal] || daily.max_capacity_mb || 33.2;
-    // Update capacity subtitle in card
     const capSub = document.querySelector('#cVol .card-sub');
     if (capSub) capSub.textContent = `of ${MAX_CAP.toFixed(2)} Mb capacity`;
+    if (!allDates.length) {
+        document.getElementById('sig1').textContent = 'No data yet for this terminal — pipeline has not run.';
+        return;
+    }
     render();
     if (currentTerminal === 'kharg') {
         loadStagingSignal().then(s => { window._stagingData = s; render(); });
