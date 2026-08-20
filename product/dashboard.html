@@ -536,16 +536,6 @@
     <div class="section active" id="sec-overview">
         <div class="ctrl-row">
             <div class="ctrl-group">
-                <span class="ctrl-label">Terminal</span>
-                <select id="terminalSelect" onchange="setTerminal(this.value)" style="background:var(--surface);color:var(--text);border:1px solid var(--border);border-radius:6px;padding:0.3rem 0.55rem;font-size:0.75rem;font-family:'Inter',sans-serif;cursor:pointer;outline:none;">
-                    <option value="kharg">Kharg Island</option>
-                    <option value="lavan">Lavan Island</option>
-                    <option value="siri">Siri Island</option>
-                    <option value="jask">Jask</option>
-                    <option value="iran_total">Iran Total</option>
-                </select>
-            </div>
-            <div class="ctrl-group">
                 <span class="ctrl-label">Period</span>
                 <div class="btn-group">
                     <button class="tbtn" data-range="30" onclick="setRange(30)">1M</button>
@@ -1096,31 +1086,6 @@ const PULSE_THRESHOLD = 2.0;
 const PULSE_WIN_MIN = 6;
 const PULSE_WIN_MAX = 12;
 
-const TERMINAL_DATA_URL = {
-    kharg:      '/data/data_daily.json',
-    lavan:      '/data/terminals/lavan_daily.json',
-    siri:       '/data/terminals/siri_daily.json',
-    jask:       '/data/terminals/jask_daily.json',
-    iran_total: '/data/terminals/iran_total_daily.json',
-};
-
-const TERMINAL_MAX_CAP = {
-    kharg:      33.2,
-    lavan:      7.5,
-    siri:       3.2,
-    jask:       9.8,
-    iran_total: 53.7,
-};
-
-const TERMINAL_MAP_VIEW = {
-    kharg:      { lat: 29.23, lon: 50.32, zoom: 12 },
-    lavan:      { lat: 26.80, lon: 53.37, zoom: 12 },
-    siri:       { lat: 25.90, lon: 54.54, zoom: 13 },
-    jask:       { lat: 25.64, lon: 57.77, zoom: 12 },
-    iran_total: { lat: 27.50, lon: 52.50, zoom: 7  },
-};
-
-let currentTerminal = 'kharg';
 let MAX_CAP = 33.2;
 
 let allDates = [], allValues = [];
@@ -1130,62 +1095,14 @@ let charts = {};
 
 async function loadData() {
     destroyCharts();
-    const url = TERMINAL_DATA_URL[currentTerminal] || TERMINAL_DATA_URL.kharg;
-    let daily;
-    try {
-        const resp = await fetch(`${url}?v=${Date.now()}`);
-        if (!resp.ok) throw new Error(`HTTP ${resp.status} fetching ${url}`);
-        daily = await resp.json();
-    } catch (err) {
-        console.error('loadData fetch error:', err);
-        const sig = document.getElementById('sig1');
-        if (sig) sig.textContent = `Error loading data: ${err.message}`;
-        return;
-    }
+    const resp = await fetch(`/data/data_daily.json?v=${Date.now()}`);
+    const daily = await resp.json();
     allDates = daily.dates || [];
     allValues = daily.values || [];
-    MAX_CAP = TERMINAL_MAX_CAP[currentTerminal] || daily.max_capacity_mb || 33.2;
-    const capSub = document.querySelector('#cVol .card-sub');
-    if (capSub) capSub.textContent = `of ${MAX_CAP.toFixed(2)} Mb capacity`;
-    if (!allDates.length) {
-        document.getElementById('sig1').textContent = 'No data yet — pipeline has not run for this terminal.';
-        document.getElementById('mVol').innerHTML  = '--<span class="cu"> Mb</span>';
-        document.getElementById('mUtil').innerHTML = '--<span class="cu">%</span>';
-        document.getElementById('mUtilBadge').textContent = '';
-        document.getElementById('mRate').innerHTML = '--<span class="cu"> Mb</span>';
-        document.getElementById('mRateSub').textContent   = '';
-        document.getElementById('mDays').innerHTML = '--<span class="cu"> d</span>';
-        document.getElementById('mDaysSub').textContent   = '';
-        document.getElementById('mDaysLabel').textContent = 'Days to Capacity';
-        return;
-    }
-    try {
-        render();
-    } catch (err) {
-        console.error('render error:', err);
-        const sig = document.getElementById('sig1');
-        if (sig) sig.textContent = `Render error: ${err.message}`;
-    }
-    if (currentTerminal === 'kharg') {
-        loadStagingSignal().then(s => { window._stagingData = s; render(); });
-    }
+    render();
+    loadStagingSignal().then(s => { window._stagingData = s; render(); });
 }
 
-const TERMINAL_NAMES = {
-    kharg: 'Kharg Island', lavan: 'Lavan Island', siri: 'Siri Island',
-    jask: 'Jask', iran_total: 'Iran Total',
-};
-
-async function setTerminal(tid) {
-    currentTerminal = tid;
-    const view = TERMINAL_MAP_VIEW[tid];
-    if (view && window._map) {
-        window._map.setView([view.lat, view.lon], view.zoom);
-    }
-    const title = document.getElementById('overviewTitle');
-    if (title) title.textContent = `${TERMINAL_NAMES[tid] || tid} — Inventory Level & Velocity`;
-    await loadData();
-}
 
 // ── Aggregation ────────────────────────────────────────────────────────────
 function aggregateWeekly(dates, values) {
@@ -1324,8 +1241,8 @@ function render() {
     if (!n) return;
 
     const latest = values[n - 1];
-    const util = Math.min(100, (latest / MAX_CAP) * 100);
-    const spiSeries = values.map(v => Math.min(100, (v / MAX_CAP) * 100));
+    const util = (latest / MAX_CAP) * 100;
+    const spiSeries = values.map(v => (v / MAX_CAP) * 100);
     // Use raw daily data for pulse detection
     const pulses = detectPulses(rawSlice.dates, rawSlice.values);
     const streak = computeStreak(rawSlice.dates, rawSlice.values);
