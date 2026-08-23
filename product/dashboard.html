@@ -654,41 +654,24 @@
 
         <!-- ── Revenue card ── -->
         <div class="chart-card" style="margin-bottom:1.25rem">
-            <div class="chart-head" style="flex-wrap:wrap;gap:0.5rem">
+            <div style="display:flex;align-items:baseline;gap:1rem;flex-wrap:wrap;justify-content:space-between">
                 <div>
-                    <div class="chart-ttl">Est. Export Revenue</div>
-                    <div class="chart-meta" id="fRevSub">Gross Out × (Dubai − discount) · est. only</div>
+                    <div class="chart-ttl" style="margin-bottom:0.25rem">Est. Revenue — Last SAR Pass</div>
+                    <div class="card-val" id="fRevLast" style="font-size:2rem;color:#34d399;line-height:1">--</div>
+                    <div class="chart-meta" id="fRevLastSub" style="margin-top:0.35rem">loading...</div>
                 </div>
-                <div style="display:flex;align-items:center;gap:0.75rem;margin-left:auto;flex-wrap:wrap">
-                    <label style="font-size:0.72rem;color:var(--muted)">Dubai price <span id="dubaiPriceLabel" style="color:var(--text)">$--</span></label>
-                    <label style="font-size:0.72rem;color:var(--muted)">Iran discount
+                <div style="display:flex;flex-direction:column;gap:0.3rem;align-items:flex-end">
+                    <label style="font-size:0.72rem;color:var(--muted)">Dubai <span id="dubaiPriceLabel" style="color:var(--text)">$--</span></label>
+                    <label style="font-size:0.72rem;color:var(--muted);display:flex;align-items:center;gap:0.4rem">discount
                         <input type="range" id="discountSlider" min="3" max="15" value="9" step="1"
-                            style="width:80px;vertical-align:middle;accent-color:#60a5fa"
+                            style="width:72px;vertical-align:middle;accent-color:#60a5fa"
                             oninput="document.getElementById('discountLabel').textContent='-$'+this.value+'/bbl';renderRevenue()">
-                        <span id="discountLabel" style="color:#60a5fa;font-size:0.72rem">-$9/bbl</span>
+                        <span id="discountLabel" style="color:#60a5fa">-$9/bbl</span>
                     </label>
                 </div>
             </div>
-            <div class="cards c3" style="margin:0.75rem 0 0.25rem">
-                <div class="card green">
-                    <div class="card-label">Last Pass Est. Revenue</div>
-                    <div class="card-val" id="fRevLast" style="color:#34d399">--</div>
-                    <div class="card-sub" id="fRevLastSub">gross_out × net_price</div>
-                </div>
-                <div class="card">
-                    <div class="card-label">Period Total Est. Revenue</div>
-                    <div class="card-val" id="fRevTotal">--</div>
-                    <div class="card-sub" id="fRevTotalSub">Σ all passes in view</div>
-                </div>
-                <div class="card">
-                    <div class="card-label">Avg per Pass</div>
-                    <div class="card-val" id="fRevAvg">--</div>
-                    <div class="card-sub">est. at selected discount</div>
-                </div>
-            </div>
-            <div class="ch ch-280" style="margin-top:0.75rem"><canvas id="revenueChart"></canvas></div>
-            <div style="font-size:0.68rem;color:var(--muted);padding:0.6rem 0 0;line-height:1.6">
-                ⚠ Estimate only. Dubai price from Brent futures (×0.975). Iranian discount vs Dubai set manually — actual discount varies ($3–$15/bbl under sanctions). Not financial advice.
+            <div style="font-size:0.67rem;color:var(--muted);padding:0.75rem 0 0;line-height:1.6">
+                ⚠ Estimate only. Based on gross outflow × (Dubai spot − assumed discount). Dubai from Brent futures ×0.975. Actual Iranian discount varies under sanctions. Not financial advice.
             </div>
         </div>
 
@@ -1855,58 +1838,13 @@ function renderRevenue() {
     if (!_flowsBuckets.length) return;
     const discount = parseFloat(document.getElementById('discountSlider').value) || 9;
     const netPrice = _dubaiPrice - discount;
-    const revData = _flowsBuckets.map(p => +(p.grossOut * 1e6 * netPrice / 1e9).toFixed(3));
-
-    const lastRev = revData[revData.length - 1];
-    const totalRev = revData.reduce((s, v) => s + v, 0);
-    const avgRev = revData.length ? totalRev / revData.length : 0;
-
-    const fmt = v => v >= 1 ? '$' + v.toFixed(2) + 'B' : '$' + (v * 1000).toFixed(0) + 'M';
     const lastP = _flowsBuckets[_flowsBuckets.length - 1];
-    document.getElementById('fRevLast').textContent = fmt(lastRev);
-    document.getElementById('fRevLastSub').textContent = lastP ? `${lastP.d0} → ${lastP.d1} · ${lastP.grossOut.toFixed(2)} Mb` : '';
-    document.getElementById('fRevTotal').textContent = fmt(totalRev);
-    document.getElementById('fRevTotalSub').textContent = `${_flowsBuckets.length} passes · Dubai $${_dubaiPrice.toFixed(1)} −$${discount}/bbl`;
-    document.getElementById('fRevAvg').textContent = fmt(avgRev);
-
-    charts.revenue && charts.revenue.destroy();
-    charts.revenue = new Chart(document.getElementById('revenueChart').getContext('2d'), {
-        type: 'bar',
-        data: {
-            labels: _flowsBuckets.map(p => p.d1),
-            datasets: [{
-                label: 'Est. Revenue ($B)',
-                data: revData,
-                backgroundColor: 'rgba(96,165,250,0.7)',
-                borderWidth: 0, borderRadius: 2
-            }]
-        },
-        options: {
-            responsive: true, maintainAspectRatio: false,
-            plugins: {
-                legend: { display: false },
-                tooltip: {
-                    backgroundColor: '#111827', borderColor: 'rgba(255,255,255,0.1)', borderWidth: 1,
-                    titleColor: '#e2e8f0', bodyColor: '#94a3b8',
-                    callbacks: {
-                        title: ctx => { const p = _flowsBuckets[ctx[0].dataIndex]; return p.d0 + ' → ' + p.d1; },
-                        label: ctx => {
-                            const p = _flowsBuckets[ctx.dataIndex];
-                            return [
-                                ` Est. revenue: ${fmt(ctx.parsed.y)}`,
-                                ` Gross out: ${p.grossOut.toFixed(2)} Mb`,
-                                ` Net price: $${netPrice.toFixed(1)}/bbl (Dubai $${_dubaiPrice.toFixed(1)} −$${discount})`
-                            ];
-                        }
-                    }
-                }
-            },
-            scales: {
-                x: gX,
-                y: { ...gY, ticks: { ...gY.ticks, callback: v => v >= 1 ? '$' + v.toFixed(1) + 'B' : '$' + (v*1000).toFixed(0) + 'M' } }
-            }
-        }
-    });
+    const lastRev = lastP ? +(lastP.grossOut * 1e6 * netPrice / 1e9).toFixed(3) : 0;
+    const fmt = v => v >= 1 ? '$' + v.toFixed(2) + 'B' : '$' + (v * 1000).toFixed(0) + 'M';
+    document.getElementById('fRevLast').textContent = lastP ? fmt(lastRev) : '--';
+    document.getElementById('fRevLastSub').textContent = lastP
+        ? `${lastP.d0} → ${lastP.d1} · ${lastP.grossOut.toFixed(2)} Mb out · est. at Dubai $${_dubaiPrice.toFixed(1)} −$${discount}/bbl`
+        : '';
 }
 
 checkAuth();
