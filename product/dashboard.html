@@ -652,29 +652,6 @@
             </div>
         </div>
 
-        <!-- ── Revenue card ── -->
-        <div class="chart-card" style="margin-bottom:1.25rem">
-            <div style="display:flex;align-items:baseline;gap:1rem;flex-wrap:wrap;justify-content:space-between">
-                <div>
-                    <div class="chart-ttl" style="margin-bottom:0.25rem">Est. Revenue — Last SAR Pass</div>
-                    <div class="card-val" id="fRevLast" style="font-size:2rem;color:#34d399;line-height:1">--</div>
-                    <div class="chart-meta" id="fRevLastSub" style="margin-top:0.35rem">loading...</div>
-                </div>
-                <div style="display:flex;flex-direction:column;gap:0.3rem;align-items:flex-end">
-                    <label style="font-size:0.72rem;color:var(--muted)">Dubai <span id="dubaiPriceLabel" style="color:var(--text)">$--</span></label>
-                    <label style="font-size:0.72rem;color:var(--muted);display:flex;align-items:center;gap:0.4rem">discount
-                        <input type="range" id="discountSlider" min="3" max="15" value="9" step="1"
-                            style="width:72px;vertical-align:middle;accent-color:#60a5fa"
-                            oninput="document.getElementById('discountLabel').textContent='-$'+this.value+'/bbl';renderRevenue()">
-                        <span id="discountLabel" style="color:#60a5fa">-$9/bbl</span>
-                    </label>
-                </div>
-            </div>
-            <div style="font-size:0.67rem;color:var(--muted);padding:0.75rem 0 0;line-height:1.6">
-                ⚠ Estimate only. Based on gross outflow × (Dubai spot − assumed discount). Dubai from Brent futures ×0.975. Actual Iranian discount varies under sanctions. Not financial advice.
-            </div>
-        </div>
-
         <div class="chart-card">
             <div class="chart-head">
                 <div class="chart-ttl">Export Coverage Ratio <span id="fECR" style="font-size:0.85rem;font-weight:400;margin-left:0.5rem">--</span></div>
@@ -712,6 +689,29 @@
                 <b style="color:#34d399">Export Velocity (green)</b> — how fast oil is leaving the terminal into tankers, Mb/d.<br><br>
                 <b style="color:#f87171">Production Inflow (red)</b> — how fast oil is arriving from upstream fields into storage, Mb/d.<br><br>
                 <b style="color:var(--dim)">Note:</b> SAR measures tank levels, not flow directly. Moves under 1.5 Mb per pass may be operational noise rather than real export or production events.
+            </div>
+        </div>
+
+        <!-- ── Revenue card ── -->
+        <div class="chart-card" style="margin-bottom:1.25rem">
+            <div style="display:flex;align-items:baseline;gap:1rem;flex-wrap:wrap;justify-content:space-between">
+                <div>
+                    <div class="chart-ttl" style="margin-bottom:0.25rem">Est. Revenue — Last SAR Pass</div>
+                    <div class="card-val" id="fRevLast" style="font-size:2rem;color:#34d399;line-height:1">--</div>
+                    <div class="chart-meta" id="fRevLastSub" style="margin-top:0.35rem">loading...</div>
+                </div>
+                <div style="display:flex;flex-direction:column;gap:0.3rem;align-items:flex-end">
+                    <label style="font-size:0.72rem;color:var(--muted)">Dubai <span id="dubaiPriceLabel" style="color:var(--text)">$--</span></label>
+                    <label style="font-size:0.72rem;color:var(--muted);display:flex;align-items:center;gap:0.4rem">vs Dubai
+                        <input type="range" id="discountSlider" min="-15" max="15" value="-5" step="1"
+                            style="width:80px;vertical-align:middle;accent-color:#60a5fa"
+                            oninput="const v=+this.value;document.getElementById('discountLabel').textContent=(v>=0?'+$'+v:'-$'+Math.abs(v))+'/bbl';renderRevenue()">
+                        <span id="discountLabel" style="color:#60a5fa">-$5/bbl</span>
+                    </label>
+                </div>
+            </div>
+            <div style="font-size:0.67rem;color:var(--muted);padding:0.75rem 0 0;line-height:1.6">
+                ⚠ Estimate only. Gross outflow × (Dubai spot ± assumed spread). Dubai from Brent futures ×0.975. Actual Iranian spread vs Dubai varies under sanctions. Not financial advice.
             </div>
         </div>
 
@@ -1836,14 +1836,15 @@ fetch('/data/prices.json?v=' + Date.now())
 
 function renderRevenue() {
     if (!_flowsBuckets.length) return;
-    const discount = parseFloat(document.getElementById('discountSlider').value) || 9;
-    const netPrice = _dubaiPrice - discount;
+    const spread = parseFloat(document.getElementById('discountSlider').value) || -5;
+    const netPrice = _dubaiPrice + spread;  // spread is negative for discount, positive for premium
     const lastP = _flowsBuckets[_flowsBuckets.length - 1];
     const lastRev = lastP ? +(lastP.grossOut * 1e6 * netPrice / 1e9).toFixed(3) : 0;
     const fmt = v => v >= 1 ? '$' + v.toFixed(2) + 'B' : '$' + (v * 1000).toFixed(0) + 'M';
+    const spreadLabel = spread >= 0 ? `+$${spread}/bbl` : `-$${Math.abs(spread)}/bbl`;
     document.getElementById('fRevLast').textContent = lastP ? fmt(lastRev) : '--';
     document.getElementById('fRevLastSub').textContent = lastP
-        ? `${lastP.d0} → ${lastP.d1} · ${lastP.grossOut.toFixed(2)} Mb out · est. at Dubai $${_dubaiPrice.toFixed(1)} −$${discount}/bbl`
+        ? `${lastP.d0} → ${lastP.d1} · ${lastP.grossOut.toFixed(2)} Mb out · est. at Dubai $${_dubaiPrice.toFixed(1)} ${spreadLabel}`
         : '';
 }
 
