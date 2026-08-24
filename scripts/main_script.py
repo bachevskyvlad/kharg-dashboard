@@ -96,9 +96,19 @@ refresh_gross_flows(sb)
 
 print("\nKharg pipeline complete!")
 
-# ── Iranian terminals (Lavan, Siri, Jask) ────────────────────────────────────
-IRAN_TERMINAL_IDS = {"lavan", "siri", "jask"}
-TERMINAL_MAX_CAP = {"lavan": 7.5, "siri": 3.2, "jask": 9.8}
+# ── All non-Kharg terminals ───────────────────────────────────────────────────
+TERMINAL_MAX_CAP = {
+    "lavan":         7.5,
+    "siri":          3.2,
+    "jask":          9.8,
+    "al_flaw":      13.5,
+    "halul":         3.5,
+    "sitra":         3.7,
+    "kozmino":       1.8,
+    "de_kastri":     1.2,
+    "primorsk":      3.8,
+    "novorossiysk":  3.2,
+}
 TERMINALS_DIR = os.path.join(os.path.dirname(DAILY_PATH), "terminals")
 os.makedirs(TERMINALS_DIR, exist_ok=True)
 
@@ -152,8 +162,6 @@ iran_series = {}  # tid → daily_df (for iran_total)
 
 for terminal in TERMINALS:
     tid = terminal["id"]
-    if tid not in IRAN_TERMINAL_IDS:
-        continue
 
     tanks = terminal["tanks"]
     print(f"\n{'='*50}\nTerminal: {terminal['name']} ({tid}) — {len(tanks)} tanks")
@@ -216,20 +224,21 @@ for terminal in TERMINALS:
     except Exception as e:
         print(f"  [!] Volume computation failed: {e}")
 
-# ── Iran Total aggregate ───────────────────────────────────────────────────────
-if iran_series:
+# ── Iran Total aggregate (Kharg + Jask + Lavan + Siri) ────────────────────────
+IRAN_TERMINAL_IDS = {"lavan", "siri", "jask"}
+iran_series_filtered = {tid: df for tid, df in iran_series.items() if tid in IRAN_TERMINAL_IDS}
+if iran_series_filtered:
     print("\nBuilding iran_total…")
-    # Also include Kharg
     kharg_df = daily_total[["day", "vol_mn_bbl"]].rename(columns={"vol_mn_bbl": "kharg"})
     merged = kharg_df.copy()
-    for tid, df_t in iran_series.items():
+    for tid, df_t in iran_series_filtered.items():
         tmp = df_t[["day", "vol_mn_bbl"]].rename(columns={"vol_mn_bbl": tid})
         merged = merged.merge(tmp, on="day", how="outer")
     merged = merged.sort_values("day")
     vol_cols = [c for c in merged.columns if c != "day"]
     merged["vol_total"] = merged[vol_cols].sum(axis=1, min_count=1)
     merged = merged.dropna(subset=["vol_total"])
-    total_max = 33.2 + sum(TERMINAL_MAX_CAP.get(t, 0) for t in iran_series)
+    total_max = 33.2 + sum(TERMINAL_MAX_CAP.get(t, 0) for t in iran_series_filtered)
     iran_total_payload = {
         "terminal": "iran_total", "name": "Iran Total",
         "max_capacity_mb": round(total_max, 1),
