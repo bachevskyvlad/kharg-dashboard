@@ -16,10 +16,13 @@ Run once manually after deploying the orbit-based dedup fix in sar_fetch.py.
 
 import sys
 import os
-sys.path.insert(0, os.path.dirname(__file__))
-
-from config import sb
+from supabase import create_client
 import pandas as pd
+
+sb = create_client(
+    "https://yoekhkczwdeyauwarsyy.supabase.co",
+    "sb_publishable_7j07_zzdqTGM1LXf7-o9Tg_JJRbJQSM"
+)
 
 TERMINALS = ["lavan", "siri", "jask", "al_flaw",
              "halul", "sitra", "kozmino", "de_kastri", "primorsk", "novorossiysk"]
