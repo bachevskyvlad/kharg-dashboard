@@ -30,7 +30,7 @@ from datetime import timedelta
 from sentinelhub import SentinelHubRequest, SentinelHubCatalog, MimeType
 
 from config import config, S1_CDSE, START_DATE, RESOLUTION, LOS_AZIMUTH, WIDTH_WIDE
-from tanks import get_super_bbox
+from locations import get_super_bbox
 
 
 def load_cache(raw_cache_path, sb):

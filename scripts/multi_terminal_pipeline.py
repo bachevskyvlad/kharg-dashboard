@@ -35,7 +35,7 @@ warnings.filterwarnings("ignore")
 
 from sentinelhub import BBox, CRS, SentinelHubCatalog, SentinelHubRequest, MimeType
 from config import config, S1_CDSE, sb, START_DATE, RESOLUTION, BARREL_PER_M3, TANK_HEIGHT_MIN
-from terminals import TERMINALS
+from locations import TERMINALS
 from volume import compute_volumes, aggregate_daily
 
 

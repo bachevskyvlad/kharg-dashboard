@@ -38,7 +38,7 @@ from config import (
     sb, RAW_CACHE_PATH, DAILY_PATH, WEEKLY_PATH, PLOT_PATH,
     RESOLUTION, BUFFER_METERS, EWMA_ALPHA,
 )
-from tanks import raw_tanks, get_super_bbox
+from locations import raw_tanks, get_super_bbox
 from sar_fetch import load_cache, get_all_scene_dates, build_crescent_masks, fetch_new_records
 from volume import compute_volumes, aggregate_daily, aggregate_weekly
 from export_data import (
@@ -46,7 +46,7 @@ from export_data import (
     save_daily_json, save_weekly_json, refresh_gross_flows,
 )
 from notify import send_sar_alert
-from terminals import TERMINALS
+from locations import TERMINALS
 
 os.makedirs("public", exist_ok=True)
 
