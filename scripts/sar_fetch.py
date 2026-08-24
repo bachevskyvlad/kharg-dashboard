@@ -99,13 +99,21 @@ def get_all_scene_dates(super_bbox):
             bbox=super_bbox,
             time=(START_DATE.strftime("%Y-%m-%d"), end_date.strftime("%Y-%m-%d")),
             filter="sat:orbit_state = 'descending'",
-            fields={"include": ["properties.datetime"]}
+            fields={"include": ["properties.datetime", "properties.sat:relative_orbit"]}
         ))
-        raw_dates = sorted(pd.to_datetime(s["properties"]["datetime"]) for s in scenes)
+        # Deduplicate by relative orbit number: one physical pass = one orbit number per day.
+        # This handles both the UTC-midnight straddle and multi-satellite overlap (S1A/C)
+        # where two scenes from different swaths of the same orbit reach the bbox hours apart.
+        seen_orbits = set()
         deduped = []
-        for d in raw_dates:
-            if not deduped or (d - deduped[-1]).total_seconds() > 43200:
-                deduped.append(d)
+        for s in sorted(scenes, key=lambda x: x["properties"]["datetime"]):
+            orbit = s["properties"].get("sat:relative_orbit")
+            dt = pd.to_datetime(s["properties"]["datetime"])
+            # Key = (orbit_number, calendar_date) — unique physical pass
+            key = (orbit, dt.normalize().date())
+            if key not in seen_orbits:
+                seen_orbits.add(key)
+                deduped.append(dt)
         all_dates = sorted({d.normalize().tz_localize(None) for d in deduped})
         return all_dates
     except Exception as e:
