@@ -1,0 +1,236 @@
+"""
+tank_registry.py — Source of truth for all terminal locations and tank geometry.
+
+Structure: LOCATIONS list → each entry is one terminal with its tanks.
+
+Per terminal:
+  id          — machine identifier (used in Supabase as terminal_id)
+  name        — human name
+  country     — ISO 3166-1 alpha-2
+  los_azimuth — Sentinel-1 line-of-sight azimuth for crescent mask direction (degrees)
+  status      — "active" | "legacy"
+
+Per tank:
+  id          — unique across all terminals (prefix_index, e.g. t60_0, jk_3)
+  lat / lon   — WGS84 centre of the tank roof
+  radius_m    — RADIUS from tank centre to the inner wall edge, in metres
+                  (diameter = 2 × radius_m; the SAR crescent sits at the far wall)
+  h_max_m     — maximum fill height in metres (from API 650 floating-roof aspect ratios)
+  uncertain   — True if tank existence/operability not confirmed (optional field)
+  notes       — free-text anomaly note (optional field)
+
+Radius groups and corresponding h_max (API 650 standard):
+  r=60m → h_max=18m   (t60 class, largest)
+  r=55m → h_max=17m   (t55 class, main cluster)
+  r=40m → h_max=14m   (t40 class, mid-size)
+  r=35m → h_max=13m   (jk/lv/af mid)
+  r=25m → h_max=12m   (t25 class, smallest at Kharg)
+  r=20m → h_max=9m    (lv small)
+  r=15m → h_max=7m    (lv smallest)
+
+To add a tank: append to the relevant terminal's "tanks" list with correct
+id prefix and satellite-measured lat/lon/radius. Then re-run the full SAR
+pipeline with force_reset=true to recalculate global percentiles.
+
+To add a terminal: append a new dict to LOCATIONS, then wire it into
+multi_terminal_pipeline.py and export_terminal_json.py.
+"""
+
+LOCATIONS = [
+
+    # ── Kharg Island ─────────────────────────────────────────────────────────
+    # Primary Iranian crude export terminal (~90% of Iranian exports).
+    # 47 tanks. Max theoretical capacity ≈ 33.2 Mn bbl.
+    # Known outliers:
+    #   t55_5, t55_10  → mean dB >14 over 18 months → likely idle/offline
+    #   t55_31, t60_1  → mean dB <1 chronically → probable strategic reserve
+    #   t60_2, t55_17  → std >6 dB → primary active loading terminals
+    {
+        "id": "kharg",
+        "name": "Kharg Island",
+        "country": "IR",
+        "los_azimuth": 282,
+        "status": "active",
+        "tanks": [
+            # ── t60 cluster (5 tanks, southern shore) ────────────────────────
+            {"id": "t60_0", "lat": 29.22173338156137,  "lon": 50.31654819949878,  "radius_m": 60, "h_max_m": 18},
+            {"id": "t60_1", "lat": 29.221638820210273, "lon": 50.315043243946754, "radius_m": 60, "h_max_m": 18},
+            {"id": "t60_2", "lat": 29.221840470329855, "lon": 50.31352911803618,  "radius_m": 60, "h_max_m": 18},
+            {"id": "t60_3", "lat": 29.223156804822317, "lon": 50.315849029771684, "radius_m": 60, "h_max_m": 18},
+            {"id": "t60_4", "lat": 29.222897954869325, "lon": 50.3144195158663,   "radius_m": 60, "h_max_m": 18},
+            # ── t55 cluster (17 tanks, central-northern) ─────────────────────
+            {"id": "t55_5",  "lat": 29.23596908236423,  "lon": 50.31262041733899,  "radius_m": 55, "h_max_m": 17},
+            {"id": "t55_6",  "lat": 29.236450714039865, "lon": 50.31093940154909,  "radius_m": 55, "h_max_m": 17},
+            {"id": "t55_7",  "lat": 29.237953299445927, "lon": 50.31084946173491,  "radius_m": 55, "h_max_m": 17},
+            {"id": "t55_8",  "lat": 29.239068986858886, "lon": 50.30968216852048,  "radius_m": 55, "h_max_m": 17},
+            {"id": "t55_9",  "lat": 29.238926386438376, "lon": 50.306814019231595, "radius_m": 55, "h_max_m": 17},
+            {"id": "t55_10", "lat": 29.237608159424354, "lon": 50.30726790052075,  "radius_m": 55, "h_max_m": 17},
+            {"id": "t55_11", "lat": 29.236277626607237, "lon": 50.307724616432196, "radius_m": 55, "h_max_m": 17},
+            {"id": "t55_12", "lat": 29.23632825886285,  "lon": 50.30930379724654,  "radius_m": 55, "h_max_m": 17},
+            {"id": "t55_13", "lat": 29.234972729277782, "lon": 50.3081865326845,   "radius_m": 55, "h_max_m": 17},
+            {"id": "t55_14", "lat": 29.23511372342508,  "lon": 50.30981988700097,  "radius_m": 55, "h_max_m": 17},
+            {"id": "t55_15", "lat": 29.233643820114974, "lon": 50.30863801777735,  "radius_m": 55, "h_max_m": 17},
+            {"id": "t55_16", "lat": 29.233830846966335, "lon": 50.31028094525233,  "radius_m": 55, "h_max_m": 17},
+            {"id": "t55_17", "lat": 29.23144045674206,  "lon": 50.308740382712706, "radius_m": 55, "h_max_m": 17},
+            {"id": "t55_18", "lat": 29.231783644202153, "lon": 50.310385461009616, "radius_m": 55, "h_max_m": 17},
+            {"id": "t55_19", "lat": 29.232076421746672, "lon": 50.312234207587345, "radius_m": 55, "h_max_m": 17},
+            {"id": "t55_20", "lat": 29.23021527314446,  "lon": 50.3101614506557,   "radius_m": 55, "h_max_m": 17},
+            {"id": "t55_21", "lat": 29.228871179764596, "lon": 50.309966015820464, "radius_m": 55, "h_max_m": 17},
+            # ── t40 cluster (9 tanks, central) ───────────────────────────────
+            {"id": "t40_22", "lat": 29.22952889859548,  "lon": 50.312187062458655, "radius_m": 40, "h_max_m": 14},
+            {"id": "t40_23", "lat": 29.22976318244905,  "lon": 50.313501526357314, "radius_m": 40, "h_max_m": 14},
+            {"id": "t40_24", "lat": 29.229963868790236, "lon": 50.31481471193477,  "radius_m": 40, "h_max_m": 14},
+            {"id": "t40_25", "lat": 29.228423649589555, "lon": 50.31244141506387,  "radius_m": 40, "h_max_m": 14},
+            {"id": "t40_26", "lat": 29.228616543309535, "lon": 50.313733669284346, "radius_m": 40, "h_max_m": 14},
+            {"id": "t40_27", "lat": 29.22881135666992,  "lon": 50.31501996070619,  "radius_m": 40, "h_max_m": 14},
+            {"id": "t40_28", "lat": 29.22720915866873,  "lon": 50.312698386632235, "radius_m": 40, "h_max_m": 14},
+            {"id": "t40_29", "lat": 29.227435720069668, "lon": 50.31399368455909,  "radius_m": 40, "h_max_m": 14},
+            {"id": "t40_30", "lat": 29.227640813983122, "lon": 50.31526721678495,  "radius_m": 40, "h_max_m": 14},
+            # ── t55_31 — strategic reserve tank, added after initial mapping ──
+            {"id": "t55_31", "lat": 29.232346117474552, "lon": 50.313766336270064, "radius_m": 55, "h_max_m": 17,
+             "notes": "Chronically full (dB <1). Probable strategic reserve."},
+            # ── t40 additions (3 tanks, western row) ─────────────────────────
+            {"id": "t40_32", "lat": 29.230717804109947, "lon": 50.31192906218232,  "radius_m": 40, "h_max_m": 14},
+            {"id": "t40_33", "lat": 29.230947410364493, "lon": 50.31324186520479,  "radius_m": 40, "h_max_m": 14},
+            {"id": "t40_34", "lat": 29.231135117157258, "lon": 50.31454377331308,  "radius_m": 40, "h_max_m": 14},
+            # ── t25 cluster (12 tanks, eastern rows) ─────────────────────────
+            {"id": "t25_35", "lat": 29.226211162396392, "lon": 50.31288089406942,  "radius_m": 25, "h_max_m": 12},
+            {"id": "t25_36", "lat": 29.226383532289553, "lon": 50.313809940357444, "radius_m": 25, "h_max_m": 12},
+            {"id": "t25_37", "lat": 29.226542892768347, "lon": 50.31474811903658,  "radius_m": 25, "h_max_m": 12},
+            {"id": "t25_38", "lat": 29.226689095834363, "lon": 50.31565041182445,  "radius_m": 25, "h_max_m": 12},
+            {"id": "t25_39", "lat": 29.22515641565613,  "lon": 50.31310639099006,  "radius_m": 25, "h_max_m": 12},
+            {"id": "t25_40", "lat": 29.22532307473051,  "lon": 50.31405678957588,  "radius_m": 25, "h_max_m": 12},
+            {"id": "t25_41", "lat": 29.225474230400657, "lon": 50.31496277701283,  "radius_m": 25, "h_max_m": 12},
+            {"id": "t25_42", "lat": 29.22561536435356,  "lon": 50.315886541434466, "radius_m": 25, "h_max_m": 12},
+            {"id": "t25_43", "lat": 29.22435349448338,  "lon": 50.313281303050275, "radius_m": 25, "h_max_m": 12},
+            {"id": "t25_44", "lat": 29.224512933127766, "lon": 50.31422412891253,  "radius_m": 25, "h_max_m": 12},
+            {"id": "t25_45", "lat": 29.224656215116465, "lon": 50.31513496008376,  "radius_m": 25, "h_max_m": 12},
+            {"id": "t25_46", "lat": 29.22481810164328,  "lon": 50.316063441149545, "radius_m": 25, "h_max_m": 12},
+        ],
+    },
+
+    # ── Jask ─────────────────────────────────────────────────────────────────
+    # Iranian terminal near Strait of Hormuz mouth. Strategic bypass route.
+    # Data available from 2022-01-01 (earlier passes too sparse to calibrate).
+    {
+        "id": "jask",
+        "name": "Jask",
+        "country": "IR",
+        "los_azimuth": 282,
+        "status": "active",
+        "tanks": [
+            # Confirmed operational
+            {"id": "jk_0", "lat": 25.854547959796683, "lon": 57.30425500256653, "radius_m": 35, "h_max_m": 13},
+            {"id": "jk_1", "lat": 25.854285897427793, "lon": 57.30285809909571, "radius_m": 35, "h_max_m": 13},
+            {"id": "jk_2", "lat": 25.853004240288325, "lon": 57.303153860416884,"radius_m": 35, "h_max_m": 13},
+            {"id": "jk_3", "lat": 25.853270400262147, "lon": 57.30455531406189, "radius_m": 35, "h_max_m": 13},
+            {"id": "jk_4", "lat": 25.861242540725943, "lon": 57.30140013397687, "radius_m": 35, "h_max_m": 13},
+            {"id": "jk_5", "lat": 25.859992238216282, "lon": 57.301668785557,   "radius_m": 35, "h_max_m": 13},
+            {"id": "jk_6", "lat": 25.860219021790332, "lon": 57.30306060943653, "radius_m": 35, "h_max_m": 13},
+            {"id": "jk_7", "lat": 25.861503877842335, "lon": 57.30277881775879, "radius_m": 35, "h_max_m": 13},
+            # Uncertain — may not yet be operational
+            {"id": "jk_8",  "lat": 25.853687716748603, "lon": 57.30698588912281, "radius_m": 35, "h_max_m": 13, "uncertain": True},
+            {"id": "jk_9",  "lat": 25.853928243776394, "lon": 57.30841264827629, "radius_m": 35, "h_max_m": 13, "uncertain": True},
+            {"id": "jk_10", "lat": 25.855236751552415, "lon": 57.30810298608718, "radius_m": 35, "h_max_m": 13, "uncertain": True},
+            {"id": "jk_11", "lat": 25.854958644693784, "lon": 57.30673002892039, "radius_m": 35, "h_max_m": 13, "uncertain": True},
+            {"id": "jk_12", "lat": 25.86191666534025,  "lon": 57.305243449053705,"radius_m": 35, "h_max_m": 13, "uncertain": True},
+            {"id": "jk_13", "lat": 25.86220236992449,  "lon": 57.30664059485674, "radius_m": 35, "h_max_m": 13, "uncertain": True},
+            {"id": "jk_14", "lat": 25.860673586711076, "lon": 57.305524427309486,"radius_m": 35, "h_max_m": 13, "uncertain": True},
+            {"id": "jk_15", "lat": 25.860904481636084, "lon": 57.30691674803369, "radius_m": 35, "h_max_m": 13, "uncertain": True},
+            {"id": "jk_16", "lat": 25.858441643613652, "lon": 57.30597802808436, "radius_m": 35, "h_max_m": 13, "uncertain": True},
+            {"id": "jk_17", "lat": 25.85870547057771,  "lon": 57.30737158935134, "radius_m": 35, "h_max_m": 13, "uncertain": True},
+            {"id": "jk_18", "lat": 25.85716642306246,  "lon": 57.306251980766476,"radius_m": 35, "h_max_m": 13, "uncertain": True},
+            {"id": "jk_19", "lat": 25.857398072650852, "lon": 57.30766780088818, "radius_m": 35, "h_max_m": 13, "uncertain": True},
+        ],
+    },
+
+    # ── Lavan Island ─────────────────────────────────────────────────────────
+    # Iranian island terminal, Persian Gulf. Mixed tank sizes.
+    {
+        "id": "lavan",
+        "name": "Lavan Island",
+        "country": "IR",
+        "los_azimuth": 282,
+        "status": "active",
+        "tanks": [
+            {"id": "lv_0",  "lat": 26.79900382074584,  "lon": 53.35353039022181,  "radius_m": 20, "h_max_m": 9},
+            {"id": "lv_1",  "lat": 26.798479852549846, "lon": 53.35358181469451,  "radius_m": 20, "h_max_m": 9},
+            {"id": "lv_2",  "lat": 26.799107534277073, "lon": 53.35465579553378,  "radius_m": 20, "h_max_m": 9},
+            {"id": "lv_3",  "lat": 26.798563876628965, "lon": 53.35471130709531,  "radius_m": 20, "h_max_m": 9},
+            {"id": "lv_4",  "lat": 26.79833375021648,  "lon": 53.35236086038317,  "radius_m": 15, "h_max_m": 7},
+            {"id": "lv_5",  "lat": 26.798934023118402, "lon": 53.35229752236978,  "radius_m": 15, "h_max_m": 7},
+            {"id": "lv_6",  "lat": 26.79827467700471,  "lon": 53.35183098569965,  "radius_m": 15, "h_max_m": 7},
+            {"id": "lv_7",  "lat": 26.798884861477664, "lon": 53.35177266861828,  "radius_m": 15, "h_max_m": 7},
+            {"id": "lv_8",  "lat": 26.799137962674727, "lon": 53.347484855698475, "radius_m": 15, "h_max_m": 7},
+            {"id": "lv_9",  "lat": 26.797287666825397, "lon": 53.353602092280966, "radius_m": 25, "h_max_m": 10},
+            {"id": "lv_10", "lat": 26.797370393243344, "lon": 53.3542855443725,   "radius_m": 25, "h_max_m": 10},
+            {"id": "lv_11", "lat": 26.797431880634935, "lon": 53.35497621233966,  "radius_m": 25, "h_max_m": 10},
+            {"id": "lv_12", "lat": 26.796139645955098, "lon": 53.35364409181301,  "radius_m": 25, "h_max_m": 10},
+            {"id": "lv_13", "lat": 26.796205560719393, "lon": 53.35442256036965,  "radius_m": 25, "h_max_m": 10},
+            {"id": "lv_14", "lat": 26.79628024605769,  "lon": 53.35518798806746,  "radius_m": 25, "h_max_m": 10},
+            {"id": "lv_15", "lat": 26.799086207709394, "lon": 53.34675495548526,  "radius_m": 25, "h_max_m": 10},
+            {"id": "lv_16", "lat": 26.80600956029062,  "lon": 53.33853345571229,  "radius_m": 55, "h_max_m": 17},
+            {"id": "lv_17", "lat": 26.8061274882919,   "lon": 53.3403030081189,   "radius_m": 55, "h_max_m": 17},
+            {"id": "lv_18", "lat": 26.803974628177848, "lon": 53.33872987361962,  "radius_m": 35, "h_max_m": 13},
+            {"id": "lv_19", "lat": 26.80412236607243,  "lon": 53.34052628117685,  "radius_m": 35, "h_max_m": 13},
+            {"id": "lv_20", "lat": 26.802350551222506, "lon": 53.33891450240212,  "radius_m": 35, "h_max_m": 13},
+            {"id": "lv_21", "lat": 26.802499303852,    "lon": 53.34067630656812,  "radius_m": 35, "h_max_m": 13},
+            {"id": "lv_22", "lat": 26.800756760805854, "lon": 53.33906528744336,  "radius_m": 35, "h_max_m": 13},
+            {"id": "lv_23", "lat": 26.800933849735905, "lon": 53.340866771883356, "radius_m": 35, "h_max_m": 13},
+        ],
+    },
+
+    # ── Siri Island ──────────────────────────────────────────────────────────
+    # Iranian island terminal, Persian Gulf.
+    {
+        "id": "siri",
+        "name": "Siri Island",
+        "country": "IR",
+        "los_azimuth": 282,
+        "status": "active",
+        "tanks": [
+            {"id": "si_0", "lat": 25.906493850156608, "lon": 54.537083188997116, "radius_m": 55, "h_max_m": 17},
+            {"id": "si_1", "lat": 25.904546808294974, "lon": 54.535470599866656, "radius_m": 55, "h_max_m": 17},
+            {"id": "si_2", "lat": 25.90669475757451,  "lon": 54.53450541965348,  "radius_m": 55, "h_max_m": 17},
+            {"id": "si_3", "lat": 25.90544779314368,  "lon": 54.53352182244191,  "radius_m": 40, "h_max_m": 14},
+            {"id": "si_4", "lat": 25.907888267412808, "lon": 54.535572815324926, "radius_m": 40, "h_max_m": 14},
+            {"id": "si_5", "lat": 25.907379839437166, "lon": 54.53236712959832,  "radius_m": 40, "h_max_m": 14},
+        ],
+    },
+
+    # ── Al Flaw ───────────────────────────────────────────────────────────────
+    # Iraqi crude export terminal.
+    {
+        "id": "al_flaw",
+        "name": "Al Flaw",
+        "country": "IQ",
+        "los_azimuth": 282,
+        "status": "active",
+        "tanks": [
+            {"id": "af_0",  "lat": 29.976037712391882, "lon": 48.44195552300743,  "radius_m": 40, "h_max_m": 14},
+            {"id": "af_1",  "lat": 29.97446023561727,  "lon": 48.44041073298363,  "radius_m": 40, "h_max_m": 14},
+            {"id": "af_2",  "lat": 29.973482237683964, "lon": 48.44170682926327,  "radius_m": 40, "h_max_m": 14},
+            {"id": "af_3",  "lat": 29.97506237979022,  "lon": 48.443256604287775, "radius_m": 40, "h_max_m": 14},
+            {"id": "af_4",  "lat": 29.972052466075166, "lon": 48.44360540262179,  "radius_m": 40, "h_max_m": 14},
+            {"id": "af_5",  "lat": 29.973613605327138, "lon": 48.44517136039961,  "radius_m": 40, "h_max_m": 14},
+            {"id": "af_6",  "lat": 29.971043737749962, "lon": 48.44490239092673,  "radius_m": 40, "h_max_m": 14},
+            {"id": "af_7",  "lat": 29.972645241700267, "lon": 48.44646203210755,  "radius_m": 40, "h_max_m": 14},
+            {"id": "af_8",  "lat": 29.970602225788706, "lon": 48.44914349229505,  "radius_m": 40, "h_max_m": 14},
+            {"id": "af_9",  "lat": 29.96964506640903,  "lon": 48.45042448972437,  "radius_m": 40, "h_max_m": 14},
+            {"id": "af_10", "lat": 29.969053578374012, "lon": 48.44757323726147,  "radius_m": 40, "h_max_m": 14},
+            {"id": "af_11", "lat": 29.968074369587153, "lon": 48.44888119527686,  "radius_m": 40, "h_max_m": 14},
+            {"id": "af_12", "lat": 29.967562585491844, "lon": 48.44613477210609,  "radius_m": 40, "h_max_m": 14},
+            {"id": "af_13", "lat": 29.966616705980595, "lon": 48.44740303358956,  "radius_m": 40, "h_max_m": 14},
+            {"id": "af_14", "lat": 29.965160381102958, "lon": 48.449324515383225, "radius_m": 40, "h_max_m": 14},
+            {"id": "af_15", "lat": 29.966613187227228, "lon": 48.45079062045803,  "radius_m": 40, "h_max_m": 14},
+            {"id": "af_16", "lat": 29.964164829146835, "lon": 48.450625111425616, "radius_m": 40, "h_max_m": 14},
+            {"id": "af_17", "lat": 29.965658494437534, "lon": 48.45208349893114,  "radius_m": 40, "h_max_m": 14},
+            {"id": "af_18", "lat": 29.961779354173064, "lon": 48.45380166725049,  "radius_m": 40, "h_max_m": 14},
+            {"id": "af_19", "lat": 29.96274476143991,  "lon": 48.45253449582525,  "radius_m": 40, "h_max_m": 14},
+            {"id": "af_20", "lat": 29.964218037290507, "lon": 48.45399437056702,  "radius_m": 40, "h_max_m": 14},
+            {"id": "af_21", "lat": 29.96326674821542,  "lon": 48.45527466098349,  "radius_m": 40, "h_max_m": 14},
+            {"id": "af_22", "lat": 29.964822804270934, "lon": 48.45681522152186,  "radius_m": 40, "h_max_m": 14},
+            {"id": "af_23", "lat": 29.96580178961507,  "lon": 48.45553712042206,  "radius_m": 40, "h_max_m": 14},
+        ],
+    },
+]

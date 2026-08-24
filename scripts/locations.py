@@ -1,37 +1,41 @@
 """
-locations.py — All terminal and tank data, loaded from data/locations.json.
+locations.py — Adapts tank_registry.LOCATIONS for use by the SAR pipeline.
 
-To add or edit tanks: update data/locations.json, then re-run the pipeline.
+Source of truth: scripts/tank_registry.py
+Do not edit coordinates here — edit tank_registry.py.
+
+Exports:
+  raw_tanks   — list of Kharg tanks in pipeline format (radius/h_max keys)
+  TERMINALS   — list of all non-Kharg terminals in pipeline format
+  get_super_bbox(tanks, buffer_m) — BBox enclosing all tanks + buffer
 """
 
-import json
-from pathlib import Path
 import numpy as np
 from sentinelhub import BBox, CRS
+from tank_registry import LOCATIONS
 
-_DATA = json.loads((Path(__file__).parent.parent / "data" / "locations.json").read_text())
-_BY_ID = {loc["id"]: loc for loc in _DATA["locations"]}
+_BY_ID = {loc["id"]: loc for loc in LOCATIONS}
 
-def _to_tank(t):
+
+def _to_pipeline_tank(t):
     entry = {"id": t["id"], "lat": t["lat"], "lon": t["lon"],
              "radius": t["radius_m"], "h_max": t["h_max_m"]}
     if t.get("uncertain"):
         entry["uncertain"] = True
     return entry
 
-# Kharg tanks list — used directly by main pipeline
-raw_tanks = [_to_tank(t) for t in _BY_ID["kharg"]["tanks"]]
 
-# All non-Kharg terminals — used by multi-terminal pipeline
+raw_tanks = [_to_pipeline_tank(t) for t in _BY_ID["kharg"]["tanks"]]
+
 TERMINALS = [
     {
         "id": loc["id"],
         "name": loc["name"],
         "country": loc["country"],
         "los_azimuth": loc.get("los_azimuth", 282),
-        "tanks": [_to_tank(t) for t in loc["tanks"]],
+        "tanks": [_to_pipeline_tank(t) for t in loc["tanks"]],
     }
-    for loc in _DATA["locations"] if loc["id"] != "kharg"
+    for loc in LOCATIONS if loc["id"] != "kharg"
 ]
 
 
