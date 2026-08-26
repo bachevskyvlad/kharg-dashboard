@@ -110,7 +110,7 @@ TERMINAL_MAX_CAP = {
     "novorossiysk":  3.2,
     "ras_laffan":   11.8,
     "ras_tanura":   28.5,
-    "fujairah":     15.2,
+    "fujairah":     19.4,
     "mina_ahmadi":   8.4,
 }
 TERMINALS_DIR = os.path.join(os.path.dirname(DAILY_PATH), "terminals")

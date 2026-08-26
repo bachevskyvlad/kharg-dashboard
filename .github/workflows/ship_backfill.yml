@@ -51,4 +51,5 @@ jobs:
           git add data/anchorage.json
           git diff --cached --quiet && echo "no changes" && exit 0
           git commit -m "anchorage backfill $(date -u +'%Y-%m-%d')"
+          git pull --rebase origin main
           git push
