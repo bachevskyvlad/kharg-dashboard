@@ -109,6 +109,9 @@ TERMINAL_MAX_CAP = {
     "primorsk":      3.8,
     "novorossiysk":  3.2,
     "ras_laffan":   11.8,
+    "ras_tanura":   28.5,
+    "fujairah":     15.2,
+    "mina_ahmadi":   8.4,
 }
 TERMINALS_DIR = os.path.join(os.path.dirname(DAILY_PATH), "terminals")
 os.makedirs(TERMINALS_DIR, exist_ok=True)
