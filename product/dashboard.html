@@ -1118,10 +1118,39 @@ let charts = {};
 
 async function loadData() {
     destroyCharts();
-    const resp = await fetch(`/data/data_daily.json?v=${Date.now()}`);
-    const daily = await resp.json();
-    allDates = daily.dates || [];
-    allValues = daily.values || [];
+    try {
+        // Pull daily volume directly from Supabase so Overview stays in sync with Gross Flows
+        const SB_URL = 'https://yoekhkczwdeyauwarsyy.supabase.co';
+        const SB_KEY = 'sb_publishable_7j07_zzdqTGM1LXf7-o9Tg_JJRbJQSM';
+        const headers = { 'apikey': SB_KEY, 'Authorization': 'Bearer ' + SB_KEY };
+        let rows = [], offset = 0;
+        while (true) {
+            const batch = await fetch(
+                `${SB_URL}/rest/v1/volume_timeseries?select=date,vol_mn_bbl&aggregation=eq.daily&smoothed=eq.false&order=date&limit=1000&offset=${offset}`,
+                { headers }
+            ).then(r => r.json());
+            if (!Array.isArray(batch) || batch.length === 0) break;
+            rows = rows.concat(batch);
+            if (batch.length < 1000) break;
+            offset += 1000;
+        }
+        if (rows.length > 0) {
+            allDates = rows.map(r => r.date);
+            allValues = rows.map(r => r.vol_mn_bbl);
+        } else {
+            // fallback to static JSON
+            const resp = await fetch(`/data/data_daily.json?v=${Date.now()}`);
+            const daily = await resp.json();
+            allDates = daily.dates || [];
+            allValues = daily.values || [];
+        }
+    } catch (e) {
+        // fallback to static JSON on any error
+        const resp = await fetch(`/data/data_daily.json?v=${Date.now()}`);
+        const daily = await resp.json();
+        allDates = daily.dates || [];
+        allValues = daily.values || [];
+    }
     render();
     loadStagingSignal().then(s => { window._stagingData = s; render(); });
 }
