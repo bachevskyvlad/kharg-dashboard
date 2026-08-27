@@ -23,11 +23,16 @@ export async function onRequest(context) {
     const sessionData = JSON.parse(atob(sessionToken));
     if (sessionData.exp && sessionData.exp < Date.now()) return jsonResponse({ authenticated: false }, origin);
 
-    let tier = 'paid';
+    const TRIAL_LIST = [
+      'asaljuhani@energyera.sa',
+      'ibrahim.aljuhani@straedge.com',
+    ];
+
+    let tier = TRIAL_LIST.includes(sessionData.email.toLowerCase()) ? 'trial' : 'paid';
     if (env.GOOGLE_SA_KEY) {
       try {
         const user = await getUserByEmail(env.GOOGLE_SA_KEY, sessionData.email);
-        if (user) tier = user.data.status || 'paid';
+        if (user) tier = user.data.status || tier;
       } catch (e) {
         console.error('Sheets error in check:', e?.message);
       }
