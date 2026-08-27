@@ -40,6 +40,8 @@ export async function onRequest(context) {
     'cyril@bluewaterstrategy.eu',
     'paclonalytics@gmail.com',
     'fairy1000@gmail.com',
+    'asaljuhani@energyera.sa',
+    'ibrahim.aljuhani@straedge.com',
   ];
 
   if (env.GOOGLE_SA_KEY) {
