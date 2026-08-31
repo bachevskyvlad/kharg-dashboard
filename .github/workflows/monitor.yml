@@ -75,20 +75,47 @@ jobs:
           fi
           echo "count=$COUNT" >> $GITHUB_OUTPUT
       - name: Ingest — fetch SAR data
+        id: ingest
         run: python scripts/ingest.py
         env:
           CLIENT_ID: ${{ secrets.CLIENT_ID }}
           CLIENT_SECRET: ${{ secrets.CLIENT_SECRET }}
+      - name: Telegram - Ingest FAILED
+        if: failure() && steps.ingest.outcome == 'failure'
+        run: |
+          curl -s -X POST "https://api.telegram.org/bot7745904293:AAHV2qN_5_XNxpg6Ir3iV3XmEKpokthi308/sendMessage" \
+            -d chat_id="204715787" -d parse_mode="HTML" \
+            --data-urlencode text="&#10060; <b>Ingest FAILED</b>
+          &#128197; <code>$(date -u +'%Y-%m-%d %H:%M UTC')</code>
+          &#128279; <a href='https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}'>Run #${{ github.run_number }}</a>"
       - name: Compute — volumes and aggregates
+        id: compute
         run: python scripts/compute.py
         env:
           CLIENT_ID: ${{ secrets.CLIENT_ID }}
           CLIENT_SECRET: ${{ secrets.CLIENT_SECRET }}
+      - name: Telegram - Compute FAILED
+        if: failure() && steps.compute.outcome == 'failure'
+        run: |
+          curl -s -X POST "https://api.telegram.org/bot7745904293:AAHV2qN_5_XNxpg6Ir3iV3XmEKpokthi308/sendMessage" \
+            -d chat_id="204715787" -d parse_mode="HTML" \
+            --data-urlencode text="&#10060; <b>Compute FAILED</b>
+          &#128197; <code>$(date -u +'%Y-%m-%d %H:%M UTC')</code>
+          &#128279; <a href='https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}'>Run #${{ github.run_number }}</a>"
       - name: Export — write JSON files and chart
+        id: export
         run: python scripts/export.py
         env:
           CLIENT_ID: ${{ secrets.CLIENT_ID }}
           CLIENT_SECRET: ${{ secrets.CLIENT_SECRET }}
+      - name: Telegram - Export FAILED
+        if: failure() && steps.export.outcome == 'failure'
+        run: |
+          curl -s -X POST "https://api.telegram.org/bot7745904293:AAHV2qN_5_XNxpg6Ir3iV3XmEKpokthi308/sendMessage" \
+            -d chat_id="204715787" -d parse_mode="HTML" \
+            --data-urlencode text="&#10060; <b>Export FAILED</b>
+          &#128197; <code>$(date -u +'%Y-%m-%d %H:%M UTC')</code>
+          &#128279; <a href='https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}'>Run #${{ github.run_number }}</a>"
       - name: Count dates AFTER run
         id: after
         run: |
