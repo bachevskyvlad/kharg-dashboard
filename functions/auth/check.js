@@ -26,7 +26,6 @@ export async function onRequest(context) {
     const TRIAL_LIST = [
       'asaljuhani@energyera.sa',
       'ibrahim.aljuhani@straedge.com',
-      'vladislav.bachevsky@gmail.com',
     ];
 
     let tier = TRIAL_LIST.includes(sessionData.email.toLowerCase()) ? 'trial' : 'paid';
