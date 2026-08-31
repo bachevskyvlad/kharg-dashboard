@@ -98,3 +98,4 @@ venv.bak/
 # PyPI configuration file
 .pypirc
 data/dardanelles_aegean_entrance_*.png
+data/*.png
