@@ -74,12 +74,21 @@ jobs:
             COUNT=0
           fi
           echo "count=$COUNT" >> $GITHUB_OUTPUT
-      - name: Run Kharg SAR script
-        run: python scripts/main_script.py
+      - name: Ingest — fetch SAR data
+        run: python scripts/ingest.py
         env:
           CLIENT_ID: ${{ secrets.CLIENT_ID }}
           CLIENT_SECRET: ${{ secrets.CLIENT_SECRET }}
-          NOTIFY_SECRET: ${{ secrets.NOTIFY_SECRET }}
+      - name: Compute — volumes and aggregates
+        run: python scripts/compute.py
+        env:
+          CLIENT_ID: ${{ secrets.CLIENT_ID }}
+          CLIENT_SECRET: ${{ secrets.CLIENT_SECRET }}
+      - name: Export — write JSON files and chart
+        run: python scripts/export.py
+        env:
+          CLIENT_ID: ${{ secrets.CLIENT_ID }}
+          CLIENT_SECRET: ${{ secrets.CLIENT_SECRET }}
       - name: Count dates AFTER run
         id: after
         run: |
