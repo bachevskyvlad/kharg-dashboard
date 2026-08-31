@@ -24,14 +24,28 @@ jobs:
       run: ${{ steps.check.outputs.run }}
     steps:
       - id: check
+        shell: bash
         run: |
+          set +e
+          echo "event=${{ github.event_name }}"
           if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-            echo "Manual trigger — running."
-            echo "run=true" >> "$GITHUB_OUTPUT"; exit 0
+            echo "Manual trigger - running."
+            echo "run=true" >> "$GITHUB_OUTPUT"
+            exit 0
           fi
-          LAST=$(curl -sf -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
-            "https://api.github.com/repos/${{ github.repository }}/contents/data/data_daily.json" \
-            | python3 -c "import json,sys,base64; c=json.load(sys.stdin); d=json.loads(base64.b64decode(c['content'])); print(d['dates'][-1])")
+          RESP=$(curl -sf -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+            "https://api.github.com/repos/${{ github.repository }}/contents/data/data_daily.json")
+          if [ $? -ne 0 ] || [ -z "$RESP" ]; then
+            echo "API fetch failed - running anyway."
+            echo "run=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          LAST=$(echo "$RESP" | python3 -c "import json,sys,base64; c=json.load(sys.stdin); d=json.loads(base64.b64decode(c['content'])); print(d['dates'][-1])" 2>/dev/null)
+          if [ -z "$LAST" ]; then
+            echo "Could not parse last date - running anyway."
+            echo "run=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
           NOW=$(date -u +%s)
           THEN=$(date -u -d "$LAST" +%s)
           DAYS=$(( (NOW - THEN) / 86400 ))
@@ -39,7 +53,7 @@ jobs:
           if [ "$DAYS" -ge "${REVISIT_GATE_DAYS}" ]; then
             echo "run=true" >> "$GITHUB_OUTPUT"
           else
-            echo "Too soon — skipping."
+            echo "Too soon - skipping."
             echo "run=false" >> "$GITHUB_OUTPUT"
           fi
 
