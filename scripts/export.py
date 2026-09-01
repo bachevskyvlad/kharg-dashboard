@@ -162,7 +162,7 @@ plt.title(
 plt.xlabel("Date", fontsize=13)
 plt.ylabel("Total Active Volume (Mn. Barrels)", fontsize=13)
 plt.grid(True, linestyle="--", alpha=0.5)
-max_cap = sum(np.pi * t["radius_m"]**2 * t["h_max_m"] * 6.2898 for t in raw_tanks) / 1_000_000
+max_cap = sum(np.pi * t["radius"]**2 * t["h_max"] * 6.2898 for t in raw_tanks) / 1_000_000
 plt.axhline(y=max_cap, color="r", linestyle="--", linewidth=1, label=f"Max Capacity (~{max_cap:.1f} M)")
 plt.legend(fontsize=12, loc="upper right")
 plt.tight_layout()
