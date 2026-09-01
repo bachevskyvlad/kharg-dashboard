@@ -94,12 +94,20 @@ for terminal in TERMINALS:
     img_w = int((bbox.max_x - bbox.min_x) * 111320 * np.cos(np.deg2rad(lat0)) / RESOLUTION)
     img_h = int((bbox.max_y - bbox.min_y) * 111320 / RESOLUTION)
 
+    existing = _existing_dates(tid)
+    if existing:
+        import pandas as pd
+        catalog_start = max(existing).to_pydatetime() - __import__('datetime').timedelta(days=14)
+    else:
+        from datetime import datetime, timedelta
+        catalog_start = datetime.utcnow() - timedelta(days=365)
+
     try:
-        all_t = get_all_scene_dates(bbox)
+        all_t = get_all_scene_dates(bbox, start_date=catalog_start)
     except Exception as e:
         print(f"  [!] Catalog failed: {e}"); continue
 
-    new_t = [d for d in all_t if d not in _existing_dates(tid)]
+    new_t = [d for d in all_t if d not in existing]
     print(f"  total: {len(all_t)} | new: {len(new_t)}")
 
     if not new_t:

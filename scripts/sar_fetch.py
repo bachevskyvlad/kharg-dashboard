@@ -75,10 +75,10 @@ def load_cache(raw_cache_path, sb):
     return cached_records, cached_dates
 
 
-def get_all_scene_dates(super_bbox):
+def get_all_scene_dates(super_bbox, start_date=None):
     """
     Queries the Sentinel Hub catalog for every descending-orbit S1 scene
-    over the Kharg bounding box from START_DATE to now.
+    over the given bbox from start_date (default: START_DATE) to now.
 
     Deduplication logic: the catalog sometimes returns two scenes ~1 second
     apart when a pass straddles a UTC day boundary (the satellite crosses
@@ -91,13 +91,14 @@ def get_all_scene_dates(super_bbox):
     """
     from datetime import datetime as dt
     end_date = dt.utcnow()
+    effective_start = start_date or START_DATE
 
     try:
         catalog = SentinelHubCatalog(config=config)
         scenes = list(catalog.search(
             S1_CDSE,
             bbox=super_bbox,
-            time=(START_DATE.strftime("%Y-%m-%d"), end_date.strftime("%Y-%m-%d")),
+            time=(effective_start.strftime("%Y-%m-%d"), end_date.strftime("%Y-%m-%d")),
             filter="sat:orbit_state = 'descending'",
             fields={"include": ["properties.datetime", "properties.sat:relative_orbit"]}
         ))
