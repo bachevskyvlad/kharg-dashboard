@@ -52,24 +52,11 @@ jobs:
           python-version: "3.11"
       - name: Install dependencies
         run: pip install -r scripts/requirements.txt
-      - name: Restore raw cache
-        if: ${{ github.event.inputs.force_reset != 'true' }}
-        uses: actions/cache@v4
-        with:
-          path: public/data_raw_cache.json
-          key: kharg-raw-cache-${{ github.run_id }}
-          restore-keys: |
-            kharg-raw-cache-
       - name: Run ingest
         run: python scripts/ingest.py
         env:
           CLIENT_ID: ${{ secrets.CLIENT_ID }}
           CLIENT_SECRET: ${{ secrets.CLIENT_SECRET }}
-      - name: Save raw cache
-        uses: actions/cache/save@v4
-        with:
-          path: public/data_raw_cache.json
-          key: kharg-raw-cache-${{ github.run_id }}
       - name: Telegram — Ingest FAILED
         if: failure()
         run: |
@@ -88,11 +75,6 @@ jobs:
           python-version: "3.11"
       - name: Install dependencies
         run: pip install -r scripts/requirements.txt
-      - name: Restore raw cache
-        uses: actions/cache/restore@v4
-        with:
-          path: public/data_raw_cache.json
-          key: kharg-raw-cache-${{ github.run_id }}
       - name: Run compute
         run: python scripts/compute.py
         env:
@@ -124,11 +106,6 @@ jobs:
           python-version: "3.11"
       - name: Install dependencies
         run: pip install -r scripts/requirements.txt
-      - name: Restore raw cache
-        uses: actions/cache/restore@v4
-        with:
-          path: public/data_raw_cache.json
-          key: kharg-raw-cache-${{ github.run_id }}
       - name: Restore compute artifacts
         uses: actions/cache/restore@v4
         with:
@@ -139,12 +116,20 @@ jobs:
           key: kharg-compute-${{ github.run_id }}
       - name: Count dates BEFORE
         id: before
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
         run: |
-          if [ -f public/data_raw_cache.json ]; then
-            COUNT=$(python3 -c "import json; d=json.load(open('public/data_raw_cache.json')); print(len(set(r['date'] for r in d)))")
-          else
-            COUNT=0
-          fi
+          COUNT=$(python3 -c "
+import os, sys
+try:
+    from supabase import create_client
+    sb = create_client(os.environ['SUPABASE_URL'], os.environ['SUPABASE_KEY'])
+    rows = sb.table('raw_observations').select('date', count='exact').execute()
+    print(rows.count or 0)
+except Exception as e:
+    print(0)
+")
           echo "count=$COUNT" >> $GITHUB_OUTPUT
       - name: Run export
         run: python scripts/export.py
@@ -153,8 +138,20 @@ jobs:
           CLIENT_SECRET: ${{ secrets.CLIENT_SECRET }}
       - name: Count dates AFTER
         id: after
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
         run: |
-          COUNT=$(python3 -c "import json; d=json.load(open('public/data_raw_cache.json')); print(len(set(r['date'] for r in d)))")
+          COUNT=$(python3 -c "
+import os, sys
+try:
+    from supabase import create_client
+    sb = create_client(os.environ['SUPABASE_URL'], os.environ['SUPABASE_KEY'])
+    rows = sb.table('raw_observations').select('date', count='exact').execute()
+    print(rows.count or 0)
+except Exception as e:
+    print(0)
+")
           echo "count=$COUNT" >> $GITHUB_OUTPUT
       - name: Save volume graph
         uses: actions/cache/save@v4

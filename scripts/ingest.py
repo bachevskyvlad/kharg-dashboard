@@ -13,10 +13,11 @@ import warnings
 
 warnings.filterwarnings("ignore")
 
-from config import sb, RAW_CACHE_PATH, RESOLUTION, BUFFER_METERS
+import pandas as pd
+from config import sb, RESOLUTION, BUFFER_METERS
 from locations import raw_tanks, get_super_bbox, TERMINALS
-from sar_fetch import load_cache, get_all_scene_dates, build_crescent_masks, fetch_new_records
-from export_data import save_raw_cache, upsert_raw_observations
+from sar_fetch import get_all_scene_dates, build_crescent_masks, fetch_new_records
+from export_data import upsert_raw_observations
 
 os.makedirs("public", exist_ok=True)
 
@@ -25,11 +26,24 @@ os.makedirs("public", exist_ok=True)
 print(f"[ingest] Kharg: {len(raw_tanks)} tanks")
 super_bbox = get_super_bbox(raw_tanks, buffer_m=BUFFER_METERS)
 
-cached_records, cached_dates = load_cache(RAW_CACHE_PATH, sb)
+print("[ingest] Kharg — loading existing dates from Supabase...")
+cached_dates = set()
+offset = 0
+while True:
+    rows = (sb.table("raw_observations")
+              .select("date")
+              .range(offset, offset + 999)
+              .execute().data)
+    for r in rows:
+        cached_dates.add(pd.to_datetime(r["date"]).normalize())
+    if len(rows) < 1000:
+        break
+    offset += 1000
+print(f"[ingest] Kharg — {len(cached_dates)} dates already in Supabase")
 
 all_dates = get_all_scene_dates(super_bbox)
 new_dates  = [d for d in all_dates if d not in cached_dates]
-print(f"[ingest] Kharg — total: {len(all_dates)} | cached: {len(cached_dates)} | new: {len(new_dates)}")
+print(f"[ingest] Kharg — total: {len(all_dates)} | existing: {len(cached_dates)} | new: {len(new_dates)}")
 
 if new_dates:
     width_m   = (super_bbox.max_x - super_bbox.min_x) * 111320 * np.cos(np.deg2rad(raw_tanks[0]["lat"]))
@@ -41,12 +55,10 @@ if new_dates:
     new_records = fetch_new_records(new_dates, tanks_data, super_bbox, img_w, img_h)
 
     if new_records:
-        cached_records.extend(new_records)
-        save_raw_cache(cached_records, RAW_CACHE_PATH)
         upsert_raw_observations(new_records, sb)
         print(f"[ingest] Kharg — {len(new_records)} new records saved")
 
-if not cached_records:
+if not cached_dates and not new_dates:
     print("CRITICAL: No Kharg data — aborting.")
     sys.exit(1)
 

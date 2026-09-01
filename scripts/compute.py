@@ -16,19 +16,30 @@ import warnings
 
 warnings.filterwarnings("ignore")
 
-from config import sb, RAW_CACHE_PATH
+from config import sb
 from locations import TERMINALS
-from sar_fetch import load_cache
 from volume import compute_volumes, aggregate_daily, aggregate_weekly
 
 os.makedirs("data", exist_ok=True)
 
 
 # ── Kharg ─────────────────────────────────────────────────────────────────────
-cached_records, _ = load_cache(RAW_CACHE_PATH, sb)
+print("[compute] Loading Kharg raw_observations from Supabase...")
+cached_records = []
+offset = 0
+while True:
+    rows = (sb.table("raw_observations")
+              .select("date,tank_id,radius_m,diameter,h_max,db_mean")
+              .range(offset, offset + 999)
+              .execute().data)
+    cached_records.extend(rows)
+    if len(rows) < 1000:
+        break
+    offset += 1000
+print(f"[compute] Loaded {len(cached_records)} Kharg records")
 
 if not cached_records:
-    print("CRITICAL: No Kharg cache — run ingest.py first.")
+    print("CRITICAL: No Kharg data in Supabase — run ingest.py first.")
     sys.exit(1)
 
 df = pd.DataFrame(cached_records)
