@@ -25,18 +25,17 @@ try:
 
     lines = []
     seen = set()
+    blocks = []
     for code in COUNTRY_ORDER:
         if code in by_country:
-            lines.append(f"<b>{COUNTRY_NAMES.get(code, code)}</b>")
-            lines.extend(by_country[code])
-            lines.append("")
+            block = [f"<b>{COUNTRY_NAMES.get(code, code)}</b>"] + by_country[code]
+            blocks.append("\n".join(block))
             seen.add(code)
     for code, entries in by_country.items():
         if code not in seen:
-            lines.append(f"<b>{COUNTRY_NAMES.get(code, code)}</b>")
-            lines.extend(entries)
-            lines.append("")
+            block = [f"<b>{COUNTRY_NAMES.get(code, code)}</b>"] + entries
+            blocks.append("\n".join(block))
 
-    print("\n".join(lines).rstrip())
+    print("\n\n".join(blocks))
 except Exception as e:
     print(f"(no summary: {e})")
