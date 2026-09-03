@@ -22,6 +22,6 @@ jobs:
 
       - name: Run diagnostic
         env:
-          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
-          SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+          SUPABASE_URL: "https://yoekhkczwdeyauwarsyy.supabase.co"
+          SUPABASE_KEY: "sb_publishable_7j07_zzdqTGM1LXf7-o9Tg_JJRbJQSM"
         run: python check_terminals.py
