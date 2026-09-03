@@ -163,11 +163,8 @@ jobs:
         if: success()
         run: |
           LINES=$(python3 scripts/tg_summary.py)
-          curl -s -X POST "$TG_BOT" -d chat_id="$TG_CHAT" -d parse_mode="HTML" \
-            --data-urlencode text="&#9989; <b>OilRadar SAR &#8212; SUCCESS</b>
-${LINES}
-&#128197; <code>$(date -u +'%Y-%m-%d %H:%M UTC')</code>
-&#128279; <a href='https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}'>Run #${{ github.run_number }}</a>"
+          TEXT="$(printf '&#9989; <b>OilRadar SAR &#8212; SUCCESS</b>\n%s\n&#128197; <code>%s</code>\n&#128279; <a href="https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}">Run #${{ github.run_number }}</a>' "$LINES" "$(date -u +'%Y-%m-%d %H:%M UTC')")"
+          curl -s -X POST "$TG_BOT" -d chat_id="$TG_CHAT" -d parse_mode="HTML" --data-urlencode text="$TEXT"
 
   commit_data:
     runs-on: ubuntu-latest
