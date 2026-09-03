@@ -36,6 +36,7 @@ TERMINAL_MAX_CAP = {
     "fujairah":    19.4,
     "mina_ahmadi":  8.4,
     "ruwais":      11.5,
+    "yanbu":       14.8,
     "das_island":   5.2,
     "zirku":        7.9,
 }

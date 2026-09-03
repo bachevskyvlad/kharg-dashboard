@@ -615,4 +615,29 @@ LOCATIONS = [
             {"id": "ma_13", "lat": 29.052961, "lon": 48.057500, "radius_m": 50, "h_max_m": 16},
         ],
     },
+
+    # ── Yanbu ─────────────────────────────────────────────────────────────────
+    # Saudi Aramco Red Sea export terminal. Primary outlet for Arabian crude
+    # bound for Europe and Asia via Suez. 12 tanks, 60m radius.
+    {
+        "id": "yanbu",
+        "name": "Yanbu",
+        "country": "SA",
+        "los_azimuth": 282,
+        "status": "active",
+        "tanks": [
+            {"id": "yb_0",  "lat": 23.959074, "lon": 38.244398, "radius_m": 60, "h_max_m": 18},
+            {"id": "yb_1",  "lat": 23.962590, "lon": 38.247925, "radius_m": 60, "h_max_m": 18},
+            {"id": "yb_2",  "lat": 23.964053, "lon": 38.245977, "radius_m": 60, "h_max_m": 18},
+            {"id": "yb_3",  "lat": 23.965544, "lon": 38.244086, "radius_m": 60, "h_max_m": 18},
+            {"id": "yb_4",  "lat": 23.964986, "lon": 38.250081, "radius_m": 60, "h_max_m": 18},
+            {"id": "yb_5",  "lat": 23.966460, "lon": 38.248119, "radius_m": 60, "h_max_m": 18},
+            {"id": "yb_6",  "lat": 23.967960, "lon": 38.246187, "radius_m": 60, "h_max_m": 18},
+            {"id": "yb_7",  "lat": 23.967392, "lon": 38.252229, "radius_m": 60, "h_max_m": 18},
+            {"id": "yb_8",  "lat": 23.968866, "lon": 38.250263, "radius_m": 60, "h_max_m": 18},
+            {"id": "yb_9",  "lat": 23.970331, "lon": 38.248336, "radius_m": 60, "h_max_m": 18},
+            {"id": "yb_10", "lat": 23.969788, "lon": 38.254362, "radius_m": 60, "h_max_m": 18},
+            {"id": "yb_11", "lat": 23.971259, "lon": 38.252416, "radius_m": 60, "h_max_m": 18},
+        ],
+    },
 ]
