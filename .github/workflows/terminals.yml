@@ -11,6 +11,10 @@ on:
         description: "Dry run (skip Supabase writes)"
         required: false
         default: "false"
+      force:
+        description: "Force re-fetch all dates (use when new tanks added)"
+        required: false
+        default: "false"
   schedule:
     # Run weekly on Mondays at 06:00 UTC (after Kharg pipeline)
     - cron: "0 6 * * 1"
@@ -39,4 +43,5 @@ jobs:
         run: |
           ARGS="--terminal ${{ inputs.terminal || 'all' }}"
           if [ "${{ inputs.dry_run }}" = "true" ]; then ARGS="$ARGS --dry-run"; fi
+          if [ "${{ inputs.force }}" = "true" ]; then ARGS="$ARGS --force"; fi
           python multi_terminal_pipeline.py $ARGS

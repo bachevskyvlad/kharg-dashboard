@@ -43,6 +43,7 @@ from volume import compute_volumes, aggregate_daily
 parser = argparse.ArgumentParser()
 parser.add_argument("--terminal", default="all", help="Terminal id or 'all'")
 parser.add_argument("--dry-run", action="store_true", help="Skip Supabase writes")
+parser.add_argument("--force", action="store_true", help="Ignore existing dates, re-fetch all (use when new tanks added)")
 args = parser.parse_args()
 
 target_ids = (
@@ -197,9 +198,9 @@ for terminal in TERMINALS:
     all_dates = get_scene_dates(bbox)
     print(f"  Sentinel Hub: {len(all_dates)} total dates since {START_DATE.date()}")
 
-    existing_dates = load_existing_dates(tid)
+    existing_dates = set() if args.force else load_existing_dates(tid)
     new_dates = [d for d in all_dates if d not in existing_dates]
-    print(f"  New dates to process: {len(new_dates)}")
+    print(f"  New dates to process: {len(new_dates)}{' (force mode)' if args.force else ''}")
 
     if not new_dates:
         print("  No new data — skipping.")
