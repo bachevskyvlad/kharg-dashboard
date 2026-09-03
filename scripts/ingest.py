@@ -8,6 +8,7 @@ and upserts to Supabase. No volume computation here.
 
 import sys
 import os
+import json
 import numpy as np
 import warnings
 
@@ -20,6 +21,9 @@ from sar_fetch import get_all_scene_dates, build_crescent_masks, fetch_new_recor
 from export_data import upsert_raw_observations
 
 os.makedirs("public", exist_ok=True)
+os.makedirs("data", exist_ok=True)
+
+summary = {}  # terminal_id → new_dates count
 
 
 # ── Kharg ─────────────────────────────────────────────────────────────────────
@@ -61,6 +65,8 @@ if new_dates:
 if not cached_dates and not new_dates:
     print("CRITICAL: No Kharg data — aborting.")
     sys.exit(1)
+
+summary["kharg"] = {"name": "Kharg Island", "new": len(new_dates)}
 
 
 # ── Terminals ─────────────────────────────────────────────────────────────────
@@ -109,6 +115,7 @@ for terminal in TERMINALS:
 
     new_t = [d for d in all_t if d not in existing]
     print(f"  total: {len(all_t)} | new: {len(new_t)}")
+    summary[tid] = {"name": terminal["name"], "new": len(new_t)}
 
     if not new_t:
         continue
@@ -123,5 +130,8 @@ for terminal in TERMINALS:
             print(f"  upserted {len(raw)} rows")
     except Exception as e:
         print(f"  [!] Fetch failed: {e}")
+
+with open("data/ingest_summary.json", "w") as f:
+    json.dump(summary, f)
 
 print("\n[ingest] Done.")

@@ -57,6 +57,12 @@ jobs:
         env:
           CLIENT_ID: ${{ secrets.CLIENT_ID }}
           CLIENT_SECRET: ${{ secrets.CLIENT_SECRET }}
+      - name: Save ingest summary
+        if: success()
+        uses: actions/cache/save@v4
+        with:
+          path: data/ingest_summary.json
+          key: ingest-summary-${{ github.run_id }}
       - name: Telegram — Ingest FAILED
         if: failure()
         run: |
@@ -114,6 +120,12 @@ jobs:
             data/_kharg_weekly.parquet
             data/_terminal_daily.pkl
           key: kharg-compute-${{ github.run_id }}
+      - name: Restore ingest summary
+        uses: actions/cache/restore@v4
+        with:
+          path: data/ingest_summary.json
+          key: ingest-summary-${{ github.run_id }}
+        continue-on-error: true
       - name: Count dates BEFORE
         id: before
         run: |
@@ -150,19 +162,25 @@ jobs:
       - name: Telegram — Pipeline SUCCESS
         if: success()
         run: |
-          BEFORE=${{ steps.before.outputs.count }}
-          AFTER=${{ steps.after.outputs.count }}
-          DIFF=$((AFTER - BEFORE))
-          if [ "$DIFF" -gt 0 ]; then
-            STATUS="&#128195; <b>New data:</b> +${DIFF} date(s)"
-          else
-            STATUS="&#128564; No new data (${AFTER} dates total)"
-          fi
+          LINES=$(python3 - <<'EOF'
+import json, os
+try:
+    data = json.load(open("data/ingest_summary.json"))
+    lines = []
+    for tid, info in data.items():
+        n = info["new"]
+        mark = "🟢" if n > 0 else "⚪"
+        lines.append(f"{mark} {info['name']}: +{n}")
+    print("\n".join(lines))
+except Exception as e:
+    print(f"(summary unavailable: {e})")
+EOF
+)
           curl -s -X POST "$TG_BOT" -d chat_id="$TG_CHAT" -d parse_mode="HTML" \
-            --data-urlencode text="&#9989; <b>Kharg SAR &#8212; SUCCESS</b>
-          ${STATUS}
-          &#128197; <code>$(date -u +'%Y-%m-%d %H:%M UTC')</code>
-          &#128279; <a href='https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}'>Run #${{ github.run_number }}</a>"
+            --data-urlencode text="&#9989; <b>OilRadar SAR &#8212; SUCCESS</b>
+${LINES}
+&#128197; <code>$(date -u +'%Y-%m-%d %H:%M UTC')</code>
+&#128279; <a href='https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}'>Run #${{ github.run_number }}</a>"
 
   commit_data:
     runs-on: ubuntu-latest
