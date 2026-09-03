@@ -28,12 +28,12 @@ try:
     blocks = []
     for code in COUNTRY_ORDER:
         if code in by_country:
-            block = [f"<b>{COUNTRY_NAMES.get(code, code)}</b>"] + by_country[code]
+            block = [f"<b>{COUNTRY_NAMES.get(code, code)}</b>", ""] + by_country[code]
             blocks.append("\n".join(block))
             seen.add(code)
     for code, entries in by_country.items():
         if code not in seen:
-            block = [f"<b>{COUNTRY_NAMES.get(code, code)}</b>"] + entries
+            block = [f"<b>{COUNTRY_NAMES.get(code, code)}</b>", ""] + entries
             blocks.append("\n".join(block))
 
     print("\n\n".join(blocks))
