@@ -66,7 +66,7 @@ if not cached_dates and not new_dates:
     print("CRITICAL: No Kharg data — aborting.")
     sys.exit(1)
 
-summary["kharg"] = {"name": "Kharg Island", "new": len(new_dates)}
+summary["kharg"] = {"name": "Kharg Island", "new": len(new_dates), "country": "IR"}
 
 
 # ── Terminals ─────────────────────────────────────────────────────────────────
@@ -115,7 +115,7 @@ for terminal in TERMINALS:
 
     new_t = [d for d in all_t if d not in existing]
     print(f"  total: {len(all_t)} | new: {len(new_t)}")
-    summary[tid] = {"name": terminal["name"], "new": len(new_t)}
+    summary[tid] = {"name": terminal["name"], "new": len(new_t), "country": terminal.get("country", "")}
 
     if not new_t:
         continue
