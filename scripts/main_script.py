@@ -97,24 +97,28 @@ refresh_gross_flows(sb)
 print("\nKharg pipeline complete!")
 
 # ── All non-Kharg terminals ───────────────────────────────────────────────────
+# Max capacity derived from tank geometry: π × r² × h_max × 6.2898 / 1e6 (Mn bbl)
+# Recomputed from tank_registry.py — do not override with industry throughput figures.
 TERMINAL_MAX_CAP = {
-    "lavan":         7.5,
-    "siri":          3.2,
-    "jask":          9.8,
-    "al_flaw":      13.5,
-    "halul":         3.5,
-    "sitra":         3.7,
-    "kozmino":       1.8,
-    "de_kastri":     1.2,
-    "primorsk":      3.8,
-    "novorossiysk":  3.2,
-    "ras_laffan":   11.8,
-    "ras_tanura":   28.5,
-    "fujairah":     19.4,
-    "mina_ahmadi":   8.4,
+    "lavan":          5.2,   # 24 tanks r=40m h=14m  (was 7.5 — industry throughput, not storage)
+    "siri":           4.4,   # 6 tanks r=55m h=17m   (was 3.2 — too low, caused 119 over-cap rows)
+    "jask":           6.3,   # 20 tanks r=35m h=14m  (was 9.8 — too high)
+    "al_flaw":       10.6,   # 24 tanks r=40m h=14m  (was 13.5 — too high)
+    "halul":          3.5,
+    "sitra":          3.7,
+    "kozmino":        1.8,
+    "de_kastri":      1.2,
+    "primorsk":       3.8,
+    "novorossiysk":   3.2,
+    "ras_laffan":    12.4,   # 34 tanks              (was 11.8 — slightly low)
+    "ras_tanura":    31.1,   # 66 tanks              (was 28.5 — too low)
+    "fujairah":      11.5,   # 22 tanks              (was 19.4 — industry figure, not storage)
+    "mina_ahmadi":    8.8,   # 14 tanks              (was 8.4 — minor)
     "ruwais":        11.5,
     "das_island":     5.2,
     "zirku":          7.9,
+    "juwaymah":      15.0,   # 19 tanks r=50m h=16m  (was 10.0 — caused 17 over-cap rows)
+    "yanbu":         15.4,   # 12 tanks r=60m h=18m  (was 6.0 — wrong, was throughput not storage)
 }
 TERMINALS_DIR = os.path.join(os.path.dirname(DAILY_PATH), "terminals")
 os.makedirs(TERMINALS_DIR, exist_ok=True)

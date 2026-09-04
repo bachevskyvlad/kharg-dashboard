@@ -20,25 +20,27 @@ from config import sb, DAILY_PATH, WEEKLY_PATH, PLOT_PATH, EWMA_ALPHA
 from locations import raw_tanks, TERMINALS
 from export_data import refresh_gross_flows
 
+# Max capacity from tank geometry: π × r² × h_max × 6.2898 / 1e6 (Mn bbl)
 TERMINAL_MAX_CAP = {
-    "lavan":        7.5,
-    "siri":         3.2,
-    "jask":         9.8,
-    "al_flaw":     13.5,
-    "halul":        3.5,
-    "sitra":        3.7,
-    "kozmino":      1.8,
-    "de_kastri":    1.2,
-    "primorsk":     3.8,
-    "novorossiysk": 3.2,
-    "ras_laffan":  11.8,
-    "ras_tanura":  28.5,
-    "fujairah":    19.4,
-    "mina_ahmadi":  8.4,
-    "ruwais":      11.5,
-    "yanbu":       14.8,
-    "das_island":   5.2,
-    "zirku":        7.9,
+    "lavan":          5.2,
+    "siri":           4.4,
+    "jask":           6.3,
+    "al_flaw":       10.6,
+    "halul":          3.5,
+    "sitra":          3.7,
+    "kozmino":        1.8,
+    "de_kastri":      1.2,
+    "primorsk":       3.8,
+    "novorossiysk":   3.2,
+    "ras_laffan":    12.4,
+    "ras_tanura":    31.1,
+    "fujairah":      11.5,
+    "mina_ahmadi":    8.8,
+    "ruwais":        11.5,
+    "yanbu":         15.4,
+    "das_island":     5.2,
+    "zirku":          7.9,
+    "juwaymah":      15.0,
 }
 
 TERMINALS_DIR = os.path.join(os.path.dirname(DAILY_PATH), "terminals")

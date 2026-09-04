@@ -97,6 +97,9 @@ if run_kharg:
 
         tanks_data  = build_crescent_masks(raw_tanks, super_bbox, img_w, img_h)
         new_records = fetch_new_records(new_dates, tanks_data, super_bbox, img_w, img_h)
+        for r in new_records:
+            if r.get("db_mean") is not None:
+                r["db_mean"] = max(r["db_mean"], -5.0)
 
         if new_records:
             upsert_raw_observations(new_records, sb)
@@ -153,6 +156,9 @@ for terminal in TERMINALS:
         raw    = fetch_new_records(new_t, t_data, bbox, img_w, img_h)
         for r in raw:
             r["terminal_id"] = tid
+            # clip SAR artifacts: VV backscatter physically bounded below ~-5 dB
+            if r.get("db_mean") is not None:
+                r["db_mean"] = max(r["db_mean"], -5.0)
         if raw:
             sb.table("terminal_observations").upsert(
                 raw, on_conflict="terminal_id,date,tank_id"
