@@ -11,11 +11,7 @@ Safe to re-run: rows already at >= -5.0 are untouched.
 """
 
 import os, sys
-from supabase import create_client
-
-URL = os.environ["SUPABASE_URL"]
-KEY = os.environ["SUPABASE_KEY"]
-sb  = create_client(URL, KEY)
+from config import sb
 
 DB_FLOOR = -5.0
 

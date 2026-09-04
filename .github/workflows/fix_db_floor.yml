@@ -21,7 +21,4 @@ jobs:
         run: pip install -r requirements.txt
 
       - name: Fix db_mean < -5.0 in Supabase
-        env:
-          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
-          SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
         run: python fix_db_mean_floor.py
