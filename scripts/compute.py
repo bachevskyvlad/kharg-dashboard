@@ -93,7 +93,7 @@ for terminal in TERMINALS:
         all_obs = []; offset = 0
         while True:
             batch = (sb.table("terminal_observations")
-                       .select("date,tank_id,db_mean,radius_m,h_max")
+                       .select("date,tank_id,db_mean")
                        .eq("terminal_id", tid).range(offset, offset+999).execute().data)
             all_obs.extend(batch)
             if len(batch) < 1000: break
@@ -102,10 +102,16 @@ for terminal in TERMINALS:
         if not all_obs:
             print(f"  no observations — skipping"); continue
 
+        # Build tank geometry lookup from local registry
+        tank_geom = {t["id"]: {"radius": t.get("radius_m", t.get("radius")),
+                               "h_max":  t.get("h_max_m",  t.get("h_max"))}
+                     for t in tanks}
+
         df_t = pd.DataFrame(all_obs)
         df_t["date"] = pd.to_datetime(df_t["date"])
-        if "radius_m" in df_t.columns and "radius" not in df_t.columns:
-            df_t = df_t.rename(columns={"radius_m": "radius"})
+        df_t["radius"] = df_t["tank_id"].map(lambda tid: tank_geom.get(tid, {}).get("radius"))
+        df_t["h_max"]  = df_t["tank_id"].map(lambda tid: tank_geom.get(tid, {}).get("h_max"))
+        df_t = df_t.dropna(subset=["radius", "h_max"])
 
         df_t, _, _ = compute_volumes(df_t)
         daily_t = aggregate_daily(df_t)
