@@ -103,15 +103,15 @@ for terminal in TERMINALS:
             print(f"  no observations — skipping"); continue
 
         # Build tank geometry lookup from local registry
-        tank_geom = {t["id"]: {"radius": t.get("radius_m", t.get("radius")),
-                               "h_max":  t.get("h_max_m",  t.get("h_max"))}
+        tank_geom = {t["id"]: {"radius_m": t.get("radius_m", t.get("radius")),
+                               "h_max_m":  t.get("h_max_m",  t.get("h_max"))}
                      for t in tanks}
 
         df_t = pd.DataFrame(all_obs)
         df_t["date"] = pd.to_datetime(df_t["date"])
-        df_t["radius"] = df_t["tank_id"].map(lambda tid: tank_geom.get(tid, {}).get("radius"))
-        df_t["h_max"]  = df_t["tank_id"].map(lambda tid: tank_geom.get(tid, {}).get("h_max"))
-        df_t = df_t.dropna(subset=["radius", "h_max"])
+        df_t["radius_m"] = df_t["tank_id"].map(lambda t_id: tank_geom.get(t_id, {}).get("radius_m"))
+        df_t["h_max"]    = df_t["tank_id"].map(lambda t_id: tank_geom.get(t_id, {}).get("h_max_m"))
+        df_t = df_t.dropna(subset=["radius_m", "h_max"])
 
         df_t, _, _ = compute_volumes(df_t)
         daily_t = aggregate_daily(df_t)
