@@ -138,8 +138,11 @@ for terminal in TERMINALS:
         # new terminal — full history from START_DATE
         catalog_start = START_DATE
 
+    orbit_state = terminal.get("orbit_state", "descending")
+    los_azimuth = terminal.get("los_azimuth", None)  # None → uses config default (282°)
+
     try:
-        all_t = get_all_scene_dates(bbox, start_date=catalog_start)
+        all_t = get_all_scene_dates(bbox, start_date=catalog_start, orbit_state=orbit_state)
     except Exception as e:
         print(f"  [!] Catalog failed: {e}")
         continue
@@ -152,7 +155,7 @@ for terminal in TERMINALS:
         continue
 
     try:
-        t_data = build_crescent_masks(tanks, bbox, img_w, img_h)
+        t_data = build_crescent_masks(tanks, bbox, img_w, img_h, los_azimuth=los_azimuth)
         raw    = fetch_new_records(new_t, t_data, bbox, img_w, img_h)
         for r in raw:
             r["terminal_id"] = tid

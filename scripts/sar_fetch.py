@@ -75,10 +75,13 @@ def load_cache(raw_cache_path, sb):
     return cached_records, cached_dates
 
 
-def get_all_scene_dates(super_bbox, start_date=None):
+def get_all_scene_dates(super_bbox, start_date=None, orbit_state="descending"):
     """
-    Queries the Sentinel Hub catalog for every descending-orbit S1 scene
-    over the given bbox from start_date (default: START_DATE) to now.
+    Queries the Sentinel Hub catalog for S1 scenes over the given bbox.
+
+    orbit_state: "descending" (default, covers Persian Gulf / Russia) or
+                 "ascending" (needed for Red Sea terminals like Yanbu where
+                 descending orbit has no coverage after 2016).
 
     Deduplication logic: the catalog sometimes returns two scenes ~1 second
     apart when a pass straddles a UTC day boundary (the satellite crosses
@@ -99,7 +102,7 @@ def get_all_scene_dates(super_bbox, start_date=None):
             S1_CDSE,
             bbox=super_bbox,
             time=(effective_start.strftime("%Y-%m-%d"), end_date.strftime("%Y-%m-%d")),
-            filter="sat:orbit_state = 'descending'",
+            filter=f"sat:orbit_state = '{orbit_state}'",
             fields={"include": ["properties.datetime", "properties.sat:relative_orbit"]}
         ))
         # Deduplicate by relative orbit number: one physical pass = one orbit number per day.
@@ -122,7 +125,7 @@ def get_all_scene_dates(super_bbox, start_date=None):
         sys.exit(1)
 
 
-def build_crescent_masks(raw_tanks, super_bbox, img_width, img_height):
+def build_crescent_masks(raw_tanks, super_bbox, img_width, img_height, los_azimuth=None):
     """
     Pre-computes per-tank crescent pixel masks for a given image size.
 
@@ -134,12 +137,16 @@ def build_crescent_masks(raw_tanks, super_bbox, img_width, img_height):
     The annulus width (WIDTH_WIDE=15m) was chosen to maximise pixel count
     while avoiding spill into adjacent tank walls. At 5m/px this is 3 pixels.
 
+    los_azimuth: override LOS azimuth (degrees). Use ~98 for ascending orbit
+                 (e.g. Yanbu/Red Sea terminals). Defaults to config LOS_AZIMUTH (282°).
+
     Returns list of dicts: {id, radius_m, diameter, h_max, crescent (bool mask)}.
     Called once per pipeline run since masks depend only on image geometry.
     """
+    az = los_azimuth if los_azimuth is not None else LOS_AZIMUTH
     Y_grid, X_grid = np.indices((img_height, img_width))
-    dx = np.sin(np.deg2rad(LOS_AZIMUTH))
-    dy = -np.cos(np.deg2rad(LOS_AZIMUTH))
+    dx = np.sin(np.deg2rad(az))
+    dy = -np.cos(np.deg2rad(az))
 
     tanks_data = []
     for tank in raw_tanks:

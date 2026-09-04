@@ -691,7 +691,8 @@ LOCATIONS = [
         "id": "yanbu",
         "name": "Yanbu",
         "country": "SA",
-        "los_azimuth": 282,
+        "los_azimuth": 98,        # ascending orbit — descending has no Red Sea coverage after 2016
+        "orbit_state": "ascending",
         "status": "active",
         "tanks": [
             {"id": "yb_0",  "lat": 23.959074, "lon": 38.244398, "radius_m": 60, "h_max_m": 18},
