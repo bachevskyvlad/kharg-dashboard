@@ -128,28 +128,65 @@ else:
     vdf = vdf[vdf["aggregation"] == "daily"]
     print(f"\nDaily volume rows: {len(vdf):,}")
 
-    print("\n── Per-terminal volume stats ──")
+    print("\n── Per-terminal volume stats (SPI = vol/cap × 100) ──")
+    print(f"  {'terminal':<20} {'n':>4}  {'min%':>5} {'p25%':>5} {'med%':>5} {'p75%':>5} {'p90%':>5} {'max%':>5}  {'mean%':>6} {'std%':>5}  {'cv':>5}  flags")
+    print("  " + "-" * 110)
+
+    spi_rows = []
     for tid, grp in vdf.groupby("terminal_id"):
         cap = TERMINAL_MAX_CAP.get(tid, None)
-        vmin = round(grp["vol_mn_bbl"].min(), 3)
-        vmax = round(grp["vol_mn_bbl"].max(), 3)
-        vmean = round(grp["vol_mn_bbl"].mean(), 3)
-        nulls = int(grp["vol_mn_bbl"].isna().sum())
-        over_cap = int((grp["vol_mn_bbl"] > cap).sum()) if cap else 0
-        neg = int((grp["vol_mn_bbl"] < 0).sum())
-        zeros = int((grp["vol_mn_bbl"] == 0).sum())
-        pct = round(vmax / cap * 100, 1) if cap else "?"
+        if not cap:
+            continue
+        v = grp["vol_mn_bbl"].dropna()
+        spi = v / cap * 100
+        nulls    = int(grp["vol_mn_bbl"].isna().sum())
+        over_cap = int((v > cap).sum())
+        neg      = int((v < 0).sum())
+        zeros    = int((v == 0).sum())
+
+        p_min = round(spi.min(), 1)
+        p25   = round(spi.quantile(0.25), 1)
+        p50   = round(spi.median(), 1)
+        p75   = round(spi.quantile(0.75), 1)
+        p90   = round(spi.quantile(0.90), 1)
+        p_max = round(spi.max(), 1)
+        mean_ = round(spi.mean(), 1)
+        std_  = round(spi.std(), 1)
+        cv    = round(std_ / mean_ * 100, 1) if mean_ else 0  # coefficient of variation %
 
         flag = ""
-        if over_cap: flag += f" ⚠ {over_cap} rows OVER CAPACITY ({vmax} > {cap})"
-        if neg:      flag += f" ⚠ {neg} negative values"
-        if zeros:    flag += f" ⚠ {zeros} zero values"
-        if nulls:    flag += f" ⚠ {nulls} nulls"
-        if cap and vmax / cap > 1.05: flag += f" ⚠ max={pct}% of cap"
+        if over_cap:      flag += f" ⚠ {over_cap} over-cap"
+        if neg:           flag += f" ⚠ {neg} negative"
+        if zeros:         flag += f" ⚠ {zeros} zero"
+        if nulls:         flag += f" ⚠ {nulls} null"
+        if p90 > 85:      flag += f" ⚠ p90={p90}% CRITICAL"
+        elif p50 > 85:    flag += f" ⚠ median={p50}% CRITICAL"
+        elif p_max > 85:  flag += f" ℹ max>{85}%"
 
-        print(f"  {tid:<20} vol=[{vmin:>7},{vmax:>7}] mean={vmean:>7}  cap={cap}  max%={pct}{flag}")
+        print(f"  {tid:<20} {len(v):>4}  {p_min:>5} {p25:>5} {p50:>5} {p75:>5} {p90:>5} {p_max:>5}  {mean_:>6} {std_:>5}  {cv:>5}  {flag}")
+        spi_rows.append({"tid": tid, "mean_spi": mean_, "std_spi": std_, "cv": cv, "p90": p90, "p_max": p_max})
         if flag:
             issues.append(f"[vol] {tid}: {flag.strip()}")
+
+    # ── Cross-terminal comparison ─────────────────────────────────────────
+    print("\n── Cross-terminal SPI comparison (sorted by mean SPI) ──")
+    for r in sorted(spi_rows, key=lambda x: -x["mean_spi"]):
+        bar = "█" * int(r["mean_spi"] / 5)
+        print(f"  {r['tid']:<20} mean={r['mean_spi']:>5.1f}%  std={r['std_spi']:>4.1f}%  cv={r['cv']:>5.1f}%  {bar}")
+
+    # ── db_mean std per terminal (pass-level activity) ────────────────────
+    print("\n── db_mean std per terminal (proxy for tank activity) ──")
+    print(f"  {'terminal':<20}  {'db_std_mean':>11}  {'db_std_p90':>10}  note")
+    print("  " + "-" * 65)
+    for tid, grp in df.groupby("terminal_id"):
+        # std of db_mean across tanks per date (cross-tank dispersion)
+        per_date_std = grp.groupby("date")["db_mean"].std().dropna()
+        if per_date_std.empty:
+            continue
+        m = round(per_date_std.mean(), 2)
+        p90 = round(per_date_std.quantile(0.90), 2)
+        note = "active" if m > 4 else ("moderate" if m > 2 else "low/idle")
+        print(f"  {tid:<20}  {m:>11}  {p90:>10}  {note}")
 
 # ── 4. Kharg volume_timeseries ────────────────────────────────────────────
 print("\n── Kharg (volume_timeseries, daily) ──")
