@@ -33,7 +33,9 @@ TERMINALS = [
         "name": loc["name"],
         "country": loc["country"],
         "los_azimuth": loc.get("los_azimuth", 282),
+        "orbit_state": loc.get("orbit_state", "descending"),
         "tanks": [_to_pipeline_tank(t) for t in loc["tanks"]],
+        **( {"clusters": loc["clusters"]} if "clusters" in loc else {} ),
     }
     for loc in LOCATIONS if loc["id"] != "kharg"
 ]

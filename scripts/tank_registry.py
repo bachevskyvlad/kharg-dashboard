@@ -468,14 +468,32 @@ LOCATIONS = [
         "country": "SA",
         "los_azimuth": 282,
         "status": "active",
+        # Two geographically separate clusters ~5.5 km apart — fetched with independent
+        # bboxes so a single SAR pass covers each tightly without inflating the image frame.
+        "clusters": [
+            {"name": "south", "tank_ids": [
+                "rt_0","rt_1","rt_2","rt_3","rt_4",
+                "rt_11","rt_12","rt_13","rt_14","rt_15","rt_16","rt_17","rt_18","rt_19","rt_20",
+                "rt_21","rt_22","rt_23","rt_24","rt_25","rt_26","rt_27","rt_28","rt_29","rt_30",
+                "rt_31","rt_32","rt_33","rt_34","rt_35","rt_36","rt_37","rt_38","rt_39","rt_40",
+                "rt_41","rt_42","rt_43","rt_44","rt_45","rt_46","rt_47","rt_48","rt_49","rt_50",
+                "rt_51","rt_52","rt_53","rt_54","rt_55","rt_56","rt_57","rt_58","rt_59","rt_60",
+                "rt_61","rt_62","rt_63","rt_64","rt_65",
+            ]},
+            {"name": "north", "tank_ids": ["rt_5","rt_6","rt_7","rt_8","rt_9","rt_10"]},
+        ],
         "tanks": [
             {"id": "rt_0",  "lat": 26.638626, "lon": 50.154236, "radius_m": 60, "h_max_m": 18},
             {"id": "rt_1",  "lat": 26.640430, "lon": 50.153296, "radius_m": 60, "h_max_m": 18},
             {"id": "rt_2",  "lat": 26.641913, "lon": 50.152682, "radius_m": 60, "h_max_m": 18},
             {"id": "rt_3",  "lat": 26.650024, "lon": 50.152807, "radius_m": 60, "h_max_m": 18},
             {"id": "rt_4",  "lat": 26.652085, "lon": 50.149920, "radius_m": 60, "h_max_m": 18},
-            # rt_5–rt_10 removed: separate northern cluster ~5.5 km away (26.687–26.690 N),
-            # likely fixed-roof tanks — bbox inflation caused CV=87% in SPI time-series.
+            {"id": "rt_5",  "lat": 26.688442, "lon": 50.118714, "radius_m": 60, "h_max_m": 18},
+            {"id": "rt_6",  "lat": 26.687011, "lon": 50.117969, "radius_m": 60, "h_max_m": 18},
+            {"id": "rt_7",  "lat": 26.687548, "lon": 50.116596, "radius_m": 60, "h_max_m": 18},
+            {"id": "rt_8",  "lat": 26.689090, "lon": 50.117193, "radius_m": 60, "h_max_m": 18},
+            {"id": "rt_9",  "lat": 26.688215, "lon": 50.114879, "radius_m": 60, "h_max_m": 18},
+            {"id": "rt_10", "lat": 26.689749, "lon": 50.115695, "radius_m": 60, "h_max_m": 18},
             {"id": "rt_11", "lat": 26.651657, "lon": 50.148320, "radius_m": 35, "h_max_m": 13},
             {"id": "rt_12", "lat": 26.649988, "lon": 50.148177, "radius_m": 35, "h_max_m": 13},
             {"id": "rt_13", "lat": 26.650865, "lon": 50.148946, "radius_m": 35, "h_max_m": 13},
