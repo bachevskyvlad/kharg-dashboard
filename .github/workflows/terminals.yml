@@ -1,26 +1,19 @@
-name: Gulf Terminals SAR Pipeline
+name: Terminal Force Backfill
 
 on:
   workflow_dispatch:
     inputs:
       terminal:
-        description: "Terminal to process (al_flaw / lavan / siri / jask / all)"
+        description: "Terminal id or 'all'"
         required: false
         default: "all"
-      dry_run:
-        description: "Dry run (skip Supabase writes)"
-        required: false
-        default: "false"
       force:
-        description: "Force re-fetch all dates (use when new tanks added)"
+        description: "Re-fetch all history from 2014 (use when new tanks added)"
         required: false
         default: "false"
-  schedule:
-    # Run weekly on Mondays at 06:00 UTC (after Kharg pipeline)
-    - cron: "0 6 * * 1"
 
 jobs:
-  run-terminals:
+  backfill:
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -34,14 +27,13 @@ jobs:
           python-version: "3.11"
 
       - name: Install dependencies
-        run: pip install sentinelhub supabase numpy pandas matplotlib
+        run: pip install -r requirements.txt
 
-      - name: Run multi-terminal pipeline
+      - name: Run ingest
         env:
           CLIENT_ID: ${{ secrets.CLIENT_ID }}
           CLIENT_SECRET: ${{ secrets.CLIENT_SECRET }}
         run: |
           ARGS="--terminal ${{ inputs.terminal || 'all' }}"
-          if [ "${{ inputs.dry_run }}" = "true" ]; then ARGS="$ARGS --dry-run"; fi
           if [ "${{ inputs.force }}" = "true" ]; then ARGS="$ARGS --force"; fi
-          python multi_terminal_pipeline.py $ARGS
+          python ingest.py $ARGS
