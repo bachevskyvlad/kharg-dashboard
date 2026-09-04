@@ -267,7 +267,7 @@ footer{background:var(--panel);border-top:1px solid var(--border);padding:32px 4
 
   <div class="data-note" id="note">
     Detection via Sentinel-1 IW VV backscatter. Per-pass adaptive threshold. Kharg Island and known offshore platforms masked.
-    Small vessels (&lt;100m) excluded — non-export traffic. Last 2 weeks hidden (SAR processing lag).
+    Small vessels (&lt;100m) excluded — non-export traffic.
     Queue Index = current 4-week avg / historical 95th percentile × 100.
   </div>
 </main>
@@ -319,11 +319,8 @@ async function loadData() {
 }
 
 function filterRecords(records, range) {
-  // Dataset is always 2026+; hide last 2 weeks (SAR processing lag)
-  const cutEnd = new Date();
-  cutEnd.setDate(cutEnd.getDate() - 14);
-  const endStr = cutEnd.toISOString().slice(0,10);
-  let data = records.filter(r => r.date >= '2026-01-01' && r.date <= endStr);
+  const endStr = new Date().toISOString().slice(0,10);
+  let data = records.filter(r => r.date >= '2026-01-01');
 
   if (range === 'all') return data;
 
@@ -353,9 +350,7 @@ function computeStats(records) {
 
 function updateKPIs(records) {
   // Historical stats from full dataset; chart/KPI display from 2026+
-  const cutEnd = new Date(); cutEnd.setDate(cutEnd.getDate() - 14);
-  const endStr = cutEnd.toISOString().slice(0,10);
-  const fullData = records.filter(r => r.date <= endStr);
+  const fullData = records;
   const visible  = fullData.filter(r => r.date >= '2026-01-01');
   const { mean, p95, latest, tqi } = computeStats(fullData);
   if (!latest) return;
