@@ -113,6 +113,16 @@ for terminal in TERMINALS:
         df_t["h_max"]    = df_t["tank_id"].map(lambda t_id: tank_geom.get(t_id, {}).get("h_max_m"))
         df_t = df_t.dropna(subset=["radius_m", "h_max"])
 
+        # Drop dates where fewer than 50% of the terminal's tanks contributed —
+        # partial-cluster dates produce artificially low volume sums.
+        tanks_per_date = df_t.groupby("date")["tank_id"].nunique()
+        max_tanks = tanks_per_date.max()
+        valid_dates = tanks_per_date[tanks_per_date >= max_tanks * 0.5].index
+        n_dropped = (tanks_per_date < max_tanks * 0.5).sum()
+        if n_dropped:
+            print(f"  dropping {n_dropped} partial-coverage dates (max_tanks={max_tanks})")
+        df_t = df_t[df_t["date"].isin(valid_dates)]
+
         df_t, _, _ = compute_volumes(df_t)
         daily_t = aggregate_daily(df_t)
 
