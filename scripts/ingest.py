@@ -159,14 +159,19 @@ for terminal in TERMINALS:
     else:
         fetch_clusters = [("default", tanks)]
 
-    # Catalog dates once per terminal using the first cluster's bbox
-    # (scene dates are the same for nearby clusters; catalog call is cheap)
-    try:
-        catalog_bbox = _bbox(fetch_clusters[0][1])
-        all_t = get_all_scene_dates(catalog_bbox, start_date=catalog_start, orbit_state=orbit_state)
-    except Exception as e:
-        print(f"  [!] Catalog failed: {e}")
+    # Catalog dates per cluster and take the union — clusters may fall in
+    # different SAR scenes and have non-overlapping acquisition dates.
+    all_t_set = set()
+    for c_name, c_tanks in fetch_clusters:
+        try:
+            c_dates = get_all_scene_dates(_bbox(c_tanks), start_date=catalog_start, orbit_state=orbit_state)
+            all_t_set.update(c_dates)
+        except Exception as e:
+            print(f"  [!] Catalog failed for cluster '{c_name}': {e}")
+    if not all_t_set:
+        print(f"  [!] No scene dates found — skipping")
         continue
+    all_t = sorted(all_t_set)
 
     new_t = [d for d in all_t if d not in existing]
     print(f"  total: {len(all_t)} | existing: {len(existing)} | new: {len(new_t)}{' (force)' if args.force else ''}")
