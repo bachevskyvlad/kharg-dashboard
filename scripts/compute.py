@@ -130,9 +130,12 @@ for terminal in TERMINALS:
                  "vol_mn_bbl": round(float(r["vol_mn_bbl"]), 3),
                  "aggregation": "daily", "smoothed": False}
                 for _, r in daily_t.iterrows()]
-        sb.table("terminal_volume_timeseries").upsert(
-            rows, on_conflict="terminal_id,date,aggregation,smoothed").execute()
-        print(f"  {len(rows)} rows upserted")
+        # Delete existing rows before re-inserting so partial-coverage rows
+        # that were excluded by the tank-count filter are removed.
+        sb.table("terminal_volume_timeseries").delete().eq(
+            "terminal_id", tid).eq("aggregation", "daily").execute()
+        sb.table("terminal_volume_timeseries").insert(rows).execute()
+        print(f"  {len(rows)} rows inserted (replaced)")
         terminal_daily[tid] = daily_t
 
     except Exception as e:
