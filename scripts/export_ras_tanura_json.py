@@ -11,7 +11,7 @@ import os
 from supabase import create_client
 
 SUPABASE_URL = "https://yoekhkczwdeyauwarsyy.supabase.co"
-SUPABASE_KEY = os.environ.get("SUPABASE_KEY", "sb_publishable_7j07_zzdqTGM1LXf7-o9Tg_JJRbJQSM")
+SUPABASE_KEY = os.environ.get("SUPABASE_KEY") or "sb_publishable_7j07_zzdqTGM1LXf7-o9Tg_JJRbJQSM"
 sb = create_client(SUPABASE_URL, SUPABASE_KEY)
 
 OUTPUT_DIR = os.path.join(os.path.dirname(__file__), "..", "data", "terminals")
