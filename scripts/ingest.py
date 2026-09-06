@@ -122,10 +122,8 @@ for terminal in TERMINALS:
 
     print(f"\n[ingest] {terminal['name']} ({tid}) — {len(tanks)} tanks")
 
-    bbox  = _bbox(tanks)
-    lat0  = min(t["lat"] for t in tanks)
-    img_w = int((bbox.max_x - bbox.min_x) * 111320 * np.cos(np.deg2rad(lat0)) / RESOLUTION)
-    img_h = int((bbox.max_y - bbox.min_y) * 111320 / RESOLUTION)
+    orbit_state = terminal.get("orbit_state", "descending")
+    los_azimuth = terminal.get("los_azimuth", None)  # None → uses config default (282°)
 
     existing = set() if args.force else _existing_dates_terminal(tid)
 
@@ -138,14 +136,42 @@ for terminal in TERMINALS:
         # new terminal — full history from START_DATE
         catalog_start = START_DATE
 
-    orbit_state = terminal.get("orbit_state", "descending")
-    los_azimuth = terminal.get("los_azimuth", None)  # None → uses config default (282°)
+    # Build list of (cluster_name, cluster_tanks) to fetch independently.
+    # Terminals with a "clusters" key get one bbox per cluster; others get one bbox for all tanks.
+    clusters_def = terminal.get("clusters")
+    if clusters_def:
+        tank_by_id = {t["id"]: t for t in tanks}
+        fetch_clusters = []
+        seen_ids = set()
+        for c in clusters_def:
+            c_tanks = [tank_by_id[tid_] for tid_ in c["tank_ids"] if tid_ in tank_by_id]
+            overlap = seen_ids & {t["id"] for t in c_tanks}
+            if overlap:
+                print(f"  [!] Duplicate tank ids across clusters: {overlap} — skipping duplicates")
+                c_tanks = [t for t in c_tanks if t["id"] not in seen_ids]
+            seen_ids.update(t["id"] for t in c_tanks)
+            if c_tanks:
+                fetch_clusters.append((c["name"], c_tanks))
+        # Any tanks not assigned to a cluster go into a fallback group
+        unassigned = [t for t in tanks if t["id"] not in seen_ids]
+        if unassigned:
+            fetch_clusters.append(("default", unassigned))
+    else:
+        fetch_clusters = [("default", tanks)]
 
-    try:
-        all_t = get_all_scene_dates(bbox, start_date=catalog_start, orbit_state=orbit_state)
-    except Exception as e:
-        print(f"  [!] Catalog failed: {e}")
+    # Catalog dates per cluster and take the union — clusters may fall in
+    # different SAR scenes and have non-overlapping acquisition dates.
+    all_t_set = set()
+    for c_name, c_tanks in fetch_clusters:
+        try:
+            c_dates = get_all_scene_dates(_bbox(c_tanks), start_date=catalog_start, orbit_state=orbit_state)
+            all_t_set.update(c_dates)
+        except Exception as e:
+            print(f"  [!] Catalog failed for cluster '{c_name}': {e}")
+    if not all_t_set:
+        print(f"  [!] No scene dates found — skipping")
         continue
+    all_t = sorted(all_t_set)
 
     new_t = [d for d in all_t if d not in existing]
     print(f"  total: {len(all_t)} | existing: {len(existing)} | new: {len(new_t)}{' (force)' if args.force else ''}")
@@ -154,21 +180,30 @@ for terminal in TERMINALS:
     if not new_t:
         continue
 
-    try:
-        t_data = build_crescent_masks(tanks, bbox, img_w, img_h, los_azimuth=los_azimuth)
-        raw    = fetch_new_records(new_t, t_data, bbox, img_w, img_h)
-        for r in raw:
-            r["terminal_id"] = tid
-            # clip SAR artifacts: VV backscatter physically bounded below ~-5 dB
-            if r.get("db_mean") is not None:
-                r["db_mean"] = max(r["db_mean"], -5.0)
-        if raw:
-            sb.table("terminal_observations").upsert(
-                raw, on_conflict="terminal_id,date,tank_id"
-            ).execute()
-            print(f"  upserted {len(raw)} rows")
-    except Exception as e:
-        print(f"  [!] Fetch failed: {e}")
+    all_raw = []
+    for c_name, c_tanks in fetch_clusters:
+        label = f"  [{c_name}]" if len(fetch_clusters) > 1 else " "
+        try:
+            c_bbox  = _bbox(c_tanks)
+            lat0    = min(t["lat"] for t in c_tanks)
+            img_w   = int((c_bbox.max_x - c_bbox.min_x) * 111320 * np.cos(np.deg2rad(lat0)) / RESOLUTION)
+            img_h   = int((c_bbox.max_y - c_bbox.min_y) * 111320 / RESOLUTION)
+            t_data  = build_crescent_masks(c_tanks, c_bbox, img_w, img_h, los_azimuth=los_azimuth)
+            raw     = fetch_new_records(new_t, t_data, c_bbox, img_w, img_h)
+            print(f"{label} {len(c_tanks)} tanks → {len(raw)} raw records")
+            all_raw.extend(raw)
+        except Exception as e:
+            print(f"{label} [!] Fetch failed: {e}")
+
+    for r in all_raw:
+        r["terminal_id"] = tid
+        if r.get("db_mean") is not None:
+            r["db_mean"] = max(r["db_mean"], -5.0)
+    if all_raw:
+        sb.table("terminal_observations").upsert(
+            all_raw, on_conflict="terminal_id,date,tank_id"
+        ).execute()
+        print(f"  upserted {len(all_raw)} rows total")
 
 with open("data/ingest_summary.json", "w") as f:
     json.dump(summary, f)

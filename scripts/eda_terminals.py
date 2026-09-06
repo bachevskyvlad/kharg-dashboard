@@ -92,7 +92,17 @@ for tid, grp in df.groupby("terminal_id"):
     if db_max > 25:
         flag += f" ⚠ db_max={db_max}"
 
-    print(f"  {tid:<20} passes={n:>4}  {first} → {last}  max_gap={max_gap:>3}d  db=[{db_min:>6},{db_max:>6}]{flag}")
+    tanks_per_date = grp.groupby("date")["tank_id"].count()
+    t_min = int(tanks_per_date.min())
+    t_max = int(tanks_per_date.max())
+    t_mean = round(tanks_per_date.mean(), 1)
+    t_sparse = int((tanks_per_date < t_max * 0.5).sum())
+
+    tank_flag = ""
+    if t_sparse > 0:
+        tank_flag = f" ⚠ {t_sparse} dates<50%tanks (tanks/date: min={t_min} mean={t_mean} max={t_max})"
+
+    print(f"  {tid:<20} passes={n:>4}  {first} → {last}  max_gap={max_gap:>3}d  db=[{db_min:>6},{db_max:>6}]{flag}{tank_flag}")
     summary_rows.append({"tid": tid, "passes": n, "first": first, "last": last,
                           "max_gap": max_gap, "gaps_big": gaps_big, "null_db": null_db,
                           "db_min": db_min, "db_max": db_max})

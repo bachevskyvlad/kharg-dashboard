@@ -1,0 +1,33 @@
+name: Export — Ras Tanura JSON
+
+on:
+  workflow_dispatch:
+
+jobs:
+  export:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: pip install supabase pandas
+
+      - name: Export ras_tanura JSON
+        run: python scripts/export_ras_tanura_json.py
+        env:
+          SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+
+      - name: Commit and push
+        run: |
+          git config user.name "bot"
+          git config user.email "bot@github.com"
+          git add data/terminals/ras_tanura_daily.json
+          git diff --cached --quiet && echo "no changes" && exit 0
+          git commit -m "data: export ras_tanura daily volume JSON"
+          git push

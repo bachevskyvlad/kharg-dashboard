@@ -468,6 +468,20 @@ LOCATIONS = [
         "country": "SA",
         "los_azimuth": 282,
         "status": "active",
+        # Two geographically separate clusters ~5.5 km apart — fetched with independent
+        # bboxes so a single SAR pass covers each tightly without inflating the image frame.
+        "clusters": [
+            {"name": "south", "tank_ids": [
+                "rt_0","rt_1","rt_2","rt_3","rt_4",
+                "rt_11","rt_12","rt_13","rt_14","rt_15","rt_16","rt_17","rt_18","rt_19","rt_20",
+                "rt_21","rt_22","rt_23","rt_24","rt_25","rt_26","rt_27","rt_28","rt_29","rt_30",
+                "rt_31","rt_32","rt_33","rt_34","rt_35","rt_36","rt_37","rt_38","rt_39","rt_40",
+                "rt_41","rt_42","rt_43","rt_44","rt_45","rt_46","rt_47","rt_48","rt_49","rt_50",
+                "rt_51","rt_52","rt_53","rt_54","rt_55","rt_56","rt_57","rt_58","rt_59","rt_60",
+                "rt_61","rt_62","rt_63","rt_64","rt_65",
+            ]},
+            {"name": "north", "tank_ids": ["rt_5","rt_6","rt_7","rt_8","rt_9","rt_10"]},
+        ],
         "tanks": [
             {"id": "rt_0",  "lat": 26.638626, "lon": 50.154236, "radius_m": 60, "h_max_m": 18},
             {"id": "rt_1",  "lat": 26.640430, "lon": 50.153296, "radius_m": 60, "h_max_m": 18},
