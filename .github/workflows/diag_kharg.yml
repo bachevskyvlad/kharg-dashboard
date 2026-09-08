@@ -21,16 +21,16 @@ jobs:
         env:
           SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
         run: |
-          python3 - <<'EOF'
+          python3 - <<'PYEOF'
 import os, json
 from supabase import create_client
-from collections import Counter
+from collections import Counter, defaultdict
+import statistics
 
 SUPABASE_URL = "https://yoekhkczwdeyauwarsyy.supabase.co"
 SUPABASE_KEY = os.environ.get("SUPABASE_KEY") or "sb_publishable_7j07_zzdqTGM1LXf7-o9Tg_JJRbJQSM"
 sb = create_client(SUPABASE_URL, SUPABASE_KEY)
 
-# Pull all raw_observations (Kharg only)
 print("Fetching raw_observations ...")
 rows = []
 offset = 0
@@ -45,13 +45,9 @@ while True:
     offset += 1000
 print(f"Total rows: {len(rows)}")
 
-from collections import Counter, defaultdict
-
 date_tanks = defaultdict(set)
-date_db = defaultdict(list)
 for r in rows:
     date_tanks[r["date"]].add(r["tank_id"])
-    date_db[r["date"]].append(r["db_mean"])
 
 date_counts = {d: len(t) for d, t in date_tanks.items()}
 all_counts = sorted(date_counts.values())
@@ -61,13 +57,11 @@ for t in date_tanks.values():
 
 print(f"\n=== TANK INVENTORY ===")
 print(f"Total unique tank_ids: {len(all_tanks)}")
-print(f"Tank IDs: {sorted(all_tanks)[:10]} ...")
 
 print(f"\n=== COVERAGE ===")
 print(f"Total dates: {len(date_counts)}")
 print(f"Min coverage: {min(all_counts)} tanks")
 print(f"Max coverage: {max(all_counts)} tanks")
-import statistics
 print(f"Median coverage: {statistics.median(all_counts)}")
 
 print(f"\n=== 20 WORST COVERAGE DATES ===")
@@ -80,7 +74,7 @@ for n in sorted(hist.keys()):
     bar = "#" * (hist[n] // 2)
     print(f"  {n:3d} tanks: {hist[n]:4d} dates  {bar}")
 
-print(f"\n=== dB STATS PER TANK (top 10 fullest / emptiest) ===")
+print(f"\n=== dB STATS PER TANK ===")
 tank_db = defaultdict(list)
 for r in rows:
     tank_db[r["tank_id"]].append(r["db_mean"])
@@ -95,24 +89,22 @@ for tid, dbs in tank_db.items():
         "max": round(max(dbs), 2),
     })
 tank_stats.sort(key=lambda x: x["mean"])
-print("FULLEST (lowest dB):")
+print("FULLEST (lowest mean dB):")
 for t in tank_stats[:10]:
     print(f"  {t['tank_id']:10s}  mean={t['mean']:6.2f}  min={t['min']:6.2f}  max={t['max']:6.2f}  n={t['n']}")
-print("EMPTIEST (highest dB):")
-for t in tank_stats[-10:]:
+print("EMPTIEST (highest mean dB):")
+for t in reversed(tank_stats[-10:]):
     print(f"  {t['tank_id']:10s}  mean={t['mean']:6.2f}  min={t['min']:6.2f}  max={t['max']:6.2f}  n={t['n']}")
 
 print(f"\n=== GLOBAL dB PERCENTILES ===")
-all_db = [r["db_mean"] for r in rows]
-all_db.sort()
+all_db = sorted(r["db_mean"] for r in rows)
 n = len(all_db)
 p05 = all_db[int(n*0.05)]
 p95 = all_db[int(n*0.95)]
-print(f"  5th percentile (dB_min, 'full'):  {p05:.3f}")
-print(f"  95th percentile (dB_max, 'empty'): {p95:.3f}")
-print(f"  Range used in fill_ratio: {p05:.3f} → {p95:.3f}")
+print(f"  5th  percentile (dB_min = 'full'):   {p05:.3f} dB")
+print(f"  95th percentile (dB_max = 'empty'):  {p95:.3f} dB")
 
-print(f"\n=== LAST 20 DAILY VOLUMES ===")
+print(f"\n=== LAST 20 DAILY VOLUMES (volume_timeseries) ===")
 vol_rows = (sb.table("volume_timeseries")
               .select("date,vol_mn_bbl")
               .eq("aggregation","daily")
@@ -122,6 +114,4 @@ vol_rows = (sb.table("volume_timeseries")
               .execute().data)
 for r in vol_rows:
     print(f"  {r['date']}: {r['vol_mn_bbl']} Mb")
-
-EOF
-
+PYEOF
