@@ -487,11 +487,6 @@
         <div class="nav-item" id="nav-signals" onclick="showSection('signals')" style="opacity:0.35;pointer-events:none">
             <span class="nav-icon">⚡</span> Export Signals <span id="signals-badge" style="display:none;background:var(--accent);color:#fff;font-size:0.6rem;font-weight:700;padding:1px 6px;border-radius:10px;margin-left:4px"></span>
         </div>
-        <hr class="nav-divider" id="nav-gulf-divider" style="display:none">
-        <div class="nav-group-label" id="nav-gulf-group" style="display:none">Gulf</div>
-        <div class="nav-item" id="nav-gulf" style="display:none" onclick="showSection('gulf')">
-            <span class="nav-icon">🛢</span> Terminals
-        </div>
         <hr class="nav-divider">
         <div class="nav-group-label">Ships</div>
         <div class="nav-item" onclick="showSection('anchorage')">
@@ -560,6 +555,20 @@
                 </div>
             </div>
             <button class="export-btn" onclick="exportCSV()">Export CSV</button>
+        </div>
+
+        <!-- Country filter — visible only for admin -->
+        <div id="country-filter-wrap" style="display:none;margin-bottom:1rem">
+            <div class="ctrl-group">
+                <span class="ctrl-label">Country</span>
+                <div class="btn-group">
+                    <button class="tbtn tbtn-country active" data-terminal="kharg"      onclick="setTerminal('kharg')">🇮🇷 Iran</button>
+                    <button class="tbtn tbtn-country"        data-terminal="ras_tanura" onclick="setTerminal('ras_tanura')">🇸🇦 Saudi</button>
+                    <button class="tbtn tbtn-country"        data-terminal="lavan"      onclick="setTerminal('lavan')">🇮🇷 Lavan</button>
+                    <button class="tbtn tbtn-country"        data-terminal="siri"       onclick="setTerminal('siri')">🇮🇷 Siri</button>
+                    <button class="tbtn tbtn-country"        data-terminal="jask"       onclick="setTerminal('jask')">🇮🇷 Jask</button>
+                </div>
+            </div>
         </div>
 
         <div class="sec-title" id="overviewTitle">Inventory Level &amp; Velocity</div>
@@ -1041,74 +1050,78 @@ async function checkAuth() {
         const label = _userTier === 'trial' ? `${d.email} · Trial` : d.email;
         document.getElementById('userEmail').textContent = label;
         applyTierRestrictions();
-        if (_userEmail === 'vladislav.bachevsky@gmail.com') enableGulfTerminals();
+        if (_userEmail === 'vladislav.bachevsky@gmail.com') enableCountryFilter();
     } catch { window.location.href = '/app'; }
 }
 
-// ── Gulf Terminals (admin-only) ──────────────────────────────────────────────
-const GULF_TERMINALS = [
-    { id: 'ras_tanura',  name: 'Ras Tanura',   flag: '🇸🇦', file: '/data/terminals/ras_tanura_daily.json' },
-    { id: 'lavan',       name: 'Lavan Island',  flag: '🇮🇷', file: '/data/terminals/lavan_daily.json' },
-    { id: 'siri',        name: 'Siri Island',   flag: '🇮🇷', file: '/data/terminals/siri_daily.json' },
-    { id: 'jask',        name: 'Jask',          flag: '🇮🇷', file: '/data/terminals/jask_daily.json' },
+// ── Country filter (admin-only extras) ───────────────────────────────────────
+const COUNTRY_TERMINALS = [
+    { id: 'kharg',      label: 'Iran',         flag: '🇮🇷', file: null },  // default, uses existing data
+    { id: 'ras_tanura', label: 'Saudi Arabia', flag: '🇸🇦', file: '/data/terminals/ras_tanura_daily.json' },
+    { id: 'lavan',      label: 'Lavan',        flag: '🇮🇷', file: '/data/terminals/lavan_daily.json' },
+    { id: 'siri',       label: 'Siri',         flag: '🇮🇷', file: '/data/terminals/siri_daily.json' },
+    { id: 'jask',       label: 'Jask',         flag: '🇮🇷', file: '/data/terminals/jask_daily.json' },
 ];
+let _activeTerminal = 'kharg';
 
-function enableGulfTerminals() {
-    ['nav-gulf-divider','nav-gulf-group','nav-gulf'].forEach(id => {
-        const el = document.getElementById(id);
-        if (el) el.style.display = '';
-    });
+function enableCountryFilter() {
+    const wrap = document.getElementById('country-filter-wrap');
+    if (wrap) wrap.style.display = '';
 }
 
-async function renderGulfTerminals() {
-    const grid = document.getElementById('gulf-grid');
-    grid.innerHTML = '<div style="color:var(--muted);font-size:0.75rem">Loading…</div>';
-
-    const results = await Promise.all(GULF_TERMINALS.map(async t => {
-        try {
-            const r = await fetch(t.file);
-            const d = await r.json();
-            return { ...t, dates: d.dates || [], values: d.values || [], maxCap: d.max_capacity_mb };
-        } catch { return { ...t, dates: [], values: [], maxCap: null }; }
-    }));
-
-    grid.innerHTML = results.map(t => {
-        if (!t.dates.length) return `<div class="card" style="padding:1rem"><b>${t.flag} ${t.name}</b><div style="color:var(--muted);font-size:0.72rem;margin-top:0.5rem">No data</div></div>`;
-        const last = t.values[t.values.length - 1];
-        const prev = t.values[t.values.length - 2] ?? last;
-        const delta = last - prev;
-        const deltaStr = (delta >= 0 ? '+' : '') + delta.toFixed(2);
-        const deltaColor = delta < 0 ? 'var(--green)' : 'var(--red)';
-        const capLine = t.maxCap ? `<span style="color:var(--muted)"> / ${t.maxCap} Mb cap</span>` : '';
-        const svgPath = _sparkPath(t.values.slice(-60), 280, 50);
-        return `
-        <div class="card" style="padding:1rem 1.25rem">
-            <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:0.75rem">
-                <div style="font-size:0.72rem;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:var(--muted)">${t.flag} ${t.name}</div>
-                <div style="font-size:0.65rem;color:var(--muted)">${t.dates[t.dates.length-1]}</div>
-            </div>
-            <div style="display:flex;align-items:baseline;gap:0.5rem;margin-bottom:0.75rem">
-                <span style="font-size:1.6rem;font-weight:700;font-variant-numeric:tabular-nums">${last.toFixed(2)}</span>
-                <span style="font-size:0.7rem;color:var(--muted)">Mb${capLine}</span>
-                <span style="font-size:0.72rem;font-weight:600;color:${deltaColor};margin-left:auto">${deltaStr} Mb</span>
-            </div>
-            <svg viewBox="0 0 280 50" style="width:100%;height:50px;overflow:visible">
-                <path d="${svgPath}" fill="none" stroke="var(--accent)" stroke-width="1.5" stroke-linejoin="round"/>
-            </svg>
-        </div>`;
-    }).join('');
+async function setTerminal(id) {
+    if (id === _activeTerminal) return;
+    _activeTerminal = id;
+    document.querySelectorAll('.tbtn-country').forEach(b => {
+        b.classList.toggle('active', b.dataset.terminal === id);
+    });
+    const t = COUNTRY_TERMINALS.find(x => x.id === id);
+    if (!t || !t.file) {
+        // restore Kharg
+        loadData();
+        return;
+    }
+    try {
+        const r = await fetch(t.file);
+        const d = await r.json();
+        _overrideData = { dates: d.dates, values: d.values, name: d.name || t.label, maxCap: d.max_capacity_mb };
+    } catch { _overrideData = null; }
+    renderOverrideChart();
 }
 
-function _sparkPath(vals, w, h) {
-    if (!vals.length) return '';
-    const mn = Math.min(...vals), mx = Math.max(...vals);
-    const range = mx - mn || 1;
-    const pts = vals.map((v, i) => {
-        const x = (i / (vals.length - 1)) * w;
-        const y = h - ((v - mn) / range) * h;
-        return `${i === 0 ? 'M' : 'L'}${x.toFixed(1)},${y.toFixed(1)}`;
+let _overrideData = null;
+
+function renderOverrideChart() {
+    if (!_overrideData) return;
+    const { dates, values, name, maxCap } = _overrideData;
+    const range = _currentRange || 90;
+    const cutoff = range === 0 ? 0 : dates.length - range;
+    const slicedDates  = dates.slice(Math.max(0, cutoff));
+    const slicedValues = values.slice(Math.max(0, cutoff));
+    const last = slicedValues[slicedValues.length - 1];
+    const prev7 = slicedValues[Math.max(0, slicedValues.length - 8)];
+    const delta7 = last - prev7;
+
+    document.getElementById('overviewTitle').textContent = name + ' — Inventory Level';
+    document.getElementById('mVol').innerHTML = last.toFixed(2) + '<span class="cu"> Mb</span>';
+    document.getElementById('cVol').querySelector('.card-sub').textContent = maxCap ? `of ${maxCap} Mb capacity` : '';
+    const util = maxCap ? (last / maxCap * 100).toFixed(1) : '--';
+    document.getElementById('mUtil').innerHTML = util + '<span class="cu">%</span>';
+    document.getElementById('mRate').innerHTML = (delta7 >= 0 ? '+' : '') + delta7.toFixed(2) + '<span class="cu"> Mb</span>';
+    document.getElementById('mRateSub').textContent = (delta7 < 0 ? '▼ Draw' : '▲ Build');
+
+    // re-use existing chart render
+    if (window._chartInst) window._chartInst.destroy();
+    const ctx = document.getElementById('volChart');
+    if (!ctx) return;
+    window._chartInst = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: slicedDates,
+            datasets: [{ data: slicedValues, borderColor: '#3b82f6', borderWidth: 2, pointRadius: 0, tension: 0.3, fill: false }]
+        },
+        options: { responsive: true, plugins: { legend: { display: false } }, scales: { x: { ticks: { maxTicksLimit: 8 } } } }
     });
-    return pts.join(' ');
 }
 
 function applyTierRestrictions() {
@@ -1159,7 +1172,6 @@ function showSection(id) {
     if (mobNav) mobNav.classList.add('active');
     if (id === 'map' && !window._mapInited) { initTankMap(); window._mapInited = true; }
     if (id === 'anchorage') { initAnchorage(); }
-    if (id === 'gulf' && !window._gulfInited) { window._gulfInited = true; renderGulfTerminals(); }
     if (id === 'flows') {
         if (!window._flowsInited) { window._flowsInited = true; _flowsRange = 90; loadFlows(); }
         else if (_flowsData) { renderFlows(_flowsData); }
@@ -2031,17 +2043,6 @@ async function initTankMap() {
 </script>
 
 <div class="es-tip" id="esTip"></div>
-
-<!-- ── SECTION: GULF TERMINALS (admin only) ── -->
-<div class="section" id="sec-gulf">
-    <div class="sec-title" style="margin-bottom:0.25rem">Gulf Terminals</div>
-    <div style="font-size:0.72rem;color:var(--muted);margin-bottom:1.5rem">
-        Iranian export terminals tracked by Sentinel-1 SAR. Daily volume estimates (Mb).
-    </div>
-    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:1.25rem" id="gulf-grid">
-        <!-- cards injected by renderGulfTerminals() -->
-    </div>
-</div>
 
 <!-- ── ONBOARDING MODAL ── -->
 <div class="ob-overlay" id="obOverlay">
