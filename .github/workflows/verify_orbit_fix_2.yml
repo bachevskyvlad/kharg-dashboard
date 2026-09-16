@@ -1,4 +1,4 @@
-name: Verify — Ras Tanura Round 2
+name: Verify — Ras Tanura Round 2 (v2)
 
 on:
   workflow_dispatch:
