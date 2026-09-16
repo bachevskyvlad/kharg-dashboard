@@ -487,6 +487,11 @@
         <div class="nav-item" id="nav-signals" onclick="showSection('signals')" style="opacity:0.35;pointer-events:none">
             <span class="nav-icon">⚡</span> Export Signals <span id="signals-badge" style="display:none;background:var(--accent);color:#fff;font-size:0.6rem;font-weight:700;padding:1px 6px;border-radius:10px;margin-left:4px"></span>
         </div>
+        <hr class="nav-divider" id="nav-gulf-divider" style="display:none">
+        <div class="nav-group-label" id="nav-gulf-group" style="display:none">Gulf</div>
+        <div class="nav-item" id="nav-gulf" style="display:none" onclick="showSection('gulf')">
+            <span class="nav-icon">🛢</span> Terminals
+        </div>
         <hr class="nav-divider">
         <div class="nav-group-label">Ships</div>
         <div class="nav-item" onclick="showSection('anchorage')">
@@ -1024,6 +1029,7 @@
 <script>
 // ── Auth ──────────────────────────────────────────────────────────────────
 let _userTier = 'paid';
+let _userEmail = '';
 
 async function checkAuth() {
     try {
@@ -1031,10 +1037,78 @@ async function checkAuth() {
         const d = await r.json();
         if (!d.authenticated) { window.location.href = '/app'; return; }
         _userTier = d.tier || 'paid';
+        _userEmail = d.email || '';
         const label = _userTier === 'trial' ? `${d.email} · Trial` : d.email;
         document.getElementById('userEmail').textContent = label;
         applyTierRestrictions();
+        if (_userEmail === 'vladislav.bachevsky@gmail.com') enableGulfTerminals();
     } catch { window.location.href = '/app'; }
+}
+
+// ── Gulf Terminals (admin-only) ──────────────────────────────────────────────
+const GULF_TERMINALS = [
+    { id: 'ras_tanura',  name: 'Ras Tanura',   flag: '🇸🇦', file: '/data/terminals/ras_tanura_daily.json' },
+    { id: 'lavan',       name: 'Lavan Island',  flag: '🇮🇷', file: '/data/terminals/lavan_daily.json' },
+    { id: 'siri',        name: 'Siri Island',   flag: '🇮🇷', file: '/data/terminals/siri_daily.json' },
+    { id: 'jask',        name: 'Jask',          flag: '🇮🇷', file: '/data/terminals/jask_daily.json' },
+];
+
+function enableGulfTerminals() {
+    ['nav-gulf-divider','nav-gulf-group','nav-gulf'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.style.display = '';
+    });
+}
+
+async function renderGulfTerminals() {
+    const grid = document.getElementById('gulf-grid');
+    grid.innerHTML = '<div style="color:var(--muted);font-size:0.75rem">Loading…</div>';
+
+    const results = await Promise.all(GULF_TERMINALS.map(async t => {
+        try {
+            const r = await fetch(t.file);
+            const d = await r.json();
+            return { ...t, dates: d.dates || [], values: d.values || [], maxCap: d.max_capacity_mb };
+        } catch { return { ...t, dates: [], values: [], maxCap: null }; }
+    }));
+
+    grid.innerHTML = results.map(t => {
+        if (!t.dates.length) return `<div class="card" style="padding:1rem"><b>${t.flag} ${t.name}</b><div style="color:var(--muted);font-size:0.72rem;margin-top:0.5rem">No data</div></div>`;
+        const last = t.values[t.values.length - 1];
+        const prev = t.values[t.values.length - 2] ?? last;
+        const delta = last - prev;
+        const deltaStr = (delta >= 0 ? '+' : '') + delta.toFixed(2);
+        const deltaColor = delta < 0 ? 'var(--green)' : 'var(--red)';
+        const capLine = t.maxCap ? `<span style="color:var(--muted)"> / ${t.maxCap} Mb cap</span>` : '';
+        const svgPath = _sparkPath(t.values.slice(-60), 280, 50);
+        return `
+        <div class="card" style="padding:1rem 1.25rem">
+            <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:0.75rem">
+                <div style="font-size:0.72rem;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:var(--muted)">${t.flag} ${t.name}</div>
+                <div style="font-size:0.65rem;color:var(--muted)">${t.dates[t.dates.length-1]}</div>
+            </div>
+            <div style="display:flex;align-items:baseline;gap:0.5rem;margin-bottom:0.75rem">
+                <span style="font-size:1.6rem;font-weight:700;font-variant-numeric:tabular-nums">${last.toFixed(2)}</span>
+                <span style="font-size:0.7rem;color:var(--muted)">Mb${capLine}</span>
+                <span style="font-size:0.72rem;font-weight:600;color:${deltaColor};margin-left:auto">${deltaStr} Mb</span>
+            </div>
+            <svg viewBox="0 0 280 50" style="width:100%;height:50px;overflow:visible">
+                <path d="${svgPath}" fill="none" stroke="var(--accent)" stroke-width="1.5" stroke-linejoin="round"/>
+            </svg>
+        </div>`;
+    }).join('');
+}
+
+function _sparkPath(vals, w, h) {
+    if (!vals.length) return '';
+    const mn = Math.min(...vals), mx = Math.max(...vals);
+    const range = mx - mn || 1;
+    const pts = vals.map((v, i) => {
+        const x = (i / (vals.length - 1)) * w;
+        const y = h - ((v - mn) / range) * h;
+        return `${i === 0 ? 'M' : 'L'}${x.toFixed(1)},${y.toFixed(1)}`;
+    });
+    return pts.join(' ');
 }
 
 function applyTierRestrictions() {
@@ -1085,6 +1159,7 @@ function showSection(id) {
     if (mobNav) mobNav.classList.add('active');
     if (id === 'map' && !window._mapInited) { initTankMap(); window._mapInited = true; }
     if (id === 'anchorage') { initAnchorage(); }
+    if (id === 'gulf' && !window._gulfInited) { window._gulfInited = true; renderGulfTerminals(); }
     if (id === 'flows') {
         if (!window._flowsInited) { window._flowsInited = true; _flowsRange = 90; loadFlows(); }
         else if (_flowsData) { renderFlows(_flowsData); }
@@ -1956,6 +2031,17 @@ async function initTankMap() {
 </script>
 
 <div class="es-tip" id="esTip"></div>
+
+<!-- ── SECTION: GULF TERMINALS (admin only) ── -->
+<div class="section" id="sec-gulf">
+    <div class="sec-title" style="margin-bottom:0.25rem">Gulf Terminals</div>
+    <div style="font-size:0.72rem;color:var(--muted);margin-bottom:1.5rem">
+        Iranian export terminals tracked by Sentinel-1 SAR. Daily volume estimates (Mb).
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:1.25rem" id="gulf-grid">
+        <!-- cards injected by renderGulfTerminals() -->
+    </div>
+</div>
 
 <!-- ── ONBOARDING MODAL ── -->
 <div class="ob-overlay" id="obOverlay">
