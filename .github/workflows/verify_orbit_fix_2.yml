@@ -1,0 +1,39 @@
+name: Verify — Ras Tanura Round 2
+
+on:
+  workflow_dispatch:
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: claude/oilradar-dashboard-iran-zchdva
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: pip install -r scripts/requirements.txt matplotlib
+
+      - name: Run verification round 2
+        run: python scripts/verify_orbit_fix_2.py
+        env:
+          CLIENT_ID: ${{ secrets.CLIENT_ID }}
+          CLIENT_SECRET: ${{ secrets.CLIENT_SECRET }}
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+
+      - name: Print VERIFICATION_2.md
+        if: always()
+        run: cat diagnostics/ras_tanura/VERIFICATION_2.md 2>/dev/null || echo "No report generated"
+
+      - name: Upload diagnostics
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: orbit-fix-verification-2
+          path: diagnostics/ras_tanura/
+          retention-days: 30
