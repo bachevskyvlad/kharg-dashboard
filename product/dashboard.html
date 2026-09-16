@@ -1056,13 +1056,14 @@ async function checkAuth() {
 
 // ── Country filter (admin-only extras) ───────────────────────────────────────
 const COUNTRY_TERMINALS = [
-    { id: 'kharg',      label: 'Iran',         flag: '🇮🇷', file: null },  // default, uses existing data
-    { id: 'ras_tanura', label: 'Saudi Arabia', flag: '🇸🇦', file: '/data/terminals/ras_tanura_daily.json' },
-    { id: 'lavan',      label: 'Lavan',        flag: '🇮🇷', file: '/data/terminals/lavan_daily.json' },
-    { id: 'siri',       label: 'Siri',         flag: '🇮🇷', file: '/data/terminals/siri_daily.json' },
-    { id: 'jask',       label: 'Jask',         flag: '🇮🇷', file: '/data/terminals/jask_daily.json' },
+    { id: 'kharg',      label: 'Iran (Kharg)',  file: null },
+    { id: 'ras_tanura', label: 'Ras Tanura',    file: '/data/terminals/ras_tanura_daily.json' },
+    { id: 'lavan',      label: 'Lavan',         file: '/data/terminals/lavan_daily.json' },
+    { id: 'siri',       label: 'Siri',          file: '/data/terminals/siri_daily.json' },
+    { id: 'jask',       label: 'Jask',          file: '/data/terminals/jask_daily.json' },
 ];
 let _activeTerminal = 'kharg';
+let _khargDates = [], _khargValues = [];
 
 function enableCountryFilter() {
     const wrap = document.getElementById('country-filter-wrap');
@@ -1072,56 +1073,24 @@ function enableCountryFilter() {
 async function setTerminal(id) {
     if (id === _activeTerminal) return;
     _activeTerminal = id;
-    document.querySelectorAll('.tbtn-country').forEach(b => {
-        b.classList.toggle('active', b.dataset.terminal === id);
-    });
+    document.querySelectorAll('.tbtn-country').forEach(b =>
+        b.classList.toggle('active', b.dataset.terminal === id));
+
     const t = COUNTRY_TERMINALS.find(x => x.id === id);
     if (!t || !t.file) {
-        // restore Kharg
-        loadData();
+        // restore Kharg — allDates/allValues already hold it
+        allDates = _khargDates.slice();
+        allValues = _khargValues.slice();
+        render();
         return;
     }
     try {
         const r = await fetch(t.file);
         const d = await r.json();
-        _overrideData = { dates: d.dates, values: d.values, name: d.name || t.label, maxCap: d.max_capacity_mb };
-    } catch { _overrideData = null; }
-    renderOverrideChart();
-}
-
-let _overrideData = null;
-
-function renderOverrideChart() {
-    if (!_overrideData) return;
-    const { dates, values, name, maxCap } = _overrideData;
-    const range = _currentRange || 90;
-    const cutoff = range === 0 ? 0 : dates.length - range;
-    const slicedDates  = dates.slice(Math.max(0, cutoff));
-    const slicedValues = values.slice(Math.max(0, cutoff));
-    const last = slicedValues[slicedValues.length - 1];
-    const prev7 = slicedValues[Math.max(0, slicedValues.length - 8)];
-    const delta7 = last - prev7;
-
-    document.getElementById('overviewTitle').textContent = name + ' — Inventory Level';
-    document.getElementById('mVol').innerHTML = last.toFixed(2) + '<span class="cu"> Mb</span>';
-    document.getElementById('cVol').querySelector('.card-sub').textContent = maxCap ? `of ${maxCap} Mb capacity` : '';
-    const util = maxCap ? (last / maxCap * 100).toFixed(1) : '--';
-    document.getElementById('mUtil').innerHTML = util + '<span class="cu">%</span>';
-    document.getElementById('mRate').innerHTML = (delta7 >= 0 ? '+' : '') + delta7.toFixed(2) + '<span class="cu"> Mb</span>';
-    document.getElementById('mRateSub').textContent = (delta7 < 0 ? '▼ Draw' : '▲ Build');
-
-    // re-use existing chart render
-    if (window._chartInst) window._chartInst.destroy();
-    const ctx = document.getElementById('volChart');
-    if (!ctx) return;
-    window._chartInst = new Chart(ctx, {
-        type: 'line',
-        data: {
-            labels: slicedDates,
-            datasets: [{ data: slicedValues, borderColor: '#3b82f6', borderWidth: 2, pointRadius: 0, tension: 0.3, fill: false }]
-        },
-        options: { responsive: true, plugins: { legend: { display: false } }, scales: { x: { ticks: { maxTicksLimit: 8 } } } }
-    });
+        allDates  = d.dates  || [];
+        allValues = d.values || [];
+        render();
+    } catch (e) { console.error('setTerminal fetch failed', e); }
 }
 
 function applyTierRestrictions() {
@@ -1238,6 +1207,9 @@ async function loadData() {
         allDates = daily.dates || [];
         allValues = daily.values || [];
     }
+    // snapshot Kharg data so country filter can restore it
+    _khargDates  = allDates.slice();
+    _khargValues = allValues.slice();
     render();
     loadStagingSignal().then(s => { window._stagingData = s; render(); });
 }
