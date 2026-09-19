@@ -75,13 +75,17 @@ def load_cache(raw_cache_path, sb):
     return cached_records, cached_dates
 
 
-def get_all_scene_dates(super_bbox, start_date=None, orbit_state="descending"):
+def get_all_scene_dates(super_bbox, start_date=None, orbit_state="descending", relative_orbit=None):
     """
     Queries the Sentinel Hub catalog for S1 scenes over the given bbox.
 
     orbit_state: "descending" (default, covers Persian Gulf / Russia) or
                  "ascending" (needed for Red Sea terminals like Yanbu where
                  descending orbit has no coverage after 2016).
+
+    relative_orbit: if set, restricts to that specific orbit number.
+                    Use for terminals with multiple overlapping orbits
+                    (e.g. ras_tanura DESC 35 to exclude DESC 137).
 
     Deduplication logic: the catalog sometimes returns two scenes ~1 second
     apart when a pass straddles a UTC day boundary (the satellite crosses
@@ -98,11 +102,14 @@ def get_all_scene_dates(super_bbox, start_date=None, orbit_state="descending"):
 
     try:
         catalog = SentinelHubCatalog(config=config)
+        stac_filter = f"sat:orbit_state = '{orbit_state}'"
+        if relative_orbit is not None:
+            stac_filter += f" AND sat:relative_orbit = {relative_orbit}"
         scenes = list(catalog.search(
             S1_CDSE,
             bbox=super_bbox,
             time=(effective_start.strftime("%Y-%m-%d"), end_date.strftime("%Y-%m-%d")),
-            filter=f"sat:orbit_state = '{orbit_state}'",
+            filter=stac_filter,
             fields={"include": ["properties.datetime", "properties.sat:relative_orbit"]}
         ))
         # Deduplicate by relative orbit number: one physical pass = one orbit number per day.

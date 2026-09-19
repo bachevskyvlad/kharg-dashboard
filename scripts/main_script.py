@@ -184,7 +184,11 @@ for terminal in TERMINALS:
 
     try:
         from sar_fetch import get_all_scene_dates as _get_dates
-        all_t_dates = _get_dates(bbox)
+        all_t_dates = _get_dates(
+            bbox,
+            orbit_state=terminal.get("orbit_state", "descending"),
+            relative_orbit=terminal.get("relative_orbit"),
+        )
     except Exception as e:
         print(f"  [!] Catalog query failed: {e}"); continue
 

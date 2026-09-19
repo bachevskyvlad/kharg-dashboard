@@ -467,6 +467,8 @@ LOCATIONS = [
         "name": "Ras Tanura",
         "country": "SA",
         "los_azimuth": 282,
+        # DESC 137 contaminates 25% of weekly aggregates — lock to orbit 35 only.
+        "relative_orbit": 35,
         "status": "active",
         # Two geographically separate clusters ~5.5 km apart — fetched with independent
         # bboxes so a single SAR pass covers each tightly without inflating the image frame.
