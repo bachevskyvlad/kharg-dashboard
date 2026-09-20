@@ -1,6 +1,15 @@
 name: Hormuz Ship Detection
 on:
   workflow_dispatch:
+    inputs:
+      scene_index:
+        description: 'Scene index (0=latest, 1=second, 2=third)'
+        required: false
+        default: '0'
+      output_name:
+        description: 'Output filename (without .jpg)'
+        required: false
+        default: 'hormuz_latest'
 jobs:
   detect:
     runs-on: ubuntu-latest
@@ -14,11 +23,12 @@ jobs:
         env:
           CLIENT_ID: ${{ secrets.CLIENT_ID }}
           CLIENT_SECRET: ${{ secrets.CLIENT_SECRET }}
+          SCENE_INDEX: ${{ inputs.scene_index }}
       - name: Commit result image
         run: |
           git config user.email "actions@github.com"
           git config user.name "GitHub Actions"
-          cp /tmp/hormuz_ships.jpg data/hormuz_latest.jpg
-          git add data/hormuz_latest.jpg
-          git commit -m "ci: update Hormuz ship detection result [skip ci]" || echo "nothing to commit"
+          cp /tmp/hormuz_ships.jpg data/${{ inputs.output_name || 'hormuz_latest' }}.jpg
+          git add data/
+          git commit -m "ci: update Hormuz ship detection [${{ inputs.output_name || 'hormuz_latest' }}] [skip ci]" || echo "nothing to commit"
           git push origin claude/oilradar-dashboard-iran-zchdva
