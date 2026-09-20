@@ -33,11 +33,14 @@ S1_CDSE = DataCollection.SENTINEL1.define_from(
     service_url="https://sh.dataspace.copernicus.eu",
 )
 
-# ── Strait of Hormuz — wide bbox showing both Iranian (N) and Omani (S) coasts
-# Iran coast ~27.0-27.3°N, Oman/UAE coast ~25.8-26.1°N
-# Narrowest navigable channel is ~26.3-26.7°N around 56.0-57.0°E
-BBOX = BBox([55.5, 25.8, 57.2, 27.2], crs=CRS.WGS84)
-RESOLUTION = 80  # m/px — 80m fits both coasts in under 2500px
+# ── Strait of Hormuz — zoomed on the navigable channel between Qeshm and Oman
+# Qeshm Island south coast ~26.5°N, Oman coast ~25.8°N
+# Detection zone: south of Qeshm only (lat < 26.55°N)
+BBOX = BBox([55.8, 25.8, 57.1, 26.9], crs=CRS.WGS84)
+RESOLUTION = 60  # m/px — finer resolution at reduced area
+
+# Latitude threshold: only detect ships south of Qeshm Island
+DETECT_LAT_MAX = 26.55  # °N — north of this = Persian Gulf / Qeshm, skip
 
 lat_mid = (BBOX.min_y + BBOX.max_y) / 2
 width_m  = (BBOX.max_x - BBOX.min_x) * 111320 * np.cos(np.deg2rad(lat_mid))
@@ -106,18 +109,25 @@ img_db = 10 * np.log10(np.clip(img, 1e-10, None))
 # ── Valid mask (finite, non-zero pixels) ─────────────────────────────────────────────────────────────────
 valid_mask = np.isfinite(img_db) & (img > 0)
 
+# ── Detection zone: south of Qeshm only ─────────────────────────────────────────────────
+lon_range_deg = BBOX.max_x - BBOX.min_x  # noqa: F841 (used for ticks below)
+lat_range_deg = BBOX.max_y - BBOX.min_y
+detect_row_start = int((BBOX.max_y - DETECT_LAT_MAX) / lat_range_deg * IMG_H)
+detect_zone = np.zeros(img_db.shape, dtype=bool)
+detect_zone[detect_row_start:, :] = True
+
 # ── CFAR-lite ship detector ───────────────────────────────────────────────────────────────────────────
-WINDOW_SIZE = 21   # smaller window for coarser resolution
+WINDOW_SIZE = 17   # window tuned for 60m/px
 SIGMA       = 3
-MIN_SHIP_PX = 1    # at 80m/px: 1px = 80m object
-MAX_SHIP_PX = 80   # ~6.4km — larger = land fragment
+MIN_SHIP_PX = 1    # at 60m/px: 1px = 60m object
+MAX_SHIP_PX = 100  # ~6km — larger = land fragment
 
 local_mean  = uniform_filter(img_db, size=WINDOW_SIZE, mode='reflect')
 local_mean2 = uniform_filter(img_db**2, size=WINDOW_SIZE, mode='reflect')
 local_std2  = np.sqrt(np.maximum(local_mean2 - local_mean**2, 0))
 
 threshold  = local_mean + SIGMA * local_std2
-detections = (img_db > threshold) & valid_mask
+detections = (img_db > threshold) & valid_mask & detect_zone
 print(f"Raw detections: {detections.sum()} px above threshold")
 
 # ── Cluster into ship objects ─────────────────────────────────────────────────────────────────────────────
@@ -155,6 +165,11 @@ for (x0, y0, x1, y1) in ship_boxes:
     )
     ax.add_patch(rect)
 
+# Detection boundary line (south of Qeshm)
+ax.axhline(detect_row_start, color="#ff6600", linewidth=0.8, linestyle="--", alpha=0.6)
+ax.text(0.98, detect_row_start / IMG_H - 0.01, "← detection zone", transform=ax.transAxes,
+        color="#ff6600", fontsize=7, ha="right", va="bottom", alpha=0.7)
+
 # Lat/lon axis ticks
 lon_range = BBOX.max_x - BBOX.min_x
 lat_range = BBOX.max_y - BBOX.min_y
@@ -169,12 +184,12 @@ ax.tick_params(length=3, color="#555")
 # Shore labels
 ax.text(0.02, 0.04, "OMAN / UAE", transform=ax.transAxes,
         color="#ffcc00", fontsize=9, fontweight="bold", alpha=0.85)
-ax.text(0.02, 0.96, "IRAN", transform=ax.transAxes,
+ax.text(0.02, 0.96, "IRAN / QESHM", transform=ax.transAxes,
         color="#ffcc00", fontsize=9, fontweight="bold", alpha=0.85, va="top")
 
 ax.set_title(
     f"Strait of Hormuz — Sentinel-1 VV  {scene_date}\n"
-    f"Ships detected: {n_ships}  (σ={SIGMA}, {RESOLUTION}m/px, CFAR)",
+    f"Ships detected (Qeshm–Oman channel): {n_ships}  (σ={SIGMA}, {RESOLUTION}m/px, CFAR)",
     color="white", fontsize=12, pad=10,
 )
 
@@ -201,6 +216,7 @@ print(f"  Orbit        : any")
 print(f"  Resolution   : {RESOLUTION} m/px")
 print(f"  Image size   : {IMG_W} × {IMG_H} px")
 print(f"  Detector     : CFAR-lite σ={SIGMA}, window={WINDOW_SIZE}px")
+print(f"  Detect zone  : south of {DETECT_LAT_MAX}°N (Qeshm–Oman channel)")
 print(f"  Ships found  : {n_ships}")
 if ship_pixels:
     sizes_m = [round(np.sqrt(s) * RESOLUTION) for s in ship_pixels]
