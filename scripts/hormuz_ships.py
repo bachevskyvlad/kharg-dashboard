@@ -43,7 +43,7 @@ S1_CDSE = DataCollection.SENTINEL1.define_from(
 # ── Ormuz strait bbox ─────────────────────────────────────────────────────────
 # Main shipping lane of the Strait of Hormuz — narrowest navigable channel
 BBOX = BBox([56.15, 26.35, 56.75, 26.75], crs=CRS.WGS84)
-RESOLUTION = 10  # metres/pixel
+RESOLUTION = 25  # metres/pixel  (SH max 2500px per side)
 
 width_m  = (BBOX.max_x - BBOX.min_x) * 111320 * np.cos(np.deg2rad(26.55))
 height_m = (BBOX.max_y - BBOX.min_y) * 111320
