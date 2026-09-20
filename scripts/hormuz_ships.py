@@ -18,7 +18,7 @@ import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
-from scipy.ndimage import label, uniform_filter, generic_filter
+from scipy.ndimage import label, uniform_filter
 
 # ── Credentials (same pattern as verify scripts) ──────────────────────────────
 SH_CLIENT_ID     = os.environ.get("CLIENT_ID")     or "sh-0f08bb88-cde8-4e6e-8eb9-1006acfe6be9"
@@ -119,12 +119,9 @@ pct65 = np.percentile(img_db[np.isfinite(img_db)], 65)
 water_mask = (img_db < pct65) | False  # start broad — refine below
 
 # Better: use a neighbourhood std to find flat (water) vs textured (land) areas
-local_std = generic_filter(img_db, np.std, size=15, mode='reflect')
-flat_mask  = local_std < 6.0   # water is flat; land is textured — use permissive 6dB
-
-# Combine: valid pixels are finite, not NaN/0, and look like water
+# Combine: valid pixels are finite and non-zero — CFAR adapts to local background
 valid_mask = np.isfinite(img_db) & (img > 0)
-water_mask = flat_mask & valid_mask
+water_mask = valid_mask
 
 print(f"Water mask coverage: {water_mask.mean()*100:.1f}% of image")
 
