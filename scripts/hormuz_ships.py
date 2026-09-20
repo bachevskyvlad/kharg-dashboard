@@ -120,7 +120,7 @@ water_mask = (img_db < pct65) | False  # start broad — refine below
 
 # Better: use a neighbourhood std to find flat (water) vs textured (land) areas
 local_std = generic_filter(img_db, np.std, size=15, mode='reflect')
-flat_mask  = local_std < 3.5   # water is flat in dB; land is textured
+flat_mask  = local_std < 6.0   # water is flat; land is textured — use permissive 6dB
 
 # Combine: valid pixels are finite, not NaN/0, and look like water
 valid_mask = np.isfinite(img_db) & (img > 0)
@@ -133,9 +133,9 @@ print(f"Water mask coverage: {water_mask.mean()*100:.1f}% of image")
 # Ship = pixel > local_mean + SIGMA * local_std, within water mask.
 GUARD_SIZE  = 5   # pixels ignored around candidate (guard cell)
 WINDOW_SIZE = 41  # neighbourhood window
-SIGMA       = 10  # detection threshold (high to avoid false alarms on coast edges)
-MIN_SHIP_PX = 3   # minimum cluster size to count as ship (at 10m: 3px = 30m object)
-MAX_SHIP_PX = 150 # maximum (larger = likely noise / coast fragment)
+SIGMA       = 5   # detection threshold — 5σ standard for open-sea SAR
+MIN_SHIP_PX = 2   # minimum cluster size (at 25m: 2px ≈ 50m object)
+MAX_SHIP_PX = 200 # maximum (larger = likely coast fragment)
 
 # Compute local mean and std in the window (fast uniform filter proxy)
 local_mean = uniform_filter(img_db, size=WINDOW_SIZE, mode='reflect')
@@ -164,7 +164,7 @@ print(f"\nDetections: {n_clusters} raw clusters → {n_ships} ships after size f
 print(f"Ship sizes: {sorted(ship_pixels, reverse=True)[:20]} px")
 
 # ── Render PNG ────────────────────────────────────────────────────────────────
-fig, axes = plt.subplots(1, 2, figsize=(18, 10), facecolor="#0d1117")
+fig, axes = plt.subplots(1, 2, figsize=(14, 7), facecolor="#0d1117")
 for ax in axes:
     ax.set_facecolor("#0d1117")
 
@@ -220,7 +220,7 @@ fig.suptitle(
 plt.tight_layout(rect=[0, 0, 1, 0.97])
 
 OUT = "/tmp/hormuz_ships.png"
-plt.savefig(OUT, dpi=150, bbox_inches="tight", facecolor="#0d1117")
+plt.savefig(OUT, dpi=72, bbox_inches="tight", facecolor="#0d1117")
 print(f"\nSaved: {OUT}")
 
 # Print base64 for extraction from GHA logs
