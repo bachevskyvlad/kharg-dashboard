@@ -1,0 +1,16 @@
+name: Hormuz Ship Detection
+on:
+  workflow_dispatch:
+jobs:
+  detect:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: claude/oilradar-dashboard-iran-zchdva
+      - run: pip install -r scripts/requirements.txt scipy matplotlib -q
+      - name: Run ship detector
+        run: python scripts/hormuz_ships.py
+        env:
+          CLIENT_ID: ${{ secrets.CLIENT_ID }}
+          CLIENT_SECRET: ${{ secrets.CLIENT_SECRET }}
