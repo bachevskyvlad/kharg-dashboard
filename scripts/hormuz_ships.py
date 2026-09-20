@@ -45,7 +45,7 @@ IMG_W = min(int(width_m  / RESOLUTION), 2400)
 IMG_H = min(int(height_m / RESOLUTION), 2400)
 print(f"Image size: {IMG_W} x {IMG_H} px  ({RESOLUTION}m/px)")
 
-# ── Find S1 scenes ─────────────────────────────────────────────
+# ── Find S1 scenes ──────────────────────────────────────────────
 end_dt   = datetime.utcnow()
 start_dt = end_dt - timedelta(days=60)
 
@@ -76,7 +76,7 @@ latest_dt  = scenes[SCENE_INDEX]["properties"]["datetime"]
 scene_date = latest_dt[:10]
 print(f"Scene [{SCENE_INDEX}]: {latest_dt}")
 
-# ── Download VV backscatter ────────────────────────────────────────────────────────────────────────────
+# ── Download VV backscatter ────────────────────────────────────────────────────────────────────────────────────
 EVALSCRIPT = """
 //VERSION=3
 function setup() {
@@ -111,10 +111,10 @@ if not data or data[0] is None:
 img = data[0].squeeze().astype(np.float32)
 print(f"Image shape: {img.shape}, min={img.min():.4f}, max={img.max():.4f}")
 
-# ── Convert to dB ───────────────────────────────────────────────────────────────────────────────────
+# ── Convert to dB ───────────────────────────────────────────────────────────────────────────────────────
 img_db = 10 * np.log10(np.clip(img, 1e-10, None))
 
-# ── Valid mask + CFAR ─────────────────────────────────────────────────────────────────────────────────────────
+# ── Valid mask + CFAR ───────────────────────────────────────────────────────────────────────────────────────────────
 valid_mask = np.isfinite(img_db) & (img > 0)
 
 WINDOW_SIZE = 15
@@ -129,11 +129,19 @@ local_std   = np.sqrt(np.maximum(local_mean2 - local_mean**2, 0))
 # Water mask: local background < -8 dB = open water, excludes land/coast
 water_mask = local_mean < -8.0
 
+# Anchorage exclusion: Khasab bay (SW corner) — lon<56.35°E && lat<26.45°N
+lon_range_deg = BBOX.max_x - BBOX.min_x
+lat_range_deg = BBOX.max_y - BBOX.min_y
+excl_col = int((56.35 - BBOX.min_x) / lon_range_deg * IMG_W)
+excl_row = int((BBOX.max_y - 26.45) / lat_range_deg * IMG_H)
+anchorage_mask = np.ones(img_db.shape, dtype=bool)
+anchorage_mask[excl_row:, :excl_col] = False  # exclude bottom-left bay
+
 threshold  = local_mean + SIGMA * local_std
-detections = (img_db > threshold) & valid_mask & water_mask
+detections = (img_db > threshold) & valid_mask & water_mask & anchorage_mask
 print(f"Raw detections: {detections.sum()} px")
 
-# ── Cluster ───────────────────────────────────────────────────────────────────────────────────────────────────────────
+# ── Cluster ──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
 struct = np.ones((3, 3), dtype=int)
 labeled, n_clusters = label(detections, structure=struct)
 
@@ -151,7 +159,7 @@ n_ships = len(ship_boxes)
 print(f"Detections: {n_clusters} clusters → {n_ships} ships")
 print(f"Ship sizes (px): {sorted(ship_pixels, reverse=True)}")
 
-# ── Render ──────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+# ── Render ────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
 fig, ax = plt.subplots(1, 1, figsize=(12, 6), facecolor="#0d1117")
 ax.set_facecolor("#0d1117")
 
