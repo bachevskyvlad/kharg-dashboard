@@ -59,7 +59,6 @@ catalog = SentinelHubCatalog(config=cfg)
 scenes = list(catalog.search(
     S1_CDSE, bbox=BBOX,
     time=(start_dt.strftime("%Y-%m-%d"), end_dt.strftime("%Y-%m-%d")),
-    filter="sat:orbit_state = 'descending'",
     fields={"include": ["properties.datetime"]},
 ))
 scenes.sort(key=lambda s: s["properties"]["datetime"], reverse=True)
@@ -130,7 +129,7 @@ print(f"Water mask coverage: {water_mask.mean()*100:.1f}% of image")
 # Ship = pixel > local_mean + SIGMA * local_std, within water mask.
 GUARD_SIZE  = 5   # pixels ignored around candidate (guard cell)
 WINDOW_SIZE = 41  # neighbourhood window
-SIGMA       = 5   # detection threshold — 5σ standard for open-sea SAR
+SIGMA       = 3   # detection threshold
 MIN_SHIP_PX = 2   # minimum cluster size (at 25m: 2px ≈ 50m object)
 MAX_SHIP_PX = 200 # maximum (larger = likely coast fragment)
 
@@ -141,6 +140,7 @@ local_std2 = np.sqrt(np.maximum(local_mean2 - local_mean**2, 0))
 
 threshold = local_mean + SIGMA * local_std2
 detections = (img_db > threshold) & water_mask & valid_mask
+print(f"Raw detections: {detections.sum()} px above threshold")
 
 # ── Cluster detections into ship objects ──────────────────────────────────────
 struct = np.ones((3, 3), dtype=int)
@@ -161,7 +161,7 @@ print(f"\nDetections: {n_clusters} raw clusters → {n_ships} ships after size f
 print(f"Ship sizes: {sorted(ship_pixels, reverse=True)[:20]} px")
 
 # ── Render PNG ────────────────────────────────────────────────────────────────
-fig, axes = plt.subplots(1, 2, figsize=(14, 7), facecolor="#0d1117")
+fig, axes = plt.subplots(1, 2, figsize=(10, 4), facecolor="#0d1117")
 for ax in axes:
     ax.set_facecolor("#0d1117")
 
@@ -217,7 +217,7 @@ fig.suptitle(
 plt.tight_layout(rect=[0, 0, 1, 0.97])
 
 OUT = "/tmp/hormuz_ships.png"
-plt.savefig(OUT, dpi=72, bbox_inches="tight", facecolor="#0d1117")
+plt.savefig(OUT, dpi=50, bbox_inches="tight", facecolor="#0d1117")
 print(f"\nSaved: {OUT}")
 
 # Print base64 for extraction from GHA logs
@@ -234,7 +234,7 @@ print("PNG_B64_END")
 print("\n" + "="*50)
 print(f"STRAIT OF HORMUZ SHIP COUNT SUMMARY")
 print(f"  Scene date   : {scene_date}")
-print(f"  Orbit        : descending")
+print(f"  Orbit        : any")
 print(f"  Resolution   : {RESOLUTION} m/px")
 print(f"  Image size   : {IMG_W} × {IMG_H} px")
 print(f"  Detector     : CFAR-lite σ={SIGMA}, window={WINDOW_SIZE}px")
