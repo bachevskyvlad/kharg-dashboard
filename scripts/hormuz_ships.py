@@ -216,8 +216,8 @@ fig.suptitle(
 )
 plt.tight_layout(rect=[0, 0, 1, 0.97])
 
-OUT = "/tmp/hormuz_ships.png"
-plt.savefig(OUT, dpi=50, bbox_inches="tight", facecolor="#0d1117")
+OUT = "/tmp/hormuz_ships.jpg"
+plt.savefig(OUT, dpi=50, bbox_inches="tight", facecolor="#0d1117", format="jpeg", quality=70, pil_kwargs={"quality": 70})
 print(f"\nSaved: {OUT}")
 
 # Print base64 for extraction from GHA logs
@@ -225,10 +225,10 @@ import base64
 with open(OUT, "rb") as f:
     b64 = base64.b64encode(f.read()).decode()
 chunk = 76
-print("PNG_B64_START")
+print("IMG_B64_START")
 for i in range(0, len(b64), chunk):
     print(b64[i:i+chunk])
-print("PNG_B64_END")
+print("IMG_B64_END")
 
 # ── Summary ───────────────────────────────────────────────────────────────────
 print("\n" + "="*50)
