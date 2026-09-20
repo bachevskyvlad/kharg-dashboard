@@ -14,3 +14,11 @@ jobs:
         env:
           CLIENT_ID: ${{ secrets.CLIENT_ID }}
           CLIENT_SECRET: ${{ secrets.CLIENT_SECRET }}
+      - name: Commit result image
+        run: |
+          git config user.email "actions@github.com"
+          git config user.name "GitHub Actions"
+          cp /tmp/hormuz_ships.jpg data/hormuz_latest.jpg
+          git add data/hormuz_latest.jpg
+          git commit -m "ci: update Hormuz ship detection result [skip ci]" || echo "nothing to commit"
+          git push origin claude/oilradar-dashboard-iran-zchdva
