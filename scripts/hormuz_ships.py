@@ -16,6 +16,7 @@ from scipy.ndimage import label, uniform_filter
 
 SH_CLIENT_ID     = os.environ.get("CLIENT_ID")     or "sh-0f08bb88-cde8-4e6e-8eb9-1006acfe6be9"
 SH_CLIENT_SECRET = os.environ.get("CLIENT_SECRET") or "erkNtZDw4z36UB0Xm7BrzcYixzaUGeW0"
+SCENE_INDEX      = int(os.environ.get("SCENE_INDEX", "0"))
 
 from sentinelhub import (
     SentinelHubRequest, SentinelHubCatalog, MimeType,
@@ -34,20 +35,19 @@ S1_CDSE = DataCollection.SENTINEL1.define_from(
 )
 
 # ── Strait of Hormuz — channel between Qeshm south coast and Musandam (Oman)
-# Qeshm south: ~26.55°N, Musandam/Oman: ~26.15°N
 BBOX = BBox([56.0, 26.15, 57.1, 26.75], crs=CRS.WGS84)
-RESOLUTION = 40  # m/px — tight area, can afford finer resolution
+RESOLUTION = 40  # m/px
 
 lat_mid = (BBOX.min_y + BBOX.max_y) / 2
 width_m  = (BBOX.max_x - BBOX.min_x) * 111320 * np.cos(np.deg2rad(lat_mid))
 height_m = (BBOX.max_y - BBOX.min_y) * 111320
 IMG_W = min(int(width_m  / RESOLUTION), 2400)
 IMG_H = min(int(height_m / RESOLUTION), 2400)
-print(f"Image size: {IMG_W} x {IMG_H} px  ({RESOLUTION}m/px)  [Hormuz strait channel]")
+print(f"Image size: {IMG_W} x {IMG_H} px  ({RESOLUTION}m/px)")
 
-# ── Find most recent S1 scene ─────────────────────────────────────────────
+# ── Find S1 scenes ─────────────────────────────────────────────
 end_dt   = datetime.utcnow()
-start_dt = end_dt - timedelta(days=30)
+start_dt = end_dt - timedelta(days=60)
 
 catalog = SentinelHubCatalog(config=cfg)
 scenes = list(catalog.search(
@@ -56,13 +56,25 @@ scenes = list(catalog.search(
     fields={"include": ["properties.datetime"]},
 ))
 scenes.sort(key=lambda s: s["properties"]["datetime"], reverse=True)
+# deduplicate by date
+seen = set()
+uniq = []
+for s in scenes:
+    d = s["properties"]["datetime"][:10]
+    if d not in seen:
+        seen.add(d)
+        uniq.append(s)
+scenes = uniq
+print(f"Available scenes ({len(scenes)}): {[s['properties']['datetime'][:10] for s in scenes[:8]]}")
 
 if not scenes:
     print("No scenes found"); sys.exit(1)
+if SCENE_INDEX >= len(scenes):
+    print(f"SCENE_INDEX={SCENE_INDEX} out of range ({len(scenes)} scenes)"); sys.exit(1)
 
-latest_dt  = scenes[0]["properties"]["datetime"]
+latest_dt  = scenes[SCENE_INDEX]["properties"]["datetime"]
 scene_date = latest_dt[:10]
-print(f"Latest scene: {latest_dt}")
+print(f"Scene [{SCENE_INDEX}]: {latest_dt}")
 
 # ── Download VV backscatter ────────────────────────────────────────────────────────────────────────────
 EVALSCRIPT = """
@@ -102,27 +114,26 @@ print(f"Image shape: {img.shape}, min={img.min():.4f}, max={img.max():.4f}")
 # ── Convert to dB ───────────────────────────────────────────────────────────────────────────────────
 img_db = 10 * np.log10(np.clip(img, 1e-10, None))
 
-# ── Valid mask + water mask ─────────────────────────────────────────────────────────────────────────────
+# ── Valid mask + CFAR ─────────────────────────────────────────────────────────────────────────────────────────
 valid_mask = np.isfinite(img_db) & (img > 0)
 
-# ── CFAR-lite ship detector ──────────────────────────────────────────────────
 WINDOW_SIZE = 15
-SIGMA       = 4    # raised to suppress wave clutter
-MIN_SHIP_PX = 3    # >=3px at 40m/px = ~120m minimum object
-MAX_SHIP_PX = 150  # ~6km max
+SIGMA       = 4
+MIN_SHIP_PX = 3
+MAX_SHIP_PX = 150
 
 local_mean  = uniform_filter(img_db, size=WINDOW_SIZE, mode='reflect')
 local_mean2 = uniform_filter(img_db**2, size=WINDOW_SIZE, mode='reflect')
 local_std   = np.sqrt(np.maximum(local_mean2 - local_mean**2, 0))
 
-# Water mask: background mean < -8 dB means open water (land/coast is brighter)
+# Water mask: local background < -8 dB = open water, excludes land/coast
 water_mask = local_mean < -8.0
 
 threshold  = local_mean + SIGMA * local_std
 detections = (img_db > threshold) & valid_mask & water_mask
-print(f"Raw detections: {detections.sum()} px above threshold (water pixels only)")
+print(f"Raw detections: {detections.sum()} px")
 
-# ── Cluster into ship objects ─────────────────────────────────────────────────────────────────────────────
+# ── Cluster ───────────────────────────────────────────────────────────────────────────────────────────────────────────
 struct = np.ones((3, 3), dtype=int)
 labeled, n_clusters = label(detections, structure=struct)
 
@@ -137,10 +148,10 @@ for i in range(1, n_clusters + 1):
         ship_pixels.append(int(sz))
 
 n_ships = len(ship_boxes)
-print(f"Detections: {n_clusters} raw clusters → {n_ships} ships after size filter")
-print(f"Ship sizes: {sorted(ship_pixels, reverse=True)[:20]} px")
+print(f"Detections: {n_clusters} clusters → {n_ships} ships")
+print(f"Ship sizes (px): {sorted(ship_pixels, reverse=True)}")
 
-# ── Render single annotated panel ────────────────────────────────────────────────────────────────────────
+# ── Render ──────────────────────────────────────────────────────────────────────────────────────────────────────────────────
 fig, ax = plt.subplots(1, 1, figsize=(12, 6), facecolor="#0d1117")
 ax.set_facecolor("#0d1117")
 
@@ -157,7 +168,6 @@ for (x0, y0, x1, y1) in ship_boxes:
     )
     ax.add_patch(rect)
 
-# Lat/lon axis ticks
 lon_range = BBOX.max_x - BBOX.min_x
 lat_range = BBOX.max_y - BBOX.min_y
 xt = np.linspace(0, IMG_W, 7)
@@ -189,22 +199,21 @@ print(f"\nSaved: {OUT}")
 import base64
 with open(OUT, "rb") as f:
     b64 = base64.b64encode(f.read()).decode()
-chunk = 76
 print("IMG_B64_START")
-for i in range(0, len(b64), chunk):
-    print(b64[i:i+chunk])
+for i in range(0, len(b64), 76):
+    print(b64[i:i+76])
 print("IMG_B64_END")
 
 print("\n" + "="*50)
 print(f"STRAIT OF HORMUZ SHIP COUNT SUMMARY")
 print(f"  Scene date   : {scene_date}")
+print(f"  Scene index  : {SCENE_INDEX}")
 print(f"  Resolution   : {RESOLUTION} m/px")
-print(f"  Image size   : {IMG_W} × {IMG_H} px")
-print(f"  Detector     : CFAR σ={SIGMA}, window={WINDOW_SIZE}px, water-mask <-8dB")
+print(f"  CFAR         : σ={SIGMA}, window={WINDOW_SIZE}px, water<-8dB")
 print(f"  Size filter  : {MIN_SHIP_PX}–{MAX_SHIP_PX} px")
 print(f"  Ships found  : {n_ships}")
 if ship_pixels:
     sizes_m = [round(np.sqrt(s) * RESOLUTION) for s in ship_pixels]
-    print(f"  Largest ship : ~{max(sizes_m)} m equivalent")
-    print(f"  Median size  : ~{int(np.median(sizes_m))} m")
+    print(f"  Largest      : ~{max(sizes_m)} m")
+    print(f"  Median       : ~{int(np.median(sizes_m))} m")
 print("="*50)
