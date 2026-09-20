@@ -217,7 +217,7 @@ fig.suptitle(
 plt.tight_layout(rect=[0, 0, 1, 0.97])
 
 OUT = "/tmp/hormuz_ships.jpg"
-plt.savefig(OUT, dpi=50, bbox_inches="tight", facecolor="#0d1117", format="jpeg", quality=70, pil_kwargs={"quality": 70})
+plt.savefig(OUT, dpi=50, bbox_inches="tight", facecolor="#0d1117", pil_kwargs={"quality": 55})
 print(f"\nSaved: {OUT}")
 
 # Print base64 for extraction from GHA logs
