@@ -1,0 +1,40 @@
+name: Backfill Ras Tanura (Task 3)
+on:
+  workflow_dispatch:
+    inputs:
+      commit:
+        description: 'Pass --commit to write to Supabase (dry-run if unchecked)'
+        type: boolean
+        default: false
+      reset:
+        description: 'Wipe checkpoint and restart from scratch'
+        type: boolean
+        default: false
+jobs:
+  backfill:
+    runs-on: ubuntu-latest
+    timeout-minutes: 360
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: claude/oilradar-dashboard-iran-zchdva
+      - run: pip install sentinelhub scipy supabase pandas -q
+      - name: Run backfill
+        run: |
+          FLAGS=""
+          if [ "${{ inputs.commit }}" = "true" ]; then FLAGS="$FLAGS --commit"; fi
+          if [ "${{ inputs.reset }}"  = "true" ]; then FLAGS="$FLAGS --reset";  fi
+          python scripts/backfill_ras_tanura.py $FLAGS
+        env:
+          CLIENT_ID:    ${{ secrets.CLIENT_ID }}
+          CLIENT_SECRET: ${{ secrets.CLIENT_SECRET }}
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+      - name: Save checkpoint
+        if: always()
+        run: |
+          git config user.email "actions@github.com"
+          git config user.name "GitHub Actions"
+          git add .backfill_checkpoint.json diagnostics/ || true
+          git commit -m "ci: backfill checkpoint [skip ci]" || echo "nothing to commit"
+          git push origin claude/oilradar-dashboard-iran-zchdva || true
