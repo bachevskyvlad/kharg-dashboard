@@ -102,7 +102,10 @@ def get_all_scene_dates(super_bbox, start_date=None, orbit_state="descending", r
 
     try:
         catalog = SentinelHubCatalog(config=config)
-        stac_filter = f"sat:orbit_state = '{orbit_state}'"
+        # Normalise short codes ("DESC"/"ASC") to full words required by the STAC API
+        _norm = {"desc": "descending", "asc": "ascending"}
+        orbit_state_api = _norm.get(orbit_state.lower(), orbit_state.lower())
+        stac_filter = f"sat:orbit_state = '{orbit_state_api}'"
         if relative_orbit is not None:
             stac_filter += f" AND sat:relative_orbit = {relative_orbit}"
         scenes = list(catalog.search(

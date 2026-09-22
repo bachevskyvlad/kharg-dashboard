@@ -176,7 +176,7 @@ def main():
         c_dates = get_all_scene_dates(
             _bbox(c_tanks),
             start_date=BACKFILL_START,
-            orbit_state=ALLOWED_ORBIT["direction"].lower(),
+            orbit_state=ALLOWED_ORBIT["direction"],
             relative_orbit=ALLOWED_ORBIT["relative_orbit"],
         )
         all_dates_set.update(c_dates)
