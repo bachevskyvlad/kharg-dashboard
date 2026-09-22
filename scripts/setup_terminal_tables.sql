@@ -18,6 +18,11 @@ CREATE TABLE IF NOT EXISTS terminal_observations (
 CREATE INDEX IF NOT EXISTS idx_terminal_obs_terminal_date
     ON terminal_observations (terminal_id, date DESC);
 
+-- Task 1: orbit provenance columns (added 2026-09).
+-- Nullable for backward compat; new rows from backfill/ingest always populate both.
+ALTER TABLE terminal_observations ADD COLUMN IF NOT EXISTS relative_orbit  INT;
+ALTER TABLE terminal_observations ADD COLUMN IF NOT EXISTS orbit_direction TEXT;
+
 -- Aggregated volume timeseries per terminal
 CREATE TABLE IF NOT EXISTS terminal_volume_timeseries (
     id            BIGSERIAL PRIMARY KEY,

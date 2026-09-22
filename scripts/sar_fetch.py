@@ -190,7 +190,16 @@ function evaluatePixel(sample) { return [sample.VV]; }
 """
 
 
-def fetch_new_records(new_dates, tanks_data, super_bbox, img_width, img_height):
+def _tank_valid_fraction(img_linear, crescent_mask):
+    """Return fraction of crescent pixels that are finite. Testable without SH."""
+    total = int(crescent_mask.sum())
+    if total == 0:
+        return 0.0
+    return int(np.isfinite(img_linear[crescent_mask]).sum()) / total
+
+
+def fetch_new_records(new_dates, tanks_data, super_bbox, img_width, img_height,
+                      min_valid_fraction=0.0):
     """
     Downloads SAR imagery for each date in new_dates and extracts per-tank dB means.
 
@@ -200,6 +209,11 @@ def fetch_new_records(new_dates, tanks_data, super_bbox, img_width, img_height):
       - Filters NaN/Inf pixels (can occur at image edges or layover zones)
       - Computes mean linear → convert to dB
       - Stores as a record per (date, tank_id)
+
+    min_valid_fraction: minimum ratio of finite pixels to total crescent pixels
+      required to emit a record. 0.0 = old behaviour (any finite pixel accepted).
+      Set to 0.5 for Ras Tanura ingest to guard against edge-of-frame partial
+      illumination (the rt_65 / DESC-137 contamination mechanism).
 
     Skips dates where Sentinel Hub returns no data (cloud-safe; SAR is all-weather
     but catalog misses or ordering failures can produce empty responses).
@@ -232,9 +246,17 @@ def fetch_new_records(new_dates, tanks_data, super_bbox, img_width, img_height):
                 continue
             img_linear = data[0].squeeze()
             for tank in tanks_data:
-                pixels = img_linear[tank["crescent"]]
-                # Filter NaN/Inf pixels (can appear at image edges or layover zones)
-                pixels = pixels[np.isfinite(pixels)]
+                crescent_pixels = int(tank["crescent"].sum())
+                pixels_all = img_linear[tank["crescent"]]
+                pixels = pixels_all[np.isfinite(pixels_all)]
+                # Guard: reject tank if too few valid pixels (edge-of-frame partial illumination)
+                valid_frac = _tank_valid_fraction(img_linear, tank["crescent"])
+                if min_valid_fraction > 0 and crescent_pixels > 0:
+                    if valid_frac < min_valid_fraction:
+                        print(f"  [guard] {d_str} {tank['id']}: "
+                              f"{100*valid_frac:.0f}% valid px < "
+                              f"{100*min_valid_fraction:.0f}% threshold — skipped")
+                        continue
                 if pixels.size > 0:
                     mean_linear = np.mean(pixels)
                     db_mean = 10 * np.log10(np.clip(mean_linear, 1e-10, None))
