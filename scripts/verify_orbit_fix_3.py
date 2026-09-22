@@ -709,7 +709,7 @@ def task3_orbit137_cycle():
         return
 
     df = pd.DataFrame(rows)
-    df["date"] = pd.to_datetime(df["date"])
+    df["date"] = pd.to_datetime(df["date"]).dt.tz_localize(None)
 
     # Find dates where only 1 tank reported (single-tank dates)
     per_date = df.groupby("date")["tank_id"].nunique().reset_index()
@@ -736,7 +736,7 @@ def task3_orbit137_cycle():
     print("  Fetching DESC 35 catalog anchor (all time)...")
     desc35_all = _catalog(bbox_probe, "2023-01-01", WIN_END, "descending")
     desc35_all = [s for s in desc35_all if s["relative_orbit"] == 35]
-    desc35_dates = sorted([s["date"] for s in desc35_all])
+    desc35_dates = sorted([s["date"].tz_localize(None) if s["date"].tzinfo else s["date"] for s in desc35_all])
     print(f"  DESC 35 dates found: {len(desc35_dates)}")
 
     if not desc35_dates:
