@@ -65,13 +65,11 @@ sh_config.sh_client_secret = SH_CLIENT_SECRET
 sh_config.sh_base_url      = "https://sh.dataspace.copernicus.eu"
 sh_config.sh_token_url     = "https://identity.dataspace.copernicus.eu/auth/realms/CDSE/protocol/openid-connect/token"
 
-import sentinelhub as _shub
-_shub_S1_CDSE = _shub.DataCollection.SENTINEL1_IW_SLC
-# Prefer the CDSE collection if available
-for _name in dir(_shub.DataCollection):
-    if "CDSE" in _name and "SENTINEL1" in _name:
-        _shub_S1_CDSE = getattr(_shub.DataCollection, _name)
-        break
+from sentinelhub import DataCollection as _DC
+_shub_S1_CDSE = _DC.SENTINEL1_IW.define_from(
+    "s1iw_cdse",
+    service_url="https://sh.dataspace.copernicus.eu"
+)
 
 # Override the global config used by sar_fetch / config.py
 os.environ.setdefault("CLIENT_ID",     SH_CLIENT_ID)
