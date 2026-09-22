@@ -106,8 +106,8 @@ def get_all_scene_dates(super_bbox, start_date=None, orbit_state="descending", r
         _norm = {"desc": "descending", "asc": "ascending"}
         orbit_state_api = _norm.get(orbit_state.lower(), orbit_state.lower())
         stac_filter = f"sat:orbit_state = '{orbit_state_api}'"
-        if relative_orbit is not None:
-            stac_filter += f" AND sat:relative_orbit = {relative_orbit}"
+        # sat:relative_orbit is NOT supported as a STAC filter property on CDSE —
+        # filter client-side from the returned scene properties instead.
         scenes = list(catalog.search(
             S1_CDSE,
             bbox=super_bbox,
@@ -122,6 +122,9 @@ def get_all_scene_dates(super_bbox, start_date=None, orbit_state="descending", r
         deduped = []
         for s in sorted(scenes, key=lambda x: x["properties"]["datetime"]):
             orbit = s["properties"].get("sat:relative_orbit")
+            # Client-side orbit filter (CDSE STAC does not support sat:relative_orbit in filter)
+            if relative_orbit is not None and orbit != relative_orbit:
+                continue
             dt = pd.to_datetime(s["properties"]["datetime"])
             # Key = (orbit_number, calendar_date) — unique physical pass
             key = (orbit, dt.normalize().date())
