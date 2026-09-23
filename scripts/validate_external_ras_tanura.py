@@ -42,7 +42,13 @@ SUPABASE_KEY = os.environ.get("SUPABASE_KEY") or "sb_publishable_7j07_zzdqTGM1LX
 
 JODI_DIR     = os.path.join(os.path.dirname(__file__), "..", "data", "external", "jodi")
 JODI_CACHE   = os.path.join(JODI_DIR, "jodi_oil_latest.csv")
-JODI_URL     = "https://www.jodidata.org/_resources/files/downloads/oil-data/jodi_oil_csv_beta.zip"
+JODI_URLS = [
+    "https://www.jodidata.org/_resources/files/downloads/oil-data/jodi_oil_world_primary_csv.zip",
+    "https://www.jodidata.org/_resources/files/downloads/oil-data/world_primary_csv.zip",
+    "https://www.jodidata.org/_resources/files/downloads/oil-data/jodi_oil_csv_beta.zip",
+    "https://www.jodidb.org/_resources/files/downloads/oil-data/jodi_oil_csv_beta.zip",
+]
+JODI_URL     = JODI_URLS[0]
 JODI_SAUDI_OUT = os.path.join(os.path.dirname(__file__), "..", "data", "external", "jodi_saudi_crude.csv")
 
 OUT_DIR      = os.path.join(os.path.dirname(__file__), "..", "diagnostics", "ras_tanura")
@@ -159,10 +165,23 @@ def download_jodi():
         age_days = (datetime.datetime.now().timestamp() - os.path.getmtime(JODI_CACHE)) / 86400
         print(f"[validate] JODI cache found ({age_days:.0f} days old) — using cached file")
         return True
-    print(f"[validate] Downloading JODI bulk CSV from {JODI_URL} ...")
+    print(f"[validate] Downloading JODI bulk CSV ...")
+    last_err = None
     try:
-        r = requests.get(JODI_URL, timeout=60, stream=True)
-        r.raise_for_status()
+        r = None
+        for url in JODI_URLS:
+            print(f"  Trying {url} ...")
+            try:
+                r = requests.get(url, timeout=60, stream=True)
+                r.raise_for_status()
+                print(f"  OK: {url}")
+                break
+            except Exception as e:
+                print(f"  failed ({type(e).__name__}): {e}")
+                last_err = e
+                r = None
+        if r is None:
+            raise last_err
         zip_path = os.path.join(JODI_DIR, "jodi_oil.zip")
         with open(zip_path, "wb") as f:
             for chunk in r.iter_content(65536):

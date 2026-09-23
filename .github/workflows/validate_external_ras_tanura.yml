@@ -6,9 +6,6 @@ on:
 jobs:
   validate:
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: scripts
 
     steps:
       - uses: actions/checkout@v4
@@ -19,34 +16,34 @@ jobs:
         with:
           python-version: "3.11"
 
-      - name: Install dependencies
-        run: pip install supabase pandas scipy matplotlib requests
-
-      - name: Restore JODI cache
-        id: jodi-cache
-        uses: actions/cache@v4
-        with:
-          path: data/external/jodi/jodi_oil_latest.csv
-          key: jodi-oil-${{ steps.date.outputs.week }}
-
       - name: Get week number (for cache key)
         id: date
         run: echo "week=$(date +%Y-W%V)" >> $GITHUB_OUTPUT
 
+      - name: Restore JODI cache
+        uses: actions/cache@v4
+        with:
+          path: data/external/jodi/jodi_oil_latest.csv
+          key: jodi-oil-${{ steps.date.outputs.week }}
+          restore-keys: jodi-oil-
+
+      - name: Install dependencies
+        run: pip install supabase pandas scipy matplotlib requests
+
       - name: Run validation
         env:
           SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
-        run: python validate_external_ras_tanura.py
+        run: python scripts/validate_external_ras_tanura.py
 
       - name: Commit results
         run: |
-          cd ..
           git config user.name "bot"
           git config user.email "bot@github.com"
           git add diagnostics/ras_tanura/VALIDATION_EXTERNAL.md \
                   diagnostics/ras_tanura/plots/ \
                   diagnostics/ras_tanura/correlations.csv \
-                  data/external/jodi_saudi_crude.csv || true
+                  data/external/jodi_saudi_crude.csv \
+                  data/external/jodi/jodi_oil_latest.csv || true
           git diff --cached --quiet && echo "no changes" && exit 0
           git commit -m "data: ras_tanura external validation report $(date +%Y-%m-%d)"
           git push
