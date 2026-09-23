@@ -228,10 +228,8 @@ def main():
         # tag rows
         for r in date_rows:
             r["terminal_id"] = TERMINAL_ID
-            # orbit provenance — omitted if columns not yet in DB schema;
-            # apply setup_terminal_tables.sql migration first, then re-run to populate
-            # r["relative_orbit"]  = rel_orbit
-            # r["orbit_direction"] = direction
+            r["relative_orbit"]  = rel_orbit
+            r["orbit_direction"] = direction
             if r.get("db_mean") is not None:
                 r["db_mean"] = max(r["db_mean"], -5.0)
 
@@ -252,7 +250,7 @@ def main():
     # Step 3: dry-run summary
     # ------------------------------------------------------------------
     df = pd.DataFrame(all_rows) if all_rows else pd.DataFrame(
-        columns=["date", "tank_id", "terminal_id"])
+        columns=["date", "tank_id", "terminal_id", "relative_orbit", "orbit_direction"])
 
     print("\n" + "="*60)
     print("DRY-RUN SUMMARY")
