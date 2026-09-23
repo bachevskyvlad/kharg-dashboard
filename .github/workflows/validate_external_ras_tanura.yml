@@ -42,8 +42,7 @@ jobs:
           git add diagnostics/ras_tanura/VALIDATION_EXTERNAL.md \
                   diagnostics/ras_tanura/plots/ \
                   diagnostics/ras_tanura/correlations.csv \
-                  data/external/jodi_saudi_crude.csv \
-                  data/external/jodi/jodi_oil_latest.csv || true
+                  data/external/jodi_saudi_crude.csv || true
           git diff --cached --quiet && echo "no changes" && exit 0
           git commit -m "data: ras_tanura external validation report $(date +%Y-%m-%d)"
           git push

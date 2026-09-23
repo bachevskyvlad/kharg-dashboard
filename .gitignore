@@ -99,3 +99,6 @@ venv.bak/
 .pypirc
 data/dardanelles_aegean_entrance_*.png
 data/*.png
+
+# JODI bulk CSV — 271MB, cached in GHA actions/cache, not committed to git
+data/external/jodi/
