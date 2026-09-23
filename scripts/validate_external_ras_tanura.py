@@ -241,9 +241,13 @@ def load_jodi_saudi():
     print(f"  Column mapping: {col_map}")
 
     # Filter Saudi Arabia, Crude Oil
-    sa_mask = df[col_map["country"]].str.upper().str.contains("SAUDI", na=False)
-    # JODI product codes: Crude Oil = "CRUDEOIL" or "Crude oil" or "TOTCRUDE"
-    crude_mask = df[col_map["product"]].str.upper().str.contains("CRUDE", na=False)
+    # JODI uses ISO2 country codes (SA) or full names — try both
+    country_vals = df[col_map["country"]].str.upper()
+    sa_mask = (country_vals == "SA") | country_vals.str.contains("SAUDI", na=False)
+    # JODI product codes: CRUDEOIL=crude oil, TOTCRUDE=total crude+condensate
+    # Use TOTCRUDE for exports/stocks (aggregate), CRUDEOIL as fallback
+    prod_vals = df[col_map["product"]].str.upper()
+    crude_mask = prod_vals.isin(["TOTCRUDE", "CRUDEOIL"])
     df_sa = df[sa_mask & crude_mask].copy()
     print(f"  Saudi crude rows: {len(df_sa)}")
     if len(df_sa) == 0:
