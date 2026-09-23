@@ -1,7 +1,7 @@
 # Diagnostic: Juwaymah + Yanbu
 **Date:** 2026-09-23  
 **Author:** automated diagnostic (same framework as Ras Tanura cycle)  
-**Status:** Task 0 complete from local data. Tasks 1–3 require Sentinel Hub access (blocked in CI container — run script locally or via GHA with network policy `external`).
+**Status:** Task 0 completed via GHA run #35921474302 (2026-09-23). Tasks 1–3 blocked: Sentinel Hub CLIENT_ID/CLIENT_SECRET secrets not set in repo, hardcoded fallback credentials also invalid (`InvalidClientError`).
 
 ---
 
@@ -25,23 +25,17 @@
 
 ### Supabase / terminal_observations
 
-Queried from local backup (`backups/ras_tanura_pre_rebuild_2026-09-22/`):
+Queried via GHA run #35921474302 (2026-09-23) — Supabase reachable in GHA, not in dev container:
 
-| terminal_id | rows | distinct_dates | distinct_tanks | min_date | max_date |
-|---|---|---|---|---|---|
-| ras_tanura | 21,110 | 558 | 66 | 2017-03-14 | 2026-09-18 |
-| **juwaymah** | **0** | **0** | **0** | — | — |
-| **yanbu** | **0** | **0** | **0** | — | — |
+| terminal_id | obs rows | vol_ts rows |
+|---|---|---|
+| ras_tanura | 20,793 | 315 |
+| **juwaymah** | **5,985** | **315** |
+| **yanbu** | **3,984** | **332** |
 
-**Juwaymah and Yanbu have zero observations in Supabase.** Neither terminal has been processed through the SAR pipeline.
+**Juwaymah and Yanbu data already exists in Supabase.** Both terminals have been processed through the SAR pipeline. Earlier assessment (from local backup which contained only ras_tanura rows) was incorrect.
 
-### Volume timeseries
-
-| terminal_id | rows | min_date | max_date |
-|---|---|---|---|
-| ras_tanura | 315 | 2017-03-14 | 2026-09-18 |
-| juwaymah | 0 | — | — |
-| yanbu | 0 | — | — |
+Note: The local backup (`backups/ras_tanura_pre_rebuild_2026-09-22/terminal_observations.csv`) contains only ras_tanura rows — it was a targeted backup, not a full export.
 
 ---
 
@@ -50,11 +44,11 @@ Queried from local backup (`backups/ras_tanura_pre_rebuild_2026-09-22/`):
 | Criterion | Juwaymah | Yanbu |
 |---|---|---|
 | In registry | ✅ 19 tanks | ✅ 12 tanks |
-| Data in Supabase | ❌ none | ❌ none |
-| Volume timeseries | ❌ none | ❌ none |
+| Data in Supabase | ✅ **5,985 rows** | ✅ **3,984 rows** |
+| Volume timeseries | ✅ **315 rows** | ✅ **332 rows** |
 | Same orbit frame as RT | **Likely yes** — DESC, los=282, 26.8°N vs 26.6°N for RT; probable same DESC 35 frame | ❌ **Different orbit** — ASC, los=98, Red Sea side |
 | allowed_orbits configured | ❌ not set (risk: multi-orbit contamination, same issue RT had) | ❌ not set |
-| Blocker for immediate backfill | `allowed_orbits` not set → need orbit audit before processing | Ascending orbit, los=98 → separate calibration run needed; no existing calibration data |
+| Blocker for immediate signal analysis | `allowed_orbits` audit recommended before using signal | Ascending orbit, los=98 → crescent mask direction inverted vs RT |
 
 ---
 
@@ -127,7 +121,7 @@ Expected to verify:
 | Criterion | Juwaymah | Yanbu |
 |---|---|---|
 | In registry | ✅ 19 tanks, r=50m | ✅ 12 tanks, r=60m |
-| In Supabase | ❌ zero data | ❌ zero data |
+| In Supabase | ✅ 5,985 obs rows, 315 vol_ts rows | ✅ 3,984 obs rows, 332 vol_ts rows |
 | Tank coverage % (optical) | ⬜ not checked (needs SH) | ⬜ not checked (needs SH) |
 | Floating roof % | ⬜ not checked | ⬜ not checked |
 | Orbit / cadence | ⬜ catalog blocked; likely DESC 35, 6d | ⬜ catalog blocked; ASC ~6d |
@@ -147,14 +141,22 @@ Expected to verify:
 
 ---
 
-## Blockers requiring Sentinel Hub access
+## Blockers requiring valid Sentinel Hub credentials
 
-To complete this diagnostic fully, run `scripts/diag_juwaymah_yanbu.py` in an environment with outbound HTTPS to `services.sentinel-hub.com`. The script performs:
+Tasks 1–3 need working `CLIENT_ID`/`CLIENT_SECRET` for `services.sentinel-hub.com`.
 
-1. Catalog search (2024-2026) for all three terminals → orbit table
-2. Sentinel-2 True Color crop download → optical tank count + floating/fixed classification
+**Current status:** GHA secrets `CLIENT_ID` and `CLIENT_SECRET` are empty strings (confirmed in run #35921474302 log: `CLIENT_ID: ` with blank value). Hardcoded fallback `sh-0f08bb88-cde8-4e6e-8eb9-1006acfe6be9` is also rejected with `InvalidClientError`.
+
+**To unblock Tasks 1–3:**
+1. Set valid `CLIENT_ID` and `CLIENT_SECRET` as GitHub Actions repo secrets
+2. Re-trigger workflow: `.github/workflows/diag_juwaymah_yanbu.yml` (dispatch from `main`)
+3. Script runs Tasks 1–4: catalog search, S2 optical crops, S1 SAR signal stats, verdict table
+
+The script performs:
+1. Catalog search (2024-2026) → orbit table (relative orbit, cadence, cloud cover)
+2. Sentinel-2 True Color crop → optical tank count + floating/fixed classification
 3. S1 scene download (6–8 scenes per terminal) → per-tank dB stats
 4. Crescent profile angular check → mask geometry validation
-5. Dynamic range assessment
+5. Dynamic range and signal quality assessment
 
-**Note:** This container's network policy blocks `services.sentinel-hub.com:443` and `yoekhkczwdeyauwarsyy.supabase.co:443`. Both confirmed 403 Forbidden via proxy.
+**Dev container note:** `yoekhkczwdeyauwarsyy.supabase.co:443` is blocked in dev container (403 via proxy); reachable from GHA runners.
