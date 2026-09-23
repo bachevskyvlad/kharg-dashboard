@@ -273,18 +273,19 @@ def load_jodi_saudi():
     flows_avail = df_sa[flow_col].unique()
     print(f"  Flow values: {flows_avail}")
 
-    # Map JODI flow codes to our names
+    # JODI flow codes (short form): TOTEXPSB=exports, CLOSTLV=closing stocks level,
+    # INDPROD=production, REFINOBS=refinery intake. Long-form names as fallback.
     FLOW_MAP = {
-        "exports_mbpd":           ["EXPORTS", "EXPORT"],
-        "closing_stocks_mb":      ["CLOSING STOCKS", "CLOSTK", "CSTOCK", "CLOSINGSTK", "CLOSING_STOCKS"],
-        "production_mbpd":        ["PRODUCTION", "PRODUC"],
-        "refinery_intake_mbpd":   ["REFINERY INTAKE", "REFINERYINTAKE", "REF_INTAKE", "REFINTAKE"],
+        "exports_mbpd":           ["TOTEXPSB", "EXPORTS", "EXPORT"],
+        "closing_stocks_mb":      ["CLOSTLV", "CLOSTK", "CSTOCK", "CLOSINGSTK", "CLOSING STOCKS", "CLOSING_STOCKS"],
+        "production_mbpd":        ["INDPROD", "PRODUCTION", "PRODUC"],
+        "refinery_intake_mbpd":   ["REFINOBS", "REFINERY INTAKE", "REFINERYINTAKE", "REF_INTAKE"],
     }
 
     records = {}
+    flow_vals_upper = df_sa[flow_col].str.upper()
     for out_col, keywords in FLOW_MAP.items():
-        mask = df_sa[flow_col].str.upper().str.replace("_", " ").str.replace("-", " ")
-        matched = df_sa[[any(kw in v for kw in keywords) for v in mask]]
+        matched = df_sa[flow_vals_upper.isin(keywords)]
         if len(matched) == 0:
             print(f"  [!] Flow not found for {out_col}: tried {keywords}")
             continue
