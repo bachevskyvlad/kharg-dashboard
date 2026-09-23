@@ -75,13 +75,17 @@ def load_cache(raw_cache_path, sb):
     return cached_records, cached_dates
 
 
-def get_all_scene_dates(super_bbox, start_date=None, orbit_state="descending"):
+def get_all_scene_dates(super_bbox, start_date=None, orbit_state="descending", relative_orbit=None):
     """
     Queries the Sentinel Hub catalog for S1 scenes over the given bbox.
 
     orbit_state: "descending" (default, covers Persian Gulf / Russia) or
                  "ascending" (needed for Red Sea terminals like Yanbu where
                  descending orbit has no coverage after 2016).
+
+    relative_orbit: if set, restricts to that specific orbit number.
+                    Use for terminals with multiple overlapping orbits
+                    (e.g. ras_tanura DESC 35 to exclude DESC 137).
 
     Deduplication logic: the catalog sometimes returns two scenes ~1 second
     apart when a pass straddles a UTC day boundary (the satellite crosses
@@ -98,11 +102,17 @@ def get_all_scene_dates(super_bbox, start_date=None, orbit_state="descending"):
 
     try:
         catalog = SentinelHubCatalog(config=config)
+        # Normalise short codes ("DESC"/"ASC") to full words required by the STAC API
+        _norm = {"desc": "descending", "asc": "ascending"}
+        orbit_state_api = _norm.get(orbit_state.lower(), orbit_state.lower())
+        stac_filter = f"sat:orbit_state = '{orbit_state_api}'"
+        # sat:relative_orbit is NOT supported as a STAC filter property on CDSE —
+        # filter client-side from the returned scene properties instead.
         scenes = list(catalog.search(
             S1_CDSE,
             bbox=super_bbox,
             time=(effective_start.strftime("%Y-%m-%d"), end_date.strftime("%Y-%m-%d")),
-            filter=f"sat:orbit_state = '{orbit_state}'",
+            filter=stac_filter,
             fields={"include": ["properties.datetime", "properties.sat:relative_orbit"]}
         ))
         # Deduplicate by relative orbit number: one physical pass = one orbit number per day.
@@ -112,6 +122,9 @@ def get_all_scene_dates(super_bbox, start_date=None, orbit_state="descending"):
         deduped = []
         for s in sorted(scenes, key=lambda x: x["properties"]["datetime"]):
             orbit = s["properties"].get("sat:relative_orbit")
+            # Client-side orbit filter (CDSE STAC does not support sat:relative_orbit in filter)
+            if relative_orbit is not None and orbit != relative_orbit:
+                continue
             dt = pd.to_datetime(s["properties"]["datetime"])
             # Key = (orbit_number, calendar_date) — unique physical pass
             key = (orbit, dt.normalize().date())
@@ -183,7 +196,16 @@ function evaluatePixel(sample) { return [sample.VV]; }
 """
 
 
-def fetch_new_records(new_dates, tanks_data, super_bbox, img_width, img_height):
+def _tank_valid_fraction(img_linear, crescent_mask):
+    """Return fraction of crescent pixels that are finite. Testable without SH."""
+    total = int(crescent_mask.sum())
+    if total == 0:
+        return 0.0
+    return int(np.isfinite(img_linear[crescent_mask]).sum()) / total
+
+
+def fetch_new_records(new_dates, tanks_data, super_bbox, img_width, img_height,
+                      min_valid_fraction=0.0):
     """
     Downloads SAR imagery for each date in new_dates and extracts per-tank dB means.
 
@@ -193,6 +215,11 @@ def fetch_new_records(new_dates, tanks_data, super_bbox, img_width, img_height):
       - Filters NaN/Inf pixels (can occur at image edges or layover zones)
       - Computes mean linear → convert to dB
       - Stores as a record per (date, tank_id)
+
+    min_valid_fraction: minimum ratio of finite pixels to total crescent pixels
+      required to emit a record. 0.0 = old behaviour (any finite pixel accepted).
+      Set to 0.5 for Ras Tanura ingest to guard against edge-of-frame partial
+      illumination (the rt_65 / DESC-137 contamination mechanism).
 
     Skips dates where Sentinel Hub returns no data (cloud-safe; SAR is all-weather
     but catalog misses or ordering failures can produce empty responses).
@@ -225,9 +252,17 @@ def fetch_new_records(new_dates, tanks_data, super_bbox, img_width, img_height):
                 continue
             img_linear = data[0].squeeze()
             for tank in tanks_data:
-                pixels = img_linear[tank["crescent"]]
-                # Filter NaN/Inf pixels (can appear at image edges or layover zones)
-                pixels = pixels[np.isfinite(pixels)]
+                crescent_pixels = int(tank["crescent"].sum())
+                pixels_all = img_linear[tank["crescent"]]
+                pixels = pixels_all[np.isfinite(pixels_all)]
+                # Guard: reject tank if too few valid pixels (edge-of-frame partial illumination)
+                valid_frac = _tank_valid_fraction(img_linear, tank["crescent"])
+                if min_valid_fraction > 0 and crescent_pixels > 0:
+                    if valid_frac < min_valid_fraction:
+                        print(f"  [guard] {d_str} {tank['id']}: "
+                              f"{100*valid_frac:.0f}% valid px < "
+                              f"{100*min_valid_fraction:.0f}% threshold — skipped")
+                        continue
                 if pixels.size > 0:
                     mean_linear = np.mean(pixels)
                     db_mean = 10 * np.log10(np.clip(mean_linear, 1e-10, None))

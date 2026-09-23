@@ -122,8 +122,16 @@ for terminal in TERMINALS:
 
     print(f"\n[ingest] {terminal['name']} ({tid}) — {len(tanks)} tanks")
 
-    orbit_state = terminal.get("orbit_state", "descending")
-    los_azimuth = terminal.get("los_azimuth", None)  # None → uses config default (282°)
+    # Normalise orbit config: terminals may use the new allowed_orbits list or
+    # the legacy top-level orbit_state / los_azimuth / relative_orbit keys.
+    allowed_orbits = terminal.get("allowed_orbits")
+    if not allowed_orbits:
+        orbit_state    = terminal.get("orbit_state", "descending")
+        los_azimuth    = terminal.get("los_azimuth", None)
+        relative_orbit = terminal.get("relative_orbit", None)
+        allowed_orbits = [{"relative_orbit": relative_orbit,
+                            "direction": orbit_state,
+                            "los_azimuth": los_azimuth}]
 
     existing = set() if args.force else _existing_dates_terminal(tid)
 
@@ -159,15 +167,34 @@ for terminal in TERMINALS:
     else:
         fetch_clusters = [("default", tanks)]
 
-    # Catalog dates per cluster and take the union — clusters may fall in
-    # different SAR scenes and have non-overlapping acquisition dates.
+    # Iterate over each allowed orbit: catalog → deduplicate → fetch.
+    # Using min_valid_fraction=0.5 for all terminals with explicit allowed_orbits
+    # (guards against edge-of-frame partial illumination like the rt_65 artefact).
+    has_orbit_config = terminal.get("allowed_orbits") is not None
+    min_valid_frac   = 0.5 if has_orbit_config else 0.0
+
     all_t_set = set()
-    for c_name, c_tanks in fetch_clusters:
-        try:
-            c_dates = get_all_scene_dates(_bbox(c_tanks), start_date=catalog_start, orbit_state=orbit_state)
-            all_t_set.update(c_dates)
-        except Exception as e:
-            print(f"  [!] Catalog failed for cluster '{c_name}': {e}")
+    orbit_for_date = {}  # date → (relative_orbit, direction) for tagging
+
+    for orbit_cfg in allowed_orbits:
+        rel_orbit  = orbit_cfg.get("relative_orbit")
+        direction  = orbit_cfg.get("direction", "descending").lower()
+        los_az     = orbit_cfg.get("los_azimuth")
+
+        for c_name, c_tanks in fetch_clusters:
+            try:
+                c_dates = get_all_scene_dates(
+                    _bbox(c_tanks),
+                    start_date=catalog_start,
+                    orbit_state=direction,
+                    relative_orbit=rel_orbit,
+                )
+                for d in c_dates:
+                    all_t_set.add(d)
+                    orbit_for_date.setdefault(d, (rel_orbit, direction.upper()))
+            except Exception as e:
+                print(f"  [!] Catalog failed for cluster '{c_name}' orbit {rel_orbit}: {e}")
+
     if not all_t_set:
         print(f"  [!] No scene dates found — skipping")
         continue
@@ -175,25 +202,42 @@ for terminal in TERMINALS:
 
     new_t = [d for d in all_t if d not in existing]
     print(f"  total: {len(all_t)} | existing: {len(existing)} | new: {len(new_t)}{' (force)' if args.force else ''}")
+    print(f"  allowed orbits: {[o.get('relative_orbit') for o in allowed_orbits]} "
+          f"| pixel guard: {int(min_valid_frac*100)}%")
     summary[tid] = {"name": terminal["name"], "new": len(new_t), "country": terminal.get("country", "")}
 
     if not new_t:
         continue
 
     all_raw = []
-    for c_name, c_tanks in fetch_clusters:
-        label = f"  [{c_name}]" if len(fetch_clusters) > 1 else " "
-        try:
-            c_bbox  = _bbox(c_tanks)
-            lat0    = min(t["lat"] for t in c_tanks)
-            img_w   = int((c_bbox.max_x - c_bbox.min_x) * 111320 * np.cos(np.deg2rad(lat0)) / RESOLUTION)
-            img_h   = int((c_bbox.max_y - c_bbox.min_y) * 111320 / RESOLUTION)
-            t_data  = build_crescent_masks(c_tanks, c_bbox, img_w, img_h, los_azimuth=los_azimuth)
-            raw     = fetch_new_records(new_t, t_data, c_bbox, img_w, img_h)
-            print(f"{label} {len(c_tanks)} tanks → {len(raw)} raw records")
-            all_raw.extend(raw)
-        except Exception as e:
-            print(f"{label} [!] Fetch failed: {e}")
+    for orbit_cfg in allowed_orbits:
+        rel_orbit  = orbit_cfg.get("relative_orbit")
+        direction  = orbit_cfg.get("direction", "descending").lower()
+        los_az     = orbit_cfg.get("los_azimuth")
+
+        # Filter new_t to dates that belong to this orbit
+        orbit_dates = [d for d in new_t if orbit_for_date.get(d) == (rel_orbit, direction.upper())]
+        if not orbit_dates:
+            continue
+
+        for c_name, c_tanks in fetch_clusters:
+            label = f"  [{c_name}/orbit{rel_orbit}]" if len(fetch_clusters) > 1 else f"  [orbit{rel_orbit}]"
+            try:
+                c_bbox  = _bbox(c_tanks)
+                lat0    = min(t["lat"] for t in c_tanks)
+                img_w   = int((c_bbox.max_x - c_bbox.min_x) * 111320 * np.cos(np.deg2rad(lat0)) / RESOLUTION)
+                img_h   = int((c_bbox.max_y - c_bbox.min_y) * 111320 / RESOLUTION)
+                t_data  = build_crescent_masks(c_tanks, c_bbox, img_w, img_h, los_azimuth=los_az)
+                raw     = fetch_new_records(orbit_dates, t_data, c_bbox, img_w, img_h,
+                                            min_valid_fraction=min_valid_frac)
+                # Tag orbit provenance on every record
+                for r in raw:
+                    r["relative_orbit"]  = rel_orbit
+                    r["orbit_direction"] = direction.upper()
+                print(f"{label} {len(c_tanks)} tanks × {len(orbit_dates)} dates → {len(raw)} records")
+                all_raw.extend(raw)
+            except Exception as e:
+                print(f"{label} [!] Fetch failed: {e}")
 
     for r in all_raw:
         r["terminal_id"] = tid

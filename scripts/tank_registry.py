@@ -466,7 +466,11 @@ LOCATIONS = [
         "id": "ras_tanura",
         "name": "Ras Tanura",
         "country": "SA",
-        "los_azimuth": 282,
+        # DESC 137 contaminated ~215 historical dates (rt_65 edge-of-frame artefact).
+        # Lock to DESC 35 only; ASC 101 is a separate future phase (needs az=98 + per-orbit calibration).
+        "allowed_orbits": [
+            {"relative_orbit": 35, "direction": "DESC", "los_azimuth": 282},
+        ],
         "status": "active",
         # Two geographically separate clusters ~5.5 km apart — fetched with independent
         # bboxes so a single SAR pass covers each tightly without inflating the image frame.
