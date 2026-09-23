@@ -242,18 +242,21 @@ def load_jodi_saudi():
 
     # Filter Saudi Arabia, Crude Oil
     # JODI uses ISO2 country codes (SA) or full names — try both
-    country_vals = df[col_map["country"]].str.upper()
-    sa_mask = (country_vals == "SA") | country_vals.str.contains("SAUDI", na=False)
+    # Use astype(str) to avoid pandas 3.0 StringArray comparison issues
+    country_vals = df[col_map["country"]].astype(str).str.strip().str.upper()
+    sa_mask = country_vals.isin(["SA"]) | country_vals.str.contains("SAUDI", na=False)
     # JODI product codes: CRUDEOIL=crude oil, TOTCRUDE=total crude+condensate
     # Use TOTCRUDE for exports/stocks (aggregate), CRUDEOIL as fallback
-    prod_vals = df[col_map["product"]].str.upper()
+    prod_vals = df[col_map["product"]].astype(str).str.strip().str.upper()
     crude_mask = prod_vals.isin(["TOTCRUDE", "CRUDEOIL"])
     df_sa = df[sa_mask & crude_mask].copy()
     print(f"  Saudi crude rows: {len(df_sa)}")
     if len(df_sa) == 0:
-        print("  [!] No Saudi crude rows found — dumping unique country/product values:")
-        print(df[col_map["country"]].unique()[:30])
-        print(df[col_map["product"]].unique()[:30])
+        all_countries = sorted(df[col_map["country"]].astype(str).str.strip().str.upper().unique())
+        print("  [!] No Saudi crude rows found")
+        print(f"  SA in countries: {'SA' in all_countries}")
+        print(f"  All countries: {all_countries}")
+        print(f"  Products: {sorted(df[col_map['product']].astype(str).str.strip().str.upper().unique())}")
         raise ValueError("No Saudi Arabia / crude oil data in JODI file")
 
     # Unit conversion: JODI kb → Mb (divide by 1000); kbd → Mbpd (divide by 1000)
