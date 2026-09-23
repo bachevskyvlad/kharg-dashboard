@@ -1,0 +1,43 @@
+name: Diagnose — Juwaymah + Yanbu SAR
+
+on:
+  workflow_dispatch:
+
+jobs:
+  diagnose:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: claude/oilradar-dashboard-iran-zchdva
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: pip install -r scripts/requirements.txt pillow opencv-python-headless
+
+      - name: Run diagnostic (all tasks)
+        run: python scripts/diag_juwaymah_yanbu.py --tasks 0,1,2,3,4
+        env:
+          CLIENT_ID: ${{ secrets.CLIENT_ID }}
+          CLIENT_SECRET: ${{ secrets.CLIENT_SECRET }}
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+
+      - name: Upload Juwaymah diagnostics
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: juwaymah-diagnostics
+          path: diagnostics/juwaymah/
+          retention-days: 30
+
+      - name: Upload Yanbu diagnostics
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: yanbu-diagnostics
+          path: diagnostics/yanbu/
+          retention-days: 30
