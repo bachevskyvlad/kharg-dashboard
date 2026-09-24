@@ -64,6 +64,8 @@ import requests
 cfg = SHConfig()
 cfg.sh_client_id     = SH_CLIENT_ID
 cfg.sh_client_secret = SH_CLIENT_SECRET
+cfg.sh_token_url     = "https://identity.dataspace.copernicus.eu/auth/realms/CDSE/protocol/openid-connect/token"
+cfg.sh_base_url      = "https://sh.dataspace.copernicus.eu"
 
 # ── Task 0: Supabase summary ──────────────────────────────────────────────────
 def task0_supabase():
