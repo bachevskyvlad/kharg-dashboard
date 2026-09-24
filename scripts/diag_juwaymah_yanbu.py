@@ -67,6 +67,10 @@ cfg.sh_client_secret = SH_CLIENT_SECRET
 cfg.sh_token_url     = "https://identity.dataspace.copernicus.eu/auth/realms/CDSE/protocol/openid-connect/token"
 cfg.sh_base_url      = "https://sh.dataspace.copernicus.eu"
 
+CDSE_URL = "https://sh.dataspace.copernicus.eu"
+S1_CDSE  = DataCollection.SENTINEL1_IW.define_from("s1iw_cdse",  service_url=CDSE_URL)
+S2_CDSE  = DataCollection.SENTINEL2_L2A.define_from("s2l2a_cdse", service_url=CDSE_URL)
+
 # ── Task 0: Supabase summary ──────────────────────────────────────────────────
 def task0_supabase():
     print("\n" + "="*70)
@@ -128,7 +132,7 @@ def fetch_s2_true_color(bbox_coords, out_path, label, resolution=10):
     req = SentinelHubRequest(
         evalscript=evalscript,
         input_data=[SentinelHubRequest.input_data(
-            data_collection=DataCollection.SENTINEL2_L2A,
+            data_collection=S2_CDSE,
             time_interval=("2026-06-01", "2026-09-20"),
             mosaicking_order=MosaickingOrder.LEAST_CC,
         )],
@@ -228,7 +232,7 @@ def task2_catalog():
     ]:
         bbox = BBox(bbox_coords, crs=CRS.WGS84)
         items = list(catalog.search(
-            DataCollection.SENTINEL1_IW, bbox=bbox,
+            S1_CDSE, bbox=bbox,
             time=(CATALOG_START, CATALOG_END), fields=fields
         ))
         results[name] = items
@@ -313,7 +317,7 @@ def fetch_sar_scene(bbox_coords, date_str, orbit=None):
     req = SentinelHubRequest(
         evalscript=evalscript,
         input_data=[SentinelHubRequest.input_data(
-            data_collection=DataCollection.SENTINEL1_IW,
+            data_collection=S1_CDSE,
             time_interval=(date_str, date_str),
             other_args={"dataFilter": {
                 "acquisitionMode": "IW",
@@ -329,7 +333,10 @@ def fetch_sar_scene(bbox_coords, date_str, orbit=None):
     data = req.get_data()
     if not data or data[0] is None:
         return None
-    return data[0][:, :, 0]  # shape (H, W)
+    arr = np.asarray(data[0])
+    if arr.ndim < 3:
+        return None
+    return arr[:, :, 0]  # shape (H, W)
 
 
 def crescent_mask(cx, cy, radius_px, los_az_deg, arc_deg=60, n_rings=3, ring_width=2):
@@ -615,13 +622,39 @@ def task4_verdict():
         count = df.groupby(["state","orbit"]).size().max()
         return f"{best[0]} orbit {best[1]}: {count} scenes"
 
+    def supabase_row_count(terminal):
+        """Query Supabase for row count — same as Task 0."""
+        headers = {"apikey": SUPABASE_KEY, "Authorization": f"Bearer {SUPABASE_KEY}",
+                   "Accept": "application/json", "Prefer": "count=exact"}
+        try:
+            r = requests.get(
+                f"{SUPABASE_URL}/rest/v1/terminal_observations?terminal_id=eq.{terminal}&select=date",
+                headers=headers, timeout=15
+            )
+            return r.headers.get("Content-Range", "?/0").split("/")[-1]
+        except Exception:
+            return "?"
+
+    jw_count = supabase_row_count("juwaymah")
+    yb_count = supabase_row_count("yanbu")
+    jw_sb = f"✅ {jw_count} obs rows" if jw_count not in ("0","?") else "❌ no data"
+    yb_sb = f"✅ {yb_count} obs rows" if yb_count not in ("0","?") else "❌ no data"
+
+    # Check catalog overlap with RT (DESC 35 shared?)
+    jw_catalog = OUT_JW / "sar_catalog.csv"
+    jw_backfill = "⬜ catalog not downloaded"
+    if jw_catalog.exists():
+        df = pd.read_csv(jw_catalog)
+        desc35 = df[(df["state"] == "descending") & (df["orbit"] == 35)]
+        jw_backfill = "✅ DESC 35 confirmed — backfill FREE" if len(desc35) > 0 else "❌ DESC 35 not in catalog"
+
     rows = [
         ("In registry / tanks", "✅ 19 tanks r=50m", "✅ 12 tanks r=60m"),
-        ("In Supabase", "❌ no data", "❌ no data"),
+        ("In Supabase", jw_sb, yb_sb),
         ("Floating % (optical)", "⬜ check optical crop", "⬜ check optical crop"),
         ("SAR orbits / cadence", catalog_summary(OUT_JW / "sar_catalog.csv"),
                                   catalog_summary(OUT_YB / "sar_catalog.csv")),
-        ("Same frame as RT (backfill free?)", "⬜ check catalog overlap", "❌ ASC orbit — NO"),
+        ("Same frame as RT (backfill free?)", jw_backfill, "❌ ASC orbit — NO"),
         ("LOS azimuth", "282 (DESC) — same as RT", "98 (ASC) — different"),
         ("Crescent mask compatible", "✅ los=282 same as RT", "❌ los=98 — mask code change needed"),
         ("allowed_orbits configured", "❌ not set", "❌ not set"),
