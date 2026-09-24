@@ -299,48 +299,57 @@ def task2_catalog():
 
 # ── Task 3: SAR signal quality ────────────────────────────────────────────────
 def fetch_sar_scene(bbox_coords, date_str, orbit=None):
-    """Fetch S1 VV backscatter in dB for a given bbox and date."""
-    bbox = BBox(bbox_coords, crs=CRS.WGS84)
-    evalscript = """
-    //VERSION=3
-    function setup() {
-      return {
-        input: [{bands: ["VV"], units: "LINEAR_POWER"}],
-        output: {bands: 1, sampleType: "FLOAT32"}
-      };
-    }
-    function evaluatePixel(s) {
-      var db = 10 * Math.log10(s.VV + 1e-10);
-      return [db];
-    }
+    """Fetch S1 VV linear power for a bbox+date, return dB array (H,W).
+
+    Mirrors sar_fetch.py exactly: raw linear VV evalscript + orthorectify +
+    GAMMA0_TERRAIN. No dataFilter polarization — let SH use scene default.
+    Orbit filtering is done via catalog date selection, not the request.
     """
-    # SH requires non-zero time window; extend ±1 day around the target date
+    bbox = BBox(bbox_coords, crs=CRS.WGS84)
+    # Same evalscript as sar_fetch.py: return linear power, convert to dB in Python
+    evalscript = """
+//VERSION=3
+function setup() { return { input: [{ bands: ["VV"] }], output: { bands: 1, sampleType: "FLOAT32" } }; }
+function evaluatePixel(sample) { return [sample.VV]; }
+"""
     d = date.fromisoformat(date_str)
-    t_start = (d - timedelta(days=1)).isoformat()
-    t_end   = (d + timedelta(days=1)).isoformat()
+    t_end = (d + timedelta(days=1)).strftime("%Y-%m-%d")
+    # Compute bbox size in pixels at 5m resolution
+    lon_span = bbox_coords[2] - bbox_coords[0]
+    lat_span = bbox_coords[3] - bbox_coords[1]
+    w = max(1, int(lon_span * 111320 / 5))
+    h = max(1, int(lat_span * 111320 / 5))
     req = SentinelHubRequest(
         evalscript=evalscript,
         input_data=[SentinelHubRequest.input_data(
             data_collection=S1_CDSE,
-            time_interval=(t_start, t_end),
-            other_args={"dataFilter": {
-                "acquisitionMode": "IW",
-                "polarization": "DV",
-                **({"orbitDirection": orbit.upper()} if orbit else {})
+            time_interval=(date_str, t_end),
+            other_args={"processing": {
+                "orthorectify": True,
+                "backCoeff": "GAMMA0_TERRAIN",
+                "demInstance": "COPERNICUS_30",
             }},
         )],
         responses=[SentinelHubRequest.output_response("default", MimeType.TIFF)],
         bbox=bbox,
-        resolution=(5, 5),
+        size=(w, h),
         config=cfg,
     )
-    data = req.get_data()
+    try:
+        data = req.get_data()
+    except Exception as e:
+        import traceback
+        print(f"SH request error: {e}")
+        traceback.print_exc()
+        return None
     if not data or data[0] is None:
         return None
-    arr = np.asarray(data[0])
-    if arr.ndim < 3:
+    arr = np.asarray(data[0]).squeeze()
+    if arr.ndim < 2 or arr.size == 0:
         return None
-    return arr[:, :, 0]  # shape (H, W)
+    # Convert linear power → dB (same as sar_fetch.py)
+    arr_db = 10 * np.log10(np.clip(arr.astype(np.float32), 1e-10, None))
+    return arr_db
 
 
 def crescent_mask(cx, cy, radius_px, los_az_deg, arc_deg=60, n_rings=3, ring_width=2):
