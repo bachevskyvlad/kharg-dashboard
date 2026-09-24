@@ -314,11 +314,15 @@ def fetch_sar_scene(bbox_coords, date_str, orbit=None):
       return [db];
     }
     """
+    # SH requires non-zero time window; extend ±1 day around the target date
+    d = date.fromisoformat(date_str)
+    t_start = (d - timedelta(days=1)).isoformat()
+    t_end   = (d + timedelta(days=1)).isoformat()
     req = SentinelHubRequest(
         evalscript=evalscript,
         input_data=[SentinelHubRequest.input_data(
             data_collection=S1_CDSE,
-            time_interval=(date_str, date_str),
+            time_interval=(t_start, t_end),
             other_args={"dataFilter": {
                 "acquisitionMode": "IW",
                 "polarization": "DV",
@@ -433,7 +437,9 @@ def task3_signal_quality(catalog_results=None):
                 arr = fetch_sar_scene(bbox, scene_date, orbit=orbit_dir)
                 time.sleep(0.5)
             except Exception as e:
+                import traceback
                 print(f"ERROR: {e}")
+                traceback.print_exc()
                 continue
 
             if arr is None or arr.size == 0:
