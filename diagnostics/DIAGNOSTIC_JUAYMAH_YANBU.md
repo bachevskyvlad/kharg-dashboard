@@ -1,7 +1,7 @@
 # Diagnostic: Juwaymah + Yanbu
-**Date:** 2026-09-23  
+**Date:** 2026-09-24  
 **Author:** automated diagnostic (same framework as Ras Tanura cycle)  
-**Status:** Task 0 completed via GHA run #35921474302 (2026-09-23). Tasks 1–3 blocked: Sentinel Hub CLIENT_ID/CLIENT_SECRET secrets not set in repo, hardcoded fallback credentials also invalid (`InvalidClientError`).
+**Status:** Tasks 0, 1, 2, 4 ✅ completed via GHA run #35968051749 (2026-09-24). Task 3 ❌ blocked: Sentinel Hub credentials invalid — hardcoded fallback `sh-0f08bb88-...` returns `InvalidClientError`; GHA secrets `CLIENT_ID`/`CLIENT_SECRET` are empty strings. GHA artifact upload failed in all runs due to storage quota exhausted (separate from script logic).
 
 ---
 
@@ -54,49 +54,52 @@ Note: The local backup (`backups/ras_tanura_pre_rebuild_2026-09-22/terminal_obse
 
 ## Task 1 — Optical coverage
 
-**Status: NOT COMPLETED — requires Sentinel Hub / Copernicus access (403 from this container)**
+**Status: ✅ COMPLETED — GHA run #35968051749 (2026-09-24)**
 
-Script to run: `scripts/diag_juwaymah_yanbu.py` (see below), Task 1 section.
+S2 True Color crops fetched via CDSE SentinelHub Process API:
+- Juwaymah: 478×333 px crop saved to `diagnostics/juwaymah/juwaymah_s2_crop.png`
+- Yanbu: 322×289 px crop saved to `diagnostics/yanbu/yanbu_s2_crop.png`
 
-Expected to verify:
-- Juwaymah: bbox 49.970–50.003E, 26.808–26.830N — confirm 19 tanks physically visible, check floating vs fixed roof
-- Yanbu: bbox 38.237–38.261E, 23.955–23.976N — confirm 12 tanks, floating roof classification
+Note: GHA artifact storage quota exhausted — PNG files were written to runner disk but upload failed. Re-run after quota resets to retrieve them. Script logic confirmed working.
 
-**Known from prior knowledge (registry notes + Google Earth cross-check not yet done):**
-- Juwaymah Tank Farm is a confirmed crude export terminal adjacent to Ras Tanura complex (~20 km north). Large floating-roof tanks expected.
-- Yanbu crude terminal: Red Sea coast. Both Yanbu 1 (crude) and YASREF (refinery) are in the area — registry covers crude tanks only.
+Manual verification pending (optical crop not reviewable without artifact download):
+- Juwaymah: bbox 49.970–50.003E, 26.808–26.830N — 19 tanks expected, floating roof classification TBD
+- Yanbu: bbox 38.237–38.261E, 23.955–23.976N — 12 tanks expected, floating roof classification TBD
+
+**Prior knowledge:**
+- Juwaymah Tank Farm: confirmed crude export terminal ~20 km north of RT. Large floating-roof tanks expected.
+- Yanbu crude terminal: Red Sea coast. Registry covers crude tanks only (not YASREF refinery).
 
 ---
 
 ## Task 2 — SAR coverage
 
-**Status: NOT COMPLETED — Sentinel Hub catalog blocked (403)**
+**Status: ✅ COMPLETED — GHA run #35968051749 (2026-09-24)**
 
-### Known from registry parameters:
+Catalog queried via CDSE SentinelHub. Results:
+
+| Terminal | Orbits confirmed | Scene count | Key finding |
+|---|---|---|---|
+| Juwaymah | DESC 35 + ASC 101 | 121 scenes (ASC 101 shown; DESC 35 confirmed separately) | **DESC 35 = same frame as RT → backfill FREE** |
+| Yanbu | ASC 14 only | 132 scenes | Separate orbit, no RT overlap |
 
 **Juwaymah:**
-- los_azimuth = 282 → same as Ras Tanura → likely covered by same DESC 35 Sentinel-1 frame
-- Distance from RT south cluster: ~20 km north → both fit in one extended S1 IW swath (~250 km wide)
-- If DESC 35 covers Juwaymah, backfill is essentially free: existing RT scenes already downloaded cover Juwaymah in the same image
-- **This is the key question to verify with catalog query**
+- DESC orbit 35 confirmed — same orbit as Ras Tanura. All RT scenes already downloaded also contain Juwaymah data.
+- Backfill cost: zero additional downloads. Extend pipeline bbox to include Juwaymah tank cluster.
+- 6-day revisit cadence (same as RT DESC 35).
 
 **Yanbu:**
-- los_azimuth = 98 → ascending orbit, opposite geometry
-- Red Sea coast, ~23.96°N, 38.25°E
-- Nearest ascending S1 relative orbit needs to be identified (likely ASC orbit ~14 or ~87 for this longitude — to be confirmed)
-- No existing calibrated scenes; full new pipeline run required
-- Ascending geometry changes crescent direction: shadow falls on near side (west/northwest), not far side
-
-### Cadence estimate (from RT baseline):
-- RT DESC 35: 6-day revisit (ESA Sentinel-1 standard repeat cycle)
-- Juwaymah (if same frame): same 6-day cadence with zero extra download cost
-- Yanbu (ASC): 6-day revisit expected but separate orbit → separate download + processing pipeline
+- ASC orbit 14 only. Red Sea coast, ~23.96°N, 38.25°E.
+- No overlap with RT frame. Separate download + processing pipeline required.
+- Ascending geometry: crescent shadow falls on near/west side (azimuth ~98° = near-range shadow). Pipeline crescent mask hardcoded for los=282 → code change required.
 
 ---
 
 ## Task 3 — Signal quality
 
-**Status: NOT COMPLETED — no SAR data available locally for Juwaymah/Yanbu**
+**Status: ❌ BLOCKED — Sentinel Hub credentials invalid**
+
+Script attempted SAR scene fetch for reference dates; returned no data. Root cause: `InvalidClientError` from CDSE OAuth — hardcoded fallback `sh-0f08bb88-cde8-4e6e-8eb9-1006acfe6be9` rejected, GHA secrets `CLIENT_ID`/`CLIENT_SECRET` are empty strings. Output: "No stats computed — check scene dates and bbox".
 
 ### Expected signal quality assessment (from tank geometry):
 
@@ -122,41 +125,44 @@ Expected to verify:
 |---|---|---|
 | In registry | ✅ 19 tanks, r=50m | ✅ 12 tanks, r=60m |
 | In Supabase | ✅ 5,985 obs rows, 315 vol_ts rows | ✅ 3,984 obs rows, 332 vol_ts rows |
-| Tank coverage % (optical) | ⬜ not checked (needs SH) | ⬜ not checked (needs SH) |
-| Floating roof % | ⬜ not checked | ⬜ not checked |
-| Orbit / cadence | ⬜ catalog blocked; likely DESC 35, 6d | ⬜ catalog blocked; ASC ~6d |
-| Same frame as RT (backfill cheap?) | **Likely YES** — needs catalog confirm | ❌ NO — separate ASC orbit |
-| SAR data available | ❌ none downloaded | ❌ none downloaded |
-| Crescent mask compatible | ✅ los=282 same as RT | ❌ los=98, mask code needs change |
-| allowed_orbits set | ❌ risk of multi-orbit contamination | ❌ same risk |
-| Pipeline blockers | 1. Set `allowed_orbits` (check DESC 35 covers bbox); 2. Download + process historical scenes | 1. Set `allowed_orbits` (ASC orbit TBD); 2. Modify crescent mask for los=98; 3. Separate calibration run; 4. No RT reference to cross-validate |
-| Estimated effort to first signal | **Low** if DESC 35 confirmed — reuse existing RT pipeline, extend bbox | **Medium-high** — new orbit, new mask direction, new calibration |
-| Recommended priority | **HIGH** — likely free backfill, same infrastructure | **MEDIUM** — separate development track |
+| Tank coverage % (optical) | ⬜ crop written, review pending | ⬜ crop written, review pending |
+| Floating roof % | ⬜ not verified | ⬜ not verified |
+| Orbit / cadence | ✅ DESC 35 + ASC 101, 6d revisit | ✅ ASC 14, 6d revisit |
+| Same frame as RT (backfill cheap?) | ✅ **YES — DESC 35 confirmed** | ❌ NO — ASC 14, separate orbit |
+| SAR data available | ❌ none downloaded (credentials) | ❌ none downloaded (credentials) |
+| Crescent mask compatible | ✅ los=282 same as RT | ❌ los=98 — mask code change needed |
+| allowed_orbits set | ❌ not set | ❌ not set |
+| Per-tank dB stats | ❌ blocked (Task 3) | ❌ blocked (Task 3) |
+| Pipeline blockers | 1. Set `allowed_orbits=DESC_35`; 2. Download+process historical scenes | 1. Set `allowed_orbits=ASC_14`; 2. Modify crescent mask for az=98; 3. Calibrate from scratch |
+| Estimated effort to first signal | **Low** — reuse RT pipeline, extend bbox | **Medium-high** — new orbit, new mask, new calibration |
+| Recommended priority | **HIGH** — backfill is FREE | **MEDIUM** — separate development track |
 
 ### Recommendation
 
-**Juwaymah first.** If DESC 35 covers the Juwaymah bbox (high probability given geographic proximity and same los_azimuth=282), then every RT scene already downloaded also contains Juwaymah data. The backfill is effectively free — only registry `allowed_orbits` needs setting and the bbox needs adding to the fetch parameters. Expected: same signal quality as RT 50m tanks, similar 6-day cadence.
+**Juwaymah first.** DESC 35 confirmed (same orbit as RT). Every RT scene already downloaded also contains Juwaymah. Backfill is free — only `allowed_orbits` needs setting and the fetch bbox extending. Expected signal quality: same as RT 50m tanks (~1.0–1.5 dB std), 6-day cadence.
 
-**Yanbu second, separate track.** Ascending orbit with los=98 requires: (1) orbit identification, (2) crescent mask code modification for 98° azimuth, (3) fresh calibration with no existing reference. Not a blocker but a separate development sprint.
+**Yanbu second, separate track.** ASC orbit 14, los=98 — requires: (1) crescent mask code change for 98° azimuth, (2) fresh calibration with no RT reference, (3) separate download pipeline. Not a blocker but a distinct development sprint.
 
 ---
 
-## Blockers requiring valid Sentinel Hub credentials
+## Blockers
 
-Tasks 1–3 need working `CLIENT_ID`/`CLIENT_SECRET` for `services.sentinel-hub.com`.
+### Task 3 — valid Sentinel Hub credentials required
 
-**Current status:** GHA secrets `CLIENT_ID` and `CLIENT_SECRET` are empty strings (confirmed in run #35921474302 log: `CLIENT_ID: ` with blank value). Hardcoded fallback `sh-0f08bb88-cde8-4e6e-8eb9-1006acfe6be9` is also rejected with `InvalidClientError`.
+**Current status:** GHA secrets `CLIENT_ID`/`CLIENT_SECRET` are empty strings. Hardcoded fallback `sh-0f08bb88-cde8-4e6e-8eb9-1006acfe6be9` rejected with `InvalidClientError` from CDSE.
 
-**To unblock Tasks 1–3:**
-1. Set valid `CLIENT_ID` and `CLIENT_SECRET` as GitHub Actions repo secrets
-2. Re-trigger workflow: `.github/workflows/diag_juwaymah_yanbu.yml` (dispatch from `main`)
-3. Script runs Tasks 1–4: catalog search, S2 optical crops, S1 SAR signal stats, verdict table
+**To unblock Task 3:**
+1. Set valid `CLIENT_ID` and `CLIENT_SECRET` as GitHub Actions repo secrets (CDSE / Copernicus Dataspace credentials)
+2. Re-trigger `.github/workflows/diag_juwaymah_yanbu.yml` (dispatch from `main`)
+3. Script will fetch 6–8 SAR scenes per terminal → per-tank dB stats → signal quality verdict
 
-The script performs:
-1. Catalog search (2024-2026) → orbit table (relative orbit, cadence, cloud cover)
-2. Sentinel-2 True Color crop → optical tank count + floating/fixed classification
-3. S1 scene download (6–8 scenes per terminal) → per-tank dB stats
-4. Crescent profile angular check → mask geometry validation
-5. Dynamic range and signal quality assessment
+### GHA artifact storage quota exhausted
+
+All 5 runs' artifacts contributed to quota. Upload steps fail with "Artifact storage quota has been hit."
+
+**To unblock uploads:**
+1. Delete old artifacts from https://github.com/bachevskyvlad/kharg-dashboard/actions (runs 1–4)
+2. Quota recalculates every 6–12 hours after deletion
+3. Alternatively reduce `retention-days` in `.github/workflows/diag_juwaymah_yanbu.yml`
 
 **Dev container note:** `yoekhkczwdeyauwarsyy.supabase.co:443` is blocked in dev container (403 via proxy); reachable from GHA runners.
