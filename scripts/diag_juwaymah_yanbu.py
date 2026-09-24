@@ -331,7 +331,7 @@ def fetch_sar_scene(bbox_coords, date_str, orbit=None):
         )],
         responses=[SentinelHubRequest.output_response("default", MimeType.TIFF)],
         bbox=bbox,
-        resolution=5,
+        resolution=(5, 5),
         config=cfg,
     )
     data = req.get_data()
