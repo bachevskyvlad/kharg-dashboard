@@ -1,54 +1,41 @@
-name: Diagnose Round 3 — Juwaymah + Yanbu
+name: Diagnose Round 4 — Juwaymah + Yanbu
 
 on:
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 jobs:
-  diagnose3:
+  diagnose4:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with:
           ref: claude/oilradar-dashboard-iran-zchdva
           fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
 
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
 
       - name: Install dependencies
-        run: pip install -r scripts/requirements.txt matplotlib pillow
+        run: pip install -r scripts/requirements.txt matplotlib pillow scipy
 
-      - name: Run Round 3 diagnostic
-        run: python scripts/diag_juwaymah_yanbu_3.py --tasks 1,2,3,4
+      - name: Run Round 4 diagnostic
+        run: python scripts/diag_juwaymah_yanbu_4.py --tasks 1,2,3,4,0
         env:
           CLIENT_ID: ${{ secrets.CLIENT_ID }}
           CLIENT_SECRET: ${{ secrets.CLIENT_SECRET }}
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
 
-      - name: Upload overlays
-        uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: round3-overlays
-          path: diagnostics/juwaymah/overlay_*.png
-          retention-days: 3
-
-      - name: Upload Yanbu overlays
-        uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: round3-yanbu-overlays
-          path: diagnostics/yanbu/overlay_*.png
-          retention-days: 3
-
-      - name: Upload report and SQL
-        uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: round3-report
-          path: |
-            diagnostics/DIAGNOSTIC_JUAYMAH_YANBU_3.md
-            diagnostics/sql/juwaymah_yanbu_provenance.sql
-          retention-days: 3
+      - name: Commit diagnostics to feature branch
+        run: |
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git config user.name "github-actions[bot]"
+          git add diagnostics/round4/
+          git diff --cached --stat
+          git commit -m "diag round4: Juwaymah/Yanbu results (auto-committed by GHA)" || echo "Nothing to commit"
+          git push origin claude/oilradar-dashboard-iran-zchdva
