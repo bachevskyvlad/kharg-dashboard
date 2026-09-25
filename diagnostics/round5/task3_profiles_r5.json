@@ -1,0 +1,372 @@
+{
+  "juwaymah_profile": {
+    "verdict": "CONFIRMED on corrected centers (['jw_3', 'jw_6', 'jw_7', 'jw_13'])",
+    "confirmed_tanks": [
+      "jw_3",
+      "jw_6",
+      "jw_7",
+      "jw_13"
+    ],
+    "n_confirmed_scenes": 3,
+    "n_total_scenes": 4,
+    "scene_results": [
+      {
+        "date": "2024-01-13",
+        "tank_results": [
+          {
+            "tank_id": "jw_3",
+            "min_az": 277.5,
+            "confirmed": true
+          },
+          {
+            "tank_id": "jw_6",
+            "min_az": 307.5,
+            "confirmed": true
+          },
+          {
+            "tank_id": "jw_7",
+            "min_az": 277.5,
+            "confirmed": true
+          },
+          {
+            "tank_id": "jw_13",
+            "min_az": 307.5,
+            "confirmed": true
+          }
+        ],
+        "scene_confirmed": true
+      },
+      {
+        "date": "2024-07-11",
+        "tank_results": [
+          {
+            "tank_id": "jw_3",
+            "min_az": 307.5,
+            "confirmed": true
+          },
+          {
+            "tank_id": "jw_6",
+            "min_az": 37.5,
+            "confirmed": false
+          },
+          {
+            "tank_id": "jw_7",
+            "min_az": 262.5,
+            "confirmed": true
+          },
+          {
+            "tank_id": "jw_13",
+            "min_az": 247.5,
+            "confirmed": false
+          }
+        ],
+        "scene_confirmed": true
+      },
+      {
+        "date": "2024-12-26",
+        "tank_results": [
+          {
+            "tank_id": "jw_3",
+            "min_az": 37.5,
+            "confirmed": false
+          },
+          {
+            "tank_id": "jw_6",
+            "min_az": 37.5,
+            "confirmed": false
+          },
+          {
+            "tank_id": "jw_7",
+            "min_az": 157.5,
+            "confirmed": false
+          },
+          {
+            "tank_id": "jw_13",
+            "min_az": 247.5,
+            "confirmed": false
+          }
+        ],
+        "scene_confirmed": false
+      },
+      {
+        "date": "2025-06-12",
+        "tank_results": [
+          {
+            "tank_id": "jw_3",
+            "min_az": 37.5,
+            "confirmed": false
+          },
+          {
+            "tank_id": "jw_6",
+            "min_az": 292.5,
+            "confirmed": true
+          },
+          {
+            "tank_id": "jw_7",
+            "min_az": 277.5,
+            "confirmed": true
+          },
+          {
+            "tank_id": "jw_13",
+            "min_az": 337.5,
+            "confirmed": false
+          }
+        ],
+        "scene_confirmed": true
+      }
+    ]
+  },
+  "yanbu_profile": {
+    "verdict": "NOT CONFIRMED \u2014 method on this site does not produce consistent crescent signal",
+    "confirmed_tanks": [],
+    "n_confirmed_scenes": 0,
+    "n_total_scenes": 4,
+    "scene_results": [
+      {
+        "date": "2024-01-11",
+        "tank_results": [
+          {
+            "tank_id": "yb_0",
+            "min_az": 337.5,
+            "confirmed": false
+          },
+          {
+            "tank_id": "yb_1",
+            "min_az": 7.5,
+            "confirmed": false
+          },
+          {
+            "tank_id": "yb_2",
+            "min_az": 142.5,
+            "confirmed": false
+          },
+          {
+            "tank_id": "yb_4",
+            "min_az": 352.5,
+            "confirmed": false
+          },
+          {
+            "tank_id": "yb_5",
+            "min_az": 337.5,
+            "confirmed": false
+          },
+          {
+            "tank_id": "yb_6",
+            "min_az": 7.5,
+            "confirmed": false
+          },
+          {
+            "tank_id": "yb_7",
+            "min_az": 7.5,
+            "confirmed": false
+          },
+          {
+            "tank_id": "yb_8",
+            "min_az": 7.5,
+            "confirmed": false
+          },
+          {
+            "tank_id": "yb_9",
+            "min_az": 352.5,
+            "confirmed": false
+          },
+          {
+            "tank_id": "yb_10",
+            "min_az": 337.5,
+            "confirmed": false
+          },
+          {
+            "tank_id": "yb_11",
+            "min_az": 7.5,
+            "confirmed": false
+          }
+        ],
+        "scene_confirmed": false
+      },
+      {
+        "date": "2024-05-10",
+        "tank_results": [
+          {
+            "tank_id": "yb_0",
+            "min_az": 22.5,
+            "confirmed": false
+          },
+          {
+            "tank_id": "yb_1",
+            "min_az": 112.5,
+            "confirmed": true
+          },
+          {
+            "tank_id": "yb_2",
+            "min_az": 352.5,
+            "confirmed": false
+          },
+          {
+            "tank_id": "yb_4",
+            "min_az": 337.5,
+            "confirmed": false
+          },
+          {
+            "tank_id": "yb_5",
+            "min_az": 337.5,
+            "confirmed": false
+          },
+          {
+            "tank_id": "yb_6",
+            "min_az": 22.5,
+            "confirmed": false
+          },
+          {
+            "tank_id": "yb_7",
+            "min_az": 7.5,
+            "confirmed": false
+          },
+          {
+            "tank_id": "yb_8",
+            "min_az": 337.5,
+            "confirmed": false
+          },
+          {
+            "tank_id": "yb_9",
+            "min_az": 337.5,
+            "confirmed": false
+          },
+          {
+            "tank_id": "yb_10",
+            "min_az": 322.5,
+            "confirmed": false
+          },
+          {
+            "tank_id": "yb_11",
+            "min_az": 7.5,
+            "confirmed": false
+          }
+        ],
+        "scene_confirmed": false
+      },
+      {
+        "date": "2024-09-07",
+        "tank_results": [
+          {
+            "tank_id": "yb_0",
+            "min_az": 337.5,
+            "confirmed": false
+          },
+          {
+            "tank_id": "yb_1",
+            "min_az": 127.5,
+            "confirmed": true
+          },
+          {
+            "tank_id": "yb_2",
+            "min_az": 127.5,
+            "confirmed": true
+          },
+          {
+            "tank_id": "yb_4",
+            "min_az": 7.5,
+            "confirmed": false
+          },
+          {
+            "tank_id": "yb_5",
+            "min_az": 7.5,
+            "confirmed": false
+          },
+          {
+            "tank_id": "yb_6",
+            "min_az": 337.5,
+            "confirmed": false
+          },
+          {
+            "tank_id": "yb_7",
+            "min_az": 352.5,
+            "confirmed": false
+          },
+          {
+            "tank_id": "yb_8",
+            "min_az": 337.5,
+            "confirmed": false
+          },
+          {
+            "tank_id": "yb_9",
+            "min_az": 22.5,
+            "confirmed": false
+          },
+          {
+            "tank_id": "yb_10",
+            "min_az": 7.5,
+            "confirmed": false
+          },
+          {
+            "tank_id": "yb_11",
+            "min_az": 337.5,
+            "confirmed": false
+          }
+        ],
+        "scene_confirmed": false
+      },
+      {
+        "date": "2025-01-05",
+        "tank_results": [
+          {
+            "tank_id": "yb_0",
+            "min_az": 352.5,
+            "confirmed": false
+          },
+          {
+            "tank_id": "yb_1",
+            "min_az": 187.5,
+            "confirmed": false
+          },
+          {
+            "tank_id": "yb_2",
+            "min_az": 142.5,
+            "confirmed": false
+          },
+          {
+            "tank_id": "yb_4",
+            "min_az": 352.5,
+            "confirmed": false
+          },
+          {
+            "tank_id": "yb_5",
+            "min_az": 337.5,
+            "confirmed": false
+          },
+          {
+            "tank_id": "yb_6",
+            "min_az": 7.5,
+            "confirmed": false
+          },
+          {
+            "tank_id": "yb_7",
+            "min_az": 7.5,
+            "confirmed": false
+          },
+          {
+            "tank_id": "yb_8",
+            "min_az": 7.5,
+            "confirmed": false
+          },
+          {
+            "tank_id": "yb_9",
+            "min_az": 352.5,
+            "confirmed": false
+          },
+          {
+            "tank_id": "yb_10",
+            "min_az": 352.5,
+            "confirmed": false
+          },
+          {
+            "tank_id": "yb_11",
+            "min_az": 22.5,
+            "confirmed": false
+          }
+        ],
+        "scene_confirmed": false
+      }
+    ]
+  },
+  "jw9_conflict_resolution": "Both centers confirmed (old=292\u00b0, new=292\u00b0) \u2014 tanks are close or same"
+}
