@@ -1,15 +1,16 @@
-name: Diagnose — Juwaymah + Yanbu SAR
+name: Diagnose Round 3 — Juwaymah + Yanbu
 
 on:
   workflow_dispatch:
 
 jobs:
-  diagnose:
+  diagnose3:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with:
           ref: claude/oilradar-dashboard-iran-zchdva
+          fetch-depth: 0
 
       - uses: actions/setup-python@v5
         with:
@@ -18,39 +19,36 @@ jobs:
       - name: Install dependencies
         run: pip install -r scripts/requirements.txt matplotlib pillow
 
-      - name: Run Round 2 diagnostic
-        run: python scripts/diag_juwaymah_yanbu_2.py --tasks 1,2,3,4,5
+      - name: Run Round 3 diagnostic
+        run: python scripts/diag_juwaymah_yanbu_3.py --tasks 1,2,3,4
         env:
           CLIENT_ID: ${{ secrets.CLIENT_ID }}
           CLIENT_SECRET: ${{ secrets.CLIENT_SECRET }}
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
 
-      - name: Upload Juwaymah diagnostics
+      - name: Upload overlays
         uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: juwaymah-diag2
-          path: diagnostics/juwaymah/
+          name: round3-overlays
+          path: diagnostics/juwaymah/overlay_*.png
           retention-days: 3
 
-      - name: Upload Yanbu diagnostics
+      - name: Upload Yanbu overlays
         uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: yanbu-diag2
-          path: diagnostics/yanbu/
+          name: round3-yanbu-overlays
+          path: diagnostics/yanbu/overlay_*.png
           retention-days: 3
 
-      - name: Upload verdict
+      - name: Upload report and SQL
         uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: verdict-diag2
+          name: round3-report
           path: |
-            diagnostics/DIAGNOSTIC_JUAYMAH_YANBU_2.md
-            diagnostics/task1_results.json
-            diagnostics/task2_results.json
-            diagnostics/task3_results.json
-            diagnostics/task4_results.json
+            diagnostics/DIAGNOSTIC_JUAYMAH_YANBU_3.md
+            diagnostics/sql/juwaymah_yanbu_provenance.sql
           retention-days: 3
