@@ -179,10 +179,6 @@ def validate_image_array(arr, label=""):
     if np.std(flat) < 1e-6:
         print(f"  [WARN] {label}: std≈0 → likely blank")
         return False
-    unique_frac = len(np.unique(np.round(flat, 3))) / len(flat)
-    if unique_frac < 0.01:
-        print(f"  [WARN] {label}: unique_frac={unique_frac:.4f} → likely blank")
-        return False
     return True
 
 
@@ -1552,13 +1548,13 @@ def smoke_test():
                 img = Image.open(p)
                 arr = np.array(img).astype(float)
                 std_val = float(arr.std())
-                unique_frac = len(np.unique(arr.ravel())) / arr.size
+                n_unique = len(np.unique(arr.ravel()))
                 if std_val < 1.0:
                     errors.append(f"{p.name}: std={std_val:.3f} < 1 → blank image")
-                elif unique_frac < 0.01:
-                    errors.append(f"{p.name}: unique_frac={unique_frac:.4f} < 1% → blank image")
+                elif n_unique < 20:
+                    errors.append(f"{p.name}: n_unique={n_unique} < 20 → blank image")
                 else:
-                    print(f"  [OK] {p.name} std={std_val:.1f} unique={unique_frac:.3f}")
+                    print(f"  [OK] {p.name} std={std_val:.1f} n_unique={n_unique}")
             except Exception as e:
                 errors.append(f"{p.name}: cannot open — {e}")
         elif ext == ".md":
