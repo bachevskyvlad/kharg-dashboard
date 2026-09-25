@@ -1,0 +1,41 @@
+name: Diagnose Round 6 — Juwaymah + Yanbu (calibration + final verdict)
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  diagnose6:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: claude/oilradar-dashboard-iran-zchdva
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: pip install -r scripts/requirements.txt matplotlib pillow scipy opencv-python-headless
+
+      - name: Run Round 6 diagnostic
+        run: python scripts/diag_juwaymah_yanbu_6.py --tasks 0,1,2,3,4,5
+        env:
+          CLIENT_ID: ${{ secrets.CLIENT_ID }}
+          CLIENT_SECRET: ${{ secrets.CLIENT_SECRET }}
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+
+      - name: Commit diagnostics to feature branch
+        run: |
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git config user.name "github-actions[bot]"
+          git add diagnostics/round6/
+          git diff --cached --stat
+          git commit -m "diag round6: calibration etalon + TM re-centering + final Juwaymah/Yanbu verdict" || echo "Nothing to commit"
+          git push origin claude/oilradar-dashboard-iran-zchdva
