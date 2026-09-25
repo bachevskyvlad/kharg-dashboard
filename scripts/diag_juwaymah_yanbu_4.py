@@ -328,7 +328,7 @@ def offset_score(min_azs_all, expected=98, tol=30):
 # ── Task 0: infrastructure smoke-test ────────────────────────────────────────
 
 EXPECTED_FILES = [
-    "jw_overlay_jw_18.jpg",
+    "jw_zoom_jw_18.jpg",
     "yb_overlay_yb_0.jpg", "yb_overlay_yb_6.jpg", "yb_overlay_yb_11.jpg",
     "jw_zoom_jw_0.jpg", "jw_zoom_jw_9.jpg",
     "jw_farm_map.jpg",
@@ -337,15 +337,20 @@ EXPECTED_FILES = [
     "rt_juwaymah_map.jpg",
     "DIAGNOSTIC_JUAYMAH_YANBU_4.md",
 ]
+# Size floors: images need >5KB, markdown only >2KB (short report is valid)
+SIZE_FLOOR = {
+    "DIAGNOSTIC_JUAYMAH_YANBU_4.md": 2000,
+}
 
 def smoke_test():
     missing = []
     for fname in EXPECTED_FILES:
         p = OUT_DIR / fname
+        floor = SIZE_FLOOR.get(fname, 5000)
         if not p.exists():
             missing.append(str(fname) + " (missing)")
-        elif p.stat().st_size < 5000:
-            missing.append(f"{fname} ({p.stat().st_size}b < 5KB)")
+        elif p.stat().st_size < floor:
+            missing.append(f"{fname} ({p.stat().st_size}b < {floor}b)")
     if missing:
         print("\n[SMOKE TEST FAILED] Missing or too-small outputs:")
         for m in missing:
