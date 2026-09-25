@@ -355,11 +355,11 @@ def select_full_scenes(sb, tank_id, all_dates, n=4):
             selected = [d for d, _ in scored[:n]]
             print(f"  Data-driven selection for {tank_id}: {selected} (dB: {[db_map[d] for d in selected]})")
             return selected
-    # Fallback: spread evenly
+    # Fallback: use latest N dates (recent = most likely full for chronically-full tanks)
     if not all_dates:
         return []
-    step = max(1, len(all_dates) // n)
-    fallback = [all_dates[i * step] for i in range(min(n, len(all_dates) // step))]
+    sorted_dates = sorted(all_dates, reverse=True)
+    fallback = sorted_dates[:n]
     print(f"  Fallback (no Supabase data) for {tank_id}: {fallback}")
     return fallback
 
