@@ -1,0 +1,111 @@
+{
+  "shift_vectors": {
+    "yb_0": {
+      "dx_px": 0.6,
+      "dy_px": -8.3,
+      "dx_m": 3.2,
+      "dy_m": 41.3,
+      "dist_m": 41.4,
+      "bearing_deg": 4.5
+    },
+    "yb_1": {
+      "dx_px": 9.2,
+      "dy_px": -4.1,
+      "dx_m": 45.8,
+      "dy_m": 20.4,
+      "dist_m": 50.2,
+      "bearing_deg": 66.0
+    },
+    "yb_2": {
+      "dx_px": -0.5,
+      "dy_px": -8.6,
+      "dx_m": -2.4,
+      "dy_m": 42.8,
+      "dist_m": 42.8,
+      "bearing_deg": 356.7
+    },
+    "yb_4": {
+      "dx_px": -1.8,
+      "dy_px": 3.2,
+      "dx_m": -9.0,
+      "dy_m": -15.9,
+      "dist_m": 18.3,
+      "bearing_deg": 209.5
+    },
+    "yb_6": {
+      "dx_px": -5.2,
+      "dy_px": -2.7,
+      "dx_m": -25.8,
+      "dy_m": 13.4,
+      "dist_m": 29.1,
+      "bearing_deg": 297.5
+    },
+    "yb_9": {
+      "dx_px": -3.0,
+      "dy_px": -4.0,
+      "dx_m": -14.9,
+      "dy_m": 19.9,
+      "dist_m": 24.8,
+      "bearing_deg": 323.2
+    },
+    "yb_11": {
+      "dx_px": -2.8,
+      "dy_px": -7.3,
+      "dx_m": -13.8,
+      "dy_m": 36.7,
+      "dist_m": 39.2,
+      "bearing_deg": 339.4
+    }
+  },
+  "is_systematic": false,
+  "median_shift_m": 39.2,
+  "median_bearing_deg": 297.5,
+  "best_offset": {
+    "dx_m": -15,
+    "dy_m": 10
+  },
+  "best_score": 0.533,
+  "offset_profiles": {
+    "yb_1": {
+      "min_azs_after_offset": [
+        112.5,
+        277.5,
+        67.5
+      ],
+      "confirmed": false
+    },
+    "yb_2": {
+      "min_azs_after_offset": [
+        127.5,
+        112.5,
+        112.5
+      ],
+      "confirmed": true
+    },
+    "yb_4": {
+      "min_azs_after_offset": [
+        112.5,
+        67.5,
+        127.5
+      ],
+      "confirmed": true
+    },
+    "yb_6": {
+      "min_azs_after_offset": [
+        22.5,
+        112.5,
+        97.5
+      ],
+      "confirmed": true
+    },
+    "yb_9": {
+      "min_azs_after_offset": [
+        292.5,
+        292.5,
+        292.5
+      ],
+      "confirmed": false
+    }
+  },
+  "offset_verdict": "OFFSET FIXES CRESCENT: best offset dx=-15m dy=10m confirms 3 tanks (['yb_2', 'yb_4', 'yb_6']). Action: apply offset to yanbu registry in separate PR."
+}

@@ -1,0 +1,34 @@
+{
+  "new_classifications": {
+    "jw_0": "unclear",
+    "jw_1": "unclear",
+    "jw_2": "unclear",
+    "jw_3": "unclear",
+    "jw_4": "fixed",
+    "jw_5": "unclear",
+    "jw_6": "floating",
+    "jw_7": "unclear",
+    "jw_8": "fixed",
+    "jw_9": "floating",
+    "jw_10": "floating",
+    "jw_11": "unclear",
+    "jw_12": "unclear",
+    "jw_13": "unclear",
+    "jw_14": "fixed",
+    "jw_15": "floating",
+    "jw_16": "unclear",
+    "jw_17": "unclear",
+    "jw_18": "floating"
+  },
+  "jw_0_class": "unclear",
+  "jw_9_class": "floating",
+  "jw_verdict": "CONTRADICTION \u2014 jw_0=unclear, jw_9=floating but profile confirmed (min at 282\u00b0). Likely: optical heuristic misses dark metallic floating roofs. Profile verdict takes precedence.",
+  "n_float_r4": 5,
+  "n_fixed_r4": 3,
+  "n_unclear_r4": 11,
+  "profile_confirmed_tanks": [
+    "jw_0",
+    "jw_9"
+  ],
+  "go_verdict": "GO backfill on ['jw_0', 'jw_9'] \u2014 2 tanks with profile confirmed AND optical floating"
+}
