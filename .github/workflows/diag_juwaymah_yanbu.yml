@@ -1,4 +1,4 @@
-name: Diagnose Round 4 — Juwaymah + Yanbu
+name: Diagnose Round 5 — Juwaymah + Yanbu (Hough re-centering)
 
 on:
   workflow_dispatch:
@@ -7,7 +7,7 @@ permissions:
   contents: write
 
 jobs:
-  diagnose4:
+  diagnose5:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -21,10 +21,10 @@ jobs:
           python-version: "3.11"
 
       - name: Install dependencies
-        run: pip install -r scripts/requirements.txt matplotlib pillow scipy
+        run: pip install -r scripts/requirements.txt matplotlib pillow scipy opencv-python-headless
 
-      - name: Run Round 4 diagnostic
-        run: python scripts/diag_juwaymah_yanbu_4.py --tasks 1,2,3,4,0
+      - name: Run Round 5 diagnostic
+        run: python scripts/diag_juwaymah_yanbu_5.py --tasks 0,1,2,3,4
         env:
           CLIENT_ID: ${{ secrets.CLIENT_ID }}
           CLIENT_SECRET: ${{ secrets.CLIENT_SECRET }}
@@ -35,7 +35,7 @@ jobs:
         run: |
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git config user.name "github-actions[bot]"
-          git add diagnostics/round4/
+          git add diagnostics/round5/ registry_candidates/
           git diff --cached --stat
-          git commit -m "diag round4: Juwaymah/Yanbu results (auto-committed by GHA)" || echo "Nothing to commit"
+          git commit -m "diag round5: Hough re-centering, SAR etalon, profiles on corrected centers" || echo "Nothing to commit"
           git push origin claude/oilradar-dashboard-iran-zchdva
