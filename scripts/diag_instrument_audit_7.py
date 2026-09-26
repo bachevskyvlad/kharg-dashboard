@@ -718,7 +718,7 @@ def task3_request_params(site_dates):
     else:
         print("  Differences found:")
         for row in diff_table:
-            print(f"    {row['param']}: Kharg={row['kharg']!r} | Yanbu={row['yb']!r}")
+            print(f"    {row['param']}: Kharg={row['kharg']!r} | Yanbu={row['yanbu']!r}")
 
     # Empirically test mosaicking: fetch same Yanbu scene with ORBIT vs SIMPLE
     print("\n  Empirical mosaicking test (ORBIT vs SIMPLE on Yanbu):")
@@ -1102,7 +1102,7 @@ def write_report(t1_rows, t2_results, t3_diff, t3_mosaick, t4_analysis,
         lines.append("| param | kharg | yanbu |")
         lines.append("|-------|-------|-------|")
         for row in t3_diff:
-            lines.append(f"| {row['param']} | {row['kharg']} | {row.get('yb', row.get('yanbu', ''))} |")
+            lines.append(f"| {row['param']} | {row['kharg']} | {row.get('yanbu', '')} |")
     lines += [""]
     if t3_mosaick:
         lines += ["**Mosaicking test (ORBIT vs SIMPLE on Yanbu):**", ""]
