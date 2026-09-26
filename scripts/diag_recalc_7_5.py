@@ -398,14 +398,15 @@ def task1_unit_test():
         print(f"  plant={plant_az:3d}° → min_az={min_az:.0f}° min_db={min_db:.1f} "
               f"Δ={delta_db:.1f} dB → {status}")
 
-    # Smoke-test: std of db_means must be > 0 (non-trivial sweep)
+    # Smoke-test: on flat image all sectors identical → std == 0 is expected.
+    # Verify all sectors return finite values (masks are not empty).
     _, db_sample = sweep_profile(
-        np.full((200, 200), 0.1, dtype=np.float32),  # flat image for contrast
+        np.full((200, 200), 0.1, dtype=np.float32),
         100, 100, RADIUS_PX * RESOLUTION,
         200, 200, res_m=RESOLUTION, los_az=0
     )
-    if np.nanstd(db_sample) == 0:
-        print("  [FATAL] sweep std == 0 on flat image — mask always empty")
+    if not np.all(np.isfinite(db_sample)):
+        print("  [FATAL] sweep returned non-finite values — mask always empty")
         sys.exit(1)
 
     # also plant a shadow and check std > 0
