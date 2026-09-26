@@ -342,25 +342,65 @@ def fetch_tank_db_means(sb, tank_id):
         return {}
 
 
-def select_full_scenes(sb, tank_id, all_dates, n=4):
+def select_full_scenes(sb, tank_id, all_dates, n=4,
+                       tank_cfg=None, orbit_direction="DESCENDING"):
     """
     From all_dates, return up to n dates where tank_id is in the top quartile of
-    fill (lowest db_mean).  Falls back to evenly-spaced selection if no data.
+    fill (lowest db_mean).
+
+    Priority:
+      1. Supabase db_mean data (most accurate)
+      2. Self-scored: fetch a candidate pool from SAR, measure crescent dB
+         from the image, pick the n fullest (lowest dB)
+      3. Latest-N fallback (chronically-full etalons only, last resort)
     """
     db_map = fetch_tank_db_means(sb, tank_id)
     if db_map:
         scored = [(d, db_map[d]) for d in all_dates if d in db_map]
         if scored:
-            scored.sort(key=lambda x: x[1])  # ascending dB = fuller
+            scored.sort(key=lambda x: x[1])
             selected = [d for d, _ in scored[:n]]
-            print(f"  Data-driven selection for {tank_id}: {selected} (dB: {[db_map[d] for d in selected]})")
+            print(f"  Data-driven (Supabase) for {tank_id}: {selected}")
             return selected
-    # Fallback: use latest N dates (recent = most likely full for chronically-full tanks)
+
+    # Self-score from SAR: fetch 12 most-recent dates, measure crescent dB, pick n best
+    if tank_cfg is not None and all_dates:
+        bbox   = tank_cfg["bbox"]
+        lat    = tank_cfg["lat"]
+        lon    = tank_cfg["lon"]
+        r      = tank_cfg["r"]
+        pool   = sorted(all_dates, reverse=True)[:12]
+        scored = []
+        print(f"  Self-scoring {len(pool)} candidate scenes for {tank_id} …")
+        for d in pool:
+            arr, w, h = fetch_s1_linear(bbox, d, orbit_direction)
+            if arr is None:
+                continue
+            cx, cy = lonlat_to_pix(lon, lat, bbox, w, h)
+            mask   = build_crescent_mask_prod(cx, cy, r, w, h, LOS_AZIMUTH)
+            pix    = arr[mask]
+            pix    = pix[np.isfinite(pix) & (pix > 0)]
+            if pix.size == 0:
+                continue
+            db_val = float(10 * np.log10(np.mean(pix)))
+            scored.append((d, db_val))
+            print(f"    {d}: crescent dB={db_val:.2f}")
+        if len(scored) >= n:
+            scored.sort(key=lambda x: x[1])  # ascending = fuller
+            selected = [d for d, _ in scored[:n]]
+            print(f"  Self-scored selection for {tank_id}: {selected} (dB: {[round(v,2) for _,v in scored[:n]]})")
+            return selected
+        elif scored:
+            selected = [d for d, _ in scored]
+            print(f"  Self-scored selection (partial {len(scored)}) for {tank_id}: {selected}")
+            return selected
+
+    # Last resort: latest N dates
     if not all_dates:
         return []
     sorted_dates = sorted(all_dates, reverse=True)
     fallback = sorted_dates[:n]
-    print(f"  Fallback (no Supabase data) for {tank_id}: {fallback}")
+    print(f"  Fallback (latest-N) for {tank_id}: {fallback}")
     return fallback
 
 
@@ -564,7 +604,9 @@ def task1_kharg_etalon(sb):
 
     for tank in KHARG_ETALON["tanks"]:
         tid = tank["id"]
-        scenes = select_full_scenes(sb, tid, all_dates, n=4)
+        tcfg = {**tank, "bbox": bbox}
+        scenes = select_full_scenes(sb, tid, all_dates, n=4,
+                                    tank_cfg=tcfg, orbit_direction="DESCENDING")
         if not scenes:
             print(f"  [ERROR] No scenes found for {tid}")
             gate_pass = False
@@ -635,7 +677,9 @@ def task2_rt_south_gate(sb):
 
     tank = RT_SOUTH["tanks"][0]  # rt_0
     tid  = tank["id"]
-    scenes = select_full_scenes(sb, tid, all_dates, n=4)
+    tcfg = {**tank, "bbox": bbox}
+    scenes = select_full_scenes(sb, tid, all_dates, n=4,
+                                tank_cfg=tcfg, orbit_direction="DESCENDING")
     if not scenes:
         print(f"  [ERROR] No scenes for {tid}")
         return False, {}
