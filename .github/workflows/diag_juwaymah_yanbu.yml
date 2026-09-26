@@ -1,4 +1,4 @@
-name: Diagnose Round 6 — Juwaymah + Yanbu (calibration + final verdict)
+name: Diagnose Round 7 — Instrument audit JW/YB
 
 on:
   workflow_dispatch:
@@ -7,7 +7,7 @@ permissions:
   contents: write
 
 jobs:
-  diagnose5:
+  audit7:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -23,8 +23,8 @@ jobs:
       - name: Install dependencies
         run: pip install -r scripts/requirements.txt matplotlib pillow scipy opencv-python-headless
 
-      - name: Run Round 6 diagnostic
-        run: python scripts/diag_juwaymah_yanbu_6.py --tasks 0,1,2,3,4,5
+      - name: Run Round 7 instrument audit
+        run: python scripts/diag_instrument_audit_7.py --tasks 1,2,3,4,5
         env:
           CLIENT_ID: ${{ secrets.CLIENT_ID }}
           CLIENT_SECRET: ${{ secrets.CLIENT_SECRET }}
@@ -36,7 +36,7 @@ jobs:
         run: |
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git config user.name "github-actions[bot]"
-          git add diagnostics/round6/
+          git add diagnostics/round7/
           git diff --cached --stat
-          git commit -m "diag round6: calibration etalon + TM re-centering + final Juwaymah/Yanbu verdict" || echo "Nothing to commit"
+          git commit -m "diag round7: instrument audit — resolution/CRS/mosaicking/LOS/micro-bbox" || echo "Nothing to commit"
           git push origin claude/oilradar-dashboard-iran-zchdva
