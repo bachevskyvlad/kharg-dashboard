@@ -59,7 +59,7 @@ CROPS_DIR = OUT_DIR / "crops"
 CROPS_DIR.mkdir(exist_ok=True)
 
 sys.path.insert(0, str(Path(__file__).parent))
-from tank_registry import TERMINALS as ALL_TERMINALS
+from tank_registry import LOCATIONS as ALL_TERMINALS
 
 # ---------------------------------------------------------------------------
 # sentinelhub bootstrap
