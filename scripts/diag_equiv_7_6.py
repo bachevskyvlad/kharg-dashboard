@@ -64,14 +64,24 @@ CLIENT_ID     = os.environ.get("CLIENT_ID", "")
 CLIENT_SECRET = os.environ.get("CLIENT_SECRET", "")
 
 if _SH_OK:
-    cfg = SHConfig()
-    cfg.sh_client_id     = CLIENT_ID     or "sh-0f08bb88-cde8-4e6e-8eb9-1006acfe6be9"
-    cfg.sh_client_secret = CLIENT_SECRET or "erkNtZDw4z36UB0Xm7BrzcYixzaUGeW0"
-    cfg.sh_base_url      = "https://sh.dataspace.copernicus.eu"
-    cfg.sh_token_url     = "https://identity.dataspace.copernicus.eu/auth/realms/CDSE/protocol/openid-connect/token"
-    S1_CDSE = DataCollection.SENTINEL1_IW.define_from(
-        "S1_CDSE", service_url=cfg.sh_base_url
-    )
+    # Use prod config and S1_CDSE directly from config.py (already registered by
+    # sar_fetch import above; re-defining raises ValueError).
+    try:
+        from config import config as cfg, S1_CDSE
+        # Override credentials from env if provided (for GHA secrets injection)
+        if CLIENT_ID:
+            cfg.sh_client_id = CLIENT_ID
+        if CLIENT_SECRET:
+            cfg.sh_client_secret = CLIENT_SECRET
+    except ImportError:
+        cfg = SHConfig()
+        cfg.sh_client_id     = CLIENT_ID     or "sh-0f08bb88-cde8-4e6e-8eb9-1006acfe6be9"
+        cfg.sh_client_secret = CLIENT_SECRET or "erkNtZDw4z36UB0Xm7BrzcYixzaUGeW0"
+        cfg.sh_base_url      = "https://sh.dataspace.copernicus.eu"
+        cfg.sh_token_url     = "https://identity.dataspace.copernicus.eu/auth/realms/CDSE/protocol/openid-connect/token"
+        S1_CDSE = DataCollection.SENTINEL1_IW.define_from(
+            "S1_CDSE_76", service_url=cfg.sh_base_url
+        )
 
 OUT_DIR = Path("diagnostics/round7_6")
 OUT_DIR.mkdir(parents=True, exist_ok=True)
