@@ -93,21 +93,24 @@ OUT_DIR.mkdir(parents=True, exist_ok=True)
 KHARG_BBOX = (50.295, 29.205, 50.340, 29.240)
 
 # 4 etalon tanks: t60_1 + t40_33 = chronically full; t55_5 + t55_10 = idle/empty
+# Coords from tank_registry.py — do NOT use hand-estimated values
 KHARG_ETALON = [
     {"id": "t60_1",  "lat": 29.221638820210273, "lon": 50.315043243946754,
-     "radius": 60, "h_max": 18, "status": "full"},
+     "radius": 60, "h_max": 18, "status": "full",  "csv_mean_db": 2.82},
     {"id": "t40_33", "lat": 29.230947410364493, "lon": 50.31324186520479,
-     "radius": 40, "h_max": 14, "status": "full"},
-    {"id": "t55_5",  "lat": 29.223560,          "lon": 50.320180,
-     "radius": 55, "h_max": 17, "status": "empty"},
-    {"id": "t55_10", "lat": 29.225200,          "lon": 50.322100,
-     "radius": 55, "h_max": 17, "status": "empty"},
+     "radius": 40, "h_max": 14, "status": "full",  "csv_mean_db": 3.50},
+    {"id": "t55_5",  "lat": 29.23596908236423,  "lon": 50.31262041733899,
+     "radius": 55, "h_max": 17, "status": "empty", "csv_mean_db": 13.02},
+    {"id": "t55_10", "lat": 29.237608159424354, "lon": 50.30726790052075,
+     "radius": 55, "h_max": 17, "status": "empty", "csv_mean_db": 9.89},
 ]
 
-# Top-2 cycling tanks (from CSV: t60_2 std=6.16, t55_17 std=5.56)
+# Top-2 cycling tanks (coords from tank_registry.py)
 KHARG_CYCLING = [
-    {"id": "t60_2",  "lat": 29.222700, "lon": 50.314200, "radius": 60, "h_max": 18},
-    {"id": "t55_17", "lat": 29.227400, "lon": 50.318900, "radius": 55, "h_max": 17},
+    {"id": "t60_2",  "lat": 29.221840470329855, "lon": 50.31352911803618,
+     "radius": 60, "h_max": 18},
+    {"id": "t55_17", "lat": 29.23144045674206,  "lon": 50.308740382712706,
+     "radius": 55, "h_max": 17},
 ]
 
 # Yanbu azimuth pivot: ascending orbit only after this date
@@ -239,13 +242,32 @@ def mask_mean_db(img_lin, mask):
 def sector_table_24(img_lin, cx, cy, radius_m, img_w, img_h, res_m=RESOLUTION):
     """
     24-sector table (0° to 345° in 15° steps) using prod mask at each azimuth.
-    Returns dict az_deg → db_mean.
+    Returns dict az_deg → (linear_mean, db_mean).
     """
     sectors = {}
     for az in range(0, 360, SECTOR_STEP):
         mask = _build_prod_mask(cx, cy, radius_m, img_w, img_h, az, res_m)
-        sectors[az] = mask_mean_db(img_lin, mask)
+        px = img_lin[mask]
+        px = px[np.isfinite(px)]
+        if px.size == 0:
+            sectors[az] = (np.nan, np.nan)
+        else:
+            lin = float(np.mean(px))
+            db  = float(10 * np.log10(np.clip(lin, 1e-10, None)))
+            sectors[az] = (lin, db)
     return sectors
+
+
+def prod_mask_mean(img_lin, cx, cy, radius_m, img_w, img_h,
+                   az_deg=LOS_AZ_DESC, res_m=RESOLUTION):
+    """Prod-mask mean linear and dB at a specific azimuth (default prod 282°)."""
+    mask = _build_prod_mask(cx, cy, radius_m, img_w, img_h, az_deg, res_m)
+    px = img_lin[mask]
+    px = px[np.isfinite(px)]
+    if px.size == 0:
+        return np.nan, np.nan, 0
+    lin = float(np.mean(px))
+    return lin, float(10 * np.log10(np.clip(lin, 1e-10, None))), px.size
 
 
 def tank_cx_cy(tank, bbox_tuple, img_w, img_h):
@@ -296,19 +318,57 @@ def task1_spatial(scenes4, lines):
         lines.append("[FINDING] All scene fetches failed — Task 1 SKIPPED\n")
         return "INSUFFICIENT DATA"
 
-    # Build per-scene Δ = mean(empty sectors) − mean(full sectors)
-    # For well-depth: ALL sectors of empty tanks should be brighter → Δ > 0 everywhere
+    # ── Sign-check on first scene only (t60_1 vs t55_5) ──────────────────────
+    first_date = list(scene_data.keys())[0]
+    img_ref0, iw0, ih0 = scene_imgs[first_date]
+    lines.append(f"\n### Sign-check — scene {first_date}: raw linear + dB per sector\n")
+    lines.append("Cross-reference: CSV global means t60_1=2.82 dB (full), "
+                 "t55_5=13.02 dB (empty/idle).\n")
+    lines.append("If sign is correct: prod-mask mean for t55_5 >> t60_1.\n\n")
+
+    for tank in [t for t in KHARG_ETALON if t["id"] in ("t60_1", "t55_5")]:
+        cx, cy = tank_cx_cy(tank, KHARG_BBOX, iw0, ih0)
+        lin_prod, db_prod, npx = prod_mask_mean(img_ref0, cx, cy, tank["radius"], iw0, ih0)
+        csv_mean = tank.get("csv_mean_db", "?")
+        match = ""
+        if np.isfinite(db_prod) and isinstance(csv_mean, float):
+            diff = abs(db_prod - csv_mean)
+            # sign check: full should be low dB, empty should be high dB
+            if tank["status"] == "full":
+                match = "OK (low dB as expected)" if db_prod < 6 else f"MISMATCH (expected <6 dB, got {db_prod:.2f})"
+            else:
+                match = "OK (high dB as expected)" if db_prod > 8 else f"MISMATCH (expected >8 dB, got {db_prod:.2f})"
+        lines.append(f"**{tank['id']}** ({tank['status']}): "
+                     f"prod-mask linear={lin_prod:.5f}, dB={db_prod:.2f}, "
+                     f"N_px={npx}, CSV_mean={csv_mean} dB — {match}\n\n")
+
+        # Per-sector raw table for sign-check
+        sdata = scene_data[first_date][tank["id"]]
+        lines.append(f"| Az° | linear mean | dB mean |\n"
+                     f"|-----|------------|--------|\n")
+        for az in range(0, 360, SECTOR_STEP):
+            lin_v, db_v = sdata.get(az, (np.nan, np.nan))
+            lin_s = f"{lin_v:.5f}" if np.isfinite(lin_v) else "NaN"
+            db_s  = f"{db_v:.2f}"  if np.isfinite(db_v)  else "NaN"
+            lines.append(f"| {az:3d} | {lin_s} | {db_s} |\n")
+        lines.append("\n")
+
+        # Crop with ring overlay
+        _save_tank_crop_with_ring(img_ref0, cx, cy, tank["radius"], iw0, ih0,
+                                  tank["id"], first_date,
+                                  OUT_DIR / f"t1_ring_{tank['id']}_{first_date}.png")
+
+    # ── Per-scene sector Δ tables ────────────────────────────────────────────
     overall_verdict_scenes = []
 
     for d_str, tdata in scene_data.items():
-        # Per-sector Δ
         sector_deltas = {}
         all_sectors_pass = True
         for az in range(0, 360, SECTOR_STEP):
-            full_vals  = [tdata[t["id"]][az] for t in full_tanks
-                          if np.isfinite(tdata[t["id"]][az])]
-            empty_vals = [tdata[t["id"]][az] for t in empty_tanks
-                          if np.isfinite(tdata[t["id"]][az])]
+            full_vals  = [tdata[t["id"]][az][1] for t in full_tanks
+                          if np.isfinite(tdata[t["id"]][az][1])]
+            empty_vals = [tdata[t["id"]][az][1] for t in empty_tanks
+                          if np.isfinite(tdata[t["id"]][az][1])]
             if not full_vals or not empty_vals:
                 sector_deltas[az] = np.nan
                 all_sectors_pass = False
@@ -336,17 +396,15 @@ def task1_spatial(scenes4, lines):
         lines.append(f"\nMin Δ={min_delta:+.2f} dB  Max Δ={max_delta:+.2f} dB  "
                      f"Mean Δ={mean_delta:+.2f} dB\n")
 
-        # Save sector polar plot
         img_ref, iw, ih = scene_imgs[d_str]
-        _save_sector_plot(scene_data[d_str], all_tanks, d_str,
+        _save_sector_plot(tdata, all_tanks, d_str,
                           OUT_DIR / f"t1_sectors_{d_str}.png")
 
-        # Save SAR crops for each etalon tank
         for tank in all_tanks:
             cx, cy = tank_cx_cy(tank, KHARG_BBOX, iw, ih)
-            _save_tank_crop(img_ref, cx, cy, tank["radius"],
-                            scene_data[d_str][tank["id"]], tank["id"], d_str,
-                            OUT_DIR / f"t1_crop_{tank['id']}_{d_str}.png")
+            _save_tank_crop_with_ring(img_ref, cx, cy, tank["radius"], iw, ih,
+                                      tank["id"], d_str,
+                                      OUT_DIR / f"t1_crop_{tank['id']}_{d_str}.png")
 
     n_pass = sum(overall_verdict_scenes)
     n_total = len(overall_verdict_scenes)
@@ -484,6 +542,16 @@ def task3_fcs(kharg_csv_path, rt_csv_path, lines):
         return pd.DataFrame(results).sort_values("fcs", ascending=False)
 
     df_fcs_k = compute_fcs(df_k, "Kharg")
+
+    # Explicit worked example for t60_2 (highest FCS cycling tank)
+    ex = df_fcs_k[df_fcs_k["tank_id"] == "t60_2"]
+    if not ex.empty:
+        r = ex.iloc[0]
+        lines.append(f"**Worked example — t60_2:**\n")
+        lines.append(f"  numerator   = p95 − p05 = {r.p95:.3f} − {r.p05:.3f} = {r.temporal_range:.3f} dB\n")
+        lines.append(f"  denominator = median intra-scene noise = {scene_noise:.3f} dB\n")
+        lines.append(f"  FCS = {r.temporal_range:.3f} / {scene_noise:.3f} = **{r.fcs:.3f}**\n\n")
+
     lines.append("### Kharg FCS (top 10)\n\n")
     lines.append("| tank_id | N dates | p05 dB | p95 dB | range dB | FCS |\n")
     lines.append("|---------|---------|--------|--------|----------|-----|\n")
@@ -701,35 +769,50 @@ def _save_sector_plot(scene_tdata, tanks, date_str, outpath):
     for ax, tank in zip(axes, tanks):
         tid = tank["id"]
         sdata = scene_tdata.get(tid, {})
+        # sdata values are (linear, dB) tuples
         azs_rad = np.deg2rad(list(sdata.keys()))
-        dbs = list(sdata.values())
+        dbs = [v[1] for v in sdata.values()]
         valid = [(a, d) for a, d in zip(azs_rad, dbs) if np.isfinite(d)]
         if valid:
             aa, dd = zip(*valid)
             ax.plot(list(aa) + [aa[0]], list(dd) + [dd[0]], "b-o", markersize=3)
-        ax.set_title(f"{tid}\n({tank['status']})", fontsize=9)
+        label = tank.get("status", "")
+        ax.set_title(f"{tid}\n({label})", fontsize=9)
     fig.suptitle(f"Sector dB profiles — {date_str}", fontsize=10)
     plt.tight_layout()
     plt.savefig(outpath, dpi=100)
     plt.close()
 
 
-def _save_tank_crop(img_lin, cx, cy, radius_m, sectors, tank_id, date_str, outpath):
+def _save_tank_crop_with_ring(img_lin, cx, cy, radius_m, img_w, img_h,
+                               tank_id, date_str, outpath):
+    """SAR crop with full-ring and prod-mask (282°) contours overlaid."""
     r_px = int(radius_m / RESOLUTION * 2.5)
     x0 = max(0, int(cx) - r_px); x1 = min(img_lin.shape[1], int(cx) + r_px)
     y0 = max(0, int(cy) - r_px); y1 = min(img_lin.shape[0], int(cy) + r_px)
     crop = img_lin[y0:y1, x0:x1]
     crop_db = 10 * np.log10(np.clip(crop, 1e-10, None))
 
-    valid = [v for v in sectors.values() if np.isfinite(v)]
-    mean_db = float(np.mean(valid)) if valid else np.nan
+    ring_full = _build_full_ring(cx, cy, radius_m, img_w, img_h)[y0:y1, x0:x1]
+    ring_prod = _build_prod_mask(cx, cy, radius_m, img_w, img_h, LOS_AZ_DESC)[y0:y1, x0:x1]
 
-    fig, ax = plt.subplots(figsize=(4, 4))
-    ax.imshow(crop_db, cmap="gray", origin="upper")
-    ax.set_title(f"{tank_id} | {date_str}\nmean={mean_db:.2f} dB", fontsize=9)
+    # Annotate: mean dB inside prod mask
+    prod_mask_full = _build_prod_mask(cx, cy, radius_m, img_w, img_h, LOS_AZ_DESC)
+    _, db_prod, npx = prod_mask_mean(img_lin, cx, cy, radius_m, img_w, img_h)
+
+    fig, ax = plt.subplots(figsize=(5, 5))
+    vmin = np.nanpercentile(crop_db, 5)
+    vmax = np.nanpercentile(crop_db, 95)
+    ax.imshow(crop_db, cmap="gray", origin="upper", vmin=vmin, vmax=vmax)
+    # full ring = green contour
+    ax.contour(ring_full.astype(float), levels=[0.5], colors=["lime"], linewidths=1.5)
+    # prod mask (282°) = red contour
+    ax.contour(ring_prod.astype(float), levels=[0.5], colors=["red"], linewidths=1.5)
+    ax.set_title(f"{tank_id} | {date_str}\nprod-mask dB={db_prod:.2f} (N={npx})\n"
+                 f"green=full ring, red=prod mask 282°", fontsize=8)
     ax.axis("off")
     plt.tight_layout()
-    plt.savefig(outpath, dpi=100)
+    plt.savefig(outpath, dpi=120)
     plt.close()
 
 
