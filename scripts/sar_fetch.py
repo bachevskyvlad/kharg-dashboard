@@ -10,10 +10,12 @@ Responsibilities:
 
 The crescent mask technique (inverse crescent radiometry):
   - Sentinel-1 illuminates from azimuth ~282° (SW→NE, descending orbit).
-  - The floating roof casts a radar shadow on the FAR wall of the tank.
-  - We mask a ring annulus on the far-side half of each tank.
-  - Mean linear backscatter in that crescent → convert to dB → fill proxy.
-  - Lower dB = full tank (more oil = smoother surface = less radar return).
+  - The far interior wall of the tank produces a double-bounce (dihedral)
+    return. Empty tank: roof at bottom, long dihedral path → high dB.
+    Full tank: roof near top, short/absent dihedral path → low dB.
+  - We mask a ring annulus on the far-side half (282° for DESC) where
+    the dihedral geometry is strongest.
+  - Lower dB = full tank; higher dB = empty/draining tank.
 
 Image processing:
   - evalscript returns raw linear VV power (not dB) — we convert to dB
