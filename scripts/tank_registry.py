@@ -438,7 +438,9 @@ LOCATIONS = [
         "id": "juwaymah",
         "name": "Juwaymah",
         "country": "SA",
-        "los_azimuth": 282,
+        "allowed_orbits": [
+            {"relative_orbit": 35, "direction": "DESC", "los_azimuth": 282},
+        ],
         "status": "active",
         "tanks": [
             {"id": "jw_0",  "lat": 26.814939449818950, "lon": 49.987095744022476, "radius_m": 50, "h_max_m": 16},
@@ -709,8 +711,9 @@ LOCATIONS = [
         "id": "yanbu",
         "name": "Yanbu",
         "country": "SA",
-        "los_azimuth": 98,        # ascending orbit — descending has no Red Sea coverage after 2016
-        "orbit_state": "ascending",
+        "allowed_orbits": [
+            {"relative_orbit": 14, "direction": "ASC", "los_azimuth": 98},
+        ],
         "status": "active",
         "tanks": [
             {"id": "yb_0",  "lat": 23.959074, "lon": 38.244398, "radius_m": 60, "h_max_m": 18},
