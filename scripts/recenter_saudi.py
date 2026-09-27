@@ -76,6 +76,7 @@ sh_config.sh_token_url     = (
 )
 
 from sar_fetch import get_all_scene_dates
+from config import S1_CDSE as _S1_CDSE
 
 # ---------------------------------------------------------------------------
 # SAR fetch (single scene, full terminal bbox)
