@@ -64,7 +64,7 @@ from tank_registry import LOCATIONS as ALL_TERMINALS
 # ---------------------------------------------------------------------------
 # sentinelhub bootstrap
 # ---------------------------------------------------------------------------
-from sentinelhub import SHConfig, BBox, CRS, DataCollection, SentinelHubCatalog
+from sentinelhub import SHConfig, BBox, CRS, SentinelHubCatalog
 
 sh_config = SHConfig()
 sh_config.sh_client_id     = SH_CLIENT_ID
@@ -73,10 +73,6 @@ sh_config.sh_base_url      = "https://sh.dataspace.copernicus.eu"
 sh_config.sh_token_url     = (
     "https://identity.dataspace.copernicus.eu/auth/realms/CDSE"
     "/protocol/openid-connect/token"
-)
-
-_S1_CDSE = DataCollection.SENTINEL1_IW.define_from(
-    "s1iw_cdse_recenter", service_url="https://sh.dataspace.copernicus.eu"
 )
 
 from sar_fetch import get_all_scene_dates
