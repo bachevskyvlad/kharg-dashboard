@@ -250,11 +250,22 @@ def task1_dihedral(kharg_csv_path, lines):
     df["date"] = pd.to_datetime(df["date"]).dt.normalize()
     t60_2_df = df[df["tank_id"] == "t60_2"].copy().sort_values("db_mean")
 
-    # 3 most full (lowest dB) and 3 most empty (highest dB) dates
+    # Labelling unit test: 6 synthetic values → exactly 3 "full" / 3 "empty"
+    syn = pd.Series([1.0, 2.0, 3.0, 10.0, 11.0, 12.0])
+    syn_full  = list(syn.nsmallest(3).index)
+    syn_empty = list(syn.nlargest(3).index)
+    assert len(syn_full) == 3 and len(syn_empty) == 3, "labelling unit test FAIL"
+    assert set(syn_full) & set(syn_empty) == set(), "labelling unit test FAIL: overlap"
+    print("  labelling unit test PASS: 3/3 split on synthetic 6-element series")
+
+    # 3 most full (lowest dB) and 3 most empty (highest dB) dates — relative to THIS sample
     full_dates  = list(t60_2_df.head(3)["date"])
     empty_dates = list(t60_2_df.tail(3)["date"])
-    target_dates = {d.strftime("%Y-%m-%d"): ("full", float(t60_2_df[t60_2_df["date"]==d]["db_mean"].iloc[0]))
-                    for d in full_dates + empty_dates}
+    target_dates = {}
+    for d in full_dates:
+        target_dates[d.strftime("%Y-%m-%d")] = ("full",  float(t60_2_df[t60_2_df["date"]==d]["db_mean"].iloc[0]))
+    for d in empty_dates:
+        target_dates[d.strftime("%Y-%m-%d")] = ("empty", float(t60_2_df[t60_2_df["date"]==d]["db_mean"].iloc[0]))
 
     lines.append("### t60_2 target dates (from Kharg CSV)\n\n")
     lines.append("| date | status | CSV db_mean |\n|------|--------|-------------|\n")
@@ -384,9 +395,41 @@ def task2_fcs_jw_yb(lines):
     return jw_result, yb_result
 
 
+def _read_fcs_csv(csv_path):
+    """
+    Robust CSV reader for Supabase SQL editor exports.
+    Handles: ISO timestamps (2019-01-01T00:00:00+00:00), plain dates (2019-01-01),
+    quoted fields, comma separator. Required columns: tank_id, date, db_mean.
+    """
+    df = pd.read_csv(csv_path, sep=",", quotechar='"')
+    df.columns = [c.strip().lower() for c in df.columns]
+    required = {"tank_id", "date", "db_mean"}
+    missing = required - set(df.columns)
+    if missing:
+        raise ValueError(f"CSV missing columns: {missing}. Got: {list(df.columns)}")
+    df["date"] = pd.to_datetime(df["date"], utc=True, errors="coerce").dt.tz_localize(None)
+    df["date"] = df["date"].fillna(pd.to_datetime(df["date"], errors="coerce"))
+    df["db_mean"] = pd.to_numeric(df["db_mean"], errors="coerce")
+    return df
+
+
+def _test_fcs_csv_parser():
+    """Mini-test: timestamp and plain-date formats both parse correctly."""
+    import io
+    ts_csv = "terminal_id,tank_id,date,db_mean\njuwaymah,jw_1,2019-01-15T00:00:00+00:00,5.2\n"
+    dt_csv = "terminal_id,tank_id,date,db_mean\njuwaymah,jw_1,2019-01-15,5.2\n"
+    for fmt, raw in [("timestamp", ts_csv), ("plain-date", dt_csv)]:
+        tmp = Path("/tmp/fcs_test.csv")
+        tmp.write_text(raw)
+        df = _read_fcs_csv(tmp)
+        assert len(df) == 1, f"CSV parser test FAIL ({fmt}): expected 1 row"
+        assert pd.notna(df["date"].iloc[0]), f"CSV parser test FAIL ({fmt}): date is NaT"
+        print(f"  CSV parser unit test PASS ({fmt}): date={df['date'].iloc[0].date()}")
+
+
 def _compute_fcs_site(csv_path, site_name, pivot_date, lines):
-    df = pd.read_csv(csv_path)
-    df["date"] = pd.to_datetime(df["date"])
+    _test_fcs_csv_parser()
+    df = _read_fcs_csv(csv_path)
 
     n_total = len(df)
     if pivot_date is not None:
