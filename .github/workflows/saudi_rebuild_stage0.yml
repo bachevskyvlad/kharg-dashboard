@@ -1,0 +1,28 @@
+name: Saudi Rebuild — Stage 0 (Backup)
+on:
+  workflow_dispatch:
+    inputs:
+      terminal:
+        description: 'Terminal to backup (ras_tanura | juwaymah | yanbu | all)'
+        type: string
+        default: 'all'
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feature/saudi-rebuild
+      - run: pip install supabase -q
+      - name: Run backup
+        run: python scripts/backup_saudi.py --terminal "${{ inputs.terminal }}"
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+      - name: Commit backup files
+        run: |
+          git config user.email "actions@github.com"
+          git config user.name "GitHub Actions"
+          git add backups/
+          git commit -m "ci: saudi pre-rebuild backup (${{ inputs.terminal }}) [skip ci]" || echo "nothing to commit"
+          git push origin feature/saudi-rebuild

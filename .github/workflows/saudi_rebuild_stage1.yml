@@ -1,0 +1,30 @@
+name: Saudi Rebuild — Stage 1 (Recenter)
+on:
+  workflow_dispatch:
+    inputs:
+      terminal:
+        description: 'Terminal to recenter (juwaymah | yanbu | all)'
+        type: string
+        default: 'all'
+jobs:
+  recenter:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feature/saudi-rebuild
+      - run: pip install sentinelhub scipy pandas matplotlib numpy -q
+      - name: Run template matching
+        run: python scripts/recenter_saudi.py --terminal "${{ inputs.terminal }}"
+        env:
+          CLIENT_ID:     ${{ secrets.CLIENT_ID }}
+          CLIENT_SECRET: ${{ secrets.CLIENT_SECRET }}
+      - name: Commit recenter report + crops
+        if: always()
+        run: |
+          git config user.email "actions@github.com"
+          git config user.name "GitHub Actions"
+          git add diagnostics/recenter/ || true
+          git commit -m "ci: recenter report stage1 (${{ inputs.terminal }}) [skip ci]" || echo "nothing to commit"
+          git push origin feature/saudi-rebuild || true
