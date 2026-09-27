@@ -14,7 +14,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           ref: feature/saudi-rebuild
-      - run: pip install sentinelhub scipy pandas matplotlib numpy -q
+      - run: pip install sentinelhub scipy pandas matplotlib numpy supabase -q
       - name: Run template matching
         run: python scripts/recenter_saudi.py --terminal "${{ inputs.terminal }}"
         env:
