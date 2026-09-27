@@ -1,6 +1,6 @@
 # Stage 1 — Re-centring Report
 
-*Generated 2026-09-27T21:41:19.621745 UTC*
+*Generated 2026-09-27T22:11:55.251585 UTC*
 
 NCC threshold: ok ≥ 0.35, low-confidence ≥ 0.2, excluded < 0.2. Search window ±10 px. Resolution 5 m/px.
 
