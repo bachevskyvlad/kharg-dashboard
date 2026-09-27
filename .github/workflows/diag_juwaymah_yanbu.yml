@@ -1,4 +1,4 @@
-name: Diagnose Round 7.5 — Sweep fix + full recalculation
+name: Diagnose Round 7.6 — Sweep ≡ prod mask equivalence
 
 on:
   workflow_dispatch:
@@ -7,7 +7,7 @@ permissions:
   contents: write
 
 jobs:
-  recalc75:
+  equiv76:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -23,8 +23,8 @@ jobs:
       - name: Install dependencies
         run: pip install -r scripts/requirements.txt matplotlib pillow scipy opencv-python-headless
 
-      - name: Run Round 7.5 recalculation
-        run: python scripts/diag_recalc_7_5.py --tasks 1,2,3,4,5
+      - name: Run Round 7.6 equivalence diagnostic
+        run: python scripts/diag_equiv_7_6.py --tasks 1,2,3,4,5
         env:
           CLIENT_ID: ${{ secrets.CLIENT_ID }}
           CLIENT_SECRET: ${{ secrets.CLIENT_SECRET }}
@@ -36,7 +36,7 @@ jobs:
         run: |
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git config user.name "github-actions[bot]"
-          git add diagnostics/round7_5/
+          git add diagnostics/round7_6/
           git diff --cached --stat
-          git commit -m "diag round7.5: sweep fix + full recalculation" || echo "Nothing to commit"
+          git commit -m "diag round7.6: sweep ≡ prod mask equivalence" || echo "Nothing to commit"
           git push origin claude/oilradar-dashboard-iran-zchdva
