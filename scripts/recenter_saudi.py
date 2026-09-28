@@ -41,7 +41,7 @@ import numpy as np
 
 RESOLUTION    = 5       # m/px
 WIDTH_WIDE    = 15      # m — crescent annulus width (same as prod)
-SEARCH_PX     = 10      # ±10 px search window
+SEARCH_PX     = 3       # ±3 px = ±15 m — prevents false-peak jumps to adjacent tanks
 NCC_OK        = 0.35
 NCC_LOW       = 0.20
 N_SCENES      = 2       # scenes per tank for template matching
