@@ -1,6 +1,6 @@
 # Stage 1 — Re-centring Report
 
-*Generated 2026-09-28T20:52:02.247961 UTC*
+*Generated 2026-09-28T21:00:08.488271 UTC*
 
 NCC: masked (ring pixels only), sub-pixel parabolic interpolation. ok ≥ 0.35, low-confidence ≥ 0.2, excluded < 0.2. Search window ±3 px. Resolution 5 m/px.
 
