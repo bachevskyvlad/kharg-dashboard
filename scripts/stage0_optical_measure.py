@@ -8,7 +8,7 @@ Outputs:
   diagnostics/stage0/stage0_report.txt     — table + verdict
 """
 
-import os, sys, json, math
+import os, math
 import numpy as np
 from pathlib import Path
 from datetime import datetime, timedelta
@@ -18,13 +18,17 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
 
-sys.path.insert(0, str(Path(__file__).parent))
-from config import config
-
 from sentinelhub import (
     SentinelHubRequest, DataCollection, MimeType,
     CRS, BBox, bbox_to_dimensions, SHConfig
 )
+
+# Build SH config directly — avoids supabase import from config.py
+config = SHConfig()
+config.sh_client_id     = os.environ.get("CLIENT_ID")     or "sh-0f08bb88-cde8-4e6e-8eb9-1006acfe6be9"
+config.sh_client_secret = os.environ.get("CLIENT_SECRET") or "erkNtZDw4z36UB0Xm7BrzcYixzaUGeW0"
+config.sh_token_url     = "https://identity.dataspace.copernicus.eu/auth/realms/CDSE/protocol/openid-connect/token"
+config.sh_base_url      = "https://sh.dataspace.copernicus.eu"
 
 # ── Tanks to measure ─────────────────────────────────────────────────────────
 TANKS = [
