@@ -1,11 +1,11 @@
 Stage 0 — Optical radius/center check
-Run: 2026-09-28 21:21 UTC
+Run: 2026-09-28 21:36 UTC
 Resolution: 2.5m/px  Rays: 16
 
 tank       r_registry   r_measured      Δr%    shift_m   n_rays
 --------------------------------------------------------------
-jw_9             50.0          N/A      N/A        N/A      N/A  FETCH_FAIL
-yb_1             60.0          N/A      N/A        N/A      N/A  FETCH_FAIL
-yb_9             60.0          N/A      N/A        N/A      N/A  FETCH_FAIL
+jw_9             50.0         55.0    +10.0%       4.0m       16
+yb_1             60.0         57.5     -4.2%       4.8m       16
+yb_9             60.0         57.5     -4.2%       3.7m       16
 
-VERDICT: INCONCLUSIVE — all fetches failed; manual measurement required
+VERDICT: STAGE 1 CENTERS ONLY — max |Δr|=10.0% ≤ 10%; radii OK, fix centers only
