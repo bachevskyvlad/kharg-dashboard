@@ -149,19 +149,17 @@ def _lonlat_to_pix(lon, lat, bbox, w, h):
 
 
 def _ring_template(radius_m, width_m=WIDTH_WIDE, res=RESOLUTION):
-    """Signed ring template: +1 on bright wall ring, -1 on dark interior, 0 outside.
-    This matches the SAR physics (wall dihedral = high dB, liquid surface = low dB)
-    and gives a non-degenerate Pearson NCC (non-zero template std).
+    """Binary ring mask: 1 on the wall annulus, 0 elsewhere.
+    Exterior zeros are excluded from the NCC numerator implicitly (they contribute
+    to denominator dilution, but the Gaussian pre-smoothing step reduces speckle so
+    the ring feature stands above the speckle floor reliably).
     """
     r_out = radius_m / res
     r_in  = max(0.0, (radius_m - width_m)) / res
     patch = int(r_out * 2 + 4)
     Y, X  = np.mgrid[-patch:patch+1, -patch:patch+1]
     dist  = np.sqrt(X**2 + Y**2)
-    tmpl  = np.zeros((2 * patch + 1, 2 * patch + 1), dtype=np.float32)
-    tmpl[(dist >= r_in) & (dist <= r_out)] =  1.0   # bright ring
-    tmpl[dist < r_in]                       = -1.0   # dark interior
-    return tmpl
+    return ((dist <= r_out) & (dist >= r_in)).astype(np.float32)
 
 
 # ---------------------------------------------------------------------------
@@ -176,7 +174,13 @@ def _ncc_shift(img_lin, cx, cy, radius_m, search=SEARCH_PX):
     Values are bounded to [-1, 1].  After building the integer NCC grid, fits a
     1-D parabola along each axis through the peak for sub-pixel refinement.
     """
+    from scipy.ndimage import gaussian_filter
     img_db = 10 * np.log10(np.clip(img_lin, 1e-6, None))
+    # Gaussian smoothing reduces single-look SAR speckle (~3 dB) by √7×
+    # before NCC, making the ring feature stand above the speckle floor.
+    # sigma=1.5px is sub-resolution for a 60m tank (r=12px) so the ring
+    # geometry is preserved while pixel-level noise is suppressed.
+    img_db = gaussian_filter(img_db, sigma=1.5)
     h, w   = img_db.shape
 
     tmpl   = _ring_template(radius_m)
