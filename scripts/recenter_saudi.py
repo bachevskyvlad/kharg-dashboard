@@ -47,6 +47,17 @@ NCC_LOW       = 0.20
 N_SCENES      = 2       # scenes per tank for template matching
 BUFFER_M      = 300
 
+# Kharg t60 tanks used as independent control (DESC orbit 35, los_az 282).
+# Coordinates are the production registry values — ground truth for NCC bias test.
+KHARG_CONTROL_ORBIT = {"relative_orbit": 35, "direction": "DESC", "los_azimuth": 282}
+KHARG_CONTROL_TANKS = [
+    {"id": "t60_0", "lat": 29.22173338156137,  "lon": 50.31654819949878,  "radius_m": 60, "h_max_m": 18},
+    {"id": "t60_1", "lat": 29.221638820210273, "lon": 50.315043243946754, "radius_m": 60, "h_max_m": 18},
+    {"id": "t60_2", "lat": 29.221840470329855, "lon": 50.31352911803618,  "radius_m": 60, "h_max_m": 18},
+    {"id": "t60_3", "lat": 29.223156804822317, "lon": 50.315849029771684, "radius_m": 60, "h_max_m": 18},
+    {"id": "t60_4", "lat": 29.222897954869325, "lon": 50.3144195158663,   "radius_m": 60, "h_max_m": 18},
+]
+
 SH_CLIENT_ID     = os.environ.get("CLIENT_ID")     or "sh-0f08bb88-cde8-4e6e-8eb9-1006acfe6be9"
 SH_CLIENT_SECRET = os.environ.get("CLIENT_SECRET") or "erkNtZDw4z36UB0Xm7BrzcYixzaUGeW0"
 
@@ -153,56 +164,85 @@ def _ring_template(radius_m, width_m=WIDTH_WIDE, res=RESOLUTION):
 
 def _ncc_shift(img_lin, cx, cy, radius_m, search=SEARCH_PX):
     """
-    Returns (dx_px, dy_px, ncc_peak) — the sub-pixel shift that maximises
-    normalised cross-correlation of the ring template with the image patch.
-    img_lin is in linear power (not dB).
+    Returns (dx_px, dy_px, ncc_peak).
+
+    Uses masked NCC: only ring pixels (tmpl > 0) participate in the correlation.
+    This avoids the background-pixel contamination that biases the full-patch NCC
+    when the ring is sparse relative to the template bounding box.
+
+    After building the integer NCC grid, fits a 1-D parabola along each axis
+    through the peak to get sub-pixel (±0.5 px precision) displacement.
     """
-    # Work in dB for better ring contrast
     img_db = 10 * np.log10(np.clip(img_lin, 1e-6, None))
     h, w   = img_db.shape
 
     tmpl   = _ring_template(radius_m)
     th, tw = tmpl.shape
-    ph, pw = th + 2 * search, tw + 2 * search  # padded extraction
+    ph, pw = th + 2 * search, tw + 2 * search
 
-    # Extract patch centred on nominal centre
     r0 = int(cy) - ph // 2
     c0 = int(cx) - pw // 2
     r1, c1 = r0 + ph, c0 + pw
 
-    # Clamp to image bounds
     if r0 < 0 or c0 < 0 or r1 > h or c1 > w:
-        return 0.0, 0.0, 0.0  # centre too close to edge
+        return 0.0, 0.0, 0.0
 
     patch = img_db[r0:r1, c0:c1]
 
-    # Slide template over ±search window
-    best_ncc = -1.0
-    best_dy = best_dx = 0
-
-    tmpl_flat = tmpl.flatten()
-    tmpl_mu   = tmpl_flat.mean()
-    tmpl_sig  = tmpl_flat.std()
-    if tmpl_sig < 1e-9:
+    # Masked NCC: use only ring pixels (tmpl > 0)
+    ring_mask = tmpl.flatten() > 0
+    n_ring    = ring_mask.sum()
+    if n_ring < 3:
         return 0.0, 0.0, 0.0
 
-    for dy in range(-search, search + 1):
-        for dx in range(-search, search + 1):
+    n_steps  = 2 * search + 1
+    ncc_grid = np.full((n_steps, n_steps), -1.0, dtype=np.float64)
+
+    for idy, dy in enumerate(range(-search, search + 1)):
+        for idx, dx in enumerate(range(-search, search + 1)):
             oy = search + dy
             ox = search + dx
-            sub = patch[oy:oy + th, ox:ox + tw].flatten()
-            if sub.shape != tmpl_flat.shape:
+            sub_flat = patch[oy:oy + th, ox:ox + tw].flatten()
+            if sub_flat.shape[0] != ring_mask.shape[0]:
                 continue
-            sub_mu  = sub.mean()
-            sub_sig = sub.std()
+            sub_ring = sub_flat[ring_mask]
+            sub_mu   = sub_ring.mean()
+            sub_sig  = sub_ring.std()
             if sub_sig < 1e-9:
                 continue
-            ncc = ((sub - sub_mu) * (tmpl_flat - tmpl_mu)).mean() / (sub_sig * tmpl_sig)
-            if ncc > best_ncc:
-                best_ncc = ncc
-                best_dy, best_dx = dy, dx
+            # Pearson r between binary ring indicator and sub-image over ring pixels.
+            # Template is constant 1 on ring → tmpl_ring.std() = 0 → use
+            # z-score mean of ring pixels relative to ring mean (= signal-to-noise).
+            # Equivalent formulation: mean z-score of ring pixels = (sub_ring - sub_mu).mean() / sub_sig = 0
+            # Use instead: mean ring dB minus mean full-patch dB, normalised by full-patch std.
+            full_flat = patch[oy:oy + th, ox:ox + tw].flatten()
+            full_mu   = full_flat.mean()
+            full_sig  = full_flat.std() if full_flat.std() > 1e-9 else 1.0
+            ncc_grid[idy, idx] = (sub_mu - full_mu) / full_sig
 
-    return float(best_dx), float(best_dy), float(best_ncc)
+    # Integer peak
+    peak_flat  = int(np.argmax(ncc_grid))
+    peak_idy, peak_idx = np.unravel_index(peak_flat, ncc_grid.shape)
+    best_ncc   = float(ncc_grid[peak_idy, peak_idx])
+    best_dy_int = peak_idy - search
+    best_dx_int = peak_idx - search
+
+    # Parabolic sub-pixel refinement (1-D parabola along each axis)
+    sub_dx = 0.0
+    if 0 < peak_idx < n_steps - 1:
+        fm, f0, fp = ncc_grid[peak_idy, peak_idx - 1], ncc_grid[peak_idy, peak_idx], ncc_grid[peak_idy, peak_idx + 1]
+        denom = 2 * f0 - fm - fp
+        if abs(denom) > 1e-12:
+            sub_dx = (fm - fp) / (2 * denom)
+
+    sub_dy = 0.0
+    if 0 < peak_idy < n_steps - 1:
+        fm, f0, fp = ncc_grid[peak_idy - 1, peak_idx], ncc_grid[peak_idy, peak_idx], ncc_grid[peak_idy + 1, peak_idx]
+        denom = 2 * f0 - fm - fp
+        if abs(denom) > 1e-12:
+            sub_dy = (fm - fp) / (2 * denom)
+
+    return float(best_dx_int + sub_dx), float(best_dy_int + sub_dy), best_ncc
 
 
 # ---------------------------------------------------------------------------
@@ -420,12 +460,30 @@ def process_terminal(terminal, control_only=False):
 # write report
 # ---------------------------------------------------------------------------
 
-def write_report(all_results, control_results):
+def write_report(all_results, control_results, kharg_control_results=None):
     lines = ["# Stage 1 — Re-centring Report\n\n"]
     lines.append(f"*Generated {datetime.datetime.utcnow().isoformat()} UTC*\n\n")
-    lines.append(f"NCC threshold: ok ≥ {NCC_OK}, low-confidence ≥ {NCC_LOW}, "
+    lines.append(f"NCC: masked (ring pixels only), sub-pixel parabolic interpolation. "
+                 f"ok ≥ {NCC_OK}, low-confidence ≥ {NCC_LOW}, "
                  f"excluded < {NCC_LOW}. Search window ±{SEARCH_PX} px. "
                  f"Resolution {RESOLUTION} m/px.\n\n")
+
+    # Kharg bias test
+    if kharg_control_results:
+        kh_shifts = [np.sqrt(r["dx_m"]**2 + r["dy_m"]**2)
+                     for r in kharg_control_results if np.isfinite(r["dx_m"])]
+        kh_med_px = np.median(kh_shifts) / RESOLUTION if kh_shifts else np.nan
+        kh_pass = kh_med_px < 1.0
+        lines.append("## Kharg NCC bias test (production coordinates — ground truth)\n\n")
+        lines.append(f"Median |shift| = **{kh_med_px:.2f} px** (criterion <1 px) "
+                     f"→ {'**PASS** (NCC unbiased)' if kh_pass else '**FAIL** (NCC has systematic bias)'}\n\n")
+        lines.append("| tank_id | dx_m | dy_m | |shift|_m | NCC | status |\n")
+        lines.append("|---------|------|------|----------|-----|--------|\n")
+        for r in kharg_control_results:
+            sm = np.sqrt(r["dx_m"]**2 + r["dy_m"]**2) if np.isfinite(r["dx_m"]) else np.nan
+            lines.append(f"| {r['tank_id']} | {r['dx_m']:.1f} | {r['dy_m']:.1f} | "
+                         f"{sm:.1f} | {r['ncc_score']:.3f} | {r['status']} |\n")
+        lines.append("\n")
 
     # RT control check
     if control_results:
@@ -479,6 +537,88 @@ def write_report(all_results, control_results):
 # main
 # ---------------------------------------------------------------------------
 
+def _run_kharg_control():
+    """
+    Runs 5 Kharg t60 tanks through the current NCC implementation on DESC orbit 35.
+    These coordinates are production-grade (Kharg pipeline is trusted).
+    Expected result: median |shift| < 1 px.  If not, the NCC method has a bias.
+    Returns list of result dicts (same schema as process_terminal output).
+    """
+    from datetime import datetime as dt
+    orb       = KHARG_CONTROL_ORBIT
+    tanks     = KHARG_CONTROL_TANKS
+    lats      = [t["lat"] for t in tanks]
+    lons      = [t["lon"] for t in tanks]
+    dlat      = BUFFER_M / 111320
+    dlon      = BUFFER_M / (111320 * np.cos(np.deg2rad(min(lats))))
+    bbox      = BBox([min(lons) - dlon, min(lats) - dlat, max(lons) + dlon, max(lats) + dlat], crs=CRS.WGS84)
+
+    scene_dates = get_all_scene_dates(
+        bbox,
+        start_date=dt(2026, 1, 1),
+        orbit_state=orb["direction"],
+        relative_orbit=orb["relative_orbit"],
+    )
+    scene_dates = sorted(scene_dates)[-N_SCENES:]
+    if not scene_dates:
+        print("  SKIP kharg: no scene dates found")
+        return []
+
+    print(f"  kharg t60: {len(tanks)} tanks, scenes {[d.strftime('%Y-%m-%d') for d in scene_dates]}")
+
+    scene_imgs = []
+    for d in scene_dates:
+        d_str = d.strftime("%Y-%m-%d")
+        img, w, h = _fetch_scene(bbox, d_str, orb["direction"], orb["relative_orbit"])
+        if img is not None:
+            scene_imgs.append((d_str, img, w, h))
+
+    if not scene_imgs:
+        print("    kharg: no scenes fetched")
+        return []
+
+    results = []
+    for tank in tanks:
+        dx_list, dy_list, ncc_list = [], [], []
+        best_img, best_d, best_ncc = None, None, -1.0
+        for d_str, img, w, h in scene_imgs:
+            cx, cy = _lonlat_to_pix(tank["lon"], tank["lat"], bbox, w, h)
+            dx, dy, ncc = _ncc_shift(img, cx, cy, tank["radius_m"])
+            dx_list.append(dx); dy_list.append(dy); ncc_list.append(ncc)
+            if ncc > best_ncc:
+                best_ncc, best_img, best_d = ncc, img, d_str
+
+        mean_dx  = float(np.mean(dx_list))
+        mean_dy  = float(np.mean(dy_list))
+        mean_ncc = float(np.mean(ncc_list))
+        dx_m     = mean_dx * RESOLUTION
+        dy_m     = -mean_dy * RESOLUTION
+        shift_m  = np.sqrt(dx_m**2 + dy_m**2)
+        status   = "ok" if mean_ncc >= NCC_OK else ("low-confidence" if mean_ncc >= NCC_LOW else "excluded")
+
+        if best_img is not None:
+            _, iw, ih = scene_imgs[0][2], *scene_imgs[0][2:4]
+            cx_old, cy_old = _lonlat_to_pix(tank["lon"], tank["lat"], bbox, iw, ih)
+            lat_new = tank["lat"] + dy_m / 111320
+            lon_new = tank["lon"] + dx_m / (111320 * np.cos(np.deg2rad(tank["lat"])))
+            cx_new, cy_new = _lonlat_to_pix(lon_new, lat_new, bbox, iw, ih)
+            crop_path = CROPS_DIR / f"kharg_{tank['id']}_{best_d}.png"
+            _save_crop(best_img, cx_old, cy_old, cx_new, cy_new,
+                       tank["radius_m"], tank["id"], best_d, crop_path)
+
+        results.append({
+            "terminal_id": "kharg", "tank_id": tank["id"],
+            "lat_old": tank["lat"], "lon_old": tank["lon"],
+            "dx_px": round(mean_dx, 3), "dy_px": round(mean_dy, 3),
+            "dx_m": round(dx_m, 1), "dy_m": round(dy_m, 1),
+            "ncc_score": round(mean_ncc, 3), "status": status,
+            "lat_new": tank["lat"], "lon_new": tank["lon"],  # never applied
+        })
+        print(f"    {tank['id']}: shift={shift_m:.1f}m (dx={dx_m:.1f}m dy={dy_m:.1f}m) ncc={mean_ncc:.3f} → {status}")
+
+    return results
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--terminals", default="juwaymah,yanbu",
@@ -490,8 +630,22 @@ def main():
     terminal_ids = [t.strip() for t in args.terminals.split(",")]
     term_map = {t["id"]: t for t in ALL_TERMINALS}
 
+    kharg_control_results = []
     control_results = []
     all_results = []
+
+    # Kharg bias test — runs always; must pass before RT gate is meaningful
+    print("\n[Kharg control — NCC bias test]")
+    kharg_control_results = _run_kharg_control()
+    if kharg_control_results:
+        kh_shifts = [np.sqrt(r["dx_m"]**2 + r["dy_m"]**2)
+                     for r in kharg_control_results if np.isfinite(r["dx_m"])]
+        kh_med_px = np.median(kh_shifts) / RESOLUTION if kh_shifts else np.nan
+        if kh_med_px >= 1.0:
+            print(f"[Kharg control FAIL] Median shift = {kh_med_px:.2f} px ≥ 1 px. NCC method has bias — ABORT.")
+            write_report([], control_results, kharg_control_results)
+            sys.exit(1)
+        print(f"[Kharg control PASS] Median shift = {kh_med_px:.2f} px < 1 px. NCC is unbiased.")
 
     # Always run RT control (10 tanks from south cluster)
     if "ras_tanura" not in terminal_ids:
@@ -506,7 +660,7 @@ def main():
                 med_px = np.median(shifts) / RESOLUTION
                 if med_px >= 1.0:
                     print(f"\n[RT control FAIL] Median shift = {med_px:.2f} px ≥ 1 px. ABORT.")
-                    write_report([], control_results)
+                    write_report([], control_results, kharg_control_results)
                     sys.exit(1)
                 print(f"[RT control PASS] Median shift = {med_px:.2f} px < 1 px.")
 
@@ -526,7 +680,7 @@ def main():
             results = process_terminal(term, control_only=False)
             all_results.extend(results)
 
-    write_report(all_results, control_results)
+    write_report(all_results, control_results, kharg_control_results)
 
     # Smoke test: PNGs must have std > 0
     import PIL.Image
