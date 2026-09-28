@@ -150,12 +150,13 @@ def _fetch_db_series(tank_geom, orbit_cfg, dates):
 
     # Build a minimal tank dict that build_crescent_masks expects
     t = {
-        "id":        "probe",
-        "lat":       tank_geom["lat"],
-        "lon":       tank_geom["lon"],
-        "radius_m":  tank_geom["radius_m"],
-        "diameter":  tank_geom["radius_m"] * 2,
-        "h_max":     tank_geom["h_max_m"],
+        "id":       "probe",
+        "lat":      tank_geom["lat"],
+        "lon":      tank_geom["lon"],
+        "radius":   tank_geom["radius_m"],   # build_crescent_masks key
+        "radius_m": tank_geom["radius_m"],
+        "diameter": tank_geom["radius_m"] * 2,
+        "h_max":    tank_geom["h_max_m"],
     }
     tanks_data = build_crescent_masks([t], bbox, img_w, img_h,
                                       los_azimuth=tank_geom.get("los_azimuth", 282))
