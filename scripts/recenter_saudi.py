@@ -166,12 +166,9 @@ def _ncc_shift(img_lin, cx, cy, radius_m, search=SEARCH_PX):
     """
     Returns (dx_px, dy_px, ncc_peak).
 
-    Uses masked NCC: only ring pixels (tmpl > 0) participate in the correlation.
-    This avoids the background-pixel contamination that biases the full-patch NCC
-    when the ring is sparse relative to the template bounding box.
-
-    After building the integer NCC grid, fits a 1-D parabola along each axis
-    through the peak to get sub-pixel (±0.5 px precision) displacement.
+    Pearson NCC over the full template patch (including zero-background pixels).
+    Values are bounded to [-1, 1].  After building the integer NCC grid, fits a
+    1-D parabola along each axis through the peak for sub-pixel refinement.
     """
     img_db = 10 * np.log10(np.clip(img_lin, 1e-6, None))
     h, w   = img_db.shape
@@ -189,45 +186,35 @@ def _ncc_shift(img_lin, cx, cy, radius_m, search=SEARCH_PX):
 
     patch = img_db[r0:r1, c0:c1]
 
-    # Masked NCC: use only ring pixels (tmpl > 0)
-    ring_mask = tmpl.flatten() > 0
-    n_ring    = ring_mask.sum()
-    if n_ring < 3:
+    tmpl_flat = tmpl.flatten()
+    tmpl_mu   = tmpl_flat.mean()
+    tmpl_sig  = tmpl_flat.std()
+    if tmpl_sig < 1e-9:
         return 0.0, 0.0, 0.0
 
     n_steps  = 2 * search + 1
     ncc_grid = np.full((n_steps, n_steps), -1.0, dtype=np.float64)
 
     for idy, dy in enumerate(range(-search, search + 1)):
-        for idx, dx in enumerate(range(-search, search + 1)):
+        for idx_i, dx in enumerate(range(-search, search + 1)):
             oy = search + dy
             ox = search + dx
-            sub_flat = patch[oy:oy + th, ox:ox + tw].flatten()
-            if sub_flat.shape[0] != ring_mask.shape[0]:
+            sub = patch[oy:oy + th, ox:ox + tw].flatten()
+            if sub.shape != tmpl_flat.shape:
                 continue
-            sub_ring = sub_flat[ring_mask]
-            sub_mu   = sub_ring.mean()
-            sub_sig  = sub_ring.std()
+            sub_mu  = sub.mean()
+            sub_sig = sub.std()
             if sub_sig < 1e-9:
                 continue
-            # Pearson r between binary ring indicator and sub-image over ring pixels.
-            # Template is constant 1 on ring → tmpl_ring.std() = 0 → use
-            # z-score mean of ring pixels relative to ring mean (= signal-to-noise).
-            # Equivalent formulation: mean z-score of ring pixels = (sub_ring - sub_mu).mean() / sub_sig = 0
-            # Use instead: mean ring dB minus mean full-patch dB, normalised by full-patch std.
-            full_flat = patch[oy:oy + th, ox:ox + tw].flatten()
-            full_mu   = full_flat.mean()
-            full_sig  = full_flat.std() if full_flat.std() > 1e-9 else 1.0
-            ncc_grid[idy, idx] = (sub_mu - full_mu) / full_sig
+            ncc_grid[idy, idx_i] = ((sub - sub_mu) * (tmpl_flat - tmpl_mu)).mean() / (sub_sig * tmpl_sig)
 
     # Integer peak
-    peak_flat  = int(np.argmax(ncc_grid))
-    peak_idy, peak_idx = np.unravel_index(peak_flat, ncc_grid.shape)
-    best_ncc   = float(ncc_grid[peak_idy, peak_idx])
+    peak_idy, peak_idx = np.unravel_index(np.argmax(ncc_grid), ncc_grid.shape)
+    best_ncc    = float(ncc_grid[peak_idy, peak_idx])
     best_dy_int = peak_idy - search
     best_dx_int = peak_idx - search
 
-    # Parabolic sub-pixel refinement (1-D parabola along each axis)
+    # Parabolic sub-pixel refinement (1-D parabola along each axis through peak)
     sub_dx = 0.0
     if 0 < peak_idx < n_steps - 1:
         fm, f0, fp = ncc_grid[peak_idy, peak_idx - 1], ncc_grid[peak_idy, peak_idx], ncc_grid[peak_idy, peak_idx + 1]
