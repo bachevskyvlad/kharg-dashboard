@@ -1,0 +1,37 @@
+name: Saudi Stage 0-Full — Optical Radius Check (97 tanks)
+on:
+  workflow_dispatch:
+jobs:
+  measure:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feature/saudi-rebuild
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - run: pip install sentinelhub matplotlib scipy Pillow -q
+
+      - name: Run Stage 0-full optical measurement
+        run: python scripts/stage0_full_optical.py
+        env:
+          CLIENT_ID:     ${{ secrets.CLIENT_ID }}
+          CLIENT_SECRET: ${{ secrets.CLIENT_SECRET }}
+
+      - name: Commit diagnostics
+        if: always()
+        run: |
+          git config user.email "actions@github.com"
+          git config user.name "GitHub Actions"
+          git add diagnostics/stage0_full/ registry_candidates/ || true
+          git commit -m "ci: stage0-full optical radius check all 97 tanks [skip ci]" || echo "nothing to commit"
+          git push origin feature/saudi-rebuild
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: stage0-full-crops
+          path: diagnostics/stage0_full/
