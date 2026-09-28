@@ -149,13 +149,19 @@ def _lonlat_to_pix(lon, lat, bbox, w, h):
 
 
 def _ring_template(radius_m, width_m=WIDTH_WIDE, res=RESOLUTION):
-    """Boolean ring mask centred at (0,0) in a small patch."""
+    """Signed ring template: +1 on bright wall ring, -1 on dark interior, 0 outside.
+    This matches the SAR physics (wall dihedral = high dB, liquid surface = low dB)
+    and gives a non-degenerate Pearson NCC (non-zero template std).
+    """
     r_out = radius_m / res
     r_in  = max(0.0, (radius_m - width_m)) / res
     patch = int(r_out * 2 + 4)
     Y, X  = np.mgrid[-patch:patch+1, -patch:patch+1]
     dist  = np.sqrt(X**2 + Y**2)
-    return ((dist <= r_out) & (dist >= r_in)).astype(np.float32)
+    tmpl  = np.zeros((2 * patch + 1, 2 * patch + 1), dtype=np.float32)
+    tmpl[(dist >= r_in) & (dist <= r_out)] =  1.0   # bright ring
+    tmpl[dist < r_in]                       = -1.0   # dark interior
+    return tmpl
 
 
 # ---------------------------------------------------------------------------
