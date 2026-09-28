@@ -105,7 +105,7 @@ def _fetch_scene(bbox, date_str, direction, rel_orbit):
                 other_args={
                     "processing": {"orthorectify": True, "backCoeff": "GAMMA0_TERRAIN",
                                    "demInstance": "COPERNICUS_30"},
-                    "dataFilter": {"orbitDirection": direction,
+                    "dataFilter": {"orbitDirection": {"DESC": "DESCENDING", "ASC": "ASCENDING"}.get(direction.upper(), direction.upper()),
                                    "relativeOrbit": rel_orbit},
                     "mosaicking": "ORBIT",
                 },
