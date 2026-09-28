@@ -166,7 +166,7 @@ def _ring_template(radius_m, width_m=WIDTH_WIDE, res=RESOLUTION):
 # normalised cross-correlation (NCC) in a ±SEARCH_PX window
 # ---------------------------------------------------------------------------
 
-def _ncc_shift(img_lin, cx, cy, radius_m, search=SEARCH_PX):
+def _ncc_shift(img_lin, cx, cy, radius_m, search=SEARCH_PX, debug=False):
     """
     Returns (dx_px, dy_px, ncc_peak).
 
@@ -238,6 +238,13 @@ def _ncc_shift(img_lin, cx, cy, radius_m, search=SEARCH_PX):
         denom = 2 * f0 - fm - fp
         if abs(denom) > 1e-12:
             sub_dy = (fm - fp) / (2 * denom)
+
+    if debug:
+        ncc_at_center = float(ncc_grid[search, search])
+        grid_std = float(np.std(ncc_grid[ncc_grid > -1.0]))
+        print(f"      [dbg] ncc@(0,0)={ncc_at_center:.3f}  peak={best_ncc:.3f}@(dy={best_dy_int},dx={best_dx_int})"
+              f"  grid_std={grid_std:.4f}  tmpl_sig={tmpl_sig:.3f}"
+              f"  img_db_mu={float(np.nanmean(img_db)):.1f}  img_db_std={float(np.nanstd(img_db)):.2f}")
 
     return float(best_dx_int + sub_dx), float(best_dy_int + sub_dy), best_ncc
 
@@ -580,7 +587,8 @@ def _run_kharg_control():
         best_img, best_d, best_ncc = None, None, -1.0
         for d_str, img, w, h in scene_imgs:
             cx, cy = _lonlat_to_pix(tank["lon"], tank["lat"], bbox, w, h)
-            dx, dy, ncc = _ncc_shift(img, cx, cy, tank["radius_m"])
+            print(f"      [{tank['id']} {d_str}] cx={cx:.1f} cy={cy:.1f}")
+            dx, dy, ncc = _ncc_shift(img, cx, cy, tank["radius_m"], debug=True)
             dx_list.append(dx); dy_list.append(dy); ncc_list.append(ncc)
             if ncc > best_ncc:
                 best_ncc, best_img, best_d = ncc, img, d_str
