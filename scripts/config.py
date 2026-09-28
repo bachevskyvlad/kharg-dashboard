@@ -64,6 +64,12 @@ TANK_HEIGHT_MIN = 2         # metres — floating roof minimum resting height;
 LOS_AZIMUTH    = 282        # degrees — line-of-sight azimuth from satellite
 WIDTH_WIDE     = 15         # metres — annulus width of the crescent mask
 
+# ── Raw dB floor ──────────────────────────────────────────────────────────────
+# Minimum physically plausible SAR dB return for open water/oil surface.
+# Values below this are instrument noise or processing artefacts.
+# Keep at -5.0 — changing this breaks time-series comparability.
+DB_FLOOR = -5.0
+
 # ── Smoothing ─────────────────────────────────────────────────────────────────
 # EWMA on weekly aggregates only. Alpha=0.1 gives ~10-week effective memory,
 # which smooths out single-pass noise without lagging trend reversals badly.

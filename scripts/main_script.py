@@ -200,7 +200,9 @@ for terminal in TERMINALS:
     if new_t_dates:
         try:
             t_data = build_crescent_masks(tanks, bbox, img_w, img_h)
-            raw = fetch_new_records(new_t_dates, t_data, bbox, img_w, img_h)
+            allowed_orbits = terminal.get("allowed_orbits")
+            raw = fetch_new_records(new_t_dates, t_data, bbox, img_w, img_h,
+                                    orbit_cfg=allowed_orbits)
             for r in raw:
                 r["terminal_id"] = tid
             new_records = raw
@@ -231,7 +233,9 @@ for terminal in TERMINALS:
         # Rename radius_m → radius for compute_volumes compatibility
         if "radius_m" in df_t.columns and "radius" not in df_t.columns:
             df_t = df_t.rename(columns={"radius_m": "radius"})
-        df_t, _, _ = compute_volumes(df_t)
+        cal_min = terminal.get("db_min")
+        cal_max = terminal.get("db_max")
+        df_t, _, _ = compute_volumes(df_t, db_min_override=cal_min, db_max_override=cal_max)
         daily_t = aggregate_daily(df_t)
         _upsert_terminal_vol(daily_t, tid)
         payload = _write_terminal_json(daily_t, tid, terminal["name"])

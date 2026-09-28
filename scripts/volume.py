@@ -38,16 +38,25 @@ import pandas as pd
 from config import BARREL_PER_M3, TANK_HEIGHT_MIN, EWMA_ALPHA
 
 
-def compute_volumes(df):
+def compute_volumes(df, db_min_override=None, db_max_override=None):
     """
     Adds a 'barrels' column to df using the inverse crescent radiometry model.
 
     df must have columns: db_mean, radius_m, h_max.
     Percentile clipping is global (all tanks, all dates) — do not filter
     before calling this or the calibration will be wrong.
+
+    db_min_override / db_max_override: optional frozen calibration values.
+    When set, skip the percentile computation and use the supplied constants.
+    This keeps volume time-series comparable when updating historical data.
+    For Kharg: never pass overrides (golden test must pass bit-for-bit).
     """
-    dB_min = df['db_mean'].quantile(0.05)
-    dB_max = df['db_mean'].quantile(0.95)
+    if db_min_override is not None and db_max_override is not None:
+        dB_min = db_min_override
+        dB_max = db_max_override
+    else:
+        dB_min = df['db_mean'].quantile(0.05)
+        dB_max = df['db_mean'].quantile(0.95)
 
     def _row_volume(row):
         vv = np.clip(row["db_mean"], dB_min, dB_max)

@@ -207,7 +207,7 @@ def _tank_valid_fraction(img_linear, crescent_mask):
 
 
 def fetch_new_records(new_dates, tanks_data, super_bbox, img_width, img_height,
-                      min_valid_fraction=0.0):
+                      min_valid_fraction=0.0, orbit_cfg=None):
     """
     Downloads SAR imagery for each date in new_dates and extracts per-tank dB means.
 
@@ -232,16 +232,29 @@ def fetch_new_records(new_dates, tanks_data, super_bbox, img_width, img_height,
 
     for d in new_dates:
         d_str = d.strftime("%Y-%m-%d")
+        other_args: dict = {"processing": {
+            "orthorectify": True,
+            "backCoeff": "GAMMA0_TERRAIN",
+            "demInstance": "COPERNICUS_30",
+        }}
+        if orbit_cfg:
+            orb = orbit_cfg[0]
+            dir_str = orb["direction"].upper()
+            if dir_str == "DESC":
+                dir_str = "DESCENDING"
+            elif dir_str == "ASC":
+                dir_str = "ASCENDING"
+            other_args["dataFilter"] = {
+                "orbitDirection": dir_str,
+                "relativeOrbitNumber": orb["relative_orbit"],
+            }
+            other_args["mosaicking"] = "ORBIT"
         request = SentinelHubRequest(
             evalscript=_EVALSCRIPT,
             input_data=[SentinelHubRequest.input_data(
                 data_collection=S1_CDSE,
                 time_interval=(d_str, (d + timedelta(days=1)).strftime("%Y-%m-%d")),
-                other_args={"processing": {
-                    "orthorectify": True,
-                    "backCoeff": "GAMMA0_TERRAIN",
-                    "demInstance": "COPERNICUS_30",  # best publicly available DEM at Kharg
-                }}
+                other_args=other_args,
             )],
             responses=[SentinelHubRequest.output_response("default", MimeType.TIFF)],
             bbox=super_bbox,
