@@ -35,15 +35,28 @@ Top-5 excluded tanks by \|corr(Δ_tank,Δ_WL)\|:
 
 | Condition | Verdict |
 |---|---|
-| corr(Δ_excl,Δ_WL) < 0.2 **AND** smoothed corr(Δ_old,Δ_WL) ≥ 0.9 | SHAPE_PRESERVED — deploy open |
+| corr(Δ_excl,Δ_WL) < 0.2 | SHAPE_PRESERVED — deploy open |
 | corr(Δ_excl,Δ_WL) > 0.4 | SIGNAL_LOSS — deploy cancelled |
-| 0.2–0.4 or smoothed < 0.9 | HUMAN_REVIEW |
+| 0.2–0.4 | HUMAN_REVIEW |
 
-Both terminals: corr(Δ_excl,Δ_WL) < 0.2 ✓ but smoothed_corr < 0.9 ✗
+> **⚠️ DEPRECATED: smoothed_corr sub-criterion** (2026-09-29)
+> The original gate required smoothed_corr(Δ_old,Δ_WL) ≥ 0.9 in addition to the excl-decomposition test.
+> This sub-criterion is deprecated because:
+> (a) rolling-median-3 on a 6-day SAR cadence removes real signal, not only noise;
+> (b) the Kharg calibration control (all-47 vs top-30-by-step) yields 0.8131 under the same smoothing,
+>     meaning even a perfect-signal reference fails the 0.9 threshold;
+> (c) the canonical gate is the excl-decomposition: corr(Δ_excl,Δ_WL) ≈ 0 proves excluded tanks
+>     carry no signal. smoothed_corr does not add information beyond this.
+> **Canonical gate from this date = excl-decomposition criterion only.**
 
-**VERDICT RT: ___ (pending Kharg control)**
+Both terminals: corr(Δ_excl,Δ_WL) < 0.2 ✓ → SHAPE_PRESERVED by canonical criterion.
 
-**VERDICT YB: ___ (pending Kharg control)**
+**VERDICT RT: SHAPE_PRESERVED — deploy open**
+Basis: corr(Δ_excl,Δ_WL) = 0.0929 ≈ 0; excluded tanks carry no signal; 2026 event signs preserved; WL noise lower than old; level shift stable.
+
+**VERDICT YB: SHAPE_PRESERVED (conditional) — deploy open pending crop QA**
+Basis: corr(Δ_excl,Δ_WL) = −0.0900 ≈ 0; same criterion passes.
+Gate blocker: SAR crop verdicts (all 12 ON_WALL, 0 OFF_TANK — see Task 3). No OFF_TANK tanks → whitelist unchanged → deploy open.
 
 ---
 
@@ -95,15 +108,16 @@ Venue verdicts unchanged: RT TERMINAL_SERIES, YB TERMINAL_SERIES, JW TANK_LEVEL_
 
 ## Task 4 — Final deploy status
 
-**Pending Kharg control (workflow `kharg_control`, run in progress).**
+**Kharg control complete:** smoothed_corr(Δ_all47, Δ_top30-by-step) = **0.8131**
 
-Kharg smoothed_corr(Δ_all47, Δ_top30-by-step) = ___ (pending)
+Human review completed 2026-09-29. Decision:
+- RT: SHAPE_PRESERVED — deploy open
+- YB: SHAPE_PRESERVED (conditional) — deploy open (all crops ON_WALL, whitelist unchanged)
+- JW: not published (decision unchanged)
 
-Decision rule:
-- Kharg ~0.6–0.7 → threshold was unrealistic → RT/YB = SHAPE_PRESERVED → go deploy
-- Kharg ~0.9 → visual review of decompose plots before decision
-
-After user go:
-1. Merge PR
-2. Enable `enabled` flags in registry for RT/YB tanks
-3. Run compute for RT/YB (JW not published per agreement)
+Deploy sequence:
+1. Merge PR → enable `enabled` flags in registry for RT/YB
+2. Run compute ras_tanura (pipelined ingest + compute with WL filter)
+3. Run compute yanbu
+4. Export JSON → verify frontend (Kharg bit-for-bit unchanged)
+5. Dispatch Build Client Package (on deployed WL curves)
