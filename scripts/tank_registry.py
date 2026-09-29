@@ -443,26 +443,25 @@ LOCATIONS = [
         ],
         "status": "active",
         "tanks": [
-            # Geometry v2 (stage0-qa measured, 2026-09). source_r and qa_status per entry.
-            {"id": "jw_0",  "lat": 26.81499513, "lon": 49.98708552, "radius_m": 55.0, "h_max_m": 17},  # measured ok
-            {"id": "jw_1",  "lat": 26.81614271, "lon": 49.98578305, "radius_m": 55.0, "h_max_m": 17},  # measured ok
-            {"id": "jw_2",  "lat": 26.81775960, "lon": 49.98402013, "radius_m": 55.0, "h_max_m": 17},  # measured ok
-            {"id": "jw_3",  "lat": 26.81893808, "lon": 49.98272833, "radius_m": 50.0, "h_max_m": 16},  # measured ok
-            {"id": "jw_4",  "lat": 26.81636248, "lon": 49.98865338, "radius_m": 45.0, "h_max_m": 15},  # measured ok
-            {"id": "jw_5",  "lat": 26.81758051, "lon": 49.98736557, "radius_m": 55.0, "h_max_m": 17},  # measured ok
-            {"id": "jw_6",  "lat": 26.81916745, "lon": 49.98561555, "radius_m": 55.0, "h_max_m": 17},  # measured ok
-            {"id": "jw_7",  "lat": 26.82032560, "lon": 49.98429796, "radius_m": 50.0, "h_max_m": 16},  # measured ok
-            {"id": "jw_8",  "lat": 26.81819348, "lon": 49.99068942, "radius_m": 52.5, "h_max_m": 17},  # measured ok
-            {"id": "jw_9",  "lat": 26.81955777, "lon": 49.99228491, "radius_m": 57.5, "h_max_m": 18},  # measured ok
-            {"id": "jw_10", "lat": 26.81933907, "lon": 49.98940696, "radius_m": 55.0, "h_max_m": 17},  # measured ok
-            {"id": "jw_11", "lat": 26.82072031, "lon": 49.99101576, "radius_m": 57.5, "h_max_m": 18},  # measured ok
-            {"id": "jw_12", "lat": 26.82093998, "lon": 49.98764610, "radius_m": 55.0, "h_max_m": 17},  # measured ok
-            {"id": "jw_13", "lat": 26.82235398, "lon": 49.98923077, "radius_m": 55.0, "h_max_m": 17},  # measured ok
-            {"id": "jw_14", "lat": 26.82208538, "lon": 49.98634786, "radius_m": 65.0, "h_max_m": 18},  # measured ok-systematic
-            {"id": "jw_15", "lat": 26.82351335, "lon": 49.98795280, "radius_m": 62.5, "h_max_m": 18},  # measured ok-systematic
-            {"id": "jw_16", "lat": 26.82312628, "lon": 49.98380147, "radius_m": 62.5, "h_max_m": 18},  # measured ok-systematic
-            {"id": "jw_17", "lat": 26.82461354, "lon": 49.98539613, "radius_m": 65.0, "h_max_m": 18},  # measured ok-systematic
-            {"id": "jw_18", "lat": 26.82570077, "lon": 49.98407462, "radius_m": 65.0, "h_max_m": 18},  # measured ok-systematic
+            {"id": "jw_0",  "lat": 26.814939449818950, "lon": 49.987095744022476, "radius_m": 50, "h_max_m": 16},
+            {"id": "jw_1",  "lat": 26.816115167835957, "lon": 49.985801747261085, "radius_m": 50, "h_max_m": 16},
+            {"id": "jw_2",  "lat": 26.817719856216030, "lon": 49.984028796562500, "radius_m": 50, "h_max_m": 16},
+            {"id": "jw_3",  "lat": 26.818881636808456, "lon": 49.982719201457790, "radius_m": 50, "h_max_m": 16},
+            {"id": "jw_4",  "lat": 26.816309495888724, "lon": 49.988651189962226, "radius_m": 50, "h_max_m": 16},
+            {"id": "jw_5",  "lat": 26.817523593073770, "lon": 49.987380783090224, "radius_m": 50, "h_max_m": 16},
+            {"id": "jw_6",  "lat": 26.819128015846970, "lon": 49.985623716671796, "radius_m": 50, "h_max_m": 16},
+            {"id": "jw_7",  "lat": 26.820299858791643, "lon": 49.984324056007070, "radius_m": 50, "h_max_m": 16},
+            {"id": "jw_8",  "lat": 26.818163062259000, "lon": 49.990692300527390, "radius_m": 50, "h_max_m": 16},
+            {"id": "jw_9",  "lat": 26.819531458247540, "lon": 49.992284316605510, "radius_m": 50, "h_max_m": 16},
+            {"id": "jw_10", "lat": 26.819300433907060, "lon": 49.989417325119426, "radius_m": 50, "h_max_m": 16},
+            {"id": "jw_11", "lat": 26.820698661135080, "lon": 49.991014367679170, "radius_m": 50, "h_max_m": 16},
+            {"id": "jw_12", "lat": 26.820894127364330, "lon": 49.987648761169076, "radius_m": 50, "h_max_m": 16},
+            {"id": "jw_13", "lat": 26.822307642984722, "lon": 49.989232681648080, "radius_m": 50, "h_max_m": 16},
+            {"id": "jw_14", "lat": 26.822084302491750, "lon": 49.986363350107820, "radius_m": 50, "h_max_m": 16},
+            {"id": "jw_15", "lat": 26.823495358779535, "lon": 49.987952836960950, "radius_m": 50, "h_max_m": 16},
+            {"id": "jw_16", "lat": 26.823098922243503, "lon": 49.983801260652840, "radius_m": 50, "h_max_m": 16},
+            {"id": "jw_17", "lat": 26.824515110824244, "lon": 49.985368840304960, "radius_m": 50, "h_max_m": 16},
+            {"id": "jw_18", "lat": 26.825690135207460, "lon": 49.984073983323120, "radius_m": 50, "h_max_m": 16},
         ],
     },
     {
@@ -490,73 +489,72 @@ LOCATIONS = [
             {"name": "north", "tank_ids": ["rt_5","rt_6","rt_7","rt_8","rt_9","rt_10"]},
         ],
         "tanks": [
-            # Geometry v2 (stage0-qa measured/row-median, 2026-09).
-            {"id": "rt_0",  "lat": 26.63863276, "lon": 50.15425087, "radius_m": 67.5, "h_max_m": 18},  # measured ok
-            {"id": "rt_1",  "lat": 26.64039684, "lon": 50.15331494, "radius_m": 58.8, "h_max_m": 18},  # measured ok
-            {"id": "rt_2",  "lat": 26.64189044, "lon": 50.15267214, "radius_m": 56.2, "h_max_m": 17},  # measured ok
-            {"id": "rt_3",  "lat": 26.65001070, "lon": 50.15277696, "radius_m": 56.2, "h_max_m": 17},  # measured ok
-            {"id": "rt_4",  "lat": 26.65205187, "lon": 50.14991839, "radius_m": 57.5, "h_max_m": 18},  # measured ok
-            {"id": "rt_5",  "lat": 26.68845858, "lon": 50.11870285, "radius_m": 50.0, "h_max_m": 16},  # measured ok
-            {"id": "rt_6",  "lat": 26.68701832, "lon": 50.11796964, "radius_m": 56.2, "h_max_m": 17},  # measured ok
-            {"id": "rt_7",  "lat": 26.68758035, "lon": 50.11658624, "radius_m": 50.0, "h_max_m": 16},  # measured ok
-            {"id": "rt_8",  "lat": 26.68910074, "lon": 50.11720098, "radius_m": 61.2, "h_max_m": 18},  # measured ok
-            {"id": "rt_9",  "lat": 26.68826301, "lon": 50.11489694, "radius_m": 57.5, "h_max_m": 18},  # measured ok
-            {"id": "rt_10", "lat": 26.68978026, "lon": 50.11567144, "radius_m": 55.0, "h_max_m": 17},  # measured ok
-            {"id": "rt_11", "lat": 26.65171696, "lon": 50.14830609, "radius_m": 25.0, "h_max_m": 12},  # measured ok
-            {"id": "rt_12", "lat": 26.64999163, "lon": 50.14816115, "radius_m": 37.5, "h_max_m": 14},  # measured ok
-            {"id": "rt_13", "lat": 26.65084497, "lon": 50.14894788, "radius_m": 35.0, "h_max_m": 13},  # measured ok
-            {"id": "rt_14", "lat": 26.65097273, "lon": 50.15045606, "radius_m": 40.0, "h_max_m": 14},  # measured low-rays
-            {"id": "rt_15", "lat": 26.64896910, "lon": 50.14896750, "radius_m": 40.0, "h_max_m": 14},  # measured ok
-            {"id": "rt_16", "lat": 26.64959548, "lon": 50.14991787, "radius_m": 35.0, "h_max_m": 13},  # measured ok
-            {"id": "rt_17", "lat": 26.65015085, "lon": 50.15108633, "radius_m": 30.0, "h_max_m": 12},  # measured ok
-            {"id": "rt_18", "lat": 26.64802825, "lon": 50.14970394, "radius_m": 40.0, "h_max_m": 14},  # measured ok
-            {"id": "rt_19", "lat": 26.64881240, "lon": 50.15052531, "radius_m": 40.0, "h_max_m": 14},  # measured ok
-            {"id": "rt_20", "lat": 26.64935542, "lon": 50.15173786, "radius_m": 30.0, "h_max_m": 12},  # measured ok
-            {"id": "rt_21", "lat": 26.64698751, "lon": 50.15025075, "radius_m": 40.0, "h_max_m": 14},  # measured ok
-            {"id": "rt_22", "lat": 26.64794605, "lon": 50.15102532, "radius_m": 35.0, "h_max_m": 13},  # measured ok
-            {"id": "rt_23", "lat": 26.64857206, "lon": 50.15254636, "radius_m": 35.0, "h_max_m": 13},  # measured ok
-            {"id": "rt_24", "lat": 26.64887824, "lon": 50.15340102, "radius_m": 37.5, "h_max_m": 14},  # row-median outlier-replaced
-            {"id": "rt_25", "lat": 26.64718143, "lon": 50.15141872, "radius_m": 35.0, "h_max_m": 13},  # measured ok
-            {"id": "rt_26", "lat": 26.64749081, "lon": 50.15250383, "radius_m": 25.0, "h_max_m": 12},  # measured ok
-            {"id": "rt_27", "lat": 26.64788186, "lon": 50.15342226, "radius_m": 37.5, "h_max_m": 14},  # row-median outlier-replaced
-            {"id": "rt_28", "lat": 26.64821694, "lon": 50.15432317, "radius_m": 45.0, "h_max_m": 15},  # measured ok
-            {"id": "rt_29", "lat": 26.64628155, "lon": 50.15193351, "radius_m": 20.0, "h_max_m": 9},   # measured ok
-            {"id": "rt_30", "lat": 26.64659394, "lon": 50.15295213, "radius_m": 45.0, "h_max_m": 15},  # measured ok
-            {"id": "rt_31", "lat": 26.64703344, "lon": 50.15382556, "radius_m": 25.0, "h_max_m": 12},  # measured ok
-            {"id": "rt_32", "lat": 26.64738298, "lon": 50.15471620, "radius_m": 20.0, "h_max_m": 9},   # measured ok
-            {"id": "rt_33", "lat": 26.64538873, "lon": 50.15240421, "radius_m": 27.5, "h_max_m": 12},  # measured ok
-            {"id": "rt_34", "lat": 26.64578815, "lon": 50.15337776, "radius_m": 27.5, "h_max_m": 12},  # row-median outlier-replaced
-            {"id": "rt_35", "lat": 26.64620085, "lon": 50.15422885, "radius_m": 20.0, "h_max_m": 9},   # measured ok
-            {"id": "rt_36", "lat": 26.64652132, "lon": 50.15516365, "radius_m": 30.0, "h_max_m": 12},  # measured ok
-            {"id": "rt_37", "lat": 26.64383748, "lon": 50.15324062, "radius_m": 25.0, "h_max_m": 12},  # measured ok
-            {"id": "rt_38", "lat": 26.64418891, "lon": 50.15413773, "radius_m": 40.0, "h_max_m": 14},  # row-median outlier-replaced
-            {"id": "rt_39", "lat": 26.64454641, "lon": 50.15507905, "radius_m": 42.5, "h_max_m": 15},  # measured ok
-            {"id": "rt_40", "lat": 26.64495459, "lon": 50.15598353, "radius_m": 27.5, "h_max_m": 12},  # row-median outlier-replaced
-            {"id": "rt_41", "lat": 26.64299258, "lon": 50.15361471, "radius_m": 40.0, "h_max_m": 14},  # measured ok
-            {"id": "rt_42", "lat": 26.64338061, "lon": 50.15458913, "radius_m": 22.5, "h_max_m": 12},  # measured ok
-            {"id": "rt_43", "lat": 26.64375612, "lon": 50.15541913, "radius_m": 20.0, "h_max_m": 9},   # measured ok
-            {"id": "rt_44", "lat": 26.64412141, "lon": 50.15644876, "radius_m": 40.0, "h_max_m": 14},  # measured ok
-            {"id": "rt_45", "lat": 26.64175001, "lon": 50.15424316, "radius_m": 35.0, "h_max_m": 13},  # measured ok
-            {"id": "rt_46", "lat": 26.64219363, "lon": 50.15513014, "radius_m": 20.0, "h_max_m": 9},   # measured ok
-            {"id": "rt_47", "lat": 26.64254629, "lon": 50.15609898, "radius_m": 25.0, "h_max_m": 12},  # measured ok
-            {"id": "rt_48", "lat": 26.64296524, "lon": 50.15700614, "radius_m": 30.0, "h_max_m": 12},  # measured ok
-            {"id": "rt_49", "lat": 26.64131239, "lon": 50.15562418, "radius_m": 20.0, "h_max_m": 9},   # measured ok
-            {"id": "rt_50", "lat": 26.64170892, "lon": 50.15657341, "radius_m": 45.0, "h_max_m": 15},  # measured ok
-            {"id": "rt_51", "lat": 26.64202395, "lon": 50.15744756, "radius_m": 45.0, "h_max_m": 15},  # measured ok
-            {"id": "rt_52", "lat": 26.64046669, "lon": 50.15605184, "radius_m": 25.0, "h_max_m": 12},  # measured ok
-            {"id": "rt_53", "lat": 26.64088384, "lon": 50.15694051, "radius_m": 25.0, "h_max_m": 12},  # measured ok
-            {"id": "rt_54", "lat": 26.64119352, "lon": 50.15781343, "radius_m": 30.0, "h_max_m": 12},  # measured ok
-            {"id": "rt_55", "lat": 26.64175966, "lon": 50.15919265, "radius_m": 25.0, "h_max_m": 12},  # measured ok
-            {"id": "rt_56", "lat": 26.64003671, "lon": 50.15734276, "radius_m": 25.0, "h_max_m": 12},  # measured ok
-            {"id": "rt_57", "lat": 26.64046229, "lon": 50.15817615, "radius_m": 20.0, "h_max_m": 9},   # measured ok
-            {"id": "rt_58", "lat": 26.64111645, "lon": 50.15873630, "radius_m": 25.0, "h_max_m": 12},  # measured ok
-            {"id": "rt_59", "lat": 26.64037520, "lon": 50.15909193, "radius_m": 30.0, "h_max_m": 12},  # measured ok
-            {"id": "rt_60", "lat": 26.63964027, "lon": 50.15857290, "radius_m": 25.0, "h_max_m": 12},  # measured ok
-            {"id": "rt_61", "lat": 26.64353258, "lon": 50.15214453, "radius_m": 25.0, "h_max_m": 12},  # row-median outlier-replaced
-            {"id": "rt_62", "lat": 26.64512719, "lon": 50.15144410, "radius_m": 27.5, "h_max_m": 12},  # measured ok
-            {"id": "rt_63", "lat": 26.64594881, "lon": 50.15106374, "radius_m": 32.5, "h_max_m": 13},  # measured ok
-            {"id": "rt_64", "lat": 26.63995622, "lon": 50.15494434, "radius_m": 25.0, "h_max_m": 12},  # row-median outlier-replaced
-            {"id": "rt_65", "lat": 26.63757438, "lon": 50.16044466, "radius_m": 22.5, "h_max_m": 12},  # measured ok
+            {"id": "rt_0",  "lat": 26.638626, "lon": 50.154236, "radius_m": 60, "h_max_m": 18},
+            {"id": "rt_1",  "lat": 26.640430, "lon": 50.153296, "radius_m": 60, "h_max_m": 18},
+            {"id": "rt_2",  "lat": 26.641913, "lon": 50.152682, "radius_m": 60, "h_max_m": 18},
+            {"id": "rt_3",  "lat": 26.650024, "lon": 50.152807, "radius_m": 60, "h_max_m": 18},
+            {"id": "rt_4",  "lat": 26.652085, "lon": 50.149920, "radius_m": 60, "h_max_m": 18},
+            {"id": "rt_5",  "lat": 26.688442, "lon": 50.118714, "radius_m": 60, "h_max_m": 18},
+            {"id": "rt_6",  "lat": 26.687011, "lon": 50.117969, "radius_m": 60, "h_max_m": 18},
+            {"id": "rt_7",  "lat": 26.687548, "lon": 50.116596, "radius_m": 60, "h_max_m": 18},
+            {"id": "rt_8",  "lat": 26.689090, "lon": 50.117193, "radius_m": 60, "h_max_m": 18},
+            {"id": "rt_9",  "lat": 26.688215, "lon": 50.114879, "radius_m": 60, "h_max_m": 18},
+            {"id": "rt_10", "lat": 26.689749, "lon": 50.115695, "radius_m": 60, "h_max_m": 18},
+            {"id": "rt_11", "lat": 26.651657, "lon": 50.148320, "radius_m": 35, "h_max_m": 13},
+            {"id": "rt_12", "lat": 26.649988, "lon": 50.148177, "radius_m": 35, "h_max_m": 13},
+            {"id": "rt_13", "lat": 26.650865, "lon": 50.148946, "radius_m": 35, "h_max_m": 13},
+            {"id": "rt_14", "lat": 26.650985, "lon": 50.150605, "radius_m": 35, "h_max_m": 13},
+            {"id": "rt_15", "lat": 26.648982, "lon": 50.148984, "radius_m": 35, "h_max_m": 13},
+            {"id": "rt_16", "lat": 26.649609, "lon": 50.149935, "radius_m": 35, "h_max_m": 13},
+            {"id": "rt_17", "lat": 26.650144, "lon": 50.151086, "radius_m": 35, "h_max_m": 13},
+            {"id": "rt_18", "lat": 26.648029, "lon": 50.149726, "radius_m": 35, "h_max_m": 13},
+            {"id": "rt_19", "lat": 26.648818, "lon": 50.150545, "radius_m": 35, "h_max_m": 13},
+            {"id": "rt_20", "lat": 26.649339, "lon": 50.151734, "radius_m": 35, "h_max_m": 13},
+            {"id": "rt_21", "lat": 26.646997, "lon": 50.150259, "radius_m": 35, "h_max_m": 13},
+            {"id": "rt_22", "lat": 26.647971, "lon": 50.151020, "radius_m": 35, "h_max_m": 13},
+            {"id": "rt_23", "lat": 26.648509, "lon": 50.152502, "radius_m": 35, "h_max_m": 13},
+            {"id": "rt_24", "lat": 26.648872, "lon": 50.153435, "radius_m": 35, "h_max_m": 13},
+            {"id": "rt_25", "lat": 26.647181, "lon": 50.151415, "radius_m": 35, "h_max_m": 13},
+            {"id": "rt_26", "lat": 26.647496613, "lon": 50.152485930, "radius_m": 35, "h_max_m": 13},
+            {"id": "rt_27", "lat": 26.647870961, "lon": 50.153402153, "radius_m": 35, "h_max_m": 13},
+            {"id": "rt_28", "lat": 26.648243784, "lon": 50.154304015, "radius_m": 35, "h_max_m": 13},
+            {"id": "rt_29", "lat": 26.646272546, "lon": 50.151974459, "radius_m": 35, "h_max_m": 13},
+            {"id": "rt_30", "lat": 26.646641703, "lon": 50.152926255, "radius_m": 35, "h_max_m": 13},
+            {"id": "rt_31", "lat": 26.647029129, "lon": 50.153832257, "radius_m": 35, "h_max_m": 13},
+            {"id": "rt_32", "lat": 26.647394612, "lon": 50.154733110, "radius_m": 35, "h_max_m": 13},
+            {"id": "rt_33", "lat": 26.645433932, "lon": 50.152392769, "radius_m": 35, "h_max_m": 13},
+            {"id": "rt_34", "lat": 26.645827818, "lon": 50.153347593, "radius_m": 35, "h_max_m": 13},
+            {"id": "rt_35", "lat": 26.646200394, "lon": 50.154249852, "radius_m": 35, "h_max_m": 13},
+            {"id": "rt_36", "lat": 26.646570259, "lon": 50.155158460, "radius_m": 35, "h_max_m": 13},
+            {"id": "rt_37", "lat": 26.643842240, "lon": 50.153203110, "radius_m": 35, "h_max_m": 13},
+            {"id": "rt_38", "lat": 26.644232379, "lon": 50.154144912, "radius_m": 35, "h_max_m": 13},
+            {"id": "rt_39", "lat": 26.644607973, "lon": 50.155046837, "radius_m": 35, "h_max_m": 13},
+            {"id": "rt_40", "lat": 26.644975530, "lon": 50.155944016, "radius_m": 35, "h_max_m": 13},
+            {"id": "rt_41", "lat": 26.643016459, "lon": 50.153611656, "radius_m": 35, "h_max_m": 13},
+            {"id": "rt_42", "lat": 26.643406095, "lon": 50.154572485, "radius_m": 35, "h_max_m": 13},
+            {"id": "rt_43", "lat": 26.643782414, "lon": 50.155472085, "radius_m": 35, "h_max_m": 13},
+            {"id": "rt_44", "lat": 26.644156293, "lon": 50.156383567, "radius_m": 35, "h_max_m": 13},
+            {"id": "rt_45", "lat": 26.641814725, "lon": 50.154215785, "radius_m": 35, "h_max_m": 13},
+            {"id": "rt_46", "lat": 26.642210411, "lon": 50.155178684, "radius_m": 35, "h_max_m": 13},
+            {"id": "rt_47", "lat": 26.642577330, "lon": 50.156072461, "radius_m": 35, "h_max_m": 13},
+            {"id": "rt_48", "lat": 26.642950972, "lon": 50.156992054, "radius_m": 35, "h_max_m": 13},
+            {"id": "rt_49", "lat": 26.641339934, "lon": 50.155599952, "radius_m": 35, "h_max_m": 13},
+            {"id": "rt_50", "lat": 26.641729102, "lon": 50.156516229, "radius_m": 35, "h_max_m": 13},
+            {"id": "rt_51", "lat": 26.642073615, "lon": 50.157423258, "radius_m": 35, "h_max_m": 13},
+            {"id": "rt_52", "lat": 26.640476856, "lon": 50.156043180, "radius_m": 35, "h_max_m": 13},
+            {"id": "rt_53", "lat": 26.640847523, "lon": 50.156946870, "radius_m": 35, "h_max_m": 13},
+            {"id": "rt_54", "lat": 26.641188536, "lon": 50.157794617, "radius_m": 35, "h_max_m": 13},
+            {"id": "rt_55", "lat": 26.641760390, "lon": 50.159183452, "radius_m": 35, "h_max_m": 13},
+            {"id": "rt_56", "lat": 26.640105425, "lon": 50.157328512, "radius_m": 35, "h_max_m": 13},
+            {"id": "rt_57", "lat": 26.640432763, "lon": 50.158165902, "radius_m": 35, "h_max_m": 13},
+            {"id": "rt_58", "lat": 26.641106377, "lon": 50.158670772, "radius_m": 35, "h_max_m": 13},
+            {"id": "rt_59", "lat": 26.640346939, "lon": 50.159052659, "radius_m": 35, "h_max_m": 13},
+            {"id": "rt_60", "lat": 26.639675405,       "lon": 50.158553012,       "radius_m": 35, "h_max_m": 13},
+            {"id": "rt_61", "lat": 26.643554305621972, "lon": 50.152191100588105, "radius_m": 35, "h_max_m": 13},
+            {"id": "rt_62", "lat": 26.645139789560954, "lon": 50.151448430921810, "radius_m": 35, "h_max_m": 13},
+            {"id": "rt_63", "lat": 26.645949000703600, "lon": 50.151042337312750, "radius_m": 35, "h_max_m": 13},
+            {"id": "rt_64", "lat": 26.639988864810530, "lon": 50.154953473357590, "radius_m": 35, "h_max_m": 13},
+            {"id": "rt_65", "lat": 26.637591408424406, "lon": 50.160445373274800, "radius_m": 20, "h_max_m": 9},
         ],
     },
     {
@@ -718,19 +716,18 @@ LOCATIONS = [
         ],
         "status": "active",
         "tanks": [
-            # Geometry v2 (stage0-qa measured, 2026-09).
-            {"id": "yb_0",  "lat": 23.95910132, "lon": 38.24443165, "radius_m": 60.0, "h_max_m": 18},  # measured ok
-            {"id": "yb_1",  "lat": 23.96262234, "lon": 38.24795912, "radius_m": 57.5, "h_max_m": 18},  # measured ok
-            {"id": "yb_2",  "lat": 23.96408611, "lon": 38.24601985, "radius_m": 60.0, "h_max_m": 18},  # measured ok
-            {"id": "yb_3",  "lat": 23.96557261, "lon": 38.24409060, "radius_m": 60.0, "h_max_m": 18},  # measured ok
-            {"id": "yb_4",  "lat": 23.96501453, "lon": 38.25011019, "radius_m": 57.5, "h_max_m": 18},  # measured ok
-            {"id": "yb_5",  "lat": 23.96649038, "lon": 38.24815107, "radius_m": 55.0, "h_max_m": 17},  # measured ok
-            {"id": "yb_6",  "lat": 23.96797745, "lon": 38.24621048, "radius_m": 57.5, "h_max_m": 18},  # measured ok
-            {"id": "yb_7",  "lat": 23.96741503, "lon": 38.25225093, "radius_m": 55.0, "h_max_m": 17},  # measured ok
-            {"id": "yb_8",  "lat": 23.96888375, "lon": 38.25030233, "radius_m": 60.0, "h_max_m": 18},  # measured ok
-            {"id": "yb_9",  "lat": 23.97036149, "lon": 38.24835112, "radius_m": 57.5, "h_max_m": 18},  # measured ok
-            {"id": "yb_10", "lat": 23.96980818, "lon": 38.25439069, "radius_m": 60.0, "h_max_m": 18},  # measured ok
-            {"id": "yb_11", "lat": 23.97127822, "lon": 38.25245023, "radius_m": 60.0, "h_max_m": 18},  # measured ok
+            {"id": "yb_0",  "lat": 23.959074, "lon": 38.244398, "radius_m": 60, "h_max_m": 18},
+            {"id": "yb_1",  "lat": 23.962590, "lon": 38.247925, "radius_m": 60, "h_max_m": 18},
+            {"id": "yb_2",  "lat": 23.964053, "lon": 38.245977, "radius_m": 60, "h_max_m": 18},
+            {"id": "yb_3",  "lat": 23.965544, "lon": 38.244086, "radius_m": 60, "h_max_m": 18},
+            {"id": "yb_4",  "lat": 23.964986, "lon": 38.250081, "radius_m": 60, "h_max_m": 18},
+            {"id": "yb_5",  "lat": 23.966460, "lon": 38.248119, "radius_m": 60, "h_max_m": 18},
+            {"id": "yb_6",  "lat": 23.967960, "lon": 38.246187, "radius_m": 60, "h_max_m": 18},
+            {"id": "yb_7",  "lat": 23.967392, "lon": 38.252229, "radius_m": 60, "h_max_m": 18},
+            {"id": "yb_8",  "lat": 23.968866, "lon": 38.250263, "radius_m": 60, "h_max_m": 18},
+            {"id": "yb_9",  "lat": 23.970331, "lon": 38.248336, "radius_m": 60, "h_max_m": 18},
+            {"id": "yb_10", "lat": 23.969788, "lon": 38.254362, "radius_m": 60, "h_max_m": 18},
+            {"id": "yb_11", "lat": 23.971259, "lon": 38.252416, "radius_m": 60, "h_max_m": 18},
         ],
     },
 ]
