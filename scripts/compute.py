@@ -103,10 +103,12 @@ for terminal in TERMINALS:
         if not all_obs:
             print(f"  no observations — skipping"); continue
 
-        # Build tank geometry lookup from local registry
+        # Build tank geometry lookup — only enabled tanks.
+        # Disabled tanks may have rows in terminal_observations from before the whitelist;
+        # excluding them here keeps them out of the volume curve without deleting data.
         tank_geom = {t["id"]: {"radius_m": t.get("radius_m", t.get("radius")),
                                "h_max_m":  t.get("h_max_m",  t.get("h_max"))}
-                     for t in tanks}
+                     for t in tanks if t.get("enabled", True)}
 
         df_t = pd.DataFrame(all_obs)
         df_t["date"] = pd.to_datetime(df_t["date"])

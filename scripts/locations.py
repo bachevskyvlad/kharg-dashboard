@@ -22,6 +22,9 @@ def _to_pipeline_tank(t):
              "radius": t["radius_m"], "h_max": t["h_max_m"]}
     if t.get("uncertain"):
         entry["uncertain"] = True
+    # Propagate enabled flag; absent means True (Kharg tanks have no field → always enabled)
+    if "enabled" in t:
+        entry["enabled"] = t["enabled"]
     return entry
 
 

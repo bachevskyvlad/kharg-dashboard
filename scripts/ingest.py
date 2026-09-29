@@ -123,7 +123,13 @@ for terminal in TERMINALS:
     if target_tid and tid != target_tid:
         continue
 
-    print(f"\n[ingest] {terminal['name']} ({tid}) — {len(tanks)} tanks")
+    # Filter disabled tanks — enabled=False tanks are not fetched or written.
+    # Absence of the field defaults to True (Kharg path and non-Saudi terminals).
+    tanks_enabled = [t for t in tanks if t.get("enabled", True)]
+    n_disabled = len(tanks) - len(tanks_enabled)
+    print(f"\n[ingest] {terminal['name']} ({tid}) — {len(tanks_enabled)} tanks"
+          + (f" ({n_disabled} disabled)" if n_disabled else ""))
+    tanks = tanks_enabled
 
     # Normalise orbit config: terminals may use the new allowed_orbits list or
     # the legacy top-level orbit_state / los_azimuth / relative_orbit keys.
