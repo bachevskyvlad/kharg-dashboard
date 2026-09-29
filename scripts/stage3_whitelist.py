@@ -34,7 +34,7 @@ try:
 except ImportError:
     pass
 
-from sentinelhub import SHConfig, BBox, CRS, DataCollection, SentinelHubCatalog
+from sentinelhub import SHConfig, BBox, CRS, DataCollection
 
 config = SHConfig()
 config.sh_client_id     = os.environ.get("CLIENT_ID")     or "sh-0f08bb88-cde8-4e6e-8eb9-1006acfe6be9"
@@ -46,7 +46,7 @@ S1_CDSE = DataCollection.SENTINEL1_IW.define_from(
     "s1iw_cdse", service_url="https://sh.dataspace.copernicus.eu"
 )
 
-from sar_fetch import fetch_new_records, build_crescent_masks
+from sar_fetch import fetch_new_records, build_crescent_masks, get_all_scene_dates
 from config import RESOLUTION, BUFFER_METERS, DB_FLOOR
 from tank_registry import LOCATIONS
 
@@ -75,30 +75,11 @@ def _catalog_dates(orbit_cfg, bbox, n):
     """Return n most-recent dates (strings) from Sentinel Hub catalog for orbit."""
     orb     = orbit_cfg[0]
     dir_str = orb["direction"].upper()
-    if dir_str == "DESC":
-        dir_str = "DESCENDING"
-    elif dir_str == "ASC":
-        dir_str = "ASCENDING"
+    orbit_state = "descending" if dir_str in ("DESC", "DESCENDING") else "ascending"
+    rel_orbit   = orb.get("relative_orbit")
 
-    catalog = SentinelHubCatalog(config=config)
-    end   = datetime.datetime.utcnow()
-    start = end - datetime.timedelta(days=180)
-
-    results = list(catalog.search(
-        S1_CDSE,
-        bbox=bbox,
-        time=(start, end),
-        filter=f"sat:orbit_state = '{dir_str}' AND s1:relative_orbit = {orb['relative_orbit']}",
-        fields={"include": ["id", "properties.datetime"], "exclude": []},
-    ))
-    dates_seen = set()
-    dates = []
-    for item in results:
-        d = item["properties"]["datetime"][:10]
-        if d not in dates_seen:
-            dates_seen.add(d)
-            dates.append(d)
-    dates.sort(reverse=True)
+    all_dates = get_all_scene_dates(bbox, orbit_state=orbit_state, relative_orbit=rel_orbit)
+    dates = sorted(all_dates, reverse=True)
     return dates[:n]
 
 
