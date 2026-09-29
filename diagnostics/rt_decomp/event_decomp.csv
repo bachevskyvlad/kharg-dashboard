@@ -1,0 +1,16 @@
+event,date,expected,subgroup,delta_mb,window_days
+E1: Attack/Halt,2026-03-02,BUILD,south_pier,-0.052,21
+E1: Attack/Halt,2026-03-02,BUILD,south_inland,0.889,21
+E1: Attack/Halt,2026-03-02,BUILD,north,1.232,21
+E1: Attack/Halt,2026-03-02,BUILD,t60_class,1.505,21
+E1: Attack/Halt,2026-03-02,BUILD,active10,0.989,21
+E2: Ops resumed,2026-06-26,DRAW,south_pier,-0.032,21
+E2: Ops resumed,2026-06-26,DRAW,south_inland,-0.551,21
+E2: Ops resumed,2026-06-26,DRAW,north,-1.394,21
+E2: Ops resumed,2026-06-26,DRAW,t60_class,-1.429,21
+E2: Ops resumed,2026-06-26,DRAW,active10,-1.527,21
+E3: Ramp ~90%,2026-07-15,DRAW,south_pier,0.294,21
+E3: Ramp ~90%,2026-07-15,DRAW,south_inland,0.249,21
+E3: Ramp ~90%,2026-07-15,DRAW,north,-1.23,21
+E3: Ramp ~90%,2026-07-15,DRAW,t60_class,-1.02,21
+E3: Ramp ~90%,2026-07-15,DRAW,active10,-1.146,21
