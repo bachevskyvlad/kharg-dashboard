@@ -1,0 +1,18 @@
+Stage 4 Visual QA  2026-09-29 11:32 UTC
+Inspect crops in diagnostics/stage4/crops/
+Update verdict in JSON (ON_WALL / OFF_TANK / UNCLEAR)
+
+Terminal         Tank         Date  CrescPx  MeanDB  Verdict
+-----------------------------------------------------------------
+yanbu            yb_0   2026-09-22       96   -2.52  PENDING
+yanbu            yb_2   2026-09-22       96   -2.55  PENDING
+yanbu            yb_3   2026-09-22       96    3.52  PENDING
+yanbu            yb_5   2026-09-22       96    1.30  PENDING
+yanbu            yb_7   2026-09-22       96    1.57  PENDING
+yanbu            yb_8   2026-09-22       96    2.12  PENDING
+yanbu            yb_9   2026-09-22       96    2.10  PENDING
+yanbu           yb_11   2026-09-22       96    3.55  PENDING
+juwaymah         jw_9   2026-09-24       86    3.01  PENDING
+juwaymah         jw_3   2026-09-24       86    5.75  PENDING
+juwaymah        jw_11   2026-09-24       86    3.18  PENDING
+juwaymah        jw_16   2026-09-24       86   -1.92  PENDING
