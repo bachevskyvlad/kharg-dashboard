@@ -21,7 +21,7 @@ import warnings
 warnings.filterwarnings("ignore")
 
 import pandas as pd
-from config import sb, RESOLUTION, BUFFER_METERS, START_DATE
+from config import sb, RESOLUTION, BUFFER_METERS, START_DATE, DB_FLOOR
 from locations import raw_tanks, get_super_bbox, TERMINALS
 from sar_fetch import get_all_scene_dates, build_crescent_masks, fetch_new_records
 from export_data import upsert_raw_observations
@@ -97,9 +97,12 @@ if run_kharg:
 
         tanks_data  = build_crescent_masks(raw_tanks, super_bbox, img_w, img_h)
         new_records = fetch_new_records(new_dates, tanks_data, super_bbox, img_w, img_h)
+        clipped = sum(1 for r in new_records if r.get("db_mean") is not None and r["db_mean"] < DB_FLOOR)
         for r in new_records:
             if r.get("db_mean") is not None:
-                r["db_mean"] = max(r["db_mean"], -5.0)
+                r["db_mean"] = max(r["db_mean"], DB_FLOOR)
+        if new_records:
+            print(f"[ingest] Kharg — clipped {clipped}/{len(new_records)} records to DB_FLOOR={DB_FLOOR}")
 
         if new_records:
             upsert_raw_observations(new_records, sb)
@@ -120,7 +123,13 @@ for terminal in TERMINALS:
     if target_tid and tid != target_tid:
         continue
 
-    print(f"\n[ingest] {terminal['name']} ({tid}) — {len(tanks)} tanks")
+    # Filter disabled tanks — enabled=False tanks are not fetched or written.
+    # Absence of the field defaults to True (Kharg path and non-Saudi terminals).
+    tanks_enabled = [t for t in tanks if t.get("enabled", True)]
+    n_disabled = len(tanks) - len(tanks_enabled)
+    print(f"\n[ingest] {terminal['name']} ({tid}) — {len(tanks_enabled)} tanks"
+          + (f" ({n_disabled} disabled)" if n_disabled else ""))
+    tanks = tanks_enabled
 
     # Normalise orbit config: terminals may use the new allowed_orbits list or
     # the legacy top-level orbit_state / los_azimuth / relative_orbit keys.
@@ -229,7 +238,8 @@ for terminal in TERMINALS:
                 img_h   = int((c_bbox.max_y - c_bbox.min_y) * 111320 / RESOLUTION)
                 t_data  = build_crescent_masks(c_tanks, c_bbox, img_w, img_h, los_azimuth=los_az)
                 raw     = fetch_new_records(orbit_dates, t_data, c_bbox, img_w, img_h,
-                                            min_valid_fraction=min_valid_frac)
+                                            min_valid_fraction=min_valid_frac,
+                                            orbit_cfg=allowed_orbits)
                 # Tag orbit provenance on every record
                 for r in raw:
                     r["relative_orbit"]  = rel_orbit
@@ -239,10 +249,13 @@ for terminal in TERMINALS:
             except Exception as e:
                 print(f"{label} [!] Fetch failed: {e}")
 
+    clipped_t = sum(1 for r in all_raw if r.get("db_mean") is not None and r["db_mean"] < DB_FLOOR)
     for r in all_raw:
         r["terminal_id"] = tid
         if r.get("db_mean") is not None:
-            r["db_mean"] = max(r["db_mean"], -5.0)
+            r["db_mean"] = max(r["db_mean"], DB_FLOOR)
+    if all_raw:
+        print(f"  clipped {clipped_t}/{len(all_raw)} records to DB_FLOOR={DB_FLOOR}")
     if all_raw:
         sb.table("terminal_observations").upsert(
             all_raw, on_conflict="terminal_id,date,tank_id"

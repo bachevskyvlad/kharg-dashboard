@@ -1,4 +1,4 @@
-name: Diagnose Round 4 — Juwaymah + Yanbu
+name: Diagnose Round 7.8 — Final diagnosis
 
 on:
   workflow_dispatch:
@@ -7,7 +7,7 @@ permissions:
   contents: write
 
 jobs:
-  diagnose4:
+  final78:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -21,10 +21,10 @@ jobs:
           python-version: "3.11"
 
       - name: Install dependencies
-        run: pip install -r scripts/requirements.txt matplotlib pillow scipy
+        run: pip install -r scripts/requirements.txt matplotlib pillow scipy opencv-python-headless
 
-      - name: Run Round 4 diagnostic
-        run: python scripts/diag_juwaymah_yanbu_4.py --tasks 1,2,3,4,0
+      - name: Run Round 7.8 final diagnostic
+        run: python scripts/diag_final_7_8.py --tasks 1,2,3,4
         env:
           CLIENT_ID: ${{ secrets.CLIENT_ID }}
           CLIENT_SECRET: ${{ secrets.CLIENT_SECRET }}
@@ -32,10 +32,11 @@ jobs:
           SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
 
       - name: Commit diagnostics to feature branch
+        if: always()
         run: |
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git config user.name "github-actions[bot]"
-          git add diagnostics/round4/
+          git add diagnostics/round7_8/
           git diff --cached --stat
-          git commit -m "diag round4: Juwaymah/Yanbu results (auto-committed by GHA)" || echo "Nothing to commit"
+          git commit -m "diag round7.8: final diagnosis" || echo "Nothing to commit"
           git push origin claude/oilradar-dashboard-iran-zchdva

@@ -78,6 +78,7 @@ os.environ.setdefault("CLIENT_SECRET", SH_CLIENT_SECRET)
 sys.path.insert(0, os.path.dirname(__file__))
 from sar_fetch import get_all_scene_dates, build_crescent_masks, fetch_new_records
 from locations import TERMINALS
+from config import DB_FLOOR
 
 # ---------------------------------------------------------------------------
 # supabase
@@ -231,7 +232,7 @@ def main():
             r["relative_orbit"]  = rel_orbit
             r["orbit_direction"] = direction
             if r.get("db_mean") is not None:
-                r["db_mean"] = max(r["db_mean"], -5.0)
+                r["db_mean"] = max(r["db_mean"], DB_FLOOR)
 
         all_rows.extend(date_rows)
         new_done.add(d_str)

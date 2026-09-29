@@ -30,8 +30,3 @@ jobs:
           git commit -m "ci: stage0 optical radius check [skip ci]" || echo "nothing to commit"
           git push origin feature/saudi-rebuild
 
-      - uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: stage0-crops
-          path: diagnostics/stage0/

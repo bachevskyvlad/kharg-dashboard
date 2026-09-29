@@ -1,0 +1,113 @@
+{
+  "run_date": "2026-09-29T11:32:26.649592",
+  "tanks": [
+    {
+      "terminal": "yanbu",
+      "tank_id": "yb_0",
+      "date": "2026-09-22",
+      "crescent_px": 96,
+      "crescent_db": -2.522,
+      "verdict": "PENDING",
+      "note": ""
+    },
+    {
+      "terminal": "yanbu",
+      "tank_id": "yb_2",
+      "date": "2026-09-22",
+      "crescent_px": 96,
+      "crescent_db": -2.553,
+      "verdict": "PENDING",
+      "note": ""
+    },
+    {
+      "terminal": "yanbu",
+      "tank_id": "yb_3",
+      "date": "2026-09-22",
+      "crescent_px": 96,
+      "crescent_db": 3.522,
+      "verdict": "PENDING",
+      "note": ""
+    },
+    {
+      "terminal": "yanbu",
+      "tank_id": "yb_5",
+      "date": "2026-09-22",
+      "crescent_px": 96,
+      "crescent_db": 1.3,
+      "verdict": "PENDING",
+      "note": ""
+    },
+    {
+      "terminal": "yanbu",
+      "tank_id": "yb_7",
+      "date": "2026-09-22",
+      "crescent_px": 96,
+      "crescent_db": 1.569,
+      "verdict": "PENDING",
+      "note": ""
+    },
+    {
+      "terminal": "yanbu",
+      "tank_id": "yb_8",
+      "date": "2026-09-22",
+      "crescent_px": 96,
+      "crescent_db": 2.117,
+      "verdict": "PENDING",
+      "note": ""
+    },
+    {
+      "terminal": "yanbu",
+      "tank_id": "yb_9",
+      "date": "2026-09-22",
+      "crescent_px": 96,
+      "crescent_db": 2.095,
+      "verdict": "PENDING",
+      "note": ""
+    },
+    {
+      "terminal": "yanbu",
+      "tank_id": "yb_11",
+      "date": "2026-09-22",
+      "crescent_px": 96,
+      "crescent_db": 3.553,
+      "verdict": "PENDING",
+      "note": ""
+    },
+    {
+      "terminal": "juwaymah",
+      "tank_id": "jw_9",
+      "date": "2026-09-24",
+      "crescent_px": 86,
+      "crescent_db": 3.008,
+      "verdict": "PENDING",
+      "note": ""
+    },
+    {
+      "terminal": "juwaymah",
+      "tank_id": "jw_3",
+      "date": "2026-09-24",
+      "crescent_px": 86,
+      "crescent_db": 5.75,
+      "verdict": "PENDING",
+      "note": ""
+    },
+    {
+      "terminal": "juwaymah",
+      "tank_id": "jw_11",
+      "date": "2026-09-24",
+      "crescent_px": 86,
+      "crescent_db": 3.176,
+      "verdict": "PENDING",
+      "note": ""
+    },
+    {
+      "terminal": "juwaymah",
+      "tank_id": "jw_16",
+      "date": "2026-09-24",
+      "crescent_px": 86,
+      "crescent_db": -1.919,
+      "verdict": "PENDING",
+      "note": ""
+    }
+  ]
+}

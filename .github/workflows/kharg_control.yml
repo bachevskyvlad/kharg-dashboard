@@ -1,0 +1,34 @@
+name: Kharg Control — smoothed_corr calibration
+
+on:
+  workflow_dispatch:
+
+jobs:
+  control:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: claude/oilradar-dashboard-iran-zchdva
+          fetch-depth: 1
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: pip install supabase numpy pandas
+
+      - name: Run kharg_control
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+        run: python scripts/kharg_control.py
+
+      - name: Commit result
+        run: |
+          git config user.email "actions@github.com"
+          git config user.name "GitHub Actions"
+          git add diagnostics/stage5/kharg_control.txt
+          git diff --cached --quiet || git commit -m "diagnostics: kharg control smoothed_corr"
+          git push origin claude/oilradar-dashboard-iran-zchdva

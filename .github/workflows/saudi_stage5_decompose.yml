@@ -25,6 +25,12 @@ jobs:
           SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
         run: python scripts/stage5_decompose.py
 
+      - name: Run kharg_control
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+        run: python scripts/kharg_control.py
+
       - name: Commit diagnostics
         run: |
           git config user.email "actions@github.com"

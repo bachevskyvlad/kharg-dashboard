@@ -57,11 +57,18 @@ TANK_HEIGHT_MIN = 2         # metres — floating roof minimum resting height;
 
 # ── Crescent mask geometry ────────────────────────────────────────────────────
 # Sentinel-1 descending orbit illuminates from the SW at Kharg (azimuth ~282°).
-# The crescent mask captures the radar shadow on the FAR side of each tank wall.
-# Wider crescent = more shadow pixels = more stable dB mean, but risk of
-# capturing adjacent tank reflections. 15m annulus is empirically validated.
+# The crescent mask captures the double-bounce (dihedral) return from the FAR
+# interior wall. 282° selects the hemisphere of maximum dihedral contrast for
+# DESC orbit. Wider annulus = more pixels = more stable dB, but risk of
+# spilling into adjacent tanks. 15m is empirically validated.
 LOS_AZIMUTH    = 282        # degrees — line-of-sight azimuth from satellite
 WIDTH_WIDE     = 15         # metres — annulus width of the crescent mask
+
+# ── Raw dB floor ──────────────────────────────────────────────────────────────
+# Minimum physically plausible SAR dB return for open water/oil surface.
+# Values below this are instrument noise or processing artefacts.
+# Keep at -5.0 — changing this breaks time-series comparability.
+DB_FLOOR = -5.0
 
 # ── Smoothing ─────────────────────────────────────────────────────────────────
 # EWMA on weekly aggregates only. Alpha=0.1 gives ~10-week effective memory,
