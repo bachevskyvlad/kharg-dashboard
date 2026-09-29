@@ -1,6 +1,11 @@
 name: Stage4 v2 panels
 
 on:
+  push:
+    branches:
+      - claude/oilradar-dashboard-iran-zchdva
+    paths:
+      - 'scripts/stage4_v2_panels.py'
   workflow_dispatch:
 
 jobs:
