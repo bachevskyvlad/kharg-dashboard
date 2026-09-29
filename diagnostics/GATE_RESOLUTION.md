@@ -7,17 +7,43 @@ Branch: `claude/oilradar-dashboard-iran-zchdva`
 
 ## Task 1 & 2 — Decomposition metrics and verdict
 
-**Status: pending `stage5_decompose` run** (workflow `saudi_stage5_decompose`)
+**Status: Run 3 complete** (workflow `saudi_stage5_decompose`, 2026-09-29)
 
-Results to be inserted here after run completes. See `diagnostics/stage5/decompose_report.txt`.
+All three sanity checks PASS for both terminals.
 
-Frozen verdict criteria (not adjustable after run):
+### Sanity checks
+
+| Terminal | #1 Additive | #2 Reproduce stage4 | #3 Var decomp |
+|---|---|---|---|
+| Ras Tanura | PASS (4.44e-15 Mb) | PASS (got 0.7885 vs ref 0.7866) | PASS |
+| Yanbu | PASS (2.22e-15 Mb) | PASS (got 0.7758 vs ref 0.7764) | PASS |
+
+### Decomposition metrics
+
+| Terminal | n_WL | n_excl | n_dates | corr(Δ_old,Δ_WL) | corr(Δ_excl,Δ_WL) | smoothed_corr(Δ_old,Δ_WL) |
+|---|---|---|---|---|---|---|
+| Ras Tanura | 45 | 21 | 316 | 0.7885 | **0.0929** | 0.6479 |
+| Yanbu | 8 | 4 | 332 | 0.7758 | **−0.0900** | 0.5736 |
+
+Top-5 excluded tanks by \|corr(Δ_tank,Δ_WL)\|:
+
+**RT:** rt_58 (+0.1424), rt_53 (+0.1422), rt_48 (+0.1140), rt_43 (+0.1004), rt_55 (+0.0624)
+
+**YB:** yb_1 (−0.0895), yb_10 (−0.0708), yb_6 (−0.0313), yb_4 (−0.0063)
+
+### Frozen verdict criteria
 
 | Condition | Verdict |
 |---|---|
 | corr(Δ_excl,Δ_WL) < 0.2 **AND** smoothed corr(Δ_old,Δ_WL) ≥ 0.9 | SHAPE_PRESERVED — deploy open |
 | corr(Δ_excl,Δ_WL) > 0.4 | SIGNAL_LOSS — deploy cancelled |
 | 0.2–0.4 or smoothed < 0.9 | HUMAN_REVIEW |
+
+Both terminals: corr(Δ_excl,Δ_WL) < 0.2 ✓ but smoothed_corr < 0.9 ✗
+
+**VERDICT RT: ___ (pending Kharg control)**
+
+**VERDICT YB: ___ (pending Kharg control)**
 
 ---
 
@@ -69,10 +95,15 @@ Venue verdicts unchanged: RT TERMINAL_SERIES, YB TERMINAL_SERIES, JW TANK_LEVEL_
 
 ## Task 4 — Final deploy status
 
-**Pending Task 1/2 results from stage5_decompose run.**
+**Pending Kharg control (workflow `kharg_control`, run in progress).**
 
-After run completes:
-1. Insert decomposition metrics table above
-2. If SHAPE_PRESERVED → deploy open: merge PR, enable `enabled` flags in registry, run compute for RT/YB
-3. If SIGNAL_LOSS → deploy cancelled; top-5 excluded tank analysis required before re-evaluation
-4. If HUMAN_REVIEW → manual review of decompose plots before decision
+Kharg smoothed_corr(Δ_all47, Δ_top30-by-step) = ___ (pending)
+
+Decision rule:
+- Kharg ~0.6–0.7 → threshold was unrealistic → RT/YB = SHAPE_PRESERVED → go deploy
+- Kharg ~0.9 → visual review of decompose plots before decision
+
+After user go:
+1. Merge PR
+2. Enable `enabled` flags in registry for RT/YB tanks
+3. Run compute for RT/YB (JW not published per agreement)
