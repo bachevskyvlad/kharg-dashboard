@@ -1,0 +1,36 @@
+Stage 5 Decompose  2026-09-29 15:54 UTC
+
+=======================================================
+Terminal: ras_tanura   n_wl=45  n_excl=21
+  n_dates_overlap=316
+  Sanity #1 (additive):        PASS (max_residual=4.44e-15 Mb)
+  Sanity #2 (reproduce stage4):PASS (got 0.7885, ref 0.7866)
+  Sanity #3 (var decomp):      PASS (formula=0.7885, actual=0.7885, diff=0.0000)
+  corr(Δ_old,Δ_WL)            = 0.7885
+  corr(Δ_excl,Δ_WL)           = 0.0929  ← KEY
+  smoothed corr(Δ_old,Δ_WL)   = 0.6479
+  smoothed corr(Δ_excl,Δ_WL)  = 0.0766
+  VERDICT: HUMAN_REVIEW
+  Top-5 excl by |corr(Δ_tank,Δ_WL)|:
+    rt_58: +0.1424
+    rt_53: +0.1422
+    rt_48: +0.1140
+    rt_43: +0.1004
+    rt_55: +0.0624
+
+=======================================================
+Terminal: yanbu   n_wl=8  n_excl=4
+  n_dates_overlap=332
+  Sanity #1 (additive):        PASS (max_residual=2.22e-15 Mb)
+  Sanity #2 (reproduce stage4):PASS (got 0.7758, ref 0.7764)
+  Sanity #3 (var decomp):      PASS (formula=0.7758, actual=0.7758, diff=0.0000)
+  corr(Δ_old,Δ_WL)            = 0.7758
+  corr(Δ_excl,Δ_WL)           = -0.0900  ← KEY
+  smoothed corr(Δ_old,Δ_WL)   = 0.5736
+  smoothed corr(Δ_excl,Δ_WL)  = -0.0532
+  VERDICT: HUMAN_REVIEW
+  Top-5 excl by |corr(Δ_tank,Δ_WL)|:
+    yb_1: -0.0895
+    yb_10: -0.0708
+    yb_6: -0.0313
+    yb_4: -0.0063
