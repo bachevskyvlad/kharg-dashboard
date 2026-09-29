@@ -1,0 +1,67 @@
+name: Build Client Package
+
+on:
+  workflow_dispatch:
+    inputs:
+      skip_fetch:
+        description: "Skip Task 0 (use cached CSVs)"
+        required: false
+        default: "false"
+        type: choice
+        options:
+          - "false"
+          - "true"
+      tasks:
+        description: "Tasks to run (comma-separated, e.g. 1,2,5 — leave empty for all)"
+        required: false
+        default: ""
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: claude/oilradar-dashboard-iran-zchdva
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          pip install --quiet \
+            pandas numpy matplotlib scipy requests supabase python-dotenv
+
+      - name: Create output directories
+        run: |
+          mkdir -p client_package/data
+          mkdir -p client_package/figures
+
+      - name: Run build_package.py
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+        run: |
+          ARGS=""
+          if [ "${{ inputs.skip_fetch }}" = "true" ]; then
+            ARGS="$ARGS --skip-fetch"
+          fi
+          if [ -n "${{ inputs.tasks }}" ]; then
+            ARGS="$ARGS --tasks ${{ inputs.tasks }}"
+          fi
+          python scripts/build_package.py $ARGS
+
+      - name: Commit outputs
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add client_package/
+          if git diff --cached --quiet; then
+            echo "Nothing to commit"
+          else
+            git commit -m "chore: rebuild client package [$(date -u +%Y-%m-%dT%H:%M:%SZ)]"
+            git push origin claude/oilradar-dashboard-iran-zchdva
+          fi
