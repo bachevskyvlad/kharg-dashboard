@@ -36,10 +36,10 @@ jobs:
           python3 - <<'PYEOF'
           import json, sys, os
 
-          ok = True
+          BASE = "scripts/data"
 
           # (a) YB curve
-          yb_path = "data/terminals/yanbu_daily.json"
+          yb_path = f"{BASE}/terminals/yanbu_daily.json"
           if not os.path.exists(yb_path):
               print("FAIL: yanbu_daily.json not found"); sys.exit(1)
           yb = json.load(open(yb_path))
@@ -54,7 +54,7 @@ jobs:
               print("    day-over-day volatility OK (all < 1 Mb)")
 
           # (b) RT curve — date count + last date
-          rt_path = "data/terminals/ras_tanura_daily.json"
+          rt_path = f"{BASE}/terminals/ras_tanura_daily.json"
           if os.path.exists(rt_path):
               rt = json.load(open(rt_path))
               print(f"(b) RT: {len(rt['dates'])} dates, last {rt['dates'][-1]}")
@@ -62,7 +62,7 @@ jobs:
               print("(b) RT: ras_tanura_daily.json not found (may use separate export)")
 
           # (c) Kharg JSON
-          kh_path = "data/data_daily.json"
+          kh_path = f"{BASE}/data_daily.json"
           if os.path.exists(kh_path):
               kh = json.load(open(kh_path))
               print(f"(c) Kharg: {len(kh['dates'])} dates, last {kh['dates'][-1]}, "
@@ -70,8 +70,8 @@ jobs:
           else:
               print("(c) Kharg JSON not found")
 
-          # (d) JW JSON — exists in backend but should NOT appear in public frontend config
-          jw_path = "data/terminals/juwaymah_daily.json"
+          # (d) JW JSON — backend only, should not appear in public frontend config
+          jw_path = f"{BASE}/terminals/juwaymah_daily.json"
           if os.path.exists(jw_path):
               jw = json.load(open(jw_path))
               print(f"(d) JW backend: {len(jw['dates'])} dates (backend only; not in frontend config)")
@@ -85,7 +85,7 @@ jobs:
         run: |
           git config user.email "noreply@anthropic.com"
           git config user.name "Claude Code"
-          git add data/
+          git add scripts/data/
           if git diff --cached --quiet; then
             echo "No JSON changes to commit"
           else
