@@ -83,11 +83,13 @@ def _fetch_terminal_obs(tid):
     return all_obs
 
 
-def _build_curve_shared_cal(df_full, tank_geom, valid_dates=None, tank_filter=None):
+def _build_curve_shared_cal(df_full, tank_geom, valid_dates=None, tank_filter=None,
+                            db_min=None, db_max=None):
     """
     Build daily volume curve using shared calibration (percentiles from df_full).
     df_full must already have radius_m / h_max columns from the shared geom join.
     valid_dates: if provided, restrict to these dates (avoids per-subset coverage drift).
+    db_min/db_max: shared calibration from full df — MUST be passed to ensure additive decomp.
     """
     df = df_full.copy()
     if tank_filter is not None:
@@ -99,7 +101,7 @@ def _build_curve_shared_cal(df_full, tank_geom, valid_dates=None, tank_filter=No
     else:
         df, _, _ = apply_coverage_filter(df, min_share=0.5)
 
-    df, _, _ = compute_volumes(df)
+    df, _, _ = compute_volumes(df, db_min_override=db_min, db_max_override=db_max)
     daily = aggregate_daily(df)
     return daily
 
@@ -174,9 +176,18 @@ def _run_terminal(tid, wl_set, lines):
     valid_dates = set(df_gate["date"].unique())
     print(f"  Valid dates (full coverage gate): {len(valid_dates)}")
 
-    old_daily  = _build_curve_shared_cal(df_full, tank_geom, valid_dates=valid_dates, tank_filter=None)
-    wl_daily   = _build_curve_shared_cal(df_full, tank_geom, valid_dates=valid_dates, tank_filter=wl_set)
-    excl_daily = _build_curve_shared_cal(df_full, tank_geom, valid_dates=valid_dates, tank_filter=excl_set)
+    # Compute shared dB percentiles from FULL df — critical for additive decomp.
+    # Without this, WL and excl subsets each get their own percentiles → vol_old ≠ vol_WL + vol_excl.
+    df_cal = df_full.dropna(subset=["radius_m", "h_max"])
+    _, shared_db_min, shared_db_max = compute_volumes(df_cal.copy())
+    print(f"  Shared calibration: dB_min={shared_db_min:.3f}  dB_max={shared_db_max:.3f}")
+
+    old_daily  = _build_curve_shared_cal(df_full, tank_geom, valid_dates=valid_dates, tank_filter=None,
+                                         db_min=shared_db_min, db_max=shared_db_max)
+    wl_daily   = _build_curve_shared_cal(df_full, tank_geom, valid_dates=valid_dates, tank_filter=wl_set,
+                                         db_min=shared_db_min, db_max=shared_db_max)
+    excl_daily = _build_curve_shared_cal(df_full, tank_geom, valid_dates=valid_dates, tank_filter=excl_set,
+                                         db_min=shared_db_min, db_max=shared_db_max)
 
     # ── Sanity #1: additive decomposition ─────────────────────────────────────
     merged3 = (old_daily.rename(columns={"vol_mn_bbl": "old", "day": "date"})
