@@ -83,19 +83,24 @@ def _fetch_terminal_obs(tid):
     return all_obs
 
 
-def _build_curve_shared_cal(df_full, tank_geom, tank_filter=None):
+def _build_curve_shared_cal(df_full, tank_geom, valid_dates=None, tank_filter=None):
     """
     Build daily volume curve using shared calibration (percentiles from df_full).
     df_full must already have radius_m / h_max columns from the shared geom join.
+    valid_dates: if provided, restrict to these dates (avoids per-subset coverage drift).
     """
     df = df_full.copy()
     if tank_filter is not None:
         df = df[df["tank_id"].isin(tank_filter)]
     df = df.dropna(subset=["radius_m", "h_max"])
 
-    df2, _, _ = apply_coverage_filter(df, min_share=0.5)
-    df2, _, _ = compute_volumes(df2)
-    daily = aggregate_daily(df2)
+    if valid_dates is not None:
+        df = df[df["date"].isin(valid_dates)]
+    else:
+        df, _, _ = apply_coverage_filter(df, min_share=0.5)
+
+    df, _, _ = compute_volumes(df)
+    daily = aggregate_daily(df)
     return daily
 
 
@@ -163,9 +168,15 @@ def _run_terminal(tid, wl_set, lines):
     excl_set = set(tank_geom.keys()) - wl_set
 
     print("  Building curves (shared calibration)...")
-    old_daily = _build_curve_shared_cal(df_full, tank_geom, tank_filter=None)
-    wl_daily  = _build_curve_shared_cal(df_full, tank_geom, tank_filter=wl_set)
-    excl_daily = _build_curve_shared_cal(df_full, tank_geom, tank_filter=excl_set)
+    # Compute valid dates once from full dataset — shared gate for all three curves.
+    df_gate = df_full.dropna(subset=["radius_m", "h_max"])
+    df_gate, _, _ = apply_coverage_filter(df_gate, min_share=0.5)
+    valid_dates = set(df_gate["date"].unique())
+    print(f"  Valid dates (full coverage gate): {len(valid_dates)}")
+
+    old_daily  = _build_curve_shared_cal(df_full, tank_geom, valid_dates=valid_dates, tank_filter=None)
+    wl_daily   = _build_curve_shared_cal(df_full, tank_geom, valid_dates=valid_dates, tank_filter=wl_set)
+    excl_daily = _build_curve_shared_cal(df_full, tank_geom, valid_dates=valid_dates, tank_filter=excl_set)
 
     # ── Sanity #1: additive decomposition ─────────────────────────────────────
     merged3 = (old_daily.rename(columns={"vol_mn_bbl": "old", "day": "date"})
