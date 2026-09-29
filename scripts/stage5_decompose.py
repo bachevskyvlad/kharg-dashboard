@@ -350,8 +350,16 @@ def main():
         f.write(report)
 
     json_path = "diagnostics/stage5/decompose_results.json"
+    def _json_safe(obj):
+        if isinstance(obj, (np.bool_,)):
+            return bool(obj)
+        if isinstance(obj, (np.integer,)):
+            return int(obj)
+        if isinstance(obj, (np.floating,)):
+            return float(obj)
+        raise TypeError(f"Object of type {type(obj)} is not JSON serializable")
     with open(json_path, "w") as f:
-        json.dump(results, f, indent=2)
+        json.dump(results, f, indent=2, default=_json_safe)
 
     print("\n" + "=" * 55)
     print(report)
