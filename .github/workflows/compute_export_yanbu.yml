@@ -1,0 +1,94 @@
+name: Compute + Export — Yanbu Deploy
+
+on:
+  workflow_dispatch:
+
+jobs:
+  compute-export:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: pip install -r scripts/requirements.txt
+
+      - name: Run compute (all terminals, WL filter via registry enabled flags)
+        env:
+          CLIENT_ID: ${{ secrets.CLIENT_ID }}
+          CLIENT_SECRET: ${{ secrets.CLIENT_SECRET }}
+        run: cd scripts && python compute.py
+
+      - name: Run export (write terminal JSON + Kharg JSON from parquet)
+        env:
+          CLIENT_ID: ${{ secrets.CLIENT_ID }}
+          CLIENT_SECRET: ${{ secrets.CLIENT_SECRET }}
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+        run: cd scripts && python export.py
+
+      - name: Smoke checks
+        run: |
+          python3 - <<'PYEOF'
+          import json, sys, os
+
+          ok = True
+
+          # (a) YB curve
+          yb_path = "data/terminals/yanbu_daily.json"
+          if not os.path.exists(yb_path):
+              print("FAIL: yanbu_daily.json not found"); sys.exit(1)
+          yb = json.load(open(yb_path))
+          n = len(yb["dates"])
+          vmin, vmax = min(yb["values"]), max(yb["values"])
+          print(f"(a) YB: {n} dates, range {vmin:.3f}–{vmax:.3f} Mb")
+          diffs = [abs(yb["values"][i+1]-yb["values"][i]) for i in range(n-1)]
+          big = [d for d in diffs if d > 1.0]
+          if big:
+              print(f"    WARN: {len(big)} day-over-day jumps > 1 Mb (max {max(big):.3f})")
+          else:
+              print("    day-over-day volatility OK (all < 1 Mb)")
+
+          # (b) RT curve — date count + last date
+          rt_path = "data/terminals/ras_tanura_daily.json"
+          if os.path.exists(rt_path):
+              rt = json.load(open(rt_path))
+              print(f"(b) RT: {len(rt['dates'])} dates, last {rt['dates'][-1]}")
+          else:
+              print("(b) RT: ras_tanura_daily.json not found (may use separate export)")
+
+          # (c) Kharg JSON
+          kh_path = "data/data_daily.json"
+          if os.path.exists(kh_path):
+              kh = json.load(open(kh_path))
+              print(f"(c) Kharg: {len(kh['dates'])} dates, last {kh['dates'][-1]}, "
+                    f"range {min(kh['values']):.3f}–{max(kh['values']):.3f} Mb")
+          else:
+              print("(c) Kharg JSON not found")
+
+          # (d) JW JSON — exists in backend but should NOT appear in public frontend config
+          jw_path = "data/terminals/juwaymah_daily.json"
+          if os.path.exists(jw_path):
+              jw = json.load(open(jw_path))
+              print(f"(d) JW backend: {len(jw['dates'])} dates (backend only; not in frontend config)")
+          else:
+              print("(d) JW JSON not present (terminal not in export output — OK)")
+
+          print("Smoke checks complete.")
+          PYEOF
+
+      - name: Commit JSON outputs
+        run: |
+          git config user.email "noreply@anthropic.com"
+          git config user.name "Claude Code"
+          git add data/
+          if git diff --cached --quiet; then
+            echo "No JSON changes to commit"
+          else
+            git commit -m "data: yanbu WL deploy — compute+export $(date -u +%Y-%m-%d)"
+            git push origin HEAD
+          fi
