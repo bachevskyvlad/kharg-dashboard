@@ -222,28 +222,97 @@ def sanity_check(groups: dict, df: pd.DataFrame) -> bool:
 
 # ── Stage 2 — Event decomposition ─────────────────────────────────────────────
 
+def _point_estimator(s: pd.Series, ev_date: pd.Timestamp, n_passes: int = 3) -> float:
+    """point[+n_passes] − point[−n_passes]: val at 3rd SAR pass after event minus val at 3rd pass before."""
+    before = s[s.index < ev_date].dropna()
+    after  = s[s.index > ev_date].dropna()
+    if len(before) < n_passes or len(after) < n_passes:
+        return float("nan")
+    val_before = float(before.iloc[-n_passes])   # 3rd pass counting back from event
+    val_after  = float(after.iloc[n_passes - 1]) # 3rd pass after event
+    return val_after - val_before
+
+
 def stage2_event_decomp(groups: dict, df: pd.DataFrame) -> pd.DataFrame:
     print("\n[Stage 2] Event decomposition…")
+    # All sub-groups, daily series
+    series_cache = {grp: compute_subgroup_series(df, tank_ids) for grp, tank_ids in groups.items()}
+    # Terminal = sum of all sub-group tanks (prod WL equivalent)
+    all_ids = set().union(*groups.values())
+    terminal_s = compute_subgroup_series(df, all_ids)
+
     records = []
     for ev in EVENTS:
         ev_date = pd.Timestamp(ev["date"])
         w_start = ev_date - pd.Timedelta(days=EVENT_WINDOW_DAYS)
         w_end   = ev_date + pd.Timedelta(days=EVENT_WINDOW_DAYS)
+
+        grp_mean_sum = 0.0   # sanity: sum of group mean-window deltas
+        grp_point_sum = 0.0  # sanity: sum of group point-estimator deltas
+        grp_mean_valid = True
+        grp_point_valid = True
+
         for grp, tank_ids in groups.items():
-            s = compute_subgroup_series(df, tank_ids)
+            s = series_cache[grp]
+            # Mean-window estimator: last − first in ±21d window
             s_w = s.loc[w_start:w_end]
             if len(s_w) < 2:
-                delta = float("nan")
+                delta_mean = float("nan")
+                grp_mean_valid = False
             else:
-                delta = float(s_w.iloc[-1] - s_w.iloc[0])
+                delta_mean = float(s_w.iloc[-1] - s_w.iloc[0])
+            # Point estimator: val[+3 passes] − val[−3 passes]
+            delta_point = _point_estimator(s, ev_date)
+            if np.isnan(delta_point):
+                grp_point_valid = False
+
             records.append({
-                "event":    ev["label"],
-                "date":     ev["date"],
-                "expected": ev["expected"],
-                "subgroup": grp,
-                "delta_mb": round(delta, 3) if not np.isnan(delta) else None,
-                "window_days": EVENT_WINDOW_DAYS,
+                "event":         ev["label"],
+                "date":          ev["date"],
+                "expected":      ev["expected"],
+                "subgroup":      grp,
+                "delta_mean_mb": round(delta_mean, 3) if not np.isnan(delta_mean) else None,
+                "delta_point_mb": round(delta_point, 3) if not np.isnan(delta_point) else None,
+                "window_days":   EVENT_WINDOW_DAYS,
             })
+            if not np.isnan(delta_mean):
+                grp_mean_sum += delta_mean
+            if not np.isnan(delta_point):
+                grp_point_sum += delta_point
+
+        # Terminal values (sanity cross-check)
+        t_w = terminal_s.loc[w_start:w_end]
+        terminal_mean  = float(t_w.iloc[-1] - t_w.iloc[0]) if len(t_w) >= 2 else float("nan")
+        terminal_point = _point_estimator(terminal_s, ev_date)
+        records.append({
+            "event":          ev["label"],
+            "date":           ev["date"],
+            "expected":       ev["expected"],
+            "subgroup":       "TERMINAL",
+            "delta_mean_mb":  round(terminal_mean, 3) if not np.isnan(terminal_mean) else None,
+            "delta_point_mb": round(terminal_point, 3) if not np.isnan(terminal_point) else None,
+            "window_days":    EVENT_WINDOW_DAYS,
+        })
+        records.append({
+            "event":          ev["label"],
+            "date":           ev["date"],
+            "expected":       ev["expected"],
+            "subgroup":       "GROUP_SUM",
+            "delta_mean_mb":  round(grp_mean_sum, 3) if grp_mean_valid else None,
+            "delta_point_mb": round(grp_point_sum, 3) if grp_point_valid else None,
+            "window_days":    EVENT_WINDOW_DAYS,
+        })
+
+        # Sanity check: GROUP_SUM ≈ TERMINAL (within 2%)
+        if grp_mean_valid and not np.isnan(terminal_mean) and abs(terminal_mean) > 0.01:
+            err = abs(grp_mean_sum - terminal_mean) / abs(terminal_mean)
+            status = "OK" if err < 0.02 else "MISMATCH ⚠"
+            print(f"  {ev['label']} mean-window sanity: group_sum={grp_mean_sum:.3f}  terminal={terminal_mean:.3f}  err={err:.1%}  {status}")
+        if grp_point_valid and not np.isnan(terminal_point) and abs(terminal_point) > 0.01:
+            err = abs(grp_point_sum - terminal_point) / abs(terminal_point)
+            status = "OK" if err < 0.02 else "MISMATCH ⚠"
+            print(f"  {ev['label']} point-estimator sanity: group_sum={grp_point_sum:.3f}  terminal={terminal_point:.3f}  err={err:.1%}  {status}")
+
     df_ev = pd.DataFrame(records)
     out = os.path.join(OUT_DIR, "event_decomp.csv")
     df_ev.to_csv(out, index=False)
@@ -265,38 +334,29 @@ def _load_jodi() -> pd.Series:
 
 def _load_portwatch_rtju() -> pd.Series:
     base = os.path.join(os.path.dirname(__file__), "..", "client_package", "data")
-    candidates = [
-        ("portwatch_rtju_monthly.csv", "month_start"),
-        ("portwatch_rt_monthly.csv",   "month_start"),
-        ("portwatch_rtju_monthly.csv", "month"),
-        ("portwatch_rt_monthly.csv",   "month"),
-    ]
-    for fname, date_col in candidates:
-        path = os.path.join(base, fname)
-        if not os.path.exists(path):
-            continue
-        try:
-            df = pd.read_csv(path)
-            if date_col not in df.columns:
-                # try first column as date
-                date_col = df.columns[0]
-            df[date_col] = pd.to_datetime(df[date_col], errors="coerce")
-            df = df.dropna(subset=[date_col])
-            col = next((c for c in ["mbpd", "exports_mbpd", "value"] if c in df.columns),
-                       df.columns[1] if len(df.columns) > 1 else None)
-            if col is None:
-                continue
-            s = df.set_index(date_col)[col].rename("rtju_mbpd")
-            # Normalize to month-end (same as JODI)
-            s = s.set_axis(s.index.to_period("M").to_timestamp("M"))
-            s = s[s > 0].dropna()
-            print(f"  [rtju] loaded {fname}: {len(s)} months, "
-                  f"keys sample: {[str(k.date()) for k in s.index[:5]]}")
-            return s
-        except Exception as exc:
-            print(f"  [rtju] {fname} load failed: {exc}")
-    print(f"  [rtju] no portwatch file found in {base} — rtju_mbpd will be NO DATA")
-    return pd.Series(dtype=float, name="rtju_mbpd")
+    path = os.path.join(base, "portwatch_monthly.csv")
+    if not os.path.exists(path):
+        print(f"  [rtju] portwatch_monthly.csv not found in {base} — rtju_mbpd will be NO DATA")
+        return pd.Series(dtype=float, name="rtju_mbpd")
+    try:
+        df = pd.read_csv(path)
+        # Canonical columns per ТЗ: date col = 'month' (YYYY-MM), value col = 'rtju_mbpd'
+        if "month" not in df.columns:
+            raise ValueError(f"'month' column not found; got: {list(df.columns)}")
+        if "rtju_mbpd" not in df.columns:
+            raise ValueError(f"'rtju_mbpd' column not found; got: {list(df.columns)}")
+        df["month"] = pd.to_datetime(df["month"], errors="coerce")
+        df = df.dropna(subset=["month"])
+        s = df.set_index("month")["rtju_mbpd"].rename("rtju_mbpd")
+        # Normalize to month-end (same as JODI)
+        s = s.set_axis(s.index.to_period("M").to_timestamp("M"))
+        s = s[s > 0].dropna()
+        print(f"  [rtju] loaded portwatch_monthly.csv: {len(s)} months, "
+              f"keys sample (5): {[str(k.date()) for k in s.index[:5]]}")
+        return s
+    except Exception as exc:
+        print(f"  [rtju] portwatch_monthly.csv load failed: {exc}")
+        return pd.Series(dtype=float, name="rtju_mbpd")
 
 
 def _align_monthly(s: pd.Series) -> pd.Series:
@@ -387,6 +447,7 @@ def stage3_correlation(groups: dict, df: pd.DataFrame) -> tuple:
     train_rows   = []
     holdout_rows = []
 
+    first_grp = True
     for grp, tank_ids in groups.items():
         # Build monthly storage series for this sub-group
         s_daily = compute_subgroup_series(df, tank_ids)
@@ -394,6 +455,16 @@ def stage3_correlation(groups: dict, df: pd.DataFrame) -> tuple:
         if len(s_monthly) < MIN_OVERLAP:
             print(f"  {grp}: too few monthly obs ({len(s_monthly)}) — skip")
             continue
+        if first_grp:
+            # Log 5 keys from storage series and intersection sizes with each anchor
+            stor_keys = [str(k.date()) for k in s_monthly.index[:5]]
+            print(f"  Storage keys sample ({grp}, 5): {stor_keys}")
+            for an, ex in anchors.items():
+                if not ex.empty:
+                    isect = s_monthly.index.intersection(ex.index)
+                    print(f"  Intersection {grp} ∩ {an}: {len(isect)} months  "
+                          f"first 5: {[str(k.date()) for k in isect[:5]]}")
+            first_grp = False
 
         for anchor_name, export_s in anchors.items():
             for metric in ["delta", "level_anom"]:
@@ -424,6 +495,7 @@ def stage3_correlation(groups: dict, df: pd.DataFrame) -> tuple:
                             "metric":       metric,
                             "lag":          lag,
                             "r_train":      res["r"],
+                            "p_train":      res["p"],
                             "r_holdout":    r_h,
                             "p_holdout":    h["p"],
                             "n_holdout":    h["n"],
@@ -442,8 +514,11 @@ def stage3_correlation(groups: dict, df: pd.DataFrame) -> tuple:
     print(f"  Train combos: {len(grid_df)}  (with r: {grid_df['r'].notna().sum()})")
     if not hold_df.empty:
         n_pass = hold_df["passes_bonferroni"].sum()
-        n_prom = ((hold_df["p_holdout"] < 0.10) & hold_df["sign_preserved"] & ~hold_df["passes_bonferroni"]).sum()
-        print(f"  Holdout: {len(hold_df)} rows  Bonferroni PASS: {n_pass}  Promising (p<0.10): {n_prom}")
+        # Promising: train p<0.10 AND holdout sign is minus (r<0) — expected negative direction preserved
+        _p_train_ok = hold_df["p_train"].notna() & (hold_df["p_train"] < 0.10)
+        _minus_ok   = hold_df["r_holdout"].notna() & (hold_df["r_holdout"] < 0)
+        n_prom = (_p_train_ok & _minus_ok & ~hold_df["passes_bonferroni"]).sum()
+        print(f"  Holdout: {len(hold_df)} rows  Bonferroni PASS: {n_pass}  Promising (train p<0.10, holdout r<0): {n_prom}")
     print(f"  Saved: {grid_path}  {hold_path}")
 
     # Fallback: if rtju was empty, commit 5 sub-series daily CSVs
@@ -625,7 +700,12 @@ def stage5_report(groups: dict, grid_df: pd.DataFrame, hold_df: pd.DataFrame,
     print("\n[Stage 5] Writing RT_DECOMPOSITION.md…")
 
     n_pass  = int(hold_df["passes_bonferroni"].sum()) if not hold_df.empty else 0
-    n_prom  = int(((hold_df["p_holdout"] < 0.10) & hold_df["sign_preserved"] & ~hold_df["passes_bonferroni"]).sum()) if not hold_df.empty else 0
+    if not hold_df.empty and "p_train" in hold_df.columns:
+        _pt_ok  = hold_df["p_train"].notna() & (hold_df["p_train"] < 0.10)
+        _rh_neg = hold_df["r_holdout"].notna() & (hold_df["r_holdout"] < 0)
+        n_prom  = int((_pt_ok & _rh_neg & ~hold_df["passes_bonferroni"]).sum())
+    else:
+        n_prom = 0
 
     lines = [
         "# RT Decomposition — Report",
@@ -659,12 +739,23 @@ def stage5_report(groups: dict, grid_df: pd.DataFrame, hold_df: pd.DataFrame,
         "",
         "## Stage 2 — Event Decomposition (2026 conflict, diagnostic)",
         "",
-        "| Event | Date | Expected | Sub-series | Δ (Mb) |",
+        "Two estimators compared. Mean-window: last−first in ±21d window.",
+        "Point: val[+3 SAR passes] − val[−3 SAR passes]. Sums of groups must match TERMINAL row.",
+        "",
+        "| Event | Expected | Sub-series | Δ mean-window (Mb) | Δ point (Mb) |",
         "|---|---|---|---|---|",
     ]
     for _, row in ev_df.iterrows():
-        d = f"{row['delta_mb']:+.3f}" if row["delta_mb"] is not None else "n/a"
-        lines.append(f"| {row['event']} | {row['date']} | {row['expected']} | {row['subgroup']} | {d} |")
+        dm = row.get("delta_mean_mb")
+        dp = row.get("delta_point_mb")
+        dm_s = f"{dm:+.3f}" if dm is not None else "n/a"
+        dp_s = f"{dp:+.3f}" if dp is not None else "n/a"
+        lines.append(f"| {row['event']} | {row['expected']} | {row['subgroup']} | {dm_s} | {dp_s} |")
+    lines += [
+        "",
+        "**Canonical estimator**: point estimator (val[+3]−val[−3]) — matches PROOF_OF_VALUE event study,",
+        "removes window-edge sensitivity. Mean-window retained for reference.",
+    ]
 
     lines += [
         "",
@@ -694,19 +785,24 @@ def stage5_report(groups: dict, grid_df: pd.DataFrame, hold_df: pd.DataFrame,
         "",
         "## Stage 3 — Holdout (2024-01 → 2026-02)",
         "",
-        f"Bonferroni PASS: {n_pass}  |  Promising (p<0.10, sign preserved): {n_prom}",
+        f"Bonferroni PASS: {n_pass}  |  Promising (train p<0.10 AND holdout r<0): {n_prom}",
         "",
         "| Sub-series | Anchor | Metric | Lag | r_train | r_holdout | p_holdout | Bonf | Sign |",
         "|---|---|---|---|---|---|---|---|---|",
     ]
     for _, row in hold_df.iterrows():
         rh = row.get("r_holdout"); ph = row.get("p_holdout")
-        rhs = f"{rh:.4f}" if rh is not None and not np.isnan(rh) else "n/a"
-        phs = f"{ph:.4f}" if ph is not None and not np.isnan(ph) else "n/a"
+        rt = row.get("r_train")
+        rhs = f"{rh:.4f}" if rh is not None and not np.isnan(float(rh)) else "n/a"
+        phs = f"{ph:.4f}" if ph is not None and not np.isnan(float(ph)) else "n/a"
         bonf = "PASS" if row.get("passes_bonferroni") else "FAIL"
         sign = "✓" if row.get("sign_preserved") else "✗"
+        note = ""
+        # north rows: positive r = sign violation (expected −, got +)
+        if row["subgroup"] == "north" and rt is not None and not np.isnan(float(rt)) and float(rt) > 0:
+            note = " ⚠ sign violation (expected −, got +); exploratory note only"
         lines.append(f"| {row['subgroup']} | {row['anchor']} | {row['metric']} | "
-                     f"{row['lag']:+d} | {row['r_train']:.4f} | {rhs} | {phs} | {bonf} | {sign} |")
+                     f"{row['lag']:+d} | {rt:.4f} | {rhs} | {phs} | {bonf} | {sign} |{note}")
 
     lines += [
         "",

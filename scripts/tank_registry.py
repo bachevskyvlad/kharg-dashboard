@@ -469,9 +469,10 @@ LOCATIONS = [
         "name": "Ras Tanura",
         "country": "SA",
         # DESC 137 contaminated ~215 historical dates (rt_65 edge-of-frame artefact).
-        # Lock to DESC 35 only; ASC 101 is a separate future phase (needs az=98 + per-orbit calibration).
+        # DESC 35 is primary; ASC 101 added as parallel series (Variant A) — per-orbit calibration required.
         "allowed_orbits": [
-            {"relative_orbit": 35, "direction": "DESC", "los_azimuth": 282},
+            {"relative_orbit": 35,  "direction": "DESC",      "los_azimuth": 282},
+            {"relative_orbit": 101, "direction": "ascending",  "los_azimuth": 98},
         ],
         "status": "active",
         # Two geographically separate clusters ~5.5 km apart — fetched with independent

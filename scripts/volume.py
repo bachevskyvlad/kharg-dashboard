@@ -38,7 +38,8 @@ import pandas as pd
 from config import BARREL_PER_M3, TANK_HEIGHT_MIN, EWMA_ALPHA
 
 
-def compute_volumes(df, db_min_override=None, db_max_override=None):
+def compute_volumes(df, db_min_override=None, db_max_override=None,
+                    per_orbit_calibration=False):
     """
     Adds a 'barrels' column to df using the inverse crescent radiometry model.
 
@@ -50,7 +51,41 @@ def compute_volumes(df, db_min_override=None, db_max_override=None):
     When set, skip the percentile computation and use the supplied constants.
     This keeps volume time-series comparable when updating historical data.
     For Kharg: never pass overrides (golden test must pass bit-for-bit).
+
+    per_orbit_calibration: when True and df has an 'orbit_direction' column,
+    compute separate dB_min/dB_max per orbit_direction group. ASC and DESC
+    differ by ~4.7 dB offset — mixing them into one global percentile produces
+    a systematic bias. Returns calibration_map = {direction: (dB_min, dB_max)}.
+    When False (default), uses global percentiles (legacy behavior).
     """
+    if per_orbit_calibration and "orbit_direction" in df.columns:
+        calibration_map = {}
+        df = df.copy()
+        df["barrels"] = np.nan
+
+        for direction, grp in df.groupby("orbit_direction"):
+            if db_min_override is not None and db_max_override is not None:
+                dB_min_d = db_min_override
+                dB_max_d = db_max_override
+            else:
+                dB_min_d = grp["db_mean"].quantile(0.05)
+                dB_max_d = grp["db_mean"].quantile(0.95)
+            calibration_map[direction] = (dB_min_d, dB_max_d)
+
+            def _row_vol(row, lo=dB_min_d, hi=dB_max_d):
+                vv = np.clip(row["db_mean"], lo, hi)
+                fr = (hi - vv) / (hi - lo)
+                h  = TANK_HEIGHT_MIN + fr * (row["h_max"] - TANK_HEIGHT_MIN)
+                return np.pi * row["radius_m"]**2 * h * BARREL_PER_M3
+
+            df.loc[grp.index, "barrels"] = grp.apply(_row_vol, axis=1)
+
+        # Return first direction's calibration as (dB_min, dB_max) for compatibility,
+        # plus full map as third return value when per_orbit_calibration=True.
+        first = next(iter(calibration_map.values()))
+        return df, first[0], first[1], calibration_map
+
+    # Legacy global-percentile path
     if db_min_override is not None and db_max_override is not None:
         dB_min = db_min_override
         dB_max = db_max_override
