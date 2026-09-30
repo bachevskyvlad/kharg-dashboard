@@ -1,0 +1,36 @@
+JW Radius-Corrected Re-Screen
+Run: 2026-09-30 08:25 UTC
+Scenes: 18  (2026-09-30 00:00:00 … 2026-06-19 00:00:00)
+Step threshold: 2.5 dB
+
+tank_id     r_old  r_new h_new  step_old  step_new      Δ%       wl_new  note
+----------------------------------------------------------------------------------------------------
+jw_0         50.0   53.8    17     2.293     2.242     2.242   -2.2%  ✓ whitelist  r_acc=r_new  cap=0.97Mb[accepted]  
+jw_1         50.0   55.0    16    12.667    10.500    12.667  -17.1%   ✗ excluded  r_acc=50  cap=0.79Mb[accepted]  ★ optical_flag
+jw_10        50.0   56.2    16     5.992     5.451     5.992   -9.0%   ✗ excluded  r_acc=50  cap=0.79Mb[accepted]  
+jw_11        50.0   57.5    16     1.530     1.685     1.530  +10.1%  ✓ whitelist  r_acc=50  cap=0.79Mb[accepted]  
+jw_12        50.0   53.8    16     4.519     5.590     4.519  +23.7%   ✗ excluded  r_acc=50  cap=0.79Mb[accepted]  
+jw_13        50.0   53.8    16     5.522     5.712     5.522   +3.4%   ✗ excluded  r_acc=50  cap=0.79Mb[accepted]  
+jw_14        50.0   63.8    16     9.282     9.495     9.282   +2.3%   ✗ excluded  r_acc=50  cap=1.45Mb[stage0]  
+jw_15        50.0   62.5    16     6.100     7.988     6.100  +31.0%   ✗ excluded  r_acc=50  cap=1.39Mb[stage0]  
+jw_16        50.0   62.5    18     2.228     1.764     1.764  -20.8%  ✓ whitelist  r_acc=r_new  cap=1.39Mb[accepted]  wl_note:review_flag_optical
+jw_17        50.0   65.0    16     6.859    10.088     6.859  +47.1%   ✗ excluded  r_acc=50  cap=1.50Mb[stage0]  ★ 11.2m_center_offset
+jw_18        50.0   63.8    18     2.405     2.195     2.195   -8.7%  ✓ whitelist  r_acc=r_new  cap=1.45Mb[accepted]  
+jw_2         50.0   56.2    16     2.135     3.246     2.135  +52.1%  ✓ whitelist  r_acc=50  cap=0.79Mb[accepted]  
+jw_3         50.0   50.0    16     1.436     1.435     1.435   +0.0%  ✓ whitelist  r_acc=r_new  cap=0.79Mb[accepted]  
+jw_4         50.0   45.0    16     2.644     1.557     1.557  -41.1%  ✓ whitelist  r_acc=r_new  cap=0.64Mb[accepted]  
+jw_5         50.0   53.8    16     3.078     8.128     3.078 +164.0%   ✗ excluded  r_acc=50  cap=0.79Mb[accepted]  
+jw_6         50.0   53.8    16     4.244     4.789     4.244  +12.8%   ✗ excluded  r_acc=50  cap=0.79Mb[accepted]  
+jw_7         50.0   50.0    16     1.857     1.857     1.857   +0.0%  ✓ whitelist  r_acc=r_new  cap=0.79Mb[accepted]  
+jw_8         50.0   52.5    16     2.221     2.579     2.221  +16.1%  ✓ whitelist  r_acc=50  cap=0.79Mb[accepted]  
+jw_9         50.0   57.5    16     1.274     4.261     1.274 +234.5%  ✓ whitelist  r_acc=50  cap=0.79Mb[accepted]  
+
+Whitelist: 10/19 tanks
+Capacity:  9.19 / 18.27 Mb (50.3%)
+Gate (≥60%): TANK_LEVEL_OR_DROP
+Terminal max cap (corrected): 18.27 Mb
+
+Control / placebo issues:
+  ! control exposed bad stage0 measurement for jw_9; per-tank rule applied (step_new=4.261 > step_old×1.20=1.529; r_old=50 kept)
+
+Newly whitelisted vs r=50 round: ['jw_4']
