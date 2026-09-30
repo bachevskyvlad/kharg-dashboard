@@ -23,6 +23,22 @@ on:
         options:
           - "false"
           - "true"
+      disabled_only:
+        description: "Process only disabled tanks (enabled=False) — supplemental backfill"
+        required: false
+        default: "false"
+        type: choice
+        options:
+          - "false"
+          - "true"
+      all_tanks:
+        description: "Process all tanks including disabled"
+        required: false
+        default: "false"
+        type: choice
+        options:
+          - "false"
+          - "true"
 
 jobs:
   asc-backfill:
@@ -62,6 +78,12 @@ jobs:
           fi
           if [ "${{ github.event.inputs.force }}" = "true" ]; then
             ARGS="$ARGS --force"
+          fi
+          if [ "${{ github.event.inputs.disabled_only }}" = "true" ]; then
+            ARGS="$ARGS --disabled-only"
+          fi
+          if [ "${{ github.event.inputs.all_tanks }}" = "true" ]; then
+            ARGS="$ARGS --all-tanks"
           fi
           python stage5_asc_backfill.py $ARGS
 

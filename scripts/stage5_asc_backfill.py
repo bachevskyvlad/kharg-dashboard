@@ -48,9 +48,11 @@ OUT_DIR = os.path.join(os.path.dirname(__file__), "..", "diagnostics", "rt_decom
 os.makedirs(OUT_DIR, exist_ok=True)
 
 parser = argparse.ArgumentParser()
-parser.add_argument("--execute",   action="store_true", help="Actually write to Supabase (default: dry-run)")
-parser.add_argument("--start",     default=None,        help="Catalog start date YYYY-MM-DD (default: 14d lookback or 2020-01-01 if no ASC data exists)")
-parser.add_argument("--force",     action="store_true", help="Re-fetch all ASC history from --start (ignore existing ASC dates)")
+parser.add_argument("--execute",        action="store_true", help="Actually write to Supabase (default: dry-run)")
+parser.add_argument("--start",          default=None,        help="Catalog start date YYYY-MM-DD (default: 14d lookback or 2020-01-01 if no ASC data exists)")
+parser.add_argument("--force",          action="store_true", help="Re-fetch all ASC history from --start (ignore existing ASC dates)")
+parser.add_argument("--disabled-only",  action="store_true", help="Process only disabled tanks (enabled=False) — for supplemental backfill")
+parser.add_argument("--all-tanks",      action="store_true", help="Process all tanks including disabled")
 args = parser.parse_args()
 
 DRY_RUN = not args.execute
@@ -278,11 +280,17 @@ def main():
     from tank_registry import LOCATIONS
 
     rt_loc   = next(loc for loc in LOCATIONS if loc["id"] == TERMINAL_ID)
-    tanks    = [t for t in rt_loc["tanks"] if t.get("enabled", True)]
+    if args.disabled_only:
+        tanks = [t for t in rt_loc["tanks"] if not t.get("enabled", True)]
+    elif args.all_tanks:
+        tanks = rt_loc["tanks"]
+    else:
+        tanks = [t for t in rt_loc["tanks"] if t.get("enabled", True)]
     clusters = rt_loc.get("clusters", [])
 
+    mode_label = "disabled-only" if args.disabled_only else ("all" if args.all_tanks else "enabled")
     print(f"[ASC Backfill] {TERMINAL_ID}  orbit={ASC_ORBIT}  az={ASC_AZ}°")
-    print(f"  Tanks (enabled): {len(tanks)}  Clusters: {len(clusters)}")
+    print(f"  Tanks ({mode_label}): {len(tanks)}  Clusters: {len(clusters)}")
     print(f"  Mode: {'DRY-RUN' if DRY_RUN else 'EXECUTE'}")
 
     # Determine catalog start
