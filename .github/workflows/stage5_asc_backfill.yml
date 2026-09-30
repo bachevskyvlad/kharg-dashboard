@@ -65,10 +65,6 @@ jobs:
           fi
           python stage5_asc_backfill.py $ARGS
 
-      - name: Upload backup CSV
+      - name: Show backup path
         if: ${{ github.event.inputs.execute == 'true' }}
-        uses: actions/upload-artifact@v4
-        with:
-          name: rt-asc-backup
-          path: diagnostics/rt_decomp/backup_ras_tanura_*.csv
-          if-no-files-found: warn
+        run: ls -lh diagnostics/rt_decomp/backup_ras_tanura_*.csv 2>/dev/null || echo "No backup file found"
