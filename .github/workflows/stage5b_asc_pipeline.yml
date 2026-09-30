@@ -1,0 +1,46 @@
+name: Stage 5b — ASC Pipeline (backup / screen / M1)
+
+on:
+  workflow_dispatch:
+    inputs:
+      item:
+        description: "Run only item N (2=backup, 3=screen, 4=M1). Leave blank = all."
+        required: false
+        default: ""
+
+jobs:
+  pipeline:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: pip install -r scripts/requirements.txt
+
+      - name: Run pipeline
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+        run: |
+          cd scripts
+          ARGS=""
+          if [ -n "${{ github.event.inputs.item }}" ]; then
+            ARGS="--item ${{ github.event.inputs.item }}"
+          fi
+          python stage5b_asc_pipeline.py $ARGS
+
+      - name: Commit outputs to backups/ and diagnostics/
+        if: always()
+        run: |
+          git config user.email "actions@github.com"
+          git config user.name "GitHub Actions"
+          git add backups/ diagnostics/rt_decomp/ || true
+          git diff --cached --quiet && echo "No new files" || \
+            git commit -m "ci: stage5b outputs [skip ci]"
+          git push origin main || true
