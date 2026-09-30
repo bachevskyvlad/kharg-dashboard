@@ -1,0 +1,74 @@
+name: Stage 5 — ASC 101 Backfill RT (manual)
+
+on:
+  workflow_dispatch:
+    inputs:
+      execute:
+        description: "Write to Supabase (false = dry-run only)"
+        required: false
+        default: "false"
+        type: choice
+        options:
+          - "false"
+          - "true"
+      start:
+        description: "Catalog start date YYYY-MM-DD (default: auto)"
+        required: false
+        default: ""
+      force:
+        description: "Re-fetch all ASC history ignoring existing dates"
+        required: false
+        default: "false"
+        type: choice
+        options:
+          - "false"
+          - "true"
+
+jobs:
+  asc-backfill:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: pip install -r scripts/requirements.txt
+
+      - name: Check secrets presence
+        run: |
+          echo "CLIENT_ID set: ${{ secrets.CLIENT_ID != '' }}"
+          echo "CLIENT_SECRET set: ${{ secrets.CLIENT_SECRET != '' }}"
+          echo "SUPABASE_URL set: ${{ secrets.SUPABASE_URL != '' }}"
+          echo "SUPABASE_KEY set: ${{ secrets.SUPABASE_KEY != '' }}"
+
+      - name: Run ASC backfill
+        env:
+          CLIENT_ID:     ${{ secrets.CLIENT_ID }}
+          CLIENT_SECRET: ${{ secrets.CLIENT_SECRET }}
+          SUPABASE_URL:  ${{ secrets.SUPABASE_URL }}
+          SUPABASE_KEY:  ${{ secrets.SUPABASE_KEY }}
+        run: |
+          cd scripts
+          ARGS=""
+          if [ "${{ github.event.inputs.execute }}" = "true" ]; then
+            ARGS="$ARGS --execute"
+          fi
+          if [ -n "${{ github.event.inputs.start }}" ]; then
+            ARGS="$ARGS --start ${{ github.event.inputs.start }}"
+          fi
+          if [ "${{ github.event.inputs.force }}" = "true" ]; then
+            ARGS="$ARGS --force"
+          fi
+          python stage5_asc_backfill.py $ARGS
+
+      - name: Upload backup CSV
+        if: ${{ github.event.inputs.execute == 'true' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: rt-asc-backup
+          path: diagnostics/rt_decomp/backup_ras_tanura_*.csv
+          if-no-files-found: warn
