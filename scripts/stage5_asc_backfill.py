@@ -156,10 +156,13 @@ def run_backfill(tanks, clusters, catalog_start):
             S1,
             bbox=bbox,
             time=(catalog_start.strftime("%Y-%m-%d"), datetime.datetime.utcnow().strftime("%Y-%m-%d")),
-            filter=f"sat:orbit_state = 'ascending' AND sar:relative_orbit = {ASC_ORBIT}",
-            fields={"include": ["properties.datetime"], "exclude": []},
+            filter="sat:orbit_state = 'ascending'",
+            fields={"include": ["properties.datetime", "properties.sat:relative_orbit"], "exclude": []},
         )
         for item in search_iter:
+            rel_orbit = item.get("properties", {}).get("sat:relative_orbit")
+            if rel_orbit is not None and int(rel_orbit) != ASC_ORBIT:
+                continue
             d = pd.to_datetime(item["properties"]["datetime"]).normalize()
             all_dates_set.add(d)
 
