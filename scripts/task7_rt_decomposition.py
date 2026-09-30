@@ -586,7 +586,8 @@ def stage4_asc_pilot() -> str:
             db_offset = round(asc_mean - (step_desc + 1.0), 3)  # crude, not precise
 
         wl_asc = (not np.isnan(step_asc)) and (step_asc < STEP_THRESH)
-        print(f"    {tid}: step_asc={step_asc:.3f if not np.isnan(step_asc) else 'nan'}  step_desc={step_desc}  wl_asc={wl_asc}")
+        step_asc_str = f"{step_asc:.3f}" if not np.isnan(step_asc) else "nan"
+        print(f"    {tid}: step_asc={step_asc_str}  step_desc={step_desc}  wl_asc={wl_asc}")
         asc_rows.append({
             "tank_id": tid,
             "step_asc":  round(step_asc, 4) if not np.isnan(step_asc) else None,
