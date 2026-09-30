@@ -156,7 +156,7 @@ def run_backfill(tanks, clusters, catalog_start):
             S1,
             bbox=bbox,
             time=(catalog_start.strftime("%Y-%m-%d"), datetime.datetime.utcnow().strftime("%Y-%m-%d")),
-            filter=f"sar:orbit_state = 'ascending' AND sar:relative_orbit = {ASC_ORBIT}",
+            filter=f"sat:orbit_state = 'ascending' AND sar:relative_orbit = {ASC_ORBIT}",
             fields={"include": ["properties.datetime"], "exclude": []},
         )
         for item in search_iter:
