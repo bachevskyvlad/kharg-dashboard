@@ -124,7 +124,6 @@ def _build_crescent(tank, bbox, img_w, img_h, az, width_m):
 def run_backfill(tanks, clusters, catalog_start):
     from sentinelhub import (SentinelHubCatalog, DataCollection, SentinelHubRequest,
                               MimeType, SHConfig, CRS, BBox)
-    from sentinelhub import filter as shfilter
 
     sh_cfg = SHConfig()
     sh_cfg.sh_client_id     = SH_CLIENT_ID
