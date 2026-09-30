@@ -47,8 +47,8 @@ sys.path.insert(0, os.path.dirname(__file__))
 
 SUPABASE_URL = os.environ.get("SUPABASE_URL") or "https://yoekhkczwdeyauwarsyy.supabase.co"
 SUPABASE_KEY = os.environ.get("SUPABASE_KEY") or "sb_publishable_7j07_zzdqTGM1LXf7-o9Tg_JJRbJQSM"
-SH_CLIENT_ID = os.environ.get("CLIENT_ID") or ""
-SH_CLIENT_SECRET = os.environ.get("CLIENT_SECRET") or ""
+SH_CLIENT_ID = os.environ.get("CLIENT_ID") or "sh-0f08bb88-cde8-4e6e-8eb9-1006acfe6be9"
+SH_CLIENT_SECRET = os.environ.get("CLIENT_SECRET") or "erkNtZDw4z36UB0Xm7BrzcYixzaUGeW0"
 
 from tank_registry import LOCATIONS
 from volume import compute_volumes
@@ -265,12 +265,37 @@ def _load_jodi() -> pd.Series:
 
 def _load_portwatch_rtju() -> pd.Series:
     base = os.path.join(os.path.dirname(__file__), "..", "client_package", "data")
-    for fname in ("portwatch_rtju_monthly.csv", "portwatch_rt_monthly.csv"):
+    candidates = [
+        ("portwatch_rtju_monthly.csv", "month_start"),
+        ("portwatch_rt_monthly.csv",   "month_start"),
+        ("portwatch_rtju_monthly.csv", "month"),
+        ("portwatch_rt_monthly.csv",   "month"),
+    ]
+    for fname, date_col in candidates:
         path = os.path.join(base, fname)
-        if os.path.exists(path):
-            df = pd.read_csv(path, parse_dates=["month_start"])
-            col = "mbpd" if "mbpd" in df.columns else df.columns[1]
-            return df.set_index("month_start")[col].rename("rtju_mbpd")
+        if not os.path.exists(path):
+            continue
+        try:
+            df = pd.read_csv(path)
+            if date_col not in df.columns:
+                # try first column as date
+                date_col = df.columns[0]
+            df[date_col] = pd.to_datetime(df[date_col], errors="coerce")
+            df = df.dropna(subset=[date_col])
+            col = next((c for c in ["mbpd", "exports_mbpd", "value"] if c in df.columns),
+                       df.columns[1] if len(df.columns) > 1 else None)
+            if col is None:
+                continue
+            s = df.set_index(date_col)[col].rename("rtju_mbpd")
+            # Normalize to month-end (same as JODI)
+            s = s.set_axis(s.index.to_period("M").to_timestamp("M"))
+            s = s[s > 0].dropna()
+            print(f"  [rtju] loaded {fname}: {len(s)} months, "
+                  f"keys sample: {[str(k.date()) for k in s.index[:5]]}")
+            return s
+        except Exception as exc:
+            print(f"  [rtju] {fname} load failed: {exc}")
+    print(f"  [rtju] no portwatch file found in {base} — rtju_mbpd will be NO DATA")
     return pd.Series(dtype=float, name="rtju_mbpd")
 
 
@@ -328,12 +353,35 @@ def stage3_correlation(groups: dict, df: pd.DataFrame) -> tuple:
     rtju  = _load_portwatch_rtju()
     print(f"  JODI: {len(jodi)} months   PortWatch RT+JU: {len(rtju)} months")
 
+    # Diagnostic: show 5 first keys from each anchor
+    jodi_keys = [str(k.date()) for k in jodi.index[:5]]
+    print(f"  JODI keys sample (month-end): {jodi_keys}")
+    if not rtju.empty:
+        rtju_keys = [str(k.date()) for k in rtju.index[:5]]
+        print(f"  rtju keys sample: {rtju_keys}")
+    else:
+        print("  rtju_mbpd: empty — skipping PortWatch half; fallback CSVs will be written")
+
+    # Intersection size check for jodi anchor (stop if <30 months in train)
+    _train_mask = (jodi.index >= pd.Timestamp(TRAIN_START)) & (jodi.index <= pd.Timestamp(TRAIN_END))
+    jodi_train  = jodi[_train_mask]
+    print(f"  JODI train months: {len(jodi_train)}  keys: {[str(k.date()) for k in jodi_train.index[:5]]}")
+    if len(jodi_train) < 30:
+        print(f"  STOP: JODI train intersection < 30 months ({len(jodi_train)}). Keys: {[str(k.date()) for k in jodi_train.index]}")
+        raise RuntimeError(f"JODI train intersection too small: {len(jodi_train)} < 30 months")
+
+    if not rtju.empty:
+        _rtju_train = rtju[(rtju.index >= pd.Timestamp(TRAIN_START)) & (rtju.index <= pd.Timestamp(TRAIN_END))]
+        print(f"  rtju train months: {len(_rtju_train)}  keys: {[str(k.date()) for k in _rtju_train.index[:5]]}")
+        if len(_rtju_train) < 30:
+            print(f"  WARN: rtju train intersection < 30 months ({len(_rtju_train)}) — treating as empty")
+            rtju = pd.Series(dtype=float, name="rtju_mbpd")
+
     anchors = {"jodi_saudi": jodi}
     if not rtju.empty:
         anchors["rtju_mbpd"] = rtju
     else:
-        print("  rtju_mbpd not available — JODI only")
-        # Add empty placeholder so grid shows all 40 slots
+        # Add empty placeholder so grid shows all 40 slots with NO DATA
         anchors["rtju_mbpd"] = pd.Series(dtype=float, name="rtju_mbpd")
 
     train_rows   = []
@@ -397,6 +445,16 @@ def stage3_correlation(groups: dict, df: pd.DataFrame) -> tuple:
         n_prom = ((hold_df["p_holdout"] < 0.10) & hold_df["sign_preserved"] & ~hold_df["passes_bonferroni"]).sum()
         print(f"  Holdout: {len(hold_df)} rows  Bonferroni PASS: {n_pass}  Promising (p<0.10): {n_prom}")
     print(f"  Saved: {grid_path}  {hold_path}")
+
+    # Fallback: if rtju was empty, commit 5 sub-series daily CSVs
+    if rtju.empty or len(anchors.get("rtju_mbpd", pd.Series())) == 0:
+        print("  [fallback] rtju empty — writing sub-series daily CSVs to diagnostics/rt_decomp/")
+        for grp, tank_ids in groups.items():
+            s = compute_subgroup_series(df, tank_ids)
+            csv_path = os.path.join(OUT_DIR, f"subgroup_{grp}_daily.csv")
+            s.to_csv(csv_path, header=["vol_mn_bbl"])
+            print(f"    wrote {csv_path} ({len(s)} rows)")
+
     return grid_df, hold_df
 
 
