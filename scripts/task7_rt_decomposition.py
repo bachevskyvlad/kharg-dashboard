@@ -546,9 +546,12 @@ def stage4_asc_pilot() -> str:
     except Exception:
         pass
 
-    S1_CDSE = DataCollection.SENTINEL1_IW.define_from(
-        "s1iw_cdse_asc", service_url="https://sh.dataspace.copernicus.eu"
-    )
+    try:
+        S1_CDSE = DataCollection.SENTINEL1_IW.define_from(
+            "s1iw_cdse_asc", service_url="https://sh.dataspace.copernicus.eu"
+        )
+    except ValueError:
+        S1_CDSE = DataCollection["s1iw_cdse"]
 
     for tid in sample_ids:
         t = tanks[tid]
