@@ -1,6 +1,6 @@
 # RT Decomposition — Report
 
-Run: 2026-09-29 22:19 UTC
+Run: 2026-09-30 08:46 UTC
 
 ## Registration
 - Train: 2020-01 → 2023-12
@@ -125,7 +125,13 @@ Bonferroni PASS: 0  |  Promising (p<0.10, sign preserved): 2
 ## Stage 4 — ASC 101 Pilot
 
 ```
-Stage 4 skipped — CLIENT_ID/CLIENT_SECRET not set
+ASC 101 pilot — 10 dates  cadence median 6.0d  (2026-09-28 00:00:00 → 2026-08-05 00:00:00)
+North WL tanks screened: 4  pass step<2.5: 3/4
+  rt_5        step_asc=0.420    step_desc=1.190    ✓
+  rt_6        step_asc=0.488    step_desc=0.538    ✓
+  rt_7        step_asc=2.574    step_desc=1.938    ✗
+  rt_8        step_asc=1.718    step_desc=1.431    ✓
+
 ```
 
 ## Final Verdict
