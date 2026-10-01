@@ -118,7 +118,7 @@ gap_inflated = step_full≥2.5 but step_2026<2.5 (enters ASC-WL via 2026 value).
 
 | Orbit | p5 (dB) | p95 (dB) | n_obs |
 |---|---|---|---|
-| ASC  | -1.456 | 16.362 | 13365 |
+| ASC  | -0.923 | 16.944 | 7290 |
 | DESC | -1.171 | 12.523 | 9450 |
 
 Mean ASC−DESC volume offset: +nan Mb
@@ -129,22 +129,22 @@ Mean ASC−DESC volume offset: +nan Mb
 
 Method: corr(Δ_ASC, Δ_DESC) on pass pairs ≤4 days apart.
 
-- Paired passes (raw, ≤4d): 238
-- **M1 raw = 0.0731**
-- Level corr: NaN
-- Monthly M1 (n=80 months): **0.0713**
-- M1_war  (2026-02→09, n=41  pairs): 0.0850
-- M1_peace (pre-war,   n=197 pairs): 0.0655
+- Tank set: BOTH-WL = 30 tanks (ASC-WL ∩ DESC-WL)
+- **Level corr (nearest-pair ≤4d, n=238): 0.2001**
+- Δ-M1 raw (paired ≤4d, n=238): 0.0647
+- Monthly Δ-M1 (n=80 months): 0.2118
+- M1_war  (2026-02→09, n=41  pairs): 0.1775
+- M1_peace (pre-war,   n=197 pairs): 0.0527
 
 ### Noise Model
 
 | | ASC | DESC |
 |---|---|---|
 | WL tanks | 55 | 30 |
-| med step (dB) | 2.167 | 1.963 |
-| σ_terminal (dB-step) | 0.3062 | 0.3755 |
+| med step (dB) | 1.737 | 1.963 |
+| σ_terminal (dB-step) | 0.3322 | 0.3755 |
 
-Expected M1 from noise model: **0.8422**  (measured/expected = 0.09)
+Expected M1 from noise model: **0.7459**  (measured/expected = 0.09)
 
 Interpretation: if measured M1 ≈ expected M1, raw corr(Δ,Δ) was suppressed by noise
 by construction and is not a valid validation metric for this cadence/tank-count.
@@ -153,8 +153,8 @@ by construction and is not a valid validation metric for this cadence/tank-count
 
 | Event | Date | Expected | ASC Δ (Mb) | Status | DESC ref (Mb) |
 |---|---|---|---|---|---|
-| E1 | 2026-03-02 | BUILD (+) | +0.03 | ✓ | +2.30 |
-| E2 | 2026-06-26 | DRAW  (−) | -1.64 | ✓ | −2.15 |
+| E1 | 2026-03-02 | BUILD (+) | -0.02 | ✗ WRONG SIGN | +2.30 |
+| E2 | 2026-06-26 | DRAW  (−) | -0.62 | ✓ | −2.15 |
 
 Series CSV: `diagnostics/rt_decomp/asc_desc_series_2024.csv`
 
@@ -162,11 +162,10 @@ Series CSV: `diagnostics/rt_decomp/asc_desc_series_2024.csv`
 
 ## 6. Verdict
 
-**STOP — all M1 variants below threshold**
+**STOP — level_corr=0.200 < 0.4; ASC orbit not validated**
 
-Grid (fixed 2026-10-01):
-- monthly M1 ≥ 0.5 → GO (raw M1 deprecated)
-- M1_war ≥ 0.5 AND level_corr ≥ 0.7 → GO (noise-floor confirmed)
-- monthly M1 0.3–0.5 → HUMAN REVIEW
-- all below → STOP
+Grid (fixed 2026-10-01) — primary criterion: level_corr on BOTH-set, nearest-pair ≤4d:
+- level_corr ≥ 0.7 → GO (Δ-M1 deprecated: cadence mismatch suppresses pass-to-pass Δ by construction)
+- level_corr 0.4–0.7 → HUMAN REVIEW
+- level_corr < 0.4 or NaN → STOP настоящий
 
