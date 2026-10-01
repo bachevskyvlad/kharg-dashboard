@@ -1,0 +1,14 @@
+Per-orbit calibration report
+Generated: 2026-10-01T09:27:06.179011
+
+ASC: p5=-1.934 dB  p95=16.359 dB  n=16016
+DESC: p5=-1.685 dB  p95=15.048 dB  n=20785
+DESCENDING: p5=-1.488 dB  p95=16.374 dB  n=115
+
+ASC-WL tanks: 1
+DESC-WL tanks: 0
+Common WL tanks: 0
+Overlap months: 0
+
+M1 = nan
+M1 verdict: FAIL/INSUFFICIENT
