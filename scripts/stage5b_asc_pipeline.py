@@ -171,24 +171,16 @@ def task4_screen(df):
 
     cutoff_2026 = pd.Timestamp("2026-01-01")
 
-    # Load DESC WL from existing diagnostics (from stage3)
-    desc_wl_path = os.path.join(os.path.dirname(__file__), "..", "diagnostics", "stage3",
-                                "whitelist_results.json")
+    # Compute DESC WL inline from terminal_observations DESC rows (same logic as ASC WL)
+    desc_df = df[df["orbit_direction"] == "DESC"].copy()
     desc_wl = {}
-    if os.path.exists(desc_wl_path):
-        import json
-        with open(desc_wl_path) as f:
-            wl_data = json.load(f)
-        # format: [{tank_id, step, passed}, ...] or similar — handle both
-        if isinstance(wl_data, list):
-            for row in wl_data:
-                tid = row.get("tank_id") or row.get("id")
-                if tid:
-                    desc_wl[tid] = row.get("passed", False)
-        elif isinstance(wl_data, dict):
-            desc_wl = {k: v.get("passed", False) if isinstance(v, dict) else bool(v)
-                       for k, v in wl_data.items()}
-    print(f"  DESC WL loaded: {sum(desc_wl.values())} passed of {len(desc_wl)} tanks")
+    for tid, grp in desc_df.groupby("tank_id"):
+        if len(grp) < MIN_OBS:
+            desc_wl[tid] = False
+            continue
+        step = tank_step_db(grp.sort_values("date")["db_mean"].tolist())
+        desc_wl[tid] = (not np.isnan(step) and step < STEP_THRESH)
+    print(f"  DESC WL computed: {sum(desc_wl.values())} passed of {len(desc_wl)} tanks")
 
     asc = df[df["orbit_direction"] == "ASC"].copy()
     all_tanks = sorted(asc["tank_id"].unique())
