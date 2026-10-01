@@ -40,9 +40,10 @@ TERMINAL_ID  = "ras_tanura"
 ASC_ORBIT    = 101
 ASC_AZ       = 98
 RESOLUTION   = 5    # m/px
-BUFFER_M     = 300
+BUFFER_M     = 300  # catalog search bbox padding
+BUFFER_FETCH = 500  # per-tank fetch bbox — matches pilot exactly (img=200×200 @ 5m/px)
 MIN_VALID    = 0.5  # pixel validity guard
-DB_FLOOR     = -20.0
+DB_FLOOR     = -20.0  # floor stored in DB; pipeline reads with -5.0 clip (not changed here)
 
 OUT_DIR = os.path.join(os.path.dirname(__file__), "..", "diagnostics", "rt_decomp")
 os.makedirs(OUT_DIR, exist_ok=True)
@@ -192,6 +193,7 @@ def run_backfill(tanks, clusters, catalog_start):
             print(f"    ... ({len(new_dates)-10} more)")
         n_tanks = sum(len(ct) for _, ct in fetch_clusters)
         print(f"  Would insert up to {len(new_dates) * n_tanks} rows into terminal_observations.")
+        print(f"  (per-tank fetch, BUFFER_FETCH={BUFFER_FETCH}m, img={int(BUFFER_FETCH*2/RESOLUTION)}²px — pilot geometry)")
         print(f"\n  Re-run with --execute to write.")
         return []
 
@@ -207,15 +209,27 @@ function setup() { return { input: [{ bands: ["VV"] }], output: { bands: 1, samp
 function evaluatePixel(s) { return [s.VV]; }
 """
 
-    for c_name, c_tanks in fetch_clusters:
-        bbox   = _bbox(c_tanks)
-        lat0   = min(t["lat"] for t in c_tanks)
-        img_w  = int((bbox.max_x - bbox.min_x) * 111320 * math.cos(math.radians(lat0)) / RESOLUTION)
-        img_h  = int((bbox.max_y - bbox.min_y) * 111320 / RESOLUTION)
-        masks  = {t["id"]: _build_crescent(t, bbox, img_w, img_h, ASC_AZ, 15) for t in c_tanks}
+    # Per-tank fetch with individual square bbox (matches pilot geometry exactly).
+    # BUFFER_FETCH=500 → img=200×200 @ 5m/px — identical to task7_rt_decomposition pilot.
+    img_size = int(BUFFER_FETCH * 2 / RESOLUTION)  # 200
+
+    all_tanks_flat = [t for _, ct in fetch_clusters for t in ct]
+    # deduplicate (a tank may appear in multiple clusters)
+    seen = set(); unique_tanks = []
+    for t in all_tanks_flat:
+        if t["id"] not in seen:
+            seen.add(t["id"]); unique_tanks.append(t)
+
+    for t in unique_tanks:
+        t_bbox = _bbox([t], buf=BUFFER_FETCH)
+        mask   = _build_crescent(t, t_bbox, img_size, img_size, ASC_AZ, 15)
+        total_px = int(mask.sum())
+        if total_px == 0:
+            print(f"  [!] {t['id']}: zero-pixel crescent mask — skip")
+            continue
 
         for d in new_dates:
-            d_str = d.strftime("%Y-%m-%d")
+            d_str  = d.strftime("%Y-%m-%d")
             d_next = (d + pd.Timedelta(days=1)).strftime("%Y-%m-%d")
             req = SentinelHubRequest(
                 evalscript=_EVALSCRIPT,
@@ -229,8 +243,8 @@ function evaluatePixel(s) { return [s.VV]; }
                     },
                 )],
                 responses=[SentinelHubRequest.output_response("default", MimeType.TIFF)],
-                bbox=bbox,
-                size=(img_w, img_h),
+                bbox=t_bbox,
+                size=(img_size, img_size),
                 config=sh_cfg,
             )
             try:
@@ -238,34 +252,29 @@ function evaluatePixel(s) { return [s.VV]; }
                 if not data:
                     continue
                 img = data[0].squeeze()
-                for t in c_tanks:
-                    mask = masks[t["id"]]
-                    total_px = int(mask.sum())
-                    if total_px == 0:
-                        continue
-                    pixels_all = img[mask]
-                    valid      = pixels_all[np.isfinite(pixels_all)]
-                    valid_frac = len(valid) / total_px if total_px > 0 else 0.0
-                    if valid_frac < MIN_VALID:
-                        continue
-                    if valid.size == 0:
-                        continue
-                    db_mean = float(10 * np.log10(np.clip(np.mean(valid), 1e-10, None)))
-                    if not np.isfinite(db_mean):
-                        continue
-                    all_raw.append({
-                        "terminal_id":    TERMINAL_ID,
-                        "date":           d_str,
-                        "tank_id":        t["id"],
-                        "radius_m":       float(t["radius_m"]),
-                        "diameter":       float(t["radius_m"] * 2),
-                        "h_max":          float(t["h_max_m"]),
-                        "db_mean":        max(db_mean, DB_FLOOR),
-                        "relative_orbit": ASC_ORBIT,
-                        "orbit_direction": "ASC",
-                    })
+                pixels_all = img[mask]
+                valid      = pixels_all[np.isfinite(pixels_all)]
+                valid_frac = len(valid) / total_px
+                if valid_frac < MIN_VALID:
+                    continue
+                if valid.size == 0:
+                    continue
+                db_mean = float(10 * np.log10(np.clip(np.mean(valid), 1e-10, None)))
+                if not np.isfinite(db_mean):
+                    continue
+                all_raw.append({
+                    "terminal_id":     TERMINAL_ID,
+                    "date":            d_str,
+                    "tank_id":         t["id"],
+                    "radius_m":        float(t["radius_m"]),
+                    "diameter":        float(t["radius_m"] * 2),
+                    "h_max":           float(t["h_max_m"]),
+                    "db_mean":         max(db_mean, DB_FLOOR),
+                    "relative_orbit":  ASC_ORBIT,
+                    "orbit_direction": "ASC",
+                })
             except Exception as e:
-                print(f"  [!] {c_name} {d_str}: {e}")
+                print(f"  [!] {t['id']} {d_str}: {e}")
 
     print(f"\n  Fetched {len(all_raw)} ASC records across {len(new_dates)} dates")
     if all_raw:
