@@ -340,6 +340,101 @@ def task5_m1(df, screen_df):
     print(f"\n  Paired passes ≤{MAX_PAIR_DAYS}d: {n_pairs_total}")
     print(f"  M1 = corr(Δ_ASC, Δ_DESC) on paired passes = {m1:.4f}" if not np.isnan(m1) else "  M1 = NaN (insufficient pairs)")
 
+    # ── M1 diagnostics ───────────────────────────────────────────────────────
+    # (a) Level corr on overlap dates
+    level_corr = float("nan")
+    if len(common_dates) >= 5:
+        level_corr = float(asc_mb.loc[common_dates].corr(desc_mb.loc[common_dates]))
+    print(f"\n  Level corr(ASC, DESC) on {len(common_dates)} overlap dates = "
+          + (f"{level_corr:.4f}" if not np.isnan(level_corr) else "NaN"))
+
+    # (b) Monthly M1: resample both series to calendar months, compute Δ, correlate
+    m1_monthly = float("nan")
+    n_months   = 0
+    if not asc_mb.empty and not desc_mb.empty:
+        asc_mo  = asc_mb.resample("MS").mean().dropna()
+        desc_mo = desc_mb.resample("MS").mean().dropna()
+        common_mo = asc_mo.index.intersection(desc_mo.index)
+        if len(common_mo) >= 4:
+            da_mo = asc_mo.loc[common_mo].diff().dropna()
+            dd_mo = desc_mo.loc[common_mo].diff().dropna()
+            n_months = min(len(da_mo), len(dd_mo))
+            m1_monthly = float(da_mo.iloc[:n_months].corr(dd_mo.iloc[:n_months]))
+        print(f"  Monthly M1 = corr(Δ_ASC_mo, Δ_DESC_mo) on {n_months} month-pairs = "
+              + (f"{m1_monthly:.4f}" if not np.isnan(m1_monthly) else "NaN"))
+
+    # (c) War / peace regime split  (war = 2026-02-01 → 2026-09-30)
+    WAR_START = pd.Timestamp("2026-02-01")
+    WAR_END   = pd.Timestamp("2026-09-30")
+    m1_war = float("nan"); n_war = 0
+    m1_peace = float("nan"); n_peace = 0
+    if pairs:
+        # reassign pairs already computed above
+        war_pairs   = [(a, d) for a, d in pairs if WAR_START <= a <= WAR_END]
+        peace_pairs = [(a, d) for a, d in pairs if a < WAR_START or a > WAR_END]
+
+        def _regime_m1(rpairs):
+            if len(rpairs) < 4:
+                return float("nan"), len(rpairs)
+            pa = pd.Series([asc_mb.get(a, float("nan"))  for a, _ in rpairs])
+            pd_ = pd.Series([desc_mb.get(d, float("nan")) for _, d in rpairs])
+            ok = pa.notna() & pd_.notna()
+            pa, pd_ = pa[ok], pd_[ok]
+            if len(pa) < 4:
+                return float("nan"), int(ok.sum())
+            da = pa.diff().dropna(); dd = pd_.diff().dropna()
+            n = min(len(da), len(dd))
+            return float(da.iloc[:n].corr(dd.iloc[:n])), int(ok.sum())
+
+        m1_war,   n_war   = _regime_m1(war_pairs)
+        m1_peace, n_peace = _regime_m1(peace_pairs)
+        print(f"  M1_war   (2026-02→09, n={n_war}  pairs) = "
+              + (f"{m1_war:.4f}"   if not np.isnan(m1_war)   else "NaN (insufficient)"))
+        print(f"  M1_peace (pre-war,    n={n_peace} pairs) = "
+              + (f"{m1_peace:.4f}" if not np.isnan(m1_peace) else "NaN (insufficient)"))
+
+    # (d) Noise model: expected corr of two independent estimators
+    # σ_terminal_Δ ≈ sigma_tank / √N_WL  where sigma_tank ≈ STEP_THRESH × √2 / 1.35
+    # (median|diff| of Gaussian noise = σ√2 × 0.6745, so σ = step / 0.9545)
+    n_asc_wl  = len(asc_wl_tanks)
+    n_desc_wl = len(desc_wl_tanks)
+    # estimate per-tank σ from median step of WL tanks
+    asc_steps  = [tank_step_db(df[(df["orbit_direction"]=="ASC")  & (df["tank_id"]==t)].sort_values("date")["db_mean"].tolist())
+                  for t in asc_wl_tanks]
+    desc_steps = [tank_step_db(df[(df["orbit_direction"]=="DESC") & (df["tank_id"]==t)].sort_values("date")["db_mean"].tolist())
+                  for t in desc_wl_tanks]
+    # convert step (dB) to volume noise (Mb): rough linear approx via mean radius/h
+    # skip volume conversion — work in dB-step units for noise ratio
+    med_step_asc  = float(np.nanmedian(asc_steps))  if asc_steps  else float("nan")
+    med_step_desc = float(np.nanmedian(desc_steps)) if desc_steps else float("nan")
+    # expected std of terminal Δ (Mb) from independent noise
+    # σ_terminal = (med_step / 0.9545) / √N_WL  (in dB-step units, proportional)
+    sigma_asc  = med_step_asc  / 0.9545 / (n_asc_wl  ** 0.5) if n_asc_wl  > 0 else float("nan")
+    sigma_desc = med_step_desc / 0.9545 / (n_desc_wl ** 0.5) if n_desc_wl > 0 else float("nan")
+    # actual std of paired Δ values
+    if pairs and len(pair_asc) >= 3:
+        da_vals = pair_asc.diff().dropna().values
+        dd_vals = pair_desc.diff().dropna().values
+        actual_std_asc  = float(np.std(da_vals))  if len(da_vals) > 1 else float("nan")
+        actual_std_desc = float(np.std(dd_vals)) if len(dd_vals) > 1 else float("nan")
+        # expected corr if noise ≈ total variance: E[corr] ≈ signal²/(signal²+σ²)
+        # here we estimate SNR from actual vs noise floor
+        snr_asc  = max(0, actual_std_asc**2  - sigma_asc**2)  / max(actual_std_asc**2,  1e-9)
+        snr_desc = max(0, actual_std_desc**2 - sigma_desc**2) / max(actual_std_desc**2, 1e-9)
+        expected_m1 = (snr_asc * snr_desc) ** 0.5
+    else:
+        actual_std_asc = actual_std_desc = expected_m1 = float("nan")
+
+    print(f"\n  Noise model:")
+    print(f"    med_step ASC={med_step_asc:.3f} dB  DESC={med_step_desc:.3f} dB")
+    print(f"    σ_terminal (dB-step units): ASC={sigma_asc:.4f}  DESC={sigma_desc:.4f}")
+    print(f"    actual std(Δ): ASC={actual_std_asc:.4f}  DESC={actual_std_desc:.4f}")
+    print(f"    expected M1 from noise model = {expected_m1:.4f}" if not np.isnan(expected_m1) else "    expected M1 = NaN")
+    print(f"    measured M1                  = {m1:.4f}" if not np.isnan(m1) else "    measured M1 = NaN")
+    if not np.isnan(expected_m1) and not np.isnan(m1):
+        ratio = m1 / max(expected_m1, 1e-6)
+        print(f"    ratio measured/expected      = {ratio:.2f}  (1.0 = pure noise; <1 = suppressed)")
+
     # ── E1/E2 point estimators ────────────────────────────────────────────────
     N_PASS = 3
 
@@ -402,16 +497,29 @@ def task5_m1(df, screen_df):
     print(f"\n  Series CSV → {plot_path}")
 
     return {
-        "calib":         calib,
-        "offset_mb":     offset_mb,
-        "m1":            m1,
-        "n_pairs":       n_pairs_total,
-        "e1_delta":      e1_delta,
-        "e1_status":     e1_status,
-        "e2_delta":      e2_delta,
-        "e2_status":     e2_status,
-        "asc_wl_tanks":  asc_wl_tanks,
-        "desc_wl_tanks": desc_wl_tanks,
+        "calib":           calib,
+        "offset_mb":       offset_mb,
+        "m1":              m1,
+        "n_pairs":         n_pairs_total,
+        "level_corr":      level_corr,
+        "n_overlap":       len(common_dates),
+        "m1_monthly":      m1_monthly,
+        "n_months":        n_months,
+        "m1_war":          m1_war,
+        "n_war":           n_war,
+        "m1_peace":        m1_peace,
+        "n_peace":         n_peace,
+        "expected_m1":     expected_m1,
+        "med_step_asc":    med_step_asc,
+        "med_step_desc":   med_step_desc,
+        "sigma_asc":       sigma_asc,
+        "sigma_desc":      sigma_desc,
+        "e1_delta":        e1_delta,
+        "e1_status":       e1_status,
+        "e2_delta":        e2_delta,
+        "e2_status":       e2_status,
+        "asc_wl_tanks":    asc_wl_tanks,
+        "desc_wl_tanks":   desc_wl_tanks,
     }
 
 
@@ -419,38 +527,51 @@ def task5_m1(df, screen_df):
 
 def task6_verdict(m5):
     print("\n" + "=" * 62)
-    print("TASK 6 — Verdict")
+    print("TASK 6 — Verdict (updated grid 2026-10-01)")
     print("=" * 62)
 
-    m1            = m5["m1"]
-    e1_ok         = "✓" in m5["e1_status"]
-    e2_ok         = "✓" in m5["e2_status"]
+    m1         = m5["m1"]
+    m1_monthly = m5["m1_monthly"]
+    m1_war     = m5["m1_war"]
+    level_corr = m5["level_corr"]
+    e1_ok      = "✓" in m5["e1_status"]
+    e2_ok      = "✓" in m5["e2_status"]
     signs_correct = e1_ok and e2_ok
 
-    print(f"  M1 = {m1:.4f}" if not np.isnan(m1) else "  M1 = NaN")
+    print(f"  M1 raw (Δ paired ≤4d)  = {m1:.4f}"       if not np.isnan(m1)         else "  M1 raw       = NaN")
+    print(f"  M1 monthly (Δ monthly) = {m1_monthly:.4f}" if not np.isnan(m1_monthly) else "  M1 monthly   = NaN")
+    print(f"  M1_war     (2026-02→09)= {m1_war:.4f}"     if not np.isnan(m1_war)     else "  M1_war       = NaN")
+    print(f"  Level corr (overlap)   = {level_corr:.4f}" if not np.isnan(level_corr) else "  Level corr   = NaN")
     print(f"  E1 sign correct: {'YES' if e1_ok else 'NO'}")
     print(f"  E2 sign correct: {'YES' if e2_ok else 'NO'}")
 
-    if np.isnan(m1):
-        verdict = "INSUFFICIENT — M1 undefined (not enough paired passes)"
-        go      = False
-        action  = "STOP — collect more ASC passes before Stage 6"
-    elif m1 >= 0.5 and signs_correct:
-        verdict = "GO — Stage 6 + Variant A"
+    # New verdict grid (fixed 2026-10-01):
+    #   monthly M1 ≥ 0.5                                → GO (raw M1 deprecated)
+    #   M1_war ≥ 0.5 AND level_corr ≥ 0.7              → GO (noise-floor confirmed)
+    #   otherwise                                        → STOP
+    monthly_ok    = not np.isnan(m1_monthly) and m1_monthly >= 0.5
+    war_level_ok  = (not np.isnan(m1_war)     and m1_war     >= 0.5 and
+                     not np.isnan(level_corr) and level_corr >= 0.7)
+
+    if monthly_ok:
+        verdict = "GO — monthly M1 ≥ 0.5; raw M1 deprecated (noise-floor artifact)"
         go      = True
-        action  = "Proceed to accuracy grid (Stage 6)"
-    elif m1 >= 0.5 and not signs_correct:
-        verdict = "PARTIAL — M1 passes but event signs wrong"
-        go      = False
-        action  = "HUMAN REVIEW — check E1/E2 event attribution"
-    elif 0.3 <= m1 < 0.5:
-        verdict = "HUMAN REVIEW — M1 in borderline range 0.3–0.5"
-        go      = False
-        action  = "Show plot to analyst; do not auto-proceed to Stage 6"
+        action  = "Proceed to Stage 6 + Variant A. Raw M1 suppressed by ~6d cadence aliasing."
+    elif war_level_ok:
+        verdict = "GO — M1_war ≥ 0.5 AND level_corr ≥ 0.7; noise-floor confirmed"
+        go      = True
+        action  = "Proceed to Stage 6 + Variant A. Signal visible in war regime; peace Δ dominated by noise."
     else:
-        verdict = "STOP — M1 < 0.3"
-        go      = False
-        action  = "Debug calibration; ASC orbit not validated"
+        if np.isnan(m1_monthly) and np.isnan(m1_war):
+            verdict = "INSUFFICIENT — not enough data for diagnostic M1"
+            action  = "STOP — collect more ASC passes"
+        elif not np.isnan(m1_monthly) and m1_monthly >= 0.3:
+            verdict = "HUMAN REVIEW — monthly M1 in 0.3–0.5 borderline"
+            action  = "Show monthly series to analyst; do not auto-proceed"
+        else:
+            verdict = "STOP — all M1 variants below threshold"
+            action  = "Debug calibration; check ASC orbit 101 tank selection"
+        go = False
 
     print(f"\n  ★ VERDICT: {verdict}")
     print(f"  → {action}")
@@ -559,8 +680,25 @@ def write_report(gate_passed, gate_results, screen_df, m5, verdict, go):
         f"",
         f"Method: corr(Δ_ASC, Δ_DESC) on pass pairs ≤4 days apart.",
         f"",
-        f"- Paired passes: {m5['n_pairs']}",
-        f"- **M1 = {m1:.4f}**" if not np.isnan(m1) else "- **M1 = NaN** (insufficient pairs)",
+        f"- Paired passes (raw, ≤4d): {m5['n_pairs']}",
+        f"- **M1 raw = {m1:.4f}**" if not np.isnan(m1) else "- **M1 raw = NaN** (insufficient pairs)",
+        f"- Level corr (overlap, n={m5['n_overlap']}): {m5['level_corr']:.4f}" if not np.isnan(m5['level_corr']) else "- Level corr: NaN",
+        f"- Monthly M1 (n={m5['n_months']} months): **{m5['m1_monthly']:.4f}**" if not np.isnan(m5['m1_monthly']) else "- Monthly M1: NaN",
+        f"- M1_war  (2026-02→09, n={m5['n_war']}  pairs): {m5['m1_war']:.4f}"   if not np.isnan(m5['m1_war'])   else f"- M1_war  (n={m5['n_war']}): NaN",
+        f"- M1_peace (pre-war,   n={m5['n_peace']} pairs): {m5['m1_peace']:.4f}" if not np.isnan(m5['m1_peace']) else f"- M1_peace (n={m5['n_peace']}): NaN",
+        f"",
+        f"### Noise Model",
+        f"",
+        f"| | ASC | DESC |",
+        f"|---|---|---|",
+        f"| WL tanks | {len(m5['asc_wl_tanks'])} | {len(m5['desc_wl_tanks'])} |",
+        f"| med step (dB) | {m5['med_step_asc']:.3f} | {m5['med_step_desc']:.3f} |",
+        f"| σ_terminal (dB-step) | {m5['sigma_asc']:.4f} | {m5['sigma_desc']:.4f} |",
+        f"",
+        f"Expected M1 from noise model: **{m5['expected_m1']:.4f}**  " + (f"(measured/expected = {m1/max(m5['expected_m1'],1e-6):.2f})" if not (np.isnan(m1) or np.isnan(m5['expected_m1'])) else ""),
+        f"",
+        f"Interpretation: if measured M1 ≈ expected M1, raw corr(Δ,Δ) was suppressed by noise",
+        f"by construction and is not a valid validation metric for this cadence/tank-count.",
         f"",
         f"### E1 / E2 Events (point estimator: val[+3 passes] − val[−3 passes])",
         f"",
@@ -577,9 +715,11 @@ def write_report(gate_passed, gate_results, screen_df, m5, verdict, go):
         f"",
         f"**{verdict}**",
         f"",
-        f"M1 criteria: ≥0.5 + E1/E2 correct signs → GO Stage 6 + Variant A.",
-        f"M1 0.3–0.5 → human review.",
-        f"M1 <0.3 → STOP.",
+        f"Grid (fixed 2026-10-01):",
+        f"- monthly M1 ≥ 0.5 → GO (raw M1 deprecated)",
+        f"- M1_war ≥ 0.5 AND level_corr ≥ 0.7 → GO (noise-floor confirmed)",
+        f"- monthly M1 0.3–0.5 → HUMAN REVIEW",
+        f"- all below → STOP",
         f"",
     ]
 

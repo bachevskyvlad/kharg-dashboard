@@ -38,7 +38,7 @@ jobs:
           git add diagnostics/rt_decomp/ ASC_VALIDATION.md || true
           git diff --cached --quiet && echo "No new files" || \
             git commit -m "ci: stage5b v2 outputs — ASC screen + M1 verdict [skip ci]"
-          git push origin claude/oilradar-dashboard-iran-zchdva || true
+          git push origin HEAD:main || true
 
       - name: Upload diagnostics
         if: always()
