@@ -2,6 +2,7 @@ name: Stage 5b — ASC screen fix, M1 validation, verdict
 
 on:
   workflow_dispatch:
+    inputs: {}
 
 jobs:
   pipeline:
