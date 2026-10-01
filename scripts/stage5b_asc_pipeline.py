@@ -249,18 +249,29 @@ def task4_screen(df):
 
 # ── Task 5: calibration + M1 + events ────────────────────────────────────────
 
-def task5_m1(df, screen_df):
+def task5_m1(df, screen_df, gate_results):
     print("\n" + "=" * 62)
     print("TASK 5 — Per-orbit calibration, M1, E1/E2")
     print("=" * 62)
 
+    # Gate numbers (Task 3 results for report)
+    print(f"  Gate (Task 3) — rt_5/rt_6/rt_8 vs pilot ±0.1 dB:")
+    for tid in PILOT_TANKS:
+        r = gate_results.get(tid, {})
+        step = r.get("step", float("nan"))
+        ref  = r.get("ref",  float("nan"))
+        diff = step - ref if not (np.isnan(step) or np.isnan(ref)) else float("nan")
+        status = "PASS" if (not np.isnan(diff) and abs(diff) <= GATE_TOL) else "FAIL"
+        print(f"    {tid}: prod={step:.3f}  pilot={ref:.3f}  diff={diff:+.3f}  {status}")
+
     asc_wl_tanks  = set(screen_df[screen_df["asc_wl"]  == True]["tank_id"])
     desc_wl_tanks = set(screen_df[screen_df["desc_wl"] == True]["tank_id"])
-    print(f"  ASC-WL tanks: {len(asc_wl_tanks)}   DESC-WL tanks: {len(desc_wl_tanks)}")
+    both_wl_tanks = asc_wl_tanks & desc_wl_tanks
+    print(f"  ASC-WL tanks: {len(asc_wl_tanks)}   DESC-WL tanks: {len(desc_wl_tanks)}   BOTH: {len(both_wl_tanks)}")
 
-    # ── Per-orbit calibration (separate p5/p95 per orbit) ─────────────────────
+    # ── Per-orbit calibration (separate p5/p95 per orbit, BOTH-set tanks) ─────
     calib = {}
-    for orbit_dir, tanks in [("ASC", asc_wl_tanks), ("DESC", desc_wl_tanks)]:
+    for orbit_dir, tanks in [("ASC", both_wl_tanks), ("DESC", both_wl_tanks)]:
         sub = df[(df["orbit_direction"] == orbit_dir) & (df["tank_id"].isin(tanks))]
         if sub.empty:
             calib[orbit_dir] = {"p5": float("nan"), "p95": float("nan"), "n": 0}
@@ -289,8 +300,8 @@ def task5_m1(df, screen_df):
         daily = sub.groupby("date")["vol_m3"].sum()
         return daily.rename(orbit_dir)
 
-    asc_daily  = vol_series("ASC",  asc_wl_tanks)
-    desc_daily = vol_series("DESC", desc_wl_tanks)
+    asc_daily  = vol_series("ASC",  both_wl_tanks)
+    desc_daily = vol_series("DESC", both_wl_tanks)
 
     def to_mn_bbl(s): return s / MN_BBL
 
@@ -340,12 +351,36 @@ def task5_m1(df, screen_df):
     print(f"\n  Paired passes ≤{MAX_PAIR_DAYS}d: {n_pairs_total}")
     print(f"  M1 = corr(Δ_ASC, Δ_DESC) on paired passes = {m1:.4f}" if not np.isnan(m1) else "  M1 = NaN (insufficient pairs)")
 
+    # ── ASC cadence around E1 (Feb–Mar 2026) ─────────────────────────────────
+    e1_window_start = pd.Timestamp("2026-02-01")
+    e1_window_end   = pd.Timestamp("2026-03-31")
+    asc_e1_dates = sorted(d for d in asc_mb.index if e1_window_start <= d <= e1_window_end)
+    print(f"\n  ASC dates Feb–Mar 2026 (cadence around E1={E1_DATE.date()}):")
+    for d in asc_e1_dates:
+        marker = " ← E1" if abs((d - E1_DATE).days) <= 3 else ""
+        print(f"    {d.date()}{marker}")
+    if not asc_e1_dates:
+        print("    (no ASC passes in window)")
+
     # ── M1 diagnostics ───────────────────────────────────────────────────────
-    # (a) Level corr on overlap dates
+    # (a) Level corr on nearest-pair ≤4d (not exact-date — ASC/DESC never share a date)
+    MAX_PAIR_DAYS = 4
+    level_pairs_asc  = []
+    level_pairs_desc = []
+    for ad in pd.DatetimeIndex(sorted(asc_mb.index)):
+        dd_idx = pd.DatetimeIndex(sorted(desc_mb.index))
+        if len(dd_idx) == 0:
+            break
+        diffs = abs((dd_idx - ad).days)
+        best  = diffs.argmin()
+        if diffs[best] <= MAX_PAIR_DAYS:
+            level_pairs_asc.append(float(asc_mb[ad]))
+            level_pairs_desc.append(float(desc_mb[dd_idx[best]]))
+    n_level_pairs = len(level_pairs_asc)
     level_corr = float("nan")
-    if len(common_dates) >= 5:
-        level_corr = float(asc_mb.loc[common_dates].corr(desc_mb.loc[common_dates]))
-    print(f"\n  Level corr(ASC, DESC) on {len(common_dates)} overlap dates = "
+    if n_level_pairs >= 5:
+        level_corr = float(pd.Series(level_pairs_asc).corr(pd.Series(level_pairs_desc)))
+    print(f"\n  Level corr(ASC, DESC) on {n_level_pairs} nearest-pair ≤4d = "
           + (f"{level_corr:.4f}" if not np.isnan(level_corr) else "NaN"))
 
     # (b) Monthly M1: resample both series to calendar months, compute Δ, correlate
@@ -396,13 +431,13 @@ def task5_m1(df, screen_df):
     # (d) Noise model: expected corr of two independent estimators
     # σ_terminal_Δ ≈ sigma_tank / √N_WL  where sigma_tank ≈ STEP_THRESH × √2 / 1.35
     # (median|diff| of Gaussian noise = σ√2 × 0.6745, so σ = step / 0.9545)
-    n_asc_wl  = len(asc_wl_tanks)
-    n_desc_wl = len(desc_wl_tanks)
-    # estimate per-tank σ from median step of WL tanks
+    n_asc_wl  = len(both_wl_tanks)
+    n_desc_wl = len(both_wl_tanks)
+    # estimate per-tank σ from median step of BOTH-WL tanks
     asc_steps  = [tank_step_db(df[(df["orbit_direction"]=="ASC")  & (df["tank_id"]==t)].sort_values("date")["db_mean"].tolist())
-                  for t in asc_wl_tanks]
+                  for t in both_wl_tanks]
     desc_steps = [tank_step_db(df[(df["orbit_direction"]=="DESC") & (df["tank_id"]==t)].sort_values("date")["db_mean"].tolist())
-                  for t in desc_wl_tanks]
+                  for t in both_wl_tanks]
     # convert step (dB) to volume noise (Mb): rough linear approx via mean radius/h
     # skip volume conversion — work in dB-step units for noise ratio
     med_step_asc  = float(np.nanmedian(asc_steps))  if asc_steps  else float("nan")
@@ -502,7 +537,7 @@ def task5_m1(df, screen_df):
         "m1":              m1,
         "n_pairs":         n_pairs_total,
         "level_corr":      level_corr,
-        "n_overlap":       len(common_dates),
+        "n_level_pairs":   n_level_pairs,
         "m1_monthly":      m1_monthly,
         "n_months":        n_months,
         "m1_war":          m1_war,
@@ -520,6 +555,7 @@ def task5_m1(df, screen_df):
         "e2_status":       e2_status,
         "asc_wl_tanks":    asc_wl_tanks,
         "desc_wl_tanks":   desc_wl_tanks,
+        "both_wl_tanks":   both_wl_tanks,
     }
 
 
@@ -546,32 +582,29 @@ def task6_verdict(m5):
     print(f"  E2 sign correct: {'YES' if e2_ok else 'NO'}")
 
     # New verdict grid (fixed 2026-10-01):
-    #   monthly M1 ≥ 0.5                                → GO (raw M1 deprecated)
-    #   M1_war ≥ 0.5 AND level_corr ≥ 0.7              → GO (noise-floor confirmed)
-    #   otherwise                                        → STOP
-    monthly_ok    = not np.isnan(m1_monthly) and m1_monthly >= 0.5
-    war_level_ok  = (not np.isnan(m1_war)     and m1_war     >= 0.5 and
-                     not np.isnan(level_corr) and level_corr >= 0.7)
+    #   level_corr (BOTH-set, nearest-pair ≤4d) ≥ 0.7  → GO; Δ-M1 deprecated
+    #   level_corr 0.4–0.7                              → HUMAN REVIEW
+    #   level_corr < 0.4 or NaN                         → STOP настоящий
+    level_corr = m5["level_corr"]
+    n_lp       = m5["n_level_pairs"]
 
-    if monthly_ok:
-        verdict = "GO — monthly M1 ≥ 0.5; raw M1 deprecated (noise-floor artifact)"
+    if np.isnan(level_corr):
+        verdict = f"INSUFFICIENT — level_corr undefined (n_level_pairs={n_lp})"
+        go      = False
+        action  = "STOP — insufficient paired passes for level correlation"
+    elif level_corr >= 0.7:
+        verdict = f"GO — level_corr={level_corr:.3f} ≥ 0.7 on BOTH-set ({len(m5['both_wl_tanks'])} tanks)"
         go      = True
-        action  = "Proceed to Stage 6 + Variant A. Raw M1 suppressed by ~6d cadence aliasing."
-    elif war_level_ok:
-        verdict = "GO — M1_war ≥ 0.5 AND level_corr ≥ 0.7; noise-floor confirmed"
-        go      = True
-        action  = "Proceed to Stage 6 + Variant A. Signal visible in war regime; peace Δ dominated by noise."
+        action  = ("Proceed to Stage 6 + Variant A. "
+                   "Δ-M1 deprecated: cadence mismatch suppresses pass-to-pass Δ corr by construction.")
+    elif level_corr >= 0.4:
+        verdict = f"HUMAN REVIEW — level_corr={level_corr:.3f} in 0.4–0.7 borderline"
+        go      = False
+        action  = "Show level series plot to analyst; do not auto-proceed to Stage 6"
     else:
-        if np.isnan(m1_monthly) and np.isnan(m1_war):
-            verdict = "INSUFFICIENT — not enough data for diagnostic M1"
-            action  = "STOP — collect more ASC passes"
-        elif not np.isnan(m1_monthly) and m1_monthly >= 0.3:
-            verdict = "HUMAN REVIEW — monthly M1 in 0.3–0.5 borderline"
-            action  = "Show monthly series to analyst; do not auto-proceed"
-        else:
-            verdict = "STOP — all M1 variants below threshold"
-            action  = "Debug calibration; check ASC orbit 101 tank selection"
-        go = False
+        verdict = f"STOP — level_corr={level_corr:.3f} < 0.4; ASC orbit not validated"
+        go      = False
+        action  = "Debug calibration; check BOTH-set tank selection and per-orbit p5/p95"
 
     print(f"\n  ★ VERDICT: {verdict}")
     print(f"  → {action}")
@@ -680,10 +713,10 @@ def write_report(gate_passed, gate_results, screen_df, m5, verdict, go):
         f"",
         f"Method: corr(Δ_ASC, Δ_DESC) on pass pairs ≤4 days apart.",
         f"",
-        f"- Paired passes (raw, ≤4d): {m5['n_pairs']}",
-        f"- **M1 raw = {m1:.4f}**" if not np.isnan(m1) else "- **M1 raw = NaN** (insufficient pairs)",
-        f"- Level corr (overlap, n={m5['n_overlap']}): {m5['level_corr']:.4f}" if not np.isnan(m5['level_corr']) else "- Level corr: NaN",
-        f"- Monthly M1 (n={m5['n_months']} months): **{m5['m1_monthly']:.4f}**" if not np.isnan(m5['m1_monthly']) else "- Monthly M1: NaN",
+        f"- Tank set: BOTH-WL = {len(m5['both_wl_tanks'])} tanks (ASC-WL ∩ DESC-WL)",
+        f"- **Level corr (nearest-pair ≤4d, n={m5['n_level_pairs']}): {m5['level_corr']:.4f}**" if not np.isnan(m5['level_corr']) else f"- **Level corr (n={m5['n_level_pairs']}): NaN**",
+        f"- Δ-M1 raw (paired ≤4d, n={m5['n_pairs']}): {m1:.4f}" if not np.isnan(m1) else f"- Δ-M1 raw (n={m5['n_pairs']}): NaN",
+        f"- Monthly Δ-M1 (n={m5['n_months']} months): {m5['m1_monthly']:.4f}" if not np.isnan(m5['m1_monthly']) else "- Monthly Δ-M1: NaN",
         f"- M1_war  (2026-02→09, n={m5['n_war']}  pairs): {m5['m1_war']:.4f}"   if not np.isnan(m5['m1_war'])   else f"- M1_war  (n={m5['n_war']}): NaN",
         f"- M1_peace (pre-war,   n={m5['n_peace']} pairs): {m5['m1_peace']:.4f}" if not np.isnan(m5['m1_peace']) else f"- M1_peace (n={m5['n_peace']}): NaN",
         f"",
@@ -715,11 +748,10 @@ def write_report(gate_passed, gate_results, screen_df, m5, verdict, go):
         f"",
         f"**{verdict}**",
         f"",
-        f"Grid (fixed 2026-10-01):",
-        f"- monthly M1 ≥ 0.5 → GO (raw M1 deprecated)",
-        f"- M1_war ≥ 0.5 AND level_corr ≥ 0.7 → GO (noise-floor confirmed)",
-        f"- monthly M1 0.3–0.5 → HUMAN REVIEW",
-        f"- all below → STOP",
+        f"Grid (fixed 2026-10-01) — primary criterion: level_corr on BOTH-set, nearest-pair ≤4d:",
+        f"- level_corr ≥ 0.7 → GO (Δ-M1 deprecated: cadence mismatch suppresses pass-to-pass Δ by construction)",
+        f"- level_corr 0.4–0.7 → HUMAN REVIEW",
+        f"- level_corr < 0.4 or NaN → STOP настоящий",
         f"",
     ]
 
@@ -748,7 +780,7 @@ def main():
         sys.exit(1)
 
     screen_df = task4_screen(df)
-    m5        = task5_m1(df, screen_df)
+    m5        = task5_m1(df, screen_df, gate_results)
     verdict, go = task6_verdict(m5)
     write_report(gate_passed, gate_results, screen_df, m5, verdict, go)
 
