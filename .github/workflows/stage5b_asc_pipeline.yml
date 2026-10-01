@@ -1,12 +1,7 @@
-name: Stage 5b — ASC Pipeline (backup / screen / M1)
+name: Stage 5b — ASC screen fix, M1 validation, verdict
 
 on:
   workflow_dispatch:
-    inputs:
-      item:
-        description: "Run only item N (2=backup, 3=screen, 4=M1). Leave blank = all."
-        required: false
-        default: ""
 
 jobs:
   pipeline:
@@ -21,26 +16,35 @@ jobs:
           python-version: "3.11"
 
       - name: Install dependencies
-        run: pip install -r scripts/requirements.txt
+        run: pip install supabase pandas numpy -q
 
-      - name: Run pipeline
+      - name: Run unit tests (metrics.py)
+        run: python scripts/metrics.py
+
+      - name: Run full pipeline
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
         run: |
           cd scripts
-          ARGS=""
-          if [ -n "${{ github.event.inputs.item }}" ]; then
-            ARGS="--item ${{ github.event.inputs.item }}"
-          fi
-          python stage5b_asc_pipeline.py $ARGS
+          python stage5b_asc_pipeline.py
 
-      - name: Commit outputs to backups/ and diagnostics/
+      - name: Commit outputs
         if: always()
         run: |
           git config user.email "actions@github.com"
           git config user.name "GitHub Actions"
-          git add backups/ diagnostics/rt_decomp/ || true
+          git add diagnostics/rt_decomp/ ASC_VALIDATION.md || true
           git diff --cached --quiet && echo "No new files" || \
-            git commit -m "ci: stage5b outputs [skip ci]"
-          git push origin main || true
+            git commit -m "ci: stage5b v2 outputs — ASC screen + M1 verdict [skip ci]"
+          git push origin claude/oilradar-dashboard-iran-zchdva || true
+
+      - name: Upload diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: stage5b-diagnostics
+          path: |
+            diagnostics/rt_decomp/asc_screen_v2.csv
+            diagnostics/rt_decomp/asc_desc_series_2024.csv
+            ASC_VALIDATION.md
