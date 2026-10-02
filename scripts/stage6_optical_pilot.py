@@ -37,8 +37,9 @@ SB_URL = "https://yoekhkczwdeyauwarsyy.supabase.co"
 SB_KEY = os.environ.get("SUPABASE_KEY") or "sb_publishable_7j07_zzdqTGM1LXf7-o9Tg_JJRbJQSM"
 
 # ── Pipeline constants ─────────────────────────────────────────────────────────
-CATALOG_START   = "2020-01-01"
-MAX_CLOUD       = 20          # percent
+CATALOG_START        = "2022-01-01"   # 3-year window keeps tile count tractable
+MAX_CLOUD            = 20            # percent
+MAX_SCENES_PER_CLUSTER = 80          # cap per cluster to stay within 120-min budget
 RESOLUTION      = 5.0         # m/px (S2 bicubic upsampled from 10m)
 BUFFER_M        = 800         # terminal-cluster bbox padding (metres)
 SHADOW_ANGLE    = 120         # degrees — full opening of shadow sector (±60° either side)
@@ -395,7 +396,9 @@ def stage0_catalog_and_fetch():
                 gate_scenes = [s for s in scenes if not s.get("low_shadow", False)][-30:]
                 fetch_scenes = gate_scenes
             else:
-                fetch_scenes = scenes
+                # cap to most recent MAX_SCENES_PER_CLUSTER non-low-shadow scenes
+                usable = [s for s in scenes if not s.get("low_shadow", False)]
+                fetch_scenes = usable[-MAX_SCENES_PER_CLUSTER:]
 
             print(f"    fetching {len(fetch_scenes)} tiles @ {RESOLUTION}m/px…")
             n_fetched = 0

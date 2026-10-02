@@ -43,11 +43,11 @@ BACKFILL_SENT  = -20.0 # sentinel for missing passes
 # SH catalog — geometry check only (no tile fetch for AL-FAW in stage7)
 CATALOG_URL    = "https://sh.dataspace.copernicus.eu/api/v1/catalog/1.0.0/search"
 TOKEN_URL      = "https://identity.dataspace.copernicus.eu/auth/realms/CDSE/protocol/openid-connect/token"
-SH_CLIENT_ID   = os.environ.get("CLIENT_ID",     "sh-0f08bb88-cde8-4e6e-8eb9-1006acfe6be9")
-SH_CLIENT_SECRET = os.environ.get("CLIENT_SECRET", "")
+SH_CLIENT_ID     = os.environ.get("CLIENT_ID")     or "sh-0f08bb88-cde8-4e6e-8eb9-1006acfe6be9"
+SH_CLIENT_SECRET = os.environ.get("CLIENT_SECRET") or "erkNtZDw4z36UB0Xm7BrzcYixzaUGeW0"
 
-SUPABASE_URL   = os.environ.get("SUPABASE_URL", "https://yoekhkczwdeyauwarsyy.supabase.co")
-SUPABASE_KEY   = os.environ.get("SUPABASE_KEY", "")
+SUPABASE_URL   = os.environ.get("SUPABASE_URL") or "https://yoekhkczwdeyauwarsyy.supabase.co"
+SUPABASE_KEY   = os.environ.get("SUPABASE_KEY") or "sb_publishable_7j07_zzdqTGM1LXf7-o9Tg_JJRbJQSM"
 
 CATALOG_START  = "2020-01-01"
 MAX_CLOUD      = 20
