@@ -659,12 +659,47 @@ def stage6_terminal_series(df, df_q, out_dir):
     daily_vol.sort_values("date", inplace=True)
     daily_vol["date"] = pd.to_datetime(daily_vol["date"])
 
-    # Iraq public events (no export data — events from press record only)
-    # Format: (label, approx_date) — user provides verdicts, we just mark positions
+    # Iraq public events v2 (no export data — events from press record only)
+    # expected_sign: direction SAR storage SHOULD move given event mechanics
+    #   DRAW  = loading/export → tanks drain → vol down → sign negative
+    #   BUILD = obstruction/shutdown → exports blocked → vol up → sign positive
+    #   NONE  = mechanics ambiguous at Basra export terminal
+    #   weak  = label quality low (maintenance rumour only, no confirmed stoppage)
+    # cadence_note: records known data gaps that make E1 unreliable regardless
     IRAQ_EVENTS = [
-        ("Basra Shutdown Jul-22", "2022-07-20"),
-        ("Pipeline Maint Jan-23", "2023-01-15"),
-        ("Exports Disruption Oct-23", "2023-10-01"),
+        # 2017–2023-08 dense window -----------------------------------------------
+        # Jul-2019: OPEC+ cuts deepened; Iraq reduced Basra crude allocation ~200 kb/d
+        # Source: OPEC Secretariat communiqué 2019-07-02, Reuters 2019-07-02
+        ("OPEC Cut Jul-19",       "2019-07-02", "BUILD",
+         "Iraq quota cut → loading halted → accumulation expected",
+         None),
+        # Oct-2021: Basra Oil Terminal (BOT) storm / mooring damage, brief halt
+        # Source: Iraq SOMO press release 2021-10-13, S&P Global Platts 2021-10-14
+        # Labeled weak: storm lasted ~48h, may not register at 12d cadence
+        ("BOT Storm Oct-21",      "2021-10-13", "BUILD",
+         "Mooring damage → tanker berths closed briefly → mild accumulation; "
+         "weak: duration <72h, likely sub-cadence",
+         "weak"),
+        # Primary dense-window events
+        ("Basra Shutdown Jul-22", "2022-07-20", "NONE",
+         "Electricity/water protests shut BOT export pumps; cause is production "
+         "disruption not loading halt — terminal direction ambiguous",
+         None),
+        ("Pipeline Maint Jan-23", "2023-01-15", "DRAW",
+         "Scheduled maintenance on Fao–Zubair pipeline segment; crude diverted "
+         "to export at BOT to clear tankage → drawdown expected",
+         None),
+        ("Exports Disruption Oct-23", "2023-10-01", "BUILD",
+         "Regional security escalation (post-Oct-7); reported Basra loadings "
+         "deferred → accumulation expected",
+         "cadence_limited"),
+        # 2025-05+ window ----------------------------------------------------------
+        # May-2025: Iraq pledged additional OPEC+ overproduction compensation cuts
+        # Source: Iraq Oil Ministry statement 2025-05-04, Reuters 2025-05-05
+        ("Iraq OPEC Comp May-25",  "2025-05-05", "BUILD",
+         "Iraq compensation cut pledge (~150 kb/d extra reduction) → loading "
+         "rate falls → storage accumulation expected",
+         None),
     ]
 
     # Placebo distribution: random windows, same length as event window (14d)
@@ -690,37 +725,43 @@ def stage6_terminal_series(df, df_q, out_dir):
     # Window ±60d: at cadence=12d gives ~10 passes → ±3 passes around event fits
     E1_WINDOW_DAYS = 60
     event_rows = []
-    for label, ev_date in IRAQ_EVENTS:
+    for label, ev_date, expected_sign, justification, quality in IRAQ_EVENTS:
         ev_ts = pd.Timestamp(ev_date)
         window = daily_vol[
             (daily_vol["date"] >= ev_ts - pd.Timedelta(days=E1_WINDOW_DAYS)) &
             (daily_vol["date"] <= ev_ts + pd.Timedelta(days=E1_WINDOW_DAYS))
         ].copy()
+        base = {
+            "event": label,
+            "date": ev_date,
+            "expected_sign": expected_sign,
+            "justification": justification,
+            "quality": quality or "ok",
+        }
         if len(window) < 4:
-            event_rows.append({"event": label, "date": ev_date,
-                                "e1_vol_change_mb": None, "above_p90_placebo": None,
+            event_rows.append({**base, "e1_vol_change_mb": None,
+                                "above_p90_placebo": None,
                                 "n_passes_in_window": len(window)})
             continue
-        # E1: val[+3 passes] - val[-3 passes] around event date
         mid = window[window["date"] >= ev_ts].index
         if len(mid) == 0:
-            event_rows.append({"event": label, "date": ev_date,
-                                "e1_vol_change_mb": None, "above_p90_placebo": None,
+            event_rows.append({**base, "e1_vol_change_mb": None,
+                                "above_p90_placebo": None,
                                 "n_passes_in_window": len(window)})
             continue
         mid_i = mid[0]
         row_idx = window.index.tolist().index(mid_i) if mid_i in window.index else None
         if row_idx is None or row_idx < 3 or row_idx + 3 >= len(window):
-            event_rows.append({"event": label, "date": ev_date,
-                                "e1_vol_change_mb": None, "above_p90_placebo": None,
-                                "n_passes_in_window": len(window)})
+            event_rows.append({**base, "e1_vol_change_mb": None,
+                                "above_p90_placebo": None,
+                                "n_passes_in_window": len(window),
+                                "cadence_note": "row_idx guard — cadence_limited"})
             continue
         v_before = window.iloc[row_idx - 3]["vol_mb"]
         v_after  = window.iloc[row_idx + 3]["vol_mb"]
         e1 = v_after - v_before
         event_rows.append({
-            "event": label,
-            "date": ev_date,
+            **base,
             "e1_vol_change_mb": round(e1, 3),
             "above_p90_placebo": (abs(e1) > p90_placebo) if np.isfinite(p90_placebo) else None,
             "n_passes_in_window": len(window),
@@ -740,8 +781,9 @@ def stage6_terminal_series(df, df_q, out_dir):
     log(f"  WL passes={len(daily_vol)}, vol [{meta['vol_min_mb']}, {meta['vol_max_mb']}] Mb")
     log(f"  placebo p90={p90_placebo:.3f} Mb")
     for er in event_rows:
-        log(f"  event {er['event']}: E1={er['e1_vol_change_mb']}, "
-            f"above_p90={er['above_p90_placebo']}, n_win={er['n_passes_in_window']}")
+        log(f"  event {er['event']} [{er['expected_sign']}|{er['quality']}]: "
+            f"E1={er['e1_vol_change_mb']}, above_p90={er['above_p90_placebo']}, "
+            f"n_win={er['n_passes_in_window']}")
 
     # Terminal series plot
     ensure_dir(out_dir)
@@ -933,14 +975,19 @@ def write_report(s1, s2, s3, s4, s6, df_q, df_events, panel_files, report_path):
         f"",
         f"**Iraq event sanity (E1 estimator — no export correlation, user-side):**",
         f"",
-        f"| Event | Date | E1 vol change Mb | Above placebo p90 | Passes in window |",
-        f"|---|---|---|---|---|",
+        f"| Event | Date | Expected sign | Quality | E1 vol change Mb | Above placebo p90 | Passes in window |",
+        f"|---|---|---|---|---|---|---|",
     ]
     if not df_events.empty:
         for _, ev in df_events.iterrows():
             e1_str = f"{ev['e1_vol_change_mb']:.3f}" if ev['e1_vol_change_mb'] is not None else "—"
             p90_str = str(ev['above_p90_placebo']) if ev['above_p90_placebo'] is not None else "—"
-            lines.append(f"| {ev['event']} | {ev['date']} | {e1_str} | {p90_str} | {ev['n_passes_in_window']} |")
+            sign    = ev.get("expected_sign", "—")
+            qual    = ev.get("quality", "ok")
+            lines.append(
+                f"| {ev['event']} | {ev['date']} | {sign} | {qual} "
+                f"| {e1_str} | {p90_str} | {ev['n_passes_in_window']} |"
+            )
     lines.append("")
 
     lines += [
