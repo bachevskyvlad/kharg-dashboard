@@ -630,12 +630,18 @@ def stage1_shadow_metrics(all_scenes: dict) -> pd.DataFrame:
 
     shadow_csv = OUT_DIR / "shadow_metrics.csv"
     if shadow_csv.exists():
-        print(f"  shadow_metrics.csv exists, loading…")
-        df = pd.read_csv(shadow_csv, parse_dates=["date"])
-        print(f"  {len(df)} rows, {df['tank_id'].nunique()} tanks")
-        return df
+        df_cached = pd.read_csv(shadow_csv, parse_dates=["date"])
+        valid_frac = df_cached["valid"].mean() if "valid" in df_cached.columns else 0.0
+        if valid_frac >= 0.50:
+            print(f"  shadow_metrics.csv OK (valid={valid_frac:.1%}), loading…")
+            print(f"  {len(df_cached)} rows, {df_cached['tank_id'].nunique()} tanks")
+            return df_cached
+        else:
+            print(f"  shadow_metrics.csv STALE (valid={valid_frac:.1%} < 50%) — recomputing")
+            shadow_csv.unlink()
 
     rows = []
+    scenes_processed = 0
     for terminal_id, scenes in all_scenes.items():
         print(f"\n  [{terminal_id}] {len(scenes)} scenes")
         for sc in scenes:
@@ -681,6 +687,18 @@ def stage1_shadow_metrics(all_scenes: dict) -> pd.DataFrame:
                     "sun_elevation":   sun_elv,
                     **result,
                 })
+
+            scenes_processed += 1
+            if scenes_processed == 5:
+                early_valid = sum(1 for r in rows if r.get("valid", False))
+                early_frac  = early_valid / len(rows) if rows else 0.0
+                if early_frac < 0.50:
+                    raise AssertionError(
+                        f"FAIL: valid_fraction={early_frac:.1%} after first 5 scenes "
+                        f"({early_valid}/{len(rows)} rows valid). "
+                        f"Check sun_az/elv, DN scale, sector geometry before proceeding."
+                    )
+                print(f"  Early check OK: valid={early_frac:.1%} after 5 scenes")
 
     df = pd.DataFrame(rows)
     df["date"] = pd.to_datetime(df["date"])
