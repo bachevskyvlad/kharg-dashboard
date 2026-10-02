@@ -35,8 +35,9 @@ from supabase import create_client
 # ── Config ────────────────────────────────────────────────────────────────────
 TERMINAL_ID    = "al_flaw"
 TANK_PREFIX    = "af_"
-STEP_THRESH    = 2.5   # dB — frozen
-WL_CAP_FRAC    = 0.60  # WL capacity / total capacity gate — frozen
+STEP_THRESH       = 2.5   # dB — frozen (used on established terminals with years of history)
+WL_CAP_FRAC       = 0.60  # WL capacity / total capacity gate — frozen
+ACTIVATION_STD_MIN = 0.30  # activation gate: exclude structurally-idle tanks (db_std < 0.30)
 DB_FLOOR       = -5.0  # clip on read, never written back
 BACKFILL_SENT  = -20.0 # sentinel for missing passes
 
@@ -386,7 +387,7 @@ def stage4_quality_screen(df):
         date_last  = str(dates_t[-1]) if dates_t else "—"
 
         cap_mb = tank_cap_bbl(tank) / 1e6
-        wl = (np.isfinite(step_full) and step_full >= STEP_THRESH)
+        wl = (n_passes >= 2 and np.isfinite(db_std) and db_std >= ACTIVATION_STD_MIN)
 
         records.append({
             "tank_id": tid,
