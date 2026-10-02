@@ -190,12 +190,25 @@ def terminal_bbox():
 
 
 # ── Stage 1: DB Inventory ─────────────────────────────────────────────────────
+def _fetch_all(sb, terminal_id, page_size=1000):
+    """Paginate terminal_observations — Supabase default cap is 1000 rows."""
+    rows, offset = [], 0
+    while True:
+        batch = (sb.table("terminal_observations")
+                   .select("date,tank_id,db_mean")
+                   .eq("terminal_id", terminal_id)
+                   .range(offset, offset + page_size - 1)
+                   .execute().data)
+        rows.extend(batch)
+        if len(batch) < page_size:
+            break
+        offset += page_size
+    return rows
+
+
 def stage1_db_inventory(sb):
     log("Stage 1: DB inventory")
-    rows = sb.table("terminal_observations") \
-             .select("date,tank_id,db_mean") \
-             .eq("terminal_id", TERMINAL_ID) \
-             .execute().data
+    rows = _fetch_all(sb, TERMINAL_ID)
     if not rows:
         return None, {"error": "no rows"}
 
