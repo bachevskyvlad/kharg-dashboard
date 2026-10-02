@@ -169,13 +169,74 @@ def _get_token() -> str:
     return _TOKEN_CACHE["token"]
 
 
+def _solar_az_elv_from_dt(dt_iso: str, lat: float, lon: float) -> tuple:
+    """
+    Compute (azimuth_deg, elevation_deg) from ISO8601 UTC datetime and location.
+    Uses NOAA simplified solar algorithm (accurate to ~1° for this application).
+    Falls back to S2 nominal overpass time (10:30 local solar time) when only
+    a date string is supplied (no time component).
+    """
+    from datetime import timezone as _tz
+    # Parse datetime; if only date supplied use nominal S2 overpass (10:30 LST)
+    if len(dt_iso) >= 19:
+        dt = datetime.strptime(dt_iso[:19], "%Y-%m-%dT%H:%M:%S").replace(tzinfo=_tz.utc)
+    else:
+        # nominal S2 descending overpass ≈ 10:30 LST; LST = UTC + lon/15
+        utc_hour = 10.5 - lon / 15.0
+        dt_date = datetime.strptime(dt_iso[:10], "%Y-%m-%d")
+        dt = dt_date.replace(hour=int(utc_hour), minute=int((utc_hour % 1) * 60),
+                             tzinfo=_tz.utc)
+
+    doy = dt.timetuple().tm_yday
+    ut = dt.hour + dt.minute / 60.0 + dt.second / 3600.0  # decimal UTC hours
+
+    # Solar declination (degrees)
+    dec_deg = -23.45 * math.cos(math.radians(360 * (doy + 10) / 365))
+    dec = math.radians(dec_deg)
+
+    # Equation of time (minutes)
+    B = math.radians(360 * (doy - 81) / 365)
+    eot_min = 9.87 * math.sin(2 * B) - 7.53 * math.cos(B) - 1.5 * math.sin(B)
+
+    # True solar time (hours)
+    tst = ut + lon / 15.0 + eot_min / 60.0
+
+    # Hour angle (degrees, negative before noon)
+    ha = math.radians(15.0 * (tst - 12.0))
+
+    lat_r = math.radians(lat)
+
+    # Solar elevation
+    sin_elv = (math.sin(lat_r) * math.sin(dec) +
+               math.cos(lat_r) * math.cos(dec) * math.cos(ha))
+    sin_elv = max(-1.0, min(1.0, sin_elv))
+    elv_deg = math.degrees(math.asin(sin_elv))
+
+    # Solar azimuth (0 = N, CW)
+    cos_elv = math.cos(math.radians(elv_deg))
+    if cos_elv < 1e-9:
+        return 180.0, round(elv_deg, 1)  # solar noon edge case
+    cos_az = (math.sin(dec) - math.sin(lat_r) * sin_elv) / (math.cos(lat_r) * cos_elv)
+    cos_az = max(-1.0, min(1.0, cos_az))
+    az_deg = math.degrees(math.acos(cos_az))
+    if ha > 0:  # afternoon → sun is west
+        az_deg = 360.0 - az_deg
+
+    return round(az_deg, 1), round(elv_deg, 1)
+
+
 def _catalog_search(bbox: list, date_from: str, date_to: str,
                     max_cloud: float = MAX_CLOUD) -> list:
     """
     Return list of {date, scene_id, sun_azimuth, sun_elevation, cloud_cover}.
     Paginates automatically.
+    sun_azimuth/sun_elevation: from s2:mean_solar_* catalog fields when present;
+    fallback to ephemeris computed from datetime + bbox centre (SH catalog often
+    omits the solar fields — ephemeris is accurate to ~1°, well within ±60° sector).
     """
     token = _get_token()
+    lat_c = (bbox[1] + bbox[3]) / 2
+    lon_c = (bbox[0] + bbox[2]) / 2
     items = []
     next_token = None
     while True:
@@ -215,20 +276,32 @@ def _catalog_search(bbox: list, date_from: str, date_to: str,
                 time.sleep(2 ** attempt)
 
         resp = r.json()
+        _ephemeris_used = 0
         for feat in resp.get("features", []):
             p = feat.get("properties", {})
-            dt_str = p.get("datetime", "")[:10]
-            sun_az  = p.get("s2:mean_solar_azimuth", float("nan"))
-            sun_zen = p.get("s2:mean_solar_zenith", float("nan"))
-            sun_elv = 90.0 - sun_zen if not math.isnan(sun_zen) else float("nan")
+            dt_full = p.get("datetime", "")  # full ISO timestamp when present
+            dt_str  = dt_full[:10]
+            sun_az_raw  = p.get("s2:mean_solar_azimuth")
+            sun_zen_raw = p.get("s2:mean_solar_zenith")
+            if sun_az_raw is not None and sun_zen_raw is not None:
+                sun_az  = float(sun_az_raw)
+                sun_zen = float(sun_zen_raw)
+                sun_elv = 90.0 - sun_zen if not math.isnan(sun_zen) else float("nan")
+            else:
+                # SH catalog omits solar fields — compute from ephemeris
+                sun_az, sun_elv = _solar_az_elv_from_dt(dt_full or dt_str, lat_c, lon_c)
+                _ephemeris_used += 1
             items.append({
-                "date":         dt_str,
-                "scene_id":     feat.get("id", ""),
-                "sun_azimuth":  round(float(sun_az), 2),
-                "sun_elevation":round(float(sun_elv), 2),
-                "cloud_cover":  round(float(p.get("eo:cloud_cover", 0)), 2),
-                "low_shadow":   (sun_elv > LOW_SHADOW_ELV or sun_elv < MIN_ELV_SHADOW),
+                "date":          dt_str,
+                "scene_id":      feat.get("id", ""),
+                "sun_azimuth":   round(float(sun_az),  2),
+                "sun_elevation": round(float(sun_elv), 2),
+                "cloud_cover":   round(float(p.get("eo:cloud_cover", 0)), 2),
+                "low_shadow":    (sun_elv > LOW_SHADOW_ELV or sun_elv < MIN_ELV_SHADOW),
             })
+        if _ephemeris_used:
+            print(f"    sun position: ephemeris fallback for {_ephemeris_used} scenes "
+                  f"(s2:mean_solar_* absent from catalog)")
         next_token = resp.get("context", {}).get("next") or resp.get("links", {})
         # links is a list — extract "next" rel
         if isinstance(next_token, list):
