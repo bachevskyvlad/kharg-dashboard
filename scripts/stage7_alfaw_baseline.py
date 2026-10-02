@@ -215,6 +215,25 @@ def stage1_db_inventory(sb):
     df = pd.DataFrame(rows)
     df["date"] = pd.to_datetime(df["date"]).dt.date
 
+    n_rows_raw = len(df)
+
+    # Diagnose and dedup: find dates where tank_id appears more than once
+    dup_check = df.groupby(["date","tank_id"]).size().reset_index(name="n")
+    dup_dates = dup_check[dup_check["n"] > 1]["date"].unique()
+    if len(dup_dates):
+        log(f"  WARN: {len(dup_dates)} dates have duplicate (date,tank_id) rows — "
+            f"deduplicating by keeping row with max db_mean")
+        df = df.sort_values("db_mean", ascending=False).drop_duplicates(
+            subset=["date","tank_id"], keep="first"
+        )
+
+    # Also cap rows per date to n_tanks (catches multi-orbit stacking)
+    per_date_counts = df.groupby("date")["tank_id"].nunique()
+    overflow_dates = per_date_counts[per_date_counts > len(TANKS)].index.tolist()
+    if overflow_dates:
+        log(f"  WARN: {len(overflow_dates)} dates still have >24 tank rows after dedup: "
+            f"{[str(d) for d in overflow_dates[:5]]}")
+
     n_rows = len(df)
     n_tanks_db = df["tank_id"].nunique()
     tanks_db   = sorted(df["tank_id"].unique())
@@ -222,6 +241,9 @@ def stage1_db_inventory(sb):
     n_dates    = len(dates)
     date_min   = str(dates[0])  if dates else "—"
     date_max   = str(dates[-1]) if dates else "—"
+
+    if n_rows_raw != n_rows:
+        log(f"  dedup: {n_rows_raw} raw rows → {n_rows} after (date,tank_id) dedup")
 
     # clip floor
     n_backfill = int((df["db_mean"] <= BACKFILL_SENT + 1).sum())
@@ -281,6 +303,16 @@ def stage2_orbit_catalog(df):
     # near-duplicate passes (same day or adjacent, gap ≤ 1d → possible dual-orbit)
     dup_pairs = [(str(dates[i-1]), str(dates[i])) for i, g in enumerate(gaps, 1) if g <= 1]
 
+    # year-by-year coverage
+    from collections import Counter
+    year_counts = Counter(d.year for d in dates)
+    years_sorted = sorted(year_counts.keys())
+    year_coverage = {str(y): year_counts[y] for y in years_sorted}
+
+    # large gaps (>90d) — coverage holes
+    large_gaps = [(str(dates[i-1]), str(dates[i]), int(g))
+                  for i, g in enumerate(gaps, 1) if g > 90]
+
     meta = {
         "n_passes": len(dates),
         "date_min": str(dates[0]),
@@ -290,12 +322,17 @@ def stage2_orbit_catalog(df):
         "cadence_max_days": cadence_max,
         "n_near_duplicate_pairs": len(dup_pairs),
         "near_duplicate_pairs": dup_pairs[:10],
+        "year_coverage": year_coverage,
+        "large_gaps_gt90d": large_gaps,
         "db_terminal_min": float(daily["db_med"].min()),
         "db_terminal_max": float(daily["db_med"].max()),
         "db_terminal_mean": float(daily["db_med"].mean()),
     }
     log(f"  passes={len(dates)}, cadence median={cadence_med:.1f}d "
         f"(min={cadence_min}, max={cadence_max}), dup_pairs={len(dup_pairs)}")
+    log(f"  year coverage: {year_coverage}")
+    if large_gaps:
+        log(f"  large gaps (>90d): {large_gaps}")
     return meta, daily
 
 
@@ -645,13 +682,14 @@ def stage6_terminal_series(df, df_q, out_dir):
     p90_placebo = float(np.percentile(placebo_changes, 90)) if placebo_changes else float("nan")
 
     # E1/E2 point estimators for each Iraq event
+    # Window ±60d: at cadence=12d gives ~10 passes → ±3 passes around event fits
+    E1_WINDOW_DAYS = 60
     event_rows = []
     for label, ev_date in IRAQ_EVENTS:
         ev_ts = pd.Timestamp(ev_date)
-        # find nearest passes within ±30d
         window = daily_vol[
-            (daily_vol["date"] >= ev_ts - pd.Timedelta(days=30)) &
-            (daily_vol["date"] <= ev_ts + pd.Timedelta(days=30))
+            (daily_vol["date"] >= ev_ts - pd.Timedelta(days=E1_WINDOW_DAYS)) &
+            (daily_vol["date"] <= ev_ts + pd.Timedelta(days=E1_WINDOW_DAYS))
         ].copy()
         if len(window) < 4:
             event_rows.append({"event": label, "date": ev_date,
@@ -806,6 +844,17 @@ def write_report(s1, s2, s3, s4, s6, df_q, df_events, panel_files, report_path):
         f"| Near-duplicate pairs (gap≤1d) | {s2.get('n_near_duplicate_pairs','—')} |",
         f"| Terminal dB range (median across dates) | [{s2.get('db_terminal_min','—'):.2f}, {s2.get('db_terminal_max','—'):.2f}] |",
         f"",
+        f"**Year-by-year pass coverage:**",
+        f"",
+        f"| Year | Passes |",
+        f"|---|---|",
+        *[f"| {yr} | {cnt} |" for yr, cnt in s2.get("year_coverage", {}).items()],
+        f"",
+        *(
+            [f"**Large gaps (>90d):**", f"", f"| From | To | Days |", f"|---|---|---|",
+             *[f"| {g[0]} | {g[1]} | {g[2]} |" for g in s2.get("large_gaps_gt90d", [])], f""]
+            if s2.get("large_gaps_gt90d") else []
+        ),
         f"---",
         f"",
         f"## Stage 3 — S2 Optical Geometry",
