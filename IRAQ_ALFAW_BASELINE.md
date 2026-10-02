@@ -1,6 +1,6 @@
 # IRAQ_ALFAW_BASELINE
 
-Generated: 2026-10-02 13:47 UTC  
+Generated: 2026-10-02 15:48 UTC  
 Terminal: `al_flaw` (Al-Faw, Iraq, IQ)  
 Tanks: 24 (all radius=40m, h_max=14m)  
 Pipeline: stage7_alfaw_baseline.py  
@@ -11,12 +11,12 @@ Pipeline: stage7_alfaw_baseline.py
 
 | Field | Value |
 |---|---|
-| Rows in terminal_observations | 7584 |
+| Rows in terminal_observations | 6697 |
 | Unique tanks in DB | 24 |
 | Unique passes (dates) | 281 |
 | Date range | 2015-04-11 → 2026-09-29 |
 | Backfill rows removed (≤-19.0) | 0 |
-| Rows clipped to DB_FLOOR=-5.0 | 370 |
+| Rows clipped to DB_FLOOR=-5.0 | 311 |
 | Tanks in registry, absent from DB | [] |
 | Tanks in DB, absent from registry | [] |
 
@@ -32,6 +32,30 @@ Pipeline: stage7_alfaw_baseline.py
 | Cadence min / max | 1 / 684 d |
 | Near-duplicate pairs (gap≤1d) | 4 |
 | Terminal dB range (median across dates) | [-2.15, 3.24] |
+
+**Year-by-year pass coverage:**
+
+| Year | Passes |
+|---|---|
+| 2015 | 1 |
+| 2017 | 25 |
+| 2018 | 30 |
+| 2019 | 26 |
+| 2020 | 29 |
+| 2021 | 29 |
+| 2022 | 26 |
+| 2023 | 17 |
+| 2024 | 14 |
+| 2025 | 35 |
+| 2026 | 49 |
+
+**Large gaps (>90d):**
+
+| From | To | Days |
+|---|---|---|
+| 2015-04-11 | 2017-02-23 | 684 |
+| 2023-08-27 | 2024-01-30 | 156 |
+| 2024-07-04 | 2025-04-18 | 288 |
 
 ---
 
@@ -63,30 +87,30 @@ All tanks: radius=40m → 8px/ray at 5m/px, shadow pixels = 7px ≥ 2 — geomet
 
 | tank_id | n_passes | db_mean | db_std | step_full | step_fresh | WL |
 |---|---|---|---|---|---|---|
-| af_0 | 316 | 2.23 | 4.76 | 0.53 | 0.60 | ✓ |
-| af_1 | 316 | 1.89 | 5.57 | 0.39 | 0.70 | ✓ |
-| af_2 | 316 | -0.89 | 4.10 | 0.16 | 0.70 | ✓ |
-| af_3 | 316 | 0.24 | 3.50 | 0.42 | 0.32 | ✓ |
-| af_4 | 316 | 2.09 | 3.37 | 0.54 | 1.18 | ✓ |
-| af_5 | 315 | 0.20 | 3.74 | 0.46 | 0.43 | ✓ |
-| af_6 | 315 | 0.76 | 3.37 | 1.18 | 1.17 | ✓ |
-| af_7 | 315 | -1.18 | 2.20 | 0.70 | 0.68 | ✓ |
-| af_8 | 316 | -0.62 | 1.47 | 0.78 | 0.79 | ✓ |
-| af_9 | 316 | -3.56 | 1.22 | 0.40 | 0.56 | ✓ |
-| af_10 | 316 | 2.44 | 2.52 | 0.92 | 0.58 | ✓ |
-| af_11 | 316 | -0.83 | 1.41 | 0.57 | 0.56 | ✓ |
-| af_12 | 316 | 2.43 | 2.07 | 0.55 | 0.64 | ✓ |
-| af_13 | 316 | 0.87 | 1.77 | 0.55 | 0.44 | ✓ |
-| af_14 | 316 | 5.59 | 0.96 | 0.45 | 0.30 | ✓ |
-| af_15 | 316 | 8.09 | 0.38 | 0.25 | 0.20 | ✓ |
-| af_16 | 316 | -0.30 | 2.30 | 0.60 | 0.53 | ✓ |
-| af_17 | 317 | -1.78 | 0.80 | 0.46 | 0.50 | ✓ |
-| af_18 | 317 | 0.31 | 1.16 | 0.29 | 0.35 | ✓ |
-| af_19 | 317 | 3.28 | 1.35 | 0.62 | 0.43 | ✓ |
-| af_20 | 316 | 2.70 | 2.98 | 0.78 | 0.68 | ✓ |
-| af_21 | 316 | 3.20 | 2.88 | 0.61 | 0.95 | ✓ |
-| af_22 | 316 | -0.64 | 0.82 | 0.44 | 0.20 | ✓ |
-| af_23 | 316 | -1.65 | 1.05 | 0.40 | 0.48 | ✓ |
+| af_0 | 280 | 1.74 | 4.84 | 0.62 | 0.60 | ✓ |
+| af_1 | 280 | 2.17 | 5.60 | 0.48 | 0.70 | ✓ |
+| af_2 | 280 | -0.68 | 3.99 | 0.37 | 0.70 | ✓ |
+| af_3 | 280 | 0.18 | 3.71 | 0.51 | 0.32 | ✓ |
+| af_4 | 280 | 1.78 | 3.40 | 0.69 | 1.18 | ✓ |
+| af_5 | 279 | 0.65 | 3.74 | 0.52 | 0.43 | ✓ |
+| af_6 | 279 | 0.65 | 3.37 | 1.45 | 1.17 | ✓ |
+| af_7 | 279 | -1.09 | 2.18 | 0.93 | 0.68 | ✓ |
+| af_8 | 279 | -0.66 | 1.53 | 0.90 | 0.79 | ✓ |
+| af_9 | 279 | -3.57 | 1.17 | 0.49 | 0.56 | ✓ |
+| af_10 | 279 | 2.39 | 2.58 | 1.11 | 0.58 | ✓ |
+| af_11 | 279 | -0.67 | 1.34 | 0.71 | 0.56 | ✓ |
+| af_12 | 279 | 2.28 | 2.09 | 0.63 | 0.64 | ✓ |
+| af_13 | 279 | 0.89 | 1.79 | 0.65 | 0.44 | ✓ |
+| af_14 | 279 | 5.55 | 0.99 | 0.52 | 0.30 | ✓ |
+| af_15 | 279 | 8.07 | 0.38 | 0.29 | 0.20 | ✓ |
+| af_16 | 279 | -0.47 | 2.36 | 0.74 | 0.53 | ✓ |
+| af_17 | 279 | -1.74 | 0.81 | 0.55 | 0.50 | ✓ |
+| af_18 | 279 | 0.42 | 1.19 | 0.33 | 0.35 | ✓ |
+| af_19 | 279 | 3.27 | 1.38 | 0.74 | 0.43 | ✓ |
+| af_20 | 278 | 2.39 | 2.95 | 0.91 | 0.68 | ✓ |
+| af_21 | 278 | 3.32 | 2.97 | 0.70 | 0.95 | ✓ |
+| af_22 | 278 | -0.61 | 0.86 | 0.52 | 0.20 | ✓ |
+| af_23 | 278 | -1.56 | 1.04 | 0.52 | 0.48 | ✓ |
 
 ---
 
@@ -107,17 +131,17 @@ Panels written to `diagnostics/al_faw/panels/` (no verdicts — visual review by
 | Field | Value |
 |---|---|
 | WL passes in series | 281 |
-| Volume range (WL tanks) | [1.155, 13.795] Mb |
-| dB p5/p95 (WL calibration) | -4.938 / 7.773 dB |
-| Placebo p90 change | 1.011 Mb |
+| Volume range (WL tanks) | [1.166, 7.809] Mb |
+| dB p5/p95 (WL calibration) | -4.807 / 7.802 dB |
+| Placebo p90 change | 0.959 Mb |
 
 **Iraq event sanity (E1 estimator — no export correlation, user-side):**
 
 | Event | Date | E1 vol change Mb | Above placebo p90 | Passes in window |
 |---|---|---|---|---|
-| Basra Shutdown Jul-22 | 2022-07-20 | — | — | 5 |
-| Pipeline Maint Jan-23 | 2023-01-15 | — | — | 5 |
-| Exports Disruption Oct-23 | 2023-10-01 | — | — | 0 |
+| Basra Shutdown Jul-22 | 2022-07-20 | 0.621 | False | 9 |
+| Pipeline Maint Jan-23 | 2023-01-15 | -0.108 | False | 9 |
+| Exports Disruption Oct-23 | 2023-10-01 | nan | — | 2 |
 
 ---
 
