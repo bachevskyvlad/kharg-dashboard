@@ -39,10 +39,12 @@ jobs:
           git config user.name "GitHub Actions"
           ls -la diagnostics/optical/ || echo "diagnostics/optical missing"
           git add -f diagnostics/optical/run.txt || true
+          git add -f diagnostics/optical/crops/ || true
           git add diagnostics/optical/ OPTICAL_PILOT.md || true
           git status --short
           git diff --cached --quiet && echo "No new files" || \
             git commit -m "ci: stage6 optical pilot outputs [skip ci]"
+          git pull --rebase origin main || true
           git push origin HEAD:main || true
 
       - name: Upload diagnostics

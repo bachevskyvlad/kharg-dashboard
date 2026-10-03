@@ -53,8 +53,12 @@ MAX_RETRIES     = 4           # exponential-backoff retries
 
 # ── Kharg repères (reference tanks for gate, read-only) ──────────────────────
 # Expected behaviour: full tanks → low shadow_frac; empty → high shadow_frac
-KHARG_FULL  = ["t60_1", "t55_31", "t40_33"]   # chronically full
-KHARG_EMPTY = ["t55_5",  "t55_10"]            # chronically empty (idle)
+# t55_5 / t55_10 are structurally IDLE (roof settled on floor supports) — NOT
+# floating-roof-empty. They give sf≈0 because the bright settled roof has no
+# wall shadow inside. Use active-cycle tanks with known low SAR db as empty repères.
+# t40_18, t40_22: high db_mean (~9 dB), actively cycling — genuine floating-empty.
+KHARG_FULL  = ["t60_1", "t55_31", "t40_33"]   # chronically full (low dB)
+KHARG_EMPTY = ["t40_18", "t40_22"]             # active empty (high dB, floating)
 KHARG_GATE_N_SCENES = 20
 
 # ── Event dates ──────────────────────────────────────────────────────────────
@@ -826,8 +830,15 @@ def stage2_gate(shadow_df: pd.DataFrame) -> tuple[bool, dict]:
                         pairs_s2.append(sf)
                         pairs_s1.append(db)
             if len(pairs_s2) >= 5:
-                c = float(pd.Series(pairs_s2).corr(pd.Series(pairs_s1)))
-                corr_per_tank[tank_id] = c
+                s2_ser = pd.Series(pairs_s2, dtype=float)
+                s1_ser = pd.Series(pairs_s1, dtype=float)
+                # skip if either series has zero variance (corr would be NaN)
+                if s2_ser.std() < 1e-9 or s1_ser.std() < 1e-9:
+                    print(f"      {tank_id}: std≈0 (sf_std={s2_ser.std():.4f}), skipping corr")
+                    continue
+                c = float(s2_ser.corr(s1_ser))
+                if not math.isnan(c):
+                    corr_per_tank[tank_id] = c
                 n_pairs_total += len(pairs_s2)
 
         if corr_per_tank:
