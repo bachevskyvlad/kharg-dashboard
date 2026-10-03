@@ -1,0 +1,14 @@
+=== dedup_terminal_observations [DRY-RUN] terminal=al_flaw ===
+
+Fetching all rows…
+  fetched offset=0 → 1000 rows (total so far: 1000)
+  fetched offset=1000 → 1000 rows (total so far: 2000)
+  fetched offset=2000 → 1000 rows (total so far: 3000)
+  fetched offset=3000 → 1000 rows (total so far: 4000)
+  fetched offset=4000 → 1000 rows (total so far: 5000)
+  fetched offset=5000 → 1000 rows (total so far: 6000)
+  fetched offset=6000 → 1000 rows (total so far: 7000)
+  fetched offset=7000 → 584 rows (total so far: 7584)
+  Total rows fetched: 7584
+  Duplicate (date, tank_id) rows: 0
+  No duplicates — nothing to delete.
