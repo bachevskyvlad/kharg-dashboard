@@ -24,6 +24,7 @@ FRONT_BUF_M   = 40              # ice counts on the centerline if present within
 STEP_M        = 5               # sampling step along polylines
 PX_ERR_M      = 10              # ±1 px
 GAMMA         = 0.6             # one gamma for the whole series (applied after the common p2–p98 stretch)
+B08_SNOW      = 0.60            # rev3: tongue bright pixels with B08 ≥ this = snow, else ice (sweep 0.50/0.60/0.70 in rev3.py)
 SNOW_FLAG_X   = 1.25            # frame snow fraction > 1.25 × series median → fresh-snow flag
 
 FONT_B = "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf"
@@ -178,58 +179,6 @@ def save_gif(paths_imgs, path, ms=1300):
     durs = [ms] * len(imgs); durs[-1] = 2 * ms
     imgs[0].save(path, save_all=True, append_images=imgs[1:], duration=durs, loop=0, optimize=False, disposal=1)
 
-# ── analysis ─────────────────────────────────────────────────────────────────
-def linfit(x, y):
-    x, y = np.asarray(x, float), np.asarray(y, float)
-    (b, a), cov = np.polyfit(x, y, 1, cov=True)
-    return float(b), float(np.sqrt(cov[0, 0])), float(a)
-
-def analyse(rows, y0, L0):
-    import matplotlib; matplotlib.use("Agg"); import matplotlib.pyplot as plt
-    def dec(r):  # decimal year of the acquisition
-        m, d = map(int, r["date"][5:].split("-")); return r["year"] + (m - 1) / 12 + (d - 1) / 365
-    fit = {}
-    for key, sel in (("clean", lambda r: not r["snow_flag"]), ("all", lambda r: True)):
-        rr = [r for r in rows if sel(r) and r["L_clean_edge_m"] is not None]
-        fit[key] = {"n": len(rr), "years": [r["year"] for r in rr]}
-        for col in ("tongue_ice_km2", "L_clean_edge_m", "area_km2"):
-            b, eb, _ = linfit([dec(r) for r in rr], [r[col] for r in rr])
-            fit[key][col] = {"per_yr": round(b, 4), "se": round(eb, 4)}
-        # same, controlling for acquisition day-of-year (late-September frames read brighter/icier)
-        import datetime as dt
-        X = np.array([[1.0, r["year"] - 2021, dt.date.fromisoformat(r["date"]).timetuple().tm_yday - 240] for r in rr])
-        yv = np.array([r["tongue_ice_km2"] for r in rr])
-        cf, *_ = np.linalg.lstsq(X, yv, rcond=None)
-        s2 = ((yv - X @ cf) ** 2).sum() / (len(yv) - 3); se = np.sqrt(np.diag(s2 * np.linalg.inv(X.T @ X)))
-        fit[key]["tongue_ice_km2_doy_adj"] = {"per_yr": round(float(cf[1]), 4), "se": round(float(se[1]), 4),
-                                              "per_day": round(float(cf[2]), 4), "per_day_se": round(float(se[2]), 4)}
-    ink, mute, grid, c1 = "#0b0b0b", "#52514e", "#e4e3df", "#2a78d6"
-    fig, axs = plt.subplots(2, 1, figsize=(8, 6.4), sharex=True, dpi=130)
-    fig.patch.set_facecolor("#fcfcfb")
-    for ax, key, lab, unit in ((axs[0], "tongue_ice_km2", "Exposed ice in fixed tongue polygon (NDSI>0.1)", "km²"),
-                               (axs[1], "L_clean_edge_m", "Clean-ice edge along centerline (not the terminus)", "m from top")):
-        ax.set_facecolor("#fcfcfb")
-        xs = [dec(r) for r in rows if r[key] is not None]; ys = [r[key] for r in rows if r[key] is not None]
-        ax.plot(xs, ys, color=c1, lw=2, zorder=2)
-        for r in rows:
-            if r[key] is None: continue
-            ax.scatter(dec(r), r[key], s=46, zorder=3, color="#fcfcfb" if r["snow_flag"] else c1,
-                       edgecolor=c1, linewidth=2)
-        sub = [r for r in rows if not r["snow_flag"] and r[key] is not None]
-        b, eb, a = linfit([dec(r) for r in sub], [r[key] for r in sub])
-        xx = np.array([min(xs), max(xs)])
-        ax.plot(xx, a + b * xx, color=mute, lw=1.2, ls="--", zorder=1)
-        ax.set_title(f"{lab}  ·  fit (clean years): {b:+.{1 if key[0]=='L' else 3}f} ± {eb:.{1 if key[0]=='L' else 3}f} {unit.split()[0]}/yr",
-                     loc="left", fontsize=10.5, color=ink)
-        ax.set_ylabel(unit, color=mute, fontsize=9)
-        ax.grid(axis="y", color=grid, lw=0.8); ax.tick_params(colors=mute, labelsize=8.5)
-        for sp in ("top", "right"): ax.spines[sp].set_visible(False)
-        for sp in ("left", "bottom"): ax.spines[sp].set_color(grid)
-    axs[1].text(0.0, -0.22, "Filled = clean frame · hollow = fresh-snow flag (excluded from fit) · dashed = linear fit · ±10 m (1 px) per point",
-                transform=axs[1].transAxes, fontsize=8, color=mute)
-    fig.tight_layout(); fig.savefig(os.path.join(OUT, "aksay_metrics.png"), facecolor=fig.get_facecolor())
-    return fit
-
 # ── main ─────────────────────────────────────────────────────────────────────
 def main():
     g = json.load(open(GEOM))
@@ -253,10 +202,15 @@ def main():
         L, _ = front_on_centerline(m, cl_m, cl_d)
         Ws = [width_on_transect(m, t["a"], t["b"]) for t in trans]
         area = float(m[sl].sum() * px_km2)
-        tice = (ndsi(d) > tg["ndsi_threshold"]) & TP & ~cl & (d["mask"] > 0)
+        ok = TP & ~cl & (d["mask"] > 0)
+        bright = (ndsi(d) > tg["ndsi_threshold"]) & ok
+        snow = bright & (d["b08"] / 1e4 >= B08_SNOW)
         rows.append({"year": y, "date": pk["date"],
-                     "tongue_ice_km2": round(float(tice.sum() * px_km2), 3),
-                     "tongue_ice_pct": round(100 * float(tice.sum() / TP.sum()), 1),
+                     "tongue_bright_km2": round(float(bright.sum() * px_km2), 3),
+                     "tongue_bright_pct": round(100 * float(bright.sum() / TP.sum()), 1),
+                     "tongue_snow_km2": round(float(snow.sum() * px_km2), 3),
+                     "tongue_ice_km2": round(float((bright & ~snow).sum() * px_km2), 3),
+                     "tongue_debris_km2": round(float((ok & ~bright).sum() * px_km2), 3),
                      "L_clean_edge_m": None if L is None else round(L, 1),
                      **{f"W{i+1}_m": round(w, 1) for i, w in enumerate(Ws)},
                      "area_km2": round(area, 3), "err_m": PX_ERR_M,
@@ -290,7 +244,7 @@ def main():
     bar_px = 500 / PXW
     for y, im2, L in ruler:
         t = byyear[y]["tongue_ice_km2"]
-        sub = f"tongue ice: {t:.2f} km² ({100 * (t / T0 - 1):+.0f}% vs {y0})" + ("  ⚠snow" if byyear[y]["snow_flag"] else "")
+        sub = f"tongue bare ice: {t:.2f} km² ({100 * (t / T0 - 1):+.0f}% vs {y0})" + ("  ⚠snow" if byyear[y]["snow_flag"] else "")
         year_badge(im2, str(y), sub)
         dr = ImageDraw.Draw(im2); fx0, fy0 = sw - 24 - bar_px, sh - 30
         dr.rectangle([fx0 - 10, fy0 - 26, sw - 14, sh - 12], fill=(0, 0, 0, 170))
@@ -301,7 +255,9 @@ def main():
     save_gif(clean, os.path.join(OUT, "aksay_timelapse.gif"))
     save_gif([r[1] for r in ruler], os.path.join(OUT, "aksay_timelapse_ruler.gif"))
 
-    fit = analyse(rows, y0, L0)
+    import rev3
+    import sys
+    fit = rev3.run(rows, sys.modules[__name__])
     with open(os.path.join(OUT, "aksay_metrics.csv"), "w", newline="") as fh:
         w = csv.DictWriter(fh, fieldnames=list(rows[0])); w.writeheader(); w.writerows(rows)
     with open(os.path.join(OUT, "aksay_frames.csv"), "w", newline="") as fh:
