@@ -60,8 +60,8 @@ R_M   = 40.0    # uniform radius (ТЗ)
 H_MAX = 14.0
 
 # Bounding box for Al-Faw terminal (covers all 24 tanks + buffer)
-LAT_MIN, LAT_MAX = 29.952, 29.968
-LON_MIN, LON_MAX = 48.438, 48.470
+LAT_MIN, LAT_MAX = 29.958, 29.980
+LON_MIN, LON_MAX = 48.436, 48.462
 BBOX = [LON_MIN, LAT_MIN, LON_MAX, LAT_MAX]
 
 LOS_AZIMUTH = 282   # Sentinel-1 DESC orbit at al_flaw
@@ -145,9 +145,6 @@ def _query_s2_catalog(bbox, date_from="2023-01-01", max_cloud=30, n_scenes=5):
         "limit": 100,
         "filter": {"op": "lte", "args": [{"property": "eo:cloud_cover"}, max_cloud]},
         "filter-lang": "cql2-json",
-        "fields": {"include": ["id", "datetime", "properties.eo:cloud_cover",
-                                "properties.s2:mean_solar_azimuth",
-                                "properties.s2:mean_solar_zenith"]},
     }
     r = requests.post(
         "https://sh.dataspace.copernicus.eu/api/v1/catalog/1.0.0/search",
