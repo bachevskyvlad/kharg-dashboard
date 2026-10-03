@@ -58,8 +58,8 @@ KHARG_CONTROL_TANKS = [
     {"id": "t60_4", "lat": 29.222897954869325, "lon": 50.3144195158663,   "radius_m": 60, "h_max_m": 18},
 ]
 
-SH_CLIENT_ID     = os.environ.get("CLIENT_ID")     or "sh-0f08bb88-cde8-4e6e-8eb9-1006acfe6be9"
-SH_CLIENT_SECRET = os.environ.get("CLIENT_SECRET") or "erkNtZDw4z36UB0Xm7BrzcYixzaUGeW0"
+SH_CLIENT_ID     = os.environ.get("CLIENT_ID")     or ""
+SH_CLIENT_SECRET = os.environ.get("CLIENT_SECRET") or ""
 
 os.environ.setdefault("CLIENT_ID",     SH_CLIENT_ID)
 os.environ.setdefault("CLIENT_SECRET", SH_CLIENT_SECRET)

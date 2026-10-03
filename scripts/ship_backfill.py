@@ -1,3 +1,4 @@
+import os
 """
 Historical Sentinel-1 ship detection backfill for Kharg anchorage.
 Iterates weekly from START_DATE to today, detects ships (no Small),
@@ -23,8 +24,8 @@ from scipy import ndimage
 
 # ── Config ────────────────────────────────────────────────────────────────────
 config = SHConfig()
-config.sh_client_id     = "sh-0f08bb88-cde8-4e6e-8eb9-1006acfe6be9"
-config.sh_client_secret = "erkNtZDw4z36UB0Xm7BrzcYixzaUGeW0"
+config.sh_client_id     = os.environ.get("CLIENT_ID", "")
+config.sh_client_secret = os.environ.get("CLIENT_SECRET", "")
 config.sh_token_url     = "https://identity.dataspace.copernicus.eu/auth/realms/CDSE/protocol/openid-connect/token"
 config.sh_base_url      = "https://sh.dataspace.copernicus.eu"
 

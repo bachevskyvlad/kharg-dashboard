@@ -60,8 +60,8 @@ RESOLUTIONS = [5, 10]           # m/px; "max" for IW GRD is effectively 5m floor
 OUT_DIR = Path("diagnostics/ras_tanura")
 
 # Sentinel Hub credentials (same env vars as ingest.py)
-SH_CLIENT_ID     = os.environ.get("CLIENT_ID")     or "sh-0f08bb88-cde8-4e6e-8eb9-1006acfe6be9"
-SH_CLIENT_SECRET = os.environ.get("CLIENT_SECRET") or "erkNtZDw4z36UB0Xm7BrzcYixzaUGeW0"
+SH_CLIENT_ID     = os.environ.get("CLIENT_ID")     or ""
+SH_CLIENT_SECRET = os.environ.get("CLIENT_SECRET") or ""
 SH_TOKEN_URL     = "https://identity.dataspace.copernicus.eu/auth/realms/CDSE/protocol/openid-connect/token"
 SH_BASE_URL      = "https://sh.dataspace.copernicus.eu"
 

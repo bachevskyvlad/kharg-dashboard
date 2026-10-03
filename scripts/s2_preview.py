@@ -13,8 +13,8 @@ from sentinelhub import (
 )
 
 config = SHConfig()
-config.sh_client_id     = os.environ.get("CLIENT_ID")     or "sh-0f08bb88-cde8-4e6e-8eb9-1006acfe6be9"
-config.sh_client_secret = os.environ.get("CLIENT_SECRET") or "erkNtZDw4z36UB0Xm7BrzcYixzaUGeW0"
+config.sh_client_id     = os.environ.get("CLIENT_ID")     or ""
+config.sh_client_secret = os.environ.get("CLIENT_SECRET") or ""
 config.sh_token_url     = "https://identity.dataspace.copernicus.eu/auth/realms/CDSE/protocol/openid-connect/token"
 config.sh_base_url      = "https://sh.dataspace.copernicus.eu"
 

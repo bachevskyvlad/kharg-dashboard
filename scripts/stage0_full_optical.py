@@ -40,8 +40,8 @@ from sentinelhub import (
 
 # ── SH config (no supabase dependency) ───────────────────────────────────────
 sh = SHConfig()
-sh.sh_client_id     = os.environ.get("CLIENT_ID")     or "sh-0f08bb88-cde8-4e6e-8eb9-1006acfe6be9"
-sh.sh_client_secret = os.environ.get("CLIENT_SECRET") or "erkNtZDw4z36UB0Xm7BrzcYixzaUGeW0"
+sh.sh_client_id     = os.environ.get("CLIENT_ID")     or ""
+sh.sh_client_secret = os.environ.get("CLIENT_SECRET") or ""
 sh.sh_token_url     = "https://identity.dataspace.copernicus.eu/auth/realms/CDSE/protocol/openid-connect/token"
 sh.sh_base_url      = "https://sh.dataspace.copernicus.eu"
 

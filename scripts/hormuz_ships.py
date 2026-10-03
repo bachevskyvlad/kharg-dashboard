@@ -14,8 +14,8 @@ import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
 from scipy.ndimage import label, uniform_filter
 
-SH_CLIENT_ID     = os.environ.get("CLIENT_ID")     or "sh-0f08bb88-cde8-4e6e-8eb9-1006acfe6be9"
-SH_CLIENT_SECRET = os.environ.get("CLIENT_SECRET") or "erkNtZDw4z36UB0Xm7BrzcYixzaUGeW0"
+SH_CLIENT_ID     = os.environ.get("CLIENT_ID")     or ""
+SH_CLIENT_SECRET = os.environ.get("CLIENT_SECRET") or ""
 SCENE_INDEX      = int(os.environ.get("SCENE_INDEX", "0"))
 
 from sentinelhub import (
