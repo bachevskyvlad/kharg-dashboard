@@ -1,14 +1,14 @@
 === H5 Al-Faw Panels — 24 tanks, r=40.0m ===
-  bbox: [48.438, 29.952, 48.47, 29.968]
+  bbox: [48.436, 29.958, 48.462, 29.98]
 
 [S2 catalog]
 Traceback (most recent call last):
-  File "/home/runner/work/kharg-dashboard/kharg-dashboard/scripts/stage_h5_alfaw_panels.py", line 546, in <module>
+  File "/home/runner/work/kharg-dashboard/kharg-dashboard/scripts/stage_h5_alfaw_panels.py", line 543, in <module>
     main()
-  File "/home/runner/work/kharg-dashboard/kharg-dashboard/scripts/stage_h5_alfaw_panels.py", line 417, in main
+  File "/home/runner/work/kharg-dashboard/kharg-dashboard/scripts/stage_h5_alfaw_panels.py", line 414, in main
     s2_scenes  = _query_s2_catalog(BBOX, n_scenes=3)
                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/home/runner/work/kharg-dashboard/kharg-dashboard/scripts/stage_h5_alfaw_panels.py", line 158, in _query_s2_catalog
+  File "/home/runner/work/kharg-dashboard/kharg-dashboard/scripts/stage_h5_alfaw_panels.py", line 155, in _query_s2_catalog
     r.raise_for_status()
   File "/opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/site-packages/requests/models.py", line 1167, in raise_for_status
     raise HTTPError(http_error_msg, response=self)
