@@ -1,0 +1,31 @@
+{
+ "pair": "2026-08-06_2026-08-18",
+ "zones": {
+  "a_bare_ice_polygon": {
+   "px": 5517,
+   "valid_px": 5517,
+   "median": 0.332,
+   "p25": 0.281,
+   "p75": 0.387
+  },
+  "b_debris_lobe": {
+   "px": 6004,
+   "valid_px": 6004,
+   "median": 0.606,
+   "p25": 0.436,
+   "p75": 0.728
+  },
+  "c_valley_rock": {
+   "px": 90493,
+   "valid_px": 90493,
+   "median": 0.472,
+   "p25": 0.356,
+   "p75": 0.645
+  }
+ },
+ "b_minus_c": 0.134,
+ "b_minus_a": 0.274,
+ "separates": false,
+ "rule": "|b−c| ≥ 0.15 and |b−a| ≥ 0.1 (parameters)",
+ "coh_band": 2
+}

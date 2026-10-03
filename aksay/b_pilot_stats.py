@@ -61,12 +61,12 @@ def outline(m, col):
     for yy, xx in zip(ys, xs): dr.rectangle([xx * K, yy * K, xx * K + K - 1, yy * K + K - 1], fill=col)
 outline(TP, (255, 255, 255)); outline(zones["b_debris_lobe"], (235, 104, 52))
 dr.line([((P.ll2px(*q)[0] - x0 + .5) * K, (P.ll2px(*q)[1] - y0 + .5) * K) for q in json.load(open(P.GEOM))["centerline"]], fill=(255, 214, 0), width=2)
-W = I.width + 320; can = Image.new("RGB", (W, I.height), (252, 252, 251)); can.paste(I, (0, 0)); dr = ImageDraw.Draw(can)
+W = I.width + 400; can = Image.new("RGB", (W, I.height), (252, 252, 251)); can.paste(I, (0, 0)); dr = ImageDraw.Draw(can)
 fb, fr = ImageFont.truetype(P.FONT_B, 16), ImageFont.truetype(P.FONT_R, 13)
 dr.text((I.width + 14, 12), f"S1 DES 107 coherence {TAG.replace('_', ' → ')}", font=fb, fill=(11, 11, 11))
 for i in range(len(ramp)): dr.rectangle([I.width + 14 + i * 40, 44, I.width + 52 + i * 40, 60], fill=tuple(int(v) for v in ramp[i]))
 dr.text((I.width + 14, 64), "coherence 0 → 1 (looks 5×1)", font=fr, fill=(82, 81, 78))
-lines = [f"(a) bare ice, polygon: {a}", f"(b) debris lobe: {b}", f"(c) valley rock: {c}", f"b − c = {res['b_minus_c']}, b − a = {res['b_minus_a']}",
+lines = [TAG.replace("_", " → "), f"(a) bare ice, polygon: {a}", f"(b) debris lobe: {b}", f"(c) valley rock: {c}", f"b − c = {res['b_minus_c']}, b − a = {res['b_minus_a']}",
          "separates: " + ("YES" if res["separates"] else "NO"), "", "white: tongue polygon (frozen v1)", "orange: zone (b) debris lobe", "yellow: centerline"]
-for i, t in enumerate(lines): dr.text((I.width + 14, 94 + 20 * i), t, font=fr, fill=(11, 11, 11) if i < 5 else (82, 81, 78))
+for i, t in enumerate(lines): dr.text((I.width + 14, 94 + 20 * i), t, font=fr, fill=(11, 11, 11) if i < 6 else (82, 81, 78))
 can.save(os.path.join(P.OUT, f"s1_pilot_{TAG}_coherence.png"))

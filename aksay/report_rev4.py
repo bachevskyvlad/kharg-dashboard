@@ -38,7 +38,7 @@ L += [f"1. **2017 was fresh snow, not bright ice.** On common clear tongue pixel
       f"3. **Debris expansion:** {fs(F['tongue_debris_km2']['clean_doy'])} (clean + DOY); without DOY {fs(F['tongue_debris_km2']['clean'])}. {W['frac_of_base_ice_lost_to_debris']*100:.0f}% of {BY} bare ice is debris in 2026, concentrated at the lateral margins.",
       "4. **Optical offset tracking (Part D):** the clean, crevassed tongue flows at ~30 m/yr; flow drops to ~4–16 m/yr (pair-dependent) across the clean-ice/debris boundary and fades into the noise (≤ 3–4 m/yr) at ≈ 3.95 km along the centerline. The debris lobe below that is stagnant within noise (< ~0.5 m/yr over 7–8 years). A single L_moving_opt number is **not** stable — reported as a profile, not a rate.",
       f"5. **Surface darkening / debris expansion, consistent with thinning.** External check (Hugonnet 2021, RGI60-13.11414): glacier-wide dh/dt 2000–2019 = {h['dhdt']:+.2f} ± {h['err_dhdt']:.2f} m/yr — not distinguishable from zero; neither confirms nor rules out tongue thinning.",
-      "6. **Sentinel-1 B-pilot:** see Part B section (verdict per the B4 stop rule).", ""]
+      "6. **Sentinel-1 B-pilot (DES 107, 2026-08-06 → 08-18):** coherence bare ice 0.33, debris lobe 0.61, valley rock 0.47 → b − c = 0.13 < 0.15 → stop rule triggered, Part B closed. The lobe is as coherent as stable ground, consistent with Part D.", ""]
 
 # ── Part C
 L += ["## Part C — base-year check (September 2017)", "",
@@ -110,7 +110,11 @@ if stats:
         L += ["", f"b − c = {s['b_minus_c']}, b − a = {s['b_minus_a']}. Rule (parameters, read as absolute contrasts): {s['rule']}.", "",
               f"![coherence](out/s1_pilot_{tag}_coherence.png)", "",
               ("**Verdict: contrast present** → a separate decision on the 9-year series is needed (not started)." if s["separates"] else
-               "**Verdict: 12-day C-band coherence does not separate debris-covered ice from ice-free moraine on a near-stagnant tongue; not pursued.** This is a result, not a failure."), ""]
+               "**Verdict: 12-day C-band coherence does not separate debris-covered ice from ice-free moraine on a near-stagnant tongue; not pursued.** This is a result, not a failure."), "",
+              "- Stop rule triggered by b − c = %.3f < 0.15. The lobe is *more* coherent than the valley walls (rock coherence is pulled down by steep, foreshortened slopes and by the 5×1-look estimator floor ≈ 0.3), i.e. the lobe behaves like stable ground. That agrees with Part D (no measurable motion below ≈ 3.95 km) — stagnant debris-covered ice and ice-free moraine look the same to 12-day coherence." % s["b_minus_c"],
+              "- Bare ice in the polygon is clearly decorrelated (median %.2f) — the active, melting tongue is visible; the method fails only at the boundary that matters (dead ice vs moraine)." % z["a_bare_ice_polygon"]["median"],
+              "- Processing: CDSE OData (SH OAuth token accepted for download), IW3 VV only (2 × 1.35 GB), POEORB from ESA STEP, Copernicus GLO-30 + EGM2008 undulation −37.2 m → WGS84, ISCE2 2.6.5 topsApp (no ESD, no unwrapping), geocoded and resampled to the S2 grid; ≈ 5 min ISCE time. Logs: `aksay/data/s1_pilot/`.",
+              "- The 9-year S1 series was **not** downloaded (brief B5).", ""]
 else:
     for lp in logs:
         lg = json.load(open(lp)); st = lg["stages"]

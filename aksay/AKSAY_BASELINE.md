@@ -9,9 +9,9 @@ rev4: Part C (2017 base-year check → 2017 flagged as fresh snow, base → 2018
 1. **2017 was fresh snow, not bright ice.** On common clear tongue pixels B08 rose from 0.217 (2017-09-03) to 0.310 (2017-09-16) across a fully overcast 2017-09-11; no B08 ≥ 0.5 area existed on 09-03. → 2017 flagged, base year 2018.
 2. **With base 2018, the bare-ice decline no longer depends on the snow/ice split.** Clean years + DOY: B08 0.50 → -0.020 ± 0.003 km²/yr, t(4) = -7.27, p = 0.0019; **0.60 → -0.021 ± 0.003 km²/yr, t(4) = -6.15, p = 0.0035**; 0.70 → -0.021 ± 0.004 km²/yr, t(4) = -5.39, p = 0.0057. The rev3 sensitivity was entirely the 2017 snow.
 3. **Debris expansion:** +0.021 ± 0.004 km²/yr, t(4) = 5.13, p = 0.0068 (clean + DOY); without DOY +0.021 ± 0.009 km²/yr, t(5) = 2.28, p = 0.072. 27% of 2018 bare ice is debris in 2026, concentrated at the lateral margins.
-4. **Optical offset tracking (Part D):** the clean, crevassed tongue flows at ~30 m/yr; flow drops to ~5–15 m/yr across the clean-ice/debris boundary and fades into the noise (≤ 3–4 m/yr) at ≈ 3.95 km along the centerline. The debris lobe below that is stagnant within noise (< ~0.5 m/yr over 7–8 years). A single L_moving_opt number is **not** stable — reported as a profile, not a rate.
+4. **Optical offset tracking (Part D):** the clean, crevassed tongue flows at ~30 m/yr; flow drops to ~4–16 m/yr (pair-dependent) across the clean-ice/debris boundary and fades into the noise (≤ 3–4 m/yr) at ≈ 3.95 km along the centerline. The debris lobe below that is stagnant within noise (< ~0.5 m/yr over 7–8 years). A single L_moving_opt number is **not** stable — reported as a profile, not a rate.
 5. **Surface darkening / debris expansion, consistent with thinning.** External check (Hugonnet 2021, RGI60-13.11414): glacier-wide dh/dt 2000–2019 = -0.09 ± 0.17 m/yr — not distinguishable from zero; neither confirms nor rules out tongue thinning.
-6. **Sentinel-1 B-pilot:** see Part B section (verdict per the B4 stop rule).
+6. **Sentinel-1 B-pilot (DES 107, 2026-08-06 → 08-18):** coherence bare ice 0.33, debris lobe 0.61, valley rock 0.47 → b − c = 0.13 < 0.15 → stop rule triggered, Part B closed. The lobe is as coherent as stable ground, consistent with Part D.
 
 ## Part C — base-year check (September 2017)
 
@@ -107,13 +107,31 @@ Method (parameters): NCC 32×32 px windows, 8 px step, ±16 px search, parabolic
 ![profile](out/offset_win16_annual/offset_profile.png)
 
 - Zone values are medians of |d| along the centerline, ×10 m, per year. Noise floor = stable-rock median |d| ≈ 1–3 m/yr.
-- Clean-ice edge L_clean_edge_m: 3577.4 m (2018), 3462.1 m (2026). Motion continues 5–15 m/yr for ~300–400 m below it, under debris, and reaches the noise floor at ≈ 3.95 km.
+- Clean-ice edge L_clean_edge_m: 3577.4 m (2018), 3462.1 m (2026). Motion continues at ~4–16 m/yr (pair-dependent, 1.5–5× the noise floor) for ~300–400 m below it, under debris, and reaches the noise floor at ≈ 3.95 km.
 - **Interpretation (strict):** where it moves → ice under debris; where it does not → dead moraine or stagnant (dead) ice. The ≈ 3.95 km point is the limit of *active* ice, not necessarily the terminus — dead ice is still ice.
 - **Why no single L_moving_opt rate:** the threshold-based end point jumps between 3.1 and 3.6 km depending on pair, threshold (parameter) and how rejected windows are treated; with 3 annual pairs it cannot carry a trend. Use the velocity profile.
 - L_moving_opt vs L_clean_edge: the clean-ice edge is a surface-albedo boundary (bare ice vs debris); active flow extends ≈ 350–450 m further under the debris. They measure different things.
 
 ## Part B-pilot — Sentinel-1 coherence, one pair (DES 107)
 
+Pair 2026-08-06 → 2026-08-18 (12 days), coherence with 5×1 looks, resampled to the S2 grid.
+
+| zone | pixels | median | IQR |
+|---|---|---|---|
+| a_bare_ice_polygon | 5517 | 0.332 | 0.281–0.387 |
+| b_debris_lobe | 6004 | 0.606 | 0.436–0.728 |
+| c_valley_rock | 90493 | 0.472 | 0.356–0.645 |
+
+b − c = 0.134, b − a = 0.274. Rule (parameters, read as absolute contrasts): |b−c| ≥ 0.15 and |b−a| ≥ 0.1 (parameters).
+
+![coherence](out/s1_pilot_2026-08-06_2026-08-18_coherence.png)
+
+**Verdict: 12-day C-band coherence does not separate debris-covered ice from ice-free moraine on a near-stagnant tongue; not pursued.** This is a result, not a failure.
+
+- Stop rule triggered by b − c = 0.134 < 0.15. The lobe is *more* coherent than the valley walls (rock coherence is pulled down by steep, foreshortened slopes and by the 5×1-look estimator floor ≈ 0.3), i.e. the lobe behaves like stable ground. That agrees with Part D (no measurable motion below ≈ 3.95 km) — stagnant debris-covered ice and ice-free moraine look the same to 12-day coherence.
+- Bare ice in the polygon is clearly decorrelated (median 0.33) — the active, melting tongue is visible; the method fails only at the boundary that matters (dead ice vs moraine).
+- Processing: CDSE OData (SH OAuth token accepted for download), IW3 VV only (2 × 1.35 GB), POEORB from ESA STEP, Copernicus GLO-30 + EGM2008 undulation −37.2 m → WGS84, ISCE2 2.6.5 topsApp (no ESD, no unwrapping), geocoded and resampled to the S2 grid; ≈ 5 min ISCE time. Logs: `aksay/data/s1_pilot/`.
+- The 9-year S1 series was **not** downloaded (brief B5).
 
 ## Frames
 
