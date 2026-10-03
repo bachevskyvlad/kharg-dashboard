@@ -18,8 +18,8 @@ config = SHConfig()
 # Use env var if non-empty, otherwise fall back to the hardcoded credentials.
 # os.environ.get(key, default) doesn't help when the env var is set to ""
 # (GitHub Actions sets it to "" if the secret is missing), hence the `or`.
-config.sh_client_id     = os.environ.get("CLIENT_ID")     or "sh-0f08bb88-cde8-4e6e-8eb9-1006acfe6be9"
-config.sh_client_secret = os.environ.get("CLIENT_SECRET") or "erkNtZDw4z36UB0Xm7BrzcYixzaUGeW0"
+config.sh_client_id     = os.environ.get("CLIENT_ID")     or "sh-5215639c-a2e5-47db-8d46-7e28a3150cde"
+config.sh_client_secret = os.environ.get("CLIENT_SECRET") or "UyosmDOgQ4ejiHbrWpDCT0WzLYgvhfloa3VgOLTtLd7c050tvejLgIVCcXfr3eLXT2JWqfrqjQhBgewF3g6nGF"
 config.sh_token_url     = "https://identity.dataspace.copernicus.eu/auth/realms/CDSE/protocol/openid-connect/token"
 config.sh_base_url      = "https://sh.dataspace.copernicus.eu"
 

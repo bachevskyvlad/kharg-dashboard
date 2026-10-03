@@ -26,8 +26,8 @@ from datetime import datetime, timedelta, date
 from io import BytesIO
 
 # ── SH credentials ────────────────────────────────────────────────────────────
-SH_CLIENT_ID     = os.environ.get("CLIENT_ID")     or "sh-0f08bb88-cde8-4e6e-8eb9-1006acfe6be9"
-SH_CLIENT_SECRET = os.environ.get("CLIENT_SECRET") or "erkNtZDw4z36UB0Xm7BrzcYixzaUGeW0"
+SH_CLIENT_ID     = os.environ.get("CLIENT_ID")     or "sh-5215639c-a2e5-47db-8d46-7e28a3150cde"
+SH_CLIENT_SECRET = os.environ.get("CLIENT_SECRET") or "UyosmDOgQ4ejiHbrWpDCT0WzLYgvhfloa3VgOLTtLd7c050tvejLgIVCcXfr3eLXT2JWqfrqjQhBgewF3g6nGF"
 SH_TOKEN_URL     = "https://identity.dataspace.copernicus.eu/auth/realms/CDSE/protocol/openid-connect/token"
 SH_CATALOG_URL   = "https://sh.dataspace.copernicus.eu/api/v1/catalog/1.0.0/search"
 SH_PROCESS_URL   = "https://sh.dataspace.copernicus.eu/api/v1/process"
