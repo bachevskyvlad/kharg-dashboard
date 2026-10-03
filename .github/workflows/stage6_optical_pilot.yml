@@ -21,6 +21,19 @@ jobs:
       - name: Install dependencies
         run: pip install supabase pandas numpy requests Pillow scipy sentinelhub -q
 
+      - name: Check secrets
+        env:
+          CLIENT_ID:     ${{ secrets.CLIENT_ID }}
+          CLIENT_SECRET: ${{ secrets.CLIENT_SECRET }}
+          SUPABASE_URL:  ${{ secrets.SUPABASE_URL }}
+          SUPABASE_KEY:  ${{ secrets.SUPABASE_KEY }}
+        run: |
+          echo "CLIENT_ID set:     $([ -n "$CLIENT_ID" ]     && echo YES || echo MISSING)"
+          echo "CLIENT_SECRET set: $([ -n "$CLIENT_SECRET" ] && echo YES || echo MISSING)"
+          echo "SUPABASE_URL set:  $([ -n "$SUPABASE_URL" ]  && echo YES || echo MISSING)"
+          echo "SUPABASE_KEY set:  $([ -n "$SUPABASE_KEY" ]  && echo YES || echo MISSING)"
+          [ -n "$CLIENT_ID" ] && [ -n "$CLIENT_SECRET" ] || (echo "FATAL: SH secrets missing" && exit 1)
+
       - name: Run optical pilot pipeline
         env:
           CLIENT_ID:     ${{ secrets.CLIENT_ID }}
