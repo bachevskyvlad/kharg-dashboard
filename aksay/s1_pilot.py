@@ -166,7 +166,7 @@ def dem():
     → WGS84 ellipsoid heights, written as an ISCE DEM."""
     from osgeo import gdal
     from pyproj import Transformer
-    import isceobj
+    import isce, isceobj                               # conda isce2: `import isce` puts isceobj on the path
     tile = ("/vsicurl/https://copernicus-dem-30m.s3.amazonaws.com/Copernicus_DSM_COG_10_N42_00_E074_00_DEM/"
             "Copernicus_DSM_COG_10_N42_00_E074_00_DEM.tif")
     s, n, w, e = ROI[0] - 0.05, ROI[1] + 0.05, ROI[2] - 0.05, ROI[3] + 0.05
@@ -221,7 +221,10 @@ def isce(ref_safe, sec_safe, swath, orbit_dir, demfn):
   </component>
 </topsApp>"""
     open(os.path.join(wd, "topsApp.xml"), "w").write(xml)
-    p = subprocess.run(["topsApp.py", "topsApp.xml", "--end=geocode"], cwd=wd, capture_output=True, text=True)
+    import isce
+    app = shutil.which("topsApp.py") or os.path.join(os.path.dirname(isce.__file__), "applications", "topsApp.py")
+    log("isce", app=app, isce_version=getattr(isce, "__version__", "?"))
+    p = subprocess.run([sys.executable, app, "topsApp.xml", "--end=geocode"], cwd=wd, capture_output=True, text=True)
     open(os.path.join(OUT, "topsApp_stdout.txt"), "w").write(p.stdout[-200000:])
     open(os.path.join(OUT, "topsApp_stderr.txt"), "w").write(p.stderr[-200000:])
     if p.returncode != 0: raise RuntimeError(f"topsApp rc={p.returncode}: {p.stderr[-1500:]}")

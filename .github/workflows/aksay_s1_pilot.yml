@@ -18,7 +18,7 @@ jobs:
       matrix:
         pair:
           - "2026-08-06 2026-08-18"   # brief: DES 107, August 2026 (Sentinel-1D)
-          - "2025-08-04 2025-08-16"   # fallback if ISCE2 does not read S1D (Sentinel-1A)
+          # fallback "2025-08-04 2025-08-16" (S1A) not needed: S1D files and orbits resolve
     defaults:
       run:
         shell: bash -el {0}
