@@ -1,4 +1,4 @@
-=== dedup_terminal_observations [DRY-RUN] terminal=al_flaw ===
+=== dedup_terminal_observations [LIVE] terminal=al_flaw ===
 
 Fetching all rows…
   fetched offset=0 → 1000 rows (total so far: 1000)
