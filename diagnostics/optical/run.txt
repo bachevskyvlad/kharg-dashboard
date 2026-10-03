@@ -1,0 +1,145 @@
+RT WL: 45  JW WL: 9  YB WL: 8
+=== Stage 6 Optical Pilot ===
+  Resolution: 5.0m/px  MaxCloud: 20%  ShadowAngle: 120°  DarkPctile: p30
+
+=== STAGE 0 — S2 Catalog + Tile Fetch ===
+
+  [kharg/main] bbox 50.299,29.214 → 50.325,29.246  (2.5×3.5 km)
+    querying catalog 2022-01-01 → 2026-10-03…
+    sun position: ephemeris fallback for 100 scenes (s2:mean_solar_* absent from catalog)
+    sun position: ephemeris fallback for 55 scenes (s2:mean_solar_* absent from catalog)
+    154 unique dates → /home/runner/work/kharg-dashboard/kharg-dashboard/diagnostics/optical/catalog_kharg_main.csv
+    fetching 30 tiles @ 5.0m/px…
+    fetched 30 new tiles (existing skipped)
+  kharg: 30 scenes with tiles
+
+  [ras_tanura/south] bbox 50.140,26.630 → 50.168,26.659  (2.8×3.2 km)
+    querying catalog 2022-01-01 → 2026-10-03…
+    sun position: ephemeris fallback for 100 scenes (s2:mean_solar_* absent from catalog)
+    sun position: ephemeris fallback for 100 scenes (s2:mean_solar_* absent from catalog)
+    sun position: ephemeris fallback for 100 scenes (s2:mean_solar_* absent from catalog)
+    sun position: ephemeris fallback for 100 scenes (s2:mean_solar_* absent from catalog)
+    sun position: ephemeris fallback for 98 scenes (s2:mean_solar_* absent from catalog)
+    476 unique dates → /home/runner/work/kharg-dashboard/kharg-dashboard/diagnostics/optical/catalog_ras_tanura_south.csv
+    fetching 80 tiles @ 5.0m/px…
+    fetched 80 new tiles (existing skipped)
+
+  [ras_tanura/north] bbox 50.107,26.680 → 50.127,26.697  (2.0×1.9 km)
+    querying catalog 2022-01-01 → 2026-10-03…
+    sun position: ephemeris fallback for 100 scenes (s2:mean_solar_* absent from catalog)
+    sun position: ephemeris fallback for 100 scenes (s2:mean_solar_* absent from catalog)
+    sun position: ephemeris fallback for 100 scenes (s2:mean_solar_* absent from catalog)
+    sun position: ephemeris fallback for 100 scenes (s2:mean_solar_* absent from catalog)
+    sun position: ephemeris fallback for 99 scenes (s2:mean_solar_* absent from catalog)
+    476 unique dates → /home/runner/work/kharg-dashboard/kharg-dashboard/diagnostics/optical/catalog_ras_tanura_north.csv
+    fetching 80 tiles @ 5.0m/px…
+    fetched 80 new tiles (existing skipped)
+  ras_tanura: 160 scenes with tiles
+
+  [juwaymah/main] bbox 49.975,26.808 → 50.000,26.833  (2.6×2.8 km)
+    querying catalog 2022-01-01 → 2026-10-03…
+    sun position: ephemeris fallback for 100 scenes (s2:mean_solar_* absent from catalog)
+    sun position: ephemeris fallback for 100 scenes (s2:mean_solar_* absent from catalog)
+    sun position: ephemeris fallback for 100 scenes (s2:mean_solar_* absent from catalog)
+    sun position: ephemeris fallback for 100 scenes (s2:mean_solar_* absent from catalog)
+    sun position: ephemeris fallback for 100 scenes (s2:mean_solar_* absent from catalog)
+    sun position: ephemeris fallback for 100 scenes (s2:mean_solar_* absent from catalog)
+    sun position: ephemeris fallback for 100 scenes (s2:mean_solar_* absent from catalog)
+    sun position: ephemeris fallback for 100 scenes (s2:mean_solar_* absent from catalog)
+    sun position: ephemeris fallback for 100 scenes (s2:mean_solar_* absent from catalog)
+    sun position: ephemeris fallback for 100 scenes (s2:mean_solar_* absent from catalog)
+    sun position: ephemeris fallback for 61 scenes (s2:mean_solar_* absent from catalog)
+    550 unique dates → /home/runner/work/kharg-dashboard/kharg-dashboard/diagnostics/optical/catalog_juwaymah_main.csv
+    fetching 80 tiles @ 5.0m/px…
+    fetched 80 new tiles (existing skipped)
+  juwaymah: 80 scenes with tiles
+
+  [yanbu/main] bbox 38.236,23.952 → 38.262,23.978  (2.6×3.0 km)
+    querying catalog 2022-01-01 → 2026-10-03…
+    sun position: ephemeris fallback for 100 scenes (s2:mean_solar_* absent from catalog)
+    sun position: ephemeris fallback for 100 scenes (s2:mean_solar_* absent from catalog)
+    sun position: ephemeris fallback for 84 scenes (s2:mean_solar_* absent from catalog)
+    282 unique dates → /home/runner/work/kharg-dashboard/kharg-dashboard/diagnostics/optical/catalog_yanbu_main.csv
+    fetching 80 tiles @ 5.0m/px…
+    fetched 80 new tiles (existing skipped)
+  yanbu: 80 scenes with tiles
+
+=== STAGE 1 — Shadow Metrics ===
+
+  [kharg] 30 scenes
+  Early check OK: valid=100.0% after 5 scenes
+
+  [ras_tanura] 160 scenes
+
+  [juwaymah] 80 scenes
+
+  [yanbu] 80 scenes
+
+  Saved 9170 rows → /home/runner/work/kharg-dashboard/kharg-dashboard/diagnostics/optical/shadow_metrics.csv
+  Valid measurements: 9170 / 9170
+
+=== STAGE 2 — Validation Gate ===
+
+  [Gate 1 — Kharg repères]
+    n scenes used:   30
+    full tanks (t60_1, t55_31, t40_33):  median shadow_frac = 0.1333
+    empty tanks (t55_5, t55_10): median shadow_frac = 0.0095
+    gap (empty - full) = -0.1239  → FAIL
+
+  [Gate 2 — RT cross-sensor corr (S2 shadow_frac vs S1 db_mean)]
+    S1 rows loaded: 1000 for 20 tanks
+    no tanks with ≥5 paired observations
+
+  GATE OVERALL: FAIL  (gate1=FAIL, gate2=FAIL)
+
+  Gate FAIL → pipeline stops at Stage 2 per ТЗ.
+  S2 shadow method verdict: NOT VALIDATED at 10m→5m/px on this tank geometry.
+
+=== STAGE 2b — PNG Crop Examples ===
+  saved ras_tanura_full_rt_12_2026-02-22.png
+  saved ras_tanura_empty_rt_58_2026-01-06.png
+  saved juwaymah_full_jw_10_2025-12-14.png
+  saved juwaymah_empty_jw_7_2025-09-17.png
+  saved yanbu_full_yb_3_2024-03-14.png
+  saved yanbu_empty_yb_0_2024-04-03.png
+
+Gate FAILED — pipeline stops here per ТЗ.
+# OPTICAL_PILOT — S2 Shadow Fill Method
+
+Generated: 2026-10-03 14:16 UTC
+
+---
+
+## Summary
+
+- **Gate**: FAIL
+- **Verdict**: S2 10m/5m-px shadow method **NOT VALIDATED** on this tank geometry (gap=-0.124, cross-sensor median_corr=NaN)
+
+---
+
+## Stage 2 Gate Numbers
+
+### Gate 1 — Kharg Repères
+
+| Group | Tanks | Median shadow_frac |
+|-------|-------|--------------------|
+| Full  | t60_1, t55_31, t40_33  | 0.1333 |
+| Empty | t55_5, t55_10 | 0.0095 |
+
+Gap (empty − full) = **-0.1239**  → **FAIL**
+
+Scenes used (Kharg): 30
+
+### Gate 2 — RT Cross-Sensor Correlation
+
+| Metric | Value |
+|--------|-------|
+| Median corr(shadow_frac_S2, db_mean_S1) | NaN |
+| Total paired obs (≤3d) | 0 |
+| Tanks with ≥5 pairs | 0 |
+
+Threshold ≥ 0.40  → **FAIL**
+
+### Overall Gate: **FAIL — pipeline closed**
+
+**Reason:** S
