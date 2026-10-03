@@ -106,7 +106,20 @@ Selection, rendering and flags as in rev1/rev2: L2A Aug–Sep, in-bbox SCL scori
 
 ## Part B — Sentinel-1 coherence terminus
 
-Not run in rev3 — see the status note in the chat / next revision. Requires SLC download (GB per scene) and SNAP/ISCE2 processing outside the Process API.
+**B1 done (feasibility probe, `aksay/s1_probe.py`, `aksay/data/s1_probe.json`, `aksay/out/s1_geometry.png`). B2–B5 not run.**
+
+![s1 geometry](out/s1_geometry.png)
+
+| orbit | incidence | tongue layover / shadow | snout zone layover / shadow | August pairs 2017–2026 |
+|---|---|---|---|---|
+| DES 5 | 33° | 3.5 % / 0.7 % | 6.5 % / 0 % | 10/10 (12 d; 6 d only 2025) |
+| **DES 107** | **41°** | **1.7 % / 2.2 %** | **0.6 % / 0 %** | **9/10 (12 d; no pair 2023)** |
+| ASC 129 | 31° | 5.4 % / 0 % | 0 % / 0 % | 10/10 (12 d) |
+| ASC 27 | 41° | 4.2 % / 0.4 % | 0 % / 0.2 % | 10/10 (12 d) |
+
+- Layover/shadow from Copernicus DEM GLO-30 + orbit heading + footprint-derived incidence. The tongue is **not** in layover/shadow on any orbit; ascending orbits put a layover band on the west valley wall right along the polygon edge. **Chosen: DES 107** (cleanest tongue and snout); 2023 has no August pair on it → 9 years.
+- **6-day pairs do not exist** over Ak-Sai for 2017–2024: Sentinel-1B never acquired IW here, Sentinel-1C only from 2025, 2026 is Sentinel-1D only. The series is therefore uniformly **12-day** (the fallback in the brief) — consistent across years, but 12-day August coherence on melting ice and on wet debris-covered dead ice will be low, so the moving/stagnant contrast may be weak.
+- Cost of B2: each IW SLC ≈ 7.8 GB; one sub-swath VV TIFF + annotation ≈ 1.3 GB via CDSE OData Nodes. 18 scenes ≈ 25 GB transfer; ISCE2 `topsApp` (coreg → interferogram → coherence, 5×1 looks, geocode to the S2 grid) ≈ 20–40 min per pair as a GitHub Actions matrix job. Engineering + debugging without local network: several Actions iterations.
 
 ## Files
 
