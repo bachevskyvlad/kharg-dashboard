@@ -1,0 +1,86 @@
+{
+ "pair": [
+  "2026-08-06",
+  "2026-08-18"
+ ],
+ "relorb": 107,
+ "stages": {
+  "auth": {
+   "ok": true,
+   "seconds": 1
+  },
+  "find": {
+   "2026-08-06": {
+    "id": "6c485ea1-63e0-489f-8fc4-dd1ad133aab8",
+    "name": "S1D_IW_SLC__1SDV_20260806T010424_20260806T010451_003998_00743C_A208.SAFE",
+    "candidates": [
+     "S1D_IW_SLC__1SDV_20260806T010424_20260806T010451_003998_00743C_A208.SAFE",
+     "S1D_IW_SLC__1SDV_20260806T010359_20260806T010426_003998_00743C_FA94.SAFE"
+    ],
+    "roi_cover": 1.0
+   },
+   "ok": true,
+   "seconds": 1,
+   "2026-08-18": {
+    "id": "39dc4b27-7225-4622-bbe8-e7f04c08b8f3",
+    "name": "S1D_IW_SLC__1SDV_20260818T010424_20260818T010451_004173_007A3F_52FC.SAFE",
+    "candidates": [
+     "S1D_IW_SLC__1SDV_20260818T010400_20260818T010427_004173_007A3F_BF4D.SAFE",
+     "S1D_IW_SLC__1SDV_20260818T010424_20260818T010451_004173_007A3F_52FC.SAFE"
+    ],
+    "roi_cover": 1.0
+   }
+  },
+  "download_test": {
+   "safe_root": [
+    "support",
+    "S1D_IW_SLC__1SDV_20260806T010424_20260806T010451_003998_00743C_A208.SAFE-report-20260806T031623.pdf",
+    "annotation",
+    "manifest.safe",
+    "measurement",
+    "preview"
+   ],
+   "ok": true,
+   "seconds": 1
+  },
+  "fetch": {
+   "S1D_IW_SLC__1SDV_20260806T010424_20260806T010451_003998_00743C_A208.SAFE": {
+    "swath": 3,
+    "measurement": [
+     "s1d-iw3-slc-vv-20260806t010425-20260806t010450-003998-00743c-006.tiff"
+    ],
+    "mb": 1351
+   },
+   "ok": true,
+   "seconds": 109,
+   "S1D_IW_SLC__1SDV_20260818T010424_20260818T010451_004173_007A3F_52FC.SAFE": {
+    "swath": 3,
+    "measurement": [
+     "s1d-iw3-slc-vv-20260818t010425-20260818t010451-004173-007a3f-006.tiff"
+    ],
+    "mb": 1351
+   }
+  },
+  "orbit": {
+   "files": [
+    {
+     "scene": "S1D_IW_SLC__1SDV_20260806T010424_20260806T010451_003998_00743C_A208.SAFE",
+     "orbit": "S1D_OPER_AUX_POEORB_OPOD_20260826T071421_V20260805T225942_20260807T005942.EOF.zip",
+     "kind": "POEORB"
+    },
+    {
+     "scene": "S1D_IW_SLC__1SDV_20260818T010424_20260818T010451_004173_007A3F_52FC.SAFE",
+     "orbit": "S1D_OPER_AUX_POEORB_OPOD_20260907T071442_V20260817T225942_20260819T005942.EOF.zip",
+     "kind": "POEORB"
+    }
+   ],
+   "ok": true,
+   "seconds": 3
+  },
+  "dem": {
+   "ok": false,
+   "error": "ModuleNotFoundError(\"No module named 'isceobj'\")",
+   "trace": "Traceback (most recent call last):\n  File \"/home/runner/work/kharg-dashboard/kharg-dashboard/aksay/s1_pilot.py\", line 46, in run\n    r = fn(*a, **k); log(name, ok=True, seconds=round(time.time() - t0)); return r\n        ^^^^^^^^^^^\n  File \"/home/runner/work/kharg-dashboard/kharg-dashboard/aksay/s1_pilot.py\", line 169, in dem\n    import isceobj\nModuleNotFoundError: No module named 'isceobj'\n"
+  }
+ }
+}
