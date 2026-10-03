@@ -716,24 +716,34 @@ def _load_s1_for_rt(top_n: int = 20) -> pd.DataFrame:
     """
     Pull S1 terminal_observations for top_n RT WL tanks (DESC) from Supabase.
     Returns: tank_id, date, db_mean
+    Paginates to bypass the 1000-row server cap.
     """
     tanks_quoted = ",".join(f'"{t}"' for t in RT_WL_TANKS[:top_n])
-    url = (f"{SB_URL}/rest/v1/terminal_observations"
-           f"?terminal_id=eq.ras_tanura"
-           f"&orbit_direction=eq.DESC"
-           f"&tank_id=in.({tanks_quoted})"
-           f"&select=tank_id,date,db_mean"
-           f"&order=date.asc"
-           f"&limit=100000")
-    r = requests.get(url, headers={"apikey": SB_KEY, "Authorization": f"Bearer {SB_KEY}"},
-                     timeout=60)
-    r.raise_for_status()
-    df = pd.DataFrame(r.json())
+    hdrs = {"apikey": SB_KEY, "Authorization": f"Bearer {SB_KEY}"}
+    rows, offset = [], 0
+    while True:
+        url = (f"{SB_URL}/rest/v1/terminal_observations"
+               f"?terminal_id=eq.ras_tanura"
+               f"&orbit_direction=eq.DESC"
+               f"&tank_id=in.({tanks_quoted})"
+               f"&select=tank_id,date,db_mean"
+               f"&order=date.asc"
+               f"&offset={offset}&limit=1000")
+        r = requests.get(url, headers=hdrs, timeout=60)
+        r.raise_for_status()
+        batch = r.json()
+        rows.extend(batch)
+        if len(batch) < 1000:
+            break
+        offset += 1000
+    df = pd.DataFrame(rows)
     if df.empty:
         return df
     df["date"] = pd.to_datetime(df["date"])
     DB_FLOOR = -5.0
     df["db_mean"] = df["db_mean"].clip(lower=DB_FLOOR)
+    print(f"      _load_s1_for_rt: {len(df)} rows, {df['tank_id'].nunique()} tanks, "
+          f"dates {df['date'].min().date()}–{df['date'].max().date()}")
     return df
 
 
@@ -908,6 +918,35 @@ def stage2b_crop_pngs(shadow_df: pd.DataFrame, all_scenes: dict) -> list[str]:
                 "sun_elv":  float(row.iloc[0]["sun_elevation"]),
                 "shadow_frac": float(row.iloc[0]["shadow_frac"]),
             })
+
+    # Add Kharg t55_5 crops (3 scenes: low/mid/high shadow_frac) for sector audit
+    kharg_df = shadow_df[
+        (shadow_df["terminal"] == "kharg") & (shadow_df["tank_id"] == "t55_5")
+    ].copy()
+    if not kharg_df.empty:
+        # pick 3 scenes spanning the shadow_frac range
+        kharg_valid = kharg_df[kharg_df["valid"] == True].sort_values("shadow_frac")
+        picks = []
+        if len(kharg_valid) >= 3:
+            picks = [kharg_valid.iloc[0], kharg_valid.iloc[len(kharg_valid)//2],
+                     kharg_valid.iloc[-1]]
+        elif len(kharg_valid) > 0:
+            picks = [kharg_valid.iloc[0]]
+        for row in picks:
+            examples.insert(0, {
+                "terminal":    "kharg",
+                "role":        "t55_5_audit",
+                "tank_id":     "t55_5",
+                "date":        str(row["date"])[:10],
+                "sun_az":      float(row["sun_azimuth"]),
+                "sun_elv":     float(row["sun_elevation"]),
+                "shadow_frac": float(row["shadow_frac"]),
+            })
+        print(f"\n  t55_5 Kharg scenes for sector audit:")
+        for row in kharg_valid.itertuples():
+            print(f"    {row.date}  sun_az={row.sun_azimuth:.1f}°  "
+                  f"sun_elv={row.sun_elevation:.1f}°  sf={row.shadow_frac:.4f}  "
+                  f"sector_px={row.sector_px}")
 
     png_paths = []
     crop_dir  = OUT_DIR / "crops"
