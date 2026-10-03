@@ -1,0 +1,31 @@
+name: Ak-Sai — S1 feasibility probe
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [claude/pensive-brahmagupta-0lzzag]
+    paths: [aksay/s1_probe.py, .github/workflows/aksay_s1_probe.yml]
+
+permissions:
+  contents: write
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: pip install requests numpy Pillow tifffile imagecodecs -q
+      - run: python aksay/s1_probe.py
+      - name: Commit outputs
+        if: always()
+        run: |
+          git config user.email "actions@github.com"
+          git config user.name "GitHub Actions"
+          git add aksay/data/s1_probe.json aksay/out/s1_geometry.png || true
+          git diff --cached --quiet && echo "No new files" || git commit -m "ci: aksay s1 probe [skip ci]"
+          git pull --rebase origin ${{ github.ref_name }} || true
+          git push origin HEAD:${{ github.ref_name }} || true
