@@ -1,0 +1,93 @@
+{
+ "_note": "FROZEN after first commit. Ak-Sai glacier (Ala-Archa). Centerline: top of accumulation basin -> down-flow axis -> point below every year's front. Drawn on fetch grid (10 m) using earliest frames (2016; axis cross-checked on 2017 because 2016 has fresh snow). Do not edit \u2014 new geometry = new file + version bump.",
+ "version": 1,
+ "crop": [
+  74.520405,
+  42.496937,
+  74.567838,
+  42.54018
+ ],
+ "centerline": [
+  [
+   74.547223,
+   42.499144
+  ],
+  [
+   74.544791,
+   42.504099
+  ],
+  [
+   74.539926,
+   42.510135
+  ],
+  [
+   74.536642,
+   42.514279
+  ],
+  [
+   74.534209,
+   42.519144
+  ],
+  [
+   74.532993,
+   42.523288
+  ],
+  [
+   74.531777,
+   42.528153
+  ],
+  [
+   74.530196,
+   42.532297
+  ],
+  [
+   74.527764,
+   42.536532
+  ]
+ ],
+ "centerline_px_fetchgrid": [
+  [
+   470,
+   675
+  ],
+  [
+   450,
+   620
+  ],
+  [
+   410,
+   553
+  ],
+  [
+   383,
+   507
+  ],
+  [
+   363,
+   453
+  ],
+  [
+   353,
+   407
+  ],
+  [
+   343,
+   353
+  ],
+  [
+   330,
+   307
+  ],
+  [
+   310,
+   260
+  ]
+ ],
+ "transect_dist_m": [
+  1000,
+  1600,
+  2200,
+  2800
+ ],
+ "transect_len_m": 1200
+}
