@@ -28,15 +28,16 @@ jobs:
           SUPABASE_URL:  ${{ secrets.SUPABASE_URL }}
           SUPABASE_KEY:  ${{ secrets.SUPABASE_KEY }}
         run: |
+          mkdir -p diagnostics/optical
           cd scripts
-          python stage6_optical_pilot.py
+          python stage6_optical_pilot.py 2>&1 | tee ../diagnostics/optical/run.log
 
       - name: Commit outputs
         if: always()
         run: |
           git config user.email "actions@github.com"
           git config user.name "GitHub Actions"
-          git add diagnostics/optical/ OPTICAL_PILOT.md || true
+          git add diagnostics/optical/ OPTICAL_PILOT.md diagnostics/optical/run.log || true
           git diff --cached --quiet && echo "No new files" || \
             git commit -m "ci: stage6 optical pilot outputs [skip ci]"
           git push origin HEAD:main || true
