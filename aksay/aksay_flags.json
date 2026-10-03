@@ -1,0 +1,6 @@
+{
+ "_note": "Manual fresh-snow flags (rev4, rule C3). Applied on top of the automatic snow-fraction flag. Base year = first non-flagged year.",
+ "fresh_snow": {
+  "2017": "rev4 C3: B08 on common clear tongue pixels 0.217 (2017-09-03) -> 0.310 (2017-09-16) after a 100%-overcast 2017-09-11; no B08>=0.5 area on 09-03. Brightness only after the cloudy spell -> fresh snow."
+ }
+}

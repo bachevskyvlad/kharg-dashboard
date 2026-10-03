@@ -1,17 +1,17 @@
 {
  "b08_snow_default": 0.6,
  "ndsi_threshold": 0.1,
+ "base_year": 2018,
  "fits": {
   "tongue_ice_km2": {
    "clean": {
-    "slope_per_yr": -0.0173,
-    "sigma": 0.0065,
-    "t": -2.64,
-    "df": 6,
-    "p": 0.039,
-    "n": 8,
+    "slope_per_yr": -0.0209,
+    "sigma": 0.008,
+    "t": -2.61,
+    "df": 5,
+    "p": 0.048,
+    "n": 7,
     "years": [
-     2017,
      2018,
      2019,
      2021,
@@ -22,14 +22,13 @@
     ]
    },
    "clean_doy": {
-    "slope_per_yr": -0.0151,
-    "sigma": 0.005,
-    "t": -3.02,
-    "df": 5,
-    "p": 0.029,
-    "n": 8,
+    "slope_per_yr": -0.0208,
+    "sigma": 0.0034,
+    "t": -6.15,
+    "df": 4,
+    "p": 0.0035,
+    "n": 7,
     "years": [
-     2017,
      2018,
      2019,
      2021,
@@ -38,19 +37,18 @@
      2025,
      2026
     ],
-    "doy_per_day": 0.0027,
-    "doy_sigma": 0.0011,
-    "doy_p": 0.063
+    "doy_per_day": 0.0033,
+    "doy_sigma": 0.0007,
+    "doy_p": 0.0082
    },
    "clean_no2021": {
-    "slope_per_yr": -0.0167,
-    "sigma": 0.0038,
-    "t": -4.37,
-    "df": 5,
-    "p": 0.0072,
-    "n": 7,
+    "slope_per_yr": -0.0187,
+    "sigma": 0.0048,
+    "t": -3.9,
+    "df": 4,
+    "p": 0.018,
+    "n": 6,
     "years": [
-     2017,
      2018,
      2019,
      2022,
@@ -60,14 +58,13 @@
     ]
    },
    "clean_doy_no2021": {
-    "slope_per_yr": -0.0159,
-    "sigma": 0.0039,
-    "t": -4.06,
-    "df": 4,
-    "p": 0.015,
-    "n": 7,
+    "slope_per_yr": -0.02,
+    "sigma": 0.0032,
+    "t": -6.25,
+    "df": 3,
+    "p": 0.0083,
+    "n": 6,
     "years": [
-     2017,
      2018,
      2019,
      2022,
@@ -75,21 +72,20 @@
      2025,
      2026
     ],
-    "doy_per_day": 0.0011,
-    "doy_sigma": 0.0012,
-    "doy_p": 0.38
+    "doy_per_day": 0.0024,
+    "doy_sigma": 0.001,
+    "doy_p": 0.088
    }
   },
   "tongue_snow_km2": {
    "clean": {
-    "slope_per_yr": -0.006,
-    "sigma": 0.0036,
-    "t": -1.64,
-    "df": 6,
-    "p": 0.15,
-    "n": 8,
+    "slope_per_yr": -0.0006,
+    "sigma": 0.0016,
+    "t": -0.36,
+    "df": 5,
+    "p": 0.74,
+    "n": 7,
     "years": [
-     2017,
      2018,
      2019,
      2021,
@@ -100,14 +96,13 @@
     ]
    },
    "clean_doy": {
-    "slope_per_yr": -0.0051,
-    "sigma": 0.0035,
-    "t": -1.47,
-    "df": 5,
-    "p": 0.2,
-    "n": 8,
+    "slope_per_yr": -0.0006,
+    "sigma": 0.0012,
+    "t": -0.48,
+    "df": 4,
+    "p": 0.65,
+    "n": 7,
     "years": [
-     2017,
      2018,
      2019,
      2021,
@@ -116,21 +111,20 @@
      2025,
      2026
     ],
-    "doy_per_day": 0.001,
-    "doy_sigma": 0.0008,
-    "doy_p": 0.24
+    "doy_per_day": 0.0005,
+    "doy_sigma": 0.0002,
+    "doy_p": 0.082
    }
   },
   "tongue_debris_km2": {
    "clean": {
-    "slope_per_yr": 0.0232,
-    "sigma": 0.0073,
-    "t": 3.18,
-    "df": 6,
-    "p": 0.019,
-    "n": 8,
+    "slope_per_yr": 0.0215,
+    "sigma": 0.0094,
+    "t": 2.28,
+    "df": 5,
+    "p": 0.072,
+    "n": 7,
     "years": [
-     2017,
      2018,
      2019,
      2021,
@@ -141,14 +135,13 @@
     ]
    },
    "clean_doy": {
-    "slope_per_yr": 0.0202,
-    "sigma": 0.0033,
-    "t": 6.07,
-    "df": 5,
-    "p": 0.0018,
-    "n": 8,
+    "slope_per_yr": 0.0214,
+    "sigma": 0.0042,
+    "t": 5.13,
+    "df": 4,
+    "p": 0.0068,
+    "n": 7,
     "years": [
-     2017,
      2018,
      2019,
      2021,
@@ -157,21 +150,20 @@
      2025,
      2026
     ],
-    "doy_per_day": -0.0037,
-    "doy_sigma": 0.0007,
-    "doy_p": 0.0041
+    "doy_per_day": -0.0039,
+    "doy_sigma": 0.0008,
+    "doy_p": 0.0098
    }
   },
   "tongue_bright_km2": {
    "clean": {
-    "slope_per_yr": -0.0232,
-    "sigma": 0.0073,
-    "t": -3.2,
-    "df": 6,
-    "p": 0.019,
-    "n": 8,
+    "slope_per_yr": -0.0215,
+    "sigma": 0.0094,
+    "t": -2.29,
+    "df": 5,
+    "p": 0.071,
+    "n": 7,
     "years": [
-     2017,
      2018,
      2019,
      2021,
@@ -182,14 +174,13 @@
     ]
    },
    "clean_doy": {
-    "slope_per_yr": -0.0202,
-    "sigma": 0.0033,
-    "t": -6.19,
-    "df": 5,
-    "p": 0.0016,
-    "n": 8,
+    "slope_per_yr": -0.0214,
+    "sigma": 0.0041,
+    "t": -5.23,
+    "df": 4,
+    "p": 0.0064,
+    "n": 7,
     "years": [
-     2017,
      2018,
      2019,
      2021,
@@ -198,21 +189,20 @@
      2025,
      2026
     ],
-    "doy_per_day": 0.0037,
-    "doy_sigma": 0.0007,
-    "doy_p": 0.0038
+    "doy_per_day": 0.0039,
+    "doy_sigma": 0.0008,
+    "doy_p": 0.0093
    }
   },
   "L_clean_edge_m": {
    "clean": {
-    "slope_per_yr": -10.212,
-    "sigma": 3.7574,
-    "t": -2.72,
-    "df": 6,
-    "p": 0.035,
-    "n": 8,
+    "slope_per_yr": -10.6778,
+    "sigma": 4.8802,
+    "t": -2.19,
+    "df": 5,
+    "p": 0.08,
+    "n": 7,
     "years": [
-     2017,
      2018,
      2019,
      2021,
@@ -223,14 +213,13 @@
     ]
    },
    "clean_doy": {
-    "slope_per_yr": -8.8928,
-    "sigma": 2.6932,
-    "t": -3.3,
-    "df": 5,
-    "p": 0.021,
-    "n": 8,
+    "slope_per_yr": -10.6608,
+    "sigma": 3.0785,
+    "t": -3.46,
+    "df": 4,
+    "p": 0.026,
+    "n": 7,
     "years": [
-     2017,
      2018,
      2019,
      2021,
@@ -239,9 +228,9 @@
      2025,
      2026
     ],
-    "doy_per_day": 1.6158,
-    "doy_sigma": 0.6069,
-    "doy_p": 0.045
+    "doy_per_day": 1.8133,
+    "doy_sigma": 0.6196,
+    "doy_p": 0.043
    }
   }
  },
@@ -265,7 +254,7 @@
     {
      "year": 2017,
      "date": "2017-09-16",
-     "snow_flag": 0,
+     "snow_flag": 1,
      "ice": 0.559,
      "snow": 0.248
     },
@@ -334,14 +323,13 @@
     }
    ],
    "ice_clean": {
-    "slope_per_yr": -0.0082,
-    "sigma": 0.0087,
-    "t": -0.94,
-    "df": 6,
-    "p": 0.38,
-    "n": 8,
+    "slope_per_yr": -0.0198,
+    "sigma": 0.0061,
+    "t": -3.24,
+    "df": 5,
+    "p": 0.023,
+    "n": 7,
     "years": [
-     2017,
      2018,
      2019,
      2021,
@@ -352,14 +340,13 @@
     ]
    },
    "ice_clean_doy": {
-    "slope_per_yr": -0.0073,
-    "sigma": 0.0095,
-    "t": -0.77,
-    "df": 5,
-    "p": 0.48,
-    "n": 8,
+    "slope_per_yr": -0.0198,
+    "sigma": 0.0027,
+    "t": -7.27,
+    "df": 4,
+    "p": 0.0019,
+    "n": 7,
     "years": [
-     2017,
      2018,
      2019,
      2021,
@@ -368,19 +355,18 @@
      2025,
      2026
     ],
-    "doy_per_day": 0.0011,
-    "doy_sigma": 0.0021,
-    "doy_p": 0.62
+    "doy_per_day": 0.0025,
+    "doy_sigma": 0.0005,
+    "doy_p": 0.01
    },
    "snow_clean": {
-    "slope_per_yr": -0.0151,
-    "sigma": 0.0091,
-    "t": -1.67,
-    "df": 6,
-    "p": 0.15,
-    "n": 8,
+    "slope_per_yr": -0.0016,
+    "sigma": 0.0039,
+    "t": -0.41,
+    "df": 5,
+    "p": 0.7,
+    "n": 7,
     "years": [
-     2017,
      2018,
      2019,
      2021,
@@ -403,7 +389,7 @@
     {
      "year": 2017,
      "date": "2017-09-16",
-     "snow_flag": 0,
+     "snow_flag": 1,
      "ice": 0.707,
      "snow": 0.099
     },
@@ -472,14 +458,13 @@
     }
    ],
    "ice_clean": {
-    "slope_per_yr": -0.0173,
-    "sigma": 0.0065,
-    "t": -2.64,
-    "df": 6,
-    "p": 0.039,
-    "n": 8,
+    "slope_per_yr": -0.0209,
+    "sigma": 0.008,
+    "t": -2.61,
+    "df": 5,
+    "p": 0.048,
+    "n": 7,
     "years": [
-     2017,
      2018,
      2019,
      2021,
@@ -490,14 +475,13 @@
     ]
    },
    "ice_clean_doy": {
-    "slope_per_yr": -0.0151,
-    "sigma": 0.005,
-    "t": -3.02,
-    "df": 5,
-    "p": 0.029,
-    "n": 8,
+    "slope_per_yr": -0.0208,
+    "sigma": 0.0034,
+    "t": -6.15,
+    "df": 4,
+    "p": 0.0035,
+    "n": 7,
     "years": [
-     2017,
      2018,
      2019,
      2021,
@@ -506,19 +490,18 @@
      2025,
      2026
     ],
-    "doy_per_day": 0.0027,
-    "doy_sigma": 0.0011,
-    "doy_p": 0.063
+    "doy_per_day": 0.0033,
+    "doy_sigma": 0.0007,
+    "doy_p": 0.0082
    },
    "snow_clean": {
-    "slope_per_yr": -0.006,
-    "sigma": 0.0036,
-    "t": -1.64,
-    "df": 6,
-    "p": 0.15,
-    "n": 8,
+    "slope_per_yr": -0.0006,
+    "sigma": 0.0016,
+    "t": -0.36,
+    "df": 5,
+    "p": 0.74,
+    "n": 7,
     "years": [
-     2017,
      2018,
      2019,
      2021,
@@ -541,7 +524,7 @@
     {
      "year": 2017,
      "date": "2017-09-16",
-     "snow_flag": 0,
+     "snow_flag": 1,
      "ice": 0.802,
      "snow": 0.004
     },
@@ -610,14 +593,13 @@
     }
    ],
    "ice_clean": {
-    "slope_per_yr": -0.0229,
-    "sigma": 0.007,
-    "t": -3.26,
-    "df": 6,
-    "p": 0.017,
-    "n": 8,
+    "slope_per_yr": -0.0213,
+    "sigma": 0.0091,
+    "t": -2.35,
+    "df": 5,
+    "p": 0.066,
+    "n": 7,
     "years": [
-     2017,
      2018,
      2019,
      2021,
@@ -628,14 +610,13 @@
     ]
    },
    "ice_clean_doy": {
-    "slope_per_yr": -0.02,
-    "sigma": 0.0032,
-    "t": -6.34,
-    "df": 5,
-    "p": 0.0014,
-    "n": 8,
+    "slope_per_yr": -0.0212,
+    "sigma": 0.0039,
+    "t": -5.39,
+    "df": 4,
+    "p": 0.0057,
+    "n": 7,
     "years": [
-     2017,
      2018,
      2019,
      2021,
@@ -644,19 +625,18 @@
      2025,
      2026
     ],
-    "doy_per_day": 0.0036,
-    "doy_sigma": 0.0007,
-    "doy_p": 0.0038
+    "doy_per_day": 0.0038,
+    "doy_sigma": 0.0008,
+    "doy_p": 0.009
    },
    "snow_clean": {
-    "slope_per_yr": -0.0003,
-    "sigma": 0.0003,
-    "t": -0.84,
-    "df": 6,
-    "p": 0.44,
-    "n": 8,
+    "slope_per_yr": -0.0001,
+    "sigma": 0.0004,
+    "t": -0.32,
+    "df": 5,
+    "p": 0.77,
+    "n": 7,
     "years": [
-     2017,
      2018,
      2019,
      2021,
@@ -670,31 +650,31 @@
  },
  "transitions_km2": {
   "snow (unchanged)": 0.0,
-  "snow→ice": 0.0943,
-  "snow→debris": 0.0045,
-  "ice→snow": 0.0001,
-  "ice (unchanged)": 0.4528,
-  "ice→debris": 0.2546,
-  "debris→snow": 0.0001,
-  "debris→ice": 0.0013,
-  "debris (unchanged)": 0.4812
+  "snow→ice": 0.0004,
+  "snow→debris": 0.001,
+  "ice→snow": 0.0002,
+  "ice (unchanged)": 0.546,
+  "ice→debris": 0.2031,
+  "debris→snow": 0.0,
+  "debris→ice": 0.002,
+  "debris (unchanged)": 0.5362
  },
  "where_ice_to_debris": {
-  "ice2017_px": 7117,
-  "ice_to_debris_px": 2561,
-  "frac_of_2017_ice_lost_to_debris": 0.36,
+  "ice_base_px": 7538,
+  "ice_to_debris_px": 2043,
+  "frac_of_base_ice_lost_to_debris": 0.271,
   "down_glacier_quarter": {
-   "share_of_ice_to_debris": 0.171,
-   "share_of_all_2017_ice": 0.165
+   "share_of_ice_to_debris": 0.181,
+   "share_of_all_base_ice": 0.155
   },
   "lateral_margins_outer20pct": {
-   "share_of_ice_to_debris": 0.628,
-   "share_of_all_2017_ice": 0.423
+   "share_of_ice_to_debris": 0.621,
+   "share_of_all_base_ice": 0.399
   },
   "clumping": {
-   "components": 65,
-   "share_in_components_ge_50px": 0.868,
-   "largest_component_px": 1337
+   "components": 74,
+   "share_in_components_ge_50px": 0.862,
+   "largest_component_px": 359
   }
  }
 }

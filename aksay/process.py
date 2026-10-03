@@ -16,6 +16,7 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 DATA = os.path.join(HERE, "data")
 OUT  = os.path.join(HERE, "out")
 GEOM = os.path.join(HERE, "aksay_geometry.json")
+MANUAL_FLAGS = json.load(open(os.path.join(HERE, "aksay_flags.json")))["fresh_snow"] if os.path.exists(os.path.join(HERE, "aksay_flags.json")) else {}
 TONGUE = os.path.join(HERE, "aksay_tongue_polygon.json")
 
 NDSI_T, NIR_T = 0.4, 0.11       # NDSI snow/ice threshold; NIR>0.11 rejects water (Hall et al.)
@@ -235,7 +236,8 @@ def main():
 
     med = float(np.median([f["snow_bbox_pct_fetch"] for f in fr_rows]))
     for r, f in zip(rows, fr_rows):
-        f["snow_flag"] = r["snow_flag"] = int(f["snow_bbox_pct_fetch"] > SNOW_FLAG_X * med)
+        f["snow_flag"] = r["snow_flag"] = int(f["snow_bbox_pct_fetch"] > SNOW_FLAG_X * med or str(r["year"]) in MANUAL_FLAGS)
+        f["flag_reason"] = "manual (aksay_flags.json)" if str(r["year"]) in MANUAL_FLAGS else ("auto snow fraction" if f["snow_flag"] else "")
     # reference = first clean (not snow-flagged) year
     ref = next(r for r in rows if not r["snow_flag"] and r["L_clean_edge_m"] is not None)
     y0, L0, T0 = ref["year"], ref["L_clean_edge_m"], ref["tongue_ice_km2"]

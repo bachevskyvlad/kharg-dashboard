@@ -2,9 +2,9 @@
 aksay/rev3.py — revision 3 analysis (called from process.py):
   A1  snow / ice / debris classes inside the frozen tongue polygon (B08 split, sweep 0.50/0.60/0.70)
   A3  fits with t-tests: clean years, clean + day-of-year; ice with and without 2021
-  A4  2017→2026 class-transition map + area table + where ice→debris happens
+  A4  base→2026 class-transition map + area table + where ice→debris happens
   A5  slope, σ (standard error), t, df = n − p, two-sided p-value
-Outputs into OUT: aksay_metrics.png, aksay_transition_2017_2026.png, rev3_stats.json
+Outputs into OUT: aksay_metrics.png, aksay_transition_<base>_2026.png, rev3_stats.json
 """
 import os, json, datetime as dt
 import numpy as np
@@ -12,7 +12,7 @@ from scipy import stats, ndimage
 from PIL import Image, ImageDraw, ImageFont
 
 SWEEP = (0.50, 0.60, 0.70)
-BASE_YEAR, END_YEAR = 2017, 2026
+END_YEAR = 2026                    # base year = first clean (non-flagged) year, see run()
 SNOW, ICE, DEBRIS = 1, 2, 3
 NAMES = {SNOW: "snow", ICE: "ice", DEBRIS: "debris"}
 
@@ -58,7 +58,8 @@ def run(rows, P):
     px_km2 = P.PXW * P.PXH / 1e6
     frames = {y: (meta, d) for y, meta, d in P.load_years()}
     clean = [r for r in rows if not r["snow_flag"]]
-    res = {"b08_snow_default": P.B08_SNOW, "ndsi_threshold": ndsi_t}
+    BASE_YEAR = clean[0]["year"]
+    res = {"b08_snow_default": P.B08_SNOW, "ndsi_threshold": ndsi_t, "base_year": BASE_YEAR}
 
     # ── A3/A5 fits ──────────────────────────────────────────────────────────
     fits = {}
@@ -87,7 +88,7 @@ def run(rows, P):
                              "snow_clean": ols(cs, "snow")}
     res["b08_sweep"] = sweep
 
-    # ── A4 transition map 2017 → 2026 ──────────────────────────────────────
+    # ── A4 transition map base → 2026 ──────────────────────────────────────
     cmap = {}
     for y in (BASE_YEAR, END_YEAR):
         meta, d = frames[y]
@@ -101,14 +102,15 @@ def run(rows, P):
             trans[k] = round(float(((a == ca) & (b == cb) & valid).sum() * px_km2), 4)
     res["transitions_km2"] = trans
     res["where_ice_to_debris"] = locate(P, TP, a, b, valid)
-    draw_transition(P, TP, a, b, valid, frames[END_YEAR][1], os.path.join(OUT, "aksay_transition_2017_2026.png"))
+    draw_transition(P, TP, a, b, valid, frames[END_YEAR][1], os.path.join(OUT, f"aksay_transition_{BASE_YEAR}_{END_YEAR}.png"),
+                    f"{BASE_YEAR} → {END_YEAR}")
 
     plot(rows, fits, os.path.join(OUT, "aksay_metrics.png"))
     json.dump(res, open(os.path.join(OUT, "rev3_stats.json"), "w"), indent=1, ensure_ascii=False)
     return res
 
 def locate(P, TP, a, b, valid):
-    """Where does ice(2017) → debris(2026) sit: down-glacier end, lateral margins, or scattered?"""
+    """Where does ice(base) → debris(2026) sit: down-glacier end, lateral margins, or scattered?"""
     g = json.load(open(P.GEOM))
     cl_m, cl_d = P.densify([P.to_m(*q) for q in g["centerline"]])
     ys, xs = np.nonzero(TP)
@@ -125,8 +127,8 @@ def locate(P, TP, a, b, valid):
     ice17 = (a == ICE) & valid
     i2d = ice17 & (b == DEBRIS)
     smin, smax = S[ice17].min(), S[ice17].max()
-    low = S >= smax - 0.25 * (smax - smin)                         # down-glacier quarter of 2017 ice
-    margin = np.zeros(TP.shape, bool)                              # outer 20 % of 2017 ice width per 50 m bin
+    low = S >= smax - 0.25 * (smax - smin)                         # down-glacier quarter of base-year ice
+    margin = np.zeros(TP.shape, bool)                              # outer 20 % of base-year ice width per 50 m bin
     for s0 in np.arange(smin, smax + 50, 50):
         band = ice17 & (S >= s0) & (S < s0 + 50)
         if band.sum() < 5: continue
@@ -139,15 +141,15 @@ def locate(P, TP, a, b, valid):
     n_i2d, n_ice = int(i2d.sum()), int(ice17.sum())
     share = lambda m, base: round(float((m & base).sum() / max(1, base.sum())), 3)
     return {
-        "ice2017_px": n_ice, "ice_to_debris_px": n_i2d,
-        "frac_of_2017_ice_lost_to_debris": round(n_i2d / max(1, n_ice), 3),
-        "down_glacier_quarter": {"share_of_ice_to_debris": share(low, i2d), "share_of_all_2017_ice": share(low, ice17)},
-        "lateral_margins_outer20pct": {"share_of_ice_to_debris": share(margin, i2d), "share_of_all_2017_ice": share(margin, ice17)},
+        "ice_base_px": n_ice, "ice_to_debris_px": n_i2d,
+        "frac_of_base_ice_lost_to_debris": round(n_i2d / max(1, n_ice), 3),
+        "down_glacier_quarter": {"share_of_ice_to_debris": share(low, i2d), "share_of_all_base_ice": share(low, ice17)},
+        "lateral_margins_outer20pct": {"share_of_ice_to_debris": share(margin, i2d), "share_of_all_base_ice": share(margin, ice17)},
         "clumping": {"components": int(nlab), "share_in_components_ge_50px": round(big / max(1, n_i2d), 3),
                      "largest_component_px": int(max(sizes) if nlab else 0)},
     }
 
-def draw_transition(P, TP, a, b, valid, d_end, path):
+def draw_transition(P, TP, a, b, valid, d_end, path, title):
     ys, xs = np.nonzero(TP); y0, y1, x0, x1 = ys.min() - 8, ys.max() + 9, xs.min() - 8, xs.max() + 9
     g = (np.clip((d_end["b04"] + d_end["b03"] + d_end["b02"]) / 3 / 6000, 0, 1) ** 0.7 * 255).astype(np.uint8)
     im = np.stack([g] * 3, -1).astype(float) * 0.55
@@ -166,7 +168,7 @@ def draw_transition(P, TP, a, b, valid, d_end, path):
     dr = ImageDraw.Draw(canvas)
     try: fb = ImageFont.truetype(P.FONT_B, 17); fr = ImageFont.truetype(P.FONT_R, 14)
     except Exception: fb = fr = ImageFont.load_default()
-    dr.text((I.width + 16, 14), "2017 → 2026, tongue polygon", font=fb, fill=(11, 11, 11))
+    dr.text((I.width + 16, 14), f"{title}, tongue polygon", font=fb, fill=(11, 11, 11))
     yy = 48
     labels = [(("ice", "debris"), "ice → debris"), (("ice", "ice"), "ice unchanged"), (("ice", "snow"), "ice → snow"),
               (("snow", "ice"), "snow → ice"), (("snow", "debris"), "snow → debris"), (("debris", "ice"), "debris → ice")]

@@ -1,0 +1,51 @@
+name: Ak-Sai — rev4 B-pilot (S1 coherence, one pair)
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [claude/pensive-brahmagupta-0lzzag]
+    paths: [aksay/s1_pilot.py, .github/workflows/aksay_s1_pilot.yml]
+
+permissions:
+  contents: write
+
+jobs:
+  pilot:
+    runs-on: ubuntu-latest
+    timeout-minutes: 170
+    strategy:
+      fail-fast: false
+      matrix:
+        pair:
+          - "2026-08-06 2026-08-18"   # brief: DES 107, August 2026 (Sentinel-1D)
+          - "2025-08-04 2025-08-16"   # fallback if ISCE2 does not read S1D (Sentinel-1A)
+    defaults:
+      run:
+        shell: bash -el {0}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Free disk
+        run: sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /opt/hostedtoolcache/CodeQL; df -h /
+      - uses: mamba-org/setup-micromamba@v2
+        with:
+          environment-name: isce
+          create-args: >-
+            python=3.11 isce2 gdal pyproj shapely lxml requests numpy
+          init-shell: bash
+      - name: Run pilot
+        env:
+          CLIENT_ID:     ${{ secrets.CLIENT_ID }}
+          CLIENT_SECRET: ${{ secrets.CLIENT_SECRET }}
+          S1_WORK: /mnt/s1work
+        run: |
+          sudo mkdir -p /mnt/s1work && sudo chown $USER /mnt/s1work
+          python -c "import isce; print('isce', isce.__version__)" || true
+          cd aksay && python s1_pilot.py ${{ matrix.pair }}
+      - name: Commit outputs
+        if: always()
+        run: |
+          git config user.email "actions@github.com"
+          git config user.name "GitHub Actions"
+          git add aksay/data/s1_pilot/ || true
+          git diff --cached --quiet && echo "No new files" || git commit -m "ci: aksay s1 pilot ${{ matrix.pair }} [skip ci]"
+          for i in 1 2 3 4; do git pull --rebase origin ${{ github.ref_name }} && git push origin HEAD:${{ github.ref_name }} && break; sleep $((i*7)); done
