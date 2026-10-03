@@ -1,0 +1,39 @@
+name: Glacier S2 snapshot
+
+on:
+  workflow_dispatch:
+    inputs:
+      years:
+        description: "Space-separated years"
+        default: "2025"
+  push:
+    branches: [claude/pensive-brahmagupta-0lzzag]
+    paths: [scripts/glacier_s2.py, .github/workflows/glacier_s2.yml]
+
+permissions:
+  contents: write
+
+jobs:
+  snapshot:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: pip install requests Pillow numpy -q
+      - name: Fetch clearest summer scene
+        env:
+          CLIENT_ID:     ${{ secrets.CLIENT_ID }}
+          CLIENT_SECRET: ${{ secrets.CLIENT_SECRET }}
+        run: python scripts/glacier_s2.py ${{ github.event.inputs.years || '2025' }}
+      - name: Commit outputs
+        if: always()
+        run: |
+          git config user.email "actions@github.com"
+          git config user.name "GitHub Actions"
+          git add diagnostics/glacier/ || true
+          git diff --cached --quiet && echo "No new files" || \
+            git commit -m "ci: glacier S2 snapshot [skip ci]"
+          git push origin HEAD:${{ github.ref_name }} || true
