@@ -12,10 +12,24 @@
     2025,
     2026
    ],
-   "front_m_per_yr": -10.2,
-   "front_se": 3.8,
-   "area_km2_per_yr": -0.128,
-   "area_se": 0.063
+   "tongue_ice_km2": {
+    "per_yr": -0.0232,
+    "se": 0.0073
+   },
+   "L_clean_edge_m": {
+    "per_yr": -10.2131,
+    "se": 3.7563
+   },
+   "area_km2": {
+    "per_yr": -0.1281,
+    "se": 0.0634
+   },
+   "tongue_ice_km2_doy_adj": {
+    "per_yr": -0.0202,
+    "se": 0.0033,
+    "per_day": 0.0037,
+    "per_day_se": 0.0007
+   }
   },
   "all": {
    "n": 11,
@@ -32,10 +46,24 @@
     2025,
     2026
    ],
-   "front_m_per_yr": -9.9,
-   "front_se": 4.8,
-   "area_km2_per_yr": -0.177,
-   "area_se": 0.101
+   "tongue_ice_km2": {
+    "per_yr": -0.0252,
+    "se": 0.0088
+   },
+   "L_clean_edge_m": {
+    "per_yr": -9.895,
+    "se": 4.7746
+   },
+   "area_km2": {
+    "per_yr": -0.1771,
+    "se": 0.1008
+   },
+   "tongue_ice_km2_doy_adj": {
+    "per_yr": -0.0253,
+    "se": 0.0073,
+    "per_day": 0.0032,
+    "per_day_se": 0.0015
+   }
   }
  },
  "snow_median_pct": 23.1,
@@ -94,8 +122,9 @@
    ]
   }
  ],
- "front_ref": {
-  "year": 2016,
-  "L_m": 3577.447978728442
+ "ref": {
+  "year": 2017,
+  "L_clean_edge_m": 3577.4,
+  "tongue_ice_km2": 0.806
  }
 }

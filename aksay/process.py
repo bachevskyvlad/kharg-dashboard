@@ -16,6 +16,7 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 DATA = os.path.join(HERE, "data")
 OUT  = os.path.join(HERE, "out")
 GEOM = os.path.join(HERE, "aksay_geometry.json")
+TONGUE = os.path.join(HERE, "aksay_tongue_polygon.json")
 
 NDSI_T, NIR_T = 0.4, 0.11       # NDSI snow/ice threshold; NIR>0.11 rejects water (Hall et al.)
 FRONT_GAP_M   = 100             # gaps in the ice run along the centerline tolerated up to this
@@ -65,6 +66,15 @@ def crop_slices(g):
 
 def cloud_px(d, coll):
     return (d["scl"] == 255) if coll.endswith("l1c") else np.isin(d["scl"], [3, 8, 9, 10])
+
+def ndsi(d):
+    g, s = d["b03"] / 1e4, d["b11"] / 1e4
+    return (g - s) / (g + s + 1e-6)
+
+def poly_mask(poly_ll):
+    m = Image.new("L", (W, H), 0)
+    ImageDraw.Draw(m).polygon([ll2px(lon, lat) for lon, lat in poly_ll], fill=1)
+    return np.array(m).astype(bool)
 
 def ice_mask(d):
     g, s, n = d["b03"] / 1e4, d["b11"] / 1e4, d["b08"] / 1e4
@@ -180,17 +190,24 @@ def analyse(rows, y0, L0):
         m, d = map(int, r["date"][5:].split("-")); return r["year"] + (m - 1) / 12 + (d - 1) / 365
     fit = {}
     for key, sel in (("clean", lambda r: not r["snow_flag"]), ("all", lambda r: True)):
-        rr = [r for r in rows if sel(r) and r["L_front_m"] is not None]
-        b, eb, _ = linfit([dec(r) for r in rr], [r["L_front_m"] for r in rr])
-        ba, eba, _ = linfit([dec(r) for r in rr], [r["area_km2"] for r in rr])
-        fit[key] = {"n": len(rr), "years": [r["year"] for r in rr],
-                    "front_m_per_yr": round(b, 1), "front_se": round(eb, 1),
-                    "area_km2_per_yr": round(ba, 3), "area_se": round(eba, 3)}
+        rr = [r for r in rows if sel(r) and r["L_clean_edge_m"] is not None]
+        fit[key] = {"n": len(rr), "years": [r["year"] for r in rr]}
+        for col in ("tongue_ice_km2", "L_clean_edge_m", "area_km2"):
+            b, eb, _ = linfit([dec(r) for r in rr], [r[col] for r in rr])
+            fit[key][col] = {"per_yr": round(b, 4), "se": round(eb, 4)}
+        # same, controlling for acquisition day-of-year (late-September frames read brighter/icier)
+        import datetime as dt
+        X = np.array([[1.0, r["year"] - 2021, dt.date.fromisoformat(r["date"]).timetuple().tm_yday - 240] for r in rr])
+        yv = np.array([r["tongue_ice_km2"] for r in rr])
+        cf, *_ = np.linalg.lstsq(X, yv, rcond=None)
+        s2 = ((yv - X @ cf) ** 2).sum() / (len(yv) - 3); se = np.sqrt(np.diag(s2 * np.linalg.inv(X.T @ X)))
+        fit[key]["tongue_ice_km2_doy_adj"] = {"per_yr": round(float(cf[1]), 4), "se": round(float(se[1]), 4),
+                                              "per_day": round(float(cf[2]), 4), "per_day_se": round(float(se[2]), 4)}
     ink, mute, grid, c1 = "#0b0b0b", "#52514e", "#e4e3df", "#2a78d6"
     fig, axs = plt.subplots(2, 1, figsize=(8, 6.4), sharex=True, dpi=130)
     fig.patch.set_facecolor("#fcfcfb")
-    for ax, key, lab, unit in ((axs[0], "L_front_m", "Front position along centerline", "m from top"),
-                               (axs[1], "area_km2", "NDSI snow/ice area in frame", "km²")):
+    for ax, key, lab, unit in ((axs[0], "tongue_ice_km2", "Exposed ice in fixed tongue polygon (NDSI>0.1)", "km²"),
+                               (axs[1], "L_clean_edge_m", "Clean-ice edge along centerline (not the terminus)", "m from top")):
         ax.set_facecolor("#fcfcfb")
         xs = [dec(r) for r in rows if r[key] is not None]; ys = [r[key] for r in rows if r[key] is not None]
         ax.plot(xs, ys, color=c1, lw=2, zorder=2)
@@ -222,6 +239,7 @@ def main():
     lo, hi = common_stretch(frames, sl)
     for sub in ("frames", "frames_ruler"): os.makedirs(os.path.join(OUT, sub), exist_ok=True)
 
+    tg = json.load(open(TONGUE)); TP = poly_mask(tg["polygon"]); px_km2 = PXW * PXH / 1e6
     cl_m, cl_d = densify([to_m(*p) for p in g["centerline"]])
     trans = build_transects(g, cl_m, cl_d)
 
@@ -234,8 +252,12 @@ def main():
         m = ice_mask(d); cl = cloud_px(d, coll); m &= ~cl
         L, _ = front_on_centerline(m, cl_m, cl_d)
         Ws = [width_on_transect(m, t["a"], t["b"]) for t in trans]
-        area = float(m[sl].sum() * PXW * PXH / 1e6)
-        rows.append({"year": y, "date": pk["date"], "L_front_m": None if L is None else round(L, 1),
+        area = float(m[sl].sum() * px_km2)
+        tice = (ndsi(d) > tg["ndsi_threshold"]) & TP & ~cl & (d["mask"] > 0)
+        rows.append({"year": y, "date": pk["date"],
+                     "tongue_ice_km2": round(float(tice.sum() * px_km2), 3),
+                     "tongue_ice_pct": round(100 * float(tice.sum() / TP.sum()), 1),
+                     "L_clean_edge_m": None if L is None else round(L, 1),
                      **{f"W{i+1}_m": round(w, 1) for i, w in enumerate(Ws)},
                      "area_km2": round(area, 3), "err_m": PX_ERR_M,
                      "cloud_bbox_pct": round(100 * float(cl[sl].mean()), 2)})
@@ -248,6 +270,7 @@ def main():
         im.convert("RGB").save(os.path.join(OUT, "frames", f"{y}.png")); clean.append(im)
 
         im2 = base.copy(); dr = ImageDraw.Draw(im2)
+        dr.polygon([P(q) for q in tg["polygon"]], outline=(255, 255, 255))
         dr.line([P(p) for p in g["centerline"]], fill=(255, 214, 0), width=2)
         for t in trans: dr.line([P(t["a"]), P(t["b"])], fill=(80, 200, 255), width=2)
         if L is not None:
@@ -256,13 +279,18 @@ def main():
             dr.ellipse([fx - 2, fy - 2, fx + 2, fy + 2], fill=(255, 40, 40))
         ruler.append((y, im2, L))
 
-    # cumulative retreat vs first valid year (front moves up-glacier → L decreases)
-    L0 = next((L for _, _, L in ruler if L is not None), None)
-    y0 = next((y for y, _, L in ruler if L is not None), None)
+    med = float(np.median([f["snow_bbox_pct_fetch"] for f in fr_rows]))
+    for r, f in zip(rows, fr_rows):
+        f["snow_flag"] = r["snow_flag"] = int(f["snow_bbox_pct_fetch"] > SNOW_FLAG_X * med)
+    # reference = first clean (not snow-flagged) year
+    ref = next(r for r in rows if not r["snow_flag"] and r["L_clean_edge_m"] is not None)
+    y0, L0, T0 = ref["year"], ref["L_clean_edge_m"], ref["tongue_ice_km2"]
+    byyear = {r["year"]: r for r in rows}
     sw, sh = sl[1].stop - sl[1].start, sl[0].stop - sl[0].start
     bar_px = 500 / PXW
     for y, im2, L in ruler:
-        sub = f"front: {L - L0:+.0f} m since {y0}" if L is not None else "front: n/a (masked)"
+        t = byyear[y]["tongue_ice_km2"]
+        sub = f"tongue ice: {t:.2f} km² ({100 * (t / T0 - 1):+.0f}% vs {y0})" + ("  ⚠snow" if byyear[y]["snow_flag"] else "")
         year_badge(im2, str(y), sub)
         dr = ImageDraw.Draw(im2); fx0, fy0 = sw - 24 - bar_px, sh - 30
         dr.rectangle([fx0 - 10, fy0 - 26, sw - 14, sh - 12], fill=(0, 0, 0, 170))
@@ -273,16 +301,13 @@ def main():
     save_gif(clean, os.path.join(OUT, "aksay_timelapse.gif"))
     save_gif([r[1] for r in ruler], os.path.join(OUT, "aksay_timelapse_ruler.gif"))
 
-    med = float(np.median([f["snow_bbox_pct_fetch"] for f in fr_rows]))
-    for r, f in zip(rows, fr_rows):
-        f["snow_flag"] = r["snow_flag"] = int(f["snow_bbox_pct_fetch"] > SNOW_FLAG_X * med)
     fit = analyse(rows, y0, L0)
     with open(os.path.join(OUT, "aksay_metrics.csv"), "w", newline="") as fh:
         w = csv.DictWriter(fh, fieldnames=list(rows[0])); w.writeheader(); w.writerows(rows)
     with open(os.path.join(OUT, "aksay_frames.csv"), "w", newline="") as fh:
         w = csv.DictWriter(fh, fieldnames=list(fr_rows[0])); w.writeheader(); w.writerows(fr_rows)
     json.dump({"fit": fit, "snow_median_pct": med, "stretch_p2_p98": [lo, hi], "gamma": GAMMA, "px_m": [PXW, PXH], "transects": trans,
-               "front_ref": {"year": y0, "L_m": L0}},
+               "ref": {"year": y0, "L_clean_edge_m": L0, "tongue_ice_km2": T0}},
               open(os.path.join(OUT, "run_meta.json"), "w"), indent=1)
     print(f"stretch p2/p98 = {lo:.0f}/{hi:.0f}  px = {PXW:.2f}×{PXH:.2f} m")
     for r in rows: print(r)
