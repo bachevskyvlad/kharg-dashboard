@@ -38,3 +38,22 @@ W = sum(t.width for t in tiles) + 8 * (len(tiles) - 1); can = Image.new("RGB", (
 for t in tiles: can.paste(t, (x, 0)); x += t.width + 8
 can.save(os.path.join(P.OUT, "c2017_quicklooks.png"))
 json.dump(rows, open(os.path.join(P.OUT, "c2017_table.json"), "w"), indent=1)
+
+# ── rev5 G1: share of the polygon clear on BOTH 09-03 and 09-16, split by 2018 class ──────────────
+def g1():
+    a = dict(np.load(os.path.join(D, "2017-09-03.npz"))); b = dict(np.load(os.path.join(D, "2017-09-16.npz")))
+    bad = lambda d: np.isin(d["scl"], [3, 8, 9, 10]) | (d["mask"] == 0)
+    m = TP & ~bad(a) & ~bad(b)
+    r = dict(np.load(os.path.join(P.DATA, "raw", "2018.npz"))); nd = P.ndsi(r)[y0:y1, x0:x1]; nir = r["b08"][y0:y1, x0:x1] / 1e4
+    cls = np.where(nd > 0.1, np.where(nir >= P.B08_SNOW, "snow", "ice"), "debris")
+    out = {"clear_both_frac_of_polygon": round(float(m.sum() / TP.sum()), 3),
+           "class_2018_share_of_clear": {k: round(float(((cls == k) & m).sum() / max(1, m.sum())), 3) for k in ("ice", "debris", "snow")},
+           "b08_median_by_2018_class": {}}
+    for k in ("ice", "debris"):
+        mm = m & (cls == k)
+        out["b08_median_by_2018_class"][k] = {"2017-09-03": round(float(np.median(a["b08"][mm] / 1e4)), 3),
+                                              "2017-09-16": round(float(np.median(b["b08"][mm] / 1e4)), 3), "px": int(mm.sum())}
+    out["weak"] = out["clear_both_frac_of_polygon"] < 0.30 or out["class_2018_share_of_clear"]["debris"] > 0.9
+    json.dump(out, open(os.path.join(P.OUT, "c2017_g1.json"), "w"), indent=1); print(out)
+
+g1()

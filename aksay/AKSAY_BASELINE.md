@@ -1,17 +1,33 @@
-# AKSAY_BASELINE — Ak-Sai glacier, Sentinel-2 2016–2026 (rev4)
+# AKSAY_BASELINE — Ak-Sai glacier, Sentinel-2 2016–2026 (rev5)
 
 R&D mini-project (`aksay/`), independent of OilRadar. Frozen geometry: `aksay_geometry.json` v1, `aksay_tongue_polygon.json` v1 (untouched). **Base year: 2018** (changed from 2017 by rule C3, see Part C).
 
-rev4: Part C (2017 base-year check → 2017 flagged as fresh snow, base → 2018, Part A re-run), Part D (optical offset tracking), Part B-pilot (one Sentinel-1 pair).
+rev5: Part E (is the day-of-year covariate justified), Part G (report corrections), Part F (migration of the active-ice limit). rev4 parts C, D, B-pilot kept. Frozen D-sensitivity parameters.
 
 ## Verdict
 
-1. **2017 was fresh snow, not bright ice.** On common clear tongue pixels B08 rose from 0.217 (2017-09-03) to 0.310 (2017-09-16) across a fully overcast 2017-09-11; no B08 ≥ 0.5 area existed on 09-03. → 2017 flagged, base year 2018.
-2. **With base 2018, the bare-ice decline no longer depends on the snow/ice split.** Clean years + DOY: B08 0.50 → -0.020 ± 0.003 km²/yr, t(4) = -7.27, p = 0.0019; **0.60 → -0.021 ± 0.003 km²/yr, t(4) = -6.15, p = 0.0035**; 0.70 → -0.021 ± 0.004 km²/yr, t(4) = -5.39, p = 0.0057. The rev3 sensitivity was entirely the 2017 snow.
-3. **Debris expansion:** +0.021 ± 0.004 km²/yr, t(4) = 5.13, p = 0.0068 (clean + DOY); without DOY +0.021 ± 0.009 km²/yr, t(5) = 2.28, p = 0.072. 27% of 2018 bare ice is debris in 2026, concentrated at the lateral margins.
-4. **Optical offset tracking (Part D):** the clean, crevassed tongue flows at ~30 m/yr; flow drops to ~4–16 m/yr (pair-dependent) across the clean-ice/debris boundary and fades into the noise (≤ 3–4 m/yr) at ≈ 3.95 km along the centerline. The debris lobe below that is stagnant within noise (< ~0.5 m/yr over 7–8 years). A single L_moving_opt number is **not** stable — reported as a profile, not a rate.
+1. **2017 was fresh snow, not bright ice.** On common clear tongue pixels B08 rose from 0.217 (2017-09-03) to 0.310 (2017-09-16) across a fully overcast 2017-09-11; no B08 ≥ 0.5 area existed on 09-03. → 2017 flagged, base year 2018. The flag rests on an independent signal (dark before the cloudy spell, bright after), not on its effect on the fit. Caveat: the brightening is confined to ice pixels (B08 0.195 → 0.393); debris did not brighten (0.289 → 0.237) — consistent with a thin snowfall that melted off warm debris, but not proof of it.
+2. **Bare-ice decline (base 2018, B08 0.60):** clean: -0.021 ± 0.008 km²/yr, t(5) = -2.61, p = 0.048 | clean+DOY: -0.021 ± 0.003 km²/yr, t(4) = -6.15, p = 0.0035. Without the DOY term the evidence is marginal (p ≈ 0.05); with it, strong. B08-split sweep (clean+DOY): 0.50 p = 0.0019, 0.70 p = 0.0057 — no longer split-dependent once 2017 is out.
+3. **Debris expansion:** clean: +0.021 ± 0.009 km²/yr, t(5) = 2.28, p = 0.072 | clean+DOY: +0.021 ± 0.004 km²/yr, t(4) = 5.13, p = 0.0068. Without DOY p ≈ 0.07. 27% of 2018 bare ice is debris in 2026, concentrated at the lateral margins.
+4. **Optical offset tracking (Part D) — a snapshot of where active ice ends, not a trend (trend: Part F):** the clean, crevassed tongue flows at ~30 m/yr; flow drops to ~4–16 m/yr (pair-dependent) across the clean-ice/debris boundary and fades into the noise at ≈ 3.65–3.96 km along the centerline depending on the pair (Part F). The debris lobe below that is stagnant within noise (< ~0.5 m/yr over 7–8 years). A single L_moving_opt number is **not** stable — reported as a profile, not a rate.
 5. **Surface darkening / debris expansion, consistent with thinning.** External check (Hugonnet 2021, RGI60-13.11414): glacier-wide dh/dt 2000–2019 = -0.09 ± 0.17 m/yr — not distinguishable from zero; neither confirms nor rules out tongue thinning.
-6. **Sentinel-1 B-pilot (DES 107, 2026-08-06 → 08-18):** coherence bare ice 0.33, debris lobe 0.61, valley rock 0.47 → b − c = 0.13 < 0.15 → stop rule triggered, Part B closed. The lobe is as coherent as stable ground, consistent with Part D.
+6. **Sentinel-1 B-pilot (DES 107, 2026-08-06 → 08-18):** coherence bare ice 0.33, debris lobe 0.61, valley rock 0.47 → b − c = 0.13 < 0.15 → stop rule triggered, Part B closed. The lobe is coherent; the rock reference is itself degraded by steep terrain and the 5×1 estimator floor, so b − c understates the contrast to truly stable ground.
+7. **Migration of the active-ice limit (Part F): not resolved on 6 pairs.** L_active (2× noise) ranges 305.8 m across pairs with residual SD 130.8 m vs half the fitted change 98.6 m (fit +28.1 ± 22.8 m/yr, t(4) = 1.23, p = 0.28 — not used). Speed under the debris (3600–3950 m) shows no trend: +0.17 ± 0.62 m/yr per yr, t(4) = 0.28, p = 0.79.
+
+## Part E — is the day-of-year covariate justified?
+
+Model clean_doy on the 7 clean years (y = a + b·year + c·(DOY − 240)); the DOY coefficient c:
+
+| series | DOY coefficient (per day) | σ | t | df | p |
+|---|---|---|---|---|---|
+| tongue_ice_km2 | +0.0033 | 0.0007 | +4.71 | 4 | 0.0082 |
+| tongue_debris_km2 | -0.0039 | 0.0008 | -4.87 | 4 | 0.0098 |
+| tongue_bright_km2 | +0.0039 | 0.0008 | +4.87 | 4 | 0.0093 |
+| tongue_snow_km2 | +0.0005 | 0.0002 | +2.50 | 4 | 0.082 |
+| L_clean_edge_m | +1.8133 | 0.6196 | +2.93 | 4 | 0.043 |
+
+**Rule E2:** p(DOY) < 0.10 for ice and debris → the covariate is justified; the Verdict shows both models side by side.
+Physical reading: later acquisitions show more bright/ice and less debris area (+0.003 km²/day for ice) — late-season frames carry more residual snow/firn and wetter, brighter ice, so DOY is a confounder, not a nuisance fit. With df = 4 the DOY model is still fragile; both numbers are reported.
 
 ## Part C — base-year check (September 2017)
 
@@ -26,6 +42,8 @@ rev4: Part C (2017 base-year check → 2017 flagged as fresh snow, base → 2018
 ![sept 2017](out/c2017_quicklooks.png)
 
 - Only five S2 acquisitions in September 2017 (Sentinel-2B not yet routinely acquiring here). Within ±7 days of 09-16: 09-11 and 09-23 fully clouded over the polygon, 09-18 partly clouded/hazy (33 % of polygon).
+- Pixels clear on both 09-03 and 09-16: 37% of the polygon; by 2018 class: ice 68%, debris 31% → comparison adequate (≥ 30 % clear, not debris-dominated). On those pixels B08: ice 0.195 → 0.393, debris 0.289 → 0.237 (brightening only on ice).
+- The 2017 flag is justified by an independent signal (darker before the overcast spell, brighter after), not by its influence on the fit.
 - Same-pixel comparison (pixels clear on both dates): B08 median 0.217 on 09-03 → 0.310 on 09-16; 09-16 → 09-18: 0.276 → 0.312 (haze-affected).
 - **Decision (rule C3):** bright B08 0.5–0.6 surface is present only after the 09-11 overcast spell, the pre-storm date is darker → **2017 flagged as fresh snow** (`aksay_flags.json`), **base year → 2018**; all Part A fits and the transition map re-run with 2018.
 
@@ -112,6 +130,32 @@ Method (parameters): NCC 32×32 px windows, 8 px step, ±16 px search, parabolic
 - **Why no single L_moving_opt rate:** the threshold-based end point jumps between 3.1 and 3.6 km depending on pair, threshold (parameter) and how rejected windows are treated; with 3 annual pairs it cannot carry a trend. Use the velocity profile.
 - L_moving_opt vs L_clean_edge: the clean-ice edge is a surface-albedo boundary (bare ice vs debris); active flow extends ≈ 350–450 m further under the debris. They measure different things.
 
+## Part F — migration of the active-ice limit (frozen D-sensitivity parameters)
+
+![profiles](out/f_migration/f_profiles.png)
+
+Pairs on clean frames; 2-year pairs cross a flagged year. |d| normalised to m/yr. QC: stable-rock median |d| ≤ 0.5 px/yr. L_active = last point down-glacier where the 150 m running median of |d| is ≥ k × the pair's noise floor (k = 2, 3: parameters).
+
+| pair | yr | mid | valid windows | noise (m/yr) | QC | L_active 2× (m) | L_active 3× (m) | 2800–3350 | 3350–3600 | 3600–3950 | 3950–4470 (m/yr) |
+|---|---|---|---|---|---|---|---|---|---|---|---|
+| 2018→2019 | 0.93 | 2019.15 | 828/1065 | 3.55 | pass | 3652.6 | 3652.6 | 31.2 (n=44) | 17.5 (n=49) | 5.0 (n=28) | 4.7 (n=99) |
+| 2019→2021 (2 yr) | 2.13 | 2020.67 | 664/1065 | 1.83 | pass | 3737.9 | 2798.9 | 26.7 (n=2) | 4.9 (n=9) | 4.9 (n=21) | 2.4 (n=93) |
+| 2021→2022 | 0.94 | 2022.21 | 782/1065 | 1.81 | pass | 3883.2 | 2798.9 | 2.9 (n=20) | 6.7 (n=1) | 2.6 (n=34) | 1.9 (n=89) |
+| 2022→2023 | 0.95 | 2023.16 | 860/1065 | 3.47 | pass | 3923.3 | 3652.6 | 35.1 (n=76) | 13.5 (n=49) | 9.2 (n=38) | 3.9 (n=99) |
+| 2023→2025 (2 yr) | 2.04 | 2024.65 | 839/1065 | 1.23 | pass | 3652.6 | 3346.7 | 1.5 (n=81) | 3.3 (n=49) | 0.7 (n=5) | 0.8 (n=98) |
+| 2025→2026 | 0.99 | 2026.17 | 935/1065 | 1.01 | pass | 3958.4 | 3958.4 | 30.3 (n=81) | 3.8 (n=49) | 8.1 (n=55) | 0.9 (n=91) |
+
+| fit | slope (m/yr per yr) | σ | t | df | p | residual SD | half fitted change over span | resolved |
+|---|---|---|---|---|---|---|---|---|
+| L_active_2x_m | +28.1 | 22.8 | 1.23 | 4 | 0.28 | 130.8 m | 98.6 m | NO |
+| L_active_3x_m | +77.6 | 85.3 | 0.91 | 4 | 0.41 | 489.9 m | 272.4 m | NO |
+| zone 3600–3950 speed | +0.17 | 0.62 | 0.28 | 4 | 0.79 | 3.6 m/yr | — | — |
+
+- **Resolvability rule (F5, operationalised):** inter-pair scatter = residual SD around the OLS line; resolvable only if it is ≤ half the fitted change over the 7-year span. Fails for both k → **migration of the active-ice limit is not resolved on 6 pairs; no rate reported.**
+- The 3× variant collapses to 2.8 km in two pairs (19→21, 21→22) because the fast clean-ice zone is barely matched there (n = 2 and 20 windows in 2800–3350 m, median 2.9 m/yr in 21→22 vs ~30 m/yr in all other 1-year pairs): 2-year pairs and the late-September 2021 frame decorrelate the crevasse field. The pairs disagree with each other more than any plausible 7-year migration.
+- Under-debris zone 3600–3950 m: 0.7–9.2 m/yr across pairs, no trend (p above). No evidence of slowdown on this record.
+- Range of L_active (2×) across pairs: 3653–3958 m — the active-ice limit sits ≈ 3.65–3.96 km in every pair, i.e. 100–500 m below the clean-ice edge; that location statement holds, the trend does not.
+
 ## Part B-pilot — Sentinel-1 coherence, one pair (DES 107)
 
 Pair 2026-08-06 → 2026-08-18 (12 days), coherence with 5×1 looks, resampled to the S2 grid.
@@ -128,7 +172,7 @@ b − c = 0.134, b − a = 0.274. Rule (parameters, read as absolute contrasts):
 
 **Verdict: 12-day C-band coherence does not separate debris-covered ice from ice-free moraine on a near-stagnant tongue; not pursued.** This is a result, not a failure.
 
-- Stop rule triggered by b − c = 0.134 < 0.15. The lobe is *more* coherent than the valley walls (rock coherence is pulled down by steep, foreshortened slopes and by the 5×1-look estimator floor ≈ 0.3), i.e. the lobe behaves like stable ground. That agrees with Part D (no measurable motion below ≈ 3.95 km) — stagnant debris-covered ice and ice-free moraine look the same to 12-day coherence.
+- Stop rule triggered by b − c = 0.134 < 0.15. The lobe is coherent; the rock reference is itself degraded by steep, foreshortened terrain and by the 5×1 estimator floor (≈ 0.3), so b − c understates the contrast to truly stable ground. Consistent with Part D (no measurable motion below ≈ 3.95 km): stagnant debris-covered ice and ice-free moraine are not separable by 12-day coherence.
 - Bare ice in the polygon is clearly decorrelated (median 0.33) — the active, melting tongue is visible; the method fails only at the boundary that matters (dead ice vs moraine).
 - Processing: CDSE OData (SH OAuth token accepted for download), IW3 VV only (2 × 1.35 GB), POEORB from ESA STEP, Copernicus GLO-30 + EGM2008 undulation −37.2 m → WGS84, ISCE2 2.6.5 topsApp (no ESD, no unwrapping), geocoded and resampled to the S2 grid; ≈ 5 min ISCE time. Logs: `aksay/data/s1_pilot/`.
 - The 9-year S1 series was **not** downloaded (brief B5).
@@ -149,6 +193,11 @@ b − c = 0.134, b − a = 0.274. Rule (parameters, read as absolute contrasts):
 | 2025 | 2025-09-04 | 0.0 | 17.9 |  |
 | 2026 | 2026-08-30 | 0.0 | 15.0 |  |
 
+## Next steps
+
+- **Landsat 1990–2015 (rev6, Part H)** — 30-year baseline at 30 m; the only free-data route to a visible, measurable change of the tongue. Awaiting decision.
+- DEM differencing: not pursued — no free post-2016 DEM over the site; on free data it would only reproduce Hugonnet 2021.
+
 ## Caveats
 
 - n = 7 clean frames; DOY models have df = 4. p-values assume independent Gaussian residuals — indicative.
@@ -158,4 +207,4 @@ b − c = 0.134, b − a = 0.274. Rule (parameters, read as absolute contrasts):
 
 ## Files
 
-`aksay/out/aksay_metrics.csv`, `aksay_metrics.png`, `aksay_transition_*_2026.png`, `rev3_stats.json`, `c2017_table.json`, `c2017_quicklooks.png`, `offset/`, `offset_win16_annual/`, `s1_pilot_*`. Re-run offline: `python aksay/process.py && python aksay/c_check.py && python aksay/d_offset.py 2018 2026 2019 2026 && python aksay/report_rev4.py`.
+`aksay/out/aksay_metrics.csv`, `aksay_metrics.png`, `aksay_transition_*_2026.png`, `rev3_stats.json`, `c2017_table.json`, `c2017_quicklooks.png`, `offset/`, `offset_win16_annual/`, `f_migration/`, `c2017_g1.json`, `s1_pilot_*`. Re-run offline: `python aksay/process.py && python aksay/c_check.py && python aksay/d_offset.py 2018 2026 2019 2026 && python aksay/f_migration.py && python aksay/report_rev5.py`.
