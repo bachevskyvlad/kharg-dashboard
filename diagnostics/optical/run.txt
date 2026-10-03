@@ -83,12 +83,17 @@ RT WL: 45  JW WL: 9  YB WL: 8
   [Gate 1 — Kharg repères]
     n scenes used:   30
     full tanks (t60_1, t55_31, t40_33):  median shadow_frac = 0.1333
-    empty tanks (t55_5, t55_10): median shadow_frac = 0.0095
-    gap (empty - full) = -0.1239  → FAIL
+    empty tanks (t40_18, t40_22): median shadow_frac = 0.0194
+    gap (empty - full) = -0.1139  → FAIL
 
   [Gate 2 — RT cross-sensor corr (S2 shadow_frac vs S1 db_mean)]
-    S1 rows loaded: 1000 for 20 tanks
-    no tanks with ≥5 paired observations
+      _load_s1_for_rt: 6300 rows, 20 tanks, dates 2017-03-14–2026-09-18
+    S1 rows loaded: 6300 for 20 tanks
+      rt_21: std≈0 (sf_std=0.0000), skipping corr
+    tanks with ≥5 pairs: 19
+    total pairs: 1387
+    median corr(shadow_frac, db_mean): 0.0203  → FAIL
+    expected sign: positive (empty=high db=large shadow)
 
   GATE OVERALL: FAIL  (gate1=FAIL, gate2=FAIL)
 
@@ -96,6 +101,41 @@ RT WL: 45  JW WL: 9  YB WL: 8
   S2 shadow method verdict: NOT VALIDATED at 10m→5m/px on this tank geometry.
 
 === STAGE 2b — PNG Crop Examples ===
+
+  t55_5 Kharg scenes for sector audit:
+    2025-12-29 00:00:00  sun_az=160.5°  sun_elv=35.0°  sf=0.0000  sector_px=103
+    2026-01-01 00:00:00  sun_az=160.0°  sun_elv=35.0°  sf=0.0000  sector_px=102
+    2026-01-06 00:00:00  sun_az=159.2°  sun_elv=35.3°  sf=0.0000  sector_px=103
+    2026-01-16 00:00:00  sun_az=157.6°  sun_elv=36.3°  sf=0.0000  sector_px=103
+    2026-01-21 00:00:00  sun_az=156.7°  sun_elv=37.1°  sf=0.0000  sector_px=102
+    2026-01-26 00:00:00  sun_az=155.9°  sun_elv=38.0°  sf=0.0000  sector_px=103
+    2026-01-31 00:00:00  sun_az=155.0°  sun_elv=39.0°  sf=0.0000  sector_px=103
+    2026-02-15 00:00:00  sun_az=152.3°  sun_elv=43.0°  sf=0.0000  sector_px=101
+    2026-09-23 00:00:00  sun_az=152.4°  sun_elv=56.7°  sf=0.0000  sector_px=101
+    2026-10-03 00:00:00  sun_az=156.4°  sun_elv=53.4°  sf=0.0000  sector_px=103
+    2026-09-13 00:00:00  sun_az=147.5°  sun_elv=60.0°  sf=0.0000  sector_px=106
+    2026-03-07 00:00:00  sun_az=148.6°  sun_elv=49.9°  sf=0.0093  sector_px=108
+    2026-04-06 00:00:00  sun_az=141.3°  sun_elv=61.4°  sf=0.0095  sector_px=105
+    2026-03-27 00:00:00  sun_az=144.2°  sun_elv=57.6°  sf=0.0097  sector_px=103
+    2026-09-25 00:00:00  sun_az=153.4°  sun_elv=56.1°  sf=0.0097  sector_px=103
+    2026-09-08 00:00:00  sun_az=144.7°  sun_elv=61.5°  sf=0.0192  sector_px=104
+    2026-09-28 00:00:00  sun_az=154.6°  sun_elv=55.1°  sf=0.0194  sector_px=103
+    2026-02-10 00:00:00  sun_az=153.2°  sun_elv=41.6°  sf=0.0196  sector_px=102
+    2026-02-20 00:00:00  sun_az=151.4°  sun_elv=44.6°  sf=0.0200  sector_px=100
+    2026-09-18 00:00:00  sun_az=150.1°  sun_elv=58.4°  sf=0.0202  sector_px=99
+    2026-09-15 00:00:00  sun_az=148.7°  sun_elv=59.4°  sf=0.0278  sector_px=108
+    2026-03-22 00:00:00  sun_az=145.4°  sun_elv=55.7°  sf=0.0283  sector_px=106
+    2026-02-05 00:00:00  sun_az=154.1°  sun_elv=40.2°  sf=0.0291  sector_px=103
+    2026-08-29 00:00:00  sun_az=138.5°  sun_elv=64.2°  sf=0.0385  sector_px=104
+    2026-09-03 00:00:00  sun_az=141.7°  sun_elv=62.9°  sf=0.0385  sector_px=104
+    2026-03-02 00:00:00  sun_az=149.5°  sun_elv=48.1°  sf=0.0459  sector_px=109
+    2026-03-17 00:00:00  sun_az=146.5°  sun_elv=53.7°  sf=0.0472  sector_px=106
+    2026-02-25 00:00:00  sun_az=150.5°  sun_elv=46.3°  sf=0.0505  sector_px=99
+    2026-08-26 00:00:00  sun_az=136.7°  sun_elv=65.0°  sf=0.0667  sector_px=105
+    2026-03-29 00:00:00  sun_az=143.8°  sun_elv=58.4°  sf=0.0673  sector_px=104
+  saved kharg_t55_5_audit_t55_5_2026-03-29.png
+  saved kharg_t55_5_audit_t55_5_2026-09-08.png
+  saved kharg_t55_5_audit_t55_5_2025-12-29.png
   saved ras_tanura_full_rt_12_2026-02-22.png
   saved ras_tanura_empty_rt_58_2026-01-06.png
   saved juwaymah_full_jw_10_2025-12-14.png
@@ -106,14 +146,14 @@ RT WL: 45  JW WL: 9  YB WL: 8
 Gate FAILED — pipeline stops here per ТЗ.
 # OPTICAL_PILOT — S2 Shadow Fill Method
 
-Generated: 2026-10-03 14:16 UTC
+Generated: 2026-10-03 16:40 UTC
 
 ---
 
 ## Summary
 
 - **Gate**: FAIL
-- **Verdict**: S2 10m/5m-px shadow method **NOT VALIDATED** on this tank geometry (gap=-0.124, cross-sensor median_corr=NaN)
+- **Verdict**: S2 10m/5m-px shadow method **NOT VALIDATED** on this tank geometry (gap=-0.114, cross-sensor median_corr=0.020)
 
 ---
 
@@ -124,9 +164,9 @@ Generated: 2026-10-03 14:16 UTC
 | Group | Tanks | Median shadow_frac |
 |-------|-------|--------------------|
 | Full  | t60_1, t55_31, t40_33  | 0.1333 |
-| Empty | t55_5, t55_10 | 0.0095 |
+| Empty | t40_18, t40_22 | 0.0194 |
 
-Gap (empty − full) = **-0.1239**  → **FAIL**
+Gap (empty − full) = **-0.1139**  → **FAIL**
 
 Scenes used (Kharg): 30
 
@@ -134,12 +174,10 @@ Scenes used (Kharg): 30
 
 | Metric | Value |
 |--------|-------|
-| Median corr(shadow_frac_S2, db_mean_S1) | NaN |
-| Total paired obs (≤3d) | 0 |
-| Tanks with ≥5 pairs | 0 |
+| Median corr(shadow_frac_S2, db_mean_S1) | 0.0203 |
+| Total paired obs (≤3d) | 1387 |
+| Tanks with ≥5 pairs | 19 |
 
 Threshold ≥ 0.40  → **FAIL**
 
-### Overall Gate: **FAIL — pipeline closed**
-
-**Reason:** S
+**Per-tank cross-sensor correlation (top/bottom):
