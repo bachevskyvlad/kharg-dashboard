@@ -1,0 +1,1116 @@
+2026-10-03 16:20:46,591 - isce.insar - INFO - ISCE VERSION = 2.6.5, RELEASE_SVN_REVISION = ,RELEASE_DATE = 20260630, CURRENT_SVN_REVISION = 
+ISCE VERSION = 2.6.5, RELEASE_SVN_REVISION = ,RELEASE_DATE = 20260630, CURRENT_SVN_REVISION = 
+Step processing
+Running step startup
+None
+The currently supported sensors are:  ['SENTINEL1']
+Dumping the application's pickle object _insar to file  PICKLE/startup
+The remaining steps are (in order):  ['preprocess', 'computeBaselines', 'verifyDEM', 'topo', 'subsetoverlaps', 'coarseoffsets', 'coarseresamp', 'overlapifg', 'prepesd', 'esd', 'rangecoreg', 'fineoffsets', 'fineresamp', 'ion', 'burstifg', 'mergebursts', 'filter', 'unwrap', 'unwrap2stage', 'geocode', 'denseoffsets', 'filteroffsets', 'geocodeoffsets']
+Running step preprocess
+Input XML files:  ['/mnt/s1work/S1D_IW_SLC__1SDV_20260806T010424_20260806T010451_003998_00743C_A208.SAFE/annotation/s1d-iw3-slc-vv-20260806t010425-20260806t010450-003998-00743c-006.xml']
+Input TIFF files:  ['/mnt/s1work/S1D_IW_SLC__1SDV_20260806T010424_20260806T010451_003998_00743C_A208.SAFE/measurement/s1d-iw3-slc-vv-20260806t010425-20260806t010450-003998-00743c-006.tiff']
+Manifest files:  ['/mnt/s1work/S1D_IW_SLC__1SDV_20260806T010424_20260806T010451_003998_00743C_A208.SAFE/manifest.safe']
+Setting IPF version to :  004.03
+Extracting orbit from Orbit File:  /mnt/s1work/orbits/S1D_OPER_AUX_POEORB_OPOD_20260826T071421_V20260805T225942_20260807T005942.EOF
+Number of Bursts before cropping:  9
+Number of Bursts after cropping:  2
+Updating burst number from 1 to 1
+Updating burst number from 2 to 2
+Input XML files:  ['/mnt/s1work/S1D_IW_SLC__1SDV_20260818T010424_20260818T010451_004173_007A3F_52FC.SAFE/annotation/s1d-iw3-slc-vv-20260818t010425-20260818t010451-004173-007a3f-006.xml']
+Input TIFF files:  ['/mnt/s1work/S1D_IW_SLC__1SDV_20260818T010424_20260818T010451_004173_007A3F_52FC.SAFE/measurement/s1d-iw3-slc-vv-20260818t010425-20260818t010451-004173-007a3f-006.tiff']
+Manifest files:  ['/mnt/s1work/S1D_IW_SLC__1SDV_20260818T010424_20260818T010451_004173_007A3F_52FC.SAFE/manifest.safe']
+Setting IPF version to :  004.03
+Extracting orbit from Orbit File:  /mnt/s1work/orbits/S1D_OPER_AUX_POEORB_OPOD_20260907T071442_V20260817T225942_20260819T005942.EOF
+Number of Bursts before cropping:  9
+Number of Bursts after cropping:  2
+Updating burst number from 1 to 1
+Updating burst number from 2 to 2
+2026-10-03 16:20:47,861 - isce.topsinsar.runPreprocessor - INFO - 
+####################################################################################################
+    runPreprocessor
+----------------------------------------------------------------------------------------------------
+common.Input list of swaths to process:  = [3]
+reference.burstLength_3 = 1516
+reference.burstWidth_3 = 24742
+reference.numberOfBursts_3 = 2
+reference.sensor.ascendingnodetime = 2026-08-06 00:26:36.109198
+reference.sensor.family = topsswathslc
+reference.sensor.folder = None
+reference.sensor.imagingmode = TOPS
+reference.sensor.mission = S1D
+reference.sensor.name = topsswathslc_name
+reference.sensor.numberofbursts = 2
+reference.sensor.processingfacility = S1 Production Service-SERCO, Italy
+reference.sensor.processingsoftwareversion = 004.03
+reference.sensor.processingsystem = Sentinel-1 IPF
+reference.sensor.spacecraftname = Sentinel-1
+secondary.burstLength_3 = 1516
+secondary.burstWidth_3 = 24742
+secondary.numberOfBursts_3 = 2
+secondary.sensor.ascendingnodetime = 2026-08-18 00:26:36.611777
+secondary.sensor.family = topsswathslc
+secondary.sensor.folder = None
+secondary.sensor.imagingmode = TOPS
+secondary.sensor.mission = S1D
+secondary.sensor.name = topsswathslc_name
+secondary.sensor.numberofbursts = 2
+secondary.sensor.processingfacility = S1 Production Service-SERCO, Italy
+secondary.sensor.processingsoftwareversion = 004.03
+secondary.sensor.processingsystem = Sentinel-1 IPF
+secondary.sensor.spacecraftname = Sentinel-1
+####################################################################################################
+Dumping the application's pickle object _insar to file  PICKLE/preprocess
+The remaining steps are (in order):  ['computeBaselines', 'verifyDEM', 'topo', 'subsetoverlaps', 'coarseoffsets', 'coarseresamp', 'overlapifg', 'prepesd', 'esd', 'rangecoreg', 'fineoffsets', 'fineresamp', 'ion', 'burstifg', 'mergebursts', 'filter', 'unwrap', 'unwrap2stage', 'geocode', 'denseoffsets', 'filteroffsets', 'geocodeoffsets']
+Running step computeBaselines
+Estimated burst offset:  0
+2026-10-03 16:20:47,985 - isce.topsinsar.runPreprocessor - INFO - 
+####################################################################################################
+    runComputeBaseline
+----------------------------------------------------------------------------------------------------
+baseline.IW-3 Bpar at midrange for first common burst = -38.4764355817401
+baseline.IW-3 Bpar at midrange for last common burst = -38.41294593862186
+baseline.IW-3 Bperp at midrange for first common burst = 66.0359044066747
+baseline.IW-3 Bperp at midrange for last common burst = 65.99763947023675
+baseline.IW-3 First common burst in reference = 0
+baseline.IW-3 First common burst in secondary = 0
+baseline.IW-3 Last common burst in reference = 2
+baseline.IW-3 Last common burst in secondary = 2
+baseline.IW-3 Number of bursts in reference = 2
+baseline.IW-3 Number of bursts in secondary = 2
+baseline.IW-3 Number of common bursts = 2
+####################################################################################################
+Dumping the application's pickle object _insar to file  PICKLE/computeBaselines
+The remaining steps are (in order):  ['verifyDEM', 'topo', 'subsetoverlaps', 'coarseoffsets', 'coarseresamp', 'overlapifg', 'prepesd', 'esd', 'rangecoreg', 'fineoffsets', 'fineresamp', 'ion', 'burstifg', 'mergebursts', 'filter', 'unwrap', 'unwrap2stage', 'geocode', 'denseoffsets', 'filteroffsets', 'geocodeoffsets']
+Running step verifyDEM
+Dumping the application's pickle object _insar to file  PICKLE/verifyDEM
+The remaining steps are (in order):  ['topo', 'subsetoverlaps', 'coarseoffsets', 'coarseresamp', 'overlapifg', 'prepesd', 'esd', 'rangecoreg', 'fineoffsets', 'fineresamp', 'ion', 'burstifg', 'mergebursts', 'filter', 'unwrap', 'unwrap2stage', 'geocode', 'denseoffsets', 'filteroffsets', 'geocodeoffsets']
+Running step topo
+2026-10-03 16:20:48,036 - isce.zerodop.topozero - WARNING - Default Peg heading set to: -2.901035336024139
+Polynomial Order: 0 - by - 0 
+0	
+Polynomial Order: 0 - by - 0 
+0	
+Polynomial Order: 0 - by - 0 
+0	
+Polynomial Order: 0 - by - 1 
+901265	2.32956	
+GDAL open (R): /mnt/s1work/dem.wgs84.vrt
+API open (WR): geom_reference/IW3/lat_01.rdr
+API open (WR): geom_reference/IW3/lon_01.rdr
+API open (WR): geom_reference/IW3/hgt_01.rdr
+API open (WR): geom_reference/IW3/los_01.rdr
+ Initializing biquintic interpolator
+ Orbit interpolation method: hermite
+ Max threads used:            2
+ DEM parameters:
+ Dimensions:          747         732
+ Top Left:    74.440404999999998        42.620179999999998     
+ Spacing:    2.7777777777777778E-004  -2.7777777777777778E-004
+ Lon:    74.440404999999998        74.647627222222226     
+ Lat:    42.417124444444440        42.620179999999998     
+  
+ Estimated DEM bounds needed for global height range: 
+ Lon:    73.628033186088658        75.081686021612200     
+ Lat:    42.177329530104203        42.797093625919544     
+ Warning: west limit may be insufficient for global height range
+ Warning: east limit may be insufficient for global height range
+ Warning: north limit may be insufficient for global height range
+ Warning: south limit may be insufficient for global height range
+  
+ Actual DEM bounds used: 
+ Dimensions:          747         732
+ Top Left:    74.440404999999998        42.620179999999998     
+ Spacing:    2.7777777777777778E-004  -2.7777777777777778E-004
+ Lon:    74.440404999999998        74.647627222222226     
+ Lat:    42.417124444444440        42.620179999999998     
+ Lines:            1         732
+ Pixels:            1         747
+ Max DEM height:    4838.09033    
+ Primary iterations:           25
+ Secondary iterations:           10
+ Distance threshold :    5.0000000000000003E-002
+ Processing line:            1   7592.5255818265459     
+ Dopplers:    0.0000000000000000        0.0000000000000000        0.0000000000000000     
+ Processing line:         1001   7592.5622439933732     
+ Dopplers:    0.0000000000000000        0.0000000000000000        0.0000000000000000     
+ Total convergence:    35615142  out of     37508872
+API close:  geom_reference/IW3/lat_01.rdr
+API open (R): geom_reference/IW3/lat_01.rdr
+API close:  geom_reference/IW3/lat_01.rdr
+API close:  geom_reference/IW3/lon_01.rdr
+API open (R): geom_reference/IW3/lon_01.rdr
+API close:  geom_reference/IW3/lon_01.rdr
+API close:  geom_reference/IW3/hgt_01.rdr
+API open (R): geom_reference/IW3/hgt_01.rdr
+API close:  geom_reference/IW3/hgt_01.rdr
+API close:  geom_reference/IW3/los_01.rdr
+API open (R): geom_reference/IW3/los_01.rdr
+API close:  geom_reference/IW3/los_01.rdr
+GDAL close: /mnt/s1work/dem.wgs84.vrt
+C pointer already created. Finalize and recreate if image dimensions changed.
+C pointer already created. Finalize and recreate if image dimensions changed.
+2026-10-03 16:22:34,906 - isce.zerodop.topozero - WARNING - Default Peg heading set to: -2.9013889752601045
+Polynomial Order: 0 - by - 0 
+0	
+Polynomial Order: 0 - by - 1 
+901265	2.32956	
+GDAL open (R): /mnt/s1work/dem.wgs84.vrt
+API open (WR): geom_reference/IW3/lat_02.rdr
+API open (WR): geom_reference/IW3/lon_02.rdr
+API open (WR): geom_reference/IW3/hgt_02.rdr
+API open (WR): geom_reference/IW3/los_02.rdr
+ Initializing biquintic interpolator
+ Orbit interpolation method: hermite
+ Max threads used:            2
+ DEM parameters:
+ Dimensions:          747         732
+ Top Left:    74.440404999999998        42.620179999999998     
+ Spacing:    2.7777777777777778E-004  -2.7777777777777778E-004
+ Lon:    74.440404999999998        74.647627222222226     
+ Lat:    42.417124444444440        42.620179999999998     
+  
+ Estimated DEM bounds needed for global height range: 
+ Lon:    73.593086695324132        75.043648430335224     
+ Lat:    42.011970985818166        42.631825038528603     
+ Warning: west limit may be insufficient for global height range
+ Warning: east limit may be insufficient for global height range
+ Warning: north limit may be insufficient for global height range
+ Warning: south limit may be insufficient for global height range
+  
+ Actual DEM bounds used: 
+ Dimensions:          747         732
+ Top Left:    74.440404999999998        42.620179999999998     
+ Spacing:    2.7777777777777778E-004  -2.7777777777777778E-004
+ Lon:    74.440404999999998        74.647627222222226     
+ Lat:    42.417124444444440        42.620179999999998     
+ Lines:            1         732
+ Pixels:            1         747
+ Max DEM height:    4838.09033    
+ Primary iterations:           25
+ Secondary iterations:           10
+ Distance threshold :    5.0000000000000003E-002
+ Processing line:            1   7592.5746924108144     
+ Dopplers:    0.0000000000000000        0.0000000000000000        0.0000000000000000     
+ Processing line:         1001   7592.6112575586258     
+ Dopplers:    0.0000000000000000        0.0000000000000000        0.0000000000000000     
+ Total convergence:    37020995  out of     37508872
+API close:  geom_reference/IW3/lat_02.rdr
+API open (R): geom_reference/IW3/lat_02.rdr
+API close:  geom_reference/IW3/lat_02.rdr
+API close:  geom_reference/IW3/lon_02.rdr
+API open (R): geom_reference/IW3/lon_02.rdr
+API close:  geom_reference/IW3/lon_02.rdr
+API close:  geom_reference/IW3/hgt_02.rdr
+API open (R): geom_reference/IW3/hgt_02.rdr
+API close:  geom_reference/IW3/hgt_02.rdr
+API close:  geom_reference/IW3/los_02.rdr
+API open (R): geom_reference/IW3/los_02.rdr
+API close:  geom_reference/IW3/los_02.rdr
+GDAL close: /mnt/s1work/dem.wgs84.vrt
+C pointer already created. Finalize and recreate if image dimensions changed.
+C pointer already created. Finalize and recreate if image dimensions changed.
+2026-10-03 16:23:07,338 - isce.topsinsar.topo - INFO - 
+####################################################################################################
+    runTopo
+----------------------------------------------------------------------------------------------------
+topo.Bounding box for burst 0 - IW-3 = [42.32745960913354, 42.634822643522675, 73.88599391906764, 74.93063719627855]
+topo.Bounding box for burst 1 - IW-3 = [42.162101817015554, 42.469544463920116, 73.85074424452245, 74.89259675530863]
+topo.Dem Used = /mnt/s1work/dem.wgs84
+topo.Number of common bursts IW-3 = 2
+topo.Number of lines for burst 0 - IW-3 = 1516
+topo.Number of lines for burst 1 - IW-3 = 1516
+topo.Number of pixels for bursts 0 - IW-3 = 24742
+topo.Number of pixels for bursts 1 - IW-3 = 24742
+topo.Overall bounding box = [42.162101817015554, 42.634822643522675, 73.85074424452245, 74.93063719627855]
+####################################################################################################
+Dumping the application's pickle object _insar to file  PICKLE/topo
+The remaining steps are (in order):  ['subsetoverlaps', 'coarseoffsets', 'coarseresamp', 'overlapifg', 'prepesd', 'esd', 'rangecoreg', 'fineoffsets', 'fineresamp', 'ion', 'burstifg', 'mergebursts', 'filter', 'unwrap', 'unwrap2stage', 'geocode', 'denseoffsets', 'filteroffsets', 'geocodeoffsets']
+Running step subsetoverlaps
+Dumping the application's pickle object _insar to file  PICKLE/subsetoverlaps
+The remaining steps are (in order):  ['coarseoffsets', 'coarseresamp', 'overlapifg', 'prepesd', 'esd', 'rangecoreg', 'fineoffsets', 'fineresamp', 'ion', 'burstifg', 'mergebursts', 'filter', 'unwrap', 'unwrap2stage', 'geocode', 'denseoffsets', 'filteroffsets', 'geocodeoffsets']
+Running step coarseoffsets
+Dumping the application's pickle object _insar to file  PICKLE/coarseoffsets
+The remaining steps are (in order):  ['coarseresamp', 'overlapifg', 'prepesd', 'esd', 'rangecoreg', 'fineoffsets', 'fineresamp', 'ion', 'burstifg', 'mergebursts', 'filter', 'unwrap', 'unwrap2stage', 'geocode', 'denseoffsets', 'filteroffsets', 'geocodeoffsets']
+Running step coarseresamp
+Dumping the application's pickle object _insar to file  PICKLE/coarseresamp
+The remaining steps are (in order):  ['overlapifg', 'prepesd', 'esd', 'rangecoreg', 'fineoffsets', 'fineresamp', 'ion', 'burstifg', 'mergebursts', 'filter', 'unwrap', 'unwrap2stage', 'geocode', 'denseoffsets', 'filteroffsets', 'geocodeoffsets']
+Running step overlapifg
+Dumping the application's pickle object _insar to file  PICKLE/overlapifg
+The remaining steps are (in order):  ['prepesd', 'esd', 'rangecoreg', 'fineoffsets', 'fineresamp', 'ion', 'burstifg', 'mergebursts', 'filter', 'unwrap', 'unwrap2stage', 'geocode', 'denseoffsets', 'filteroffsets', 'geocodeoffsets']
+Running step prepesd
+Dumping the application's pickle object _insar to file  PICKLE/prepesd
+The remaining steps are (in order):  ['esd', 'rangecoreg', 'fineoffsets', 'fineresamp', 'ion', 'burstifg', 'mergebursts', 'filter', 'unwrap', 'unwrap2stage', 'geocode', 'denseoffsets', 'filteroffsets', 'geocodeoffsets']
+Running step esd
+Dumping the application's pickle object _insar to file  PICKLE/esd
+The remaining steps are (in order):  ['rangecoreg', 'fineoffsets', 'fineresamp', 'ion', 'burstifg', 'mergebursts', 'filter', 'unwrap', 'unwrap2stage', 'geocode', 'denseoffsets', 'filteroffsets', 'geocodeoffsets']
+Running step rangecoreg
+Dumping the application's pickle object _insar to file  PICKLE/rangecoreg
+The remaining steps are (in order):  ['fineoffsets', 'fineresamp', 'ion', 'burstifg', 'mergebursts', 'filter', 'unwrap', 'unwrap2stage', 'geocode', 'denseoffsets', 'filteroffsets', 'geocodeoffsets']
+Running step fineoffsets
+2026-10-03 16:23:07,503 - isce.topsinsar.fineoffsets - INFO - IW3 - Burst 0 of reference matched with Burst 0 of secondary
+GDAL open (R): geom_reference/IW3/lat_01.rdr.vrt
+GDAL open (R): geom_reference/IW3/lon_01.rdr.vrt
+GDAL open (R): geom_reference/IW3/hgt_01.rdr.vrt
+2026-10-03 16:23:07,525 - isce.topsinsar.fineoffsets - INFO - Additional time offset applied in geo2rdr: 0.0 secs
+2026-10-03 16:23:07,525 - isce.topsinsar.fineoffsets - INFO - Additional range offset applied in geo2rdr: 0.0 m
+API open (WR): fine_offsets/IW3/range_01.off
+API open (WR): fine_offsets/IW3/azimuth_01.off
+ Orbit interpolation method: hermite
+ threads           2
+ Starting Acquisition time:    3865.8693370000001     
+ Stop Acquisition time:    3868.9835047945003     
+ Azimuth line spacing in secs:    2.0555562999999980E-003
+ Near Range in m:    901264.95407586847     
+ Far  Range in m:    958900.65035604034     
+ Range sample spacing in m:    2.3295621147153232     
+ Radar Image Lines:         1516
+ Radar Image Width:        24742
+ reading dem ...
+ Geocoded Lines:          1516
+ Geocoded Samples:       24742
+ Dopplers:    0.0000000000000000        0.0000000000000000     
+ geo2rdr on            2  threads...
+ Processing line:            1           0
+ Processing line:         1001       92026
+ Number of pixels outside the image:       101314
+ Number of pixels with valid data:       37225369
+ Number of pixels that converged:           24705
+ elapsed time =    48.9609375      seconds
+API close:  fine_offsets/IW3/range_01.off
+API open (R): fine_offsets/IW3/range_01.off
+API close:  fine_offsets/IW3/range_01.off
+API close:  fine_offsets/IW3/azimuth_01.off
+API open (R): fine_offsets/IW3/azimuth_01.off
+API close:  fine_offsets/IW3/azimuth_01.off
+GDAL close: geom_reference/IW3/lat_01.rdr.vrt
+GDAL close: geom_reference/IW3/lon_01.rdr.vrt
+GDAL close: geom_reference/IW3/hgt_01.rdr.vrt
+Turning off bistatic delay correction term by default.
+2026-10-03 16:23:56,562 - isce.topsinsar.fineoffsets - INFO - IW3 - Burst 1 of reference matched with Burst 1 of secondary
+GDAL open (R): geom_reference/IW3/lat_02.rdr.vrt
+GDAL open (R): geom_reference/IW3/lon_02.rdr.vrt
+GDAL open (R): geom_reference/IW3/hgt_02.rdr.vrt
+2026-10-03 16:23:56,572 - isce.topsinsar.fineoffsets - INFO - Additional time offset applied in geo2rdr: 0.0 secs
+2026-10-03 16:23:56,572 - isce.topsinsar.fineoffsets - INFO - Additional range offset applied in geo2rdr: 0.0 m
+API open (WR): fine_offsets/IW3/range_02.off
+API open (WR): fine_offsets/IW3/azimuth_02.off
+ Orbit interpolation method: hermite
+ threads           2
+ Starting Acquisition time:    3868.6217270000002     
+ Stop Acquisition time:    3871.7358947945004     
+ Azimuth line spacing in secs:    2.0555562999999980E-003
+ Near Range in m:    901264.95407586847     
+ Far  Range in m:    958900.65035604034     
+ Range sample spacing in m:    2.3295621147153232     
+ Radar Image Lines:         1516
+ Radar Image Width:        24742
+ reading dem ...
+ Geocoded Lines:          1516
+ Geocoded Samples:       24742
+ Dopplers:    0.0000000000000000        0.0000000000000000     
+ geo2rdr on            2  threads...
+ Processing line:            1           0
+ Processing line:         1001       67365
+ Number of pixels outside the image:        76653
+ Number of pixels with valid data:       37197762
+ Number of pixels that converged:           24735
+ elapsed time =    48.8750000      seconds
+API close:  fine_offsets/IW3/range_02.off
+API open (R): fine_offsets/IW3/range_02.off
+API close:  fine_offsets/IW3/range_02.off
+API close:  fine_offsets/IW3/azimuth_02.off
+API open (R): fine_offsets/IW3/azimuth_02.off
+API close:  fine_offsets/IW3/azimuth_02.off
+GDAL close: geom_reference/IW3/lat_02.rdr.vrt
+GDAL close: geom_reference/IW3/lon_02.rdr.vrt
+GDAL close: geom_reference/IW3/hgt_02.rdr.vrt
+Turning off bistatic delay correction term by default.
+Dumping the application's pickle object _insar to file  PICKLE/fineoffsets
+The remaining steps are (in order):  ['fineresamp', 'ion', 'burstifg', 'mergebursts', 'filter', 'unwrap', 'unwrap2stage', 'geocode', 'denseoffsets', 'filteroffsets', 'geocodeoffsets']
+Running step fineresamp
+Shifts IW-3:  {0: 0, 1: -1}
+Chi squared: 0.001785
+Misfit radians - Max: 0.0053840191449126 , Min : -0.002815964102410362 
+2026-10-03 16:24:45,560 - isce.stdproc.resamp_slc - WARNING - The variable INPUT_LINES has been set to the default value 1516 which is the number of lines in the slc image.
+2026-10-03 16:24:45,560 - isce.stdproc.resamp_slc - WARNING - The variable INPUT_WIDTH has been set to the default value 24742 which is the width of the slc image.
+2026-10-03 16:24:45,560 - isce.stdproc.resamp_slc - WARNING - No flattening requested
+Polynomial Order: 0 - by - 0 
+0	
+Polynomial Order: 0 - by - 0 
+0	
+Polynomial Order: 5 - by - 3 
+11986.2	-575.806	142.099	3.30313	
+-47438.8	2328.93	-333.125	-6.83284	
+46938.1	-2353.47	101.137	3.60125	
+-2.60422e-09	2.77765e-09	-1.0142e-09	0	
+2.0119e-09	-7.83824e-10	0	0	
+-6.39789e-10	0	0	0	
+GDAL open (R): secondary/IW3/burst_01.slc.vrt
+API open (WR): fine_coreg/IW3/burst_01.slc
+Polynomial Order: 0 - by - 0 
+0	
+Polynomial Order: 0 - by - 0 
+0	
+Polynomial Order: 5 - by - 3 
+11986.2	-575.806	142.099	3.30313	
+-47438.8	2328.93	-333.125	-6.83284	
+46938.1	-2353.47	101.137	3.60125	
+-2.60422e-09	2.77765e-09	-1.0142e-09	0	
+2.0119e-09	-7.83824e-10	0	0	
+-6.39789e-10	0	0	0	
+Polynomial Order: 0 - by - 0 
+0	
+Polynomial Order: 0 - by - 0 
+0	
+GDAL open (R): fine_offsets/IW3/range_01.off.vrt
+GDAL open (R): fine_offsets/IW3/azimuth_01.off.vrt
+Polynomial Order: 0 - by - 2 
+0.232466	-1670.98	1.37564e+06	
+  
+  << Resample one image to another image coordinates >>
+  
+ Input Image Dimensions: 
+       24742  pixels
+        1516 lines
+  
+ Output Image Dimensions: 
+       24742 pixels
+        1516 lines
+   
+ Number of threads:            2
+ Complex data interpolation
+ Initializing Sinc interpolator
+ Azimuth Carrier Poly
+Polynomial Order: 5 - by - 3 
+11986.2	-575.806	142.099	3.30313	
+-47438.8	2328.93	-333.125	-6.83284	
+46938.1	-2353.47	101.137	3.60125	
+-2.60422e-09	2.77765e-09	-1.0142e-09	0	
+2.0119e-09	-7.83824e-10	0	0	
+-6.39789e-10	0	0	0	
+ Range Carrier Poly
+Polynomial Order: 0 - by - 0 
+0	
+ Range offsets poly
+Polynomial Order: 0 - by - 0 
+0	
+ Azimuth offsets poly
+Polynomial Order: 0 - by - 0 
+0	
+ Doppler poly
+Polynomial Order: 0 - by - 2 
+0.232466	-1670.98	1.37564e+06	
+ Reading in the image
+ At line         1000
+ Interpolating image
+ At line         1000
+ Elapsed time:    18.0039062    
+GDAL close: fine_offsets/IW3/range_01.off.vrt
+GDAL close: fine_offsets/IW3/azimuth_01.off.vrt
+GDAL close: secondary/IW3/burst_01.slc.vrt
+API close:  fine_coreg/IW3/burst_01.slc
+API open (R): fine_coreg/IW3/burst_01.slc
+API close:  fine_coreg/IW3/burst_01.slc
+No Range Carrier provided.
+Assuming zero range carrier.
+Adjust valid samples
+Before:  836 23639
+Offsets :  15.497855186462402 17.374494552612305
+Adjust valid lines
+Before:  30 1460
+Offsets :  -2.374316930770874 -2.3504600524902344
+After:  37 1452
+Chi squared: 0.000029
+Misfit radians - Max: 0.00010365688285673968 , Min : -0.00019833830992865842 
+2026-10-03 16:25:04,094 - isce.stdproc.resamp_slc - WARNING - The variable INPUT_LINES has been set to the default value 1516 which is the number of lines in the slc image.
+2026-10-03 16:25:04,094 - isce.stdproc.resamp_slc - WARNING - The variable INPUT_WIDTH has been set to the default value 24742 which is the width of the slc image.
+2026-10-03 16:25:04,094 - isce.stdproc.resamp_slc - WARNING - No flattening requested
+Polynomial Order: 5 - by - 3 
+11955.5	-639.575	33.0417	1.04637	
+-47379.7	2455.01	-116.441	-3.90989	
+46941.6	-2353.4	101.124	3.60082	
+-2.20836e-09	2.31733e-09	-8.85276e-10	0	
+1.70209e-09	-6.3541e-10	0	0	
+-5.47223e-10	0	0	0	
+GDAL open (R): secondary/IW3/burst_02.slc.vrt
+API open (WR): fine_coreg/IW3/burst_02.slc
+Polynomial Order: 0 - by - 0 
+0	
+Polynomial Order: 0 - by - 0 
+0	
+Polynomial Order: 5 - by - 3 
+11955.5	-639.575	33.0417	1.04637	
+-47379.7	2455.01	-116.441	-3.90989	
+46941.6	-2353.4	101.124	3.60082	
+-2.20836e-09	2.31733e-09	-8.85276e-10	0	
+1.70209e-09	-6.3541e-10	0	0	
+-5.47223e-10	0	0	0	
+Polynomial Order: 0 - by - 0 
+0	
+Polynomial Order: 0 - by - 0 
+0	
+GDAL open (R): fine_offsets/IW3/range_02.off.vrt
+GDAL open (R): fine_offsets/IW3/azimuth_02.off.vrt
+Polynomial Order: 0 - by - 2 
+-0.21767	-237.099	84834.4	
+  
+  << Resample one image to another image coordinates >>
+  
+ Input Image Dimensions: 
+       24742  pixels
+        1516 lines
+  
+ Output Image Dimensions: 
+       24742 pixels
+        1516 lines
+   
+ Number of threads:            2
+ Complex data interpolation
+ Initializing Sinc interpolator
+ Azimuth Carrier Poly
+Polynomial Order: 5 - by - 3 
+11955.5	-639.575	33.0417	1.04637	
+-47379.7	2455.01	-116.441	-3.90989	
+46941.6	-2353.4	101.124	3.60082	
+-2.20836e-09	2.31733e-09	-8.85276e-10	0	
+1.70209e-09	-6.3541e-10	0	0	
+-5.47223e-10	0	0	0	
+ Range Carrier Poly
+Polynomial Order: 0 - by - 0 
+0	
+ Range offsets poly
+Polynomial Order: 0 - by - 0 
+0	
+ Azimuth offsets poly
+Polynomial Order: 0 - by - 0 
+0	
+ Doppler poly
+Polynomial Order: 0 - by - 2 
+-0.21767	-237.099	84834.4	
+ Reading in the image
+ At line         1000
+ Interpolating image
+ At line         1000
+ Elapsed time:    18.1484375    
+GDAL close: fine_offsets/IW3/range_02.off.vrt
+GDAL close: fine_offsets/IW3/azimuth_02.off.vrt
+GDAL close: secondary/IW3/burst_02.slc.vrt
+API close:  fine_coreg/IW3/burst_02.slc
+API open (R): fine_coreg/IW3/burst_02.slc
+API close:  fine_coreg/IW3/burst_02.slc
+GDAL open (R): fine_interferogram/IW3/burst_01.int.vrt
+API open (WR): fine_interferogram/IW3/burst_01.1alks_5rlks.int
+GDAL close: fine_interferogram/IW3/burst_01.int.vrt
+API close:  fine_interferogram/IW3/burst_01.1alks_5rlks.int
+API open (R): fine_interferogram/IW3/burst_01.1alks_5rlks.int
+API close:  fine_interferogram/IW3/burst_01.1alks_5rlks.int
+GDAL open (R): reference/IW3/burst_01.slc.vrt
+GDAL open (R): fine_coreg/IW3/burst_01.slc.vrt
+API open (WR): fine_interferogram/IW3/burst_01.cor
+No Range Carrier provided.
+Assuming zero range carrier.
+Adjust valid samples
+Before:  836 23638
+Offsets :  15.471234321594238 17.34677505493164
+Adjust valid lines
+Before:  28 1462
+Offsets :  -0.3770214319229126 -0.3529353141784668
+After:  32 1455
+Dumping the application's pickle object _insar to file  PICKLE/fineresamp
+The remaining steps are (in order):  ['ion', 'burstifg', 'mergebursts', 'filter', 'unwrap', 'unwrap2stage', 'geocode', 'denseoffsets', 'filteroffsets', 'geocodeoffsets']
+Running step ion
+Dumping the application's pickle object _insar to file  PICKLE/ion
+The remaining steps are (in order):  ['burstifg', 'mergebursts', 'filter', 'unwrap', 'unwrap2stage', 'geocode', 'denseoffsets', 'filteroffsets', 'geocodeoffsets']
+Running step burstifg
+Writing geotrans to VRT for fine_interferogram/IW3/burst_01.1alks_5rlks.int
+2026-10-03 16:25:25,049 - isce.mroipac.correlation - INFO - Calculating Correlation
+Operating on coregistered SLCs. 
+Number of lines : 1516
+Number of pixels: 24742
+Processing with box size of 5
+# correlation weights (range,azimuth): 5 5
+
+range correlation weights:
+index,coefficient: -2  0.333333
+index,coefficient: -1  0.666667
+index,coefficient: 0  1
+index,coefficient: 1  0.666667
+index,coefficient: 2  0.333333
+
+azimuth correlation weights:
+index,coefficient:  -2  0.333333
+index,coefficient:  -1  0.666667
+index,coefficient:  0  1
+index,coefficient:  1  0.666667
+index,coefficient:  2  0.333333
+
+processing line: 10
+processing line: 20
+processing line: 30
+processing line: 40
+processing line: 50
+processing line: 60
+processing line: 70
+processing line: 80
+processing line: 90
+processing line: 100
+processing line: 110
+processing line: 120
+processing line: 130
+processing line: 140
+processing line: 150
+processing line: 160
+processing line: 170
+processing line: 180
+processing line: 190
+processing line: 200
+processing line: 210
+processing line: 220
+processing line: 230
+processing line: 240
+processing line: 250
+processing line: 260
+processing line: 270
+processing line: 280
+processing line: 290
+processing line: 300
+processing line: 310
+processing line: 320
+processing line: 330
+processing line: 340
+processing line: 350
+processing line: 360
+processing line: 370
+processing line: 380
+processing line: 390
+processing line: 400
+processing line: 410
+processing line: 420
+processing line: 430
+processing line: 440
+processing line: 450
+processing line: 460
+processing line: 470
+processing line: 480
+processing line: 490
+processing line: 500
+processing line: 510
+processing line: 520
+processing line: 530
+processing line: 540
+processing line: 550
+processing line: 560
+processing line: 570
+processing line: 580
+processing line: 590
+processing line: 600
+processing line: 610
+processing line: 620
+processing line: 630
+processing line: 640
+processing line: 650
+processing line: 660
+processing line: 670
+processing line: 680
+processing line: 690
+processing line: 700
+processing line: 710
+processing line: 720
+processing line: 730
+processing line: 740
+processing line: 750
+processing line: 760
+processing line: 770
+processing line: 780
+processing line: 790
+processing line: 800
+processing line: 810
+processing line: 820
+processing line: 830
+processing line: 840
+processing line: 850
+processing line: 860
+processing line: 870
+processing line: 880
+processing line: 890
+processing line: 900
+processing line: 910
+processing line: 920
+processing line: 930
+processing line: 940
+processing line: 950
+processing line: 960
+processing line: 970
+processing line: 980
+processing line: 990
+processing line: 1000
+processing line: 1010
+processing line: 1020
+processing line: 1030
+processing line: 1040
+processing line: 1050
+processing line: 1060
+processing line: 1070
+processing line: 1080
+processing line: 1090
+processing line: 1100
+processing line: 1110
+processing line: 1120
+processing line: 1130
+processing line: 1140
+processing line: 1150
+processing line: 1160
+processing line: 1170
+processing line: 1180
+processing line: 1190
+processing line: 1200
+processing line: 1210
+processing line: 1220
+processing line: 1230
+processing line: 1240
+processing line: 1250
+processing line: 1260
+processing line: 1270
+processing line: 1280
+processing line: 1290
+processing line: 1300
+processing line: 1310
+processing line: 1320
+processing line: 1330
+processing line: 1340
+processing line: 1350
+processing line: 1360
+processing line: 1370
+processing line: 1380
+processing line: 1390
+processing line: 1400
+processing line: 1410
+processing line: 1420
+processing line: 1430
+processing line: 1440
+processing line: 1450
+processing line: 1460
+processing line: 1470
+processing line: 1480
+processing line: 1490
+processing line: 1500
+processing line: 1510
+output lines:1516
+API close:  fine_interferogram/IW3/burst_01.cor
+GDAL close: reference/IW3/burst_01.slc.vrt
+GDAL close: fine_coreg/IW3/burst_01.slc.vrt
+GDAL open (R): fine_interferogram/IW3/burst_02.int.vrt
+API open (WR): fine_interferogram/IW3/burst_02.1alks_5rlks.int
+GDAL close: fine_interferogram/IW3/burst_02.int.vrt
+API close:  fine_interferogram/IW3/burst_02.1alks_5rlks.int
+API open (R): fine_interferogram/IW3/burst_02.1alks_5rlks.int
+API close:  fine_interferogram/IW3/burst_02.1alks_5rlks.int
+GDAL open (R): reference/IW3/burst_02.slc.vrt
+GDAL open (R): fine_coreg/IW3/burst_02.slc.vrt
+API open (WR): fine_interferogram/IW3/burst_02.cor
+Writing geotrans to VRT for fine_interferogram/IW3/burst_02.1alks_5rlks.int
+2026-10-03 16:25:33,005 - isce.mroipac.correlation - INFO - Calculating Correlation
+Operating on coregistered SLCs. 
+Number of lines : 1516
+Number of pixels: 24742
+Processing with box size of 5
+# correlation weights (range,azimuth): 5 5
+
+range correlation weights:
+index,coefficient: -2  0.333333
+index,coefficient: -1  0.666667
+index,coefficient: 0  1
+index,coefficient: 1  0.666667
+index,coefficient: 2  0.333333
+
+azimuth correlation weights:
+index,coefficient:  -2  0.333333
+index,coefficient:  -1  0.666667
+index,coefficient:  0  1
+index,coefficient:  1  0.666667
+index,coefficient:  2  0.333333
+
+processing line: 10
+processing line: 20
+processing line: 30
+processing line: 40
+processing line: 50
+processing line: 60
+processing line: 70
+processing line: 80
+processing line: 90
+processing line: 100
+processing line: 110
+processing line: 120
+processing line: 130
+processing line: 140
+processing line: 150
+processing line: 160
+processing line: 170
+processing line: 180
+processing line: 190
+processing line: 200
+processing line: 210
+processing line: 220
+processing line: 230
+processing line: 240
+processing line: 250
+processing line: 260
+processing line: 270
+processing line: 280
+processing line: 290
+processing line: 300
+processing line: 310
+processing line: 320
+processing line: 330
+processing line: 340
+processing line: 350
+processing line: 360
+processing line: 370
+processing line: 380
+processing line: 390
+processing line: 400
+processing line: 410
+processing line: 420
+processing line: 430
+processing line: 440
+processing line: 450
+processing line: 460
+processing line: 470
+processing line: 480
+processing line: 490
+processing line: 500
+processing line: 510
+processing line: 520
+processing line: 530
+processing line: 540
+processing line: 550
+processing line: 560
+processing line: 570
+processing line: 580
+processing line: 590
+processing line: 600
+processing line: 610
+processing line: 620
+processing line: 630
+processing line: 640
+processing line: 650
+processing line: 660
+processing line: 670
+processing line: 680
+processing line: 690
+processing line: 700
+processing line: 710
+processing line: 720
+processing line: 730
+processing line: 740
+processing line: 750
+processing line: 760
+processing line: 770
+processing line: 780
+processing line: 790
+processing line: 800
+processing line: 810
+processing line: 820
+processing line: 830
+processing line: 840
+processing line: 850
+processing line: 860
+processing line: 870
+processing line: 880
+processing line: 890
+processing line: 900
+processing line: 910
+processing line: 920
+processing line: 930
+processing line: 940
+processing line: 950
+processing line: 960
+processing line: 970
+processing line: 980
+processing line: 990
+processing line: 1000
+processing line: 1010
+processing line: 1020
+processing line: 1030
+processing line: 1040
+processing line: 1050
+processing line: 1060
+processing line: 1070
+processing line: 1080
+processing line: 1090
+processing line: 1100
+processing line: 1110
+processing line: 1120
+processing line: 1130
+processing line: 1140
+processing line: 1150
+processing line: 1160
+processing line: 1170
+processing line: 1180
+processing line: 1190
+processing line: 1200
+processing line: 1210
+processing line: 1220
+processing line: 1230
+processing line: 1240
+processing line: 1250
+processing line: 1260
+processing line: 1270
+processing line: 1280
+processing line: 1290
+processing line: 1300
+processing line: 1310
+processing line: 1320
+processing line: 1330
+processing line: 1340
+processing line: 1350
+processing line: 1360
+processing line: 1370
+processing line: 1380
+processing line: 1390
+processing line: 1400
+processing line: 1410
+processing line: 1420
+processing line: 1430
+processing line: 1440
+processing line: 1450
+processing line: 1460
+processing line: 1470
+processing line: 1480
+processing line: 1490
+processing line: 1500
+processing line: 1510
+output lines:1516
+API close:  fine_interferogram/IW3/burst_02.cor
+GDAL close: reference/IW3/burst_02.slc.vrt
+GDAL close: fine_coreg/IW3/burst_02.slc.vrt
+GDAL open (R): merged/topophase.flat.full.vrt
+API open (WR): merged/topophase.flat
+GDAL close: merged/topophase.flat.full.vrt
+API close:  merged/topophase.flat
+API open (R): merged/topophase.flat
+API close:  merged/topophase.flat
+GDAL open (R): merged/los.rdr.full.vrt
+API open (WR): merged/los.rdr
+GDAL close: merged/los.rdr.full.vrt
+API close:  merged/los.rdr
+API open (R): merged/los.rdr
+API close:  merged/los.rdr
+GDAL open (R): merged/topophase.cor.full.vrt
+API open (WR): merged/topophase.cor
+GDAL close: merged/topophase.cor.full.vrt
+API close:  merged/topophase.cor
+API open (R): merged/topophase.cor
+API close:  merged/topophase.cor
+Dumping the application's pickle object _insar to file  PICKLE/burstifg
+The remaining steps are (in order):  ['mergebursts', 'filter', 'unwrap', 'unwrap2stage', 'geocode', 'denseoffsets', 'filteroffsets', 'geocodeoffsets']
+Running step mergebursts
+Multilooking merged/topophase.flat.full ...
+Writing geotrans to VRT for merged/topophase.flat
+Multilooking merged/los.rdr.full ...
+Writing geotrans to VRT for merged/los.rdr
+Multilooking merged/topophase.cor.full ...
+Writing geotrans to VRT for merged/topophase.cor
+Dumping the application's pickle object _insar to file  PICKLE/mergebursts
+The remaining steps are (in order):  ['filter', 'unwrap', 'unwrap2stage', 'geocode', 'denseoffsets', 'filteroffsets', 'geocodeoffsets']
+Running step filter
+2026-10-03 16:25:44,295 - isce.topsinsar.runFilter - INFO - Applying power-spectral filter
+GDAL open (R): merged/topophase.flat.vrt
+API open (WR): merged/filt_topophase.flat
+2026-10-03 16:25:44,300 - isce.mroipac.filter - DEBUG - width: 4948
+2026-10-03 16:25:44,300 - isce.mroipac.filter - DEBUG - length: 2856
+2026-10-03 16:25:44,300 - isce.mroipac.filter - DEBUG - input: merged/topophase.flat
+2026-10-03 16:25:44,300 - isce.mroipac.filter - DEBUG - output: merged/filt_topophase.flat
+2026-10-03 16:25:44,300 - isce.mroipac.filter - DEBUG - filter strength: 0.0
+2026-10-03 16:25:44,300 - isce.mroipac.filter - INFO - Filtering interferogram
+array width, height, offset:  4948  2856     0
+
+number of lines written to file: 2864
+Rescaling magnitude
+GDAL close: merged/topophase.flat.vrt
+API close:  merged/filt_topophase.flat
+GDAL open (R): merged/filt_topophase.flat.vrt
+API open (WR): merged/phsig.cor
+
+ << PS filtering >>
+
+
+ interferogram width:  4948  number of lines/patch:  3700
+ start line:        1  number of lines:    2856
+ start sample:      1  end sample:         4948
+ wisdomFile, length =            0
+
+ azimuth buffer size:                             3700
+ overlap between azimuth patches:                  200
+ total overlap between azimuth patches:            264
+ offset in overlap region for phase  bootstrap:    132
+ lines to increment for the next patch:           3436
+ number of patches:                                  1
+
+ PATCH:   1   starting line:     0    lines read: 2856
+ starting output line:    1   ending output line: 2856
+
+*** Normal Completion  ***
+
+GDAL close: merged/filt_topophase.flat.vrt
+API close:  merged/phsig.cor
+API open (R): merged/phsig.cor
+API close:  merged/phsig.cor
+Dumping the application's pickle object _insar to file  PICKLE/filter
+The remaining steps are (in order):  ['unwrap', 'unwrap2stage', 'geocode', 'denseoffsets', 'filteroffsets', 'geocodeoffsets']
+Running step unwrap
+Dumping the application's pickle object _insar to file  PICKLE/unwrap
+The remaining steps are (in order):  ['unwrap2stage', 'geocode', 'denseoffsets', 'filteroffsets', 'geocodeoffsets']
+Running step unwrap2stage
+Dumping the application's pickle object _insar to file  PICKLE/unwrap2stage
+The remaining steps are (in order):  ['geocode', 'denseoffsets', 'filteroffsets', 'geocodeoffsets']
+Running step geocode
+2026-10-03 16:26:01,062 - isce.topsinsar.runGeocode - INFO - Geocoding Image
+API open (WR): merged/dem.crop
+API open (WR): merged/topophase.cor.geo
+GDAL open (R): merged/topophase.cor.vrt
+GDAL open (R): /mnt/s1work/dem.wgs84.vrt
+ Using nearest neighbor interpolation
+ threads           2
+ Starting Acquisition time:    3865.3583789999998     
+ Stop Acquisition time:    3871.2269922364999     
+ Azimuth line spacing in secs:    2.0555562999999980E-003
+ Near Range in m:    901269.61320009793     
+ Far  Range in m:    958891.33210758143     
+ Range sample spacing in m:    11.647810573576615     
+ Input Lines:         2856
+ Input Width:         4948
+ reading interferogram ...
+ Geocoded Lines:           373
+ Geocoded Samples:         388
+ Initializing Nearest Neighbor Interpolator
+ geocoding on            2  threads...
+ Number of pixels with outside DEM:             0
+ Number of pixels outside the image:        12470
+ Number of pixels with valid data:         131726
+ elapsed time =   0.257812500      seconds
+ Using nearest neighbor interpolation
+ threads           2
+ Starting Acquisition time:    3865.3583789999998     
+ Stop Acquisition time:    3871.2269922364999     
+ Azimuth line spacing in secs:    2.0555562999999980E-003
+ Near Range in m:    901269.61320009793     
+ Far  Range in m:    958891.33210758143     
+ Range sample spacing in m:    11.647810573576615     
+ Input Lines:         2856
+ Input Width:         4948
+ reading interferogram ...
+ Geocoded Lines:           373
+ Geocoded Samples:         388
+ Initializing Nearest Neighbor Interpolator
+ geocoding on            2  threads...
+ Number of pixels with outside DEM:             0
+ Number of pixels outside the image:        12483
+ Number of pixels with valid data:         131742
+ elapsed time =   0.250000000      seconds
+GDAL close: /mnt/s1work/dem.wgs84.vrt
+GDAL close: merged/topophase.cor.vrt
+API close:  merged/dem.crop
+API close:  merged/topophase.cor.geo
+API open (R): merged/topophase.cor.geo
+API close:  merged/topophase.cor.geo
+API open (WR): merged/dem.crop
+API open (WR): merged/phsig.cor.geo
+GDAL open (R): merged/phsig.cor.vrt
+GDAL open (R): /mnt/s1work/dem.wgs84.vrt
+ Using nearest neighbor interpolation
+ threads           2
+ Starting Acquisition time:    3865.3583789999998     
+ Stop Acquisition time:    3871.2269922364999     
+ Azimuth line spacing in secs:    2.0555562999999980E-003
+ Near Range in m:    901269.61320009793     
+ Far  Range in m:    958891.33210758143     
+ Range sample spacing in m:    11.647810573576615     
+ Input Lines:         2856
+ Input Width:         4948
+ reading interferogram ...
+ Geocoded Lines:           373
+ Geocoded Samples:         388
+ Initializing Nearest Neighbor Interpolator
+ geocoding on            2  threads...
+ Number of pixels with outside DEM:             0
+ Number of pixels outside the image:        12450
+ Number of pixels with valid data:         131581
+ elapsed time =   0.246093750      seconds
+GDAL close: merged/phsig.cor.vrt
+API close:  merged/dem.crop
+API close:  merged/phsig.cor.geo
+API open (R): merged/phsig.cor.geo
+API close:  merged/phsig.cor.geo
+API open (WR): merged/dem.crop
+API open (WR): merged/los.rdr.geo
+GDAL open (R): merged/los.rdr.vrt
+ Using nearest neighbor interpolation
+ threads           2
+ Starting Acquisition time:    3865.3583789999998     
+ Stop Acquisition time:    3871.2269922364999     
+ Azimuth line spacing in secs:    2.0555562999999980E-003
+ Near Range in m:    901269.61320009793     
+ Far  Range in m:    958891.33210758143     
+ Range sample spacing in m:    11.647810573576615     
+ Input Lines:         2856
+ Input Width:         4948
+ reading interferogram ...
+ Geocoded Lines:           373
+ Geocoded Samples:         388
+ Initializing Nearest Neighbor Interpolator
+ geocoding on            2  threads...
+ Number of pixels with outside DEM:             0
+ Number of pixels outside the image:        12445
+ Number of pixels with valid data:         131642
+ elapsed time =   0.250000000      seconds
+ Using nearest neighbor interpolation
+ threads           2
+ Starting Acquisition time:    3865.3583789999998     
+ Stop Acquisition time:    3871.2269922364999     
+ Azimuth line spacing in secs:    2.0555562999999980E-003
+ Near Range in m:    901269.61320009793     
+ Far  Range in m:    958891.33210758143     
+ Range sample spacing in m:    11.647810573576615     
+ Input Lines:         2856
+ Input Width:         4948
+ reading interferogram ...
+ Geocoded Lines:           373
+ Geocoded Samples:         388
+ Initializing Nearest Neighbor Interpolator
+ geocoding on            2  threads...
+ Number of pixels with outside DEM:             0
+ Number of pixels outside the image:        12459
+ Number of pixels with valid data:         131573
+ elapsed time =   0.250000000      seconds
+GDAL close: merged/los.rdr.vrt
+API close:  merged/dem.crop
+API close:  merged/los.rdr.geo
+API open (R): merged/los.rdr.geo
+API close:  merged/los.rdr.geo
+Number of products to geocode:  3
+Output:  merged/topophase.cor.geo
+Writing geotrans to VRT for merged/topophase.cor.geo
+Output:  merged/phsig.cor.geo
+Writing geotrans to VRT for merged/phsig.cor.geo
+Output:  merged/los.rdr.geo
+Writing geotrans to VRT for merged/los.rdr.geo
+2026-10-03 16:26:02,397 - isce.topsinsar.runGeocode - INFO - 
+####################################################################################################
+    runGeocode
+----------------------------------------------------------------------------------------------------
+geocode.Azimuth looks = 1
+geocode.Dem Used = /mnt/s1work/dem.wgs84
+geocode.East = 74.597905
+geocode.Geocoding:  = merged/los.rdr
+geocode.Length = 2856
+geocode.North = 42.570457777777776
+geocode.Output file:  = merged/los.rdr.geo
+geocode.Range looks = 5
+geocode.South = 42.46684666666666
+geocode.West = 74.49012722222223
+geocode.Width = 4948
+####################################################################################################
+Dumping the application's pickle object _insar to file  PICKLE/geocode
+The remaining steps are (in order):  ['denseoffsets', 'filteroffsets', 'geocodeoffsets']
