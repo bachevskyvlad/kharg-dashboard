@@ -181,12 +181,19 @@ function evaluatePixel(s,scenes,inputMetadata,customData,outputMetadata){
             dist  = np.sqrt(dx_m**2 + dy_m**2).flatten()
             mask  = dist <= r_m
 
+            if _fetch_db._diag_calls < 5:
+                finite = arr[np.isfinite(arr)]
+                print(f"    [diag] ok | shape={arr.shape} mode={img.mode} "
+                      f"min={finite.min() if len(finite) else 'nan':.2f} "
+                      f"max={finite.max() if len(finite) else 'nan':.2f} "
+                      f"n_finite={len(finite)} n_mask={mask.sum()}", flush=True)
+                _fetch_db._diag_calls += 1
             valid = arr[mask & np.isfinite(arr) & (arr > -40) & (arr < 30)]
             if len(valid) < 4:
                 return None
             return float(np.median(valid))
         except Exception as exc:
-            if _fetch_db._diag_calls < 3:
+            if _fetch_db._diag_calls < 5:
                 print(f"    [diag] exception: {exc}", flush=True)
                 _fetch_db._diag_calls += 1
             if attempt < retries:
