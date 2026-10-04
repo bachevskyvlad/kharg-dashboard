@@ -1,0 +1,50 @@
+name: SOMO Iraq Monthly Export Table (Этап 4)
+
+on:
+  workflow_dispatch:
+    inputs: {}
+
+jobs:
+  somo:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: pip install pandas requests -q
+
+      - name: Build SOMO table
+        run: |
+          mkdir -p diagnostics/al_faw
+          cd scripts
+          python build_somo_iraq_table.py 2>&1 | tee ../diagnostics/al_faw/somo_run.txt
+
+      - name: Commit outputs
+        if: always()
+        run: |
+          git config user.email "actions@github.com"
+          git config user.name "GitHub Actions"
+          git add -f diagnostics/al_faw/somo_iraq_monthly_exports.csv || true
+          git add -f diagnostics/al_faw/somo_run.txt || true
+          git status --short
+          git diff --cached --quiet && echo "No new files" || \
+            git commit -m "ci: SOMO Iraq monthly exports table [skip ci]"
+          git pull --rebase origin main || true
+          git push origin HEAD:main || true
+
+      - name: Upload
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: somo-iraq-table
+          path: |
+            diagnostics/al_faw/somo_iraq_monthly_exports.csv
+            diagnostics/al_faw/somo_run.txt
