@@ -131,7 +131,6 @@ function evaluatePixel(s,scenes,inputMetadata,customData,outputMetadata){
                         "to":   f"{date_str}T23:59:59Z"
                     },
                     "acquisitionMode": "IW",
-                    "polarization":    "DV",
                     "orbitDirection":  ORBIT_DIR,
                     "resolution":      "HIGH"
                 },
@@ -159,6 +158,14 @@ function evaluatePixel(s,scenes,inputMetadata,customData,outputMetadata){
                 time.sleep(2 * (attempt + 1))
                 continue
             if resp.status_code != 200:
+                if _fetch_db._diag_calls < 3:
+                    print(f"    [diag] HTTP {resp.status_code} | ct={resp.headers.get('content-type')} | {resp.text[:200]}", flush=True)
+                    _fetch_db._diag_calls += 1
+                return None
+            if len(resp.content) < 16:
+                if _fetch_db._diag_calls < 3:
+                    print(f"    [diag] empty body ({len(resp.content)}B) | ct={resp.headers.get('content-type')}", flush=True)
+                    _fetch_db._diag_calls += 1
                 return None
             img = Image.open(io.BytesIO(resp.content))
             arr = np.array(img, dtype=np.float32).flatten()
@@ -178,10 +185,42 @@ function evaluatePixel(s,scenes,inputMetadata,customData,outputMetadata){
             if len(valid) < 4:
                 return None
             return float(np.median(valid))
-        except Exception:
+        except Exception as exc:
+            if _fetch_db._diag_calls < 3:
+                print(f"    [diag] exception: {exc}", flush=True)
+                _fetch_db._diag_calls += 1
             if attempt < retries:
                 time.sleep(2)
     return None
+
+_fetch_db._diag_calls = 0
+
+
+# ── Supabase: config A db_mean (already ingested) ─────────────────────────────
+def fetch_supabase_db():
+    """Fetch all al_flaw DESCENDING terminal_observations. Returns {(date,tank_id): db_mean}."""
+    rows, offset = [], 0
+    while True:
+        url = (f"{SB_URL}/rest/v1/terminal_observations"
+               f"?terminal_id=eq.{TERMINAL_ID}"
+               f"&orbit_direction=eq.{ORBIT_DIR}"
+               f"&select=date,tank_id,db_mean"
+               f"&order=date.asc&offset={offset}&limit={PAGE_SIZE}")
+        r = requests.get(url, headers=SB_HEADERS, timeout=60)
+        r.raise_for_status()
+        batch = r.json()
+        rows.extend(batch)
+        if len(batch) < PAGE_SIZE:
+            break
+        offset += PAGE_SIZE
+    result = {}
+    for row in rows:
+        d = row["date"][:10]
+        tid = row["tank_id"]
+        val = row.get("db_mean")
+        if val is not None:
+            result[(d, tid)] = float(val)
+    return result
 
 
 # ── Supabase: recent scene dates for al_flaw ──────────────────────────────────
@@ -269,8 +308,13 @@ def main():
     tank_ids = sorted(configs.keys())
     log(f"  {len(tank_ids)} tanks: {tank_ids[0]}–{tank_ids[-1]}")
 
-    # 3. SH token
-    log("\n[3] Getting SH token…")
+    # 3. Config A: load from Supabase (production db_mean, no SH needed)
+    log("\n[3] Loading config A db_mean from Supabase…")
+    sb_db = fetch_supabase_db()
+    log(f"  {len(sb_db)} (date,tank) pairs")
+
+    # 4. SH token (needed for B/C only)
+    log("\n[4] Getting SH token…")
     try:
         token = _get_sh_token()
         log("  token OK")
@@ -278,26 +322,21 @@ def main():
         log(f"  FATAL: SH token failed: {e}")
         save_log(); sys.exit(1)
 
-    # 4. Fetch db_mean per (date, tank, config)
-    # Config A: re-fetch from SH using original centre+r=40
-    # Config B: original centre + r_fit
-    # Config C: v2 centre + r_fit
-    # Result: db_records[tank_id] = {date: {A:val, B:val, C:val}}
+    # 5. Fetch db_mean per (date, tank, config B/C) via SH Process API
+    # Config A: Supabase. Config B: old centre+r_fit. Config C: v2 centre+r_fit.
     db_rec = {t: {} for t in tank_ids}
-    total_calls = len(dates) * len(tank_ids) * 3
-    log(f"\n[4] Fetching SAR db_mean — {total_calls} SH calls…")
+    total_bc = len(dates) * len(tank_ids) * 2
+    log(f"\n[5] Fetching SAR db_mean for B/C — {total_bc} SH calls…")
 
     call_n = 0
     for di, date_str in enumerate(dates):
         for tid in tank_ids:
             cfg = configs[tid]
-            vals = {}
+            vals = {"A": sb_db.get((date_str, tid))}
             for conf, lat, lon, r in [
-                ("A", cfg["lat_A"], cfg["lon_A"], cfg["r_A"]),
                 ("B", cfg["lat_A"], cfg["lon_A"], cfg["r_B"]),
                 ("C", cfg["lat_C"], cfg["lon_C"], cfg["r_C"]),
             ]:
-                # re-fetch token if needed
                 try:
                     token = _get_sh_token()
                 except Exception:
@@ -308,7 +347,7 @@ def main():
             db_rec[tid][date_str] = vals
 
         if (di + 1) % 5 == 0 or (di + 1) == len(dates):
-            log(f"  {di+1}/{len(dates)} dates | {call_n}/{total_calls} calls")
+            log(f"  {di+1}/{len(dates)} dates | {call_n}/{total_bc} BC calls")
 
     # 5. Compute step_db = std(db_mean across scenes) per tank per config
     step = {}
