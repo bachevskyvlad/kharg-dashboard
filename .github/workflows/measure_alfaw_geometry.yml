@@ -39,10 +39,3 @@ jobs:
           git pull --rebase origin main || true
           git push origin HEAD:main || true
 
-      - name: Upload geometry outputs
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: alfaw-geometry-v2
-          path: |
-            diagnostics/al_faw/geometry/

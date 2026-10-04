@@ -314,11 +314,15 @@ def main():
     geo_path    = OUT_DIR / "mosaic_geo.json"
     log(f"\n[Step 1] Esri z{ZOOM} mosaic…")
 
+    geo_valid = False
     if mosaic_path.exists() and geo_path.exists():
-        log("  cache hit")
-        mosaic = Image.open(mosaic_path).convert("RGB")
         with open(geo_path) as f:
             g = json.load(f)
+        geo_valid = "tx0" in g and "ty0" in g and "mpp" in g
+
+    if geo_valid:
+        log("  cache hit")
+        mosaic = Image.open(mosaic_path).convert("RGB")
         tx0, ty0, mpp = g["tx0"], g["ty0"], g["mpp"]
     else:
         mosaic, tx0, ty0, mpp = build_mosaic()
