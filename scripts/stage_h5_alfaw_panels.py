@@ -143,8 +143,8 @@ def _query_s2_catalog(bbox, date_from="2023-01-01", max_cloud=30, n_scenes=5):
         "datetime": f"{date_from}T00:00:00Z/{date_to}T23:59:59Z",
         "collections": ["sentinel-2-l2a"],
         "limit": 100,
-        "filter": {"op": "lte", "args": [{"property": "eo:cloud_cover"}, max_cloud]},
-        "filter-lang": "cql2-json",
+        "filter": f"eo:cloud_cover<{max_cloud}",
+        "filter-lang": "cql2-text",
     }
     r = requests.post(
         "https://sh.dataspace.copernicus.eu/api/v1/catalog/1.0.0/search",
@@ -196,14 +196,8 @@ def _query_s1_catalog(bbox, orbit_dir="DESCENDING", n_scenes=5):
         "datetime": f"{date_from}T00:00:00Z/{date_to}T23:59:59Z",
         "collections": ["sentinel-1-grd"],
         "limit": 50,
-        "filter": {
-            "op": "and",
-            "args": [
-                {"op": "=", "args": [{"property": "sat:orbit_state"}, orbit_dir.lower()]},
-            ],
-        },
-        "filter-lang": "cql2-json",
-        "fields": {"include": ["id", "datetime", "properties.sat:orbit_state"]},
+        "filter": f"sat:orbit_state='{orbit_dir.lower()}'",
+        "filter-lang": "cql2-text",
     }
     r = requests.post(
         "https://sh.dataspace.copernicus.eu/api/v1/catalog/1.0.0/search",
