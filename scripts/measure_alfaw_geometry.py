@@ -2,18 +2,17 @@
 measure_alfaw_geometry.py — Al-Faw geometry v2 (ТЗ, строгий порядок)
 =====================================================================
 Steps:
-  1. Fetch Esri World Imagery XYZ tiles (z=18, ~0.52 m/px) for Al-Faw bbox → mosaic PNG
-  2. 16-ray circle measurement for all 24 tanks → r_measured, shift (dx, dy)
-  3. Write v2 registry JSON (updated centres + radii, h_max=14 kept, h_source=assumed)
-  4. Write geometry table CSV: tank | r_reg | r_measured | shift_m | dx_m | dy_m
-  5. Write annotated mosaic PNG (tank circles + IDs)
+  1. Fetch Esri World Imagery XYZ tiles (z=18, ~0.52 m/px) → mosaic PNG
+  2. 16-ray circle measurement for all 24 registry tanks:
+       fit_quality: median ray residual (m) + edge energy; filter no_tank_visible
+  3. Hough-circle census of the full mosaic → tanks visible but not in registry
+  4. Write geometry_v2.csv (filtered), registry_v2.json, annotated PNG
 
-Outputs (all in diagnostics/al_faw/geometry/):
-  esri_mosaic_z18.png     — raw stitched mosaic
-  mosaic_annotated.png    — mosaic with v2 circles overlaid
-  geometry_v2.csv         — measurement table
-  registry_v2.json        — v2 TANKS list for stage7 / ingest
-  run.txt                 — log
+Web Mercator projection (correct):
+  global_px = (lon + 180) / 360 * 2^z * 256
+  global_py = (1 - ln(tan(lat*π/180) + sec(lat*π/180)) / π) / 2 * 2^z * 256
+  mosaic_px = global_px - tx0 * 256
+  mosaic_py = global_py - ty0 * 256
 
 Rules (ТЗ):
   - measurement is the ONLY source for registry edits
@@ -21,76 +20,102 @@ Rules (ТЗ):
   - "вероятно" prohibited
 """
 
-import os, sys, math, io, json, time
+import os, sys, math, io, json, time, csv
 from pathlib import Path
 from datetime import datetime, timezone
 
 import numpy as np
 import requests
-from PIL import Image, ImageDraw, ImageFont
+from PIL import Image, ImageDraw
+
+try:
+    from scipy.ndimage import uniform_filter, gaussian_filter
+    from scipy.signal import find_peaks
+    SCIPY_OK = True
+except ImportError:
+    SCIPY_OK = False
 
 # ── Config ────────────────────────────────────────────────────────────────────
-ZOOM = 18          # ~0.52 m/px at lat 30°
+ZOOM      = 18
+TILE_SIZE = 256
+RAYS      = 16
 
-# Al-Faw bbox with buffer (covers all 24 tanks)
-LAT_MIN, LAT_MAX = 29.958, 29.980
-LON_MIN, LON_MAX = 48.436, 48.462
+# Al-Faw bbox with generous buffer
+LAT_MIN, LAT_MAX = 29.955, 29.983
+LON_MIN, LON_MAX = 48.432, 48.466
 
 OUT_DIR = Path(__file__).parent.parent / "diagnostics" / "al_faw" / "geometry"
 OUT_DIR.mkdir(parents=True, exist_ok=True)
 
 TILE_URL = "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
-TILE_SIZE = 256   # px per tile
-RAYS      = 16    # 16-ray measurement
 
-# v1 registry (stage7 coords) — source of truth for initial window centres
+# Fit quality thresholds
+EDGE_ENERGY_MIN  = 6.0   # gradient std at edge points; below → no_tank_visible
+RESIDUAL_POOR_M  = 8.0   # median residual > this → poor fit
+
+# Hough census
+HOUGH_R_MIN_M = 25.0   # smallest expected tank radius (m)
+HOUGH_R_MAX_M = 60.0   # largest
+HOUGH_MIN_VOTES = 8    # out of 360 votes
+
+# Registry tanks
 TANKS_V1 = [
-    {"id": "af_0",  "lat": 29.976037712391882, "lon": 48.44195552300743,  "radius_m": 40, "h_max_m": 14},
-    {"id": "af_1",  "lat": 29.97446023561727,  "lon": 48.44041073298363,  "radius_m": 40, "h_max_m": 14},
-    {"id": "af_2",  "lat": 29.973482237683964, "lon": 48.44170682926327,  "radius_m": 40, "h_max_m": 14},
-    {"id": "af_3",  "lat": 29.97506237979022,  "lon": 48.443256604287775, "radius_m": 40, "h_max_m": 14},
-    {"id": "af_4",  "lat": 29.972052466075166, "lon": 48.44360540262179,  "radius_m": 40, "h_max_m": 14},
-    {"id": "af_5",  "lat": 29.973613605327138, "lon": 48.44517136039961,  "radius_m": 40, "h_max_m": 14},
-    {"id": "af_6",  "lat": 29.971043737749962, "lon": 48.44490239092673,  "radius_m": 40, "h_max_m": 14},
-    {"id": "af_7",  "lat": 29.972645241700267, "lon": 48.44646203210755,  "radius_m": 40, "h_max_m": 14},
-    {"id": "af_8",  "lat": 29.970602225788706, "lon": 48.44914349229505,  "radius_m": 40, "h_max_m": 14},
-    {"id": "af_9",  "lat": 29.96964506640903,  "lon": 48.45042448972437,  "radius_m": 40, "h_max_m": 14},
-    {"id": "af_10", "lat": 29.969053578374012, "lon": 48.44757323726147,  "radius_m": 40, "h_max_m": 14},
-    {"id": "af_11", "lat": 29.968074369587153, "lon": 48.44888119527686,  "radius_m": 40, "h_max_m": 14},
-    {"id": "af_12", "lat": 29.967562585491844, "lon": 48.44613477210609,  "radius_m": 40, "h_max_m": 14},
-    {"id": "af_13", "lat": 29.966616705980595, "lon": 48.44740303358956,  "radius_m": 40, "h_max_m": 14},
-    {"id": "af_14", "lat": 29.965160381102958, "lon": 48.449324515383225, "radius_m": 40, "h_max_m": 14},
-    {"id": "af_15", "lat": 29.966613187227228, "lon": 48.45079062045803,  "radius_m": 40, "h_max_m": 14},
-    {"id": "af_16", "lat": 29.964164829146835, "lon": 48.450625111425616, "radius_m": 40, "h_max_m": 14},
-    {"id": "af_17", "lat": 29.965658494437534, "lon": 48.45208349893114,  "radius_m": 40, "h_max_m": 14},
-    {"id": "af_18", "lat": 29.961779354173064, "lon": 48.45380166725049,  "radius_m": 40, "h_max_m": 14},
-    {"id": "af_19", "lat": 29.96274476143991,  "lon": 48.45253449582525,  "radius_m": 40, "h_max_m": 14},
-    {"id": "af_20", "lat": 29.964218037290507, "lon": 48.45399437056702,  "radius_m": 40, "h_max_m": 14},
-    {"id": "af_21", "lat": 29.96326674821542,  "lon": 48.45527466098349,  "radius_m": 40, "h_max_m": 14},
-    {"id": "af_22", "lat": 29.964822804270934, "lon": 48.45681522152186,  "radius_m": 40, "h_max_m": 14},
-    {"id": "af_23", "lat": 29.96580178961507,  "lon": 48.45553712042206,  "radius_m": 40, "h_max_m": 14},
+    {"id": "af_0",  "lat": 29.976037712391882, "lon": 48.44195552300743,  "radius_m": 40},
+    {"id": "af_1",  "lat": 29.97446023561727,  "lon": 48.44041073298363,  "radius_m": 40},
+    {"id": "af_2",  "lat": 29.973482237683964, "lon": 48.44170682926327,  "radius_m": 40},
+    {"id": "af_3",  "lat": 29.97506237979022,  "lon": 48.443256604287775, "radius_m": 40},
+    {"id": "af_4",  "lat": 29.972052466075166, "lon": 48.44360540262179,  "radius_m": 40},
+    {"id": "af_5",  "lat": 29.973613605327138, "lon": 48.44517136039961,  "radius_m": 40},
+    {"id": "af_6",  "lat": 29.971043737749962, "lon": 48.44490239092673,  "radius_m": 40},
+    {"id": "af_7",  "lat": 29.972645241700267, "lon": 48.44646203210755,  "radius_m": 40},
+    {"id": "af_8",  "lat": 29.970602225788706, "lon": 48.44914349229505,  "radius_m": 40},
+    {"id": "af_9",  "lat": 29.96964506640903,  "lon": 48.45042448972437,  "radius_m": 40},
+    {"id": "af_10", "lat": 29.969053578374012, "lon": 48.44757323726147,  "radius_m": 40},
+    {"id": "af_11", "lat": 29.968074369587153, "lon": 48.44888119527686,  "radius_m": 40},
+    {"id": "af_12", "lat": 29.967562585491844, "lon": 48.44613477210609,  "radius_m": 40},
+    {"id": "af_13", "lat": 29.966616705980595, "lon": 48.44740303358956,  "radius_m": 40},
+    {"id": "af_14", "lat": 29.965160381102958, "lon": 48.449324515383225, "radius_m": 40},
+    {"id": "af_15", "lat": 29.966613187227228, "lon": 48.45079062045803,  "radius_m": 40},
+    {"id": "af_16", "lat": 29.964164829146835, "lon": 48.450625111425616, "radius_m": 40},
+    {"id": "af_17", "lat": 29.965658494437534, "lon": 48.45208349893114,  "radius_m": 40},
+    {"id": "af_18", "lat": 29.961779354173064, "lon": 48.45380166725049,  "radius_m": 40},
+    {"id": "af_19", "lat": 29.96274476143991,  "lon": 48.45253449582525,  "radius_m": 40},
+    {"id": "af_20", "lat": 29.964218037290507, "lon": 48.45399437056702,  "radius_m": 40},
+    {"id": "af_21", "lat": 29.96326674821542,  "lon": 48.45527466098349,  "radius_m": 40},
+    {"id": "af_22", "lat": 29.964822804270934, "lon": 48.45681522152186,  "radius_m": 40},
+    {"id": "af_23", "lat": 29.96580178961507,  "lon": 48.45553712042206,  "radius_m": 40},
 ]
 
-# ── Tile helpers ──────────────────────────────────────────────────────────────
-def _lat_lon_to_tile(lat, lon, z):
-    n = 2 ** z
-    x = int((lon + 180) / 360 * n)
+
+# ── Web Mercator helpers ──────────────────────────────────────────────────────
+def _global_px(lat, lon, z):
+    """Tile-system global pixel coordinates (Web Mercator, origin at NW of world)."""
+    n = 2 ** z * TILE_SIZE
+    gx = (lon + 180.0) / 360.0 * n
     lat_r = math.radians(lat)
-    y = int((1 - math.log(math.tan(lat_r) + 1 / math.cos(lat_r)) / math.pi) / 2 * n)
-    return x, y
+    gy = (1.0 - math.log(math.tan(lat_r) + 1.0 / math.cos(lat_r)) / math.pi) / 2.0 * n
+    return gx, gy
 
-def _tile_nw_corner(tx, ty, z):
-    """Return (lat, lon) of the NW corner of tile (tx,ty) at zoom z."""
-    n = 2 ** z
-    lon = tx / n * 360 - 180
-    lat_r = math.atan(math.sinh(math.pi * (1 - 2 * ty / n)))
-    lat = math.degrees(lat_r)
-    return lat, lon
+def _lat_lon_to_tile(lat, lon, z):
+    gx, gy = _global_px(lat, lon, z)
+    return int(gx / TILE_SIZE), int(gy / TILE_SIZE)
 
-def _meters_per_px(lat, z):
-    C = 2 * math.pi * 6378137  # Earth circumference
+def _tile_nw_global_px(tx, ty, z):
+    return tx * TILE_SIZE, ty * TILE_SIZE
+
+def _m_per_px_at_lat(lat, z):
+    """Web Mercator scale: constant in x, lat-dependent for geographic metres."""
+    C = 2.0 * math.pi * 6378137.0
     return C * math.cos(math.radians(lat)) / (2 ** z * TILE_SIZE)
 
+def geo_to_mosaic_px(lat, lon, z, tx0, ty0):
+    """Convert (lat, lon) → (px, py) in the stitched mosaic."""
+    gx, gy = _global_px(lat, lon, z)
+    nw_gx, nw_gy = _tile_nw_global_px(tx0, ty0, z)
+    return gx - nw_gx, gy - nw_gy
+
+
+# ── Tile fetch ────────────────────────────────────────────────────────────────
 def _fetch_tile(tx, ty, z, session, retries=3):
     url = TILE_URL.format(z=z, y=ty, x=tx)
     for attempt in range(retries):
@@ -100,359 +125,469 @@ def _fetch_tile(tx, ty, z, session, retries=3):
                 return Image.open(io.BytesIO(r.content)).convert("RGB")
             print(f"    tile {tx},{ty} → HTTP {r.status_code}")
         except Exception as e:
-            print(f"    tile {tx},{ty} attempt {attempt+1} error: {e}")
+            print(f"    tile {tx},{ty} err {attempt+1}: {e}")
         time.sleep(1.5 ** attempt)
     return None
 
-
-# ── Mosaic ────────────────────────────────────────────────────────────────────
-def build_mosaic(lat_min, lat_max, lon_min, lon_max, z):
-    """Download and stitch tiles. Returns (mosaic_img, mosaic_geo) where
-    mosaic_geo = (lat_nw, lon_nw, m_per_px)."""
-    tx0, ty0 = _lat_lon_to_tile(lat_max, lon_min, z)  # NW corner → smallest ty
-    tx1, ty1 = _lat_lon_to_tile(lat_min, lon_max, z)  # SE corner → largest ty
-    # Ensure correct ordering
+def build_mosaic():
+    tx0, ty0 = _lat_lon_to_tile(LAT_MAX, LON_MIN, ZOOM)   # NW
+    tx1, ty1 = _lat_lon_to_tile(LAT_MIN, LON_MAX, ZOOM)   # SE
     tx0, tx1 = min(tx0, tx1), max(tx0, tx1)
     ty0, ty1 = min(ty0, ty1), max(ty0, ty1)
-
     n_x = tx1 - tx0 + 1
     n_y = ty1 - ty0 + 1
-    print(f"  tiles x: {tx0}–{tx1} ({n_x} tiles)")
-    print(f"  tiles y: {ty0}–{ty1} ({n_y} tiles)")
-    print(f"  total: {n_x * n_y} tiles")
-
-    mosaic_w = n_x * TILE_SIZE
-    mosaic_h = n_y * TILE_SIZE
-    mosaic = Image.new("RGB", (mosaic_w, mosaic_h))
-
+    print(f"  tiles x:{tx0}–{tx1} ({n_x})  y:{ty0}–{ty1} ({n_y})  total:{n_x*n_y}")
+    mosaic = Image.new("RGB", (n_x * TILE_SIZE, n_y * TILE_SIZE))
     session = requests.Session()
-    session.headers["User-Agent"] = "Mozilla/5.0 OilRadar geometry survey (research)"
-
-    fetched, failed = 0, 0
+    session.headers["User-Agent"] = "Mozilla/5.0 OilRadar geometry survey"
+    ok = fail = 0
     for ty in range(ty0, ty1 + 1):
         for tx in range(tx0, tx1 + 1):
-            tile = _fetch_tile(tx, ty, z, session)
+            tile = _fetch_tile(tx, ty, ZOOM, session)
             if tile:
-                px = (tx - tx0) * TILE_SIZE
-                py = (ty - ty0) * TILE_SIZE
-                mosaic.paste(tile, (px, py))
-                fetched += 1
+                mosaic.paste(tile, ((tx - tx0) * TILE_SIZE, (ty - ty0) * TILE_SIZE))
+                ok += 1
             else:
-                failed += 1
-            time.sleep(0.05)   # polite rate limit
-
-    print(f"  fetched: {fetched}  failed: {failed}")
-
-    # NW corner lat/lon of the stitched mosaic
-    lat_nw, lon_nw = _tile_nw_corner(tx0, ty0, z)
-    m_per_px = _meters_per_px((lat_min + lat_max) / 2, z)
-    print(f"  mosaic size: {mosaic_w}×{mosaic_h} px")
-    print(f"  NW corner: ({lat_nw:.6f}, {lon_nw:.6f})")
-    print(f"  resolution: {m_per_px:.3f} m/px")
-    return mosaic, (lat_nw, lon_nw, m_per_px)
+                fail += 1
+            time.sleep(0.04)
+    print(f"  fetched:{ok}  failed:{fail}  size:{mosaic.width}×{mosaic.height}")
+    mpp = _m_per_px_at_lat((LAT_MIN + LAT_MAX) / 2, ZOOM)
+    print(f"  m/px at lat_mid: {mpp:.4f}")
+    return mosaic, tx0, ty0, mpp
 
 
-# ── Geo ↔ pixel ───────────────────────────────────────────────────────────────
-def geo_to_px(lat, lon, lat_nw, lon_nw, m_per_px):
-    """Convert (lat, lon) to pixel (x, y) in the mosaic."""
-    # Use Mercator projection consistent with tile scheme
-    def merc_y(lat_deg):
-        lat_r = math.radians(lat_deg)
-        return math.log(math.tan(math.pi / 4 + lat_r / 2))
-
-    m_nw = merc_y(lat_nw)
-    m_pt = merc_y(lat)
-
-    # 1 degree longitude = (m_per_px * TILE_SIZE * 2**z / 360) ← but we already have m_per_px
-    # Simpler: use the fact that at zoom z, 1 tile = TILE_SIZE px = 2π*R*cos(lat)/(2**z) m
-    # For x (longitude): linear
-    # For y (Mercator): use ratio
-    R = 6378137.0
-    x_px = (lon - lon_nw) * math.cos(math.radians((lat + lat_nw) / 2)) * R / m_per_px * math.pi / 180
-    y_px = (m_nw - m_pt) * R / m_per_px
-
-    return float(x_px), float(y_px)
-
-
-# ── 16-ray edge measurement ───────────────────────────────────────────────────
-def _gradient_mag(arr_gray):
-    """Simple Sobel-like gradient magnitude on float32 array."""
-    from scipy.ndimage import sobel
-    sx = sobel(arr_gray, axis=1)
-    sy = sobel(arr_gray, axis=0)
-    return np.sqrt(sx**2 + sy**2)
-
-
-def measure_tank(mosaic_arr, cx_px, cy_px, r_guess_px, n_rays=16, search_frac=0.6):
+# ── 16-ray measurement ────────────────────────────────────────────────────────
+def measure_tank(gray, cx, cy, r_guess_px, n_rays=RAYS):
     """
-    16-ray measurement.  Cast n_rays from (cx_px, cy_px), search along each ray
-    in [r_guess*(1-search_frac) .. r_guess*(1+search_frac)].
-    Edge = peak gradient pixel.
-
-    Returns:
-      r_px_list  — measured radius per ray (px)
-      cx_fit, cy_fit — fitted centre (from average of edge points)
-      r_fit_px       — mean radius (px)
+    16-ray edge measurement.
+    Returns dict with r_rays, cx_fit, cy_fit, r_fit_px,
+    median_residual_px, edge_energies, quality_flag.
     """
-    h, w = mosaic_arr.shape[:2]
-    gray = np.mean(mosaic_arr, axis=2).astype(np.float32)
-
-    r_inner = r_guess_px * (1 - search_frac)
-    r_outer = r_guess_px * (1 + search_frac)
-    r_inner = max(4, r_inner)
-    r_outer = min(r_outer, min(h, w) / 2 - 2)
+    h, w = gray.shape
+    r_in  = max(5.0, r_guess_px * 0.45)
+    r_out = min(r_guess_px * 1.55, min(h, w) / 2.0 - 2)
 
     angles = [2 * math.pi * i / n_rays for i in range(n_rays)]
-    edge_xs, edge_ys, radii = [], [], []
+    edge_xs, edge_ys, edge_gs = [], [], []
 
     for ang in angles:
-        dx = math.cos(ang)
-        dy = math.sin(ang)
-        # Sample gradient along ray
-        t_vals = np.linspace(r_inner, r_outer, int((r_outer - r_inner) * 2) + 4)
-        grads = []
-        for t in t_vals:
-            xi = int(round(cx_px + dx * t))
-            yi = int(round(cy_px + dy * t))
-            if 0 <= xi < w and 0 <= yi < h:
-                # 3×3 local gradient
-                x0, x1 = max(0, xi-1), min(w-1, xi+1)
-                y0, y1 = max(0, yi-1), min(h-1, yi+1)
-                patch = gray[y0:y1+1, x0:x1+1].astype(float)
-                g = float(np.std(patch))
-            else:
-                g = 0.0
-            grads.append(g)
-        if not grads or max(grads) < 1.0:
+        dx, dy = math.cos(ang), math.sin(ang)
+        # Sample gradient along ray at 0.5px steps
+        n_samples = max(8, int((r_out - r_in) * 2))
+        ts = np.linspace(r_in, r_out, n_samples)
+        gs = []
+        for t in ts:
+            xi = int(round(cx + dx * t))
+            yi = int(round(cy + dy * t))
+            if not (1 <= xi < w - 1 and 1 <= yi < h - 1):
+                gs.append(0.0)
+                continue
+            # 3×3 gradient (std as proxy for edge)
+            patch = gray[yi-1:yi+2, xi-1:xi+2].astype(float)
+            gs.append(float(np.std(patch)))
+
+        if not gs or max(gs) < 1e-3:
             continue
-        best_t = t_vals[int(np.argmax(grads))]
-        ex = cx_px + dx * best_t
-        ey = cy_px + dy * best_t
+        best_i = int(np.argmax(gs))
+        best_t = ts[best_i]
+        ex = cx + dx * best_t
+        ey = cy + dy * best_t
         edge_xs.append(ex)
         edge_ys.append(ey)
-        radii.append(best_t)
+        edge_gs.append(gs[best_i])
 
-    if len(radii) < 4:
-        return radii, cx_px, cy_px, r_guess_px  # fallback
+    n_valid = len(edge_xs)
+    if n_valid < 4:
+        return {"quality": "no_tank_visible", "n_rays": n_valid,
+                "cx_fit": cx, "cy_fit": cy, "r_fit_px": r_guess_px,
+                "edge_energy_mean": 0.0, "median_residual_px": 999.0}
 
-    # Fit centre as mean of edge points
+    # Fit centre
     cx_fit = float(np.mean(edge_xs))
     cy_fit = float(np.mean(edge_ys))
-    # Recompute radii from fitted centre
-    radii_fit = [math.hypot(edge_xs[i] - cx_fit, edge_ys[i] - cy_fit)
-                 for i in range(len(edge_xs))]
-    r_fit_px = float(np.mean(radii_fit))
+    r_rays = [math.hypot(edge_xs[i] - cx_fit, edge_ys[i] - cy_fit)
+              for i in range(n_valid)]
+    r_fit_px = float(np.mean(r_rays))
 
-    return radii_fit, cx_fit, cy_fit, r_fit_px
+    # Residuals from mean radius
+    residuals = [abs(r - r_fit_px) for r in r_rays]
+    med_res   = float(np.median(residuals))
+
+    edge_energy_mean = float(np.mean(edge_gs))
+
+    return {
+        "quality":            "ok",   # updated below by caller
+        "n_rays":             n_valid,
+        "edge_xs":            edge_xs,
+        "edge_ys":            edge_ys,
+        "cx_fit":             cx_fit,
+        "cy_fit":             cy_fit,
+        "r_fit_px":           r_fit_px,
+        "r_rays":             r_rays,
+        "median_residual_px": med_res,
+        "edge_energy_mean":   edge_energy_mean,
+    }
+
+
+# ── Hough circle census ───────────────────────────────────────────────────────
+def hough_census(gray, mpp):
+    """
+    Simple accumulator-based Hough circle detection on down-sampled image.
+    Returns list of (cx_px, cy_px, r_px) in full-resolution coords.
+    """
+    # Down-sample 4× for speed
+    DSAMP = 4
+    h, w = gray.shape
+    sm_h, sm_w = h // DSAMP, w // DSAMP
+    small = gray[::DSAMP, ::DSAMP].astype(np.float32)
+
+    # Gradient edges
+    gy = np.diff(small, axis=0, prepend=small[:1])
+    gx = np.diff(small, axis=1, prepend=small[:, :1])
+    gmag = np.sqrt(gx**2 + gy**2)
+
+    # Threshold top 5% edges
+    thr = np.percentile(gmag, 95)
+    edge_ys, edge_xs = np.where(gmag > thr)
+
+    if len(edge_xs) == 0:
+        return []
+
+    r_min_px = max(2, int(HOUGH_R_MIN_M / mpp / DSAMP))
+    r_max_px = max(r_min_px + 1, int(HOUGH_R_MAX_M / mpp / DSAMP))
+
+    # Limit edge points for speed
+    if len(edge_xs) > 5000:
+        idx = np.random.choice(len(edge_xs), 5000, replace=False)
+        edge_xs = edge_xs[idx]
+        edge_ys = edge_ys[idx]
+
+    # Accumulator
+    acc = {}
+    for r in range(r_min_px, r_max_px + 1):
+        for i in range(len(edge_xs)):
+            ex, ey = int(edge_xs[i]), int(edge_ys[i])
+            for ang_deg in range(0, 360, 5):
+                ang = math.radians(ang_deg)
+                cx = int(round(ex - r * math.cos(ang)))
+                cy = int(round(ey - r * math.sin(ang)))
+                if 0 <= cx < sm_w and 0 <= cy < sm_h:
+                    key = (cx, cy, r)
+                    acc[key] = acc.get(key, 0) + 1
+
+    # Collect peaks
+    candidates = [(v, k) for k, v in acc.items() if v >= HOUGH_MIN_VOTES]
+    candidates.sort(reverse=True)
+
+    # NMS: suppress within 2r
+    detected = []
+    suppressed = set()
+    for votes, (cx, cy, r) in candidates[:2000]:
+        if (cx, cy, r) in suppressed:
+            continue
+        detected.append((cx * DSAMP, cy * DSAMP, r * DSAMP, votes))
+        # suppress nearby
+        for dr in range(-2, 3):
+            for dcx in range(-r*2, r*2+1, max(1, r//2)):
+                for dcy in range(-r*2, r*2+1, max(1, r//2)):
+                    suppressed.add((cx + dcx // DSAMP, cy + dcy // DSAMP, r + dr))
+
+    # Convert radius back to metres
+    result = []
+    for cx_full, cy_full, r_full, v in detected[:80]:
+        r_m = r_full * mpp
+        result.append({"cx_px": cx_full, "cy_px": cy_full,
+                        "r_px": r_full, "r_m": round(r_m, 1), "votes": v})
+    return result
 
 
 # ── Main ──────────────────────────────────────────────────────────────────────
 def main():
     log_lines = []
     def log(msg):
-        print(msg)
-        log_lines.append(msg)
+        print(msg); log_lines.append(msg)
 
-    log("=== Al-Faw geometry v2 ===")
-    log(f"zoom={ZOOM}  bbox=lat[{LAT_MIN},{LAT_MAX}] lon[{LON_MIN},{LON_MAX}]")
+    log("=== Al-Faw geometry v2 — Web Mercator + fit_quality + census ===")
 
     # ── Step 1: mosaic ────────────────────────────────────────────────────────
-    log("\n[Step 1] Fetching Esri World Imagery tiles…")
     mosaic_path = OUT_DIR / "esri_mosaic_z18.png"
     geo_path    = OUT_DIR / "mosaic_geo.json"
+    log(f"\n[Step 1] Esri z{ZOOM} mosaic…")
 
     if mosaic_path.exists() and geo_path.exists():
-        log("  mosaic cache hit — loading")
+        log("  cache hit")
         mosaic = Image.open(mosaic_path).convert("RGB")
         with open(geo_path) as f:
-            geo = json.load(f)
-        lat_nw, lon_nw, m_per_px = geo["lat_nw"], geo["lon_nw"], geo["m_per_px"]
-        log(f"  {mosaic.width}×{mosaic.height} px, {m_per_px:.3f} m/px")
+            g = json.load(f)
+        tx0, ty0, mpp = g["tx0"], g["ty0"], g["mpp"]
     else:
-        mosaic, (lat_nw, lon_nw, m_per_px) = build_mosaic(
-            LAT_MIN, LAT_MAX, LON_MIN, LON_MAX, ZOOM)
+        mosaic, tx0, ty0, mpp = build_mosaic()
         mosaic.save(mosaic_path)
         with open(geo_path, "w") as f:
-            json.dump({"lat_nw": lat_nw, "lon_nw": lon_nw, "m_per_px": m_per_px}, f)
+            json.dump({"tx0": tx0, "ty0": ty0, "mpp": mpp}, f)
         log(f"  saved {mosaic_path}")
 
-    mosaic_arr = np.array(mosaic)
+    log(f"  {mosaic.width}×{mosaic.height} px  mpp={mpp:.4f} m/px  tx0={tx0} ty0={ty0}")
+
+    gray_arr = np.mean(np.array(mosaic), axis=2).astype(np.float32)
 
     # ── Step 2: 16-ray measurement ────────────────────────────────────────────
-    log("\n[Step 2] 16-ray measurement (af_8, af_17, af_22 first, then rest)…")
+    log(f"\n[Step 2] 16-ray measurement with fit_quality…")
+    log(f"  edge_energy threshold: >{EDGE_ENERGY_MIN}  residual poor: >{RESIDUAL_POOR_M}m")
 
-    # Priority check tanks first
     priority = ["af_8", "af_17", "af_22"]
-    all_ids   = priority + [t["id"] for t in TANKS_V1 if t["id"] not in priority]
-    tank_by_id = {t["id"]: t for t in TANKS_V1}
+    all_ids  = priority + [t["id"] for t in TANKS_V1 if t["id"] not in priority]
+    tank_map = {t["id"]: t for t in TANKS_V1}
 
     results = {}
     for tid in all_ids:
-        t = tank_by_id[tid]
-        cx_px, cy_px = geo_to_px(t["lat"], t["lon"], lat_nw, lon_nw, m_per_px)
-        r_guess_px = t["radius_m"] / m_per_px
+        t = tank_map[tid]
+        cx_px, cy_px = geo_to_mosaic_px(t["lat"], t["lon"], ZOOM, tx0, ty0)
+        r_guess_px   = t["radius_m"] / mpp
 
-        h, w = mosaic_arr.shape[:2]
-        if not (20 < cx_px < w - 20 and 20 < cy_px < h - 20):
-            log(f"  {tid}: OUT OF MOSAIC (cx={cx_px:.0f}, cy={cy_px:.0f}) — skipping")
-            results[tid] = {"skip": True, "cx_px": cx_px, "cy_px": cy_px}
+        h, w = gray_arr.shape
+        margin = r_guess_px * 1.7
+        if not (margin < cx_px < w - margin and margin < cy_px < h - margin):
+            log(f"  {tid}: out_of_mosaic  cx={cx_px:.0f} cy={cy_px:.0f}")
+            results[tid] = {"quality": "out_of_mosaic"}
             continue
 
-        radii_fit, cx_fit, cy_fit, r_fit_px = measure_tank(
-            mosaic_arr, cx_px, cy_px, r_guess_px, n_rays=RAYS)
+        m = measure_tank(gray_arr, cx_px, cy_px, r_guess_px)
 
-        r_fit_m  = r_fit_px * m_per_px
-        dx_px    = cx_fit - cx_px
-        dy_px    = cy_fit - cy_px
-        dx_m     = dx_px * m_per_px    # positive = east
-        dy_m     = -dy_px * m_per_px   # positive = north (y inverted)
-        shift_m  = math.hypot(dx_m, dy_m)
+        if m["quality"] == "no_tank_visible":
+            log(f"  {tid}: no_tank_visible  energy={m['edge_energy_mean']:.2f}  n_rays={m['n_rays']}")
+            results[tid] = {**m, "cx_px": cx_px, "cy_px": cy_px}
+            continue
 
-        # Convert fitted centre back to lat/lon
-        # Inverse: lon = lon_nw + cx_fit * m_per_px / (R*cos(lat_mid)*pi/180)
-        R = 6378137.0
-        lat_mid = (lat_nw + LAT_MIN) / 2
-        lon_v2 = t["lon"] + dx_m / (R * math.cos(math.radians(lat_mid)) * math.pi / 180)
-        lat_v2 = t["lat"] + dy_m / (R * math.pi / 180)
+        # Classify quality
+        r_fit_m         = m["r_fit_px"] * mpp
+        med_res_m       = m["median_residual_px"] * mpp
+        dx_px           = m["cx_fit"] - cx_px
+        dy_px           = m["cy_fit"] - cy_px
+        dx_m            = dx_px * mpp
+        dy_m            = -dy_px * mpp   # y↑ = north
+        shift_m         = math.hypot(dx_m, dy_m)
+
+        if m["edge_energy_mean"] < EDGE_ENERGY_MIN:
+            quality = "no_tank_visible"
+        elif med_res_m > RESIDUAL_POOR_M:
+            quality = "poor"
+        else:
+            quality = "good"
+
+        # Lat/lon of fitted centre
+        # Invert: global_px = tx0*256 + cx_fit
+        # lon = global_px / (2^z * 256) * 360 - 180
+        n_full = 2 ** ZOOM * TILE_SIZE
+        gx_fit = tx0 * TILE_SIZE + m["cx_fit"]
+        gy_fit = ty0 * TILE_SIZE + m["cy_fit"]
+        lon_v2 = gx_fit / n_full * 360.0 - 180.0
+        lat_v2 = math.degrees(math.atan(math.sinh(math.pi * (1.0 - 2.0 * gy_fit / n_full))))
 
         results[tid] = {
-            "skip":     False,
-            "r_reg_m":  t["radius_m"],
-            "r_fit_m":  round(r_fit_m, 1),
-            "dx_m":     round(dx_m, 1),
-            "dy_m":     round(dy_m, 1),
-            "shift_m":  round(shift_m, 1),
-            "cx_px":    cx_px,
-            "cy_px":    cy_px,
-            "cx_fit":   cx_fit,
-            "cy_fit":   cy_fit,
-            "r_fit_px": r_fit_px,
-            "lat_v2":   lat_v2,
-            "lon_v2":   lon_v2,
+            "quality":            quality,
+            "r_reg_m":            t["radius_m"],
+            "r_fit_m":            round(r_fit_m, 1),
+            "median_residual_m":  round(med_res_m, 1),
+            "edge_energy_mean":   round(m["edge_energy_mean"], 2),
+            "dx_m":               round(dx_m, 1),
+            "dy_m":               round(dy_m, 1),
+            "shift_m":            round(shift_m, 1),
+            "n_rays":             m["n_rays"],
+            "cx_px":              cx_px,
+            "cy_px":              cy_px,
+            "cx_fit":             m["cx_fit"],
+            "cy_fit":             m["cy_fit"],
+            "r_fit_px":           m["r_fit_px"],
+            "lat_v2":             lat_v2,
+            "lon_v2":             lon_v2,
         }
-        log(f"  {tid}: r_reg={t['radius_m']}m  r_fit={r_fit_m:.1f}m  "
-            f"shift={shift_m:.1f}m (dx={dx_m:+.1f}m, dy={dy_m:+.1f}m)  "
-            f"n_rays={len(radii_fit)}")
 
-    # ── Step 3: geometry table CSV ─────────────────────────────────────────────
-    log("\n[Step 3] Writing geometry_v2.csv…")
-    csv_lines = ["tank_id,r_reg_m,r_measured_m,shift_m,dx_m,dy_m,lat_v2,lon_v2,notes"]
+        flag = "" if quality == "good" else f"  [{quality}]"
+        log(f"  {tid}: r_fit={r_fit_m:.1f}m  res={med_res_m:.1f}m  "
+            f"energy={m['edge_energy_mean']:.2f}  shift={shift_m:.1f}m  "
+            f"({dx_m:+.1f},{dy_m:+.1f})  q={quality}{flag}")
+
+    # ── Step 3: Hough circle census ───────────────────────────────────────────
+    log(f"\n[Step 3] Hough circle census (r={HOUGH_R_MIN_M}–{HOUGH_R_MAX_M}m)…")
+    np.random.seed(42)
+    detected = hough_census(gray_arr, mpp)
+    log(f"  Hough detected: {len(detected)} circles")
+
+    # Match detected circles to registry tanks (tolerance 30m)
+    MATCH_TOL_PX = 30.0 / mpp
+    registry_pxs = []
+    for t in TANKS_V1:
+        px, py = geo_to_mosaic_px(t["lat"], t["lon"], ZOOM, tx0, ty0)
+        registry_pxs.append((px, py, t["id"]))
+
+    n_full = 2 ** ZOOM * TILE_SIZE
+    unmatched = []
+    for d in detected:
+        cx_d, cy_d = d["cx_px"], d["cy_px"]
+        matched = False
+        for rx, ry, rid in registry_pxs:
+            if math.hypot(cx_d - rx, cy_d - ry) < MATCH_TOL_PX:
+                matched = True
+                break
+        if not matched:
+            # Convert to lat/lon
+            gx = tx0 * TILE_SIZE + cx_d
+            gy = ty0 * TILE_SIZE + cy_d
+            lon_d = gx / n_full * 360.0 - 180.0
+            lat_d = math.degrees(math.atan(math.sinh(math.pi * (1.0 - 2.0 * gy / n_full))))
+            unmatched.append({**d, "lat": round(lat_d, 6), "lon": round(lon_d, 6)})
+
+    log(f"  Matched to registry: {len(detected) - len(unmatched)}")
+    log(f"  Visible but NOT in registry: {len(unmatched)}")
+    if unmatched:
+        log(f"\n  {'lat':>10}  {'lon':>10}  {'r_m':>6}  votes")
+        for u in sorted(unmatched, key=lambda x: -x["votes"])[:50]:
+            log(f"  {u['lat']:>10.6f}  {u['lon']:>10.6f}  {u['r_m']:>6.1f}  {u['votes']}")
+
+    # ── Step 4: geometry table CSV ────────────────────────────────────────────
+    log("\n[Step 4] geometry_v2.csv (quality-filtered)…")
+    good_count = sum(1 for v in results.values() if v.get("quality") == "good")
+    poor_count = sum(1 for v in results.values() if v.get("quality") == "poor")
+    skip_count = sum(1 for v in results.values()
+                     if v.get("quality") in ("no_tank_visible", "out_of_mosaic"))
+    log(f"  good: {good_count}  poor: {poor_count}  excluded: {skip_count}")
+
+    rows_csv = []
     for tid in all_ids:
-        t  = tank_by_id[tid]
+        t  = tank_map[tid]
         rv = results.get(tid, {})
-        if rv.get("skip"):
-            csv_lines.append(f"{tid},{t['radius_m']},NA,NA,NA,NA,{t['lat']:.8f},{t['lon']:.8f},out_of_mosaic")
+        q  = rv.get("quality", "unknown")
+        if q in ("no_tank_visible", "out_of_mosaic"):
+            rows_csv.append({
+                "tank_id": tid, "quality": q,
+                "r_reg_m": t["radius_m"], "r_fit_m": "", "median_residual_m": "",
+                "edge_energy": "", "shift_m": "", "dx_m": "", "dy_m": "",
+                "lat_v2": t["lat"], "lon_v2": t["lon"], "notes": q
+            })
         else:
             notes = ""
-            if rv["shift_m"] > 10:
-                notes = "large_shift"
-            if abs(rv["r_fit_m"] - rv["r_reg_m"]) > 5:
-                notes += ("+" if notes else "") + "r_mismatch"
-            csv_lines.append(
-                f"{tid},{rv['r_reg_m']},{rv['r_fit_m']},{rv['shift_m']},"
-                f"{rv['dx_m']},{rv['dy_m']},"
-                f"{rv['lat_v2']:.8f},{rv['lon_v2']:.8f},"
-                f"{notes}")
+            if rv["shift_m"] > 10: notes += "large_shift "
+            if rv["r_fit_m"] > 50 or rv["r_fit_m"] < 28: notes += "r_outlier "
+            notes = notes.strip()
+            rows_csv.append({
+                "tank_id": tid, "quality": q,
+                "r_reg_m": rv["r_reg_m"], "r_fit_m": rv["r_fit_m"],
+                "median_residual_m": rv["median_residual_m"],
+                "edge_energy": rv["edge_energy_mean"],
+                "shift_m": rv["shift_m"],
+                "dx_m": rv["dx_m"], "dy_m": rv["dy_m"],
+                "lat_v2": round(rv["lat_v2"], 8), "lon_v2": round(rv["lon_v2"], 8),
+                "notes": notes
+            })
 
     csv_path = OUT_DIR / "geometry_v2.csv"
-    csv_path.write_text("\n".join(csv_lines) + "\n")
+    fields = ["tank_id","quality","r_reg_m","r_fit_m","median_residual_m",
+              "edge_energy","shift_m","dx_m","dy_m","lat_v2","lon_v2","notes"]
+    with open(csv_path, "w", newline="") as f:
+        w = csv.DictWriter(f, fieldnames=fields)
+        w.writeheader()
+        w.writerows(rows_csv)
     log(f"  saved {csv_path}")
 
-    # Print summary table
-    log("\n  tank_id  r_reg  r_fit  shift_m   dx_m   dy_m")
-    log("  " + "-"*55)
-    for tid in all_ids:
-        rv = results.get(tid, {})
-        if rv.get("skip"):
-            log(f"  {tid:<8}  {tank_by_id[tid]['radius_m']}     NA       NA       NA     NA")
-        else:
-            log(f"  {tid:<8}  {rv['r_reg_m']:<5}  {rv['r_fit_m']:<5.1f}  {rv['shift_m']:>6.1f}  {rv['dx_m']:>6.1f}  {rv['dy_m']:>6.1f}")
-
-    # ── Step 4: registry v2 JSON ──────────────────────────────────────────────
-    log("\n[Step 4] Writing registry_v2.json…")
-    BARREL_PER_M3 = 6.2898
+    # ── Step 5: registry_v2.json (good + poor only, no_tank_visible excluded) ─
+    log("\n[Step 5] registry_v2.json…")
+    BPERM3 = 6.2898
     tanks_v2 = []
     total_cap_mb = 0.0
     for t in TANKS_V1:
-        tid = t["id"]
-        rv  = results.get(tid, {})
-        if rv.get("skip") or not rv:
-            tanks_v2.append({**t, "h_source": "assumed"})
-            cap = math.pi * t["radius_m"]**2 * t["h_max_m"] * BARREL_PER_M3 / 1e6
-        else:
-            r_v2 = round(rv["r_fit_m"])   # round to nearest metre
-            lat_v2 = rv["lat_v2"]
-            lon_v2 = rv["lon_v2"]
+        rv = results.get(t["id"], {})
+        q  = rv.get("quality", "unknown")
+        if q in ("good", "poor"):
+            r_v2 = max(25, min(60, round(rv["r_fit_m"])))
             tanks_v2.append({
-                "id":       tid,
-                "lat":      round(lat_v2, 8),
-                "lon":      round(lon_v2, 8),
+                "id": t["id"],
+                "lat": round(rv["lat_v2"], 8),
+                "lon": round(rv["lon_v2"], 8),
                 "radius_m": r_v2,
-                "h_max_m":  t["h_max_m"],
-                "h_source": "assumed",
-                "r_source": "esri_z18_16ray",
-                "r_v1_m":   t["radius_m"],
-                "shift_m":  rv["shift_m"],
+                "h_max_m": 14, "h_source": "assumed",
+                "r_source": f"esri_z{ZOOM}_16ray",
+                "fit_quality": q,
+                "median_residual_m": rv["median_residual_m"],
+                "shift_m": rv["shift_m"],
             })
-            cap = math.pi * r_v2**2 * t["h_max_m"] * BARREL_PER_M3 / 1e6
-        total_cap_mb += cap
+        else:
+            # Keep v1 values, mark excluded
+            tanks_v2.append({**t, "h_max_m": 14, "h_source": "assumed",
+                             "r_source": "v1_kept", "fit_quality": q})
+        r_use = tanks_v2[-1]["radius_m"]
+        total_cap_mb += math.pi * r_use**2 * 14 * BPERM3 / 1e6
 
-    reg_v2 = {
-        "terminal_id":   "al_flaw",
-        "version":       "v2",
+    reg = {
+        "terminal_id": "al_flaw", "version": "v2",
         "generated_utc": datetime.now(timezone.utc).isoformat(),
-        "source":        f"Esri World Imagery z={ZOOM} 16-ray measurement",
-        "h_source_note": "h_max=14 assumed — no engineering specs available",
-        "total_cap_mb":  round(total_cap_mb, 3),
-        "tanks":         tanks_v2,
+        "source": f"Esri World Imagery z={ZOOM} 16-ray Web-Mercator",
+        "total_cap_mb": round(total_cap_mb, 3),
+        "tanks": tanks_v2,
     }
     reg_path = OUT_DIR / "registry_v2.json"
     with open(reg_path, "w") as f:
-        json.dump(reg_v2, f, indent=2)
-    log(f"  total_cap_mb (v2) = {total_cap_mb:.3f}")
-    log(f"  saved {reg_path}")
+        json.dump(reg, f, indent=2)
+    log(f"  total_cap_mb={total_cap_mb:.3f}  saved {reg_path}")
 
-    # ── Step 5: annotated mosaic ──────────────────────────────────────────────
-    log("\n[Step 5] Writing annotated mosaic…")
+    # ── Step 6: annotated mosaic ──────────────────────────────────────────────
+    log("\n[Step 6] Annotated mosaic…")
     ann = mosaic.copy()
     draw = ImageDraw.Draw(ann)
-    try:
-        font = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf", 14)
-        font_sm = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf", 11)
-    except Exception:
-        font = ImageFont.load_default()
-        font_sm = font
 
+    # Draw Hough-detected unmatched circles (magenta, thin)
+    for u in unmatched[:60]:
+        cx_, cy_, rp_ = u["cx_px"], u["cy_px"], u["r_px"]
+        draw.ellipse([cx_-rp_, cy_-rp_, cx_+rp_, cy_+rp_],
+                     outline=(220, 0, 220), width=1)
+
+    # Draw registry tanks
+    COLORS = {"good": (0, 220, 255), "poor": (255, 165, 0),
+              "no_tank_visible": (255, 80, 80), "out_of_mosaic": (128, 128, 128)}
     for t in TANKS_V1:
-        tid = t["id"]
-        rv  = results.get(tid, {})
-        if rv.get("skip"):
-            continue
+        rv = results.get(t["id"], {})
+        q  = rv.get("quality", "unknown")
         # v1 circle (yellow, thin)
-        cx0, cy0 = geo_to_px(t["lat"], t["lon"], lat_nw, lon_nw, m_per_px)
-        r0 = t["radius_m"] / m_per_px
+        cx0, cy0 = geo_to_mosaic_px(t["lat"], t["lon"], ZOOM, tx0, ty0)
+        r0 = t["radius_m"] / mpp
         draw.ellipse([cx0-r0, cy0-r0, cx0+r0, cy0+r0], outline=(255, 220, 0), width=1)
-        # v2 circle (cyan, slightly thicker)
-        cx2, cy2 = rv["cx_fit"], rv["cy_fit"]
-        r2 = rv["r_fit_px"]
-        draw.ellipse([cx2-r2, cy2-r2, cx2+r2, cy2+r2], outline=(0, 220, 255), width=2)
-        # ID label
-        draw.text((cx2+r2+3, cy2-7), tid, font=font, fill=(255,255,255))
-        # shift arrow if >5m
-        if rv["shift_m"] > 5:
-            draw.line([cx0, cy0, cx2, cy2], fill=(255, 80, 80), width=2)
+        # v2 fitted circle
+        col = COLORS.get(q, (180, 180, 180))
+        lw = 2 if q == "good" else 1
+        if q in ("good", "poor") and "cx_fit" in rv:
+            cx2, cy2, r2 = rv["cx_fit"], rv["cy_fit"], rv["r_fit_px"]
+            draw.ellipse([cx2-r2, cy2-r2, cx2+r2, cy2+r2], outline=col, width=lw)
+            if rv["shift_m"] > 5:
+                draw.line([cx0, cy0, cx2, cy2], fill=(255, 80, 80), width=2)
+        # Label
+        label_x = cx0 + r0 * 0.7
+        label_y = cy0 - r0 * 0.7
+        draw.text((label_x, label_y), t["id"].replace("af_", ""), fill=(255, 255, 255))
 
     # Legend
-    draw.rectangle([8, 8, 200, 56], fill=(0, 0, 0, 180))
-    draw.text((12, 10), "yellow: v1 registry", font=font_sm, fill=(255, 220, 0))
-    draw.text((12, 26), "cyan:   v2 measured", font=font_sm, fill=(0, 220, 255))
-    draw.text((12, 42), "red:    shift > 5m",  font=font_sm, fill=(255, 80, 80))
+    draw.rectangle([6, 6, 240, 92], fill=(0, 0, 0))
+    items = [("yellow: v1 registry", (255,220,0)),
+             ("cyan:   v2 good fit", (0,220,255)),
+             ("orange: v2 poor fit", (255,165,0)),
+             ("red:    no_tank / shift>5m", (255,80,80)),
+             ("magenta: Hough unregistered", (220,0,220))]
+    for i, (txt, col) in enumerate(items):
+        draw.text((10, 10 + i * 16), txt, fill=col)
 
     ann_path = OUT_DIR / "mosaic_annotated.png"
     ann.save(ann_path)
     log(f"  saved {ann_path}")
 
-    # ── Write log ─────────────────────────────────────────────────────────────
+    # ── Step 7: unmatched census CSV ──────────────────────────────────────────
+    census_path = OUT_DIR / "hough_unregistered.csv"
+    with open(census_path, "w", newline="") as f:
+        w = csv.DictWriter(f, fieldnames=["lat","lon","r_m","votes"])
+        w.writeheader()
+        for u in sorted(unmatched, key=lambda x: -x["votes"]):
+            w.writerow({"lat": u["lat"], "lon": u["lon"],
+                        "r_m": u["r_m"], "votes": u["votes"]})
+    log(f"  unregistered census → {census_path}")
+
     (OUT_DIR / "run.txt").write_text("\n".join(log_lines) + "\n")
     log("\nDone.")
 
