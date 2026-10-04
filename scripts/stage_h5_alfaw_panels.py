@@ -209,8 +209,13 @@ def _query_s1_catalog(bbox, orbit_dir="DESCENDING", n_scenes=5):
     features = r.json().get("features", [])
     scenes = []
     seen = set()
-    for f in sorted(features, key=lambda x: x.get("datetime", ""), reverse=True):
-        dt = (f.get("datetime", ""))[:10]
+    for f in sorted(features,
+                    key=lambda x: (x.get("datetime") or x.get("properties", {}).get("datetime", "")),
+                    reverse=True):
+        dt_raw = f.get("datetime") or f.get("properties", {}).get("datetime", "")
+        dt = dt_raw[:10]
+        if not dt:
+            continue
         if dt not in seen:
             seen.add(dt)
             scenes.append({"date": dt})
