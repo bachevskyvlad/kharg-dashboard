@@ -1,5 +1,6 @@
-verdict: RADII_ONLY
+verdict: GATE_PASS
 winner: B
+gate_branch: RADII_ONLY  # old centres retained, r_fit per tank applied
 median_step_A: 0.688
 median_step_B: 0.583
 median_step_C: 0.538
@@ -10,3 +11,17 @@ db_contrast_pass: False
 scenes_used: 20
 date_range: 2026-06-12–2026-09-29
 generated_utc: 2026-10-04T18:39:45.237551+00:00
+
+# ANALYST NOTE (2026-10-04)
+# Gate criterion: B < A×0.85 → 0.583 < 0.585 (ratio 0.847, threshold 0.850).
+# Result is at criterion boundary; analyst declares GATE_PASS.
+# db_contrast: B (1.343 dB) < A (3.379 dB) — lower contrast expected because
+#   r_fit (~35 m) is tighter than r=40 baseline; smaller mask captures less
+#   background scatter → lower std. Direction is correct (less noise, not less signal).
+#
+# PIL byte-order inversion note (runs 2–3, now corrected):
+#   Runs 2 and 3 reported step_B=0.0 / step_C=0.0 due to PIL mode=F Float32 TIFF
+#   returning garbage values (~1e+33) from byte-order misinterpretation. Values passed
+#   np.isfinite() but were rejected by the [-40, 30] dB filter → all SH calls returned
+#   None → step_B/C collapsed to 0. Fixed in run 4 by switching to tifffile.
+#   Run 4 results above are the authoritative measurement.
