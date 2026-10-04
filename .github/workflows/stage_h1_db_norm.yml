@@ -1,0 +1,59 @@
+name: Stage H1 — Al-Faw db_norm (reference patches)
+
+on:
+  workflow_dispatch:
+    inputs: {}
+
+jobs:
+  h1_norm:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: pip install numpy pandas requests Pillow scipy -q
+
+      - name: Run H1 db_norm
+        env:
+          CLIENT_ID:     ${{ secrets.CLIENT_ID }}
+          CLIENT_SECRET: ${{ secrets.CLIENT_SECRET }}
+          SUPABASE_URL:  ${{ secrets.SUPABASE_URL }}
+          SUPABASE_KEY:  ${{ secrets.SUPABASE_KEY }}
+        run: |
+          mkdir -p diagnostics/al_faw
+          cd scripts
+          python stage_h1_db_norm.py 2>&1 | tee ../diagnostics/al_faw/h1_run.txt
+
+      - name: Commit outputs
+        if: always()
+        run: |
+          git config user.email "actions@github.com"
+          git config user.name "GitHub Actions"
+          git add -f diagnostics/al_faw/ref_patches_db.csv || true
+          git add -f diagnostics/al_faw/ref_patches_config.json || true
+          git add -f diagnostics/al_faw/alfaw_series_with_norm.csv || true
+          git add -f diagnostics/al_faw/h1_run.txt || true
+          git status --short
+          git diff --cached --quiet && echo "No new files" || \
+            git commit -m "ci: H1 db_norm outputs [skip ci]"
+          git pull --rebase origin main || true
+          git push origin HEAD:main || true
+
+      - name: Upload outputs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: h1-db-norm
+          path: |
+            diagnostics/al_faw/ref_patches_db.csv
+            diagnostics/al_faw/alfaw_series_with_norm.csv
+            diagnostics/al_faw/ref_patches_config.json
+            diagnostics/al_faw/h1_run.txt
