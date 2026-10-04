@@ -1,0 +1,77 @@
+=== Al-Faw geometry v2 ===
+zoom=18  bbox=lat[29.958,29.98] lon[48.436,48.462]
+
+[Step 1] Fetching Esri World Imagery tiles…
+  tiles x: 166342–166360 (19 tiles)
+  tiles y: 108170–108189 (20 tiles)
+  total: 380 tiles
+  fetched: 380  failed: 0
+  mosaic size: 4864×5120 px
+  NW corner: (29.981108, 48.435974)
+  resolution: 0.517 m/px
+  saved /home/runner/work/kharg-dashboard/kharg-dashboard/diagnostics/al_faw/geometry/esri_mosaic_z18.png
+
+[Step 2] 16-ray measurement (af_8, af_17, af_22 first, then rest)…
+  af_8: r_reg=40m  r_fit=46.2m  shift=0.8m (dx=-0.1m, dy=-0.8m)  n_rays=16
+  af_17: r_reg=40m  r_fit=40.6m  shift=2.8m (dx=+1.5m, dy=+2.4m)  n_rays=16
+  af_22: r_reg=40m  r_fit=34.6m  shift=3.3m (dx=-3.1m, dy=-1.2m)  n_rays=16
+  af_0: r_reg=40m  r_fit=46.4m  shift=6.8m (dx=-3.5m, dy=+5.8m)  n_rays=16
+  af_1: r_reg=40m  r_fit=36.9m  shift=3.4m (dx=-2.3m, dy=+2.5m)  n_rays=16
+  af_2: r_reg=40m  r_fit=39.7m  shift=4.9m (dx=-1.6m, dy=+4.6m)  n_rays=16
+  af_3: r_reg=40m  r_fit=35.2m  shift=1.9m (dx=+1.2m, dy=-1.5m)  n_rays=16
+  af_4: r_reg=40m  r_fit=43.6m  shift=4.3m (dx=+2.7m, dy=-3.3m)  n_rays=16
+  af_5: r_reg=40m  r_fit=35.6m  shift=6.0m (dx=-6.0m, dy=-0.3m)  n_rays=16
+  af_6: r_reg=40m  r_fit=47.9m  shift=3.1m (dx=+1.2m, dy=-2.9m)  n_rays=16
+  af_7: r_reg=40m  r_fit=33.1m  shift=2.7m (dx=-0.7m, dy=-2.6m)  n_rays=16
+  af_9: r_reg=40m  r_fit=42.5m  shift=2.7m (dx=-1.5m, dy=+2.2m)  n_rays=16
+  af_10: r_reg=40m  r_fit=36.5m  shift=6.3m (dx=+0.7m, dy=+6.2m)  n_rays=16
+  af_11: r_reg=40m  r_fit=48.7m  shift=2.5m (dx=-0.9m, dy=-2.3m)  n_rays=16
+  af_12: r_reg=40m  r_fit=43.4m  shift=2.3m (dx=-0.3m, dy=-2.2m)  n_rays=16
+  af_13: r_reg=40m  r_fit=36.7m  shift=4.6m (dx=+3.5m, dy=+3.0m)  n_rays=16
+  af_14: r_reg=40m  r_fit=36.4m  shift=9.6m (dx=+9.6m, dy=-0.4m)  n_rays=15
+  af_15: r_reg=40m  r_fit=39.4m  shift=6.3m (dx=-6.2m, dy=-1.2m)  n_rays=16
+  af_16: r_reg=40m  r_fit=53.6m  shift=0.8m (dx=-0.7m, dy=-0.4m)  n_rays=16
+  af_18: r_reg=40m  r_fit=41.5m  shift=6.7m (dx=-6.7m, dy=-0.0m)  n_rays=16
+  af_19: r_reg=40m  r_fit=39.4m  shift=3.4m (dx=-2.3m, dy=+2.5m)  n_rays=16
+  af_20: r_reg=40m  r_fit=38.5m  shift=1.7m (dx=+1.3m, dy=-1.1m)  n_rays=16
+  af_21: r_reg=40m  r_fit=40.8m  shift=4.4m (dx=-2.6m, dy=+3.5m)  n_rays=16
+  af_23: r_reg=40m  r_fit=41.0m  shift=4.5m (dx=+0.3m, dy=+4.5m)  n_rays=16
+
+[Step 3] Writing geometry_v2.csv…
+  saved /home/runner/work/kharg-dashboard/kharg-dashboard/diagnostics/al_faw/geometry/geometry_v2.csv
+
+  tank_id  r_reg  r_fit  shift_m   dx_m   dy_m
+  -------------------------------------------------------
+  af_8      40     46.2      0.8    -0.1    -0.8
+  af_17     40     40.6      2.8     1.5     2.4
+  af_22     40     34.6      3.3    -3.1    -1.2
+  af_0      40     46.4      6.8    -3.5     5.8
+  af_1      40     36.9      3.4    -2.3     2.5
+  af_2      40     39.7      4.9    -1.6     4.6
+  af_3      40     35.2      1.9     1.2    -1.5
+  af_4      40     43.6      4.3     2.7    -3.3
+  af_5      40     35.6      6.0    -6.0    -0.3
+  af_6      40     47.9      3.1     1.2    -2.9
+  af_7      40     33.1      2.7    -0.7    -2.6
+  af_9      40     42.5      2.7    -1.5     2.2
+  af_10     40     36.5      6.3     0.7     6.2
+  af_11     40     48.7      2.5    -0.9    -2.3
+  af_12     40     43.4      2.3    -0.3    -2.2
+  af_13     40     36.7      4.6     3.5     3.0
+  af_14     40     36.4      9.6     9.6    -0.4
+  af_15     40     39.4      6.3    -6.2    -1.2
+  af_16     40     53.6      0.8    -0.7    -0.4
+  af_18     40     41.5      6.7    -6.7    -0.0
+  af_19     40     39.4      3.4    -2.3     2.5
+  af_20     40     38.5      1.7     1.3    -1.1
+  af_21     40     40.8      4.4    -2.6     3.5
+  af_23     40     41.0      4.5     0.3     4.5
+
+[Step 4] Writing registry_v2.json…
+  total_cap_mb (v2) = 11.193
+  saved /home/runner/work/kharg-dashboard/kharg-dashboard/diagnostics/al_faw/geometry/registry_v2.json
+
+[Step 5] Writing annotated mosaic…
+  saved /home/runner/work/kharg-dashboard/kharg-dashboard/diagnostics/al_faw/geometry/mosaic_annotated.png
+
+Done.
