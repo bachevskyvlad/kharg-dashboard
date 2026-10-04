@@ -1,5 +1,5 @@
 === Gate A/B/C — Al-Faw SAR geometry arbitration ===
-  2026-10-04T17:22:23.573694+00:00
+  2026-10-04T17:42:52.976433+00:00
 
 [1] Fetching recent DESCENDING scene dates…
   20 dates: 2026-06-12 → 2026-09-29
