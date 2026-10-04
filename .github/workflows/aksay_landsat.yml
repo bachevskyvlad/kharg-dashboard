@@ -1,0 +1,30 @@
+name: Ak-Sai — rev6 H (Landsat frames)
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [claude/pensive-brahmagupta-0lzzag]
+    paths: [aksay/h_fetch.py, .github/workflows/aksay_landsat.yml]
+
+permissions:
+  contents: write
+
+jobs:
+  landsat:
+    runs-on: ubuntu-latest
+    timeout-minutes: 150
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: pip install requests numpy Pillow rasterio -q
+      - run: python aksay/h_fetch.py
+      - name: Commit outputs
+        if: always()
+        run: |
+          git config user.email "actions@github.com"
+          git config user.name "GitHub Actions"
+          git add aksay/data/landsat/ || true
+          git diff --cached --quiet && echo "No new files" || git commit -m "ci: aksay landsat frames [skip ci]"
+          for i in 1 2 3 4; do git pull --rebase origin ${{ github.ref_name }} && git push origin HEAD:${{ github.ref_name }} && break; sleep $((i*7)); done
