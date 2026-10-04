@@ -75,7 +75,7 @@ def fetch_all_observations():
         chunk = sb_get("terminal_observations",
                        {"terminal_id": f"eq.{TERMINAL_ID}",
                         "orbit_direction": f"eq.{ORBIT_DIR}",
-                        "select": "date,tank_id,lat,lon,radius_m,db_mean",
+                        "select": "date,tank_id,db_mean",
                         "order": "date.asc",
                         "offset": str(offset), "limit": str(PAGE_SIZE)})
         rows.extend(chunk)
@@ -83,6 +83,34 @@ def fetch_all_observations():
             break
         offset += PAGE_SIZE
     return pd.DataFrame(rows)
+
+# Tank coordinates from registry v2 (old centres, r_fit radii)
+TANK_COORDS = {
+    "af_0":  {"lat": 29.976037712391882, "lon": 48.44195552300743},
+    "af_1":  {"lat": 29.97446023561727,  "lon": 48.44041073298363},
+    "af_2":  {"lat": 29.973482237683964, "lon": 48.44170682926327},
+    "af_3":  {"lat": 29.97506237979022,  "lon": 48.443256604287775},
+    "af_4":  {"lat": 29.972052466075166, "lon": 48.44360540262179},
+    "af_5":  {"lat": 29.973613605327138, "lon": 48.44517136039961},
+    "af_6":  {"lat": 29.971043737749962, "lon": 48.44490239092673},
+    "af_7":  {"lat": 29.972645241700267, "lon": 48.44646203210755},
+    "af_8":  {"lat": 29.970602225788706, "lon": 48.44914349229505},
+    "af_9":  {"lat": 29.96964506640903,  "lon": 48.45042448972437},
+    "af_10": {"lat": 29.969053578374012, "lon": 48.44757323726147},
+    "af_11": {"lat": 29.968074369587153, "lon": 48.44888119527686},
+    "af_12": {"lat": 29.967562585491844, "lon": 48.44613477210609},
+    "af_13": {"lat": 29.966616705980595, "lon": 48.44740303358956},
+    "af_14": {"lat": 29.965160381102958, "lon": 48.449324515383225},
+    "af_15": {"lat": 29.966613187227228, "lon": 48.45079062045803},
+    "af_16": {"lat": 29.964164829146835, "lon": 48.450625111425616},
+    "af_17": {"lat": 29.965658494437534, "lon": 48.45208349893114},
+    "af_18": {"lat": 29.961779354173064, "lon": 48.45380166725049},
+    "af_19": {"lat": 29.96274476143991,  "lon": 48.45253449582525},
+    "af_20": {"lat": 29.964218037290507, "lon": 48.45399437056702},
+    "af_21": {"lat": 29.96326674821542,  "lon": 48.45527466098349},
+    "af_22": {"lat": 29.964822804270934, "lon": 48.45681522152186},
+    "af_23": {"lat": 29.96580178961507,  "lon": 48.45553712042206},
+}
 
 # ── SH token ─────────────────────────────────────────────────────────────────
 _token_cache = {}
@@ -205,12 +233,6 @@ def main():
 
     # ── LIVE run ──────────────────────────────────────────────────────────────
     print("[3] Live re-ingest — fetching SH and upserting Supabase …")
-    # Need lat/lon per tank — fetch from current Supabase rows
-    tank_coords = (df.groupby("tank_id")[["lat", "lon"]]
-                   .first().reset_index()
-                   .set_index("tank_id")
-                   .to_dict("index"))
-
     token    = sh_token()
     updated  = 0
     errors   = 0
@@ -224,8 +246,8 @@ def main():
             if tid not in R_FIT:
                 continue
             r_new = R_FIT[tid]
-            lat_c = tank_coords[tid]["lat"]
-            lon_c = tank_coords[tid]["lon"]
+            lat_c = TANK_COORDS[tid]["lat"]
+            lon_c = TANK_COORDS[tid]["lon"]
 
             db_new = fetch_db(lat_c, lon_c, r_new, date, token)
             if db_new is None:
