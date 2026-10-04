@@ -1,0 +1,1432 @@
+{
+ "bbox": [
+  74.49,
+  42.48,
+  74.58,
+  42.56
+ ],
+ "size": [
+  247,
+  296
+ ],
+ "source": "Planetary Computer landsat-c2-l2",
+ "years": {
+  "1990": null,
+  "1991": null,
+  "1992": {
+   "window": null,
+   "pick": {
+    "id": "LT05_L2SP_150030_19920718_02_T2",
+    "date": "1992-07-18",
+    "platform": "landsat-5",
+    "scene_cc": 8.0,
+    "valid_bbox": 1.0,
+    "valid_poly": 1.0,
+    "cloud": 0.5992039610460663,
+    "cloud_poly": 1.0,
+    "snow": 0.0
+   },
+   "candidates": [
+    {
+     "id": "LT05_L2SP_150030_19920718_02_T2",
+     "date": "1992-07-18",
+     "platform": "landsat-5",
+     "scene_cc": 8.0,
+     "valid_bbox": 1.0,
+     "valid_poly": 1.0,
+     "cloud": 0.5992039610460663,
+     "cloud_poly": 1.0,
+     "snow": 0.0
+    }
+   ]
+  },
+  "1993": {
+   "window": null,
+   "pick": {
+    "id": "LT05_L2SP_151030_19930930_02_T1",
+    "date": "1993-09-30",
+    "platform": "landsat-5",
+    "scene_cc": 2.0,
+    "valid_bbox": 1.0,
+    "valid_poly": 1.0,
+    "cloud": 0.8826868366342051,
+    "cloud_poly": 1.0,
+    "snow": 0.03426250136776453
+   },
+   "candidates": [
+    {
+     "id": "LT05_L2SP_151030_19930930_02_T1",
+     "date": "1993-09-30",
+     "platform": "landsat-5",
+     "scene_cc": 2.0,
+     "valid_bbox": 1.0,
+     "valid_poly": 1.0,
+     "cloud": 0.8826868366342051,
+     "cloud_poly": 1.0,
+     "snow": 0.03426250136776453
+    }
+   ]
+  },
+  "1994": null,
+  "1995": null,
+  "1996": {
+   "window": null,
+   "pick": {
+    "id": "LT05_L2SP_151030_19960922_02_T1",
+    "date": "1996-09-22",
+    "platform": "landsat-5",
+    "scene_cc": 0.0,
+    "valid_bbox": 1.0,
+    "valid_poly": 1.0,
+    "cloud": 0.4559990152095415,
+    "cloud_poly": 0.6797297297297298,
+    "snow": 0.09226939490097384
+   },
+   "candidates": [
+    {
+     "id": "LT05_L2SP_151030_19960922_02_T1",
+     "date": "1996-09-22",
+     "platform": "landsat-5",
+     "scene_cc": 0.0,
+     "valid_bbox": 1.0,
+     "valid_poly": 1.0,
+     "cloud": 0.4559990152095415,
+     "cloud_poly": 0.6797297297297298,
+     "snow": 0.09226939490097384
+    }
+   ]
+  },
+  "1997": null,
+  "1998": {
+   "window": null,
+   "pick": {
+    "id": "LT05_L2SP_151030_19980928_02_T1",
+    "date": "1998-09-28",
+    "platform": "landsat-5",
+    "scene_cc": 17.0,
+    "valid_bbox": 1.0,
+    "valid_poly": 1.0,
+    "cloud": 0.9921763869132291,
+    "cloud_poly": 1.0,
+    "snow": 0.000218842324105482
+   },
+   "candidates": [
+    {
+     "id": "LT05_L2SP_151030_19980928_02_T1",
+     "date": "1998-09-28",
+     "platform": "landsat-5",
+     "scene_cc": 17.0,
+     "valid_bbox": 1.0,
+     "valid_poly": 1.0,
+     "cloud": 0.9921763869132291,
+     "cloud_poly": 1.0,
+     "snow": 0.000218842324105482
+    }
+   ]
+  },
+  "1999": {
+   "window": null,
+   "pick": {
+    "id": "LE07_L2SP_151030_19990806_02_T1",
+    "date": "1999-08-06",
+    "platform": "landsat-7",
+    "scene_cc": 4.0,
+    "valid_bbox": 1.0,
+    "valid_poly": 1.0,
+    "cloud": 0.6199529489003173,
+    "cloud_poly": 0.8547297297297297,
+    "snow": 0.03173213699529489
+   },
+   "candidates": [
+    {
+     "id": "LE07_L2SP_151030_19990806_02_T1",
+     "date": "1999-08-06",
+     "platform": "landsat-7",
+     "scene_cc": 4.0,
+     "valid_bbox": 1.0,
+     "valid_poly": 1.0,
+     "cloud": 0.6199529489003173,
+     "cloud_poly": 0.8547297297297297,
+     "snow": 0.03173213699529489
+    }
+   ]
+  },
+  "2000": null,
+  "2001": {
+   "window": null,
+   "pick": {
+    "id": "LE07_L2SP_150031_20010820_02_T1",
+    "date": "2001-08-20",
+    "platform": "landsat-7",
+    "scene_cc": 1.0,
+    "valid_bbox": 0.865,
+    "valid_poly": 1.0,
+    "cloud": 0.521613969599671,
+    "cloud_poly": 0.8554054054054054,
+    "snow": 0.12807048067949955
+   },
+   "candidates": [
+    {
+     "id": "LE07_L2SP_150031_20010820_02_T1",
+     "date": "2001-08-20",
+     "platform": "landsat-7",
+     "scene_cc": 1.0,
+     "valid_bbox": 0.865,
+     "valid_poly": 1.0,
+     "cloud": 0.521613969599671,
+     "cloud_poly": 0.8554054054054054,
+     "snow": 0.12807048067949955
+    },
+    {
+     "id": "LE07_L2SP_151030_20010726_02_T1",
+     "date": "2001-07-26",
+     "platform": "landsat-7",
+     "scene_cc": 13.0,
+     "valid_bbox": 1.0,
+     "valid_poly": 1.0,
+     "cloud": 0.9999863223547434,
+     "cloud_poly": 1.0,
+     "snow": 0.0006838822628296312
+    }
+   ]
+  },
+  "2002": {
+   "window": null,
+   "pick": {
+    "id": "LE07_L2SP_150031_20020823_02_T1",
+    "date": "2002-08-23",
+    "platform": "landsat-7",
+    "scene_cc": 1.0,
+    "valid_bbox": 0.947,
+    "valid_poly": 1.0,
+    "cloud": 0.4260508937473809,
+    "cloud_poly": 0.8837837837837837,
+    "snow": 0.1541985174053148
+   },
+   "candidates": [
+    {
+     "id": "LE07_L2SP_150031_20020823_02_T1",
+     "date": "2002-08-23",
+     "platform": "landsat-7",
+     "scene_cc": 1.0,
+     "valid_bbox": 0.947,
+     "valid_poly": 1.0,
+     "cloud": 0.4260508937473809,
+     "cloud_poly": 0.8837837837837837,
+     "snow": 0.1541985174053148
+    },
+    {
+     "id": "LE07_L2SP_151030_20021001_02_T1",
+     "date": "2002-10-01",
+     "platform": "landsat-7",
+     "scene_cc": 4.0,
+     "valid_bbox": 1.0,
+     "valid_poly": 1.0,
+     "cloud": 0.8948189079768027,
+     "cloud_poly": 1.0,
+     "snow": 0.00023251996936207462
+    }
+   ]
+  },
+  "2003": null,
+  "2004": null,
+  "2005": null,
+  "2006": {
+   "window": null,
+   "pick": {
+    "id": "LT05_L2SP_151030_20060801_02_T1",
+    "date": "2006-08-01",
+    "platform": "landsat-5",
+    "scene_cc": 13.0,
+    "valid_bbox": 1.0,
+    "valid_poly": 1.0,
+    "cloud": 0.5747483313272786,
+    "cloud_poly": 0.9216216216216216,
+    "snow": 0.06100229784440311
+   },
+   "candidates": [
+    {
+     "id": "LT05_L2SP_151030_20060801_02_T1",
+     "date": "2006-08-01",
+     "platform": "landsat-5",
+     "scene_cc": 13.0,
+     "valid_bbox": 1.0,
+     "valid_poly": 1.0,
+     "cloud": 0.5747483313272786,
+     "cloud_poly": 0.9216216216216216,
+     "snow": 0.06100229784440311
+    }
+   ]
+  },
+  "2007": null,
+  "2008": {
+   "window": null,
+   "pick": {
+    "id": "LT05_L2SP_150031_20081002_02_T1",
+    "date": "2008-10-02",
+    "platform": "landsat-5",
+    "scene_cc": 2.0,
+    "valid_bbox": 1.0,
+    "valid_poly": 1.0,
+    "cloud": 0.34079220921326187,
+    "cloud_poly": 0.0033783783783783786,
+    "snow": 0.6969033811139075
+   },
+   "candidates": [
+    {
+     "id": "LT05_L2SP_150031_20080730_02_T1",
+     "date": "2008-07-30",
+     "platform": "landsat-5",
+     "scene_cc": 0.0,
+     "valid_bbox": 1.0,
+     "valid_poly": 1.0,
+     "cloud": 0.49279188094977566,
+     "cloud_poly": 0.9141891891891892,
+     "snow": 0.1148238319290951
+    },
+    {
+     "id": "LT05_L2SP_150031_20081002_02_T1",
+     "date": "2008-10-02",
+     "platform": "landsat-5",
+     "scene_cc": 2.0,
+     "valid_bbox": 1.0,
+     "valid_poly": 1.0,
+     "cloud": 0.34079220921326187,
+     "cloud_poly": 0.0033783783783783786,
+     "snow": 0.6969033811139075
+    },
+    {
+     "id": "LT05_L2SP_151030_20081009_02_T1",
+     "date": "2008-10-09",
+     "platform": "landsat-5",
+     "scene_cc": 7.0,
+     "valid_bbox": 1.0,
+     "valid_poly": 1.0,
+     "cloud": 0.9950760477076267,
+     "cloud_poly": 1.0,
+     "snow": 0.00013677645256592624
+    }
+   ]
+  },
+  "2009": {
+   "window": null,
+   "pick": {
+    "id": "LT05_L2SP_151030_20090910_02_T1",
+    "date": "2009-09-10",
+    "platform": "landsat-5",
+    "scene_cc": 22.0,
+    "valid_bbox": 1.0,
+    "valid_poly": 1.0,
+    "cloud": 0.9948845606740344,
+    "cloud_poly": 1.0,
+    "snow": 0.01589342378816063
+   },
+   "candidates": [
+    {
+     "id": "LT05_L2SP_151030_20090910_02_T1",
+     "date": "2009-09-10",
+     "platform": "landsat-5",
+     "scene_cc": 22.0,
+     "valid_bbox": 1.0,
+     "valid_poly": 1.0,
+     "cloud": 0.9948845606740344,
+     "cloud_poly": 1.0,
+     "snow": 0.01589342378816063
+    }
+   ]
+  },
+  "2010": {
+   "window": null,
+   "pick": {
+    "id": "LT05_L2SP_151030_20100812_02_T1",
+    "date": "2010-08-12",
+    "platform": "landsat-5",
+    "scene_cc": 2.0,
+    "valid_bbox": 1.0,
+    "valid_poly": 1.0,
+    "cloud": 0.5966188860925703,
+    "cloud_poly": 0.9175675675675675,
+    "snow": 0.05726830068935332
+   },
+   "candidates": [
+    {
+     "id": "LT05_L2SP_151030_20100812_02_T1",
+     "date": "2010-08-12",
+     "platform": "landsat-5",
+     "scene_cc": 2.0,
+     "valid_bbox": 1.0,
+     "valid_poly": 1.0,
+     "cloud": 0.5966188860925703,
+     "cloud_poly": 0.9175675675675675,
+     "snow": 0.05726830068935332
+    },
+    {
+     "id": "LT05_L2SP_151030_20100913_02_T1",
+     "date": "2010-09-13",
+     "platform": "landsat-5",
+     "scene_cc": 24.0,
+     "valid_bbox": 1.0,
+     "valid_poly": 1.0,
+     "cloud": 0.9755580479264689,
+     "cloud_poly": 0.9932432432432432,
+     "snow": 0.06909946383630594
+    }
+   ]
+  },
+  "2011": {
+   "window": null,
+   "pick": {
+    "id": "LT05_L2SP_151030_20110815_02_T1",
+    "date": "2011-08-15",
+    "platform": "landsat-5",
+    "scene_cc": 10.0,
+    "valid_bbox": 1.0,
+    "valid_poly": 1.0,
+    "cloud": 0.9749562315351789,
+    "cloud_poly": 1.0,
+    "snow": 0.0050744063901958635
+   },
+   "candidates": [
+    {
+     "id": "LT05_L2SP_151030_20110815_02_T1",
+     "date": "2011-08-15",
+     "platform": "landsat-5",
+     "scene_cc": 10.0,
+     "valid_bbox": 1.0,
+     "valid_poly": 1.0,
+     "cloud": 0.9749562315351789,
+     "cloud_poly": 1.0,
+     "snow": 0.0050744063901958635
+    },
+    {
+     "id": "LT05_L2SP_151030_20110730_02_T1",
+     "date": "2011-07-30",
+     "platform": "landsat-5",
+     "scene_cc": 14.0,
+     "valid_bbox": 1.0,
+     "valid_poly": 1.0,
+     "cloud": 0.9993024400919138,
+     "cloud_poly": 1.0,
+     "snow": 0.001600284495021337
+    }
+   ]
+  },
+  "2012": null,
+  "2013": {
+   "window": null,
+   "pick": {
+    "id": "LC08_L2SP_151031_20131007_02_T1",
+    "date": "2013-10-07",
+    "platform": "landsat-8",
+    "scene_cc": 0.13,
+    "valid_bbox": 0.866,
+    "valid_poly": 1.0,
+    "cloud": 0.27605549235242066,
+    "cloud_poly": 0.6966216216216217,
+    "snow": 0.13590254076602198
+   },
+   "candidates": [
+    {
+     "id": "LC08_L2SP_151031_20131007_02_T1",
+     "date": "2013-10-07",
+     "platform": "landsat-8",
+     "scene_cc": 0.13,
+     "valid_bbox": 0.866,
+     "valid_poly": 1.0,
+     "cloud": 0.27605549235242066,
+     "cloud_poly": 0.6966216216216217,
+     "snow": 0.13590254076602198
+    },
+    {
+     "id": "LC08_L2SP_151031_20130719_02_T1",
+     "date": "2013-07-19",
+     "platform": "landsat-8",
+     "scene_cc": 15.22,
+     "valid_bbox": 0.91,
+     "valid_poly": 1.0,
+     "cloud": 0.8585324052497858,
+     "cloud_poly": 1.0,
+     "snow": 0.007366537877535067
+    },
+    {
+     "id": "LC08_L2SP_151030_20130905_02_T1",
+     "date": "2013-09-05",
+     "platform": "landsat-8",
+     "scene_cc": 18.27,
+     "valid_bbox": 1.0,
+     "valid_poly": 1.0,
+     "cloud": 0.7657156143998249,
+     "cloud_poly": 0.9385135135135135,
+     "snow": 0.03850257139730824
+    },
+    {
+     "id": "LC08_L2SP_151030_20130804_02_T1",
+     "date": "2013-08-04",
+     "platform": "landsat-8",
+     "scene_cc": 22.9,
+     "valid_bbox": 1.0,
+     "valid_poly": 1.0,
+     "cloud": 0.8306433964328701,
+     "cloud_poly": 1.0,
+     "snow": 0.007673158988948462
+    }
+   ]
+  },
+  "2014": {
+   "window": null,
+   "pick": {
+    "id": "LC08_L2SP_151030_20140807_02_T1",
+    "date": "2014-08-07",
+    "platform": "landsat-8",
+    "scene_cc": 0.26,
+    "valid_bbox": 1.0,
+    "valid_poly": 1.0,
+    "cloud": 0.5159754896597002,
+    "cloud_poly": 0.9682432432432433,
+    "snow": 0.08975270817376081
+   },
+   "candidates": [
+    {
+     "id": "LC08_L2SP_151030_20140807_02_T1",
+     "date": "2014-08-07",
+     "platform": "landsat-8",
+     "scene_cc": 0.26,
+     "valid_bbox": 1.0,
+     "valid_poly": 1.0,
+     "cloud": 0.5159754896597002,
+     "cloud_poly": 0.9682432432432433,
+     "snow": 0.08975270817376081
+    },
+    {
+     "id": "LC08_L2SP_151031_20141010_02_T1",
+     "date": "2014-10-10",
+     "platform": "landsat-8",
+     "scene_cc": 0.77,
+     "valid_bbox": 0.895,
+     "valid_poly": 1.0,
+     "cloud": 0.7151808775656798,
+     "cloud_poly": 0.8,
+     "snow": 0.7042380522993688
+    },
+    {
+     "id": "LC08_L2SP_151030_20140823_02_T1",
+     "date": "2014-08-23",
+     "platform": "landsat-8",
+     "scene_cc": 1.37,
+     "valid_bbox": 1.0,
+     "valid_poly": 1.0,
+     "cloud": 0.5903408469197943,
+     "cloud_poly": 0.9398648648648649,
+     "snow": 0.06551592077907867
+    },
+    {
+     "id": "LC08_L2SP_151030_20140722_02_T1",
+     "date": "2014-07-22",
+     "platform": "landsat-8",
+     "scene_cc": 2.18,
+     "valid_bbox": 1.0,
+     "valid_poly": 1.0,
+     "cloud": 0.6842242039610461,
+     "cloud_poly": 0.9648648648648649,
+     "snow": 0.014758179231863443
+    },
+    {
+     "id": "LC08_L2SP_151030_20140908_02_T1",
+     "date": "2014-09-08",
+     "platform": "landsat-8",
+     "scene_cc": 4.5,
+     "valid_bbox": 1.0,
+     "valid_poly": 1.0,
+     "cloud": 0.7131797789692527,
+     "cloud_poly": 0.925,
+     "snow": 0.04772130430025167
+    }
+   ]
+  },
+  "2015": {
+   "window": null,
+   "pick": {
+    "id": "LC08_L2SP_151030_20150911_02_T1",
+    "date": "2015-09-11",
+    "platform": "landsat-8",
+    "scene_cc": 2.08,
+    "valid_bbox": 1.0,
+    "valid_poly": 1.0,
+    "cloud": 0.6988456067403436,
+    "cloud_poly": 0.9932432432432432,
+    "snow": 0.05205711784659153
+   },
+   "candidates": [
+    {
+     "id": "LC08_L2SP_151030_20150911_02_T1",
+     "date": "2015-09-11",
+     "platform": "landsat-8",
+     "scene_cc": 2.08,
+     "valid_bbox": 1.0,
+     "valid_poly": 1.0,
+     "cloud": 0.6988456067403436,
+     "cloud_poly": 0.9932432432432432,
+     "snow": 0.05205711784659153
+    },
+    {
+     "id": "LC08_L2SP_151030_20150725_02_T1",
+     "date": "2015-07-25",
+     "platform": "landsat-8",
+     "scene_cc": 13.14,
+     "valid_bbox": 1.0,
+     "valid_poly": 1.0,
+     "cloud": 0.8664104387788598,
+     "cloud_poly": 1.0,
+     "snow": 0.0009574351679614838
+    },
+    {
+     "id": "LC08_L2SP_151031_20150927_02_T1",
+     "date": "2015-09-27",
+     "platform": "landsat-8",
+     "scene_cc": 16.27,
+     "valid_bbox": 0.893,
+     "valid_poly": 1.0,
+     "cloud": 0.9597481964802647,
+     "cloud_poly": 1.0,
+     "snow": 0.01983488795968693
+    },
+    {
+     "id": "LC08_L2SP_151030_20150826_02_T1",
+     "date": "2015-08-26",
+     "platform": "landsat-8",
+     "scene_cc": 20.62,
+     "valid_bbox": 1.0,
+     "valid_poly": 1.0,
+     "cloud": 1.0,
+     "cloud_poly": 1.0,
+     "snow": 0.0
+    }
+   ]
+  },
+  "2016": {
+   "window": null,
+   "pick": {
+    "id": "LC08_L2SP_151030_20160828_02_T1",
+    "date": "2016-08-28",
+    "platform": "landsat-8",
+    "scene_cc": 0.56,
+    "valid_bbox": 1.0,
+    "valid_poly": 1.0,
+    "cloud": 0.5699611554874713,
+    "cloud_poly": 0.9283783783783783,
+    "snow": 0.0860323886639676
+   },
+   "candidates": [
+    {
+     "id": "LC08_L2SP_151030_20160828_02_T1",
+     "date": "2016-08-28",
+     "platform": "landsat-8",
+     "scene_cc": 0.56,
+     "valid_bbox": 1.0,
+     "valid_poly": 1.0,
+     "cloud": 0.5699611554874713,
+     "cloud_poly": 0.9283783783783783,
+     "snow": 0.0860323886639676
+    },
+    {
+     "id": "LC08_L2SP_151030_20160727_02_T1",
+     "date": "2016-07-27",
+     "platform": "landsat-8",
+     "scene_cc": 2.28,
+     "valid_bbox": 1.0,
+     "valid_poly": 1.0,
+     "cloud": 0.6266686727213043,
+     "cloud_poly": 0.8797297297297297,
+     "snow": 0.0684429368639895
+    },
+    {
+     "id": "LC08_L2SP_151030_20160812_02_T1",
+     "date": "2016-08-12",
+     "platform": "landsat-8",
+     "scene_cc": 3.84,
+     "valid_bbox": 1.0,
+     "valid_poly": 1.0,
+     "cloud": 0.9727951635846372,
+     "cloud_poly": 1.0,
+     "snow": 0.006989276726118832
+    },
+    {
+     "id": "LC08_L2SP_151030_20160929_02_T1",
+     "date": "2016-09-29",
+     "platform": "landsat-8",
+     "scene_cc": 6.63,
+     "valid_bbox": 1.0,
+     "valid_poly": 1.0,
+     "cloud": 0.9801263814421709,
+     "cloud_poly": 1.0,
+     "snow": 0.01708337892548419
+    }
+   ]
+  },
+  "2017": {
+   "window": null,
+   "pick": {
+    "id": "LC08_L2SP_151031_20170916_02_T1",
+    "date": "2017-09-16",
+    "platform": "landsat-8",
+    "scene_cc": 0.1,
+    "valid_bbox": 0.921,
+    "valid_poly": 1.0,
+    "cloud": 0.35916046963827164,
+    "cloud_poly": 0.8810810810810811,
+    "snow": 0.14393433376378562
+   },
+   "candidates": [
+    {
+     "id": "LC08_L2SP_151031_20170916_02_T1",
+     "date": "2017-09-16",
+     "platform": "landsat-8",
+     "scene_cc": 0.1,
+     "valid_bbox": 0.921,
+     "valid_poly": 1.0,
+     "cloud": 0.35916046963827164,
+     "cloud_poly": 0.8810810810810811,
+     "snow": 0.14393433376378562
+    },
+    {
+     "id": "LC08_L2SP_151030_20170831_02_T1",
+     "date": "2017-08-31",
+     "platform": "landsat-8",
+     "scene_cc": 0.12,
+     "valid_bbox": 1.0,
+     "valid_poly": 1.0,
+     "cloud": 0.4299020680599628,
+     "cloud_poly": 0.8304054054054054,
+     "snow": 0.12263376737060948
+    },
+    {
+     "id": "LC08_L2SP_151030_20170730_02_T1",
+     "date": "2017-07-30",
+     "platform": "landsat-8",
+     "scene_cc": 2.43,
+     "valid_bbox": 1.0,
+     "valid_poly": 1.0,
+     "cloud": 0.5860597439544808,
+     "cloud_poly": 0.9135135135135135,
+     "snow": 0.07634861582230003
+    }
+   ]
+  },
+  "2018": {
+   "window": null,
+   "pick": {
+    "id": "LC08_L2SP_151031_20180903_02_T1",
+    "date": "2018-09-03",
+    "platform": "landsat-8",
+    "scene_cc": 0.21,
+    "valid_bbox": 0.93,
+    "valid_poly": 1.0,
+    "cloud": 0.5501985586115605,
+    "cloud_poly": 0.9216216216216216,
+    "snow": 0.09672010589792616
+   },
+   "candidates": [
+    {
+     "id": "LC08_L2SP_151031_20180903_02_T1",
+     "date": "2018-09-03",
+     "platform": "landsat-8",
+     "scene_cc": 0.21,
+     "valid_bbox": 0.93,
+     "valid_poly": 1.0,
+     "cloud": 0.5501985586115605,
+     "cloud_poly": 0.9216216216216216,
+     "snow": 0.09672010589792616
+    },
+    {
+     "id": "LC08_L2SP_151030_20181005_02_T1",
+     "date": "2018-10-05",
+     "platform": "landsat-8",
+     "scene_cc": 0.87,
+     "valid_bbox": 1.0,
+     "valid_poly": 1.0,
+     "cloud": 0.741574570521939,
+     "cloud_poly": 0.9689189189189189,
+     "snow": 0.04233231206915417
+    },
+    {
+     "id": "LC08_L2SP_151031_20180919_02_T1",
+     "date": "2018-09-19",
+     "platform": "landsat-8",
+     "scene_cc": 4.87,
+     "valid_bbox": 0.938,
+     "valid_poly": 1.0,
+     "cloud": 0.6725356731624131,
+     "cloud_poly": 0.8851351351351351,
+     "snow": 0.046422481015610195
+    }
+   ]
+  },
+  "2019": {
+   "window": null,
+   "pick": {
+    "id": "LC08_L2SP_151030_20190805_02_T1",
+    "date": "2019-08-05",
+    "platform": "landsat-8",
+    "scene_cc": 0.96,
+    "valid_bbox": 1.0,
+    "valid_poly": 1.0,
+    "cloud": 0.5674718240507715,
+    "cloud_poly": 0.8648648648648649,
+    "snow": 0.0717802823065981
+   },
+   "candidates": [
+    {
+     "id": "LC08_L2SP_151030_20190821_02_T1",
+     "date": "2019-08-21",
+     "platform": "landsat-8",
+     "scene_cc": 0.85,
+     "valid_bbox": 1.0,
+     "valid_poly": 1.0,
+     "cloud": 0.856603567129883,
+     "cloud_poly": 0.9979729729729729,
+     "snow": 0.09716599190283401
+    },
+    {
+     "id": "LC08_L2SP_151030_20190805_02_T1",
+     "date": "2019-08-05",
+     "platform": "landsat-8",
+     "scene_cc": 0.96,
+     "valid_bbox": 1.0,
+     "valid_poly": 1.0,
+     "cloud": 0.5674718240507715,
+     "cloud_poly": 0.8648648648648649,
+     "snow": 0.0717802823065981
+    },
+    {
+     "id": "LC08_L2SP_151030_20190922_02_T1",
+     "date": "2019-09-22",
+     "platform": "landsat-8",
+     "scene_cc": 2.39,
+     "valid_bbox": 1.0,
+     "valid_poly": 1.0,
+     "cloud": 0.9415964547543495,
+     "cloud_poly": 0.9533783783783784,
+     "snow": 0.08559470401575665
+    },
+    {
+     "id": "LC08_L2SP_151030_20190720_02_T1",
+     "date": "2019-07-20",
+     "platform": "landsat-8",
+     "scene_cc": 13.75,
+     "valid_bbox": 1.0,
+     "valid_poly": 1.0,
+     "cloud": 0.9994528941897363,
+     "cloud_poly": 1.0,
+     "snow": 0.002626107889265784
+    }
+   ]
+  },
+  "2020": {
+   "window": "aug-sep",
+   "pick": {
+    "id": "LC08_L2SP_150030_20200816_02_T1",
+    "date": "2020-08-16",
+    "platform": "landsat-8",
+    "scene_cc": 3.53,
+    "valid_bbox": 0.588,
+    "valid_poly": 0.991,
+    "cloud": 0.028818846315005354,
+    "cloud_poly": 0.0,
+    "snow": 0.016574328413799525
+   },
+   "candidates": [
+    {
+     "id": "LC08_L2SP_151031_20200823_02_T1",
+     "date": "2020-08-23",
+     "platform": "landsat-8",
+     "scene_cc": 0.25,
+     "valid_bbox": 0.932,
+     "valid_poly": 1.0,
+     "cloud": 0.5370226261617749,
+     "cloud_poly": 0.7804054054054054,
+     "snow": 0.15544657671017664
+    },
+    {
+     "id": "LC08_L2SP_151030_20200908_02_T1",
+     "date": "2020-09-08",
+     "platform": "landsat-8",
+     "scene_cc": 0.55,
+     "valid_bbox": 1.0,
+     "valid_poly": 1.0,
+     "cloud": 0.6382946711894081,
+     "cloud_poly": 0.7912162162162162,
+     "snow": 0.1265045409782252
+    },
+    {
+     "id": "LC08_L2SP_151030_20200924_02_T1",
+     "date": "2020-09-24",
+     "platform": "landsat-8",
+     "scene_cc": 0.93,
+     "valid_bbox": 1.0,
+     "valid_poly": 1.0,
+     "cloud": 0.7299348944085786,
+     "cloud_poly": 0.8824324324324324,
+     "snow": 0.061713535397745926
+    },
+    {
+     "id": "LC08_L2SP_151030_20200807_02_T1",
+     "date": "2020-08-07",
+     "platform": "landsat-8",
+     "scene_cc": 1.9,
+     "valid_bbox": 1.0,
+     "valid_poly": 1.0,
+     "cloud": 0.7079685961264909,
+     "cloud_poly": 1.0,
+     "snow": 0.09061439982492614
+    },
+    {
+     "id": "LC08_L2SP_150030_20200816_02_T1",
+     "date": "2020-08-16",
+     "platform": "landsat-8",
+     "scene_cc": 3.53,
+     "valid_bbox": 0.588,
+     "valid_poly": 0.991,
+     "cloud": 0.028818846315005354,
+     "cloud_poly": 0.0,
+     "snow": 0.016574328413799525
+    }
+   ]
+  },
+  "2021": {
+   "window": null,
+   "pick": {
+    "id": "LC08_L2SP_151031_20210927_02_T1",
+    "date": "2021-09-27",
+    "platform": "landsat-8",
+    "scene_cc": 0.37,
+    "valid_bbox": 0.903,
+    "valid_poly": 1.0,
+    "cloud": 0.3328941789327034,
+    "cloud_poly": 0.9121621621621622,
+    "snow": 0.1534163183717972
+   },
+   "candidates": [
+    {
+     "id": "LC08_L2SP_151030_20210725_02_T1",
+     "date": "2021-07-25",
+     "platform": "landsat-8",
+     "scene_cc": 0.26,
+     "valid_bbox": 1.0,
+     "valid_poly": 1.0,
+     "cloud": 0.6077524893314367,
+     "cloud_poly": 0.9006756756756756,
+     "snow": 0.08564941459678302
+    },
+    {
+     "id": "LC08_L2SP_151031_20210927_02_T1",
+     "date": "2021-09-27",
+     "platform": "landsat-8",
+     "scene_cc": 0.37,
+     "valid_bbox": 0.903,
+     "valid_poly": 1.0,
+     "cloud": 0.3328941789327034,
+     "cloud_poly": 0.9121621621621622,
+     "snow": 0.1534163183717972
+    },
+    {
+     "id": "LC08_L2SP_151030_20210810_02_T1",
+     "date": "2021-08-10",
+     "platform": "landsat-8",
+     "scene_cc": 1.16,
+     "valid_bbox": 1.0,
+     "valid_poly": 1.0,
+     "cloud": 0.5324980851296641,
+     "cloud_poly": 0.9317567567567567,
+     "snow": 0.09220100667469089
+    },
+    {
+     "id": "LC08_L2SP_151030_20210911_02_T1",
+     "date": "2021-09-11",
+     "platform": "landsat-8",
+     "scene_cc": 5.77,
+     "valid_bbox": 1.0,
+     "valid_poly": 1.0,
+     "cloud": 0.9350448626764416,
+     "cloud_poly": 0.9635135135135136,
+     "snow": 0.08439107123317649
+    }
+   ]
+  },
+  "2022": {
+   "window": null,
+   "pick": {
+    "id": "LC09_L2SP_151030_20220906_02_T1",
+    "date": "2022-09-06",
+    "platform": "landsat-9",
+    "scene_cc": 0.5,
+    "valid_bbox": 1.0,
+    "valid_poly": 1.0,
+    "cloud": 0.42242039610460663,
+    "cloud_poly": 0.8628378378378379,
+    "snow": 0.12360488018382755
+   },
+   "candidates": [
+    {
+     "id": "LC09_L2SP_151030_20220720_02_T1",
+     "date": "2022-07-20",
+     "platform": "landsat-9",
+     "scene_cc": 0.23,
+     "valid_bbox": 1.0,
+     "valid_poly": 1.0,
+     "cloud": 0.5756920888499836,
+     "cloud_poly": 0.8567567567567568,
+     "snow": 0.09512802275960171
+    },
+    {
+     "id": "LC09_L2SP_151030_20220906_02_T1",
+     "date": "2022-09-06",
+     "platform": "landsat-9",
+     "scene_cc": 0.5,
+     "valid_bbox": 1.0,
+     "valid_poly": 1.0,
+     "cloud": 0.42242039610460663,
+     "cloud_poly": 0.8628378378378379,
+     "snow": 0.12360488018382755
+    },
+    {
+     "id": "LC09_L2SP_151030_20221008_02_T1",
+     "date": "2022-10-08",
+     "platform": "landsat-9",
+     "scene_cc": 7.81,
+     "valid_bbox": 1.0,
+     "valid_poly": 1.0,
+     "cloud": 0.996238647554437,
+     "cloud_poly": 0.9621621621621622,
+     "snow": 0.0011762774920669658
+    },
+    {
+     "id": "LC08_L2SP_151031_20220728_02_T1",
+     "date": "2022-07-28",
+     "platform": "landsat-8",
+     "scene_cc": 19.14,
+     "valid_bbox": 0.867,
+     "valid_poly": 1.0,
+     "cloud": 0.9044727628300161,
+     "cloud_poly": 1.0,
+     "snow": 6.308551241207457e-05
+    },
+    {
+     "id": "LC09_L2SP_151030_20220805_02_T1",
+     "date": "2022-08-05",
+     "platform": "landsat-9",
+     "scene_cc": 26.67,
+     "valid_bbox": 1.0,
+     "valid_poly": 1.0,
+     "cloud": 0.9981671955356166,
+     "cloud_poly": 1.0,
+     "snow": 0.004240070029543714
+    },
+    {
+     "id": "LC08_L2SP_151031_20220829_02_T1",
+     "date": "2022-08-29",
+     "platform": "landsat-8",
+     "scene_cc": 36.28,
+     "valid_bbox": 0.858,
+     "valid_poly": 1.0,
+     "cloud": 0.983295876568004,
+     "cloud_poly": 1.0,
+     "snow": 3.1878098152664214e-05
+    }
+   ]
+  },
+  "2023": {
+   "window": null,
+   "pick": {
+    "id": "LC08_L2SP_151030_20230715_02_T1",
+    "date": "2023-07-15",
+    "platform": "landsat-8",
+    "scene_cc": 0.4,
+    "valid_bbox": 1.0,
+    "valid_poly": 1.0,
+    "cloud": 0.5903408469197943,
+    "cloud_poly": 0.9817567567567568,
+    "snow": 0.06763595579385052
+   },
+   "candidates": [
+    {
+     "id": "LC08_L2SP_151030_20230715_02_T1",
+     "date": "2023-07-15",
+     "platform": "landsat-8",
+     "scene_cc": 0.4,
+     "valid_bbox": 1.0,
+     "valid_poly": 1.0,
+     "cloud": 0.5903408469197943,
+     "cloud_poly": 0.9817567567567568,
+     "snow": 0.06763595579385052
+    },
+    {
+     "id": "LC08_L2SP_151031_20230816_02_T1",
+     "date": "2023-08-16",
+     "platform": "landsat-8",
+     "scene_cc": 1.91,
+     "valid_bbox": 0.886,
+     "valid_poly": 1.0,
+     "cloud": 0.6393880449549216,
+     "cloud_poly": 0.6864864864864865,
+     "snow": 0.1364085463752007
+    },
+    {
+     "id": "LC09_L2SP_151030_20230925_02_T1",
+     "date": "2023-09-25",
+     "platform": "landsat-9",
+     "scene_cc": 2.87,
+     "valid_bbox": 1.0,
+     "valid_poly": 1.0,
+     "cloud": 0.9032990480358901,
+     "cloud_poly": 0.8202702702702702,
+     "snow": 0.1277902396323449
+    },
+    {
+     "id": "LC08_L2SP_151030_20231003_02_T1",
+     "date": "2023-10-03",
+     "platform": "landsat-8",
+     "scene_cc": 3.88,
+     "valid_bbox": 1.0,
+     "valid_poly": 1.0,
+     "cloud": 0.8923706094758727,
+     "cloud_poly": 0.606081081081081,
+     "snow": 0.09277546777546777
+    },
+    {
+     "id": "LC09_L2SP_151030_20230723_02_T1",
+     "date": "2023-07-23",
+     "platform": "landsat-9",
+     "scene_cc": 3.98,
+     "valid_bbox": 1.0,
+     "valid_poly": 1.0,
+     "cloud": 0.7046722836196521,
+     "cloud_poly": 0.9986486486486487,
+     "snow": 0.0033510230878651933
+    },
+    {
+     "id": "LC08_L2SP_151030_20230917_02_T1",
+     "date": "2023-09-17",
+     "platform": "landsat-8",
+     "scene_cc": 4.9,
+     "valid_bbox": 1.0,
+     "valid_poly": 1.0,
+     "cloud": 0.7390442061494693,
+     "cloud_poly": 1.0,
+     "snow": 0.016358463726884778
+    }
+   ]
+  },
+  "2024": {
+   "window": "aug-sep",
+   "pick": {
+    "id": "LC08_L2SP_150030_20240928_02_T1",
+    "date": "2024-09-28",
+    "platform": "landsat-8",
+    "scene_cc": 3.09,
+    "valid_bbox": 0.576,
+    "valid_poly": 0.991,
+    "cloud": 0.009386882129277567,
+    "cloud_poly": 0.0,
+    "snow": 0.018013307984790873
+   },
+   "candidates": [
+    {
+     "id": "LC09_L2SP_151030_20240826_02_T1",
+     "date": "2024-08-26",
+     "platform": "landsat-9",
+     "scene_cc": 0.24,
+     "valid_bbox": 1.0,
+     "valid_poly": 1.0,
+     "cloud": 0.6544342925921873,
+     "cloud_poly": 0.9168918918918919,
+     "snow": 0.06785479811795601
+    },
+    {
+     "id": "LC08_L2SP_151030_20240903_02_T1",
+     "date": "2024-09-03",
+     "platform": "landsat-8",
+     "scene_cc": 1.93,
+     "valid_bbox": 1.0,
+     "valid_poly": 1.0,
+     "cloud": 0.9395448079658606,
+     "cloud_poly": 0.870945945945946,
+     "snow": 0.09619487908961594
+    },
+    {
+     "id": "LC08_L2SP_150030_20240928_02_T1",
+     "date": "2024-09-28",
+     "platform": "landsat-8",
+     "scene_cc": 3.09,
+     "valid_bbox": 0.576,
+     "valid_poly": 0.991,
+     "cloud": 0.009386882129277567,
+     "cloud_poly": 0.0,
+     "snow": 0.018013307984790873
+    },
+    {
+     "id": "LC09_L2SP_151030_20240911_02_T1",
+     "date": "2024-09-11",
+     "platform": "landsat-9",
+     "scene_cc": 4.36,
+     "valid_bbox": 1.0,
+     "valid_poly": 1.0,
+     "cloud": 0.618284276179013,
+     "cloud_poly": 0.37905405405405407,
+     "snow": 0.5213234489550279
+    },
+    {
+     "id": "LC08_L2SP_151031_20240919_02_T1",
+     "date": "2024-09-19",
+     "platform": "landsat-8",
+     "scene_cc": 15.18,
+     "valid_bbox": 0.864,
+     "valid_poly": 1.0,
+     "cloud": 0.9182817815046278,
+     "cloud_poly": 0.5709459459459459,
+     "snow": 0.06126097618859268
+    },
+    {
+     "id": "LC09_L2SP_151030_20240810_02_T1",
+     "date": "2024-08-10",
+     "platform": "landsat-9",
+     "scene_cc": 24.43,
+     "valid_bbox": 1.0,
+     "valid_poly": 1.0,
+     "cloud": 0.8235720538352117,
+     "cloud_poly": 1.0,
+     "snow": 0.0031458584090163035
+    },
+    {
+     "id": "LC08_L2SP_151030_20240802_02_T1",
+     "date": "2024-08-02",
+     "platform": "landsat-8",
+     "scene_cc": 35.05,
+     "valid_bbox": 1.0,
+     "valid_poly": 1.0,
+     "cloud": 1.0,
+     "cloud_poly": 1.0,
+     "snow": 0.0
+    },
+    {
+     "id": "LC09_L2SP_151030_20240927_02_T1",
+     "date": "2024-09-27",
+     "platform": "landsat-9",
+     "scene_cc": 36.97,
+     "valid_bbox": 1.0,
+     "valid_poly": 1.0,
+     "cloud": 1.0,
+     "cloud_poly": 1.0,
+     "snow": 0.0
+    }
+   ]
+  },
+  "2025": {
+   "window": null,
+   "pick": {
+    "id": "LC09_L2SP_151030_20250813_02_T1",
+    "date": "2025-08-13",
+    "platform": "landsat-9",
+    "scene_cc": 0.2,
+    "valid_bbox": 1.0,
+    "valid_poly": 1.0,
+    "cloud": 0.36762774920669655,
+    "cloud_poly": 0.7506756756756757,
+    "snow": 0.12132071342597658
+   },
+   "candidates": [
+    {
+     "id": "LC09_L2SP_151030_20250829_02_T1",
+     "date": "2025-08-29",
+     "platform": "landsat-9",
+     "scene_cc": 0.09,
+     "valid_bbox": 1.0,
+     "valid_poly": 1.0,
+     "cloud": 0.4399414596783018,
+     "cloud_poly": 0.8425675675675676,
+     "snow": 0.12234653682022104
+    },
+    {
+     "id": "LC09_L2SP_151030_20250813_02_T1",
+     "date": "2025-08-13",
+     "platform": "landsat-9",
+     "scene_cc": 0.2,
+     "valid_bbox": 1.0,
+     "valid_poly": 1.0,
+     "cloud": 0.36762774920669655,
+     "cloud_poly": 0.7506756756756757,
+     "snow": 0.12132071342597658
+    },
+    {
+     "id": "LC08_L2SP_151030_20251008_02_T1",
+     "date": "2025-10-08",
+     "platform": "landsat-8",
+     "scene_cc": 4.08,
+     "valid_bbox": 1.0,
+     "valid_poly": 1.0,
+     "cloud": 0.9061439982492614,
+     "cloud_poly": 0.8087837837837838,
+     "snow": 0.13644818907976802
+    },
+    {
+     "id": "LC09_L2SP_151030_20250914_02_T1",
+     "date": "2025-09-14",
+     "platform": "landsat-9",
+     "scene_cc": 4.67,
+     "valid_bbox": 1.0,
+     "valid_poly": 1.0,
+     "cloud": 0.9213808950651056,
+     "cloud_poly": 0.9945945945945946,
+     "snow": 0.004787175839807418
+    },
+    {
+     "id": "LC08_L2SP_151030_20250720_02_T1",
+     "date": "2025-07-20",
+     "platform": "landsat-8",
+     "scene_cc": 6.48,
+     "valid_bbox": 1.0,
+     "valid_poly": 1.0,
+     "cloud": 0.8939435386803808,
+     "cloud_poly": 1.0,
+     "snow": 0.02496170259328154
+    },
+    {
+     "id": "LC08_L2SP_151030_20250821_02_T1",
+     "date": "2025-08-21",
+     "platform": "landsat-8",
+     "scene_cc": 8.18,
+     "valid_bbox": 1.0,
+     "valid_poly": 1.0,
+     "cloud": 0.9211757303862567,
+     "cloud_poly": 1.0,
+     "snow": 0.003870773607615713
+    },
+    {
+     "id": "LC08_L2SP_151030_20250805_02_T1",
+     "date": "2025-08-05",
+     "platform": "landsat-8",
+     "scene_cc": 13.02,
+     "valid_bbox": 1.0,
+     "valid_poly": 1.0,
+     "cloud": 0.9850776890250574,
+     "cloud_poly": 1.0,
+     "snow": 0.001313053944632892
+    },
+    {
+     "id": "LC08_L2SP_151031_20250922_02_T1",
+     "date": "2025-09-22",
+     "platform": "landsat-8",
+     "scene_cc": 13.78,
+     "valid_bbox": 0.857,
+     "valid_poly": 1.0,
+     "cloud": 0.8638947435651785,
+     "cloud_poly": 0.575,
+     "snow": 0.15371718720061314
+    }
+   ]
+  },
+  "2026": {
+   "window": null,
+   "pick": {
+    "id": "LC09_L2SP_151030_20260731_02_T1",
+    "date": "2026-07-31",
+    "platform": "landsat-9",
+    "scene_cc": 0.56,
+    "valid_bbox": 1.0,
+    "valid_poly": 1.0,
+    "cloud": 0.48357314804683227,
+    "cloud_poly": 0.8486486486486486,
+    "snow": 0.09748057774373564
+   },
+   "candidates": [
+    {
+     "id": "LC08_L2SP_151030_20260909_02_T1",
+     "date": "2026-09-09",
+     "platform": "landsat-8",
+     "scene_cc": 0.28,
+     "valid_bbox": 1.0,
+     "valid_poly": 1.0,
+     "cloud": 0.5432487143013459,
+     "cloud_poly": 0.9831081081081081,
+     "snow": 0.09657785315680052
+    },
+    {
+     "id": "LC09_L2SP_151030_20260731_02_T1",
+     "date": "2026-07-31",
+     "platform": "landsat-9",
+     "scene_cc": 0.56,
+     "valid_bbox": 1.0,
+     "valid_poly": 1.0,
+     "cloud": 0.48357314804683227,
+     "cloud_poly": 0.8486486486486486,
+     "snow": 0.09748057774373564
+    },
+    {
+     "id": "LC09_L2SP_151030_20260917_02_T1",
+     "date": "2026-09-17",
+     "platform": "landsat-9",
+     "scene_cc": 2.35,
+     "valid_bbox": 1.0,
+     "valid_poly": 1.0,
+     "cloud": 0.5487608053397527,
+     "cloud_poly": 0.9689189189189189,
+     "snow": 0.06930462851515483
+    },
+    {
+     "id": "LC09_L2SP_151030_20260715_02_T1",
+     "date": "2026-07-15",
+     "platform": "landsat-9",
+     "scene_cc": 4.33,
+     "valid_bbox": 1.0,
+     "valid_poly": 1.0,
+     "cloud": 0.7232602035233614,
+     "cloud_poly": 0.970945945945946,
+     "snow": 0.04681857971331656
+    },
+    {
+     "id": "LC08_L2SP_151030_20260925_02_T1",
+     "date": "2026-09-25",
+     "platform": "landsat-8",
+     "scene_cc": 7.81,
+     "valid_bbox": 1.0,
+     "valid_poly": 1.0,
+     "cloud": 0.9969225298172667,
+     "cloud_poly": 1.0,
+     "snow": 0.007317540212277054
+    },
+    {
+     "id": "LC09_L2SP_151030_20260816_02_T1",
+     "date": "2026-08-16",
+     "platform": "landsat-9",
+     "scene_cc": 11.13,
+     "valid_bbox": 1.0,
+     "valid_poly": 1.0,
+     "cloud": 0.8748495459021775,
+     "cloud_poly": 1.0,
+     "snow": 0.03144490644490645
+    },
+    {
+     "id": "LC08_L2SP_151030_20260808_02_T1",
+     "date": "2026-08-08",
+     "platform": "landsat-8",
+     "scene_cc": 14.74,
+     "valid_bbox": 1.0,
+     "valid_poly": 1.0,
+     "cloud": 0.704809060072218,
+     "cloud_poly": 0.952027027027027,
+     "snow": 0.017288543604333077
+    },
+    {
+     "id": "LC09_L2SP_151030_20260901_02_T1",
+     "date": "2026-09-01",
+     "platform": "landsat-9",
+     "scene_cc": 15.78,
+     "valid_bbox": 1.0,
+     "valid_poly": 1.0,
+     "cloud": 0.9566692198271146,
+     "cloud_poly": 1.0,
+     "snow": 0.0
+    }
+   ]
+  }
+ }
+}
