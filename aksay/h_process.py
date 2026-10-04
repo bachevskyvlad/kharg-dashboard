@@ -14,8 +14,11 @@ HERE = os.path.dirname(os.path.abspath(__file__)); sys.path.insert(0, HERE); sys
 import process as P
 
 LD = os.path.join(P.DATA, "landsat"); OUT = os.path.join(P.OUT, "h_landsat"); os.makedirs(os.path.join(OUT, "frames"), exist_ok=True)
+L_EDGE_MIN_M = 3000      # QA parameter: every S2 frame shows clean ice ≥ 3.3 km down the centerline; a 30 m run that
+                         # breaks before 3.0 km is a mixed-pixel / stripe failure, recorded as 'edge not detected'
 SENSOR = {"landsat-4": "L4", "landsat-5": "L5", "landsat-7": "L7", "landsat-8": "L8", "landsat-9": "L9"}
-FLAGS_L = json.load(open(os.path.join(HERE, "aksay_flags.json"))).get("landsat_fresh_snow", {})
+_FL = json.load(open(os.path.join(HERE, "aksay_flags.json")))
+FLAGS_L = _FL.get("landsat_fresh_snow", {}); CLOUD_L = _FL.get("landsat_cloud", {})
 
 def up(a):
     return np.repeat(np.repeat(a, 3, 0), 3, 1)[:P.H, :P.W]
@@ -27,8 +30,25 @@ def load_landsat(y):
     sr = lambda k: np.clip(up(z[k]).astype(np.float32) * 0.275 - 2000.0, 0, 1e4)          # ×1e4 reflectance
     d = {"b02": sr("blue"), "b03": sr("green"), "b04": sr("red"), "b08": sr("nir08"), "b11": sr("swir16"),
          "mask": ((qa & 1) == 0).astype(np.uint8)}
-    cloud = (((qa >> 1) & 1) | ((qa >> 2) & 1) | ((qa >> 3) & 1) | ((qa >> 4) & 1)).astype(bool)
+    # same rule as frame selection (h_fetch.score): CFMask flags glacier ice as cloud here, so only
+    # high-confidence cloud (bit 3, conf bits 8–9 = 3) that is NOT snow/ice-like (NDSI ≤ 0.4) counts as cloud
+    nd = (d["b03"] - d["b11"]) / (d["b03"] + d["b11"] + 1e-6)
+    cloud = (((qa >> 3) & 1) == 1) & (((qa >> 8) & 3) == 3) & (nd <= 0.4)
     return d, cloud, str(z["platform"]), str(z["date"])
+
+def front_skip_invalid(m, valid, cl_m, cl_d):
+    """As P.front_on_centerline (ice within ±40 m of the line, gaps ≤ 100 m bridged), but samples with no valid data
+    (L7 SLC-off stripes, cloud) are unknown and skipped instead of counting as 'no ice'."""
+    r = int(round(P.FRONT_BUF_M / P.PXW))
+    ice = P.sample(P.dilate(m, r), cl_m); ok = P.sample(P.dilate(valid, 1), cl_m)
+    d = cl_d[ok]; v = ice[ok]
+    if d.size == 0 or not v[:max(1, int(300 / P.STEP_M))].any(): return None
+    end, last_ice = None, None
+    for di, vi in zip(d, v):
+        if vi:
+            if last_ice is not None and di - last_ice > P.FRONT_GAP_M: break
+            end = last_ice = di
+    return None if end is None else round(float(end), 1)
 
 def metrics(d, cloud, TP, tg, cl_m, cl_d):
     ok = TP & (d["mask"] > 0) & ~cloud
@@ -36,11 +56,13 @@ def metrics(d, cloud, TP, tg, cl_m, cl_d):
     bright = (nd > tg["ndsi_threshold"]) & ok; snow = bright & (nir >= P.B08_SNOW)
     area = TP.sum() * P.PXW * P.PXH / 1e6; n = max(1, ok.sum())
     m = P.ice_mask(d) & ~cloud
-    L, _ = P.front_on_centerline(m, cl_m, cl_d)
+    L = front_skip_invalid(m, (d["mask"] > 0) & ~cloud, cl_m, cl_d)
+    L_raw = L
+    if L is not None and L < L_EDGE_MIN_M: L = None
     return {"valid_poly_frac": round(float(ok.sum() / TP.sum()), 3),
             "bright_km2": round(float(bright.sum() / n * area), 3), "snow_km2": round(float(snow.sum() / n * area), 3),
             "ice_km2": round(float((bright & ~snow).sum() / n * area), 3), "debris_km2": round(float((ok & ~bright).sum() / n * area), 3),
-            "L_clean_edge_m": None if L is None else round(L, 1)}
+            "L_clean_edge_m": L, "L_clean_edge_raw_m": L_raw}
 
 def ols(rows, col, extra=None):
     rr = [r for r in rows if r[col] is not None]
@@ -67,9 +89,10 @@ def main():
              "snow_bbox_pct": round(100 * v["pick"]["snow"], 1), "cloud_bbox_pct": round(100 * v["pick"]["cloud"], 2),
              **metrics(d, cloud, TP, tg, cl_m, cl_d)}
         rows.append(r)
-    med = float(np.median([r["snow_bbox_pct"] for r in rows]))
+    med = float(np.median([r["snow_bbox_pct"] for r in rows if str(r["year"]) not in CLOUD_L]))
     for r in rows:
-        r["flag"] = ("manual" if str(r["year"]) in FLAGS_L else ("auto snow" if r["snow_bbox_pct"] > P.SNOW_FLAG_X * med else ""))
+        r["flag"] = ("cloud (visual QA)" if str(r["year"]) in CLOUD_L else "manual snow" if str(r["year"]) in FLAGS_L
+                     else ("auto snow" if r["snow_bbox_pct"] > P.SNOW_FLAG_X * med else ""))
         r["dec"] = r["year"] + (np.datetime64(r["date"]).astype("datetime64[D]") - np.datetime64(f"{r['year']}-01-01")).astype(int) / 365.25
     # S2 rows from the main pipeline (same definitions; S2 valid ≈ 1 so km² are comparable)
     s2 = []
@@ -82,7 +105,7 @@ def main():
                    "flag": "flagged (S2 pipeline)" if r["snow_flag"] == "1" else "",
                    "dec": y + (np.datetime64(r["date"]) - np.datetime64(f"{y}-01-01")).astype(int) / 365.25})
     allrows = sorted(rows + s2, key=lambda r: (r["year"], r["sensor"] != "S2"))
-    cols = ["year", "sensor", "date", "window", "valid_poly_frac", "bright_km2", "snow_km2", "ice_km2", "debris_km2", "L_clean_edge_m",
+    cols = ["year", "sensor", "date", "window", "valid_poly_frac", "bright_km2", "snow_km2", "ice_km2", "debris_km2", "L_clean_edge_m", "L_clean_edge_raw_m",
             "snow_bbox_pct", "cloud_bbox_pct", "flag"]
     with open(os.path.join(OUT, "aksay_landsat_s2_metrics.csv"), "w", newline="") as fh:
         w = csv.DictWriter(fh, fieldnames=cols, extrasaction="ignore"); w.writeheader(); w.writerows(allrows)
@@ -126,7 +149,7 @@ def plot(allrows):
         for sp in ("top", "right"): ax.spines[sp].set_visible(False)
         for sp in ("left", "bottom"): ax.spines[sp].set_color(grid)
     axs[0].legend(frameon=False, fontsize=8.5, loc="upper right")
-    axs[1].text(0, -0.2, "filled = clean frame · hollow = fresh-snow flag · Landsat areas as fractions of valid polygon pixels × polygon area; L_clean_edge quantised to 30 m for Landsat",
+    axs[1].text(0, -0.2, "filled = clean frame · hollow = flagged (fresh snow or cloud) · Landsat areas = valid-pixel fractions × polygon area · Landsat edge on 30 m pixels",
                 transform=axs[1].transAxes, fontsize=7.5, color=mute)
     fig.tight_layout(); fig.savefig(os.path.join(OUT, "h_metrics.png"), facecolor=surf)
 

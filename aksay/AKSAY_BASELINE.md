@@ -1,8 +1,8 @@
-# AKSAY_BASELINE — Ak-Sai glacier, Sentinel-2 2016–2026 (rev5)
+# AKSAY_BASELINE — Ak-Sai glacier, Sentinel-2 2016–2026 (rev6)
 
 R&D mini-project (`aksay/`), independent of OilRadar. Frozen geometry: `aksay_geometry.json` v1, `aksay_tongue_polygon.json` v1 (untouched). **Base year: 2018** (changed from 2017 by rule C3, see Part C).
 
-rev5: Part E (is the day-of-year covariate justified), Part G (report corrections), Part F (migration of the active-ice limit). rev4 parts C, D, B-pilot kept. Frozen D-sensitivity parameters.
+rev6: Part H — Landsat 1993–2026 joined to the S2 series (30-year baseline). rev5: Part E (is the day-of-year covariate justified), Part G (report corrections), Part F (migration of the active-ice limit). rev4 parts C, D, B-pilot kept. Frozen D-sensitivity parameters.
 
 ## Verdict
 
@@ -12,7 +12,8 @@ rev5: Part E (is the day-of-year covariate justified), Part G (report correction
 4. **Optical offset tracking (Part D) — a snapshot of where active ice ends, not a trend (trend: Part F):** the clean, crevassed tongue flows at ~30 m/yr; flow drops to ~4–16 m/yr (pair-dependent) across the clean-ice/debris boundary and fades into the noise at ≈ 3.65–3.96 km along the centerline depending on the pair (Part F). The debris lobe below that is stagnant within noise (< ~0.5 m/yr over 7–8 years). A single L_moving_opt number is **not** stable — reported as a profile, not a rate.
 5. **Surface darkening / debris expansion, consistent with thinning.** External check (Hugonnet 2021, RGI60-13.11414): glacier-wide dh/dt 2000–2019 = -0.09 ± 0.17 m/yr — not distinguishable from zero; neither confirms nor rules out tongue thinning.
 6. **Sentinel-1 B-pilot (DES 107, 2026-08-06 → 08-18):** coherence bare ice 0.33, debris lobe 0.61, valley rock 0.47 → b − c = 0.13 < 0.15 → stop rule triggered, Part B closed. The lobe is coherent; the rock reference is itself degraded by steep terrain and the 5×1 estimator floor, so b − c understates the contrast to truly stable ground.
-7. **Migration of the active-ice limit (Part F): not resolved on 6 pairs.** L_active (2× noise) ranges 305.8 m across pairs with residual SD 130.8 m vs half the fitted change 98.6 m (fit +28.1 ± 22.8 m/yr, t(4) = 1.23, p = 0.28 — not used). Speed under the debris (3600–3950 m) shows no trend: +0.17 ± 0.62 m/yr per yr, t(4) = 0.28, p = 0.79.
+7. **30-year baseline (Part H, Landsat 5/7/8/9, one sensor family 1996–2026):** bare ice in the tongue polygon -0.0088 ± 0.0023 km²/yr, t(21) = -3.85, p = 0.00093; clean-ice edge -7.8 ± 2.0 m/yr, t(11) = -3.97, p = 0.0022 — the same direction and size as the S2-only fits, now on 30 years. The tongue was already debris-covered in 1993–1996 (no clean-ice terminus to digitise, H7 not applicable).
+8. **Migration of the active-ice limit (Part F): not resolved on 6 pairs.** L_active (2× noise) ranges 305.8 m across pairs with residual SD 130.8 m vs half the fitted change 98.6 m (fit +28.1 ± 22.8 m/yr, t(4) = 1.23, p = 0.28 — not used). Speed under the debris (3600–3950 m) shows no trend: +0.17 ± 0.62 m/yr per yr, t(4) = 0.28, p = 0.79.
 
 ## Part E — is the day-of-year covariate justified?
 
@@ -156,6 +157,78 @@ Pairs on clean frames; 2-year pairs cross a flagged year. |d| normalised to m/yr
 - Under-debris zone 3600–3950 m: 0.7–9.2 m/yr across pairs, no trend (p above). No evidence of slowdown on this record.
 - Range of L_active (2×) across pairs: 3653–3958 m — the active-ice limit sits ≈ 3.65–3.96 km in every pair, i.e. 100–500 m below the clean-ice edge; that location statement holds, the trend does not.
 
+## Part H — Landsat 1993–2026 (30-year baseline; first clean frame 1996)
+
+![timelapse](out/h_landsat/aksay_timelapse_1990_2026.gif)
+
+![metrics](out/h_landsat/h_metrics.png)
+
+**Data.** USGS Landsat Collection-2 Level-2 (Tier 1 only) via Microsoft Planetary Computer, anonymous access. Window Aug–Sep (widened to Jul 15–Oct 10 if needed), scene cloud < 70 %. Scoring inside the bbox: CFMask flags glacier ice as cloud in this terrain, so cloud = high-confidence CFMask cloud with NDSI ≤ 0.4; frames with NDSI > 0.4 on > 60 % of pixels rejected (fresh snow / saturation); same pick rule as S2, non-SLC-off L7 preferred. One frame per year on the S2 bbox at 30 m, upsampled ×3 (nearest) onto the 10 m grid → the frozen polygon and centerline are used unchanged.
+
+**Gaps.** 1990–1992, 1994–1995, 1997, 2000: no usable Tier-1 frame in the window (archive gaps / cloud). Visual QA removed 1998, 2003, 2004, 2007, 2011 (cloud over the tongue). L7 after 2003 has SLC-off stripes: areas are computed as fractions of valid polygon pixels × polygon area; the clean-ice edge skips no-data samples.
+
+**Clean-ice edge QA (parameter):** a 30 m run that breaks before 3000 m along the centerline is a mixed-pixel/stripe failure (every S2 frame has clean ice ≥ 3.3 km) → 'edge not detected'. Detected in 14 of 30 Landsat frames.
+
+| year | sensor | date | valid polygon | bright km² | ice km² | debris km² | clean-ice edge (m) | raw edge (m) | flag |
+|---|---|---|---|---|---|---|---|---|---|
+| 1993 | L5 | 1993-09-30 | 0.868 | 1.266 | 0.615 | 0.023 | — | 140.7 | auto snow |
+| 1996 | L5 | 1996-09-22 | 0.961 | 0.952 | 0.951 | 0.337 | 3682.7 | 3682.7 |  |
+| 1998 | L5 | 1998-09-28 | 0.977 | 1.289 | 0.938 | 0.0 | 4144.9 | 4144.9 | cloud (visual QA) |
+| 1999 | L7 | 1999-08-06 | 0.903 | 1.013 | 1.013 | 0.276 | 3742.9 | 3742.9 |  |
+| 2001 | L7 | 2001-08-20 | 0.85 | 0.944 | 0.944 | 0.345 | 3652.6 | 3652.6 |  |
+| 2002 | L7 | 2002-08-23 | 0.899 | 0.938 | 0.938 | 0.35 | 3572.4 | 3572.4 |  |
+| 2003 | L7 | 2003-08-01 | 0.578 | 1.08 | 1.08 | 0.209 | — | 140.7 | cloud (visual QA) |
+| 2004 | L7 | 2004-08-03 | 0.005 | 1.289 | 1.289 | 0.0 | — | 186.0 | cloud (visual QA) |
+| 2005 | L7 | 2005-09-23 | 0.707 | 1.066 | 0.69 | 0.223 | — | 934.3 |  |
+| 2006 | L7 | 2006-08-09 | 0.811 | 0.84 | 0.84 | 0.449 | — | 75.4 |  |
+| 2007 | L7 | 2007-08-28 | 0.321 | 1.245 | 1.245 | 0.044 | — | 397.1 | cloud (visual QA) |
+| 2008 | L7 | 2008-08-14 | 0.82 | 0.783 | 0.783 | 0.505 | — | 1250.4 |  |
+| 2009 | L7 | 2009-08-17 | 0.702 | 0.939 | 0.939 | 0.35 | — | 492.6 |  |
+| 2010 | L5 | 2010-08-12 | 0.884 | 0.917 | 0.917 | 0.372 | 3557.4 | 3557.4 |  |
+| 2011 | L5 | 2011-08-15 | 0.783 | 1.165 | 1.039 | 0.124 | — | 2501.4 | cloud (visual QA) |
+| 2012 | L7 | 2012-09-26 | 0.731 | 0.954 | 0.73 | 0.335 | — | — |  |
+| 2013 | L8 | 2013-10-07 | 0.901 | 0.828 | 0.828 | 0.461 | — | — |  |
+| 2014 | L8 | 2014-08-07 | 0.886 | 0.79 | 0.79 | 0.499 | 3597.5 | 3597.5 |  |
+| 2015 | L8 | 2015-09-11 | 0.817 | 1.071 | 0.909 | 0.218 | 3547.4 | 3547.4 |  |
+| 2016 | S2 | 2016-08-09 | 1.0 | 0.856 | 0.596 | 0.433 | 3577.4 | — | flagged (S2 pipeline) |
+| 2016 | L8 | 2016-08-28 | 0.84 | 0.856 | 0.856 | 0.433 | 3557.4 | 3557.4 |  |
+| 2017 | S2 | 2017-09-16 | 1.0 | 0.806 | 0.707 | 0.483 | 3577.4 | — | flagged (S2 pipeline) |
+| 2017 | L8 | 2017-08-31 | 0.907 | 0.741 | 0.741 | 0.548 | 3396.9 | 3396.9 |  |
+| 2018 | S2 | 2018-09-08 | 1.0 | 0.751 | 0.749 | 0.538 | 3577.4 | — |  |
+| 2018 | L8 | 2018-09-03 | 0.758 | 0.997 | 0.982 | 0.292 | 3597.5 | 3597.5 |  |
+| 2019 | S2 | 2019-08-12 | 1.0 | 0.655 | 0.655 | 0.634 | 3537.3 | — |  |
+| 2019 | L7 | 2019-07-28 | 0.785 | 0.766 | 0.766 | 0.523 | — | 1039.7 |  |
+| 2020 | S2 | 2020-09-25 | 1.0 | 0.956 | 0.462 | 0.333 | 3682.7 | — | flagged (S2 pipeline) |
+| 2020 | L7 | 2020-08-15 | 0.74 | 0.988 | 0.616 | 0.3 | — | 140.7 | auto snow |
+| 2021 | S2 | 2021-09-27 | 1.0 | 0.812 | 0.784 | 0.476 | 3587.5 | — |  |
+| 2021 | L8 | 2021-09-27 | 0.835 | 0.87 | 0.87 | 0.419 | — | — |  |
+| 2022 | S2 | 2022-09-07 | 1.0 | 0.673 | 0.672 | 0.616 | 3537.3 | — |  |
+| 2022 | L9 | 2022-09-06 | 0.903 | 0.714 | 0.714 | 0.575 | 3411.9 | 3411.9 |  |
+| 2023 | S2 | 2023-08-21 | 1.0 | 0.638 | 0.638 | 0.65 | 3487.2 | — |  |
+| 2023 | L8 | 2023-07-15 | 0.808 | 0.801 | 0.801 | 0.488 | — | 2501.4 |  |
+| 2024 | S2 | 2024-08-20 | 1.0 | 0.703 | 0.701 | 0.585 | 3537.3 | — | flagged (S2 pipeline) |
+| 2024 | L9 | 2024-08-26 | 0.862 | 0.932 | 0.626 | 0.357 | 3557.4 | 3557.4 |  |
+| 2025 | S2 | 2025-09-04 | 1.0 | 0.606 | 0.606 | 0.683 | 3537.3 | — |  |
+| 2025 | L9 | 2025-08-13 | 0.913 | 0.592 | 0.592 | 0.697 | — | 1546.3 |  |
+| 2026 | S2 | 2026-08-30 | 1.0 | 0.549 | 0.548 | 0.74 | 3462.1 | — |  |
+| 2026 | L9 | 2026-07-31 | 0.861 | 0.642 | 0.642 | 0.647 | 3442.0 | 3442.0 |  |
+
+### Fits (clean frames; OLS on decimal year; two-sided t-test)
+
+| series | Landsat 1996–2015 | Landsat 1996–2026 | S2 2018–2026 | Landsat ≤ 2015 + S2 | same, with sensor offset |
+|---|---|---|---|---|---|
+| ice_km2 | -0.0079 ± 0.0042 km²/yr, t(11) = -1.86, p = 0.09 (n = 13) | **-0.0088 ± 0.0023 km²/yr, t(21) = -3.85, p = 0.00093 (n = 23)** | -0.0209 ± 0.0080 km²/yr, t(5) = -2.61, p = 0.048 (n = 7) | -0.0121 ± 0.0021 km²/yr, t(18) = -5.85, p = 1.5e-05 (n = 20) | -0.0093 ± 0.0036 km²/yr, t(17) = -2.54, p = 0.021 (n = 20); offset -0.063 |
+| bright_km2 | -0.0039 ± 0.0045 km²/yr, t(11) = -0.86, p = 0.41 (n = 13) | **-0.0085 ± 0.0026 km²/yr, t(21) = -3.34, p = 0.0031 (n = 23)** | -0.0215 ± 0.0094 km²/yr, t(5) = -2.29, p = 0.071 (n = 7) | -0.0134 ± 0.0026 km²/yr, t(18) = -5.24, p = 5.5e-05 (n = 20) | -0.0057 ± 0.0040 km²/yr, t(17) = -1.42, p = 0.17 (n = 20); offset -0.170 |
+| debris_km2 | +0.0039 ± 0.0045 km²/yr, t(11) = 0.86, p = 0.41 (n = 13) | **+0.0085 ± 0.0026 km²/yr, t(21) = 3.34, p = 0.0031 (n = 23)** | +0.0215 ± 0.0094 km²/yr, t(5) = 2.28, p = 0.072 (n = 7) | +0.0134 ± 0.0026 km²/yr, t(18) = 5.24, p = 5.5e-05 (n = 20) | +0.0057 ± 0.0040 km²/yr, t(17) = 1.42, p = 0.17 (n = 20); offset +0.170 |
+| L_clean_edge_m | -7.3 ± 2.8 m/yr, t(5) = -2.62, p = 0.047 (n = 7) | **-7.8 ± 2.0 m/yr, t(11) = -3.97, p = 0.0022 (n = 13)** | -10.7 ± 4.9 m/yr, t(5) = -2.19, p = 0.08 (n = 7) | -6.0 ± 1.1 m/yr, t(12) = -5.26, p = 0.0002 (n = 14) | -7.8 ± 2.1 m/yr, t(11) = -3.62, p = 0.0041 (n = 14); offset +40.329 |
+
+**Sensor calibration (H5)** — same-year clean pairs Landsat 8/9 vs S2, years [2018, 2021, 2022, 2023, 2025, 2026]: ice L − S2 = +0.101 ± 0.087 km² (SD), bright +0.098 ± 0.093 km², clean-ice edge -42 ± 75 m (n = 3). Landsat reads ~0.1 km² more ice (mixed 30 m pixels at strip edges, different acquisition dates). There is no L8–S2 overlap before 2016, so the calibration uses 2018–2026.
+
+**Reading.** The headline is the single-sensor-family Landsat fit 1996–2026 (first clean frame 1996) (no cross-sensor splice): bare ice in the polygon declines and the clean-ice edge moves up-glacier at ≈ 8 m/yr (≈ 240 m over 30 years, 8 pixels at 30 m — resolvable over 25+ years as expected, not year-to-year). Naive Landsat + S2 splices inflate the trend because S2 reads less ice than Landsat; with a sensor-offset term the combined fits agree with Landsat-only. Landsat ≤ 2015 alone is weaker (fewer, noisier frames: ice p = 0.09, edge p = 0.047).
+
+- **H7:** already in 1993–1996 the lower tongue is debris-covered with the same lobe below; the terminus was not clean ice in the 1990s, so there is no clean-ice front to digitise. The measurable signal is the clean-ice edge and the bare-ice area, as above.
+- Not a terminus or volume measurement; DOY not modelled for Landsat (acquisition dates spread Jul–Oct).
+
 ## Part B-pilot — Sentinel-1 coherence, one pair (DES 107)
 
 Pair 2026-08-06 → 2026-08-18 (12 days), coherence with 5×1 looks, resampled to the S2 grid.
@@ -195,7 +268,7 @@ b − c = 0.134, b − a = 0.274. Rule (parameters, read as absolute contrasts):
 
 ## Next steps
 
-- **Landsat 1990–2015 (rev6, Part H)** — 30-year baseline at 30 m; the only free-data route to a visible, measurable change of the tongue. Awaiting decision.
+- Landsat done (Part H). Remaining free-data option: manual digitising of the debris-covered snout on the best Landsat/S2 frames (±30–50 m) for a terminus estimate over 30 years.
 - DEM differencing: not pursued — no free post-2016 DEM over the site; on free data it would only reproduce Hugonnet 2021.
 
 ## Caveats
@@ -207,4 +280,4 @@ b − c = 0.134, b − a = 0.274. Rule (parameters, read as absolute contrasts):
 
 ## Files
 
-`aksay/out/aksay_metrics.csv`, `aksay_metrics.png`, `aksay_transition_*_2026.png`, `rev3_stats.json`, `c2017_table.json`, `c2017_quicklooks.png`, `offset/`, `offset_win16_annual/`, `f_migration/`, `c2017_g1.json`, `s1_pilot_*`. Re-run offline: `python aksay/process.py && python aksay/c_check.py && python aksay/d_offset.py 2018 2026 2019 2026 && python aksay/f_migration.py && python aksay/report_rev5.py`.
+`aksay/out/aksay_metrics.csv`, `aksay_metrics.png`, `aksay_transition_*_2026.png`, `rev3_stats.json`, `c2017_table.json`, `c2017_quicklooks.png`, `offset/`, `offset_win16_annual/`, `f_migration/`, `h_landsat/`, `c2017_g1.json`, `s1_pilot_*`. Re-run offline: `python aksay/process.py && python aksay/c_check.py && python aksay/d_offset.py 2018 2026 2019 2026 && python aksay/f_migration.py && python aksay/h_process.py && python aksay/report_rev6.py`.
