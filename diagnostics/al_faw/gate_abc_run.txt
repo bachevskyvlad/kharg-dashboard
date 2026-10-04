@@ -1,0 +1,62 @@
+=== Gate A/B/C — Al-Faw SAR geometry arbitration ===
+  2026-10-04T16:21:11.032432+00:00
+
+[1] Fetching recent DESCENDING scene dates…
+  20 dates: 2026-06-12 → 2026-09-29
+
+[2] Loading geometry configs…
+  24 tanks: af_0–af_9
+
+[3] Getting SH token…
+  token OK
+
+[4] Fetching SAR db_mean — 1440 SH calls…
+  5/20 dates | 360/1440 calls
+  10/20 dates | 720/1440 calls
+  15/20 dates | 1080/1440 calls
+  20/20 dates | 1440/1440 calls
+
+  → /home/runner/work/kharg-dashboard/kharg-dashboard/diagnostics/al_faw/gate_abc_results.csv
+
+[5] Verdict…
+  median step_A = 0.0
+  median step_B = 0.0
+  median step_C = 0.0
+  STOP: neither B nor C beats A by ≥15% — table to analyst
+
+[6] db_contrast sanity…
+  db_contrast_A = 0.0 dB
+  db_contrast_B = 0.0 dB
+  db_contrast_C = 0.0 dB
+  db_contrast sanity (winner=A ≥ A): PASS
+
+  → /home/runner/work/kharg-dashboard/kharg-dashboard/diagnostics/al_faw/gate_abc_verdict.txt
+
+  tank_id     step_A   step_B   step_C
+  af_0        0.0      0.0      0.0
+  af_1        0.0      0.0      0.0
+  af_10       0.0      0.0      0.0
+  af_11       0.0      0.0      0.0
+  af_12       0.0      0.0      0.0
+  af_13       0.0      0.0      0.0
+  af_14       0.0      0.0      0.0
+  af_15       0.0      0.0      0.0
+  af_16       0.0      0.0      0.0
+  af_17       0.0      0.0      0.0
+  af_18       0.0      0.0      0.0
+  af_19       0.0      0.0      0.0
+  af_2        0.0      0.0      0.0
+  af_20       0.0      0.0      0.0
+  af_21       0.0      0.0      0.0
+  af_22       0.0      0.0      0.0
+  af_23       0.0      0.0      0.0
+  af_3        0.0      0.0      0.0
+  af_4        0.0      0.0      0.0
+  af_5        0.0      0.0      0.0
+  af_6        0.0      0.0      0.0
+  af_7        0.0      0.0      0.0
+  af_8        0.0      0.0      0.0
+  af_9        0.0      0.0      0.0
+  MEDIAN      0.0      0.0      0.0
+
+Done.

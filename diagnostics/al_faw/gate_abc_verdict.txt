@@ -1,0 +1,12 @@
+verdict: STOP
+winner: A
+median_step_A: 0.0
+median_step_B: 0.0
+median_step_C: 0.0
+db_contrast_A: 0.0
+db_contrast_B: 0.0
+db_contrast_C: 0.0
+db_contrast_pass: True
+scenes_used: 20
+date_range: 2026-06-12–2026-09-29
+generated_utc: 2026-10-04T16:36:50.480146+00:00
