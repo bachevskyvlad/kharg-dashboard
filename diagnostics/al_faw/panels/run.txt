@@ -5,18 +5,18 @@
   3 S2 scenes: ['2026-09-11', '2026-09-13', '2026-08-14']
 
 [S1-ASC catalog]
-  1 S1-ASC scenes: ['']
+  3 S1-ASC scenes: ['2026-10-03', '2026-09-27', '2026-09-21']
 
 [S1-DESC catalog]
-  1 S1-DESC scenes: ['']
+  3 S1-DESC scenes: ['2026-09-29', '2026-09-23', '2026-09-17']
 
 [Fetching tiles]
   S2  2026-09-11 cloud=0%
   S2 tile: OK (244, 250, 3)
-  S1-ASC  
-  S1-ASC tile: FAIL
-  S1-DESC 
-  S1-DESC tile: FAIL
+  S1-ASC  2026-10-03
+  S1-ASC tile: OK
+  S1-DESC 2026-09-29
+  S1-DESC tile: OK
 
 [Per-tank panels] sun_az_s2=102.4° (S2 2026-09-11)
   af_0  sf=0.0000
@@ -73,8 +73,8 @@ tank_id  shadow_frac
 
 [Overview grids]
   overview s2: alfaw_s2_overview.png
-  overview sar_asc: skipped (no tile)
-  overview sar_desc: skipped (no tile)
+  overview sar_asc: alfaw_sar_asc_overview.png
+  overview sar_desc: alfaw_sar_desc_overview.png
 
 Done. 24 per-tank panels + 3 overviews → /home/runner/work/kharg-dashboard/kharg-dashboard/diagnostics/al_faw/panels
 Panels to chat — analyst verdicts per tank.
