@@ -1,0 +1,19 @@
+=== Al-Faw re-ingest v2 (gate B: radii-only) ===
+  mode: DRY-RUN
+  cap v1=10.6195 Mn bbl  →  cap v2=8.5933 Mn bbl
+
+[1] Fetching current observations from Supabase …
+Traceback (most recent call last):
+  File "/home/runner/work/kharg-dashboard/kharg-dashboard/scripts/reingest_alfaw_v2.py", line 260, in <module>
+    main()
+  File "/home/runner/work/kharg-dashboard/kharg-dashboard/scripts/reingest_alfaw_v2.py", line 165, in main
+    df = fetch_all_observations()
+         ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/work/kharg-dashboard/kharg-dashboard/scripts/reingest_alfaw_v2.py", line 75, in fetch_all_observations
+    chunk = sb_get("terminal_observations",
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/work/kharg-dashboard/kharg-dashboard/scripts/reingest_alfaw_v2.py", line 59, in sb_get
+    r.raise_for_status()
+  File "/opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/site-packages/requests/models.py", line 1167, in raise_for_status
+    raise HTTPError(http_error_msg, response=self)
+requests.exceptions.HTTPError: 400 Client Error: Bad Request for url: https://yoekhkczwdeyauwarsyy.supabase.co/rest/v1/terminal_observations?terminal_id=eq.al_flaw&orbit_direction=eq.DESCENDING&select=date%2Ctank_id%2Clat%2Clon%2Cradius_m%2Cdb_mean&order=date.asc&offset=0&limit=1000
