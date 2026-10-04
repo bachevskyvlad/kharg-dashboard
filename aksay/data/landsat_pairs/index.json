@@ -1,0 +1,610 @@
+{
+ "2013-09-30_landsat-8": {
+  "date": "2013-09-30",
+  "platform": "landsat-8",
+  "purpose": "I1",
+  "valid_bbox": 0.5263841776999671,
+  "valid_poly": 0.7175675675675676,
+  "clean": false
+ },
+ "2013-09-29_landsat-7": {
+  "date": "2013-09-29",
+  "platform": "landsat-7",
+  "purpose": "I1",
+  "valid_bbox": 0.30071670861144545,
+  "valid_poly": 0.0,
+  "clean": false
+ },
+ "2013-09-22_landsat-7": {
+  "date": "2013-09-22",
+  "platform": "landsat-7",
+  "purpose": "I1",
+  "valid_bbox": 0.27675347412189516,
+  "valid_poly": 0.2418918918918919,
+  "clean": false
+ },
+ "2013-09-13_landsat-7": {
+  "date": "2013-09-13",
+  "platform": "landsat-7",
+  "purpose": "I1",
+  "valid_bbox": 0.2808294124083598,
+  "valid_poly": 0.0,
+  "clean": false
+ },
+ "2013-09-06_landsat-7": {
+  "date": "2013-09-06",
+  "platform": "landsat-7",
+  "purpose": "I1",
+  "valid_bbox": 0.259300798774483,
+  "valid_poly": 0.15878378378378377,
+  "clean": false
+ },
+ "2013-09-05_landsat-8": {
+  "date": "2013-09-05",
+  "platform": "landsat-8",
+  "purpose": "I1",
+  "slc_off": false,
+  "valid_bbox": 0.841,
+  "valid_poly": 1.0,
+  "cloud": 0.1786010371116927,
+  "cloud_poly": 0.26013513513513514,
+  "snow": 0.2288960775070306,
+  "clean": false
+ },
+ "2013-08-29_landsat-8": {
+  "date": "2013-08-29",
+  "platform": "landsat-8",
+  "purpose": "I1",
+  "slc_off": false,
+  "valid_bbox": 0.76,
+  "valid_poly": 1.0,
+  "cloud": 0.8974972561579013,
+  "cloud_poly": 0.9506756756756757,
+  "snow": 0.05604634844095792,
+  "clean": false
+ },
+ "2013-08-28_landsat-7": {
+  "date": "2013-08-28",
+  "platform": "landsat-7",
+  "purpose": "I1",
+  "valid_bbox": 0.3345688806215122,
+  "valid_poly": 0.0,
+  "clean": false
+ },
+ "2013-08-21_landsat-7": {
+  "date": "2013-08-21",
+  "platform": "landsat-7",
+  "purpose": "I1",
+  "valid_bbox": 0.22289090710143342,
+  "valid_poly": 0.026351351351351353,
+  "clean": false
+ },
+ "2013-08-20_landsat-8": {
+  "date": "2013-08-20",
+  "platform": "landsat-8",
+  "purpose": "I1",
+  "valid_bbox": 0.8640168508589561,
+  "valid_poly": 1.0,
+  "clean": false
+ },
+ "2013-08-13_landsat-8": {
+  "date": "2013-08-13",
+  "platform": "landsat-8",
+  "purpose": "I1",
+  "valid_bbox": 0.24087701061385272,
+  "valid_poly": 0.20135135135135135,
+  "clean": false
+ },
+ "2013-08-05_landsat-7": {
+  "date": "2013-08-05",
+  "platform": "landsat-7",
+  "purpose": "I1",
+  "valid_bbox": 0.5645448079658606,
+  "valid_poly": 0.5966216216216216,
+  "clean": false
+ },
+ "2013-08-04_landsat-8": {
+  "date": "2013-08-04",
+  "platform": "landsat-8",
+  "purpose": "I1",
+  "slc_off": false,
+  "valid_bbox": 0.883,
+  "valid_poly": 1.0,
+  "cloud": 0.4074676330297962,
+  "cloud_poly": 0.6013513513513513,
+  "snow": 0.15876850647339405,
+  "clean": false
+ },
+ "2014-09-25_landsat-7": {
+  "date": "2014-09-25",
+  "platform": "landsat-7",
+  "purpose": "I1",
+  "valid_bbox": 0.02433253091147828,
+  "valid_poly": 0.0,
+  "clean": false
+ },
+ "2014-09-24_landsat-8": {
+  "date": "2014-09-24",
+  "platform": "landsat-8",
+  "purpose": "I1",
+  "valid_bbox": 0.9492149031622715,
+  "valid_poly": 1.0,
+  "clean": false
+ },
+ "2014-09-17_landsat-8": {
+  "date": "2014-09-17",
+  "platform": "landsat-8",
+  "purpose": "I1",
+  "valid_bbox": 0.3854360433307802,
+  "valid_poly": 0.0,
+  "clean": false
+ },
+ "2014-09-16_landsat-7": {
+  "date": "2014-09-16",
+  "platform": "landsat-7",
+  "purpose": "I1",
+  "valid_bbox": 0.33415855126381444,
+  "valid_poly": 0.0,
+  "clean": false
+ },
+ "2014-09-09_landsat-7": {
+  "date": "2014-09-09",
+  "platform": "landsat-7",
+  "purpose": "I1",
+  "valid_bbox": 0.43668618010723276,
+  "valid_poly": 0.5763513513513514,
+  "clean": false
+ },
+ "2014-09-08_landsat-8": {
+  "date": "2014-09-08",
+  "platform": "landsat-8",
+  "purpose": "I1",
+  "slc_off": false,
+  "valid_bbox": 0.904,
+  "valid_poly": 1.0,
+  "cloud": 0.10788513646478255,
+  "cloud_poly": 0.16418918918918918,
+  "snow": 0.27907540000908254,
+  "clean": false
+ },
+ "2014-09-01_landsat-8": {
+  "date": "2014-09-01",
+  "platform": "landsat-8",
+  "purpose": "I1",
+  "valid_bbox": 0.4126408797461429,
+  "valid_poly": 0.008783783783783784,
+  "clean": false
+ },
+ "2014-08-31_landsat-7": {
+  "date": "2014-08-31",
+  "platform": "landsat-7",
+  "purpose": "I1",
+  "valid_bbox": 0.2926332202647992,
+  "valid_poly": 0.0,
+  "clean": false
+ },
+ "2014-08-24_landsat-7": {
+  "date": "2014-08-24",
+  "platform": "landsat-7",
+  "purpose": "I1",
+  "valid_bbox": 0.39624138308348833,
+  "valid_poly": 0.5641891891891891,
+  "clean": false
+ },
+ "2014-08-23_landsat-8": {
+  "date": "2014-08-23",
+  "platform": "landsat-8",
+  "purpose": "I1",
+  "slc_off": false,
+  "valid_bbox": 0.908,
+  "valid_poly": 1.0,
+  "cloud": 0.07639819849673891,
+  "cloud_poly": 0.12702702702702703,
+  "snow": 0.2482188314329181,
+  "clean": false
+ },
+ "2014-08-15_landsat-7": {
+  "date": "2014-08-15",
+  "platform": "landsat-7",
+  "purpose": "I1",
+  "slc_off": true,
+  "valid_bbox": 0.839,
+  "valid_poly": 0.873,
+  "cloud": 0.9254195861169953,
+  "cloud_poly": 0.7066563467492261,
+  "snow": 0.07458041388300472,
+  "clean": false
+ },
+ "2014-08-08_landsat-7": {
+  "date": "2014-08-08",
+  "platform": "landsat-7",
+  "purpose": "I1",
+  "valid_bbox": 0.5089588576430681,
+  "valid_poly": 0.6040540540540541,
+  "clean": false
+ },
+ "2014-08-07_landsat-8": {
+  "date": "2014-08-07",
+  "platform": "landsat-8",
+  "purpose": "I1",
+  "slc_off": false,
+  "valid_bbox": 0.899,
+  "valid_poly": 1.0,
+  "cloud": 0.06845020696372048,
+  "cloud_poly": 0.09932432432432432,
+  "snow": 0.25581324567811053,
+  "clean": false
+ },
+ "2015-09-27_landsat-8": {
+  "date": "2015-09-27",
+  "platform": "landsat-8",
+  "purpose": "I1",
+  "slc_off": false,
+  "valid_bbox": 0.893,
+  "valid_poly": 1.0,
+  "cloud": 0.3239289926327559,
+  "cloud_poly": 0.2527027027027027,
+  "snow": 0.3408231095590375,
+  "clean": false
+ },
+ "2015-09-20_landsat-8": {
+  "date": "2015-09-20",
+  "platform": "landsat-8",
+  "purpose": "I1",
+  "valid_bbox": 0.1839780063464274,
+  "valid_poly": 0.0,
+  "clean": false
+ },
+ "2015-09-12_landsat-7": {
+  "date": "2015-09-12",
+  "platform": "landsat-7",
+  "purpose": "I1",
+  "valid_bbox": 0.4907539118065434,
+  "valid_poly": 0.575,
+  "clean": false
+ },
+ "2015-09-11_landsat-8": {
+  "date": "2015-09-11",
+  "platform": "landsat-8",
+  "purpose": "I1",
+  "slc_off": false,
+  "valid_bbox": 0.914,
+  "valid_poly": 1.0,
+  "cloud": 0.09934131736526947,
+  "cloud_poly": 0.16824324324324325,
+  "snow": 0.2808233532934132,
+  "clean": false
+ },
+ "2015-09-04_landsat-8": {
+  "date": "2015-09-04",
+  "platform": "landsat-8",
+  "purpose": "I1",
+  "valid_bbox": 0.2713234489550279,
+  "valid_poly": 0.0,
+  "clean": false
+ },
+ "2015-08-27_landsat-7": {
+  "date": "2015-08-27",
+  "platform": "landsat-7",
+  "purpose": "I1",
+  "valid_bbox": 0.4046668125615494,
+  "valid_poly": 0.5310810810810811,
+  "clean": false
+ },
+ "2015-08-26_landsat-8": {
+  "date": "2015-08-26",
+  "platform": "landsat-8",
+  "purpose": "I1",
+  "slc_off": false,
+  "valid_bbox": 0.928,
+  "valid_poly": 1.0,
+  "cloud": 0.7980699815837937,
+  "cloud_poly": 0.9567567567567568,
+  "snow": 0.19488766114180478,
+  "clean": false
+ },
+ "2015-08-19_landsat-8": {
+  "date": "2015-08-19",
+  "platform": "landsat-8",
+  "purpose": "I1",
+  "valid_bbox": 0.30895065105591424,
+  "valid_poly": 0.0,
+  "clean": false
+ },
+ "2015-08-18_landsat-7": {
+  "date": "2015-08-18",
+  "platform": "landsat-7",
+  "purpose": "I1",
+  "valid_bbox": 0.2904721523142576,
+  "valid_poly": 0.0,
+  "clean": false
+ },
+ "2015-08-11_landsat-7": {
+  "date": "2015-08-11",
+  "platform": "landsat-7",
+  "purpose": "I1",
+  "valid_bbox": 0.4462605317868476,
+  "valid_poly": 0.5331081081081082,
+  "clean": false
+ },
+ "2015-08-10_landsat-8": {
+  "date": "2015-08-10",
+  "platform": "landsat-8",
+  "purpose": "I1",
+  "slc_off": false,
+  "valid_bbox": 0.94,
+  "valid_poly": 1.0,
+  "cloud": 0.9857604142424947,
+  "cloud_poly": 1.0,
+  "snow": 0.00011636025133814289,
+  "clean": false
+ },
+ "2015-08-02_landsat-7": {
+  "date": "2015-08-02",
+  "platform": "landsat-7",
+  "purpose": "I1",
+  "valid_bbox": 0.3156663748769012,
+  "valid_poly": 0.0,
+  "clean": false
+ },
+ "2018-09-12_landsat-8": {
+  "date": "2018-09-12",
+  "platform": "landsat-8",
+  "purpose": "I2:2018-09-08",
+  "valid_bbox": 0.1612047269942007,
+  "valid_poly": 0.0,
+  "clean": false
+ },
+ "2018-09-03_landsat-8": {
+  "date": "2018-09-03",
+  "platform": "landsat-8",
+  "purpose": "I2:2018-09-08",
+  "slc_off": false,
+  "valid_bbox": 0.93,
+  "valid_poly": 1.0,
+  "cloud": 0.10383879982350346,
+  "cloud_poly": 0.23648648648648649,
+  "snow": 0.2661862038535079,
+  "clean": false
+ },
+ "2019-08-21_landsat-8": {
+  "date": "2019-08-21",
+  "platform": "landsat-8",
+  "purpose": "I2:2019-08-12",
+  "slc_off": false,
+  "valid_bbox": 0.925,
+  "valid_poly": 1.0,
+  "cloud": 0.13504480790275356,
+  "cloud_poly": 0.22162162162162163,
+  "snow": 0.42860311732868,
+  "clean": false
+ },
+ "2019-08-14_landsat-8": {
+  "date": "2019-08-14",
+  "platform": "landsat-8",
+  "purpose": "I2:2019-08-12",
+  "valid_bbox": 0.05252215778531568,
+  "valid_poly": 0.0,
+  "clean": false
+ },
+ "2019-08-05_landsat-8": {
+  "date": "2019-08-05",
+  "platform": "landsat-8",
+  "purpose": "I2:2019-08-12",
+  "slc_off": false,
+  "valid_bbox": 0.927,
+  "valid_poly": 1.0,
+  "cloud": 0.08137544273907911,
+  "cloud_poly": 0.11689189189189189,
+  "snow": 0.2344155844155844,
+  "clean": false
+ },
+ "2021-09-27_landsat-8": {
+  "date": "2021-09-27",
+  "platform": "landsat-8",
+  "purpose": "I2:2021-09-27",
+  "slc_off": false,
+  "valid_bbox": 0.903,
+  "valid_poly": 1.0,
+  "cloud": 0.05749893997213641,
+  "cloud_poly": 0.1581081081081081,
+  "snow": 0.26576412865709614,
+  "clean": false
+ },
+ "2021-09-20_landsat-8": {
+  "date": "2021-09-20",
+  "platform": "landsat-8",
+  "purpose": "I2:2021-09-27",
+  "valid_bbox": 0.31056461319619216,
+  "valid_poly": 0.0,
+  "clean": false
+ },
+ "2022-09-15_landsat-9": {
+  "date": "2022-09-15",
+  "platform": "landsat-9",
+  "purpose": "I2:2022-09-07",
+  "valid_bbox": 0.45077415472152316,
+  "valid_poly": 0.13378378378378378,
+  "clean": false
+ },
+ "2022-09-07_landsat-8": {
+  "date": "2022-09-07",
+  "platform": "landsat-8",
+  "purpose": "I2:2022-09-07",
+  "slc_off": false,
+  "valid_bbox": 0.576,
+  "valid_poly": 0.989,
+  "cloud": 0.10846661288026198,
+  "cloud_poly": 0.17088174982911825,
+  "snow": 0.34929523990318445,
+  "clean": false
+ },
+ "2022-09-06_landsat-9": {
+  "date": "2022-09-06",
+  "platform": "landsat-9",
+  "purpose": "I2:2022-09-07",
+  "slc_off": false,
+  "valid_bbox": 0.883,
+  "valid_poly": 1.0,
+  "cloud": 0.046558798482619804,
+  "cloud_poly": 0.07027027027027027,
+  "snow": 0.2366184098474878,
+  "clean": false
+ },
+ "2022-08-30_landsat-9": {
+  "date": "2022-08-30",
+  "platform": "landsat-9",
+  "purpose": "I2:2022-09-07",
+  "valid_bbox": 0.5158387132071343,
+  "valid_poly": 0.6094594594594595,
+  "clean": false
+ },
+ "2022-08-29_landsat-8": {
+  "date": "2022-08-29",
+  "platform": "landsat-8",
+  "purpose": "I2:2022-09-07",
+  "slc_off": false,
+  "valid_bbox": 0.858,
+  "valid_poly": 1.0,
+  "cloud": 0.5261001928624939,
+  "cloud_poly": 0.2939189189189189,
+  "snow": 0.312198154258117,
+  "clean": false
+ },
+ "2023-08-25_landsat-8": {
+  "date": "2023-08-25",
+  "platform": "landsat-8",
+  "purpose": "I2:2023-08-21",
+  "valid_bbox": 0.4200815187657293,
+  "valid_poly": 0.0222972972972973,
+  "clean": false
+ },
+ "2023-08-24_landsat-9": {
+  "date": "2023-08-24",
+  "platform": "landsat-9",
+  "purpose": "I2:2023-08-21",
+  "slc_off": false,
+  "valid_bbox": 0.877,
+  "valid_poly": 1.0,
+  "cloud": 0.6100581839736691,
+  "cloud_poly": 0.9155405405405406,
+  "snow": 0.1754098616375747,
+  "clean": false
+ },
+ "2023-08-17_landsat-9": {
+  "date": "2023-08-17",
+  "platform": "landsat-9",
+  "purpose": "I2:2023-08-21",
+  "valid_bbox": 0.2356931830616041,
+  "valid_poly": 0.0,
+  "clean": false
+ },
+ "2023-08-16_landsat-8": {
+  "date": "2023-08-16",
+  "platform": "landsat-8",
+  "purpose": "I2:2023-08-21",
+  "slc_off": false,
+  "valid_bbox": 0.886,
+  "valid_poly": 1.0,
+  "cloud": 0.2077003828578486,
+  "cloud_poly": 0.17027027027027028,
+  "snow": 0.32442571322712116,
+  "clean": false
+ },
+ "2025-09-14_landsat-9": {
+  "date": "2025-09-14",
+  "platform": "landsat-9",
+  "purpose": "I2:2025-09-04",
+  "slc_off": false,
+  "valid_bbox": 0.858,
+  "valid_poly": 1.0,
+  "cloud": 0.3375450113125777,
+  "cloud_poly": 0.31891891891891894,
+  "snow": 0.1481788343265033,
+  "clean": false
+ },
+ "2025-09-07_landsat-9": {
+  "date": "2025-09-07",
+  "platform": "landsat-9",
+  "purpose": "I2:2025-09-04",
+  "slc_off": false,
+  "valid_bbox": 0.535,
+  "valid_poly": 0.805,
+  "cloud": 0.6975822940094051,
+  "cloud_poly": 0.9144295302013423,
+  "snow": 0.154032917603762,
+  "clean": false
+ },
+ "2025-08-30_landsat-8": {
+  "date": "2025-08-30",
+  "platform": "landsat-8",
+  "purpose": "I2:2025-09-04",
+  "valid_bbox": 0.3187985556406609,
+  "valid_poly": 0.0,
+  "clean": false
+ },
+ "2025-08-29_landsat-9": {
+  "date": "2025-08-29",
+  "platform": "landsat-9",
+  "purpose": "I2:2025-09-04",
+  "slc_off": false,
+  "valid_bbox": 0.88,
+  "valid_poly": 1.0,
+  "cloud": 0.06178151991549121,
+  "cloud_poly": 0.11756756756756757,
+  "snow": 0.22539302802460698,
+  "clean": false
+ },
+ "2026-09-09_landsat-8": {
+  "date": "2026-09-09",
+  "platform": "landsat-8",
+  "purpose": "I2:2026-08-30",
+  "slc_off": false,
+  "valid_bbox": 0.928,
+  "valid_poly": 1.0,
+  "cloud": 0.07481458545288333,
+  "cloud_poly": 0.15945945945945947,
+  "snow": 0.23528110762153315,
+  "clean": false
+ },
+ "2026-09-02_landsat-8": {
+  "date": "2026-09-02",
+  "platform": "landsat-8",
+  "purpose": "I2:2026-08-30",
+  "valid_bbox": 0.3147910055804793,
+  "valid_poly": 0.0,
+  "clean": false
+ },
+ "2026-09-01_landsat-9": {
+  "date": "2026-09-01",
+  "platform": "landsat-9",
+  "purpose": "I2:2026-08-30",
+  "slc_off": false,
+  "valid_bbox": 0.873,
+  "valid_poly": 1.0,
+  "cloud": 0.625203659606467,
+  "cloud_poly": 0.9331081081081081,
+  "snow": 0.0914744955508209,
+  "clean": false
+ },
+ "2026-08-25_landsat-9": {
+  "date": "2026-08-25",
+  "platform": "landsat-9",
+  "purpose": "I2:2026-08-30",
+  "valid_bbox": 0.34061439982492614,
+  "valid_poly": 0.0,
+  "clean": false
+ },
+ "2026-08-24_landsat-8": {
+  "date": "2026-08-24",
+  "platform": "landsat-8",
+  "purpose": "I2:2026-08-30",
+  "slc_off": false,
+  "valid_bbox": 0.903,
+  "valid_poly": 1.0,
+  "cloud": 0.894566172682365,
+  "cloud_poly": 0.8297297297297297,
+  "snow": 0.01792587204897415,
+  "clean": false
+ }
+}
