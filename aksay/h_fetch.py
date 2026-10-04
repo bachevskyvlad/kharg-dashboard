@@ -4,7 +4,8 @@ Source: Microsoft Planetary Computer STAC (collection landsat-c2-l2 = USGS C2 L2
 Per year 1990–2026: scenes Aug 1 – Sep 30 (widened to Jul 15 – Oct 10 if none usable), scene cloud < 40 %.
 Each candidate scored inside the fetch bbox from QA_PIXEL (cloud = dilated cloud | cirrus | cloud | shadow; snow bit;
 fill = no data, incl. L7 SLC-off gaps). Valid fraction is checked inside the frozen tongue polygon (≥ 0.90).
-Pick: cloud ≤ min + 0.5 pp (floor 1 %), then least snow, then latest — same rule as S2.
+Tier 1 only; reject frames with NDSI>0.4 on > 60 % of valid pixels (fresh snow / saturation).
+Pick: cloud ≤ min + 0.5 pp (floor 1 %), then non-SLC-off, then least snow, then latest.
 Output on a 30 m grid = the S2 fetch bbox at 247 × 296 px: aksay/data/landsat/<year>.npz (+ candidates.json, quicklooks).
 """
 import os, sys, json, math
@@ -42,7 +43,8 @@ def search(t0, t1):
     body = {"collections": ["landsat-c2-l2"], "bbox": BBOX, "datetime": f"{t0}T00:00:00Z/{t1}T23:59:59Z",
             "query": {"eo:cloud_cover": {"lt": 70}}, "limit": 100}
     r = requests.post(STAC, json=body, timeout=120); r.raise_for_status()
-    return r.json()["features"]
+    # Tier 1 only: Tier-2 scenes have unreliable geolocation (a 1992 T2 scene landed on the wrong valley)
+    return [f for f in r.json()["features"] if f["properties"].get("landsat:collection_category") == "T1"]
 
 def read(item, key):
     href = item["assets"][key]["href"] + "?" + token()
@@ -56,12 +58,13 @@ def score(item):
     qa = read(item, "qa_pixel").astype(np.uint16)
     g = read(item, "green").astype(np.float32) * 2.75e-5 - 0.2; sw = read(item, "swir16").astype(np.float32) * 2.75e-5 - 0.2
     ndsi = (g - sw) / (g + sw + 1e-6)
-    fill = (qa & 1) > 0
+    fill = ((qa & 1) > 0) | (qa == 0)                      # qa == 0: outside the scene footprint after warping
     cloud = (((qa >> 3) & 1) == 1) & (((qa >> 8) & 3) == 3) & (ndsi <= 0.4)
     snow = (ndsi > 0.4)
     valid = ~fill
-    if valid.mean() < 0.5 or valid[TP].mean() < 0.75: return {"valid_bbox": float(valid.mean()), "valid_poly": float(valid[TP].mean())}
-    return {"valid_bbox": round(float(valid.mean()), 3), "valid_poly": round(float(valid[TP].mean()), 3),
+    if valid.mean() < 0.5 or valid[TP].mean() < 0.75 or snow[valid].mean() > 0.60: return {"valid_bbox": float(valid.mean()), "valid_poly": float(valid[TP].mean())}
+    return {"slc_off": item["properties"]["platform"] == "landsat-7" and item["properties"]["datetime"] >= "2003-05-31",
+            "valid_bbox": round(float(valid.mean()), 3), "valid_poly": round(float(valid[TP].mean()), 3),
             "cloud": float(cloud[valid].mean()), "cloud_poly": float(cloud[TP & valid].mean()), "snow": float(snow[valid].mean())}
 
 def main():
@@ -88,7 +91,7 @@ def main():
         if not ok: summary["years"][str(y)] = None; print(y, "no usable scene"); continue
         cmin = min(r["cloud"] for r in ok)
         pool = sorted([r for r in ok if r["cloud"] <= max(0.01, cmin + 0.005)],
-                      key=lambda r: (round(r["snow"], 3), -int(r["date"].replace("-", ""))))
+                      key=lambda r: (r["slc_off"], round(r["snow"], 3), -int(r["date"].replace("-", ""))))
         for r in sorted(ok, key=lambda r: r["cloud"])[:3]:               # quicklooks of the 3 least-cloudy candidates
             try:
                 it3 = r["_item"]; rgb3 = np.stack([read(it3, k) for k in ("red", "green", "blue")], -1).astype(np.float32) * 2.75e-5 - 0.2
@@ -97,6 +100,7 @@ def main():
             except Exception as e: print("  ql error", e)
         best = pool[0]; it = best.pop("_item")
         arr = {k: read(it, k) for k in BANDS}
+        arr["qa_pixel"] = np.where(arr["qa_pixel"] == 0, 1, arr["qa_pixel"])          # mark off-footprint as fill
         np.savez_compressed(os.path.join(OUT, f"{y}.npz"), **{k: v.astype(np.uint16) for k, v in arr.items()},
                             platform=best["platform"], date=best["date"])
         sr = lambda b: np.clip(arr[b] * 0.0000275 - 0.2, 0, 1)
