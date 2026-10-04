@@ -37,7 +37,7 @@ def landsat_from_npz(f):
     sr = lambda k: np.clip(H.up(z[k]).astype(np.float32) * 0.275 - 2000.0, 0, 1e4)
     d = {"b02": sr("blue"), "b03": sr("green"), "b04": sr("red"), "b08": sr("nir08"), "b11": sr("swir16"),
          "mask": ((qa & 1) == 0).astype(np.uint8)}
-    nd = P.ndsi(d); cloud = (((qa >> 3) & 1) == 1) & (((qa >> 8) & 3) == 3) & (nd <= 0.4)
+    nd = P.ndsi(d); cloud = (((qa >> 3) & 1) == 1) & (((qa >> 8) & 3) == 3) & (nd <= 0.4) & (d["b02"] > 2000)
     return d, cloud, str(z["platform"]), str(z["date"])
 
 def s2_frame(y):
@@ -133,43 +133,50 @@ def k_break(x, y, l7_l8_offset):
             "F": round(float(F), 2), "F_df": [k1 - k0, n - (k1 - 1)], "F_p": float(f"{pF:.2g}"),
             "break_within_2012_2015": bool(near_sensor), "declared": declared}
 
-# ── L4: GIF with per-sensor stretch matched on overlap years ────────────────────────────────────────────────
+# ── L4: GIF with one display stretch for all sensors ────────────────────────────────────────────────────
 def gif(rows, s2lo, s2hi):
+    """One S2 display stretch (p2–p98, gamma) for every frame. Each Landsat family is first mapped band-by-band onto the
+    S2 radiometry by matching its p5 and p60 quantiles (crop pixels, clean frames) to those of the clean S2 frames —
+    p60 rather than p98 because TM/ETM+ visible bands saturate on snow. Saturated Landsat pixels are drawn white."""
     sl = P.crop_slices(G); oy, ox = sl[0].start, sl[1].start; sw, sh = sl[1].stop - ox, sl[0].stop - oy
-    def pool(ds):
-        v = [np.stack([d["b04"][sl], d["b03"][sl], d["b02"][sl]], -1)[(d["mask"][sl] > 0)].ravel()[::5] for d in ds]
-        return np.concatenate(v).astype(np.float32)
-    # each Landsat family is stretched to the p2–p98 of ITS OWN frames in the years it overlaps the next sensor
-    fam_years = {"L8/9": [r["year"] for r in rows if r["family"] == "L8/9" and r["year"] >= 2016 and not r["flag"]],
-                 "L5/7": [r["year"] for r in rows if r["family"] == "L5/7" and 2005 <= r["year"] <= 2012 and not r["flag"]]}
-    st = {"S2": (s2lo, s2hi)}
-    for fam, ys in fam_years.items():
-        ds = [H.load_landsat(y)[0] for y in ys if os.path.exists(os.path.join(P.DATA, "landsat", f"{y}.npz"))]
-        if ds:
-            v = pool(ds); st[fam] = (float(np.percentile(v, 2)), float(np.percentile(v, 98)))
-    # match: the S2 stretch spans its overlap-year p2–p98; Landsat families are mapped so their p2–p98 hit the same display range
-    s2v = pool([s2_frame(y)[0] for y in range(2016, 2027) if os.path.exists(os.path.join(P.DATA, "raw", f"{y}.npz"))])
-    s2p2, s2p98 = float(np.percentile(s2v, 2)), float(np.percentile(s2v, 98))
+    bands = ("b04", "b03", "b02")
+    def q(ds, qs):
+        out = {}
+        for b in bands:
+            v = np.concatenate([d[b][sl][d["mask"][sl] > 0].ravel()[::3] for d in ds]).astype(np.float32)
+            out[b] = [float(np.percentile(v, x)) for x in qs]
+        return out
+    s2c = [s2_frame(r["year"])[0] for r in rows if r["sensor"] == "S2" and not r["flag"]]
+    ref = q(s2c, (5, 60))
+    fam_q = {}
+    for fam in ("L5/7", "L8/9"):
+        ds = [H.load_landsat(r["year"])[0] for r in rows if r["family"] == fam and not r["flag"]]
+        fam_q[fam] = q(ds, (5, 60))
     def render(d, fam):
-        lo, hi = st.get(fam, st["L8/9"]) if fam != "S2" else (s2p2, s2p98)
-        a = np.stack([d["b04"][sl], d["b03"][sl], d["b02"][sl]], -1).astype(np.float32)
-        return (np.clip((a - lo) / (hi - lo), 0, 1) ** P.GAMMA * 255).astype(np.uint8)
+        a = np.stack([d[b][sl] for b in bands], -1).astype(np.float32)
+        if fam != "S2":
+            sat = (a >= 0.98 * a.max(axis=(0, 1), keepdims=True)).any(-1) if fam == "L5/7" else np.zeros(a.shape[:2], bool)
+            for i, b in enumerate(bands):
+                (l5, l60), (r5, r60) = fam_q[fam][b], ref[b]
+                a[..., i] = (a[..., i] - l5) / max(1e-6, l60 - l5) * (r60 - r5) + r5
+            a[sat] = s2hi
+        return (np.clip((a - s2lo) / (s2hi - s2lo), 0, 1) ** P.GAMMA * 255).astype(np.uint8)
     frames = []; Pp = lambda ll: (P.ll2px(*ll)[0] - ox, P.ll2px(*ll)[1] - oy)
     s2years = {r["year"] for r in rows if r["sensor"] == "S2"}
     seq = [r for r in rows if r["sensor"] != "S2" and r["year"] < min(s2years)] + [r for r in rows if r["sensor"] == "S2"]
     for r in seq:
         d = s2_frame(r["year"])[0] if r["sensor"] == "S2" else H.load_landsat(r["year"])[0]
         im = Image.fromarray(render(d, r["family"])).convert("RGBA"); dr = ImageDraw.Draw(im)
-        dr.polygon([Pp(q) for q in TG["polygon"]], outline=(255, 255, 255)); dr.line([Pp(q) for q in G["centerline"]], fill=(255, 214, 0), width=2)
-        bar = 500 / P.PXW; fx0, fy0 = sw - 24 - bar, sh - 30
-        dr.rectangle([fx0 - 10, fy0 - 26, sw - 14, sh - 12], fill=(0, 0, 0, 170)); dr.rectangle([fx0, fy0, fx0 + bar, fy0 + 6], fill=(255, 255, 255))
-        dr.text((fx0 + bar / 2 - 22, fy0 - 22), "500 m", font=P.font(P.FONT_B, 15), fill=(255, 255, 255))
-        sens = "Sentinel-2 10 m" if r["sensor"] == "S2" else f"Landsat {r['sensor'][1]} 30 m"
-        sub = f"{sens} · tongue bright: {r['bright_km2']:.2f} km²" + (f"  ⚠ {r['flag']}" if r["flag"] else "")
-        P.year_badge(im, str(r["year"]), sub)
+        dr.polygon([Pp(q_) for q_ in TG["polygon"]], outline=(255, 255, 255)); dr.line([Pp(q_) for q_ in G["centerline"]], fill=(255, 214, 0), width=2)
+        bar = 500 / P.PXW; fx0, fy0 = sw - 24 - bar, 22
+        dr.rectangle([fx0 - 10, 8, sw - 14, fy0 + 14], fill=(0, 0, 0, 170)); dr.rectangle([fx0, fy0, fx0 + bar, fy0 + 6], fill=(255, 255, 255))
+        dr.text((fx0 + bar / 2 - 22, fy0 - 14), "500 m", font=P.font(P.FONT_B, 13), fill=(255, 255, 255))
+        sens = "S2 10 m" if r["sensor"] == "S2" else f"{r['sensor']} 30 m"
+        fl = (" · ⚠ cloud" if "cloud" in r["flag"] else " · ⚠ snow") if r["flag"] else ""
+        P.year_badge(im, str(r["year"]), f"{sens} · tongue bright {r['bright_km2']:.2f} km²{fl}")
         im.convert("RGB").save(os.path.join(OUT, "frames", f"{r['year']}.png")); frames.append(im)
     P.save_gif(frames, os.path.join(OUT, "aksay_timelapse_1990_2026.gif"), ms=900)
-    return {"stretch": {k: [round(v[0]), round(v[1])] for k, v in st.items()}, "s2_overlap_p2_p98": [round(s2p2), round(s2p98)]}
+    return {"display_stretch_S2_p2_p98": [round(s2lo), round(s2hi)], "quantile_match_p5_p60": {"S2": ref, **fam_q}}
 
 def plot(rows, fits, joined, edge_fit):
     import matplotlib; matplotlib.use("Agg"); import matplotlib.pyplot as plt

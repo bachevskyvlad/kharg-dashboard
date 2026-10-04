@@ -33,7 +33,9 @@ def load_landsat(y):
     # same rule as frame selection (h_fetch.score): CFMask flags glacier ice as cloud here, so only
     # high-confidence cloud (bit 3, conf bits 8–9 = 3) that is NOT snow/ice-like (NDSI ≤ 0.4) counts as cloud
     nd = (d["b03"] - d["b11"]) / (d["b03"] + d["b11"] + 1e-6)
-    cloud = (((qa >> 3) & 1) == 1) & (((qa >> 8) & 3) == 3) & (nd <= 0.4)
+    # rev6-final: + blue SR > 0.2 — CFMask's high-confidence 'cloud' over dirty ice is dark in blue; validated on the
+    # visually-QA'd frames (clear ≤ 2 % in polygon, cloudy 10–80 %). Without it dirty ice was dropped as cloud → bright area biased up.
+    cloud = (((qa >> 3) & 1) == 1) & (((qa >> 8) & 3) == 3) & (nd <= 0.4) & (d["b02"] > 2000)
     return d, cloud, str(z["platform"]), str(z["date"])
 
 def front_skip_invalid(m, valid, cl_m, cl_d):

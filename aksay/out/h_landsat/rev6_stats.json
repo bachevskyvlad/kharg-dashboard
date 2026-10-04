@@ -1,0 +1,325 @@
+{
+ "J1": {
+  "all_clean_1996_2012": {
+   "slope_per_yr": -0.0046,
+   "sigma": 0.0042,
+   "t": -1.11,
+   "df": 8,
+   "p": 0.3,
+   "n": 10,
+   "intercept_2010": 0.8776,
+   "rss": 0.0334410423945306
+  },
+  "without_slc_off": {
+   "slope_per_yr": -0.0048,
+   "sigma": 0.0029,
+   "t": -1.65,
+   "df": 3,
+   "p": 0.2,
+   "n": 5,
+   "intercept_2010": 0.8768,
+   "rss": 0.0027158625185391676
+  },
+  "drop_slc_off_from_area": false
+ },
+ "J2": "1999 not flagged (bbox NDSI-snow 30.2 % < 32.8 % flag; polygon QA-snow 32 % \u2248 1996/2001; no NIR \u2265 0.6)",
+ "J3": {
+  "valid_min": 0.6,
+  "excluded_years": []
+ },
+ "I": {
+  "frames_scanned": 63,
+  "frames_clean": 11,
+  "I1": [
+   {
+    "L7": "2014-08-24",
+    "L8": "2014-09-08",
+    "days": 15,
+    "common_valid_frac": 0.534,
+    "bright_L7_km2": 0.801,
+    "bright_L8_km2": 0.96,
+    "diff_L7_minus_L8": -0.158,
+    "edge_L7_m": null,
+    "edge_L8_m": 3692.7,
+    "edge_diff_L7_minus_L8": null
+   },
+   {
+    "L7": "2014-08-24",
+    "L8": "2014-08-23",
+    "days": 1,
+    "common_valid_frac": 0.544,
+    "bright_L7_km2": 0.794,
+    "bright_L8_km2": 0.78,
+    "diff_L7_minus_L8": 0.014,
+    "edge_L7_m": null,
+    "edge_L8_m": 3557.4,
+    "edge_diff_L7_minus_L8": null
+   },
+   {
+    "L7": "2014-08-08",
+    "L8": "2014-08-23",
+    "days": 15,
+    "common_valid_frac": 0.603,
+    "bright_L7_km2": 0.779,
+    "bright_L8_km2": 0.766,
+    "diff_L7_minus_L8": 0.014,
+    "edge_L7_m": null,
+    "edge_L8_m": 3557.4,
+    "edge_diff_L7_minus_L8": null
+   },
+   {
+    "L7": "2014-08-08",
+    "L8": "2014-08-07",
+    "days": 1,
+    "common_valid_frac": 0.603,
+    "bright_L7_km2": 0.779,
+    "bright_L8_km2": 0.751,
+    "diff_L7_minus_L8": 0.028,
+    "edge_L7_m": null,
+    "edge_L8_m": 3557.4,
+    "edge_diff_L7_minus_L8": null
+   }
+  ],
+  "I2": [
+   {
+    "year": 2019,
+    "landsat": "2019-08-05",
+    "platform": "landsat-8",
+    "s2": "2019-08-12",
+    "days": 7,
+    "bright_L_km2": 0.675,
+    "bright_S2_km2": 0.655,
+    "diff_L_minus_S2": 0.02,
+    "edge_L_m": 3557.4,
+    "edge_S2_m": 3537.3,
+    "edge_diff_L_minus_S2": 20.1
+   },
+   {
+    "year": 2021,
+    "landsat": "2021-09-27",
+    "platform": "landsat-8",
+    "s2": "2021-09-27",
+    "days": 0,
+    "bright_L_km2": 0.846,
+    "bright_S2_km2": 0.806,
+    "diff_L_minus_S2": 0.041,
+    "edge_L_m": null,
+    "edge_S2_m": 3587.5,
+    "edge_diff_L_minus_S2": null
+   },
+   {
+    "year": 2022,
+    "landsat": "2022-09-06",
+    "platform": "landsat-9",
+    "s2": "2022-09-07",
+    "days": 1,
+    "bright_L_km2": 0.678,
+    "bright_S2_km2": 0.673,
+    "diff_L_minus_S2": 0.005,
+    "edge_L_m": 3411.9,
+    "edge_S2_m": 3537.3,
+    "edge_diff_L_minus_S2": -125.4
+   },
+   {
+    "year": 2025,
+    "landsat": "2025-08-29",
+    "platform": "landsat-9",
+    "s2": "2025-09-04",
+    "days": 6,
+    "bright_L_km2": 0.63,
+    "bright_S2_km2": 0.606,
+    "diff_L_minus_S2": 0.024,
+    "edge_L_m": 3241.3,
+    "edge_S2_m": 3537.3,
+    "edge_diff_L_minus_S2": -296.0
+   }
+  ],
+  "offsets": {
+   "bright_L7_minus_L8_km2": 0.014,
+   "n_I1": 4,
+   "I1_accepted": true,
+   "bright_L8_minus_S2_km2": 0.022,
+   "n_I2": 4,
+   "edge_L7_minus_L8_m": null,
+   "n_edge_I1": 0,
+   "edge_L8_minus_S2_m": -125.4,
+   "n_edge_I2": 3
+  }
+ },
+ "joined": true,
+ "joined_fit_bright_L8scale": {
+  "slope_per_yr": -0.0103,
+  "sigma": 0.002,
+  "t": -5.25,
+  "df": 18,
+  "p": 5.4e-05,
+  "n": 20,
+  "intercept_2010": 0.8384,
+  "rss": 0.10496842296785339
+ },
+ "K": {
+  "breakpoint": 2015.25,
+  "slope_before": -0.0075,
+  "slope_after": -0.0285,
+  "jump_at_break_km2": 0.107,
+  "rss_linear": 0.105,
+  "rss_segmented": 0.0702,
+  "AIC_linear": -99.0,
+  "AIC_segmented": -101.04,
+  "BIC_linear": -96.01,
+  "BIC_segmented": -95.06,
+  "BIC_gain": -0.95,
+  "F": 2.47,
+  "F_df": [
+   3,
+   15
+  ],
+  "F_p": 0.1,
+  "break_within_2012_2015": false,
+  "declared": false
+ },
+ "fits": {
+  "bright_km2": {
+   "L5/7": {
+    "slope_per_yr": -0.007,
+    "sigma": 0.0031,
+    "t": -2.25,
+    "df": 9,
+    "p": 0.051,
+    "n": 11,
+    "intercept_2010": 0.8629,
+    "rss": 0.036541391946240856
+   },
+   "L8/9": {
+    "slope_per_yr": -0.0145,
+    "sigma": 0.007,
+    "t": -2.08,
+    "df": 10,
+    "p": 0.064,
+    "n": 12,
+    "intercept_2010": 0.904,
+    "rss": 0.10855300354800732
+   },
+   "S2": {
+    "slope_per_yr": -0.0215,
+    "sigma": 0.0094,
+    "t": -2.29,
+    "df": 5,
+    "p": 0.071,
+    "n": 7,
+    "intercept_2010": 0.9409,
+    "rss": 0.022786143641165293
+   },
+   "L8/9+S2 2014\u20132026 (S2 shifted by L8\u2212S2 offset)": {
+    "slope_per_yr": -0.018,
+    "sigma": 0.0058,
+    "t": -3.1,
+    "df": 16,
+    "p": 0.0068,
+    "n": 18,
+    "intercept_2010": 0.9354,
+    "rss": 0.13387615854657414
+   }
+  },
+  "L_clean_edge_m": {
+   "L5/7": {
+    "slope_per_yr": -11.4242,
+    "sigma": 5.5147,
+    "t": -2.07,
+    "df": 3,
+    "p": 0.13,
+    "n": 5,
+    "intercept_2010": 3552.9555,
+    "rss": 9854.046803601186
+   },
+   "L8/9": {
+    "slope_per_yr": -11.2222,
+    "sigma": 7.6091,
+    "t": -1.47,
+    "df": 6,
+    "p": 0.19,
+    "n": 8,
+    "intercept_2010": 3634.9276,
+    "rss": 47677.96719334391
+   },
+   "S2": {
+    "slope_per_yr": -10.6778,
+    "sigma": 4.8802,
+    "t": -2.19,
+    "df": 5,
+    "p": 0.08,
+    "n": 7,
+    "intercept_2010": 3667.5751,
+    "rss": 6190.703483396719
+   }
+  }
+ },
+ "L1_edge_fit_all_sensors": {
+  "slope_per_yr": -6.745,
+  "sigma": 1.5631,
+  "t": -4.32,
+  "df": 18,
+  "p": 0.00042,
+  "n": 20,
+  "intercept_2010": 3600.2203,
+  "rss": 72971.08254550592,
+  "sensors": [
+   "L5",
+   "L7",
+   "L8",
+   "L9",
+   "S2"
+  ]
+ },
+ "L1_edge_offsets_applied": false,
+ "gif": {
+  "display_stretch_S2_p2_p98": [
+   375,
+   9560
+  ],
+  "quantile_match_p5_p60": {
+   "S2": {
+    "b04": [
+     846.0,
+     2386.0
+    ],
+    "b03": [
+     712.0,
+     2188.0
+    ],
+    "b02": [
+     513.0,
+     1896.0
+    ]
+   },
+   "L5/7": {
+    "b04": [
+     655.949951171875,
+     2198.97509765625
+    ],
+    "b03": [
+     655.675048828125,
+     1993.550048828125
+    ],
+    "b02": [
+     614.97509765625,
+     1675.650146484375
+    ]
+   },
+   "L8/9": {
+    "b04": [
+     311.10009765625,
+     1993.275146484375
+    ],
+    "b03": [
+     295.425048828125,
+     1767.22509765625
+    ],
+    "b02": [
+     92.75,
+     1343.72509765625
+    ]
+   }
+  }
+ }
+}
