@@ -19,7 +19,7 @@ jobs:
           python-version: "3.11"
 
       - name: Install dependencies
-        run: pip install numpy pandas requests Pillow -q
+        run: pip install numpy pandas requests Pillow tifffile -q
 
       - name: Run Gate A/B/C
         env:

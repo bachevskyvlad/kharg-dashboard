@@ -97,8 +97,7 @@ def _fetch_db(lat_c, lon_c, r_m, date_str, token, retries=2):
     bbox is the enclosing square; circle mask applied via evalscript distance check.
     Returns float or None.
     """
-    from PIL import Image
-    import io
+    import io, tifffile
 
     # bbox: r_m in degrees (approx)
     dr_lat = r_m / 111320.0
@@ -167,8 +166,7 @@ function evaluatePixel(s,scenes,inputMetadata,customData,outputMetadata){
                     print(f"    [diag] empty body ({len(resp.content)}B) | ct={resp.headers.get('content-type')}", flush=True)
                     _fetch_db._diag_calls += 1
                 return None
-            img = Image.open(io.BytesIO(resp.content))
-            arr = np.array(img, dtype=np.float32).flatten()
+            arr = tifffile.imread(io.BytesIO(resp.content)).flatten().astype(np.float32)
 
             # Circular mask: pixel centres in bbox, keep those within r_m
             # 40×40 grid over bbox
@@ -183,7 +181,7 @@ function evaluatePixel(s,scenes,inputMetadata,customData,outputMetadata){
 
             if _fetch_db._diag_calls < 5:
                 finite = arr[np.isfinite(arr)]
-                print(f"    [diag] ok | shape={arr.shape} mode={img.mode} "
+                print(f"    [diag] ok | shape={arr.shape} "
                       f"min={finite.min() if len(finite) else 'nan':.2f} "
                       f"max={finite.max() if len(finite) else 'nan':.2f} "
                       f"n_finite={len(finite)} n_mask={mask.sum()}", flush=True)
