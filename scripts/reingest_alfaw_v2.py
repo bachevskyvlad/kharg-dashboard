@@ -61,12 +61,14 @@ def sb_get(path, params=None):
 
 def sb_upsert(table, rows):
     r = requests.post(
-        f"{SB_URL}/rest/v1/{table}",
+        f"{SB_URL}/rest/v1/{table}?on_conflict=terminal_id,date,tank_id",
         json=rows,
         headers={"apikey": SB_KEY, "Authorization": f"Bearer {SB_KEY}",
                  "Content-Type": "application/json",
                  "Prefer": "resolution=merge-duplicates,return=minimal"},
         timeout=60)
+    if not r.ok:
+        print(f"  [upsert error] {r.status_code}: {r.text[:500]}")
     r.raise_for_status()
 
 def fetch_all_observations():
