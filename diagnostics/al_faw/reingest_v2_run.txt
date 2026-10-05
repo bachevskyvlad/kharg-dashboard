@@ -3,12 +3,12 @@
   cap v1=10.6195 Mn bbl  →  cap v2=8.5933 Mn bbl
 
 [1] Fetching current observations from Supabase …
-  7584 rows: 24 tanks, 316 dates
-  date range: 2015-04-11 – 2026-09-29
+  7608 rows: 24 tanks, 317 dates
+  date range: 2015-04-11 – 2026-10-05
 
 [2] Dry-run summary:
-  rows to re-ingest: 7584
-  SH API calls needed: 7584
+  rows to re-ingest: 7608
+  SH API calls needed: 7608
   estimated time @ 1 s/call: 2.1 h
 
   Radius delta (r_fit − 40):
@@ -37,15 +37,16 @@
     af_8: 36.4 m  (-3.6 m)
     af_9: 35.1 m  (-4.9 m)
 [3] Backup current rows before any write …
-  backup → /home/runner/work/kharg-dashboard/kharg-dashboard/diagnostics/al_faw/reingest_v2_backup_pre.csv  (7584 rows)
+  backup → /home/runner/work/kharg-dashboard/kharg-dashboard/diagnostics/al_faw/reingest_v2_backup_pre.csv  (7608 rows)
 [4] Live re-ingest — fetching SH and upserting Supabase …
+  [upsert error] 400: {"code":"PGRST204","details":null,"hint":null,"message":"Could not find the 'geom_source' column of 'terminal_observations' in the schema cache"}
 Traceback (most recent call last):
-  File "/home/runner/work/kharg-dashboard/kharg-dashboard/scripts/reingest_alfaw_v2.py", line 287, in <module>
+  File "/home/runner/work/kharg-dashboard/kharg-dashboard/scripts/reingest_alfaw_v2.py", line 289, in <module>
     main()
-  File "/home/runner/work/kharg-dashboard/kharg-dashboard/scripts/reingest_alfaw_v2.py", line 271, in main
+  File "/home/runner/work/kharg-dashboard/kharg-dashboard/scripts/reingest_alfaw_v2.py", line 273, in main
     sb_upsert("terminal_observations", batch)
-  File "/home/runner/work/kharg-dashboard/kharg-dashboard/scripts/reingest_alfaw_v2.py", line 70, in sb_upsert
+  File "/home/runner/work/kharg-dashboard/kharg-dashboard/scripts/reingest_alfaw_v2.py", line 72, in sb_upsert
     r.raise_for_status()
   File "/opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/site-packages/requests/models.py", line 1167, in raise_for_status
     raise HTTPError(http_error_msg, response=self)
-requests.exceptions.HTTPError: 400 Client Error: Bad Request for url: https://yoekhkczwdeyauwarsyy.supabase.co/rest/v1/terminal_observations
+requests.exceptions.HTTPError: 400 Client Error: Bad Request for url: https://yoekhkczwdeyauwarsyy.supabase.co/rest/v1/terminal_observations?on_conflict=terminal_id,date,tank_id
