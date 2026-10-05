@@ -39,14 +39,18 @@
 [3] Backup current rows before any write …
   backup → /home/runner/work/kharg-dashboard/kharg-dashboard/diagnostics/al_faw/reingest_v2_backup_pre.csv  (7608 rows)
 [4] Live re-ingest — fetching SH and upserting Supabase …
-  [upsert error] 400: {"code":"PGRST204","details":null,"hint":null,"message":"Could not find the 'geom_source' column of 'terminal_observations' in the schema cache"}
+  10/317 dates | updated=240 errors=0
+  20/317 dates | updated=480 errors=0
+  30/317 dates | updated=720 errors=0
+  40/317 dates | updated=960 errors=0
+  [upsert error] 500: {"code":"21000","details":null,"hint":"Ensure that no rows proposed for insertion within the same command have duplicate constrained values.","message":"ON CONFLICT DO UPDATE command cannot affect row a second time"}
 Traceback (most recent call last):
-  File "/home/runner/work/kharg-dashboard/kharg-dashboard/scripts/reingest_alfaw_v2.py", line 289, in <module>
+  File "/home/runner/work/kharg-dashboard/kharg-dashboard/scripts/reingest_alfaw_v2.py", line 288, in <module>
     main()
-  File "/home/runner/work/kharg-dashboard/kharg-dashboard/scripts/reingest_alfaw_v2.py", line 273, in main
+  File "/home/runner/work/kharg-dashboard/kharg-dashboard/scripts/reingest_alfaw_v2.py", line 272, in main
     sb_upsert("terminal_observations", batch)
   File "/home/runner/work/kharg-dashboard/kharg-dashboard/scripts/reingest_alfaw_v2.py", line 72, in sb_upsert
     r.raise_for_status()
   File "/opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/site-packages/requests/models.py", line 1167, in raise_for_status
     raise HTTPError(http_error_msg, response=self)
-requests.exceptions.HTTPError: 400 Client Error: Bad Request for url: https://yoekhkczwdeyauwarsyy.supabase.co/rest/v1/terminal_observations?on_conflict=terminal_id,date,tank_id
+requests.exceptions.HTTPError: 500 Server Error: Internal Server Error for url: https://yoekhkczwdeyauwarsyy.supabase.co/rest/v1/terminal_observations?on_conflict=terminal_id,date,tank_id
