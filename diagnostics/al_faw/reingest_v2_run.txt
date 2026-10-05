@@ -3,17 +3,39 @@
   cap v1=10.6195 Mn bbl  →  cap v2=8.5933 Mn bbl
 
 [1] Fetching current observations from Supabase …
-Traceback (most recent call last):
-  File "/home/runner/work/kharg-dashboard/kharg-dashboard/scripts/reingest_alfaw_v2.py", line 260, in <module>
-    main()
-  File "/home/runner/work/kharg-dashboard/kharg-dashboard/scripts/reingest_alfaw_v2.py", line 165, in main
-    df = fetch_all_observations()
-         ^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/home/runner/work/kharg-dashboard/kharg-dashboard/scripts/reingest_alfaw_v2.py", line 75, in fetch_all_observations
-    chunk = sb_get("terminal_observations",
-            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/home/runner/work/kharg-dashboard/kharg-dashboard/scripts/reingest_alfaw_v2.py", line 59, in sb_get
-    r.raise_for_status()
-  File "/opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/site-packages/requests/models.py", line 1167, in raise_for_status
-    raise HTTPError(http_error_msg, response=self)
-requests.exceptions.HTTPError: 400 Client Error: Bad Request for url: https://yoekhkczwdeyauwarsyy.supabase.co/rest/v1/terminal_observations?terminal_id=eq.al_flaw&orbit_direction=eq.DESCENDING&select=date%2Ctank_id%2Clat%2Clon%2Cradius_m%2Cdb_mean&order=date.asc&offset=0&limit=1000
+  7584 rows: 24 tanks, 316 dates
+  date range: 2015-04-11 – 2026-09-29
+
+[2] Dry-run summary:
+  rows to re-ingest: 7584
+  SH API calls needed: 7584
+  estimated time @ 1 s/call: 2.1 h
+
+  Radius delta (r_fit − 40):
+    af_0: 37.3 m  (-2.7 m)
+    af_1: 36.8 m  (-3.2 m)
+    af_10: 36.6 m  (-3.4 m)
+    af_11: 34.4 m  (-5.6 m)
+    af_12: 34.2 m  (-5.8 m)
+    af_13: 35.2 m  (-4.8 m)
+    af_14: 33.8 m  (-6.2 m)
+    af_15: 37.2 m  (-2.8 m)
+    af_16: 36.8 m  (-3.2 m)
+    af_17: 34.9 m  (-5.1 m)
+    af_18: 34.7 m  (-5.3 m)
+    af_19: 36.9 m  (-3.1 m)
+    af_2: 37.0 m  (-3.0 m)
+    af_20: 35.9 m  (-4.1 m)
+    af_21: 36.7 m  (-3.3 m)
+    af_22: 35.5 m  (-4.5 m)
+    af_23: 35.7 m  (-4.3 m)
+    af_3: 36.6 m  (-3.4 m)
+    af_4: 37.0 m  (-3.0 m)
+    af_5: 35.9 m  (-4.1 m)
+    af_6: 36.2 m  (-3.8 m)
+    af_7: 36.3 m  (-3.7 m)
+    af_8: 36.4 m  (-3.6 m)
+    af_9: 35.1 m  (-4.9 m)
+
+DRY-RUN complete. Pass --force to execute.
+  report → /home/runner/work/kharg-dashboard/kharg-dashboard/diagnostics/al_faw/reingest_dryrun.json
