@@ -193,6 +193,10 @@ def main():
 
     print("[1] Fetching current observations from Supabase …")
     df = fetch_all_observations()
+    before = len(df)
+    df = df.drop_duplicates(subset=["date", "tank_id"])
+    if len(df) < before:
+        print(f"  deduped {before - len(df)} duplicate rows")
     print(f"  {len(df)} rows: {df['tank_id'].nunique()} tanks, "
           f"{df['date'].nunique()} dates")
     print(f"  date range: {df['date'].min()} – {df['date'].max()}")
@@ -268,7 +272,7 @@ def main():
                           "db_mean": round(db_new, 4)})
             updated += 1
 
-        if len(batch) >= BATCH_SZ:
+        if batch:
             sb_upsert("terminal_observations", batch)
             batch = []
 
