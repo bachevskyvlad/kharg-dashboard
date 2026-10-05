@@ -41,8 +41,9 @@ jobs:
         run: |
           git config user.email "actions@github.com"
           git config user.name "GitHub Actions"
-          git add -f diagnostics/al_faw/reingest_v2_run.txt   || true
-          git add -f diagnostics/al_faw/reingest_dryrun.json  || true
+          git add -f diagnostics/al_faw/reingest_v2_run.txt        || true
+          git add -f diagnostics/al_faw/reingest_dryrun.json       || true
+          git add -f diagnostics/al_faw/reingest_v2_backup_pre.csv || true
           git status --short
           git diff --cached --quiet && echo "No new files" || \
             git commit -m "ci: al-faw reingest v2 outputs [skip ci]"

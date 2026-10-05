@@ -232,7 +232,12 @@ def main():
         return
 
     # ── LIVE run ──────────────────────────────────────────────────────────────
-    print("[3] Live re-ingest — fetching SH and upserting Supabase …")
+    print("[3] Backup current rows before any write …")
+    backup_path = OUT_DIR / "reingest_v2_backup_pre.csv"
+    df.to_csv(backup_path, index=False)
+    print(f"  backup → {backup_path}  ({len(df)} rows)")
+
+    print("[4] Live re-ingest — fetching SH and upserting Supabase …")
     token    = sh_token()
     updated  = 0
     errors   = 0
