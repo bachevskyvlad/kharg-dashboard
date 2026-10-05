@@ -265,8 +265,7 @@ def main():
                           "terminal_id": TERMINAL_ID,
                           "orbit_direction": ORBIT_DIR,
                           "radius_m": r_new,
-                          "db_mean": round(db_new, 4),
-                          "geom_source": "esri_z18_2026-10"})
+                          "db_mean": round(db_new, 4)})
             updated += 1
 
         if len(batch) >= BATCH_SZ:
