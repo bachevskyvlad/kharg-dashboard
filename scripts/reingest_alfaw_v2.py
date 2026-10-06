@@ -286,6 +286,21 @@ def main():
         sb_upsert("terminal_observations", batch)
 
     print(f"\nDone. updated={updated}  errors={errors}  skipped={n_rows-updated-errors}")
+
+    # ── Invariant: updated + N_absent == total eligible ───────────────────────
+    # N_absent = 0 (verified by catalog before this run can be authorised)
+    N_absent = 0
+    total_eligible = n_rows  # rows with known R_FIT tank_id
+    if updated + N_absent != total_eligible:
+        shortfall = total_eligible - updated - N_absent
+        print(f"\n[INVARIANT FAIL] updated({updated}) + N_absent({N_absent}) = "
+              f"{updated+N_absent} ≠ total_eligible({total_eligible})")
+        print(f"  shortfall = {shortfall} rows")
+        print("  Rerun with --force after diagnosing errors, or run reingest_alfaw_retry.py --retry")
+        sys.exit(1)
+    else:
+        print(f"[INVARIANT OK] updated({updated}) + N_absent({N_absent}) == {total_eligible}")
+
     print("Next: run stage_h1_db_norm.py for norm baseline (H1 ref patches).")
 
 if __name__ == "__main__":
