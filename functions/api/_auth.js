@@ -2,7 +2,7 @@
 // Key = base64url( HMAC-SHA256( email, API_SECRET ) )
 // Trial users are blocked entirely.
 
-const TRIAL_USERS = ['cyril@bluewaterstrategy.eu'];
+const TRIAL_USERS = [];
 const API_SECRET  = 'oilradar-api-secret-2024-kharg';
 
 export async function verifyApiKey(request, env) {

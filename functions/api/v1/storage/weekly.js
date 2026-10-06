@@ -1,4 +1,4 @@
-const TRIAL_USERS = ["cyril@bluewaterstrategy.eu"];
+const TRIAL_USERS = [];
 const API_SECRET  = "oilradar-api-secret-2024-kharg";
 
 async function verifyApiKey(request) {

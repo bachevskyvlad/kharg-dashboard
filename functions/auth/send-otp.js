@@ -34,14 +34,6 @@ export async function onRequest(context) {
   // Check authorization: CRM (Google Sheets) with hardcoded fallback
   const FALLBACK_WHITELIST = [
     'vladislav.bachevsky@gmail.com',
-    'keepmeup2date@gmail.com',
-    'vvbobylev@gmail.com',
-    'fryday.kg@gmail.com',
-    'cyril@bluewaterstrategy.eu',
-    'paclonalytics@gmail.com',
-    'fairy1000@gmail.com',
-    'asaljuhani@energyera.sa',
-    'ibrahim.aljuhani@straedge.com',
   ];
 
   if (env.GOOGLE_SA_KEY) {

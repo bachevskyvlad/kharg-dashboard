@@ -1,7 +1,5 @@
 const RECIPIENTS = [
   'vladislav.bachevsky@gmail.com',
-  'cyril@bluewaterstrategy.eu',
-  'fryday.kg@gmail.com',
 ];
 
 export async function onRequest(context) {

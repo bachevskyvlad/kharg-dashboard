@@ -72,8 +72,6 @@ html = f"""<!DOCTYPE html>
 
 recipients = [
     "vladislav.bachevsky@gmail.com",
-    "cyril@bluewaterstrategy.eu",
-    "fryday.kg@gmail.com",
 ]
 
 for to in recipients:
