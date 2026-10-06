@@ -137,28 +137,31 @@ def tank_bbox(tid):
     return [lon_c - dr_lon, lat_c - dr_lat, lon_c + dr_lon, lat_c + dr_lat]
 
 def catalog_has_scene(date_str, bbox, token):
-    """Return True if SH catalog has at least one IW DESCENDING scene for this date+bbox."""
+    """Return True if SH catalog has at least one IW DESCENDING scene for this date+bbox.
+    Uses simple bbox+datetime query (no OGC filter) and filters orbit/mode on client side.
+    """
     body = {
         "bbox": bbox,
         "datetime": f"{date_str}T00:00:00Z/{date_str}T23:59:59Z",
         "collections": ["sentinel-1-grd"],
-        "filter": {
-            "op": "and",
-            "args": [
-                {"op": "=", "args": [{"property": "sat:orbit_state"}, "descending"]},
-                {"op": "=", "args": [{"property": "sar:instrument_mode"}, "IW"]}
-            ]
-        },
-        "limit": 1
+        "limit": 10
     }
     try:
         r = requests.post(SH_CATALOG_URL, json=body,
                           headers={"Authorization": f"Bearer {token}",
                                    "Content-Type": "application/json"}, timeout=30)
-        if r.status_code == 200:
-            features = r.json().get("features", [])
-            return len(features) > 0, r.status_code, r.text[:300]
-        return False, r.status_code, r.text[:300]
+        if r.status_code != 200:
+            return False, r.status_code, r.text[:300]
+        features = r.json().get("features", [])
+        # Client-side filter: DESCENDING orbit + IW mode
+        for f in features:
+            props = f.get("properties", {})
+            orbit = str(props.get("sat:orbit_state", "")).lower()
+            mode  = str(props.get("sar:instrument_mode", "")).upper()
+            if orbit == "descending" and mode == "IW":
+                return True, r.status_code, f"OK orbit={orbit} mode={mode}"
+        # No matching scene found among returned features
+        return False, r.status_code, f"no IW/DESC in {len(features)} features"
     except Exception as e:
         return False, -1, str(e)
 
