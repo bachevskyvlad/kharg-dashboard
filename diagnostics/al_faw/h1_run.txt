@@ -23,12 +23,12 @@
   300/317 dates …
 
 [3] Patch validation (inter-scene std, threshold=1.0 dB):
-  ref_A (desert flat SE cluster): mean=-14.71 dB  std=3.060 dB  n=283/317 (89%)  [FAIL]
-    REPLACE: std=3.060 >= 1.0 — find flatter surface near lat=29.9560 lon=48.4600
-  ref_B (sand plain E of terminal): mean=-15.03 dB  std=3.750 dB  n=282/317 (89%)  [FAIL]
-    REPLACE: std=3.750 >= 1.0 — find flatter surface near lat=29.9530 lon=48.4680
-  ref_C (bare ground NE berm): mean=-9.89 dB  std=1.126 dB  n=282/317 (89%)  [FAIL]
-    REPLACE: std=1.126 >= 1.0 — find flatter surface near lat=29.9620 lon=48.4730
+  ref_A (flat desert SW of terminal, away from water): mean=-14.44 dB  std=3.991 dB  n=298/317 (94%)  [FAIL]
+    REPLACE: std=3.991 >= 1.0 — find flatter surface near lat=29.9450 lon=48.4300
+  ref_B (dry flat ground S of terminal): mean=-15.11 dB  std=3.315 dB  n=298/317 (94%)  [FAIL]
+    REPLACE: std=3.315 >= 1.0 — find flatter surface near lat=29.9400 lon=48.4450
+  ref_C (arid plain SE, 1.5km from tanks): mean=-14.65 dB  std=2.798 dB  n=297/317 (94%)  [FAIL]
+    REPLACE: std=2.798 >= 1.0 — find flatter surface near lat=29.9480 lon=48.4580
 
 [PATCH FAIL] One or more patches exceed std threshold.
   Action: replace failing patch coordinates in REF_PATCHES dict and rerun.
