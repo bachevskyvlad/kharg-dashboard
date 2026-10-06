@@ -21,6 +21,39 @@ jobs:
       - name: Install dependencies
         run: pip install numpy pandas requests Pillow scipy tifffile -q
 
+      - name: Ensure db_norm column exists
+        env:
+          SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+        run: |
+          SQL="ALTER TABLE terminal_observations ADD COLUMN IF NOT EXISTS db_norm double precision;"
+          if [ -n "$SUPABASE_DB_URL" ]; then
+            echo "Using psql to add column..."
+            pip install -q psycopg2-binary
+            python -c "
+import os, psycopg2
+conn = psycopg2.connect(os.environ['SUPABASE_DB_URL'])
+conn.autocommit = True
+cur = conn.cursor()
+cur.execute('ALTER TABLE terminal_observations ADD COLUMN IF NOT EXISTS db_norm double precision;')
+conn.close()
+print('Column ensured.')
+"
+          elif [ -n "$SUPABASE_ACCESS_TOKEN" ]; then
+            PROJECT_REF=$(echo "${SUPABASE_URL:-https://yoekhkczwdeyauwarsyy.supabase.co}" | sed 's|https://||' | cut -d. -f1)
+            echo "Using management API..."
+            curl -sf -X POST \
+              "https://api.supabase.com/v1/projects/${PROJECT_REF}/database/query" \
+              -H "Authorization: Bearer ${SUPABASE_ACCESS_TOKEN}" \
+              -H "Content-Type: application/json" \
+              -d "{\"query\": \"${SQL}\"}" && echo "Column ensured." || echo "warn: management API call failed"
+          else
+            echo "Neither SUPABASE_DB_URL nor SUPABASE_ACCESS_TOKEN set."
+            echo "Attempting to proceed — column may already exist or will fail with PGRST204."
+            echo "If so, run in Supabase SQL editor: ${SQL}"
+          fi
+
       - name: Run H1 db_norm
         env:
           CLIENT_ID:     ${{ secrets.CLIENT_ID }}
