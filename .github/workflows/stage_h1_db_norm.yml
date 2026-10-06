@@ -2,7 +2,6 @@ name: Stage H1 — Al-Faw db_norm (reference patches)
 
 on:
   workflow_dispatch:
-    inputs: {}
 
 jobs:
   h1_norm:
