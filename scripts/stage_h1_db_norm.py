@@ -50,12 +50,12 @@ STD_THRESHOLD_DB = 1.0  # dB — inter-scene std limit per patch
 # These are flat, dry ground surfaces SE of the tank cluster, away from water
 # and roads. 50m radius each. Replace any that fail std criterion.
 REF_PATCHES = {
-    "ref_A": {"lat": 29.956, "lon": 48.460, "r_m": 50,
-              "desc": "desert flat SE cluster"},
-    "ref_B": {"lat": 29.953, "lon": 48.468, "r_m": 50,
-              "desc": "sand plain E of terminal"},
-    "ref_C": {"lat": 29.962, "lon": 48.473, "r_m": 50,
-              "desc": "bare ground NE berm"},
+    "ref_A": {"lat": 29.945, "lon": 48.430, "r_m": 50,
+              "desc": "flat desert SW of terminal, away from water"},
+    "ref_B": {"lat": 29.940, "lon": 48.445, "r_m": 50,
+              "desc": "dry flat ground S of terminal"},
+    "ref_C": {"lat": 29.948, "lon": 48.458, "r_m": 50,
+              "desc": "arid plain SE, 1.5km from tanks"},
 }
 
 # ── Supabase helpers ──────────────────────────────────────────────────────────
