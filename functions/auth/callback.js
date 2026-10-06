@@ -1,6 +1,8 @@
 import { getUserByEmail, upsertUser } from '../lib/sheets.js';
 import { tgNotify, tgTime } from '../lib/telegram.js';
 
+const GOOGLE_CLIENT_ID = "377241273746-2qhpgcaa0a9nkhjuiihfqqs35rvp5asv.apps.googleusercontent.com";
+const GOOGLE_CLIENT_SECRET = "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";
 const APP_URL = "https://app.oilradar.io";
 
 export async function onRequest(context) {
@@ -19,7 +21,7 @@ export async function onRequest(context) {
       method: 'POST',
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
       body: new URLSearchParams({
-        code, client_id: env.GOOGLE_CLIENT_ID, client_secret: env.GOOGLE_CLIENT_SECRET,
+        code, client_id: GOOGLE_CLIENT_ID, client_secret: GOOGLE_CLIENT_SECRET,
         redirect_uri: `${APP_URL}/auth/callback`, grant_type: 'authorization_code'
       })
     });
