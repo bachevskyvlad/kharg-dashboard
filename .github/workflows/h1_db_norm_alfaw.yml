@@ -1,4 +1,4 @@
-name: Stage H1 — Al-Faw db_norm (reference patches)
+name: Stage H1 — Al-Faw db_norm
 
 on:
   workflow_dispatch:
@@ -20,39 +20,6 @@ jobs:
       - name: Install dependencies
         run: pip install numpy pandas requests Pillow scipy tifffile -q
 
-      - name: Ensure db_norm column exists
-        env:
-          SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
-          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
-          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
-        run: |
-          SQL="ALTER TABLE terminal_observations ADD COLUMN IF NOT EXISTS db_norm double precision;"
-          if [ -n "$SUPABASE_DB_URL" ]; then
-            echo "Using psql to add column..."
-            pip install -q psycopg2-binary
-            python -c "
-import os, psycopg2
-conn = psycopg2.connect(os.environ['SUPABASE_DB_URL'])
-conn.autocommit = True
-cur = conn.cursor()
-cur.execute('ALTER TABLE terminal_observations ADD COLUMN IF NOT EXISTS db_norm double precision;')
-conn.close()
-print('Column ensured.')
-"
-          elif [ -n "$SUPABASE_ACCESS_TOKEN" ]; then
-            PROJECT_REF=$(echo "${SUPABASE_URL:-https://yoekhkczwdeyauwarsyy.supabase.co}" | sed 's|https://||' | cut -d. -f1)
-            echo "Using management API..."
-            curl -sf -X POST \
-              "https://api.supabase.com/v1/projects/${PROJECT_REF}/database/query" \
-              -H "Authorization: Bearer ${SUPABASE_ACCESS_TOKEN}" \
-              -H "Content-Type: application/json" \
-              -d "{\"query\": \"${SQL}\"}" && echo "Column ensured." || echo "warn: management API call failed"
-          else
-            echo "Neither SUPABASE_DB_URL nor SUPABASE_ACCESS_TOKEN set."
-            echo "Attempting to proceed — column may already exist or will fail with PGRST204."
-            echo "If so, run in Supabase SQL editor: ${SQL}"
-          fi
-
       - name: Run H1 db_norm
         env:
           CLIENT_ID:     ${{ secrets.CLIENT_ID }}
@@ -70,7 +37,6 @@ print('Column ensured.')
           git config user.email "actions@github.com"
           git config user.name "GitHub Actions"
           git add -f diagnostics/al_faw/h1_scene_bias.csv || true
-          git add -f diagnostics/al_faw/h1_patch_stats.json || true
           git add -f diagnostics/al_faw/h1_run.txt || true
           git status --short
           git diff --cached --quiet && echo "No new files" || \
@@ -84,7 +50,5 @@ print('Column ensured.')
         with:
           name: h1-db-norm
           path: |
-            diagnostics/al_faw/ref_patches_db.csv
-            diagnostics/al_faw/alfaw_series_with_norm.csv
-            diagnostics/al_faw/ref_patches_config.json
+            diagnostics/al_faw/h1_scene_bias.csv
             diagnostics/al_faw/h1_run.txt
