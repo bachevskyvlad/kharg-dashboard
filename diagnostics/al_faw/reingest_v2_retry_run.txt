@@ -1,5 +1,5 @@
 === Al-Faw retry / error analysis ===
-  mode: ANALYZE
+  mode: RETRY
 
 [1] Fetching current Supabase state (radius_m) …
   7602 rows fetched
@@ -71,4 +71,13 @@ TOTAL      42     8   664    714
 
   catalog report → /home/runner/work/kharg-dashboard/kharg-dashboard/diagnostics/al_faw/reingest_v2_catalog_report.json
 
-Analysis complete. Run --retry to execute transient retries.
+[5] Retrying transient failures (catalog-confirmed, 4 backoff attempts) …
+  10/31 dates | updated=210 still_failed=0
+  20/31 dates | updated=450 still_failed=0
+  30/31 dates | updated=690 still_failed=0
+
+Retry done. updated=714  still_failed=0
+Total updated: 7602  /  7602
+Completion criterion: target=7602  achieved=7602  remaining=0
+
+Next: run stage_h1_db_norm.py for norm baseline (H1 ref patches).
