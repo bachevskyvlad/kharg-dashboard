@@ -1,0 +1,77 @@
+=== Al-Faw retry / error analysis ===
+  mode: ANALYZE
+
+[1] Fetching current Supabase state (radius_m) …
+  7599 rows fetched
+  failed (radius_m != r_fit): 1493  /  7599
+
+[2] Error table — failures per tank × per year:
+year     2021  2022  2024  2026  TOTAL
+tank_id                               
+af_0       25    10     1    27     63
+af_1       25    10     1    27     63
+af_10      24    10     0    28     62
+af_11      24    10     0    28     62
+af_12      24    10     0    28     62
+af_13      24    10     0    28     62
+af_14      24    10     0    28     62
+af_15      24    10     0    28     62
+af_16      24    10     0    28     62
+af_17      24    10     0    28     62
+af_18      24    10     0    28     62
+af_19      24    10     0    28     62
+af_2       25    10     1    27     63
+af_20      24    10     0    28     62
+af_21      24    10     0    28     62
+af_22      24    10     0    28     62
+af_23      24    10     0    28     62
+af_3       25    10     1    27     63
+af_4       25    10     1    27     63
+af_5       24    10     1    27     62
+af_6       24    10     1    27     62
+af_7       24    10     1    27     62
+af_8       24    10     0    28     62
+af_9       24    10     0    28     62
+TOTAL     581   240     8   664   1493
+
+  Per year totals:
+    2021: 581
+    2022: 240
+    2024: 8
+    2026: 664
+
+  failed pairs → /home/runner/work/kharg-dashboard/kharg-dashboard/diagnostics/al_faw/reingest_v2_failed_pairs.csv  (1493 rows)
+[3] 3 example failing requests — catalog verification:
+  tank=af_4  date=2021-02-26
+    bbox=[48.443222, 29.97172, 48.443989, 29.972385]
+    catalog → status=200  in_catalog=True
+    catalog resp snippet: OK orbit=descending mode=IW
+
+  tank=af_23  date=2021-03-10
+    bbox=[48.455167, 29.965481, 48.455907, 29.966122]
+    catalog → status=200  in_catalog=True
+    catalog resp snippet: OK orbit=descending mode=IW
+
+  tank=af_23  date=2021-03-22
+    bbox=[48.455167, 29.965481, 48.455907, 29.966122]
+    catalog → status=200  in_catalog=True
+    catalog resp snippet: OK orbit=descending mode=IW
+
+[4] Catalog verification for all failed pairs …
+  64 unique dates to check …
+  checked 20/64 dates …
+  checked 40/64 dates …
+  checked 60/64 dates …
+
+  Catalog result:
+    absent in catalog: 0 dates → 0 (tank,date) pairs — no retry needed
+    present in catalog: 64 dates → 1493 (tank,date) pairs — transient, retry
+
+  Completion criterion: updated = 7599 − 0 = 7599
+  Currently updated = 6106
+  Remaining to retry: 1493
+
+
+  catalog report → /home/runner/work/kharg-dashboard/kharg-dashboard/diagnostics/al_faw/reingest_v2_catalog_report.json
+
+Analysis complete. Run --retry to execute transient retries.
