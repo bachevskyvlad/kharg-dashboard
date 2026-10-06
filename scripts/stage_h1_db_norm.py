@@ -1,22 +1,28 @@
 """
-stage_h1_db_norm.py — H1 reference patches → db_norm column for al_flaw
-========================================================================
-Three reference patches chosen over stable, non-tank desert/sand surfaces
-adjacent to the Al-Faw terminal. Each patch must pass: inter-scene std < 1 dB
-across all DESCENDING observations. Fails with exit 1 and replacement guidance
-if any patch fails.
+stage_h1_db_norm.py — H1 db_norm for al_flaw (and other terminals)
+===================================================================
+Two norm methods, selected per terminal via USE_MEDIAN_OF_TANKS:
+
+  median_of_tanks (Al-Faw):
+    scene_bias(date) = median(db_mean) across all tanks on that date.
+    No SH calls needed. Works where ground ref patches are unstable
+    (delta/marsh terrain, Al-Faw).
+
+  ref_patches (Kharg, Ras Tanura, Saudi):
+    scene_bias(date) = median of 3 external ref patches.
+    Each patch must pass inter-scene std < STD_THRESHOLD_DB (1.0 dB).
+    Fails with exit 1 and replacement guidance if any patch fails.
 
 db_norm(tank, date) = db_mean(tank, date) − scene_bias(date)
-scene_bias(date) = median of the three ref patches on that date
 
 Modes:
-  --dry-run   (default) — fetch patches, validate std, print stats; no write
-  --force     — compute db_norm for all al_flaw rows, upsert Supabase
+  --dry-run   (default) — compute bias, print stats; no write
+  --force     — compute db_norm for all rows, upsert Supabase
 
 Output: column db_norm added to terminal_observations (upsert on terminal_id,date,tank_id)
 
 Usage:
-  python stage_h1_db_norm.py          # dry-run: validate patches
+  python stage_h1_db_norm.py          # dry-run
   python stage_h1_db_norm.py --force  # live
 """
 
@@ -44,11 +50,15 @@ PAGE_SIZE   = 1000
 OUT_DIR = Path(__file__).parent.parent / "diagnostics" / "al_faw"
 OUT_DIR.mkdir(parents=True, exist_ok=True)
 
-STD_THRESHOLD_DB = 1.0  # dB — inter-scene std limit per patch
+# Al-Faw: marshy Shatt al-Arab delta — no bare-ground surface achieves <1 dB
+# inter-scene std over 11 years. Use fleet median instead.
+USE_MEDIAN_OF_TANKS = True
 
-# ── Reference patches: stable desert/sand near Al-Faw ────────────────────────
-# These are flat, dry ground surfaces SE of the tank cluster, away from water
-# and roads. 50m radius each. Replace any that fail std criterion.
+STD_THRESHOLD_DB = 1.0  # dB — inter-scene std limit per patch (ref_patches method)
+
+# ── Reference patches (used only when USE_MEDIAN_OF_TANKS = False) ────────────
+# For arid terminals (Kharg, Saudi): stable desert/sand, r_m=50, std must be < 1.0 dB.
+# Replace coords if any patch fails validation.
 REF_PATCHES = {
     "ref_A": {"lat": 29.945, "lon": 48.430, "r_m": 50,
               "desc": "flat desert SW of terminal, away from water"},
@@ -106,7 +116,6 @@ def sh_token():
     return d["access_token"]
 
 def fetch_db_patch(lat_c, lon_c, r_m, date_str, token, retries=2):
-    """Fetch median VV dB over a circular patch."""
     try:
         import tifffile
     except ImportError:
@@ -169,26 +178,32 @@ function evaluatePixel(s){
     return None
 
 
-def main():
-    print("=== Al-Faw H1 db_norm ===")
-    print(f"  mode: {'DRY-RUN' if DRY_RUN else 'LIVE --force'}")
-    print()
+def norm_median_of_tanks(df):
+    """scene_bias = median(db_mean) across all tanks per date."""
+    bias = df.groupby("date")["db_mean"].median().rename("scene_bias")
+    df = df.join(bias, on="date")
+    df["db_norm"] = df["db_mean"] - df["scene_bias"]
 
-    print("[1] Fetching dates from Supabase …")
-    df = fetch_all_observations()
-    df = df.drop_duplicates(subset=["date", "tank_id"])
-    df["db_mean"] = pd.to_numeric(df["db_mean"], errors="coerce")
-    dates = sorted(df["date"].unique())
-    print(f"  {len(df)} rows, {len(dates)} dates, {df['tank_id'].nunique()} tanks")
-    print(f"  range: {dates[0]} – {dates[-1]}")
-    print()
+    n_tanks = df["tank_id"].nunique()
+    n_dates = df["date"].nunique()
+    print(f"  method: median_of_tanks  ({n_tanks} tanks, {n_dates} dates)")
+    print(f"  scene_bias range: [{df['scene_bias'].min():.3f}, {df['scene_bias'].max():.3f}] dB")
+    print(f"  db_norm range:    [{df['db_norm'].min():.3f}, {df['db_norm'].max():.3f}] dB")
 
-    token = sh_token()
+    bias_df = bias.reset_index().rename(columns={"scene_bias": "scene_bias"})
+    bias_path = OUT_DIR / "h1_scene_bias.csv"
+    bias_df.to_csv(bias_path, index=False)
+    print(f"  scene_bias → {bias_path}")
+    return df
 
-    # ── Fetch ref patches for all dates ──────────────────────────────────────
+
+def norm_ref_patches(df):
+    """scene_bias = median of 3 external ref patches per date (requires SH calls)."""
+    dates  = sorted(df["date"].unique())
+    token  = sh_token()
+
     print("[2] Fetching ref patches for all dates …")
     patch_records = {pid: {} for pid in REF_PATCHES}
-
     for i, date in enumerate(dates):
         for pid, pc in REF_PATCHES.items():
             val = fetch_db_patch(pc["lat"], pc["lon"], pc["r_m"], date, token)
@@ -198,10 +213,8 @@ def main():
             print(f"  {i+1}/{len(dates)} dates …")
         if (i + 1) % 100 == 0:
             token = sh_token()
-
     print()
 
-    # ── Validate patches: inter-scene std ────────────────────────────────────
     print("[3] Patch validation (inter-scene std, threshold=1.0 dB):")
     patch_fail = False
     patch_stats = {}
@@ -220,6 +233,11 @@ def main():
             print(f"    REPLACE: std={std:.3f} >= {STD_THRESHOLD_DB} — find flatter surface "
                   f"near lat={pc['lat']:.4f} lon={pc['lon']:.4f}")
 
+    patch_path = OUT_DIR / "h1_patch_stats.json"
+    with open(patch_path, "w") as f:
+        json.dump(patch_stats, f, indent=2)
+    print(f"  patch_stats → {patch_path}")
+
     if patch_fail:
         print("\n[PATCH FAIL] One or more patches exceed std threshold.")
         print("  Action: replace failing patch coordinates in REF_PATCHES dict and rerun.")
@@ -228,7 +246,6 @@ def main():
     print("  All patches PASS.")
     print()
 
-    # ── Compute scene_bias and db_norm ────────────────────────────────────────
     print("[4] Computing scene_bias and db_norm …")
     scene_bias = {}
     for date in dates:
@@ -246,25 +263,45 @@ def main():
     n_normed = df["db_norm"].notna().sum()
     print(f"  db_norm computed for {n_normed}/{len(df)} rows")
     print(f"  db_norm range: [{df['db_norm'].min():.3f}, {df['db_norm'].max():.3f}] dB")
-    print()
 
-    # Save bias table
     bias_df = pd.DataFrame([{"date": d, "scene_bias": v} for d, v in scene_bias.items()])
     bias_path = OUT_DIR / "h1_scene_bias.csv"
     bias_df.to_csv(bias_path, index=False)
     print(f"  scene_bias → {bias_path}")
+    return df
 
-    patch_path = OUT_DIR / "h1_patch_stats.json"
-    with open(patch_path, "w") as f:
-        json.dump(patch_stats, f, indent=2)
-    print(f"  patch_stats → {patch_path}")
+
+def main():
+    print("=== Al-Faw H1 db_norm ===")
+    print(f"  mode: {'DRY-RUN' if DRY_RUN else 'LIVE --force'}")
+    method_name = "median_of_tanks" if USE_MEDIAN_OF_TANKS else "ref_patches"
+    print(f"  norm method: {method_name}")
+    print()
+
+    print("[1] Fetching observations from Supabase …")
+    df = fetch_all_observations()
+    df = df.drop_duplicates(subset=["date", "tank_id"])
+    df["db_mean"] = pd.to_numeric(df["db_mean"], errors="coerce")
+    df = df[df["db_mean"].notna()].copy()
+    dates = sorted(df["date"].unique())
+    print(f"  {len(df)} rows, {len(dates)} dates, {df['tank_id'].nunique()} tanks")
+    print(f"  range: {dates[0]} – {dates[-1]}")
+    print()
+
+    if USE_MEDIAN_OF_TANKS:
+        print("[2] Computing scene_bias (median of tanks per date) …")
+        df = norm_median_of_tanks(df)
+    else:
+        df = norm_ref_patches(df)
+
+    n_normed = df["db_norm"].notna().sum()
+    print()
 
     if DRY_RUN:
-        print("\nDRY-RUN complete. Pass --force to write db_norm to Supabase.")
+        print("DRY-RUN complete. Pass --force to write db_norm to Supabase.")
         return
 
-    # ── LIVE write ────────────────────────────────────────────────────────────
-    print("[5] Writing db_norm to Supabase …")
+    print("[3] Writing db_norm to Supabase …")
     normed_df = df[df["db_norm"].notna()].copy()
     batch = []
     written = 0
