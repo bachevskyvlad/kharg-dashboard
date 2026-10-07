@@ -1,0 +1,32 @@
+=== Al-Faw series v2 (raw + norm) ===
+
+[1] Fetching terminal_observations …
+  7598 rows | 24 tanks | 317 dates
+  date range: 2015-04-11 – 2026-10-05
+  db_norm coverage: 7585/7598 (99.8%)
+
+  Calibration — raw:  dB_min=-7.268  dB_max=-2.240
+  Calibration — norm: dB_min=-2.917  dB_max=2.087
+
+============================================================
+  SERIES v2 HEADER
+============================================================
+  dates:   count=317  min=2015-04-11  max=2026-10-05
+  vol_raw: min=2.8944  max=6.0958  mean=4.3992  Mn bbl
+  vol_norm: min=1.5744  max=5.2387  mean=4.4539  Mn bbl
+  cap_v2:  8.5933 Mn bbl
+
+  [INVARIANT OK] all vol_raw <= cap_v2=8.5933
+  [INVARIANT OK] all vol_norm <= cap_v2=8.5933
+
+  Vol-vs-cap stats (raw):
+    p05: 3.4619 Mn bbl  (40.3% of cap)
+    p25: 4.0415 Mn bbl  (47.0% of cap)
+    p50: 4.3818 Mn bbl  (51.0% of cap)
+    p75: 4.7211 Mn bbl  (54.9% of cap)
+    p95: 5.2982 Mn bbl  (61.7% of cap)
+
+  → /home/runner/work/kharg-dashboard/kharg-dashboard/diagnostics/al_faw/iraq_alfaw_daily_v2.csv  (317 rows)
+  → /home/runner/work/kharg-dashboard/kharg-dashboard/diagnostics/al_faw/iraq_alfaw_pertank_v2.csv  (7598 rows)
+
+Done. Next: events_v2.py
