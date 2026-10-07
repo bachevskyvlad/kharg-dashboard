@@ -114,9 +114,12 @@ LOCATIONS = [
     # Data available from 2022-01-01 (earlier passes too sparse to calibrate).
     {
         "id": "jask",
+        "allowed_orbits": [
+            {"relative_orbit": 93, "direction": "DESC", "los_azimuth": 282},
+            {"relative_orbit": 57, "direction": "ASCE", "los_azimuth": 98}
+        ],
         "name": "Jask",
         "country": "IR",
-        "los_azimuth": 282,
         "status": "active",
         "tanks": [
             # Confirmed operational
@@ -148,9 +151,12 @@ LOCATIONS = [
     # Iranian island terminal, Persian Gulf. Mixed tank sizes.
     {
         "id": "lavan",
+        "allowed_orbits": [
+            {"relative_orbit": 64, "direction": "DESC", "los_azimuth": 282},
+            {"relative_orbit": 28, "direction": "ASCE", "los_azimuth": 98}
+        ],
         "name": "Lavan Island",
         "country": "IR",
-        "los_azimuth": 282,
         "status": "active",
         "tanks": [
             {"id": "lv_0",  "lat": 26.79900382074584,  "lon": 53.35353039022181,  "radius_m": 20, "h_max_m": 9},
@@ -184,9 +190,13 @@ LOCATIONS = [
     # Iranian island terminal, Persian Gulf.
     {
         "id": "siri",
+        "allowed_orbits": [
+            {"relative_orbit": 166, "direction": "DESC", "los_azimuth": 282},
+            {"relative_orbit": 64, "direction": "DESC", "los_azimuth": 282},
+            {"relative_orbit": 130, "direction": "ASCE", "los_azimuth": 98}
+        ],
         "name": "Siri Island",
         "country": "IR",
-        "los_azimuth": 282,
         "status": "active",
         "tanks": [
             {"id": "si_0", "lat": 25.906493850156608, "lon": 54.537083188997116, "radius_m": 55, "h_max_m": 17},
@@ -243,9 +253,13 @@ LOCATIONS = [
     # Qatari offshore crude storage and export terminal, Persian Gulf.
     {
         "id": "halul",
+        "allowed_orbits": [
+            {"relative_orbit": 137, "direction": "DESC", "los_azimuth": 282},
+            {"relative_orbit": 64, "direction": "DESC", "los_azimuth": 282},
+            {"relative_orbit": 28, "direction": "ASCE", "los_azimuth": 98}
+        ],
         "name": "Halul Island",
         "country": "QA",
-        "los_azimuth": 282,
         "status": "active",
         "tanks": [
             # 40 m tanks
@@ -267,9 +281,12 @@ LOCATIONS = [
     # Bahraini crude export terminal on Sitra Island.
     {
         "id": "sitra",
+        "allowed_orbits": [
+            {"relative_orbit": 137, "direction": "DESC", "los_azimuth": 282},
+            {"relative_orbit": 101, "direction": "ASCE", "los_azimuth": 98}
+        ],
         "name": "Sitra",
         "country": "BH",
-        "los_azimuth": 282,
         "status": "active",
         "tanks": [
             # 35 m tanks
@@ -398,9 +415,12 @@ LOCATIONS = [
     },
     {
         "id": "ras_laffan",
+        "allowed_orbits": [
+            {"relative_orbit": 137, "direction": "DESC", "los_azimuth": 282},
+            {"relative_orbit": 101, "direction": "ASCE", "los_azimuth": 98}
+        ],
         "name": "Ras Laffan",
         "country": "QA",
-        "los_azimuth": 282,
         "status": "active",
         "tanks": [
             {"id": "rl_0",  "lat": 25.894700791829038, "lon": 51.56802282660871, "radius_m": 45, "h_max_m": 15},
@@ -565,9 +585,14 @@ LOCATIONS = [
     },
     {
         "id": "fujairah",
+        "allowed_orbits": [
+            {"relative_orbit": 166, "direction": "DESC", "los_azimuth": 282},
+            {"relative_orbit": 93, "direction": "DESC", "los_azimuth": 282},
+            {"relative_orbit": 130, "direction": "ASCE", "los_azimuth": 98},
+            {"relative_orbit": 57, "direction": "ASCE", "los_azimuth": 98}
+        ],
         "name": "Fujairah",
         "country": "AE",
-        "los_azimuth": 282,
         "status": "active",
         "tanks": [
             {"id": "fj_0",  "lat": 25.214713030963306, "lon": 56.3471406652011,   "radius_m": 55, "h_max_m": 17},
@@ -596,9 +621,12 @@ LOCATIONS = [
     },
     {
         "id": "zirku",
+        "allowed_orbits": [
+            {"relative_orbit": 64, "direction": "DESC", "los_azimuth": 282},
+            {"relative_orbit": 28, "direction": "ASCE", "los_azimuth": 98}
+        ],
         "name": "Zirku Island",
         "country": "AE",
-        "los_azimuth": 282,
         "status": "active",
         "tanks": [
             {"id": "zi_0",  "lat": 24.877119872705237, "lon": 53.07962035800867, "radius_m": 50, "h_max_m": 16},
@@ -615,9 +643,12 @@ LOCATIONS = [
     },
     {
         "id": "das_island",
+        "allowed_orbits": [
+            {"relative_orbit": 64, "direction": "DESC", "los_azimuth": 282},
+            {"relative_orbit": 28, "direction": "ASCE", "los_azimuth": 98}
+        ],
         "name": "Das Island",
         "country": "AE",
-        "los_azimuth": 282,
         "status": "active",
         "tanks": [
             {"id": "di_0",  "lat": 25.151804288861204, "lon": 52.87325592336677,  "radius_m": 50, "h_max_m": 16},
@@ -639,9 +670,12 @@ LOCATIONS = [
     },
     {
         "id": "ruwais",
+        "allowed_orbits": [
+            {"relative_orbit": 64, "direction": "DESC", "los_azimuth": 282},
+            {"relative_orbit": 28, "direction": "ASCE", "los_azimuth": 98}
+        ],
         "name": "Ruwais",
         "country": "AE",
-        "los_azimuth": 282,
         "status": "active",
         "tanks": [
             {"id": "rw_0",  "lat": 24.114956567664525, "lon": 52.71241345383107,  "radius_m": 35, "h_max_m": 13},
@@ -688,9 +722,12 @@ LOCATIONS = [
     },
     {
         "id": "mina_ahmadi",
+        "allowed_orbits": [
+            {"relative_orbit": 108, "direction": "DESC", "los_azimuth": 282},
+            {"relative_orbit": 174, "direction": "ASCE", "los_azimuth": 98}
+        ],
         "name": "Mina Al Ahmadi",
         "country": "KW",
-        "los_azimuth": 282,
         "status": "active",
         "tanks": [
             {"id": "ma_0",  "lat": 29.049582, "lon": 48.059250, "radius_m": 30, "h_max_m": 12},

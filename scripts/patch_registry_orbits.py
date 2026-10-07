@@ -23,7 +23,13 @@ from pathlib import Path
 
 DRY = "--apply" not in sys.argv
 
-PATCH_PATH    = Path(__file__).parent.parent / "diagnostics" / "orbit_survey_registry_patch.json"
+# Accept --patch <file> to use a different patch file
+_patch_arg = None
+if "--patch" in sys.argv:
+    _patch_arg = sys.argv[sys.argv.index("--patch") + 1]
+
+PATCH_PATH    = Path(_patch_arg) if _patch_arg else \
+                Path(__file__).parent.parent / "diagnostics" / "orbit_survey_registry_patch.json"
 REGISTRY_PATH = Path(__file__).parent / "tank_registry.py"
 
 def main():
@@ -47,11 +53,13 @@ def main():
                 f'"direction": "{o["direction"]}", '
                 f'"los_azimuth": {o["los_azimuth"]}}}'
             )
+        # Terminal fields use 8-space indent; list items 12-space
         ao_block = "        \"allowed_orbits\": [\n" + ",\n".join(ao_lines) + "\n        ],\n"
 
         # Find the terminal block in source: locate '"id": "tid"'
+        # Terminal blocks are indented 4 spaces; fields inside 8 spaces.
         id_pat = re.compile(
-            r'(        \{[^}]*?"id":\s*"' + re.escape(tid) + r'".*?)(        \})',
+            r'(    \{[^{}]*?"id":\s*"' + re.escape(tid) + r'".*?)(    \})',
             re.DOTALL
         )
         m = id_pat.search(src)
@@ -65,7 +73,7 @@ def main():
         # If allowed_orbits already present, replace it
         if '"allowed_orbits"' in block:
             ao_existing = re.search(
-                r'\s*"allowed_orbits":\s*\[[^\]]*\],?\n',
+                r'\s*"allowed_orbits":\s*\[.*?\],?\n',
                 block, re.DOTALL
             )
             if ao_existing:
