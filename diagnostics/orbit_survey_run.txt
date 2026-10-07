@@ -1,0 +1,80 @@
+=== orbit_survey.py  2020-01-01…2026-10-07 ===
+  shapely available: True
+
+  jask               (IR, 20t) ... best: rel=57 ASCE n=111 cad=6.0d cov=FULL
+  lavan              (IR, 24t) ... best: rel=28 ASCE n=244 cad=12.0d cov=FULL
+  siri               (IR, 6t) ... best: rel=130 ASCE n=245 cad=12.0d cov=FULL
+  al_flaw            (IQ, 24t) ... best: rel=174 ASCE n=242 cad=12.0d cov=FULL
+  halul              (QA, 10t) ... best: rel=28 ASCE n=244 cad=12.0d cov=FULL
+  sitra              (BH, 25t) ... best: rel=101 ASCE n=244 cad=12.0d cov=FULL
+  kozmino            (RU, 12t) ... best: rel=163 DESC n=3 cad=12.0d cov=FULL
+  de_kastri          (RU, 2t) ... best: rel=17 DESC n=110 cad=12.0d cov=FULL
+  primorsk           (RU, 18t) ... best: rel=80 DESC n=271 cad=12.0d cov=FULL
+  novorossiysk       (RU, 15t) ... best: rel=116 ASCE n=315 cad=6.0d cov=FULL
+  ras_laffan         (QA, 34t) ... best: rel=101 ASCE n=244 cad=12.0d cov=FULL
+  juwaymah           (SA, 19t) ... best: rel=101 ASCE n=244 cad=12.0d cov=FULL
+  ras_tanura         (SA, 66t) ... best: rel=101 ASCE n=244 cad=12.0d cov=FULL
+  fujairah           (AE, 22t) ... best: rel=130 ASCE n=245 cad=12.0d cov=FULL
+  zirku              (AE, 10t) ... best: rel=28 ASCE n=244 cad=12.0d cov=FULL
+  das_island         (AE, 15t) ... best: rel=28 ASCE n=244 cad=12.0d cov=FULL
+  ruwais             (AE, 40t) ... best: rel=28 ASCE n=243 cad=12.0d cov=FULL
+  mina_ahmadi        (KW, 14t) ... best: rel=174 ASCE n=242 cad=12.0d cov=FULL
+  yanbu              (SA, 12t) ... best: rel=14 ASCE n=208 cad=12.0d cov=FULL
+  kharg              (IR, 47t) reference ... best: rel=101 ASCE n=243 cov=FULL
+
+==============================================================================================================
+  terminal           cty  tnk  rel_orb    dir  scenes   cad_d   coverage  note
+==============================================================================================================
+  jask                IR   20       57   ASCE     111     6.0       FULL   ← WORKING
+                                    93   DESC     109     6.0       FULL  
+  lavan               IR   24       28   ASCE     244    12.0       FULL   ← WORKING
+                                    64   DESC     221    12.0       FULL  
+  siri                IR    6      130   ASCE     245    12.0       FULL   ← WORKING
+                                   166   DESC     241    12.0       FULL  
+                                    64   DESC     221    12.0       FULL  
+  al_flaw             IQ   24      174   ASCE     242    12.0       FULL   ← WORKING
+                                   108   DESC     235    12.0       FULL  
+  halul               QA   10       28   ASCE     244    12.0       FULL   ← WORKING
+                                   137   DESC     239    12.0       FULL  
+                                    64   DESC     222    12.0       FULL  
+  sitra               BH   25      101   ASCE     244    12.0       FULL   ← WORKING
+                                   137   DESC     239    12.0       FULL  
+  kozmino             RU   12      163   DESC       3    12.0       FULL   ← WORKING [RU: defer]
+                                    83   ASCE       1       —       FULL   [RU: defer]
+  de_kastri           RU    2       17   DESC     110    12.0       FULL   ← WORKING [RU: defer]
+                                   170   ASCE     106    12.0       FULL   [RU: defer]
+                                    68   ASCE       2   366.0       FULL   [RU: defer]
+                                   119   DESC     108    12.0    PARTIAL   [RU: defer]
+  primorsk            RU   18       80   DESC     271    12.0       FULL   ← WORKING [RU: defer]
+                                     7   DESC     271    12.0       FULL   [RU: defer]
+                                    87   ASCE     268    12.0       FULL   [RU: defer]
+                                    14   ASCE     268    12.0       FULL   [RU: defer]
+  novorossiysk        RU   15      116   ASCE     315     6.0       FULL   ← WORKING [RU: defer]
+                                    43   ASCE     314     6.0       FULL   [RU: defer]
+                                    94   DESC     313     6.0       FULL   [RU: defer]
+                                    21   DESC     308     6.0       FULL   [RU: defer]
+  ras_laffan          QA   34      101   ASCE     244    12.0       FULL   ← WORKING
+                                   137   DESC     239    12.0       FULL  
+  juwaymah            SA   19      101   ASCE     244    12.0       FULL   ← WORKING
+                                    35   DESC     238    12.0       FULL  
+  ras_tanura          SA   66      101   ASCE     244    12.0       FULL   ← WORKING
+                                    35   DESC     238    12.0       FULL  
+                                   137   DESC     238    12.0       EDGE  
+  fujairah            AE   22      130   ASCE     245    12.0       FULL   ← WORKING
+                                    57   ASCE     243    12.0       FULL  
+                                   166   DESC     240    12.0       FULL  
+                                    93   DESC     239    12.0       FULL  
+  zirku               AE   10       28   ASCE     244    12.0       FULL   ← WORKING
+                                    64   DESC     222    12.0       FULL  
+  das_island          AE   15       28   ASCE     244    12.0       FULL   ← WORKING
+                                    64   DESC     222    12.0       FULL  
+  ruwais              AE   40       28   ASCE     243    12.0       FULL   ← WORKING
+                                    64   DESC     220    12.0       FULL  
+  mina_ahmadi         KW   14      174   ASCE     242    12.0       FULL   ← WORKING
+                                   108   DESC     235    12.0       FULL  
+  yanbu               SA   12       14   ASCE     208    12.0       FULL   ← WORKING
+  kharg               IR   47      101   ASCE     243    12.0       FULL   [REF only]
+                                    35   DESC     238    12.0       FULL  
+
+  → registry patch: /home/runner/work/kharg-dashboard/kharg-dashboard/diagnostics/orbit_survey_registry_patch.json
+  → ORBIT_SURVEY.md: /home/runner/work/kharg-dashboard/kharg-dashboard/diagnostics/ORBIT_SURVEY.md
