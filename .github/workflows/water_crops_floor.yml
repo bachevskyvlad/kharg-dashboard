@@ -1,0 +1,88 @@
+name: Al-Faw water crops + DB floor fix
+
+on:
+  workflow_dispatch:
+    inputs:
+      skip_ndwi:
+        description: "Skip S2 NDWI (faster, ESRI only)"
+        required: false
+        default: "false"
+
+jobs:
+  water_crops_floor:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: pip install numpy pandas requests Pillow tifffile -q
+
+      - name: ESRI crops + NDWI water fraction
+        env:
+          CLIENT_ID:     ${{ secrets.CLIENT_ID }}
+          CLIENT_SECRET: ${{ secrets.CLIENT_SECRET }}
+        run: |
+          mkdir -p diagnostics/al_faw/water_crops
+          cd scripts
+          if [ "${{ inputs.skip_ndwi }}" = "true" ]; then
+            python esri_water_crops.py --esri-only 2>&1 | tee ../diagnostics/al_faw/water_crops/crops_run.txt
+          else
+            python esri_water_crops.py --all 2>&1 | tee ../diagnostics/al_faw/water_crops/crops_run.txt
+          fi
+
+      - name: Apply DB_FLOOR=-5 to al_flaw (dry-run)
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+        run: |
+          cd scripts
+          python apply_db_floor_alfaw.py 2>&1
+
+      - name: Apply DB_FLOOR=-5 to al_flaw (LIVE)
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+        run: |
+          cd scripts
+          python apply_db_floor_alfaw.py --force 2>&1 | tee ../diagnostics/al_faw/db_floor_run.txt
+
+      - name: Recompute db_norm after floor fix
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+        run: |
+          cd scripts
+          python h1_db_norm_refix.py --force 2>&1 | tee ../diagnostics/al_faw/h1_refix_run2.txt
+
+      - name: Rerun series_v2
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+        run: |
+          cd scripts
+          python series_v2.py 2>&1 | tee ../diagnostics/al_faw/series_v2_run.txt
+
+      - name: Commit outputs
+        if: always()
+        run: |
+          git config user.email "actions@github.com"
+          git config user.name "GitHub Actions"
+          git add -f diagnostics/al_faw/water_crops/ || true
+          git add -f diagnostics/al_faw/db_floor_run.txt || true
+          git add -f diagnostics/al_faw/h1_refix_run2.txt || true
+          git add -f diagnostics/al_faw/iraq_alfaw_daily_v2.csv || true
+          git add -f diagnostics/al_faw/iraq_alfaw_pertank_v2.csv || true
+          git add -f diagnostics/al_faw/series_v2_run.txt || true
+          git status --short
+          git diff --cached --quiet && echo "No changes" || \
+            git commit -m "ci: water crops + DB floor fix + series_v2 final [skip ci]"
+          git pull --rebase origin main || true
+          git push origin HEAD:main || true
