@@ -85,8 +85,7 @@ for (rel, dir_), dates in sorted(orbit_dates.items(), key=lambda x: -len(x[1])):
 # ── 3. Supabase — al_flaw observation dates ──────────────────────────────────
 print("\nPulling al_flaw dates from Supabase …")
 try:
-    from supabase import create_client
-    sb = create_client(os.environ["SUPABASE_URL"], os.environ["SUPABASE_KEY"])
+    from config import sb
 
     tank_ids = [t["id"] for t in af_loc["tanks"]]
     # Pull all distinct dates for any al_flaw tank
@@ -125,6 +124,7 @@ except Exception as e:
     sb_dates = set()
     year_counts = {}
     multi_track_dates = {}
+    n_tanks = len(tank_ids)
 
 # ── 4. Date-match ─────────────────────────────────────────────────────────────
 print("\n── DATE-MATCH (Supabase dates × catalog orbit dates) ──")
