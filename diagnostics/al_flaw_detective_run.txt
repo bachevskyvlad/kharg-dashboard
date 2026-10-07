@@ -11,7 +11,7 @@ Orbit tracks found over al_flaw:
   rel= 108 DESC  n= 235
 
 Pulling al_flaw dates from Supabase …
-  [!] Supabase error: supabase_url is required
+  Supabase al_flaw: 0 rows, 0 distinct dates
 
 ── DATE-MATCH (Supabase dates × catalog orbit dates) ──
   rel= 174 ASC   catalog= 242  overlap=   0  (0.0% of Supabase dates)
@@ -29,8 +29,11 @@ Pulling al_flaw dates from Supabase …
   2024  |        0 |     0/30   |     0/31  
   2025  |        0 |     0/44   |     0/43  
   2026  |        0 |     0/48   |     0/50  
-Traceback (most recent call last):
-  File "/home/runner/work/kharg-dashboard/kharg-dashboard/scripts/al_flaw_orbit_detective.py", line 172, in <module>
-    print(f"\n── CONTAMINATION CHECK (rows/date > {n_tanks} tanks) ──")
-                                                   ^^^^^^^
-NameError: name 'n_tanks' is not defined
+
+── CONTAMINATION CHECK (rows/date > 24 tanks) ──
+  No contaminated dates found (all dates have ≤ n_tanks rows)
+
+Written: diagnostics/al_flaw_orbit_result.json
+Written: diagnostics/AL_FLAW_ORBIT_DETECTIVE.md
+
+Done.

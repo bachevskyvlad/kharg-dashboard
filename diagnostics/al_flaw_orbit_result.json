@@ -1,0 +1,20 @@
+{
+  "terminal": "al_flaw",
+  "historical_track": null,
+  "contamination_dates": 0,
+  "supabase_total_dates": 0,
+  "matches": {
+    "rel174_ASC": {
+      "n_catalog": 242,
+      "n_supabase": 0,
+      "n_overlap": 0,
+      "pct": 0
+    },
+    "rel108_DESC": {
+      "n_catalog": 235,
+      "n_supabase": 0,
+      "n_overlap": 0,
+      "pct": 0
+    }
+  }
+}
