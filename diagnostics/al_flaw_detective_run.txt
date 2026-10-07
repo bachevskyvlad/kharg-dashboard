@@ -1,0 +1,36 @@
+/home/runner/work/kharg-dashboard/kharg-dashboard/scripts/al_flaw_orbit_detective.py:47: SHDeprecationWarning: The string representation of `BBox` will change to match its `repr` representation.
+  print(f"al_flaw bbox: {bbox}")
+al_flaw bbox: 48.43522632654753,29.957287798298108,48.46199962795796,29.98052926826684
+
+Querying CDSE catalog DESC 2020-01-01…2026-10-07 …
+  DESC scenes returned: 240
+  ASC scenes returned: 243
+
+Orbit tracks found over al_flaw:
+  rel= 174 ASC   n= 242
+  rel= 108 DESC  n= 235
+
+Pulling al_flaw dates from Supabase …
+  [!] Supabase error: supabase_url is required
+
+── DATE-MATCH (Supabase dates × catalog orbit dates) ──
+  rel= 174 ASC   catalog= 242  overlap=   0  (0.0% of Supabase dates)
+  rel= 108 DESC  catalog= 235  overlap=   0  (0.0% of Supabase dates)
+
+  ★ HISTORICAL TRACK: rel=174 ASC — 0/0 dates matched (0%)
+
+── PER-YEAR BREAKDOWN ──
+  Year  | SB_dates | rel174ASC  | rel108DESC
+  ------------------------------------
+  2020  |        0 |     0/30   |     0/29  
+  2021  |        0 |     0/30   |     0/29  
+  2022  |        0 |     0/30   |     0/26  
+  2023  |        0 |     0/30   |     0/27  
+  2024  |        0 |     0/30   |     0/31  
+  2025  |        0 |     0/44   |     0/43  
+  2026  |        0 |     0/48   |     0/50  
+Traceback (most recent call last):
+  File "/home/runner/work/kharg-dashboard/kharg-dashboard/scripts/al_flaw_orbit_detective.py", line 172, in <module>
+    print(f"\n── CONTAMINATION CHECK (rows/date > {n_tanks} tanks) ──")
+                                                   ^^^^^^^
+NameError: name 'n_tanks' is not defined
