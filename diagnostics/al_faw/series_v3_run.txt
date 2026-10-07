@@ -1,0 +1,34 @@
+=== Al-Faw series v3 — live-calibrated ===
+  LOW_STUCK:  ['af_0', 'af_11', 'af_2', 'af_3', 'af_6', 'af_7', 'af_9']
+  LIVE tanks: ['af_1', 'af_10', 'af_12', 'af_13', 'af_14', 'af_15', 'af_16', 'af_17', 'af_18', 'af_19', 'af_20', 'af_21', 'af_22', 'af_23', 'af_4', 'af_5', 'af_8']  (n=17)
+  cap_all:    8.5933 Mn bbl
+  cap_live17: 6.0639 Mn bbl
+
+[1] Fetching observations …
+  7608 rows | 24 tanks | 317 dates
+  date range: 2015-04-11 – 2026-10-05
+
+  Calibration — RAW:
+    OLD (all-24):  p05=-7.267  p95=-2.240  range=5.027 dB
+    NEW (live-17): p05=-5.874  p95=-2.124  range=3.750 dB
+  Calibration — NORM:
+    NEW (live-17): p05=-2.064  p95=1.676  range=3.740 dB
+
+[2] Invariants …
+  [INVARIANT OK] all vol_raw24 <= cap_all=8.5933
+  [INVARIANT OK] all vol_live17 <= cap_live17=6.0639
+
+============================================================
+  SERIES v3 HEADER
+============================================================
+  dates:       count=317  min=2015-04-11  max=2026-10-05
+  vol_raw24:   min=3.6318  max=7.1165  mean=5.4729  Mn bbl
+  vol_live17:  min=2.1761  max=4.6300  mean=3.3945  Mn bbl
+  vol_norm17:  min=2.4586  max=4.3819  mean=3.4142  Mn bbl  (316/317 dates)
+  cap_all:     8.5933 Mn bbl
+  cap_live17:  6.0639 Mn bbl
+
+  → /home/runner/work/kharg-dashboard/kharg-dashboard/diagnostics/al_faw/iraq_alfaw_daily_v3.csv  (317 rows)
+  → /home/runner/work/kharg-dashboard/kharg-dashboard/diagnostics/al_faw/iraq_alfaw_pertank_v3.csv  (7608 rows)
+
+Done.

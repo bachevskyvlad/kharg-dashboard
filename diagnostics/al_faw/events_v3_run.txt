@@ -1,0 +1,27 @@
+=== Al-Faw events v3 — three series ===
+  Loaded 317 dates from iraq_alfaw_daily_v3.csv
+  Date range: 2015-04-11 – 2026-10-05
+
+  Placebo p90 [raw24]: 0.226 Mn bbl
+  Placebo p90 [live17]: 0.197 Mn bbl
+  Placebo p90 [norm17]: 0.179 Mn bbl
+
+=========================================================================================================
+  event                  exp    Δraw24    vrd   Δlive17    vrd   Δnorm17    vrd  note
+=========================================================================================================
+  basra_2021q3          DRAW    +0.667  WRONG    +0.294  WRONG    +0.198  WRONG  Iraq post-OPEC+ ramp-up Jul-Sep 2021; Basra_pw pea
+  basra_2022q2          DRAW    -0.446 SIGNAL    -0.248 SIGNAL    +0.149  WRONG  Iraq production push post-Ukraine May-Aug 2022; Ba
+  basra_2023h1          DRAW    +0.480  WRONG    +0.346  WRONG    +0.706  WRONG  Basra_pw peak Jan-Feb 2023 (pre-cut)
+  opec_cuts_2025h1     BUILD    +0.916 SIGNAL    +0.725 SIGNAL    +0.424 SIGNAL  Iraq voluntary OPEC+ makeup cuts H1 2025 → less lo
+  jcpoa_2015           BUILD       N/A    N/A       N/A    N/A       N/A    N/A  JCPOA signed July 2015 → anticipatory storage buil
+  jcpoa_lift_2016       DRAW       N/A    N/A       N/A    N/A       N/A    N/A  JCPOA implementation day Jan 2016 → ramp-up export
+  reimpose_2018        BUILD    -1.150  WRONG    -0.604  WRONG    -0.913  WRONG  US re-imposes Iran sanctions May 2018 → curtailed 
+  waivers_2019          DRAW    -0.252 SIGNAL    -0.142   WEAK    +0.247  WRONG  Waiver end May 2019 → Iran volumes fall further, I
+  covid_2020           BUILD    +0.921 SIGNAL    +0.773 SIGNAL    +0.798 SIGNAL  COVID demand collapse Mar 2020 → exports fall → st
+  war_2026              DRAW    -0.324 SIGNAL    -0.349 SIGNAL    -0.826 SIGNAL  Regional conflict 2026 → supply uncertainty → draw
+
+       raw24: SIGNAL=5  WEAK=0  WRONG=3  NO_DATA=2/10
+      live17: SIGNAL=4  WEAK=1  WRONG=3  NO_DATA=2/10
+      norm17: SIGNAL=3  WEAK=0  WRONG=5  NO_DATA=2/10
+
+  → /home/runner/work/kharg-dashboard/kharg-dashboard/diagnostics/al_faw/iraq_alfaw_events_v3.csv

@@ -1,0 +1,80 @@
+======================================================================
+  LOW-STUCK TANK PASSPORT
+======================================================================
+
+  ── af_0 ──
+     N=315  first=2015-04-11  last=2026-10-05
+     db_mean: min=-18.57  p05=-14.03  p25=-6.11  med=-5.39  p75=-4.62  p95=-2.93  max=3.24
+     std=3.266  frac_below_5=65.7%
+     frac<-5.0 by year:  2015:100%*  2017:100%*  2018:60%*  2019:42%  2020:43%  2021:41%  2022:65%*  2023:81%*  2024:77%*  2025:72%*  2026:70%*
+     Onset: always stuck from first observation (2015-04-11)
+
+  ── af_11 ──
+     N=317  first=2015-04-11  last=2026-10-05
+     db_mean: min=-6.79  p05=-6.00  p25=-5.38  med=-4.97  p75=-4.49  p95=-3.30  max=-0.42
+     std=1.022  frac_below_5=48.3%
+     frac<-5.0 by year:  2015:0%  2017:68%*  2018:43%  2019:58%*  2020:34%  2021:28%  2022:35%  2023:41%  2024:52%*  2025:72%*  2026:46%
+     Onset: stuck from ~2017 (frac_below crossed 50%)
+
+  ── af_2 ──
+     N=316  first=2015-04-11  last=2026-10-05
+     db_mean: min=-20.35  p05=-15.45  p25=-11.51  med=-5.44  p75=-4.50  p95=-2.72  max=-0.90
+     std=4.388  frac_below_5=60.8%
+     frac<-5.0 by year:  2015:100%*  2017:100%*  2018:100%*  2019:100%*  2020:82%*  2021:66%*  2022:35%  2023:33%  2024:19%  2025:51%*  2026:44%
+     Onset: always stuck from first observation (2015-04-11)
+
+  ── af_3 ──
+     N=316  first=2015-04-11  last=2026-10-05
+     db_mean: min=-20.33  p05=-15.32  p25=-5.73  med=-4.99  p75=-4.27  p95=-2.80  max=2.00
+     std=3.571  frac_below_5=49.4%
+     frac<-5.0 by year:  2015:100%*  2017:100%*  2018:57%*  2019:42%  2020:29%  2021:52%*  2022:27%  2023:26%  2024:45%  2025:65%*  2026:46%
+     Onset: always stuck from first observation (2015-04-11)
+
+  ── af_6 ──
+     N=316  first=2015-04-11  last=2026-10-05
+     db_mean: min=-19.27  p05=-7.18  p25=-5.77  med=-5.10  p75=-4.39  p95=-3.32  max=0.01
+     std=1.924  frac_below_5=55.4%
+     frac<-5.0 by year:  2015:100%*  2017:80%*  2018:23%  2019:69%*  2020:55%*  2021:55%*  2022:54%*  2023:33%  2024:67%*  2025:58%*  2026:58%*
+     Onset: always stuck from first observation (2015-04-11)
+
+  ── af_7 ──
+     N=316  first=2015-04-11  last=2026-10-05
+     db_mean: min=-10.39  p05=-7.54  p25=-6.65  med=-5.70  p75=-4.79  p95=-2.74  max=0.11
+     std=1.458  frac_below_5=67.7%
+     frac<-5.0 by year:  2015:100%*  2017:36%  2018:90%*  2019:100%*  2020:79%*  2021:79%*  2022:69%*  2023:41%  2024:27%  2025:70%*  2026:76%*
+     Onset: always stuck from first observation (2015-04-11)
+
+  ── af_9 ──
+     N=317  first=2015-04-11  last=2026-10-05
+     db_mean: min=-8.44  p05=-7.79  p25=-7.12  med=-6.54  p75=-5.96  p95=-5.15  max=-2.22
+     std=0.857  frac_below_5=96.5%
+     frac<-5.0 by year:  2015:100%*  2017:92%*  2018:100%*  2019:88%*  2020:86%*  2021:93%*  2022:100%*  2023:100%*  2024:100%*  2025:100%*  2026:100%*
+     Onset: always stuck from first observation (2015-04-11)
+
+======================================================================
+  OPEN QUESTION — Esri(opущены крыши) ↔ SAR(тихие = полные)
+======================================================================
+
+  Observation: 7 LOW-STUCK tanks show systematically low SAR dB
+  (−10 to −5 dB), which the volume formula interprets as full.
+  ESRI World Imagery (z=19) shows roofs in lowered position (empty).
+  This is a contradiction. Hypotheses (no winner selected):
+
+  H1 [Specular/mirror roof]: New metallic floating roofs act as
+      flat specular reflectors → near-zero SAR return regardless of fill.
+      Would explain: constant low dB unrelated to fill level.
+
+  H2 [Decommissioned/maintenance]: Tanks taken out of service;
+      roof rests on floor (drained); low dB from flat floor geometry.
+      Would explain: no cycling, onset year.
+
+  H3 [Site flooding / background contamination]: Shatt-al-Arab
+      seasonal inundation of surrounding area → low background dB
+      bleeds into tank measurement window.
+      Would explain: correlated with river level / wet season.
+
+  Resolution path: SAR time series + Esri date-matched imagery +
+  river gauge data for Shatt-al-Arab at Basra.
+
+  STATUS: OPEN — does not block series or events analysis.
+  stuck_flag=1 in pertank_v3.csv; excluded from calibration.

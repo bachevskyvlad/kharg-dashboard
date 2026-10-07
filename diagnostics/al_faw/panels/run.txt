@@ -1,80 +1,21 @@
-=== H5 Al-Faw Panels — 24 tanks, r=40.0m ===
-  bbox: [48.436, 29.958, 48.462, 29.98]
+  af_1 … saved (1138×1138)
+  af_10 … saved (1132×1132)
+  af_11 … saved (1062×1062)
+  af_12 … saved (1056×1056)
+  af_13 … saved (1088×1088)
+  af_14 … saved (1044×1044)
+  af_15 … saved (1150×1150)
+  af_16 … saved (1138×1138)
+  af_17 … saved (1078×1078)
+  af_18 … saved (1072×1072)
+  af_19 … saved (1140×1140)
+  af_20 … saved (1110×1110)
+  af_21 … saved (1134×1134)
+  af_22 … saved (1098×1098)
+  af_23 … saved (1104×1104)
+  af_4 … saved (1144×1144)
+  af_5 … saved (1110×1110)
+  af_7 … saved (1122×1122)
+  af_8 … saved (1124×1124)
 
-[S2 catalog]
-  3 S2 scenes: ['2026-09-11', '2026-09-13', '2026-08-14']
-
-[S1-ASC catalog]
-  3 S1-ASC scenes: ['2026-10-03', '2026-09-27', '2026-09-21']
-
-[S1-DESC catalog]
-  3 S1-DESC scenes: ['2026-09-29', '2026-09-23', '2026-09-17']
-
-[Fetching tiles]
-  S2  2026-09-11 cloud=0%
-  S2 tile: OK (244, 250, 3)
-  S1-ASC  2026-10-03
-  S1-ASC tile: OK
-  S1-DESC 2026-09-29
-  S1-DESC tile: OK
-
-[Per-tank panels] sun_az_s2=102.4° (S2 2026-09-11)
-  af_0  sf=0.0000
-  af_1  sf=0.1111
-  af_2  sf=0.1250
-  af_3  sf=0.0000
-  af_4  sf=0.1111
-  af_5  sf=0.0000
-  af_6  sf=0.0000
-  af_7  sf=0.0000
-  af_8  sf=0.0000
-  af_9  sf=0.0000
-  af_10  sf=0.1111
-  af_11  sf=0.1111
-  af_12  sf=0.0000
-  af_13  sf=0.0000
-  af_14  sf=0.1250
-  af_15  sf=0.0000
-  af_16  sf=0.0000
-  af_17  sf=0.0000
-  af_18  sf=0.0000
-  af_19  sf=0.0000
-  af_20  sf=0.1000
-  af_21  sf=0.1111
-  af_22  sf=0.1111
-  af_23  sf=0.0000
-
-Optical r=40 table → /home/runner/work/kharg-dashboard/kharg-dashboard/diagnostics/al_faw/panels/alfaw_optical_r40.csv
-tank_id  shadow_frac
-   af_0       0.0000
-   af_1       0.1111
-   af_2       0.1250
-   af_3       0.0000
-   af_4       0.1111
-   af_5       0.0000
-   af_6       0.0000
-   af_7       0.0000
-   af_8       0.0000
-   af_9       0.0000
-  af_10       0.1111
-  af_11       0.1111
-  af_12       0.0000
-  af_13       0.0000
-  af_14       0.1250
-  af_15       0.0000
-  af_16       0.0000
-  af_17       0.0000
-  af_18       0.0000
-  af_19       0.0000
-  af_20       0.1000
-  af_21       0.1111
-  af_22       0.1111
-  af_23       0.0000
-
-[Overview grids]
-  overview s2: alfaw_s2_overview.png
-  overview sar_asc: alfaw_sar_asc_overview.png
-  overview sar_desc: alfaw_sar_desc_overview.png
-
-Done. 24 per-tank panels + 3 overviews → /home/runner/work/kharg-dashboard/kharg-dashboard/diagnostics/al_faw/panels
-Panels to chat — analyst verdicts per tank.
+Done: 19 saved, 0 errors
