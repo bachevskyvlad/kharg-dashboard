@@ -1,0 +1,31 @@
+=== Al-Faw H1 db_norm REFIX (floor-excluded scene_bias) ===
+  mode: LIVE --force
+  floor_thresh: -4.9 dB  |  min_clean_tanks: 8
+
+[1] Fetching observations …
+  7608 rows | 317 dates | 24 tanks
+  db_mean <= -4.9: 2424 rows (31.9%)
+
+[2] Computing scene_bias (clean tanks only) …
+  Valid scenes (>= 8 clean tanks): 316 / 317
+  NaN scenes: 1
+  NaN scene dates: ['2017-11-02']
+  scene_bias range (valid): [-4.4946, -2.9233] dB
+
+  scene_bias_fixed → /home/runner/work/kharg-dashboard/kharg-dashboard/diagnostics/al_faw/h1_scene_bias_fixed.csv
+[3] Computing db_norm_fixed …
+  db_norm computed: 7584 rows
+  db_norm NULL (NaN scene): 24 rows
+  db_norm range: [-16.0769, 7.3988] dB
+
+[4] Upserting db_norm to Supabase …
+
+Done.
+  db_norm (numeric): 7584
+  db_norm (NULL):    24
+  total upserted:    7608
+
+Invariant: 7584 + 24 = 7608  (expected 7608)
+  [INVARIANT OK]
+
+Next: re-run series_v2.py to regenerate CSVs.
