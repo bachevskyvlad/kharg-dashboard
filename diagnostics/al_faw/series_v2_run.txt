@@ -1,32 +1,32 @@
 === Al-Faw series v2 (raw + norm) ===
 
 [1] Fetching terminal_observations …
-  7589 rows | 24 tanks | 317 dates
+  7601 rows | 24 tanks | 317 dates
   date range: 2015-04-11 – 2026-10-05
-  db_norm coverage: 7565/7589 (99.7%)
+  db_norm coverage: 7577/7601 (99.7%)
 
-  Calibration — raw:  dB_min=-7.268  dB_max=-2.240
-  Calibration — norm: dB_min=-3.443  dB_max=1.544
+  Calibration — raw:  dB_min=-5.000  dB_max=-2.240
+  Calibration — norm: dB_min=-1.428  dB_max=1.543
 
 ============================================================
   SERIES v2 HEADER
 ============================================================
   dates:   count=317  min=2015-04-11  max=2026-10-05
-  vol_raw: min=2.5280  max=6.0955  mean=4.3933  Mn bbl
-  vol_norm: min=0.0000  max=5.6973  mean=4.3948  Mn bbl
+  vol_raw: min=4.1515  max=7.7856  mean=6.2069  Mn bbl
+  vol_norm: min=0.0000  max=7.2701  mean=5.7940  Mn bbl
   cap_v2:  8.5933 Mn bbl
 
   [INVARIANT OK] all vol_raw <= cap_v2=8.5933
   [INVARIANT OK] all vol_norm <= cap_v2=8.5933
 
   Vol-vs-cap stats (raw):
-    p05: 3.4291 Mn bbl  (39.9% of cap)
-    p25: 4.0391 Mn bbl  (47.0% of cap)
-    p50: 4.3816 Mn bbl  (51.0% of cap)
-    p75: 4.7210 Mn bbl  (54.9% of cap)
-    p95: 5.2979 Mn bbl  (61.7% of cap)
+    p05: 5.0028 Mn bbl  (58.2% of cap)
+    p25: 5.8656 Mn bbl  (68.3% of cap)
+    p50: 6.2528 Mn bbl  (72.8% of cap)
+    p75: 6.5790 Mn bbl  (76.6% of cap)
+    p95: 7.1550 Mn bbl  (83.3% of cap)
 
   → /home/runner/work/kharg-dashboard/kharg-dashboard/diagnostics/al_faw/iraq_alfaw_daily_v2.csv  (317 rows)
-  → /home/runner/work/kharg-dashboard/kharg-dashboard/diagnostics/al_faw/iraq_alfaw_pertank_v2.csv  (7589 rows)
+  → /home/runner/work/kharg-dashboard/kharg-dashboard/diagnostics/al_faw/iraq_alfaw_pertank_v2.csv  (7601 rows)
 
 Done. Next: events_v2.py
