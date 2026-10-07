@@ -157,8 +157,7 @@ def main():
 
     # ── Invariant: vol <= cap ─────────────────────────────────────────────────
     over_cap_raw  = daily[daily["vol_raw_mb"]  > CAP_V2_MN_BBL]
-    over_cap_norm = daily[has_norm and ~daily["vol_norm_mb"].isna() and
-                          (daily["vol_norm_mb"] > CAP_V2_MN_BBL)] if has_norm else pd.DataFrame()
+    over_cap_norm = daily[daily["vol_norm_mb"].notna() & (daily["vol_norm_mb"] > CAP_V2_MN_BBL)] if has_norm else pd.DataFrame()
 
     if len(over_cap_raw) > 0:
         print(f"[INVARIANT FAIL] vol_raw > cap_v2 on {len(over_cap_raw)} dates:")
