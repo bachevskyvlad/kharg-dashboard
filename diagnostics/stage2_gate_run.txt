@@ -4,13 +4,75 @@ STAGE-2 GATE QUESTIONNAIRE — Calibration run
 
 ── KHARG (expected: ACCUMULATOR) ──
   Fetching series for kharg …
-Traceback (most recent call last):
-  File "/home/runner/work/kharg-dashboard/kharg-dashboard/scripts/stage2_gate_questionnaire.py", line 277, in <module>
-    df = fetch_series(tid)
-         ^^^^^^^^^^^^^^^^^
-  File "/home/runner/work/kharg-dashboard/kharg-dashboard/scripts/stage2_gate_questionnaire.py", line 103, in fetch_series
-    .execute().data)
-     ^^^^^^^^^
-  File "/opt/hostedtoolcache/Python/3.11.17/x64/lib/python3.11/site-packages/postgrest/_sync/request_builder.py", line 96, in execute
-    raise APIError(dict(json_obj))
-postgrest.exceptions.APIError: {'message': "Could not find the table 'public.kharg_daily' in the schema cache", 'code': 'PGRST205', 'hint': "Perhaps you meant the table 'public.kharg_gross_flows'", 'details': None}
+    587 daily rows  2015-04-06 → 2026-10-06
+  Actual: FLOW-THROUGH  [✗ FAIL]
+    n_weeks                   = 310
+    vol_mean_mn               = 18.76
+    vol_std_mn                = 1.92
+    cap_util_mean             = 0.565
+    cap_util_std              = 0.058
+    n_drawdown_events         = 97
+    cv_drawdown               = 0.489
+    autocorr_lag1             = -0.374
+    cycle_days_median         = 21.0
+    stuck_proxy               = 0.003
+
+── YANBU (expected: PIPELINE-BUFFER) ──
+  Fetching series for yanbu …
+    332 daily rows  2014-10-09 → 2026-09-22
+  Actual: PIPELINE-BUFFER  [✓]
+    n_weeks                   = 326
+    vol_mean_mn               = 9.19
+    vol_std_mn                = 1.48
+    cap_util_mean             = 1.313
+    cap_util_std              = 0.212
+    n_drawdown_events         = 113
+    cv_drawdown               = 0.496
+    autocorr_lag1             = -0.402
+    cycle_days_median         = 14.0
+    stuck_proxy               = 0.003
+
+── RAS_TANURA (expected: FLOW-THROUGH) ──
+  Fetching series for ras_tanura …
+    566 daily rows  2017-03-14 → 2026-10-06
+  Actual: FLOW-THROUGH  [✓]
+    n_weeks                   = 404
+    vol_mean_mn               = 17.09
+    vol_std_mn                = 1.0
+    cap_util_mean             = 1.627
+    cap_util_std              = 0.095
+    n_drawdown_events         = 130
+    cv_drawdown               = 0.455
+    autocorr_lag1             = -0.488
+    cycle_days_median         = 21.0
+    stuck_proxy               = 0.002
+
+============================================================
+GATE RESULT
+============================================================
+  Terminal        Expected           Actual             Pass
+  ------------------------------------------------------------
+  kharg           ACCUMULATOR        FLOW-THROUGH       FAIL
+  yanbu           PIPELINE-BUFFER    PIPELINE-BUFFER    PASS
+  ras_tanura      FLOW-THROUGH       FLOW-THROUGH       PASS
+
+  GATE FAILED — one or more calibration terminals mis-classified.
+  Thresholds must be adjusted BEFORE applying to new terminals.
+
+  Current thresholds:
+    cv_drawdown_accumulator_min                   = 0.8
+    cv_drawdown_flow_through_max                  = 0.55
+    autocorr_accumulator_min                      = 0.35
+    autocorr_pipeline_max                         = 0.25
+    cycle_accumulator_min_days                    = 28
+    cycle_flow_through_max_days                   = 25
+    cycle_pipeline_max_days                       = 14
+    cap_util_std_accumulator_min                  = 0.06
+    cap_util_std_pipeline_max                     = 0.03
+    stuck_ratio_accumulator_max                   = 0.15
+    stuck_ratio_pipeline_max                      = 0.05
+
+Written: diagnostics/stage2_gate_result.json
+Written: diagnostics/STAGE2_GATE.md
+
+Done.

@@ -1,0 +1,70 @@
+{
+  "run": "2026-10-08T11:55:44.794560",
+  "gate_passed": false,
+  "thresholds": {
+    "cv_drawdown_accumulator_min": 0.8,
+    "cv_drawdown_flow_through_max": 0.55,
+    "autocorr_accumulator_min": 0.35,
+    "autocorr_pipeline_max": 0.25,
+    "cycle_accumulator_min_days": 28,
+    "cycle_flow_through_max_days": 25,
+    "cycle_pipeline_max_days": 14,
+    "cap_util_std_accumulator_min": 0.06,
+    "cap_util_std_pipeline_max": 0.03,
+    "stuck_ratio_accumulator_max": 0.15,
+    "stuck_ratio_pipeline_max": 0.05
+  },
+  "terminals": {
+    "kharg": {
+      "expected": "ACCUMULATOR",
+      "actual": "FLOW-THROUGH",
+      "pass": false,
+      "metrics": {
+        "n_weeks": 310,
+        "vol_mean_mn": 18.76,
+        "vol_std_mn": 1.92,
+        "cap_util_mean": 0.565,
+        "cap_util_std": 0.058,
+        "n_drawdown_events": 97,
+        "cv_drawdown": 0.489,
+        "autocorr_lag1": -0.374,
+        "cycle_days_median": 21.0,
+        "stuck_proxy": 0.003
+      }
+    },
+    "yanbu": {
+      "expected": "PIPELINE-BUFFER",
+      "actual": "PIPELINE-BUFFER",
+      "pass": true,
+      "metrics": {
+        "n_weeks": 326,
+        "vol_mean_mn": 9.19,
+        "vol_std_mn": 1.48,
+        "cap_util_mean": 1.313,
+        "cap_util_std": 0.212,
+        "n_drawdown_events": 113,
+        "cv_drawdown": 0.496,
+        "autocorr_lag1": -0.402,
+        "cycle_days_median": 14.0,
+        "stuck_proxy": 0.003
+      }
+    },
+    "ras_tanura": {
+      "expected": "FLOW-THROUGH",
+      "actual": "FLOW-THROUGH",
+      "pass": true,
+      "metrics": {
+        "n_weeks": 404,
+        "vol_mean_mn": 17.09,
+        "vol_std_mn": 1.0,
+        "cap_util_mean": 1.627,
+        "cap_util_std": 0.095,
+        "n_drawdown_events": 130,
+        "cv_drawdown": 0.455,
+        "autocorr_lag1": -0.488,
+        "cycle_days_median": 21.0,
+        "stuck_proxy": 0.002
+      }
+    }
+  }
+}
