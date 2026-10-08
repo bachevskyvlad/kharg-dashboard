@@ -93,11 +93,11 @@ def fetch_series(terminal_id: str) -> pd.DataFrame:
                .execute().data)
         break  # volume_timeseries has no terminal_id filter; use kharg_daily for kharg
 
-    # kharg: use kharg_daily
+    # kharg: use volume_timeseries (weekly smoothed + daily fill-in)
     if terminal_id == "kharg":
         offset = 0
         while True:
-            r = (sb.table("kharg_daily")
+            r = (sb.table("volume_timeseries")
                    .select("date,vol_mn_bbl")
                    .range(offset, offset + 999)
                    .execute().data)
