@@ -1,0 +1,43 @@
+name: Jask Center Gate A/B — dual-config step_db comparison
+
+on:
+  workflow_dispatch:
+
+jobs:
+  jask_center_gate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: main
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: pip install numpy pandas sentinelhub shapely -q
+
+      - name: Run A/B center gate
+        env:
+          CLIENT_ID:     ${{ secrets.CLIENT_ID }}
+          CLIENT_SECRET: ${{ secrets.CLIENT_SECRET }}
+        run: |
+          mkdir -p diagnostics/jask/center_gate
+          cd scripts
+          python jask_center_gate.py 2>&1 | tee ../diagnostics/jask/center_gate/gate_run.txt
+
+      - name: Save outputs
+        if: always()
+        run: |
+          git config user.email "actions@github.com"
+          git config user.name "GitHub Actions"
+          git add -f diagnostics/jask/center_gate/  || true
+          git add -f diagnostics/jask/JASK_CENTER_GATE.md || true
+          git diff --cached --quiet && echo "No changes" || \
+            git commit -m "ci: jask center gate A/B — step_db comparison [skip ci]"
+          git pull --rebase origin main || true
+          git push origin HEAD:main || true
