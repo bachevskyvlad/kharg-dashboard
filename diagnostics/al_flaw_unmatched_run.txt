@@ -1,0 +1,35 @@
+/home/runner/work/kharg-dashboard/kharg-dashboard/scripts/al_flaw_unmatched.py:47: SHDeprecationWarning: The string representation of `BBox` will change to match its `repr` representation.
+  print(f"al_flaw bbox: {bbox}")
+al_flaw bbox: 48.43522632654753,29.957287798298108,48.46199962795796,29.98052926826684
+
+Pulling al_flaw dates from terminal_observations …
+  317 distinct dates  (2015-04-11 → 2026-10-05)
+
+Querying CDSE catalog for 108 DESC …
+  rel=108 DESC dates: 316
+  Unmatched dates: 1
+
+Full catalog scan (DESC + ASC) 2017-01-01…2026-10-08 …
+  DESC scenes: 321  ASC scenes: 333
+
+── UNMATCHED DATE ATTRIBUTION ──
+  Total unmatched  : 1
+  ±1d artefact     : 0  (108 scene exists within 1 day → date-shift)
+  Foreign track    : 0  (other orbit on same day)
+  True gap (no SAR): 1  (no catalog scene at all)
+  Unexplained      : 0
+
+── PER-YEAR DISTRIBUTION ──
+  Year   total   ±1d_art   foreign   gap  
+  ------------------------------------
+  2015   1       0         0         1    
+
+── DATE-TOLERANCE EXAMPLES (±1 day artefacts) ──
+
+── VERDICT ──
+  GAPS_ONLY: Unmatched dates are true SAR gaps (no scene in catalog). Normal for orbit geometry. No foreign tracks.
+
+Written: diagnostics/al_flaw_unmatched_result.json
+Written: diagnostics/AL_FLAW_UNMATCHED.md
+
+Done.
