@@ -84,17 +84,18 @@ for (rel, dir_), dates in sorted(orbit_dates.items(), key=lambda x: -len(x[1])):
 
 # ── 3. Supabase — al_flaw observation dates ──────────────────────────────────
 print("\nPulling al_flaw dates from Supabase …")
+tank_ids = [t["id"] for t in af_loc["tanks"]]
+n_tanks = len(tank_ids)
 try:
     from config import sb
 
-    tank_ids = [t["id"] for t in af_loc["tanks"]]
-    # Pull all distinct dates for any al_flaw tank
+    # Primary source: terminal_observations (aggregated per-date per-terminal)
     all_rows = []
     offset = 0
     while True:
-        rows = (sb.table("raw_observations")
-                  .select("date,tank_id")
-                  .in_("tank_id", tank_ids)
+        rows = (sb.table("terminal_observations")
+                  .select("date,terminal_id")
+                  .eq("terminal_id", "al_flaw")
                   .range(offset, offset + 999)
                   .execute().data)
         all_rows.extend(rows)
@@ -102,21 +103,39 @@ try:
             break
         offset += 1000
 
+    if not all_rows:
+        # Fallback: raw_observations with af_ tank_ids
+        print("  terminal_observations empty — falling back to raw_observations …")
+        offset = 0
+        while True:
+            rows = (sb.table("raw_observations")
+                      .select("date,tank_id")
+                      .in_("tank_id", tank_ids)
+                      .range(offset, offset + 999)
+                      .execute().data)
+            all_rows.extend(rows)
+            if len(rows) < 1000:
+                break
+            offset += 1000
+
     # Distinct dates
     sb_dates = {pd.to_datetime(r["date"]).date() for r in all_rows}
     print(f"  Supabase al_flaw: {len(all_rows)} rows, {len(sb_dates)} distinct dates")
+    if all_rows:
+        dates_sorted = sorted(sb_dates)
+        print(f"  Range: {dates_sorted[0]} → {dates_sorted[-1]}")
 
-    # Per-year row count to detect contamination
+    # Per-year row count
     year_counts = defaultdict(int)
     for r in all_rows:
         year_counts[pd.to_datetime(r["date"]).year] += 1
-    # rows per date (24 tanks → 24 rows/date normally; >24 → multiple tracks)
+
+    # Rows per date — detect dual-track contamination (>1 row/date in terminal_obs = impossible;
+    # but in raw_obs >n_tanks rows/date = two tracks ingested same day)
     dates_list = [pd.to_datetime(r["date"]).date() for r in all_rows]
     date_freq = defaultdict(int)
     for d in dates_list:
         date_freq[d] += 1
-    # count dates with >24 tank-rows (24 tanks = 1 track per date)
-    n_tanks = len(tank_ids)
     multi_track_dates = {d: c for d, c in date_freq.items() if c > n_tanks}
 
 except Exception as e:

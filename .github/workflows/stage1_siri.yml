@@ -1,0 +1,57 @@
+name: Stage 1 baseline — Siri (rel=166 DESC, 2017-01-01+)
+
+on:
+  workflow_dispatch:
+    inputs:
+      commit:
+        description: 'Write to Supabase (dry-run if unchecked)'
+        type: boolean
+        default: false
+      reset:
+        description: 'Wipe checkpoint and restart from scratch'
+        type: boolean
+        default: false
+
+jobs:
+  stage1_siri:
+    runs-on: ubuntu-latest
+    timeout-minutes: 360
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: main
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: pip install numpy pandas sentinelhub supabase shapely -q
+
+      - name: Stage 1 backfill — siri
+        env:
+          CLIENT_ID:     ${{ secrets.CLIENT_ID }}
+          CLIENT_SECRET: ${{ secrets.CLIENT_SECRET }}
+          SUPABASE_URL:  ${{ secrets.SUPABASE_URL }}
+          SUPABASE_KEY:  ${{ secrets.SUPABASE_KEY }}
+        run: |
+          mkdir -p diagnostics/stage1
+          FLAGS=""
+          if [ "${{ inputs.commit }}" = "true" ]; then FLAGS="$FLAGS --commit"; fi
+          if [ "${{ inputs.reset }}"  = "true" ]; then FLAGS="$FLAGS --reset";  fi
+          cd scripts
+          python stage1_backfill.py --terminal siri $FLAGS 2>&1 | tee ../diagnostics/stage1/siri_run.txt
+
+      - name: Save checkpoint + diagnostics
+        if: always()
+        run: |
+          git config user.email "actions@github.com"
+          git config user.name "GitHub Actions"
+          git add -f diagnostics/stage1/siri_run.txt   || true
+          git add -f scripts/.stage1_ckpt_siri.json    || true
+          git diff --cached --quiet && echo "No changes" || \
+            git commit -m "ci: stage1 siri — baseline ingest checkpoint [skip ci]"
+          git pull --rebase origin main || true
+          git push origin HEAD:main || true
