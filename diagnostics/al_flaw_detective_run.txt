@@ -2,7 +2,7 @@
   print(f"al_flaw bbox: {bbox}")
 al_flaw bbox: 48.43522632654753,29.957287798298108,48.46199962795796,29.98052926826684
 
-Querying CDSE catalog DESC 2020-01-01…2026-10-07 …
+Querying CDSE catalog DESC 2020-01-01…2026-10-08 …
   DESC scenes returned: 240
   ASC scenes returned: 243
 
@@ -11,24 +11,25 @@ Orbit tracks found over al_flaw:
   rel= 108 DESC  n= 235
 
 Pulling al_flaw dates from Supabase …
-  Supabase al_flaw: 0 rows, 0 distinct dates
+  Supabase al_flaw: 7608 rows, 317 distinct dates
+  Range: 2015-04-11 → 2026-10-05
 
 ── DATE-MATCH (Supabase dates × catalog orbit dates) ──
   rel= 174 ASC   catalog= 242  overlap=   0  (0.0% of Supabase dates)
-  rel= 108 DESC  catalog= 235  overlap=   0  (0.0% of Supabase dates)
+  rel= 108 DESC  catalog= 235  overlap= 235  (74.1% of Supabase dates)
 
-  ★ HISTORICAL TRACK: rel=174 ASC — 0/0 dates matched (0%)
+  ★ HISTORICAL TRACK: rel=108 DESC — 235/317 dates matched (74.1%)
 
 ── PER-YEAR BREAKDOWN ──
-  Year  | SB_dates | rel174ASC  | rel108DESC
+  Year  | SB_dates | rel108DESC | rel174ASC 
   ------------------------------------
-  2020  |        0 |     0/30   |     0/29  
-  2021  |        0 |     0/30   |     0/29  
-  2022  |        0 |     0/30   |     0/26  
-  2023  |        0 |     0/30   |     0/27  
-  2024  |        0 |     0/30   |     0/31  
-  2025  |        0 |     0/44   |     0/43  
-  2026  |        0 |     0/48   |     0/50  
+  2020  |       29 |    29/29   |     0/30  
+  2021  |       29 |    29/29   |     0/30  
+  2022  |       26 |    26/26   |     0/30  
+  2023  |       27 |    27/27   |     0/30  
+  2024  |       31 |    31/31   |     0/30  
+  2025  |       43 |    43/43   |     0/44  
+  2026  |       50 |    50/50   |     0/48  
 
 ── CONTAMINATION CHECK (rows/date > 24 tanks) ──
   No contaminated dates found (all dates have ≤ n_tanks rows)

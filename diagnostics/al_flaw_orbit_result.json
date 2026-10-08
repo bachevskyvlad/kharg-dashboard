@@ -1,20 +1,26 @@
 {
   "terminal": "al_flaw",
-  "historical_track": null,
+  "historical_track": {
+    "relative_orbit": 108,
+    "direction": "DESC",
+    "los_azimuth": 282,
+    "orbit_source": "data-derived",
+    "candidates": []
+  },
   "contamination_dates": 0,
-  "supabase_total_dates": 0,
+  "supabase_total_dates": 317,
   "matches": {
     "rel174_ASC": {
       "n_catalog": 242,
-      "n_supabase": 0,
+      "n_supabase": 317,
       "n_overlap": 0,
-      "pct": 0
+      "pct": 0.0
     },
     "rel108_DESC": {
       "n_catalog": 235,
-      "n_supabase": 0,
-      "n_overlap": 0,
-      "pct": 0
+      "n_supabase": 317,
+      "n_overlap": 235,
+      "pct": 74.1
     }
   }
 }

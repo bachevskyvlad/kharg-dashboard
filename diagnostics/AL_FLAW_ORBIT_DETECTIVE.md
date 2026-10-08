@@ -1,32 +1,34 @@
 # al_flaw Orbit Detective — data-derived track identification
 
-Run: 2026-10-07 22:09 UTC  
-Survey: 2020-01-01 … 2026-10-07  
-Supabase dates: 0  
+Run: 2026-10-08 10:47 UTC  
+Survey: 2020-01-01 … 2026-10-08  
+Supabase dates: 317  
 n_tanks: 24  
 
 ## Date-match summary
 
 | rel_orbit | direction | catalog_dates | overlap | pct_sb |
 |---|---|---|---|---|
-| 174 | ASC | 242 | 0 | 0% |
-| 108 | DESC | 235 | 0 | 0% |
+| 108 | DESC | 235 | 235 | 74.1% |
+| 174 | ASC | 242 | 0 | 0.0% |
 
 ## Historical track
 
-AMBIGUOUS — manual review required
+**rel=108 DESC** — 235/317 dates matched (74.1%)  
+los_azimuth: 282  
+orbit_source: data-derived  
 
 ## Per-year breakdown
 
-| Year | SB_dates | rel174 ASC | rel108 DESC |
+| Year | SB_dates | rel108 DESC | rel174 ASC |
 |---|---|---||---|
-| 2020 | 0 | 0/30 | 0/29 |
-| 2021 | 0 | 0/30 | 0/29 |
-| 2022 | 0 | 0/30 | 0/26 |
-| 2023 | 0 | 0/30 | 0/27 |
-| 2024 | 0 | 0/30 | 0/31 |
-| 2025 | 0 | 0/44 | 0/43 |
-| 2026 | 0 | 0/48 | 0/50 |
+| 2020 | 29 | 29/29 | 0/30 |
+| 2021 | 29 | 29/29 | 0/30 |
+| 2022 | 26 | 26/26 | 0/30 |
+| 2023 | 27 | 27/27 | 0/30 |
+| 2024 | 31 | 31/31 | 0/30 |
+| 2025 | 43 | 43/43 | 0/44 |
+| 2026 | 50 | 50/50 | 0/48 |
 
 ## Contamination check
 
