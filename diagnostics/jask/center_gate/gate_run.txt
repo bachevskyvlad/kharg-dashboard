@@ -1,0 +1,8 @@
+Traceback (most recent call last):
+  File "/home/runner/work/kharg-dashboard/kharg-dashboard/scripts/jask_center_gate.py", line 51, in <module>
+    from sar_fetch import lonlat_to_pix, LOS_AZIMUTH
+  File "/home/runner/work/kharg-dashboard/kharg-dashboard/scripts/sar_fetch.py", line 34, in <module>
+    from config import config, S1_CDSE, START_DATE, RESOLUTION, LOS_AZIMUTH, WIDTH_WIDE
+  File "/home/runner/work/kharg-dashboard/kharg-dashboard/scripts/config.py", line 12, in <module>
+    from supabase import create_client
+ModuleNotFoundError: No module named 'supabase'
