@@ -1,0 +1,29 @@
+Fetching ESRI z=18 crops for 20 Jask tanks …
+  jk_0 (confirmed) … saved (650×650px)
+  jk_1 (confirmed) … saved (650×650px)
+  jk_2 (confirmed) … saved (650×650px)
+  jk_3 (confirmed) … saved (650×650px)
+  jk_4 (confirmed) … saved (650×650px)
+  jk_5 (confirmed) … saved (650×650px)
+  jk_6 (confirmed) … saved (650×650px)
+  jk_7 (confirmed) … saved (650×650px)
+  jk_8 (uncertain) … saved (650×650px)
+  jk_9 (uncertain) … saved (650×650px)
+  jk_10 (uncertain) … saved (650×650px)
+  jk_11 (uncertain) … saved (650×650px)
+  jk_12 (uncertain) … saved (650×650px)
+  jk_13 (uncertain) … saved (650×650px)
+  jk_14 (uncertain) … saved (650×650px)
+  jk_15 (uncertain) … saved (650×650px)
+  jk_16 (uncertain) … saved (650×650px)
+  jk_17 (uncertain) … saved (650×650px)
+  jk_18 (uncertain) … saved (650×650px)
+  jk_19 (uncertain) … saved (650×650px)
+
+Building confirmed atlas (jk_0–jk_7) …
+  saved: confirmed_atlas.png  (2600, 1300)
+Building uncertain atlas (jk_8–jk_19) …
+  saved: uncertain_atlas.png  (2600, 1950)
+
+Written: /home/runner/work/kharg-dashboard/kharg-dashboard/diagnostics/jask/JASK_ESRI_MEASURE.md
+Done.
