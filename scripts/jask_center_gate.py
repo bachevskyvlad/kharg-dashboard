@@ -48,9 +48,15 @@ SH_CLIENT_ID     = os.environ.get("CLIENT_ID")     or ""
 SH_CLIENT_SECRET = os.environ.get("CLIENT_SECRET") or ""
 
 sys.path.insert(0, os.path.dirname(__file__))
-from sar_fetch import lonlat_to_pix, LOS_AZIMUTH
-from tank_registry import LOCATIONS
-from config import DB_FLOOR
+
+# Inlined to avoid importing sar_fetch/config which pull in supabase
+LOS_AZIMUTH = 282    # degrees — DESC orbit, Persian Gulf
+DB_FLOOR    = -5.0   # dB minimum clamp
+
+def lonlat_to_pix(lon, lat, bbox, w, h):
+    x = (lon - bbox.min_x) / (bbox.max_x - bbox.min_x) * w
+    y = (bbox.max_y - lat) / (bbox.max_y - bbox.min_y) * h
+    return x, y
 
 from sentinelhub import (
     SHConfig, BBox, CRS, DataCollection, MimeType, SentinelHubRequest
@@ -147,13 +153,27 @@ def extract(img_linear, masks):
 # ── Scene date catalog ────────────────────────────────────────────────────────
 
 def get_scene_dates(bbox):
-    from sar_fetch import get_all_scene_dates
-    return get_all_scene_dates(
-        bbox,
-        start_date=JASK_START,
-        orbit_state="descending",
-        relative_orbit=REL_ORBIT,
-    )
+    from sentinelhub import SentinelHubCatalog
+    import datetime as _dt
+    catalog  = SentinelHubCatalog(config=sh_config)
+    end_date = _dt.datetime.utcnow()
+    scenes   = list(catalog.search(
+        S1_CDSE, bbox=bbox,
+        time=(JASK_START.strftime("%Y-%m-%d"), end_date.strftime("%Y-%m-%d")),
+        filter="sat:orbit_state = 'descending'",
+        fields={"include": ["properties.datetime", "properties.sat:relative_orbit"]},
+    ))
+    seen_orbits = set()
+    dates = []
+    for s in sorted(scenes, key=lambda x: x["properties"]["datetime"]):
+        if s["properties"].get("sat:relative_orbit") != REL_ORBIT:
+            continue
+        dt = pd.to_datetime(s["properties"]["datetime"]).normalize()
+        key = (dt.date(), s["properties"].get("sat:relative_orbit"))
+        if key not in seen_orbits:
+            seen_orbits.add(key)
+            dates.append(dt)
+    return sorted(set(dates))
 
 
 # ── Fetch tile for one date ───────────────────────────────────────────────────
