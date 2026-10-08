@@ -1,0 +1,101 @@
+============================================================
+STAGE-2 GATE QUESTIONNAIRE v2 — Calibration + holdout
+============================================================
+
+Throughput source: EIA country briefs https://www.eia.gov/international/analysis/ ; IMF PortWatch https://portwatch.imf.org/
+
+Thresholds (physics-derived, set before data):
+  dwell_accumulator_min_days               = 12.0
+  dwell_flow_max_days                      = 4.0
+  cycle_pipeline_max_days                  = 14.0
+  cv_level_flow_max                        = 0.07
+
+────────────────────────────────────────────────────────────
+CALIBRATION TERMINALS
+────────────────────────────────────────────────────────────
+
+── KHARG (expected: ACCUMULATOR) ──
+  Fetching series for kharg …
+    587 rows  2015-04-06 → 2026-10-06
+  Actual: ACCUMULATOR  [✓]  scores={'ACCUMULATOR': 3, 'PIPELINE-BUFFER': 0, 'FLOW-THROUGH': 0}
+    n_weeks                      = 310
+    vol_mean_mn                  = 18.76
+    vol_std_mn                   = 1.92
+    cv_level                     = 0.102
+    dwell_days                   = 12.5
+    throughput_mn_d              = 1.5
+    n_drawdown_events            = 97
+    cv_drawdown                  = 0.489
+    autocorr_lag1                = -0.374
+    cycle_days_median            = 21.0
+    stuck_proxy                  = 0.003
+
+── YANBU (expected: PIPELINE-BUFFER) ──
+  Fetching series for yanbu …
+    332 rows  2014-10-09 → 2026-09-22
+  Actual: PIPELINE-BUFFER  [✓]  scores={'ACCUMULATOR': 0, 'PIPELINE-BUFFER': 5, 'FLOW-THROUGH': 0}
+    n_weeks                      = 326
+    vol_mean_mn                  = 9.19
+    vol_std_mn                   = 1.48
+    cv_level                     = 0.161
+    dwell_days                   = 7.1
+    throughput_mn_d              = 1.3
+    n_drawdown_events            = 113
+    cv_drawdown                  = 0.496
+    autocorr_lag1                = -0.402
+    cycle_days_median            = 14.0
+    stuck_proxy                  = 0.003
+
+── RAS_TANURA (expected: FLOW-THROUGH) ──
+  Fetching series for ras_tanura …
+    566 rows  2017-03-14 → 2026-10-06
+  Actual: FLOW-THROUGH  [✓]  scores={'ACCUMULATOR': 0, 'PIPELINE-BUFFER': 0, 'FLOW-THROUGH': 4}
+    n_weeks                      = 404
+    vol_mean_mn                  = 17.09
+    vol_std_mn                   = 1.0
+    cv_level                     = 0.059
+    dwell_days                   = 3.1
+    throughput_mn_d              = 5.5
+    n_drawdown_events            = 130
+    cv_drawdown                  = 0.455
+    autocorr_lag1                = -0.488
+    cycle_days_median            = 21.0
+    stuck_proxy                  = 0.002
+
+────────────────────────────────────────────────────────────
+HOLDOUT — al_flaw (expected class withheld; must be non-ACC)
+────────────────────────────────────────────────────────────
+  Fetching series for al_flaw …
+    317 rows  2015-04-11 → 2026-10-05
+
+── AL_FLAW ──
+  Actual: FLOW-THROUGH  [✓ (non-ACC)]  scores={'ACCUMULATOR': 0, 'PIPELINE-BUFFER': 0, 'FLOW-THROUGH': 3}
+    n_weeks                      = 303
+    vol_mean_mn                  = 4.65
+    vol_std_mn                   = 1.02
+    cv_level                     = 0.218
+    dwell_days                   = 3.9
+    throughput_mn_d              = 1.2
+    n_drawdown_events            = 33
+    cv_drawdown                  = 0.51
+    autocorr_lag1                = -0.38
+    cycle_days_median            = 35.0
+    stuck_proxy                  = 0.007
+
+============================================================
+GATE RESULT
+============================================================
+  Terminal        Expected             Actual             Pass
+  ------------------------------------------------------------
+  kharg           ACCUMULATOR          ACCUMULATOR        PASS
+  yanbu           PIPELINE-BUFFER      PIPELINE-BUFFER    PASS
+  ras_tanura      FLOW-THROUGH         FLOW-THROUGH       PASS
+  al_flaw         non-ACCUMULATOR      FLOW-THROUGH       PASS
+
+  GATE PASSED — calibration validated + holdout non-ACC.
+  Safe to classify Jask and other NEEDS_BASELINE terminals.
+
+Written: diagnostics/stage2_gate_v2_result.json
+Written: diagnostics/STAGE2_GATE_V2.md
+
+Done.
