@@ -1,0 +1,46 @@
+name: al_flaw unmatched-dates investigation
+
+on:
+  workflow_dispatch:
+
+jobs:
+  al_flaw_unmatched:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: main
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: pip install numpy pandas sentinelhub supabase shapely -q
+
+      - name: Run al_flaw unmatched investigation
+        env:
+          CLIENT_ID:     ${{ secrets.CLIENT_ID }}
+          CLIENT_SECRET: ${{ secrets.CLIENT_SECRET }}
+          SUPABASE_URL:  ${{ secrets.SUPABASE_URL }}
+          SUPABASE_KEY:  ${{ secrets.SUPABASE_KEY }}
+        run: |
+          mkdir -p diagnostics
+          cd scripts
+          python al_flaw_unmatched.py 2>&1 | tee ../diagnostics/al_flaw_unmatched_run.txt
+
+      - name: Save outputs
+        if: always()
+        run: |
+          git config user.email "actions@github.com"
+          git config user.name "GitHub Actions"
+          git add -f diagnostics/al_flaw_unmatched_run.txt       || true
+          git add -f diagnostics/AL_FLAW_UNMATCHED.md            || true
+          git add -f diagnostics/al_flaw_unmatched_result.json   || true
+          git diff --cached --quiet && echo "No changes" || \
+            git commit -m "ci: al_flaw unmatched investigation [skip ci]"
+          git pull --rebase origin main || true
+          git push origin HEAD:main || true
