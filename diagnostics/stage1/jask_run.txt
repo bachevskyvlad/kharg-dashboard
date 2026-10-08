@@ -1,7 +1,7 @@
 [stage1] Terminal : jask
 [stage1] Primary orbit: rel=93 DESC los=282
 [stage1] Survey start: 2024-06-01
-[stage1] Tanks (confirmed): 8
+[stage1] Tanks (confirmed): 20
 [stage1] Checkpoint reset.
 [stage1] Checkpoint: 0 dates already processed
 
@@ -9,16 +9,16 @@
 [stage1] Catalog: 109 scene dates
 [stage1] Pending (not yet processed): 109 dates
 [stage1] Date range: 2024-06-09 → 2026-10-04
-  … 10/109 scenes, 80 rows so far
-  … 20/109 scenes, 160 rows so far
-  … 30/109 scenes, 240 rows so far
-  … 40/109 scenes, 320 rows so far
-  … 50/109 scenes, 400 rows so far
-  … 60/109 scenes, 480 rows so far
-  … 70/109 scenes, 560 rows so far
-  … 80/109 scenes, 640 rows so far
-  … 90/109 scenes, 720 rows so far
-  … 100/109 scenes, 800 rows so far
+  … 10/109 scenes, 200 rows so far
+  … 20/109 scenes, 400 rows so far
+  … 30/109 scenes, 600 rows so far
+  … 40/109 scenes, 800 rows so far
+  … 50/109 scenes, 1000 rows so far
+  … 60/109 scenes, 1200 rows so far
+  … 70/109 scenes, 1400 rows so far
+  … 80/109 scenes, 1600 rows so far
+  … 90/109 scenes, 1800 rows so far
+  … 100/109 scenes, 2000 rows so far
 
 ============================================================
 STAGE-1 BASELINE — JASK
@@ -27,15 +27,15 @@ STAGE-1 BASELINE — JASK
   Catalog scenes       : 109
   Scenes processed     : 109
   Scenes skipped(err)  : 0
-  Rows prepared        : 872
+  Rows prepared        : 2180
   Distinct dates       : 109
-  Distinct tanks       : 8
+  Distinct tanks       : 20
   Date range           : 2024-06-09 → 2026-10-04
-  Tanks/date (med/min/max): 8 / 8 / 8
-  db_mean (p5/p50/p95): -2.65 / 2.57 / 8.83 dB
+  Tanks/date (med/min/max): 20 / 20 / 20
+  db_mean (p5/p50/p95): -1.70 / 6.76 / 14.73 dB
 ============================================================
 
-[stage1] Existing rows for jask: 6420
+[stage1] Existing rows for jask: 872
 [stage1] Deleting existing rows …
-[stage1] Inserting 872 rows …
+[stage1] Inserting 2180 rows …
 [stage1] Insert complete. jask Stage-1 baseline committed.
