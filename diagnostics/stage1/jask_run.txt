@@ -2,20 +2,40 @@
 [stage1] Primary orbit: rel=93 DESC los=282
 [stage1] Survey start: 2024-06-01
 [stage1] Tanks (confirmed): 8
-[stage1] Checkpoint: 109 dates already processed
+[stage1] Checkpoint reset.
+[stage1] Checkpoint: 0 dates already processed
 
 [stage1] Querying catalog: descending rel=93 from 2024-06-01 …
 [stage1] Catalog: 109 scene dates
-[stage1] Pending (not yet processed): 0 dates
+[stage1] Pending (not yet processed): 109 dates
+[stage1] Date range: 2024-06-09 → 2026-10-04
+  … 10/109 scenes, 80 rows so far
+  … 20/109 scenes, 160 rows so far
+  … 30/109 scenes, 240 rows so far
+  … 40/109 scenes, 320 rows so far
+  … 50/109 scenes, 400 rows so far
+  … 60/109 scenes, 480 rows so far
+  … 70/109 scenes, 560 rows so far
+  … 80/109 scenes, 640 rows so far
+  … 90/109 scenes, 720 rows so far
+  … 100/109 scenes, 800 rows so far
 
 ============================================================
 STAGE-1 BASELINE — JASK
 ============================================================
   Orbit                : rel=93 DESC
   Catalog scenes       : 109
-  Scenes processed     : 0
+  Scenes processed     : 109
   Scenes skipped(err)  : 0
-  Rows prepared        : 0
+  Rows prepared        : 872
+  Distinct dates       : 109
+  Distinct tanks       : 8
+  Date range           : 2024-06-09 → 2026-10-04
+  Tanks/date (med/min/max): 8 / 8 / 8
+  db_mean (p5/p50/p95): -2.65 / 2.57 / 8.83 dB
 ============================================================
 
-[stage1] ABORT: 0 rows prepared — refusing to overwrite existing data.
+[stage1] Existing rows for jask: 6420
+[stage1] Deleting existing rows …
+[stage1] Inserting 872 rows …
+[stage1] Insert complete. jask Stage-1 baseline committed.
