@@ -1,0 +1,16 @@
+============================================================
+STAGE-2 GATE QUESTIONNAIRE — Calibration run
+============================================================
+
+── KHARG (expected: ACCUMULATOR) ──
+  Fetching series for kharg …
+Traceback (most recent call last):
+  File "/home/runner/work/kharg-dashboard/kharg-dashboard/scripts/stage2_gate_questionnaire.py", line 277, in <module>
+    df = fetch_series(tid)
+         ^^^^^^^^^^^^^^^^^
+  File "/home/runner/work/kharg-dashboard/kharg-dashboard/scripts/stage2_gate_questionnaire.py", line 103, in fetch_series
+    .execute().data)
+     ^^^^^^^^^
+  File "/opt/hostedtoolcache/Python/3.11.17/x64/lib/python3.11/site-packages/postgrest/_sync/request_builder.py", line 96, in execute
+    raise APIError(dict(json_obj))
+postgrest.exceptions.APIError: {'message': "Could not find the table 'public.kharg_daily' in the schema cache", 'code': 'PGRST205', 'hint': "Perhaps you meant the table 'public.kharg_gross_flows'", 'details': None}
