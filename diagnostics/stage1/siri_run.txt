@@ -1,0 +1,59 @@
+[stage1] Terminal : siri
+[stage1] Primary orbit: rel=166 DESC los=282
+[stage1] Survey start: 2017-01-01
+[stage1] Tanks (confirmed): 6
+[stage1] Checkpoint: 0 dates already processed
+
+[stage1] Querying catalog: descending rel=166 from 2017-01-01 …
+[stage1] Catalog: 321 scene dates
+[stage1] Pending (not yet processed): 321 dates
+[stage1] Date range: 2017-02-27 → 2026-10-03
+  … 10/321 scenes, 60 rows so far
+  … 20/321 scenes, 120 rows so far
+  … 30/321 scenes, 180 rows so far
+  … 40/321 scenes, 240 rows so far
+  … 50/321 scenes, 300 rows so far
+  … 60/321 scenes, 360 rows so far
+  … 70/321 scenes, 420 rows so far
+  … 80/321 scenes, 480 rows so far
+  … 90/321 scenes, 540 rows so far
+  … 100/321 scenes, 600 rows so far
+  … 110/321 scenes, 660 rows so far
+  … 120/321 scenes, 720 rows so far
+  … 130/321 scenes, 780 rows so far
+  … 140/321 scenes, 840 rows so far
+  … 150/321 scenes, 900 rows so far
+  … 160/321 scenes, 960 rows so far
+  … 170/321 scenes, 1020 rows so far
+  … 180/321 scenes, 1080 rows so far
+  … 190/321 scenes, 1140 rows so far
+  … 200/321 scenes, 1200 rows so far
+  … 210/321 scenes, 1260 rows so far
+  … 220/321 scenes, 1320 rows so far
+  … 230/321 scenes, 1380 rows so far
+  … 240/321 scenes, 1440 rows so far
+  … 250/321 scenes, 1500 rows so far
+  … 260/321 scenes, 1560 rows so far
+  … 270/321 scenes, 1620 rows so far
+  … 280/321 scenes, 1680 rows so far
+  … 290/321 scenes, 1740 rows so far
+  … 300/321 scenes, 1800 rows so far
+  … 310/321 scenes, 1860 rows so far
+  … 320/321 scenes, 1920 rows so far
+
+============================================================
+STAGE-1 BASELINE — SIRI
+============================================================
+  Orbit                : rel=166 DESC
+  Catalog scenes       : 321
+  Scenes processed     : 321
+  Scenes skipped(err)  : 0
+  Rows prepared        : 1926
+  Distinct dates       : 321
+  Distinct tanks       : 6
+  Date range           : 2017-02-27 → 2026-10-03
+  Tanks/date (med/min/max): 6 / 6 / 6
+  db_mean (p5/p50/p95): -3.70 / 3.13 / 12.51 dB
+============================================================
+
+[stage1] Dry-run complete for siri. Pass --commit to write to Supabase.
