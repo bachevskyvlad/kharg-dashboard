@@ -1,0 +1,42 @@
+name: Jask ESRI z18 clean-crop radius measurement
+
+on:
+  workflow_dispatch:
+
+jobs:
+  jask_radius_measure:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: main
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: pip install numpy requests Pillow -q
+
+      - name: Fetch clean crops and measure radii
+        run: |
+          mkdir -p diagnostics/jask/esri_clean
+          cd scripts
+          python jask_measure_clean.py 2>&1 | tee ../diagnostics/jask/jask_radius_run.txt
+
+      - name: Save outputs
+        if: always()
+        run: |
+          git config user.email "actions@github.com"
+          git config user.name "GitHub Actions"
+          git add -f diagnostics/jask/esri_clean/        || true
+          git add -f diagnostics/jask/JASK_RADIUS_TABLE.md || true
+          git add -f diagnostics/jask/jask_radius_raw.json || true
+          git add -f diagnostics/jask/jask_radius_run.txt  || true
+          git diff --cached --quiet && echo "No changes" || \
+            git commit -m "ci: jask radius measurement — clean ESRI z18 [skip ci]"
+          git pull --rebase origin main || true
+          git push origin HEAD:main || true
