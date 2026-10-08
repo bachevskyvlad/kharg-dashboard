@@ -1,8 +1,183 @@
-Traceback (most recent call last):
-  File "/home/runner/work/kharg-dashboard/kharg-dashboard/scripts/jask_center_gate.py", line 51, in <module>
-    from sar_fetch import lonlat_to_pix, LOS_AZIMUTH
-  File "/home/runner/work/kharg-dashboard/kharg-dashboard/scripts/sar_fetch.py", line 34, in <module>
-    from config import config, S1_CDSE, START_DATE, RESOLUTION, LOS_AZIMUTH, WIDTH_WIDE
-  File "/home/runner/work/kharg-dashboard/kharg-dashboard/scripts/config.py", line 12, in <module>
-    from supabase import create_client
-ModuleNotFoundError: No module named 'supabase'
+Config A: 20 tanks (original eye centers + r_fit)
+Config B: 20 tanks (ESRI-measured centers + r_fit)
+Tile size: 322×405px  BBox: [57.2968,25.8485,57.3129,25.8667]
+
+Crescent pixel counts (A / B):
+  jk_0: 57 / 58
+  jk_1: 56 / 61
+  jk_2: 57 / 55
+  jk_3: 60 / 61
+  jk_4: 56 / 56
+  jk_5: 56 / 54
+  jk_6: 56 / 56
+  jk_7: 54 / 57
+  jk_8: 63 / 60
+  jk_9: 60 / 61
+  jk_10: 67 / 69
+  jk_11: 62 / 68
+  jk_12: 52 / 51
+  jk_13: 47 / 46
+  jk_14: 49 / 47
+  jk_15: 49 / 49
+  jk_16: 61 / 60
+  jk_17: 56 / 54
+  jk_18: 59 / 59
+  jk_19: 55 / 53
+
+Querying catalog (jask DESC rel=93 from 2024-06-01) …
+Found 109 scene dates
+  [  1/109] 2024-06-09 … A_tanks=20 B_tanks=20
+  [  2/109] 2024-06-21 … A_tanks=20 B_tanks=20
+  [  3/109] 2024-07-03 … A_tanks=20 B_tanks=20
+  [  4/109] 2024-07-15 … A_tanks=20 B_tanks=20
+  [  5/109] 2024-07-27 … A_tanks=20 B_tanks=20
+  [  6/109] 2024-08-08 … A_tanks=20 B_tanks=20
+  [  7/109] 2024-08-20 … A_tanks=20 B_tanks=20
+  [  8/109] 2024-09-01 … A_tanks=20 B_tanks=20
+  [  9/109] 2024-09-13 … A_tanks=20 B_tanks=20
+  [ 10/109] 2024-09-25 … A_tanks=20 B_tanks=20
+  [ 11/109] 2024-10-07 … A_tanks=20 B_tanks=20
+  [ 12/109] 2024-10-19 … A_tanks=20 B_tanks=20
+  [ 13/109] 2024-10-31 … A_tanks=20 B_tanks=20
+  [ 14/109] 2024-11-12 … A_tanks=20 B_tanks=20
+  [ 15/109] 2024-11-24 … A_tanks=20 B_tanks=20
+  [ 16/109] 2024-12-06 … A_tanks=20 B_tanks=20
+  [ 17/109] 2024-12-18 … A_tanks=20 B_tanks=20
+  [ 18/109] 2024-12-30 … A_tanks=20 B_tanks=20
+  [ 19/109] 2025-01-11 … A_tanks=20 B_tanks=20
+  [ 20/109] 2025-01-23 … A_tanks=20 B_tanks=20
+  [ 21/109] 2025-02-04 … A_tanks=20 B_tanks=20
+  [ 22/109] 2025-02-16 … A_tanks=20 B_tanks=20
+  [ 23/109] 2025-02-28 … A_tanks=20 B_tanks=20
+  [ 24/109] 2025-03-12 … A_tanks=20 B_tanks=20
+  [ 25/109] 2025-03-24 … A_tanks=20 B_tanks=20
+  [ 26/109] 2025-04-05 … A_tanks=20 B_tanks=20
+  [ 27/109] 2025-04-17 … A_tanks=20 B_tanks=20
+  [ 28/109] 2025-04-29 … A_tanks=20 B_tanks=20
+  [ 29/109] 2025-05-11 … A_tanks=20 B_tanks=20
+  [ 30/109] 2025-05-23 … A_tanks=20 B_tanks=20
+  [ 31/109] 2025-06-04 … A_tanks=20 B_tanks=20
+  [ 32/109] 2025-06-16 … A_tanks=20 B_tanks=20
+  [ 33/109] 2025-06-28 … A_tanks=20 B_tanks=20
+  [ 34/109] 2025-07-10 … A_tanks=20 B_tanks=20
+  [ 35/109] 2025-07-22 … A_tanks=20 B_tanks=20
+  [ 36/109] 2025-07-28 … A_tanks=20 B_tanks=20
+  [ 37/109] 2025-08-03 … A_tanks=20 B_tanks=20
+  [ 38/109] 2025-08-09 … A_tanks=20 B_tanks=20
+  [ 39/109] 2025-08-15 … A_tanks=20 B_tanks=20
+  [ 40/109] 2025-08-21 … A_tanks=20 B_tanks=20
+  [ 41/109] 2025-08-27 … A_tanks=20 B_tanks=20
+  [ 42/109] 2025-09-02 … A_tanks=20 B_tanks=20
+  [ 43/109] 2025-09-08 … A_tanks=20 B_tanks=20
+  [ 44/109] 2025-09-14 … A_tanks=20 B_tanks=20
+  [ 45/109] 2025-09-20 … A_tanks=20 B_tanks=20
+  [ 46/109] 2025-09-26 … A_tanks=20 B_tanks=20
+  [ 47/109] 2025-10-02 … A_tanks=20 B_tanks=20
+  [ 48/109] 2025-10-08 … A_tanks=20 B_tanks=20
+  [ 49/109] 2025-10-14 … A_tanks=20 B_tanks=20
+  [ 50/109] 2025-10-20 … A_tanks=20 B_tanks=20
+  [ 51/109] 2025-10-26 … A_tanks=20 B_tanks=20
+  [ 52/109] 2025-11-01 … A_tanks=20 B_tanks=20
+  [ 53/109] 2025-11-07 … A_tanks=20 B_tanks=20
+  [ 54/109] 2025-11-13 … A_tanks=20 B_tanks=20
+  [ 55/109] 2025-11-19 … A_tanks=20 B_tanks=20
+  [ 56/109] 2025-11-25 … A_tanks=20 B_tanks=20
+  [ 57/109] 2025-12-01 … A_tanks=20 B_tanks=20
+  [ 58/109] 2025-12-07 … A_tanks=20 B_tanks=20
+  [ 59/109] 2025-12-13 … A_tanks=20 B_tanks=20
+  [ 60/109] 2025-12-19 … A_tanks=20 B_tanks=20
+  [ 61/109] 2025-12-25 … A_tanks=20 B_tanks=20
+  [ 62/109] 2025-12-31 … A_tanks=20 B_tanks=20
+  [ 63/109] 2026-01-06 … A_tanks=20 B_tanks=20
+  [ 64/109] 2026-01-12 … A_tanks=20 B_tanks=20
+  [ 65/109] 2026-01-18 … A_tanks=20 B_tanks=20
+  [ 66/109] 2026-01-24 … A_tanks=20 B_tanks=20
+  [ 67/109] 2026-01-30 … A_tanks=20 B_tanks=20
+  [ 68/109] 2026-02-05 … A_tanks=20 B_tanks=20
+  [ 69/109] 2026-02-11 … A_tanks=20 B_tanks=20
+  [ 70/109] 2026-02-17 … A_tanks=20 B_tanks=20
+  [ 71/109] 2026-02-23 … A_tanks=20 B_tanks=20
+  [ 72/109] 2026-03-01 … A_tanks=20 B_tanks=20
+  [ 73/109] 2026-03-07 … A_tanks=20 B_tanks=20
+  [ 74/109] 2026-03-13 … A_tanks=20 B_tanks=20
+  [ 75/109] 2026-03-19 … A_tanks=20 B_tanks=20
+  [ 76/109] 2026-03-25 … A_tanks=20 B_tanks=20
+  [ 77/109] 2026-03-31 … A_tanks=20 B_tanks=20
+  [ 78/109] 2026-04-06 … A_tanks=20 B_tanks=20
+  [ 79/109] 2026-04-12 … A_tanks=20 B_tanks=20
+  [ 80/109] 2026-04-18 … A_tanks=20 B_tanks=20
+  [ 81/109] 2026-04-24 … A_tanks=20 B_tanks=20
+  [ 82/109] 2026-04-30 … A_tanks=20 B_tanks=20
+  [ 83/109] 2026-05-06 … A_tanks=20 B_tanks=20
+  [ 84/109] 2026-05-12 … A_tanks=20 B_tanks=20
+  [ 85/109] 2026-05-13 … A_tanks=20 B_tanks=20
+  [ 86/109] 2026-05-18 … A_tanks=20 B_tanks=20
+  [ 87/109] 2026-05-24 … A_tanks=20 B_tanks=20
+  [ 88/109] 2026-05-25 … A_tanks=20 B_tanks=20
+  [ 89/109] 2026-05-30 … A_tanks=20 B_tanks=20
+  [ 90/109] 2026-06-05 … A_tanks=20 B_tanks=20
+  [ 91/109] 2026-06-06 … A_tanks=20 B_tanks=20
+  [ 92/109] 2026-06-11 … A_tanks=20 B_tanks=20
+  [ 93/109] 2026-06-18 … A_tanks=20 B_tanks=20
+  [ 94/109] 2026-06-23 … A_tanks=20 B_tanks=20
+  [ 95/109] 2026-06-30 … A_tanks=20 B_tanks=20
+  [ 96/109] 2026-07-06 … A_tanks=20 B_tanks=20
+  [ 97/109] 2026-07-12 … A_tanks=20 B_tanks=20
+  [ 98/109] 2026-07-18 … A_tanks=20 B_tanks=20
+  [ 99/109] 2026-07-24 … A_tanks=20 B_tanks=20
+  [100/109] 2026-07-30 … A_tanks=20 B_tanks=20
+  [101/109] 2026-08-05 … A_tanks=20 B_tanks=20
+  [102/109] 2026-08-11 … A_tanks=20 B_tanks=20
+  [103/109] 2026-08-17 … A_tanks=20 B_tanks=20
+  [104/109] 2026-08-23 … A_tanks=20 B_tanks=20
+  [105/109] 2026-08-29 … A_tanks=20 B_tanks=20
+  [106/109] 2026-09-10 … A_tanks=20 B_tanks=20
+  [107/109] 2026-09-16 … A_tanks=20 B_tanks=20
+  [108/109] 2026-09-22 … A_tanks=20 B_tanks=20
+  [109/109] 2026-10-04 … A_tanks=20 B_tanks=20
+
+Done: 109 ok, 0 skipped
+Saved: /home/runner/work/kharg-dashboard/kharg-dashboard/diagnostics/jask/center_gate/ab_db_means.csv
+
+======================================================================
+CENTER GATE A/B — JASK
+Criterion: step_db = median |Δdb| per consecutive observations/tank
+Threshold: ≥15% median diff → decisive; tie → B wins
+======================================================================
+Tank       step_A   step_B      Δ%   winner
+---------------------------------------------
+jk_0        0.998    0.919   -7.9%        B
+jk_1        0.644    0.567  -11.8%        B
+jk_10       0.828    0.781   -5.6%        B
+jk_11       0.993    0.828  -16.6%        B
+jk_12       0.588    0.588   +0.0%        B
+jk_13       0.916    0.752  -17.9%        B
+jk_14       0.879    0.876   -0.4%        B
+jk_15       1.371    0.881  -35.7%        A
+jk_16       0.683    0.745   +9.1%        B
+jk_17       0.492    0.596  +21.2%        B
+jk_18       0.726    0.672   -7.4%        B
+jk_19       0.857    0.471  -45.1%        A
+jk_2        0.952    0.976   +2.6%        B
+jk_3        0.869    0.906   +4.3%        B
+jk_4        0.538    0.390  -27.4%        A
+jk_5        1.015    0.394  -61.1%        A
+jk_6        0.568    0.776  +36.8%        B
+jk_7        0.525    0.581  +10.7%        B
+jk_8        1.166    0.893  -23.4%        A
+jk_9        0.641    0.513  -20.0%        B
+---------------------------------------------
+MEDIAN      0.843    0.749  -11.1%
+
+VERDICT: TIE (diff=-11.1% < 15%) — B wins tiebreak (measured center beats eyeball per protocol)
+
+Per-tank overrides:
+  jk_4: override → A (step_B=0.390 vs step_A=0.538)
+  jk_5: override → A (step_B=0.394 vs step_A=1.015)
+  jk_8: override → A (step_B=0.893 vs step_A=1.166)
+  jk_15: override → A (step_B=0.881 vs step_A=1.371)
+  jk_19: override → A (step_B=0.471 vs step_A=0.857)
+
+Report → /home/runner/work/kharg-dashboard/kharg-dashboard/diagnostics/jask/JASK_CENTER_GATE.md
+Step CSV → /home/runner/work/kharg-dashboard/kharg-dashboard/diagnostics/jask/center_gate/ab_step_db.csv
+Raw CSV  → /home/runner/work/kharg-dashboard/kharg-dashboard/diagnostics/jask/center_gate/ab_db_means.csv
