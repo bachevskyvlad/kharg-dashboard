@@ -19,7 +19,7 @@ jobs:
           python-version: "3.11"
 
       - name: Install dependencies
-        run: pip install numpy pandas supabase -q
+        run: pip install numpy pandas supabase sentinelhub -q
 
       - name: Stage 1 — compute SERIES_HEALTH_STANDARD corridors
         env:
