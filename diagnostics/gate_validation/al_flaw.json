@@ -1,0 +1,35 @@
+{
+  "terminal": "al_flaw",
+  "relative_orbit": null,
+  "verdict": "FLAG",
+  "diagnosis": "REVIEW",
+  "flags": {
+    "cv_level": {
+      "value": -0.14948937064879977,
+      "lo": 0.098,
+      "hi": 0.6358,
+      "flag": "BELOW_LO",
+      "metric": "CV of level (\u03c3/\u03bc mean_db)"
+    },
+    "cycles_per_year": {
+      "value": 0.4353396901072706,
+      "lo": 0.67,
+      "hi": 3.65,
+      "flag": "BELOW_LO",
+      "metric": "Build-draw cycles/year"
+    }
+  },
+  "metrics": {
+    "dynamic_range_db": 2.398769166666667,
+    "cv_level": -0.14948937064879977,
+    "vel_std_norm": 0.09312807384534506,
+    "delta_p50_norm": 0.06391645993448733,
+    "delta_p90_norm": 0.18627087572341783,
+    "delta_p99_norm": 0.47137768223495263,
+    "cycles_per_year": 0.4353396901072706,
+    "cycle_depth_norm": 0.20155432143498597,
+    "max_flat_passes": 2,
+    "per_tank_step_norm": 0.22418789080372115,
+    "live_fraction": 1.0
+  }
+}

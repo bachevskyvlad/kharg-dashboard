@@ -1,0 +1,28 @@
+{
+  "terminal": "jask",
+  "relative_orbit": null,
+  "verdict": "FLAG",
+  "diagnosis": "REVIEW",
+  "flags": {
+    "cycle_depth_norm": {
+      "value": 0.36996496540231477,
+      "lo": 0.0558,
+      "hi": 0.2533,
+      "flag": "ABOVE_HI",
+      "metric": "Cycle depth (norm by dr)"
+    }
+  },
+  "metrics": {
+    "dynamic_range_db": 2.7197842029999997,
+    "cv_level": 0.15340745658719734,
+    "vel_std_norm": 0.19324545704313567,
+    "delta_p50_norm": 0.1350723798582195,
+    "delta_p90_norm": 0.4827051935046483,
+    "delta_p99_norm": 0.7201401013137653,
+    "cycles_per_year": 1.9405253837072018,
+    "cycle_depth_norm": 0.36996496540231477,
+    "max_flat_passes": 1,
+    "per_tank_step_norm": 0.29515944651583836,
+    "live_fraction": 1.0
+  }
+}

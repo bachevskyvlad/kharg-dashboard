@@ -1,0 +1,20 @@
+{
+  "terminal": "ras_tanura",
+  "relative_orbit": 35,
+  "verdict": "PASS",
+  "diagnosis": null,
+  "flags": {},
+  "metrics": {
+    "dynamic_range_db": 2.26198960680303,
+    "cv_level": 0.12677935380089764,
+    "vel_std_norm": 0.22089603755497247,
+    "delta_p50_norm": 0.22932785619907464,
+    "delta_p90_norm": 0.5912188010551658,
+    "delta_p99_norm": 0.9417120139685832,
+    "cycles_per_year": 2.680251798561151,
+    "cycle_depth_norm": 0.1440649145525915,
+    "max_flat_passes": 2,
+    "per_tank_step_norm": 1.1195730043955603,
+    "live_fraction": 1.0
+  }
+}

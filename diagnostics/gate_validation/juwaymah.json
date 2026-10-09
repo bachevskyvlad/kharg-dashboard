@@ -1,0 +1,20 @@
+{
+  "terminal": "juwaymah",
+  "relative_orbit": null,
+  "verdict": "PASS",
+  "diagnosis": null,
+  "flags": {},
+  "metrics": {
+    "dynamic_range_db": 4.3468493664035055,
+    "cv_level": 0.20704204445822588,
+    "vel_std_norm": 0.22923060026048528,
+    "delta_p50_norm": 0.24288318361098446,
+    "delta_p90_norm": 0.6029852768028366,
+    "delta_p99_norm": 0.9084139928041116,
+    "cycles_per_year": 3.346120813054681,
+    "cycle_depth_norm": 0.15807417110817204,
+    "max_flat_passes": 1,
+    "per_tank_step_norm": 1.0621233014614262,
+    "live_fraction": 1.0
+  }
+}
