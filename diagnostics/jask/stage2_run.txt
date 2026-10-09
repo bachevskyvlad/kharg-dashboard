@@ -1,8 +1,56 @@
-Traceback (most recent call last):
-  File "/home/runner/work/kharg-dashboard/kharg-dashboard/scripts/jask_stage2_screen.py", line 30, in <module>
-    jask_loc = next(l for l in LOCATIONS if l["terminal"] == "jask")
-               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/home/runner/work/kharg-dashboard/kharg-dashboard/scripts/jask_stage2_screen.py", line 30, in <genexpr>
-    jask_loc = next(l for l in LOCATIONS if l["terminal"] == "jask")
-                                            ~^^^^^^^^^^^^
-KeyError: 'terminal'
+Registry: 20 Jask tanks
+Pulling terminal_observations…
+  2180 rows
+
+── step_db ──────────────────────────────────────
+  jk_0    step=0.946   n=109
+  jk_1    step=0.555   n=109
+  jk_10   step=0.785   n=109
+  jk_11   step=0.836   n=109
+  jk_12   step=0.642   n=109
+  jk_13   step=0.598   n=109
+  jk_14   step=1.043   n=109
+  jk_15   step=0.956   n=109
+  jk_16   step=0.775   n=109
+  jk_17   step=0.647   n=109
+  jk_18   step=0.614   n=109
+  jk_19   step=0.880   n=109
+  jk_2    step=0.948   n=109
+  jk_3    step=0.964   n=109
+  jk_4    step=0.568   n=109
+  jk_5    step=1.015   n=109
+  jk_6    step=0.820   n=109
+  jk_7    step=0.557   n=109
+  jk_8    step=1.190   n=109
+  jk_9    step=0.523   n=109
+
+Total capacity (r_fit-based): 7.318 Mb
+WL tanks (0): 
+WL cap: 0.000 Mb = 0.0% of total
+
+60% gate: FAIL → TANK_LEVEL (0.0% < 60%)
+
+── Stuck detection ──────────────────────────────
+  jk_0    ok                      floor=0.00  iqr=14.53  range=19.01  step=0.946
+  jk_1    ok                      floor=0.00  iqr=7.11  range=16.12  step=0.555
+  jk_10   ok                      floor=0.05  iqr=3.83  range=25.08  step=0.785
+  jk_11   ok                      floor=0.01  iqr=2.49  range=21.58  step=0.836
+  jk_12   ok                      floor=0.00  iqr=1.56  range=12.68  step=0.642
+  jk_13   ok                      floor=0.00  iqr=1.63  range=20.49  step=0.598
+  jk_14   ok                      floor=0.00  iqr=4.20  range=15.99  step=1.043
+  jk_15   ok                      floor=0.00  iqr=5.91  range=17.32  step=0.956
+  jk_16   ok                      floor=0.00  iqr=2.86  range=18.96  step=0.775
+  jk_17   ok                      floor=0.00  iqr=1.42  range=20.96  step=0.647
+  jk_18   ok                      floor=0.00  iqr=7.94  range=19.10  step=0.614
+  jk_19   ok                      floor=0.00  iqr=1.42  range=12.22  step=0.880
+  jk_2    ok                      floor=0.00  iqr=4.91  range=17.96  step=0.948
+  jk_3    ok                      floor=0.00  iqr=9.92  range=14.46  step=0.964
+  jk_4    ok                      floor=0.00  iqr=1.75  range=12.38  step=0.568
+  jk_5    ok                      floor=0.00  iqr=2.43  range=11.32  step=1.015
+  jk_6    ok                      floor=0.06  iqr=5.11  range=20.82  step=0.820
+  jk_7    ok                      floor=0.03  iqr=3.49  range=18.12  step=0.557
+  jk_8    ok                      floor=0.03  iqr=4.73  range=21.74  step=1.190
+  jk_9    ok                      floor=0.01  iqr=4.65  range=20.50  step=0.523
+
+JSON → /home/runner/work/kharg-dashboard/kharg-dashboard/diagnostics/jask/stage2_screen.json
+MD  → /home/runner/work/kharg-dashboard/kharg-dashboard/diagnostics/jask/JASK_SCREEN.md

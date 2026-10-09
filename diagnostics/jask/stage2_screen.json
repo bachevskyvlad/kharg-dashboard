@@ -1,0 +1,315 @@
+{
+  "run_utc": "2026-10-09 09:41",
+  "n_obs": 2180,
+  "wl_threshold": 2.5,
+  "cap_gate": 0.6,
+  "total_cap_mb": 7.318,
+  "wl_cap_mb": 0,
+  "wl_pct": 0.0,
+  "wl_ids": [],
+  "verdict": "TANK_LEVEL",
+  "step_db": [
+    {
+      "tank_id": "jk_0",
+      "n_obs": 109,
+      "step_db": 0.946,
+      "WL": false,
+      "note": ""
+    },
+    {
+      "tank_id": "jk_1",
+      "n_obs": 109,
+      "step_db": 0.555,
+      "WL": false,
+      "note": ""
+    },
+    {
+      "tank_id": "jk_10",
+      "n_obs": 109,
+      "step_db": 0.785,
+      "WL": false,
+      "note": ""
+    },
+    {
+      "tank_id": "jk_11",
+      "n_obs": 109,
+      "step_db": 0.836,
+      "WL": false,
+      "note": ""
+    },
+    {
+      "tank_id": "jk_12",
+      "n_obs": 109,
+      "step_db": 0.642,
+      "WL": false,
+      "note": ""
+    },
+    {
+      "tank_id": "jk_13",
+      "n_obs": 109,
+      "step_db": 0.598,
+      "WL": false,
+      "note": ""
+    },
+    {
+      "tank_id": "jk_14",
+      "n_obs": 109,
+      "step_db": 1.043,
+      "WL": false,
+      "note": ""
+    },
+    {
+      "tank_id": "jk_15",
+      "n_obs": 109,
+      "step_db": 0.956,
+      "WL": false,
+      "note": ""
+    },
+    {
+      "tank_id": "jk_16",
+      "n_obs": 109,
+      "step_db": 0.775,
+      "WL": false,
+      "note": ""
+    },
+    {
+      "tank_id": "jk_17",
+      "n_obs": 109,
+      "step_db": 0.647,
+      "WL": false,
+      "note": ""
+    },
+    {
+      "tank_id": "jk_18",
+      "n_obs": 109,
+      "step_db": 0.614,
+      "WL": false,
+      "note": ""
+    },
+    {
+      "tank_id": "jk_19",
+      "n_obs": 109,
+      "step_db": 0.88,
+      "WL": false,
+      "note": ""
+    },
+    {
+      "tank_id": "jk_2",
+      "n_obs": 109,
+      "step_db": 0.948,
+      "WL": false,
+      "note": ""
+    },
+    {
+      "tank_id": "jk_3",
+      "n_obs": 109,
+      "step_db": 0.964,
+      "WL": false,
+      "note": ""
+    },
+    {
+      "tank_id": "jk_4",
+      "n_obs": 109,
+      "step_db": 0.568,
+      "WL": false,
+      "note": ""
+    },
+    {
+      "tank_id": "jk_5",
+      "n_obs": 109,
+      "step_db": 1.015,
+      "WL": false,
+      "note": ""
+    },
+    {
+      "tank_id": "jk_6",
+      "n_obs": 109,
+      "step_db": 0.82,
+      "WL": false,
+      "note": ""
+    },
+    {
+      "tank_id": "jk_7",
+      "n_obs": 109,
+      "step_db": 0.557,
+      "WL": false,
+      "note": ""
+    },
+    {
+      "tank_id": "jk_8",
+      "n_obs": 109,
+      "step_db": 1.19,
+      "WL": false,
+      "note": ""
+    },
+    {
+      "tank_id": "jk_9",
+      "n_obs": 109,
+      "step_db": 0.523,
+      "WL": false,
+      "note": ""
+    }
+  ],
+  "stuck": [
+    {
+      "tank_id": "jk_0",
+      "flag": "ok",
+      "floor_frac": 0.0,
+      "iqr": 14.532,
+      "range": 19.01,
+      "step_db": 0.946
+    },
+    {
+      "tank_id": "jk_1",
+      "flag": "ok",
+      "floor_frac": 0.0,
+      "iqr": 7.107,
+      "range": 16.116,
+      "step_db": 0.555
+    },
+    {
+      "tank_id": "jk_10",
+      "flag": "ok",
+      "floor_frac": 0.046,
+      "iqr": 3.826,
+      "range": 25.082,
+      "step_db": 0.785
+    },
+    {
+      "tank_id": "jk_11",
+      "flag": "ok",
+      "floor_frac": 0.009,
+      "iqr": 2.493,
+      "range": 21.584,
+      "step_db": 0.836
+    },
+    {
+      "tank_id": "jk_12",
+      "flag": "ok",
+      "floor_frac": 0.0,
+      "iqr": 1.56,
+      "range": 12.677,
+      "step_db": 0.642
+    },
+    {
+      "tank_id": "jk_13",
+      "flag": "ok",
+      "floor_frac": 0.0,
+      "iqr": 1.627,
+      "range": 20.488,
+      "step_db": 0.598
+    },
+    {
+      "tank_id": "jk_14",
+      "flag": "ok",
+      "floor_frac": 0.0,
+      "iqr": 4.202,
+      "range": 15.991,
+      "step_db": 1.043
+    },
+    {
+      "tank_id": "jk_15",
+      "flag": "ok",
+      "floor_frac": 0.0,
+      "iqr": 5.911,
+      "range": 17.325,
+      "step_db": 0.956
+    },
+    {
+      "tank_id": "jk_16",
+      "flag": "ok",
+      "floor_frac": 0.0,
+      "iqr": 2.861,
+      "range": 18.962,
+      "step_db": 0.775
+    },
+    {
+      "tank_id": "jk_17",
+      "flag": "ok",
+      "floor_frac": 0.0,
+      "iqr": 1.423,
+      "range": 20.964,
+      "step_db": 0.647
+    },
+    {
+      "tank_id": "jk_18",
+      "flag": "ok",
+      "floor_frac": 0.0,
+      "iqr": 7.937,
+      "range": 19.098,
+      "step_db": 0.614
+    },
+    {
+      "tank_id": "jk_19",
+      "flag": "ok",
+      "floor_frac": 0.0,
+      "iqr": 1.421,
+      "range": 12.215,
+      "step_db": 0.88
+    },
+    {
+      "tank_id": "jk_2",
+      "flag": "ok",
+      "floor_frac": 0.0,
+      "iqr": 4.907,
+      "range": 17.957,
+      "step_db": 0.948
+    },
+    {
+      "tank_id": "jk_3",
+      "flag": "ok",
+      "floor_frac": 0.0,
+      "iqr": 9.922,
+      "range": 14.46,
+      "step_db": 0.964
+    },
+    {
+      "tank_id": "jk_4",
+      "flag": "ok",
+      "floor_frac": 0.0,
+      "iqr": 1.745,
+      "range": 12.378,
+      "step_db": 0.568
+    },
+    {
+      "tank_id": "jk_5",
+      "flag": "ok",
+      "floor_frac": 0.0,
+      "iqr": 2.427,
+      "range": 11.323,
+      "step_db": 1.015
+    },
+    {
+      "tank_id": "jk_6",
+      "flag": "ok",
+      "floor_frac": 0.055,
+      "iqr": 5.108,
+      "range": 20.822,
+      "step_db": 0.82
+    },
+    {
+      "tank_id": "jk_7",
+      "flag": "ok",
+      "floor_frac": 0.028,
+      "iqr": 3.494,
+      "range": 18.116,
+      "step_db": 0.557
+    },
+    {
+      "tank_id": "jk_8",
+      "flag": "ok",
+      "floor_frac": 0.028,
+      "iqr": 4.733,
+      "range": 21.738,
+      "step_db": 1.19
+    },
+    {
+      "tank_id": "jk_9",
+      "flag": "ok",
+      "floor_frac": 0.009,
+      "iqr": 4.653,
+      "range": 20.501,
+      "step_db": 0.523
+    }
+  ]
+}
