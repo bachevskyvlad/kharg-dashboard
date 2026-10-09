@@ -1,21 +1,21 @@
-name: Stage 1 baseline — Lavan (rel=64 DESC, 2017-01-01+)
+name: Stage 1 Ingest — Lavan (rel=64 DESC)
 
 on:
   workflow_dispatch:
     inputs:
       commit:
-        description: 'Write to Supabase (dry-run if unchecked)'
+        description: 'Write to Supabase'
         type: boolean
         default: false
       reset:
-        description: 'Wipe checkpoint and restart from scratch'
+        description: 'Wipe checkpoint and restart'
         type: boolean
         default: false
 
 jobs:
-  stage1_lavan:
+  stage1_ingest:
     runs-on: ubuntu-latest
-    timeout-minutes: 360
+    timeout-minutes: 240
 
     steps:
       - uses: actions/checkout@v4
@@ -30,7 +30,7 @@ jobs:
       - name: Install dependencies
         run: pip install numpy pandas sentinelhub supabase shapely -q
 
-      - name: Stage 1 backfill — lavan
+      - name: Stage 1 ingest — lavan
         env:
           CLIENT_ID:     ${{ secrets.CLIENT_ID }}
           CLIENT_SECRET: ${{ secrets.CLIENT_SECRET }}
@@ -50,8 +50,8 @@ jobs:
           git config user.email "actions@github.com"
           git config user.name "GitHub Actions"
           git add -f diagnostics/stage1/lavan_run.txt  || true
-          git add -f scripts/.stage1_ckpt_lavan.json   || true
+          git add -f scripts/.stage1_ckpt_lavan.json    || true
           git diff --cached --quiet && echo "No changes" || \
-            git commit -m "ci: stage1 lavan — baseline ingest checkpoint [skip ci]"
+            git commit -m "ci: stage1 lavan — checkpoint [skip ci]"
           git pull --rebase origin main || true
           git push origin HEAD:main || true

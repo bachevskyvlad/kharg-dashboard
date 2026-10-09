@@ -27,7 +27,7 @@ OUT_DIR = Path(__file__).parent.parent / "diagnostics" / "jask"
 OUT_DIR.mkdir(parents=True, exist_ok=True)
 
 # ── Registry ──────────────────────────────────────────────────────────────────
-jask_loc = next(l for l in LOCATIONS if l["terminal"] == "jask")
+jask_loc = next(l for l in LOCATIONS if l["id"] == "jask")
 tanks_reg = {t["id"]: t for t in jask_loc["tanks"]}
 print(f"Registry: {len(tanks_reg)} Jask tanks")
 
