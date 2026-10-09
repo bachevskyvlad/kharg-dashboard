@@ -1,0 +1,44 @@
+name: Questionnaire v2 — Terminal Classification Gate (4/4)
+
+on:
+  workflow_dispatch:
+
+jobs:
+  questionnaire_v2:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: main
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: pip install numpy pandas supabase -q
+
+      - name: Run questionnaire v2
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+        run: |
+          mkdir -p diagnostics
+          cd scripts
+          python questionnaire_v2.py 2>&1 | tee ../diagnostics/questionnaire_v2_run.txt
+
+      - name: Save outputs
+        if: always()
+        run: |
+          git config user.email "actions@github.com"
+          git config user.name "GitHub Actions"
+          git add -f diagnostics/QUESTIONNAIRE_V2.md        || true
+          git add -f diagnostics/questionnaire_v2.json      || true
+          git add -f diagnostics/questionnaire_v2_run.txt   || true
+          git diff --cached --quiet && echo "No changes" || \
+            git commit -m "ci: questionnaire v2 — terminal classification gate [skip ci]"
+          git pull --rebase origin main || true
+          git push origin HEAD:main || true

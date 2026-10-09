@@ -43,14 +43,20 @@ Run: 2026-10-08 21:48 UTC
 
 **TIE (diff=-11.1% < 15%) — B wins tiebreak (measured center beats eyeball per protocol)**
 
-### Per-tank overrides
+### Per-tank overrides — detail
 
-- jk_4: override → A (step_B=0.390 vs step_A=0.538)
-- jk_5: override → A (step_B=0.394 vs step_A=1.015)
-- jk_8: override → A (step_B=0.893 vs step_A=1.166)
-- jk_15: override → A (step_B=0.881 vs step_A=1.371)
-- jk_19: override → A (step_B=0.471 vs step_A=0.857)
+Higher step_db = more signal variation = better crescent placement. Δ% = (step_B − step_A)/step_A. **Negative Δ% means B captures less variation than A → A is locally better → override to A.**
 
-Overall winner: **Config B**
+| Tank | step_A | step_B | Δ% | Interpretation |
+|---|---|---|---|---|
+| jk_4  | 0.538 | 0.390 | −27.4% | A captures 27% more signal variation. Genuine local inversion: ESRI center lands mask on wrong shadow side or straddling edge. Override to A correct. |
+| jk_5  | 1.015 | 0.394 | −61.1% | A captures 2.6× more variation. ESRI shift of −3.4m E is largest in this cluster (northwest group). Override to A correct; difference is real, not gate noise. |
+| jk_8  | 1.166 | 0.893 | −23.4% | jk_8 has r_fit=41.2m (enlarged tank). ESRI center shifts mask fractionally off-shadow. 23% gap is real. Override to A correct. |
+| jk_15 | 1.371 | 0.881 | −35.7% | step_A 1.371 is highest in dataset; step_B 0.881 is substantial drop. ESRI center likely clips part of the far-shadow annulus. Override to A correct. |
+| jk_19 | 0.857 | 0.471 | −45.1% | A nearly 2× B; largest inversion after jk_5. Override to A correct. |
 
-Registry action: see TERMINAL_PASSPORT_jask.md for final center_source per tank.
+**One-line verdict: Global B (tiebreak), 5 local A-overrides where B step is ≥23% lower than A. Overrides are signal differences, not gate noise — smallest gap is 23.4%, not single-digit.**
+
+Overall winner: **Config B (15 tanks) + Config A (jk_4/5/8/15/19)**
+
+Registry v2.1 is correct as committed. Re-ingest v2.1 completed 2026-10-09 08:43 UTC.
