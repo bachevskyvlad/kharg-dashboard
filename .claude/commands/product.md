@@ -65,6 +65,36 @@ Known structural outliers:
 
 ---
 
+## Series Health Standard (§3)
+
+Reference health corridors computed from Kharg + Yanbu. See `diagnostics/SERIES_HEALTH_STANDARD.md` for current numbers.
+
+| Metric | Description | Corridor |
+|---|---|---|
+| cv_level | CV of per-date mean_db (σ/μ) | [lo, hi] from standard |
+| vel_std | Std of pass-to-pass Δmean_db (dB/pass) | [lo, hi] |
+| delta_p50 | Median absolute Δmean_db (dB) | [lo, hi] |
+| delta_p90 | 90th pct absolute Δmean_db (dB) | [lo, hi] |
+| delta_p99 | 99th pct absolute Δmean_db (dB) | [lo, hi] |
+| dynamic_range | p95 − p5 of mean_db (dB) | [lo, hi] |
+| cycles_per_year | Build-draw cycles per year | [lo, hi] |
+| cycle_depth_db | Median cycle amplitude (dB) | [lo, hi] |
+| max_flat_passes | Longest flat run (passes) | [lo, hi] |
+| per_tank_step | Median of per-tank step_db | [lo, hi] |
+| live_fraction | Fraction of tanks with step≥0.5 | [lo, hi] |
+
+**Verdict rules**:
+- **DEAD**: ≥2 of {delta_p90, live_fraction, dynamic_range} below corridor lo
+- **WILD**: any of {delta_p99, vel_std} above corridor hi
+- **PASS**: all metrics within corridors
+
+Corridors = union(Kharg, Yanbu) × [0.5, 2.0]. **Fixed at generation time — do not adjust post-hoc.**
+
+Script: `scripts/series_health.py --terminal X` → PASS / FLAG (exit 0 / 1)
+Standard: `scripts/series_health_standard.py` → `diagnostics/SERIES_HEALTH_STANDARD.md`
+
+---
+
 ## Intelligence Metrics
 
 All 6 metrics are canonical. Use exact definitions below.
@@ -134,6 +164,7 @@ ALERT when rolling_std_30d[date] > threshold
    - **Min-radius rule**: r_fit_m < 20 m → `uncertain: True` in registry, excluded from ingest. At 5 m/px Sentinel-1 resolution, r < 20 m gives < 4-px radius — crescent annulus degenerates below reliable detection threshold.
    - **Dome-suspect rule**: ESRI 16-ray fit rms_m > 8 m → `uncertain: True, note: "dome_suspect_rmsX.X"`. High rms indicates a non-flat roof (cone/dome) where gradient signal is roof geometry, not shadow crescent. Run center-gate before final decision.
    - **Center-gate flag**: `center_gate: True` in registry marks tanks where A/B center comparison (eye-placed vs ESRI) is pending before the uncertain tag is finalized.
+6. **Series health check** (§5.1, step 6.5): run `scripts/series_health.py --terminal X` after Stage-1 ingest and before any events analysis. A FLAG result (DEAD or WILD) stops the pipeline — do not compute events or publish a terminal passport until the FLAG is diagnosed and resolved. Corridors are defined in `diagnostics/SERIES_HEALTH_STANDARD.md`.
 
 ---
 
