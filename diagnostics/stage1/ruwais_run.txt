@@ -1,0 +1,59 @@
+[stage1] Terminal : ruwais
+[stage1] Primary orbit: rel=64 DESC los=282
+[stage1] Survey start: 2017-01-01
+[stage1] Tanks (confirmed): 40
+[stage1] Checkpoint: 0 dates already processed
+
+[stage1] Querying catalog: descending rel=64 from 2017-01-01 …
+[stage1] Catalog: 297 scene dates
+[stage1] Pending (not yet processed): 297 dates
+[stage1] Date range: 2017-03-16 → 2026-10-08
+  … 10/297 scenes, 400 rows so far
+  … 20/297 scenes, 800 rows so far
+  … 30/297 scenes, 1200 rows so far
+  … 40/297 scenes, 1600 rows so far
+  … 50/297 scenes, 2000 rows so far
+  … 60/297 scenes, 2400 rows so far
+  … 70/297 scenes, 2800 rows so far
+  … 80/297 scenes, 3200 rows so far
+  … 90/297 scenes, 3600 rows so far
+  … 100/297 scenes, 4000 rows so far
+  … 110/297 scenes, 4400 rows so far
+  … 120/297 scenes, 4800 rows so far
+  … 130/297 scenes, 5200 rows so far
+  … 140/297 scenes, 5600 rows so far
+  … 150/297 scenes, 6000 rows so far
+  … 160/297 scenes, 6400 rows so far
+  … 170/297 scenes, 6800 rows so far
+  … 180/297 scenes, 7200 rows so far
+  … 190/297 scenes, 7600 rows so far
+  … 200/297 scenes, 8000 rows so far
+  … 210/297 scenes, 8400 rows so far
+  … 220/297 scenes, 8800 rows so far
+  … 230/297 scenes, 9200 rows so far
+  … 240/297 scenes, 9600 rows so far
+  … 250/297 scenes, 10000 rows so far
+  … 260/297 scenes, 10400 rows so far
+  … 270/297 scenes, 10800 rows so far
+  … 280/297 scenes, 11200 rows so far
+  … 290/297 scenes, 11600 rows so far
+
+============================================================
+STAGE-1 BASELINE — RUWAIS
+============================================================
+  Orbit                : rel=64 DESC
+  Catalog scenes       : 297
+  Scenes processed     : 297
+  Scenes skipped(err)  : 0
+  Rows prepared        : 11880
+  Distinct dates       : 297
+  Distinct tanks       : 40
+  Date range           : 2017-03-16 → 2026-10-08
+  Tanks/date (med/min/max): 40 / 40 / 40
+  db_mean (p5/p50/p95): -0.67 / 6.73 / 16.50 dB
+============================================================
+
+[stage1] Existing rows for ruwais: 11840
+[stage1] Deleting existing rows …
+[stage1] Inserting 11880 rows …
+[stage1] Insert complete. ruwais Stage-1 baseline committed.
