@@ -128,7 +128,7 @@ log(f"  window: {TANK['radius_m']*8:.0f}m × {TANK['radius_m']*8:.0f}m")
 
 # ── SAR fetch (two variants: relativeOrbit vs relativeOrbitNum) ───────────────
 SAR_ES = """//VERSION=3
-function setup(){return {input:[{bands:["VV"],units:"DECIBELS"}],output:{bands:1,sampleType:"FLOAT32"}};}
+function setup(){return {input:[{bands:["VV"],units:"DECIBEL"}],output:{bands:1,sampleType:"FLOAT32"}};}
 function evaluatePixel(s){return [s.VV];}
 """
 

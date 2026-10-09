@@ -167,7 +167,7 @@ def bbox_for_tank(tank, n_diam=4):
 
 SAR_EVALSCRIPT = """
 //VERSION=3
-function setup(){return {input:[{bands:["VV"],units:"DECIBELS"}],output:{bands:1,sampleType:"FLOAT32"}};}
+function setup(){return {input:[{bands:["VV"],units:"DECIBEL"}],output:{bands:1,sampleType:"FLOAT32"}};}
 function evaluatePixel(s){return [s.VV];}
 """
 
