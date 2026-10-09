@@ -605,14 +605,14 @@ LOCATIONS = [
             #   fj_0, fj_7: dome_suspect (rms>10) — domed fixed-roof, not sphere; confirmed by geometry.
             #   roof_type for all others: floating_roof_assumed (pending human optical panel review).
             # neighbor_dist_m: minimum center-to-center distance to nearest tank (haversine, computed 2026-10-09)
-            {"id": "fj_0",  "lat": 25.214786692, "lon": 56.347117828, "radius_m": 53.6, "h_max_m": 17, "geom_source": "esri_z18", "uncertain": True, "note": "dome_suspect_rms10.6", "center_gate": True, "neighbor_dist_m": 272},
+            {"id": "fj_0",  "lat": 25.214786692, "lon": 56.347117828, "radius_m": 53.6, "h_max_m": 17, "geom_source": "esri_z18", "roof_type": "dome_suspect", "note": "dome_suspect_rms10.6", "center_gate": True, "neighbor_dist_m": 272},
             {"id": "fj_1",  "lat": 25.214509942, "lon": 56.34980138,  "radius_m": 53.5, "h_max_m": 17, "geom_source": "esri_z18", "center_gate": True, "neighbor_dist_m": 272},
             {"id": "fj_2",  "lat": 25.212338987, "lon": 56.346777322, "radius_m": 50.4, "h_max_m": 17, "geom_source": "esri_z18", "neighbor_dist_m": 274},
             {"id": "fj_3",  "lat": 25.212023801, "lon": 56.349514151, "radius_m": 55.3, "h_max_m": 17, "geom_source": "esri_z18", "neighbor_dist_m": 278},
             {"id": "fj_4",  "lat": 25.20953691,  "lon": 56.346429244, "radius_m": 46.8, "h_max_m": 17, "geom_source": "esri_z18", "neighbor_dist_m": 272},
             {"id": "fj_5",  "lat": 25.209273036, "lon": 56.349147413, "radius_m": 47.9, "h_max_m": 17, "geom_source": "esri_z18", "neighbor_dist_m": 275},
             {"id": "fj_6",  "lat": 25.206769828, "lon": 56.348920539, "radius_m": 50.2, "h_max_m": 17, "geom_source": "esri_z18", "neighbor_dist_m": 274},
-            {"id": "fj_7",  "lat": 25.207093886, "lon": 56.346223606, "radius_m": 50.8, "h_max_m": 17, "geom_source": "esri_z18", "uncertain": True, "note": "dome_suspect_rms10.2", "center_gate": True, "neighbor_dist_m": 272},
+            {"id": "fj_7",  "lat": 25.207093886, "lon": 56.346223606, "radius_m": 50.8, "h_max_m": 17, "geom_source": "esri_z18", "roof_type": "dome_suspect", "note": "dome_suspect_rms10.2", "center_gate": True, "neighbor_dist_m": 272},
             {"id": "fj_8",  "lat": 25.200968646, "lon": 56.353470919, "radius_m": 33.5, "h_max_m": 13, "geom_source": "esri_z18", "neighbor_dist_m": 145},
             {"id": "fj_9",  "lat": 25.201974936, "lon": 56.354438154, "radius_m": 34.0, "h_max_m": 13, "geom_source": "esri_z18", "neighbor_dist_m": 107},
             {"id": "fj_10", "lat": 25.20111512,  "lon": 56.354907586, "radius_m": 34.2, "h_max_m": 13, "geom_source": "esri_z18", "neighbor_dist_m": 107},
