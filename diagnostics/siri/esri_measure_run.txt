@@ -1,0 +1,10 @@
+Terminal: siri  tanks: 6
+  si_0 … r_fit=53.8m  shift=5.3m  rms=2.4m  rays=16
+  si_1 … r_fit=55.2m  shift=5.9m  rms=2.5m  rays=16
+  si_2 … r_fit=51.5m  shift=4.0m  rms=3.6m  rays=16
+  si_3 … r_fit=37.1m  shift=2.3m  rms=3.6m  rays=16
+  si_4 … r_fit=35.6m  shift=6.4m  rms=4.9m  rays=16
+  si_5 … r_fit=38.1m  shift=4.0m  rms=5.5m  rays=16
+Atlas → /home/runner/work/kharg-dashboard/kharg-dashboard/diagnostics/siri/esri_atlas.png
+Table → /home/runner/work/kharg-dashboard/kharg-dashboard/diagnostics/siri/ESRI_RADIUS_TABLE.md
+JSON  → /home/runner/work/kharg-dashboard/kharg-dashboard/diagnostics/siri/esri_raw.json
