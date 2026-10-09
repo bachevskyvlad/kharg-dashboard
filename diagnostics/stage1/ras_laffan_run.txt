@@ -1,0 +1,61 @@
+[stage1] Terminal : ras_laffan
+[stage1] Primary orbit: rel=137 DESC los=282
+[stage1] Survey start: 2017-01-01
+[stage1] Tanks (confirmed): 34
+[stage1] Checkpoint: 0 dates already processed
+
+[stage1] Querying catalog: descending rel=137 from 2017-01-01 …
+[stage1] Catalog: 311 scene dates
+[stage1] Pending (not yet processed): 311 dates
+[stage1] Date range: 2017-03-21 → 2026-10-07
+  … 10/311 scenes, 340 rows so far
+  … 20/311 scenes, 680 rows so far
+  … 30/311 scenes, 1020 rows so far
+  … 40/311 scenes, 1360 rows so far
+  … 50/311 scenes, 1700 rows so far
+  … 60/311 scenes, 2040 rows so far
+  … 70/311 scenes, 2380 rows so far
+  … 80/311 scenes, 2720 rows so far
+  … 90/311 scenes, 3060 rows so far
+  … 100/311 scenes, 3400 rows so far
+  … 110/311 scenes, 3740 rows so far
+  … 120/311 scenes, 4080 rows so far
+  … 130/311 scenes, 4420 rows so far
+  … 140/311 scenes, 4760 rows so far
+  … 150/311 scenes, 5100 rows so far
+  … 160/311 scenes, 5440 rows so far
+  … 170/311 scenes, 5780 rows so far
+  … 180/311 scenes, 6120 rows so far
+  … 190/311 scenes, 6460 rows so far
+  … 200/311 scenes, 6800 rows so far
+  … 210/311 scenes, 7140 rows so far
+  … 220/311 scenes, 7480 rows so far
+  … 230/311 scenes, 7820 rows so far
+  … 240/311 scenes, 8160 rows so far
+  … 250/311 scenes, 8500 rows so far
+  … 260/311 scenes, 8840 rows so far
+  … 270/311 scenes, 9180 rows so far
+  … 280/311 scenes, 9520 rows so far
+  … 290/311 scenes, 9860 rows so far
+  … 300/311 scenes, 10200 rows so far
+  … 310/311 scenes, 10540 rows so far
+
+============================================================
+STAGE-1 BASELINE — RAS_LAFFAN
+============================================================
+  Orbit                : rel=137 DESC
+  Catalog scenes       : 311
+  Scenes processed     : 311
+  Scenes skipped(err)  : 0
+  Rows prepared        : 10574
+  Distinct dates       : 311
+  Distinct tanks       : 34
+  Date range           : 2017-03-21 → 2026-10-07
+  Tanks/date (med/min/max): 34 / 34 / 34
+  db_mean (p5/p50/p95): -1.30 / 7.14 / 15.34 dB
+============================================================
+
+[stage1] Existing rows for ras_laffan: 10540
+[stage1] Deleting existing rows …
+[stage1] Inserting 10574 rows …
+[stage1] Insert complete. ras_laffan Stage-1 baseline committed.
