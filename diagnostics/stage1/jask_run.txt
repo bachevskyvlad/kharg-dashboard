@@ -32,10 +32,10 @@ STAGE-1 BASELINE — JASK
   Distinct tanks       : 20
   Date range           : 2024-06-09 → 2026-10-04
   Tanks/date (med/min/max): 20 / 20 / 20
-  db_mean (p5/p50/p95): -1.70 / 6.76 / 14.73 dB
+  db_mean (p5/p50/p95): -1.45 / 5.40 / 14.11 dB
 ============================================================
 
-[stage1] Existing rows for jask: 872
+[stage1] Existing rows for jask: 2180
 [stage1] Deleting existing rows …
 [stage1] Inserting 2180 rows …
 [stage1] Insert complete. jask Stage-1 baseline committed.
