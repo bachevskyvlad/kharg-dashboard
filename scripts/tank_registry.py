@@ -151,6 +151,7 @@ LOCATIONS = [
     # Iranian island terminal, Persian Gulf. Mixed tank sizes.
     {
         "id": "lavan",
+        "geom_source": "esri_z18",
         "allowed_orbits": [
             {"relative_orbit": 64, "direction": "DESC", "los_azimuth": 282},
             {"relative_orbit": 28, "direction": "ASCE", "los_azimuth": 98}
@@ -159,30 +160,30 @@ LOCATIONS = [
         "country": "IR",
         "status": "active",
         "tanks": [
-            {"id": "lv_0",  "lat": 26.79900382074584,  "lon": 53.35353039022181,  "radius_m": 20, "h_max_m": 9},
-            {"id": "lv_1",  "lat": 26.798479852549846, "lon": 53.35358181469451,  "radius_m": 20, "h_max_m": 9},
-            {"id": "lv_2",  "lat": 26.799107534277073, "lon": 53.35465579553378,  "radius_m": 20, "h_max_m": 9},
-            {"id": "lv_3",  "lat": 26.798563876628965, "lon": 53.35471130709531,  "radius_m": 20, "h_max_m": 9},
-            {"id": "lv_4",  "lat": 26.79833375021648,  "lon": 53.35236086038317,  "radius_m": 15, "h_max_m": 7},
-            {"id": "lv_5",  "lat": 26.798934023118402, "lon": 53.35229752236978,  "radius_m": 15, "h_max_m": 7},
-            {"id": "lv_6",  "lat": 26.79827467700471,  "lon": 53.35183098569965,  "radius_m": 15, "h_max_m": 7},
-            {"id": "lv_7",  "lat": 26.798884861477664, "lon": 53.35177266861828,  "radius_m": 15, "h_max_m": 7},
-            {"id": "lv_8",  "lat": 26.799137962674727, "lon": 53.347484855698475, "radius_m": 15, "h_max_m": 7},
-            {"id": "lv_9",  "lat": 26.797287666825397, "lon": 53.353602092280966, "radius_m": 25, "h_max_m": 10},
-            {"id": "lv_10", "lat": 26.797370393243344, "lon": 53.3542855443725,   "radius_m": 25, "h_max_m": 10},
-            {"id": "lv_11", "lat": 26.797431880634935, "lon": 53.35497621233966,  "radius_m": 25, "h_max_m": 10},
-            {"id": "lv_12", "lat": 26.796139645955098, "lon": 53.35364409181301,  "radius_m": 25, "h_max_m": 10},
-            {"id": "lv_13", "lat": 26.796205560719393, "lon": 53.35442256036965,  "radius_m": 25, "h_max_m": 10},
-            {"id": "lv_14", "lat": 26.79628024605769,  "lon": 53.35518798806746,  "radius_m": 25, "h_max_m": 10},
-            {"id": "lv_15", "lat": 26.799086207709394, "lon": 53.34675495548526,  "radius_m": 25, "h_max_m": 10},
-            {"id": "lv_16", "lat": 26.80600956029062,  "lon": 53.33853345571229,  "radius_m": 55, "h_max_m": 17},
-            {"id": "lv_17", "lat": 26.8061274882919,   "lon": 53.3403030081189,   "radius_m": 55, "h_max_m": 17},
-            {"id": "lv_18", "lat": 26.803974628177848, "lon": 53.33872987361962,  "radius_m": 35, "h_max_m": 13},
-            {"id": "lv_19", "lat": 26.80412236607243,  "lon": 53.34052628117685,  "radius_m": 35, "h_max_m": 13},
-            {"id": "lv_20", "lat": 26.802350551222506, "lon": 53.33891450240212,  "radius_m": 35, "h_max_m": 13},
-            {"id": "lv_21", "lat": 26.802499303852,    "lon": 53.34067630656812,  "radius_m": 35, "h_max_m": 13},
-            {"id": "lv_22", "lat": 26.800756760805854, "lon": 53.33906528744336,  "radius_m": 35, "h_max_m": 13},
-            {"id": "lv_23", "lat": 26.800933849735905, "lon": 53.340866771883356, "radius_m": 35, "h_max_m": 13},
+            {"id": "lv_0", "lat": 26.799002024, "lon": 53.353523345, "radius_m": 22.6, "h_max_m": 9, "geom_source": "esri_z18"},
+            {"id": "lv_1", "lat": 26.798528361, "lon": 53.353567725, "radius_m": 18.5, "h_max_m": 9, "geom_source": "esri_z18"},
+            {"id": "lv_2", "lat": 26.799123704, "lon": 53.354636674, "radius_m": 20.4, "h_max_m": 9, "geom_source": "esri_z18"},
+            {"id": "lv_3", "lat": 26.798608792, "lon": 53.35469923, "radius_m": 17.4, "h_max_m": 9, "geom_source": "esri_z18"},
+            {"id": "lv_4", "lat": 26.798373276, "lon": 53.35236086, "radius_m": 15.0, "h_max_m": 7, "geom_source": "esri_z18"},
+            {"id": "lv_5", "lat": 26.798964566, "lon": 53.352302554, "radius_m": 14.8, "h_max_m": 7, "geom_source": "esri_z18", "uncertain": True, "note": "min_radius_rule"},
+            {"id": "lv_6", "lat": 26.798311508, "lon": 53.351837024, "radius_m": 15.0, "h_max_m": 7, "geom_source": "esri_z18"},
+            {"id": "lv_7", "lat": 26.798914506, "lon": 53.351767637, "radius_m": 14.9, "h_max_m": 7, "geom_source": "esri_z18", "uncertain": True, "note": "min_radius_rule"},
+            {"id": "lv_8", "lat": 26.799149641, "lon": 53.347489888, "radius_m": 17.1, "h_max_m": 7, "geom_source": "esri_z18"},
+            {"id": "lv_9", "lat": 26.79734965, "lon": 53.353569888, "radius_m": 27.9, "h_max_m": 10, "geom_source": "esri_z18"},
+            {"id": "lv_10", "lat": 26.797408122, "lon": 53.354266423, "radius_m": 26.6, "h_max_m": 10, "geom_source": "esri_z18"},
+            {"id": "lv_11", "lat": 26.797459728, "lon": 53.354939982, "radius_m": 24.9, "h_max_m": 10, "geom_source": "esri_z18"},
+            {"id": "lv_12", "lat": 26.796181867, "lon": 53.353632015, "radius_m": 26.0, "h_max_m": 10, "geom_source": "esri_z18"},
+            {"id": "lv_13", "lat": 26.796253171, "lon": 53.354404446, "radius_m": 22.8, "h_max_m": 10, "geom_source": "esri_z18"},
+            {"id": "lv_14", "lat": 26.796316179, "lon": 53.355171886, "radius_m": 23.6, "h_max_m": 10, "geom_source": "esri_z18"},
+            {"id": "lv_15", "lat": 26.799144598, "lon": 53.346748917, "radius_m": 22.3, "h_max_m": 10, "geom_source": "esri_z18"},
+            {"id": "lv_16", "lat": 26.806049086, "lon": 53.338518359, "radius_m": 51.9, "h_max_m": 17, "geom_source": "esri_z18"},
+            {"id": "lv_17", "lat": 26.806181387, "lon": 53.340250672, "radius_m": 51.4, "h_max_m": 17, "geom_source": "esri_z18"},
+            {"id": "lv_18", "lat": 26.804034815, "lon": 53.338733899, "radius_m": 35.6, "h_max_m": 13, "geom_source": "esri_z18"},
+            {"id": "lv_19", "lat": 26.804170875, "lon": 53.340530307, "radius_m": 35.7, "h_max_m": 13, "geom_source": "esri_z18"},
+            {"id": "lv_20", "lat": 26.802452959, "lon": 53.33890947, "radius_m": 37.4, "h_max_m": 13, "geom_source": "esri_z18"},
+            {"id": "lv_21", "lat": 26.802557694, "lon": 53.340713545, "radius_m": 31.8, "h_max_m": 13, "geom_source": "esri_z18"},
+            {"id": "lv_22", "lat": 26.800826829, "lon": 53.339079377, "radius_m": 35.6, "h_max_m": 13, "geom_source": "esri_z18"},
+            {"id": "lv_23", "lat": 26.800965291, "lon": 53.340855701, "radius_m": 34.8, "h_max_m": 13, "geom_source": "esri_z18"}
         ],
     },
 
@@ -190,6 +191,7 @@ LOCATIONS = [
     # Iranian island terminal, Persian Gulf.
     {
         "id": "siri",
+        "geom_source": "esri_z18",
         "allowed_orbits": [
             {"relative_orbit": 166, "direction": "DESC", "los_azimuth": 282},
             {"relative_orbit": 64, "direction": "DESC", "los_azimuth": 282},
@@ -199,12 +201,12 @@ LOCATIONS = [
         "country": "IR",
         "status": "active",
         "tanks": [
-            {"id": "si_0", "lat": 25.906493850156608, "lon": 54.537083188997116, "radius_m": 55, "h_max_m": 17},
-            {"id": "si_1", "lat": 25.904546808294974, "lon": 54.535470599866656, "radius_m": 55, "h_max_m": 17},
-            {"id": "si_2", "lat": 25.90669475757451,  "lon": 54.53450541965348,  "radius_m": 55, "h_max_m": 17},
-            {"id": "si_3", "lat": 25.90544779314368,  "lon": 54.53352182244191,  "radius_m": 40, "h_max_m": 14},
-            {"id": "si_4", "lat": 25.907888267412808, "lon": 54.535572815324926, "radius_m": 40, "h_max_m": 14},
-            {"id": "si_5", "lat": 25.907379839437166, "lon": 54.53236712959832,  "radius_m": 40, "h_max_m": 14},
+            {"id": "si_0", "lat": 25.906481274, "lon": 54.537032257, "radius_m": 53.8, "h_max_m": 17, "geom_source": "esri_z18"},
+            {"id": "si_1", "lat": 25.904513571, "lon": 54.535424662, "radius_m": 55.2, "h_max_m": 17, "geom_source": "esri_z18"},
+            {"id": "si_2", "lat": 25.906658825, "lon": 54.534501425, "radius_m": 51.5, "h_max_m": 17, "geom_source": "esri_z18"},
+            {"id": "si_3", "lat": 25.905440607, "lon": 54.533500851, "radius_m": 37.1, "h_max_m": 14, "geom_source": "esri_z18"},
+            {"id": "si_4", "lat": 25.907897251, "lon": 54.5355089, "radius_m": 35.6, "h_max_m": 14, "geom_source": "esri_z18"},
+            {"id": "si_5", "lat": 25.907344805, "lon": 54.53237412, "radius_m": 38.1, "h_max_m": 14, "geom_source": "esri_z18"}
         ],
     },
 
@@ -253,6 +255,7 @@ LOCATIONS = [
     # Qatari offshore crude storage and export terminal, Persian Gulf.
     {
         "id": "halul",
+        "geom_source": "esri_z18",
         "allowed_orbits": [
             {"relative_orbit": 137, "direction": "DESC", "los_azimuth": 282},
             {"relative_orbit": 64, "direction": "DESC", "los_azimuth": 282},
@@ -262,18 +265,16 @@ LOCATIONS = [
         "country": "QA",
         "status": "active",
         "tanks": [
-            # 40 m tanks
-            {"id": "hl_0", "lat": 25.67678890476252,  "lon": 52.4107086707498,   "radius_m": 40, "h_max_m": 14},
-            {"id": "hl_1", "lat": 25.67666466462094,  "lon": 52.41170360737482,  "radius_m": 40, "h_max_m": 14},
-            {"id": "hl_2", "lat": 25.675523804762022, "lon": 52.40946730434928,  "radius_m": 40, "h_max_m": 14},
-            {"id": "hl_3", "lat": 25.67540294843262,  "lon": 52.41046868236474,  "radius_m": 40, "h_max_m": 14},
-            {"id": "hl_4", "lat": 25.67527832383348,  "lon": 52.41147447659749,  "radius_m": 40, "h_max_m": 14},
-            {"id": "hl_5", "lat": 25.675120039380097, "lon": 52.41246904571413,  "radius_m": 40, "h_max_m": 14},
-            # 30 m tanks
-            {"id": "hl_6", "lat": 25.672087101097535, "lon": 52.409495594016576, "radius_m": 30, "h_max_m": 12},
-            {"id": "hl_7", "lat": 25.672096800324248, "lon": 52.41041326958139,  "radius_m": 30, "h_max_m": 12},
-            {"id": "hl_8", "lat": 25.67135882379344,  "lon": 52.409491143992646, "radius_m": 30, "h_max_m": 12},
-            {"id": "hl_9", "lat": 25.67134018496092,  "lon": 52.410409826513444, "radius_m": 30, "h_max_m": 12},
+            {"id": "hl_0", "lat": 25.676868854, "lon": 52.410680762, "radius_m": 39.6, "h_max_m": 14, "geom_source": "esri_z18"},
+            {"id": "hl_1", "lat": 25.676742818, "lon": 52.411691647, "radius_m": 39.9, "h_max_m": 14, "geom_source": "esri_z18"},
+            {"id": "hl_2", "lat": 25.675583992, "lon": 52.409469298, "radius_m": 35.7, "h_max_m": 14, "geom_source": "esri_z18"},
+            {"id": "hl_3", "lat": 25.675470322, "lon": 52.410456722, "radius_m": 37.7, "h_max_m": 14, "geom_source": "esri_z18"},
+            {"id": "hl_4", "lat": 25.675337612, "lon": 52.411443578, "radius_m": 40.1, "h_max_m": 14, "geom_source": "esri_z18"},
+            {"id": "hl_5", "lat": 25.675192803, "lon": 52.412456088, "radius_m": 39.0, "h_max_m": 14, "geom_source": "esri_z18"},
+            {"id": "hl_6", "lat": 25.672083508, "lon": 52.409471673, "radius_m": 27.5, "h_max_m": 12, "geom_source": "esri_z18"},
+            {"id": "hl_7", "lat": 25.672148004, "lon": 52.410390346, "radius_m": 29.4, "h_max_m": 12, "geom_source": "esri_z18"},
+            {"id": "hl_8", "lat": 25.671385773, "lon": 52.409495131, "radius_m": 30.0, "h_max_m": 12, "geom_source": "esri_z18"},
+            {"id": "hl_9", "lat": 25.671388694, "lon": 52.410397866, "radius_m": 29.5, "h_max_m": 12, "geom_source": "esri_z18"}
         ],
     },
 
@@ -643,6 +644,7 @@ LOCATIONS = [
     },
     {
         "id": "das_island",
+        "geom_source": "esri_z18",
         "allowed_orbits": [
             {"relative_orbit": 64, "direction": "DESC", "los_azimuth": 282},
             {"relative_orbit": 28, "direction": "ASCE", "los_azimuth": 98}
@@ -651,21 +653,21 @@ LOCATIONS = [
         "country": "AE",
         "status": "active",
         "tanks": [
-            {"id": "di_0",  "lat": 25.151804288861204, "lon": 52.87325592336677,  "radius_m": 50, "h_max_m": 16},
-            {"id": "di_1",  "lat": 25.153251487578796, "lon": 52.873686253900765, "radius_m": 35, "h_max_m": 13},
-            {"id": "di_2",  "lat": 25.154470532706885, "lon": 52.87264184175283,  "radius_m": 35, "h_max_m": 13},
-            {"id": "di_3",  "lat": 25.154508104160392, "lon": 52.873649098957216, "radius_m": 35, "h_max_m": 13},
-            {"id": "di_4",  "lat": 25.15445770789476,  "lon": 52.87465644173287,  "radius_m": 35, "h_max_m": 13},
-            {"id": "di_5",  "lat": 25.15588495576357,  "lon": 52.87467167514795,  "radius_m": 35, "h_max_m": 13},
-            {"id": "di_6",  "lat": 25.155873560498293, "lon": 52.873798049551205, "radius_m": 35, "h_max_m": 13},
-            {"id": "di_7",  "lat": 25.155934702233004, "lon": 52.87291316553758,  "radius_m": 35, "h_max_m": 13},
-            {"id": "di_8",  "lat": 25.157457768905314, "lon": 52.874498520936385, "radius_m": 35, "h_max_m": 13},
-            {"id": "di_9",  "lat": 25.15743998130724,  "lon": 52.87558329111141,  "radius_m": 35, "h_max_m": 13},
-            {"id": "di_10", "lat": 25.15749838285659,  "lon": 52.87668016363738,  "radius_m": 35, "h_max_m": 13},
-            {"id": "di_11", "lat": 25.15597527200394,  "lon": 52.876153230136296, "radius_m": 35, "h_max_m": 13},
-            {"id": "di_12", "lat": 25.154945607202517, "lon": 52.87614859795753,  "radius_m": 35, "h_max_m": 13},
-            {"id": "di_13", "lat": 25.15373830935185,  "lon": 52.877698831688065, "radius_m": 35, "h_max_m": 13},
-            {"id": "di_14", "lat": 25.15394732429599,  "lon": 52.876153971745545, "radius_m": 35, "h_max_m": 13},
+            {"id": "di_0", "lat": 25.15177195, "lon": 52.873224166, "radius_m": 47.8, "h_max_m": 16, "geom_source": "esri_z18", "uncertain": True, "note": "dome_suspect_rms14.0", "center_gate": True},
+            {"id": "di_1", "lat": 25.153193996, "lon": 52.873722973, "radius_m": 37.2, "h_max_m": 13, "geom_source": "esri_z18"},
+            {"id": "di_2", "lat": 25.154439092, "lon": 52.87270238, "radius_m": 38.5, "h_max_m": 13, "geom_source": "esri_z18"},
+            {"id": "di_3", "lat": 25.154470375, "lon": 52.873666963, "radius_m": 33.8, "h_max_m": 13, "geom_source": "esri_z18", "uncertain": True, "note": "dome_suspect_rms8.9", "center_gate": True},
+            {"id": "di_4", "lat": 25.154408301, "lon": 52.874679268, "radius_m": 40.4, "h_max_m": 13, "geom_source": "esri_z18"},
+            {"id": "di_5", "lat": 25.15583465, "lon": 52.874668698, "radius_m": 39.8, "h_max_m": 13, "geom_source": "esri_z18"},
+            {"id": "di_6", "lat": 25.155860086, "lon": 52.873847672, "radius_m": 37.8, "h_max_m": 13, "geom_source": "esri_z18"},
+            {"id": "di_7", "lat": 25.155844871, "lon": 52.872951871, "radius_m": 38.1, "h_max_m": 13, "geom_source": "esri_z18"},
+            {"id": "di_8", "lat": 25.157446091, "lon": 52.874549136, "radius_m": 39.6, "h_max_m": 13, "geom_source": "esri_z18"},
+            {"id": "di_9", "lat": 25.157445371, "lon": 52.875608102, "radius_m": 41.3, "h_max_m": 13, "geom_source": "esri_z18"},
+            {"id": "di_10", "lat": 25.157524434, "lon": 52.876679171, "radius_m": 34.6, "h_max_m": 13, "geom_source": "esri_z18", "uncertain": True, "note": "dome_suspect_rms8.3", "center_gate": True},
+            {"id": "di_11", "lat": 25.155916882, "lon": 52.876199875, "radius_m": 39.6, "h_max_m": 13, "geom_source": "esri_z18"},
+            {"id": "di_12", "lat": 25.154924946, "lon": 52.876208144, "radius_m": 36.9, "h_max_m": 13, "geom_source": "esri_z18"},
+            {"id": "di_13", "lat": 25.153696089, "lon": 52.877803036, "radius_m": 36.6, "h_max_m": 13, "geom_source": "esri_z18"},
+            {"id": "di_14", "lat": 25.153937443, "lon": 52.876224434, "radius_m": 35.3, "h_max_m": 13, "geom_source": "esri_z18", "center_gate": True}
         ],
     },
     {
@@ -722,6 +724,7 @@ LOCATIONS = [
     },
     {
         "id": "mina_ahmadi",
+        "geom_source": "esri_z18",
         "allowed_orbits": [
             {"relative_orbit": 108, "direction": "DESC", "los_azimuth": 282},
             {"relative_orbit": 174, "direction": "ASCE", "los_azimuth": 98}
@@ -730,20 +733,20 @@ LOCATIONS = [
         "country": "KW",
         "status": "active",
         "tanks": [
-            {"id": "ma_0",  "lat": 29.049582, "lon": 48.059250, "radius_m": 30, "h_max_m": 12},
-            {"id": "ma_1",  "lat": 29.048254, "lon": 48.058547, "radius_m": 30, "h_max_m": 12},
-            {"id": "ma_2",  "lat": 29.049275, "lon": 48.056029, "radius_m": 30, "h_max_m": 12},
-            {"id": "ma_3",  "lat": 29.050591, "lon": 48.056712, "radius_m": 30, "h_max_m": 12},
-            {"id": "ma_4",  "lat": 29.055651, "lon": 48.062169, "radius_m": 50, "h_max_m": 16},
-            {"id": "ma_5",  "lat": 29.056725, "lon": 48.059436, "radius_m": 50, "h_max_m": 16},
-            {"id": "ma_6",  "lat": 29.058623, "lon": 48.060438, "radius_m": 50, "h_max_m": 16},
-            {"id": "ma_7",  "lat": 29.057526, "lon": 48.063134, "radius_m": 50, "h_max_m": 16},
-            {"id": "ma_8",  "lat": 29.062873, "lon": 48.059721, "radius_m": 50, "h_max_m": 16},
-            {"id": "ma_9",  "lat": 29.063729, "lon": 48.057560, "radius_m": 50, "h_max_m": 16},
-            {"id": "ma_10", "lat": 29.054845, "lon": 48.058486, "radius_m": 50, "h_max_m": 16},
-            {"id": "ma_11", "lat": 29.053768, "lon": 48.061199, "radius_m": 50, "h_max_m": 16},
-            {"id": "ma_12", "lat": 29.051889, "lon": 48.060216, "radius_m": 50, "h_max_m": 16},
-            {"id": "ma_13", "lat": 29.052961, "lon": 48.057500, "radius_m": 50, "h_max_m": 16},
+            {"id": "ma_0", "lat": 29.049522711, "lon": 48.059234586, "radius_m": 31.6, "h_max_m": 12, "geom_source": "esri_z18"},
+            {"id": "ma_1", "lat": 29.048203695, "lon": 48.058528504, "radius_m": 31.2, "h_max_m": 12, "geom_source": "esri_z18"},
+            {"id": "ma_2", "lat": 29.049249847, "lon": 48.055996118, "radius_m": 25.9, "h_max_m": 12, "geom_source": "esri_z18"},
+            {"id": "ma_3", "lat": 29.050561356, "lon": 48.056697614, "radius_m": 30.3, "h_max_m": 12, "geom_source": "esri_z18"},
+            {"id": "ma_4", "lat": 29.055617762, "lon": 48.062154613, "radius_m": 43.2, "h_max_m": 16, "geom_source": "esri_z18"},
+            {"id": "ma_5", "lat": 29.056769916, "lon": 48.05945347, "radius_m": 41.5, "h_max_m": 16, "geom_source": "esri_z18"},
+            {"id": "ma_6", "lat": 29.058583474, "lon": 48.06045136, "radius_m": 43.4, "h_max_m": 16, "geom_source": "esri_z18"},
+            {"id": "ma_7", "lat": 29.057534983, "lon": 48.063107281, "radius_m": 41.9, "h_max_m": 16, "geom_source": "esri_z18"},
+            {"id": "ma_8", "lat": 29.062853237, "lon": 48.059739499, "radius_m": 45.9, "h_max_m": 16, "geom_source": "esri_z18"},
+            {"id": "ma_9", "lat": 29.063673305, "lon": 48.057532252, "radius_m": 44.8, "h_max_m": 16, "geom_source": "esri_z18"},
+            {"id": "ma_10", "lat": 29.054813559, "lon": 48.058466475, "radius_m": 44.4, "h_max_m": 16, "geom_source": "esri_z18"},
+            {"id": "ma_11", "lat": 29.053770695, "lon": 48.061162006, "radius_m": 41.3, "h_max_m": 16, "geom_source": "esri_z18"},
+            {"id": "ma_12", "lat": 29.051843186, "lon": 48.060222166, "radius_m": 46.0, "h_max_m": 16, "geom_source": "esri_z18"},
+            {"id": "ma_13", "lat": 29.052928661, "lon": 48.057497945, "radius_m": 44.5, "h_max_m": 16, "geom_source": "esri_z18"}
         ],
     },
 

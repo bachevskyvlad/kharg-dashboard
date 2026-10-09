@@ -130,6 +130,10 @@ ALERT when rolling_std_30d[date] > threshold
 2. **No gap filling**: never interpolate missing SAR dates. Missing data is missing.
 3. **Outlier handling**: clip db_mean to [5th, 95th] global percentile before fill_ratio calc.
 4. **Weekly smoothing**: SMA-13 centered on weekly aggregates. Predictive edge: 10 weeks.
+5. **Tank exclusion rules** (§5.1):
+   - **Min-radius rule**: r_fit_m < 15 m → `uncertain: True` in registry, excluded from ingest. At 5 m/px Sentinel-1 resolution, r < 15 m gives < 3-px radius — crescent annulus degenerates below reliable detection threshold.
+   - **Dome-suspect rule**: ESRI 16-ray fit rms_m > 8 m → `uncertain: True, note: "dome_suspect_rmsX.X"`. High rms indicates a non-flat roof (cone/dome) where gradient signal is roof geometry, not shadow crescent. Run center-gate before final decision.
+   - **Center-gate flag**: `center_gate: True` in registry marks tanks where A/B center comparison (eye-placed vs ESRI) is pending before the uncertain tag is finalized.
 
 ---
 

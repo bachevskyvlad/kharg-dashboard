@@ -7,7 +7,7 @@
   "wl_cap_mb": 0,
   "wl_pct": 0.0,
   "wl_ids": [],
-  "verdict": "TANK_LEVEL",
+  "verdict": "TERMINAL_SERIES",
   "step_db": [
     {
       "tank_id": "jk_0",
@@ -311,5 +311,7 @@
       "range": 20.501,
       "step_db": 0.523
     }
-  ]
+  ],
+  "verdict_source": "human_override",
+  "verdict_note": "WL 20/20 \u2014 all tanks confirmed operational by atlas review; algorithmic step_db < 2.5 reflects Jask operating mode (minor incremental fills), not sensor failure. Human verdict overrides cap gate."
 }
