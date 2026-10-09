@@ -1,0 +1,44 @@
+Terminal: ruwais  tanks: 40
+  rw_0 … r_fit=36.8m  shift=3.2m  rms=2.5m  rays=16
+  rw_1 … r_fit=39.0m  shift=5.7m  rms=2.1m  rays=16
+  rw_2 … r_fit=37.6m  shift=1.9m  rms=3.1m  rays=16
+  rw_3 … r_fit=38.5m  shift=9.4m  rms=0.6m  rays=16
+  rw_4 … r_fit=36.6m  shift=1.7m  rms=0.8m  rays=16
+  rw_5 … r_fit=37.5m  shift=6.2m  rms=1.9m  rays=16
+  rw_6 … r_fit=37.2m  shift=5.7m  rms=3.9m  rays=16
+  rw_7 … r_fit=38.0m  shift=4.8m  rms=3.5m  rays=16
+  rw_8 … r_fit=36.3m  shift=3.7m  rms=0.9m  rays=16
+  rw_9 … r_fit=39.5m  shift=5.6m  rms=2.3m  rays=16
+  rw_10 … r_fit=38.0m  shift=8.0m  rms=1.6m  rays=16
+  rw_11 … r_fit=38.1m  shift=4.4m  rms=0.4m  rays=16
+  rw_12 … r_fit=39.2m  shift=5.4m  rms=2.3m  rays=16
+  rw_13 … r_fit=38.0m  shift=5.5m  rms=0.6m  rays=16
+  rw_14 … r_fit=37.7m  shift=5.2m  rms=5.5m  rays=16
+  rw_15 … r_fit=36.9m  shift=7.6m  rms=1.7m  rays=16
+  rw_16 … r_fit=33.9m  shift=3.2m  rms=2.5m  rays=16
+  rw_17 … r_fit=31.5m  shift=1.6m  rms=1.2m  rays=16
+  rw_18 … r_fit=33.9m  shift=3.2m  rms=0.9m  rays=16
+  rw_19 … r_fit=34.0m  shift=2.8m  rms=4.6m  rays=16
+  rw_20 … r_fit=32.7m  shift=10.3m  rms=2.0m  rays=16
+  rw_21 … r_fit=38.6m  shift=6.6m  rms=1.9m  rays=16
+  rw_22 … r_fit=36.7m  shift=2.8m  rms=3.4m  rays=16
+  rw_23 … r_fit=35.7m  shift=6.8m  rms=3.1m  rays=16
+  rw_24 … r_fit=35.4m  shift=7.8m  rms=2.8m  rays=16
+  rw_25 … r_fit=31.4m  shift=7.4m  rms=2.9m  rays=16
+  rw_26 … r_fit=34.6m  shift=1.6m  rms=2.9m  rays=16
+  rw_27 … r_fit=37.3m  shift=6.3m  rms=1.7m  rays=16
+  rw_28 … r_fit=34.9m  shift=5.5m  rms=3.0m  rays=16
+  rw_29 … r_fit=31.2m  shift=7.6m  rms=2.4m  rays=16
+  rw_30 … r_fit=31.8m  shift=3.4m  rms=2.8m  rays=16
+  rw_31 … r_fit=33.2m  shift=9.3m  rms=2.0m  rays=16
+  rw_32 … r_fit=34.1m  shift=6.5m  rms=2.5m  rays=16
+  rw_33 … r_fit=27.9m  shift=5.5m  rms=5.7m  rays=16
+  rw_34 … r_fit=25.0m  shift=4.6m  rms=2.5m  rays=16
+  rw_35 … r_fit=26.4m  shift=3.5m  rms=1.2m  rays=16
+  rw_36 … r_fit=34.7m  shift=4.2m  rms=2.2m  rays=16
+  rw_37 … r_fit=34.0m  shift=3.2m  rms=3.7m  rays=16
+  rw_38 … r_fit=37.0m  shift=5.4m  rms=2.6m  rays=16
+  rw_39 … r_fit=36.0m  shift=2.4m  rms=1.8m  rays=16
+Atlas → /home/runner/work/kharg-dashboard/kharg-dashboard/diagnostics/ruwais/esri_atlas.png
+Table → /home/runner/work/kharg-dashboard/kharg-dashboard/diagnostics/ruwais/ESRI_RADIUS_TABLE.md
+JSON  → /home/runner/work/kharg-dashboard/kharg-dashboard/diagnostics/ruwais/esri_raw.json
