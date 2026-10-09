@@ -113,7 +113,7 @@ def fetch_all(table, select, filters=None):
     return rows
 
 
-def load_data(terminal_id: str, relative_orbit=None) -> pd.DataFrame:
+def load_data(terminal_id: str, relative_orbit=None, tanks=None) -> pd.DataFrame:
     if terminal_id == "kharg":
         rows = fetch_all("raw_observations", "date,tank_id,db_mean")
         df = pd.DataFrame(rows)
@@ -126,6 +126,8 @@ def load_data(terminal_id: str, relative_orbit=None) -> pd.DataFrame:
             df = df[df["relative_orbit"] == relative_orbit]
     df["date"] = pd.to_datetime(df["date"])
     df = df.dropna(subset=["db_mean"])
+    if tanks is not None and "tank_id" in df.columns:
+        df = df[df["tank_id"].isin(tanks)]
     return df
 
 
@@ -295,9 +297,13 @@ def main():
     parser = argparse.ArgumentParser(description="Run series health gate on a terminal")
     parser.add_argument("--terminal", required=True)
     parser.add_argument("--orbit",    type=int, default=None,
-                        help="Filter to this relative_orbit (e.g. 35 for RT-DESC, 101 for RT-ASC)")
+                        help="Filter to this relative_orbit (e.g. 35 for RT-DESC)")
+    parser.add_argument("--tanks",    default=None,
+                        help="Comma-separated tank IDs to include (e.g. af_0,af_2,af_3)")
     parser.add_argument("--out",      default=None, help="Write JSON result to this path")
     args = parser.parse_args()
+
+    tanks = [t.strip() for t in args.tanks.split(",")] if args.tanks else None
 
     print(f"Loading corridors from {STANDARD_PATH}...")
     corridors = load_corridors()
@@ -306,10 +312,11 @@ def main():
         print("ERROR: no corridors loaded — check SERIES_HEALTH_STANDARD.md format.")
         sys.exit(1)
 
-    print(f"\nFetching {args.terminal} (orbit={args.orbit or 'all'})...")
-    df = load_data(args.terminal, args.orbit)
+    tank_tag = f" tanks={args.tanks}" if tanks else ""
+    print(f"\nFetching {args.terminal} (orbit={args.orbit or 'all'}{tank_tag})...")
+    df = load_data(args.terminal, args.orbit, tanks=tanks)
     if df.empty:
-        print(f"ERROR: no data for terminal='{args.terminal}' orbit={args.orbit}")
+        print(f"ERROR: no data for terminal='{args.terminal}' orbit={args.orbit} tanks={tanks}")
         sys.exit(1)
     print(f"  {len(df):,} rows, {df['date'].nunique()} dates, {df['tank_id'].nunique()} tanks")
 
@@ -322,6 +329,7 @@ def main():
     result = {
         "terminal":       args.terminal,
         "relative_orbit": args.orbit,
+        "tanks":          tanks,
         "verdict":        gate["verdict"],
         "diagnosis":      gate["diagnosis"],
         "flags":          gate["flags"],
