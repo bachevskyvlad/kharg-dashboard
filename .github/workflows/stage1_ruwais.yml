@@ -1,27 +1,27 @@
-name: Stage 1 Ingest — Ruwais (rel=64 DESC)
+name: Stage 1 baseline — ruwais (DESC, 2017-01-01+)
 
 on:
   workflow_dispatch:
     inputs:
       commit:
-        description: 'Write to Supabase'
+        description: 'Write to Supabase (dry-run if unchecked)'
         type: boolean
         default: false
       reset:
-        description: 'Wipe checkpoint and restart'
+        description: 'Wipe checkpoint and restart from scratch'
         type: boolean
         default: false
 
 jobs:
-  stage1_ingest:
+  stage1_ruwais:
     runs-on: ubuntu-latest
-    timeout-minutes: 240
+    timeout-minutes: 360
 
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-          ref: main
+          ref: claude/oilradar-dashboard-iran-zchdva
 
       - uses: actions/setup-python@v5
         with:
@@ -30,7 +30,7 @@ jobs:
       - name: Install dependencies
         run: pip install numpy pandas sentinelhub supabase shapely -q
 
-      - name: Stage 1 ingest — ruwais
+      - name: Stage 1 backfill — ruwais
         env:
           CLIENT_ID:     ${{ secrets.CLIENT_ID }}
           CLIENT_SECRET: ${{ secrets.CLIENT_SECRET }}
@@ -50,8 +50,15 @@ jobs:
           git config user.email "actions@github.com"
           git config user.name "GitHub Actions"
           git add -f diagnostics/stage1/ruwais_run.txt  || true
-          git add -f scripts/.stage1_ckpt_ruwais.json    || true
+          git add -f scripts/.stage1_ckpt_ruwais.json   || true
           git diff --cached --quiet && echo "No changes" || \
-            git commit -m "ci: stage1 ruwais — checkpoint [skip ci]"
-          git pull --rebase origin main || true
-          git push origin HEAD:main || true
+            git commit -m "ci: stage1 ruwais — baseline ingest checkpoint [skip ci]"
+          git pull --rebase origin claude/oilradar-dashboard-iran-zchdva || true
+          git push origin HEAD:claude/oilradar-dashboard-iran-zchdva || true
+
+      - name: Upload diagnostics
+        continue-on-error: true
+        uses: actions/upload-artifact@v4
+        with:
+          name: stage1-ruwais
+          path: diagnostics/stage1/ruwais_run.txt
