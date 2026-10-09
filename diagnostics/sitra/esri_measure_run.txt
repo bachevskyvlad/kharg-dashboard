@@ -1,0 +1,29 @@
+Terminal: sitra  tanks: 25
+  st_0 … r_fit=36.7m  shift=5.3m  rms=4.8m  rays=16
+  st_1 … r_fit=38.1m  shift=5.2m  rms=3.4m  rays=16
+  st_2 … r_fit=35.7m  shift=8.3m  rms=3.7m  rays=16
+  st_3 … r_fit=36.4m  shift=0.3m  rms=5.3m  rays=16
+  st_4 … r_fit=35.6m  shift=4.8m  rms=4.5m  rays=16
+  st_5 … r_fit=38.6m  shift=4.7m  rms=4.2m  rays=16
+  st_6 … r_fit=36.1m  shift=2.1m  rms=8.4m  rays=16
+  st_7 … r_fit=40.6m  shift=3.0m  rms=1.3m  rays=16
+  st_8 … r_fit=23.6m  shift=0.6m  rms=3.7m  rays=16
+  st_9 … r_fit=21.1m  shift=3.2m  rms=4.1m  rays=16
+  st_10 … r_fit=21.7m  shift=5.4m  rms=3.8m  rays=16
+  st_11 … r_fit=25.4m  shift=1.4m  rms=3.4m  rays=16
+  st_12 … r_fit=20.3m  shift=2.5m  rms=2.5m  rays=16
+  st_13 … r_fit=20.6m  shift=0.9m  rms=3.4m  rays=16
+  st_14 … r_fit=20.9m  shift=1.4m  rms=1.0m  rays=16
+  st_15 … r_fit=20.1m  shift=3.0m  rms=3.4m  rays=16
+  st_16 … r_fit=22.5m  shift=4.2m  rms=3.7m  rays=16
+  st_17 … r_fit=21.8m  shift=4.7m  rms=0.8m  rays=16
+  st_18 … r_fit=20.8m  shift=3.6m  rms=1.3m  rays=16
+  st_19 … r_fit=20.3m  shift=3.6m  rms=3.7m  rays=16
+  st_20 … r_fit=20.7m  shift=4.8m  rms=3.6m  rays=16
+  st_21 … r_fit=18.9m  shift=1.7m  rms=2.9m  rays=16
+  st_22 … r_fit=18.9m  shift=0.6m  rms=3.5m  rays=16
+  st_23 … r_fit=15.1m  shift=0.6m  rms=2.1m  rays=16
+  st_24 … r_fit=18.0m  shift=3.2m  rms=1.3m  rays=16
+Atlas → /home/runner/work/kharg-dashboard/kharg-dashboard/diagnostics/sitra/esri_atlas.png
+Table → /home/runner/work/kharg-dashboard/kharg-dashboard/diagnostics/sitra/ESRI_RADIUS_TABLE.md
+JSON  → /home/runner/work/kharg-dashboard/kharg-dashboard/diagnostics/sitra/esri_raw.json
