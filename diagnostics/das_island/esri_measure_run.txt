@@ -1,0 +1,19 @@
+Terminal: das_island  tanks: 15
+  di_0 … r_fit=47.8m  shift=4.8m  rms=14.0m  rays=16
+  di_1 … r_fit=37.2m  shift=7.3m  rms=4.8m  rays=16
+  di_2 … r_fit=38.5m  shift=7.0m  rms=1.9m  rays=16
+  di_3 … r_fit=33.8m  shift=4.5m  rms=8.9m  rays=16
+  di_4 … r_fit=40.4m  shift=6.0m  rms=1.7m  rays=16
+  di_5 … r_fit=39.8m  shift=5.6m  rms=5.5m  rays=16
+  di_6 … r_fit=37.8m  shift=5.2m  rms=2.6m  rays=16
+  di_7 … r_fit=38.1m  shift=10.8m  rms=4.4m  rays=16
+  di_8 … r_fit=39.6m  shift=5.3m  rms=1.6m  rays=16
+  di_9 … r_fit=41.3m  shift=2.6m  rms=3.6m  rays=16
+  di_10 … r_fit=34.6m  shift=2.9m  rms=8.3m  rays=16
+  di_11 … r_fit=39.6m  shift=8.0m  rms=3.3m  rays=16
+  di_12 … r_fit=36.9m  shift=6.4m  rms=4.2m  rays=16
+  di_13 … r_fit=36.6m  shift=11.5m  rms=1.1m  rays=16
+  di_14 … r_fit=35.3m  shift=7.2m  rms=7.2m  rays=16
+Atlas → /home/runner/work/kharg-dashboard/kharg-dashboard/diagnostics/das_island/esri_atlas.png
+Table → /home/runner/work/kharg-dashboard/kharg-dashboard/diagnostics/das_island/ESRI_RADIUS_TABLE.md
+JSON  → /home/runner/work/kharg-dashboard/kharg-dashboard/diagnostics/das_island/esri_raw.json
