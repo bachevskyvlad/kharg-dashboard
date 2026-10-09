@@ -44,31 +44,37 @@ jobs:
           echo "RT-DESC exit=$?"
         continue-on-error: true
 
-      - name: Gate validation — Yanbu (expect PASS)
-        id: yanbu
+      - name: Gate validation — RT-ASC archive (orbit 101, expect DEAD)
+        id: rt_asc
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
         run: |
           python scripts/series_health.py \
-            --terminal yanbu \
-            --out diagnostics/gate_validation/yanbu.json
-          echo "Yanbu exit=$?"
+            --terminal ras_tanura --orbit 101 \
+            --out diagnostics/gate_validation/rt_asc.json
+          echo "RT-ASC exit=$?"
         continue-on-error: true
 
       - name: Validate gate results
         run: |
           python - <<'EOF'
           import json, sys
-          desc  = json.load(open("diagnostics/gate_validation/rt_desc.json"))
-          yanbu = json.load(open("diagnostics/gate_validation/yanbu.json"))
+          desc = json.load(open("diagnostics/gate_validation/rt_desc.json"))
+          asc  = json.load(open("diagnostics/gate_validation/rt_asc.json"))
           print(f"RT-DESC verdict: {desc['verdict']}  diagnosis: {desc['diagnosis']}")
-          print(f"Yanbu   verdict: {yanbu['verdict']}  diagnosis: {yanbu['diagnosis']}")
-          ok = (desc['verdict'] == 'PASS' and yanbu['verdict'] == 'PASS')
+          print(f"RT-ASC  verdict: {asc['verdict']}   diagnosis: {asc['diagnosis']}")
+          # Print all metric values for RT-ASC for diagnosis
+          print("\nRT-ASC metrics:")
+          for k, v in asc.get('metrics', {}).items():
+              flag_mark = " ◄ FLAG" if k in asc.get('flags', {}) else ""
+              print(f"  {k:<30} {str(v):<12}{flag_mark}")
+          print("\nRT-ASC flags:", asc.get('flags', {}))
+          ok = (desc['verdict'] == 'PASS' and asc['diagnosis'] == 'DEAD')
           if ok:
-              print("GATE VALIDATION: PASS — instrument valid")
+              print("\nGATE VALIDATION: PASS — instrument valid")
           else:
-              print("GATE VALIDATION: FAIL — corridors require review")
+              print(f"\nGATE VALIDATION: FAIL — RT-DESC={desc['verdict']} RT-ASC={asc['verdict']}/{asc['diagnosis']}")
               sys.exit(1)
           EOF
 
@@ -87,7 +93,7 @@ jobs:
       - name: Print summary table
         run: |
           python - <<'EOF'
-          import json, pathlib, math
+          import json, pathlib
           results_dir = pathlib.Path("diagnostics/gate_validation")
           print("\n=== SERIES_HEALTH SUMMARY ===")
           print(f"{'Terminal':<20} {'Orbit':<8} {'Verdict':<8} {'Diagnosis':<10}")
