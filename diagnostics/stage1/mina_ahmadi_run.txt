@@ -1,0 +1,61 @@
+[stage1] Terminal : mina_ahmadi
+[stage1] Primary orbit: rel=108 DESC los=282
+[stage1] Survey start: 2017-01-01
+[stage1] Tanks (confirmed): 14
+[stage1] Checkpoint: 0 dates already processed
+
+[stage1] Querying catalog: descending rel=108 from 2017-01-01 …
+[stage1] Catalog: 314 scene dates
+[stage1] Pending (not yet processed): 314 dates
+[stage1] Date range: 2017-02-23 → 2026-10-05
+  … 10/314 scenes, 140 rows so far
+  … 20/314 scenes, 280 rows so far
+  … 30/314 scenes, 420 rows so far
+  … 40/314 scenes, 560 rows so far
+  … 50/314 scenes, 700 rows so far
+  … 60/314 scenes, 840 rows so far
+  … 70/314 scenes, 980 rows so far
+  … 80/314 scenes, 1120 rows so far
+  … 90/314 scenes, 1260 rows so far
+  … 100/314 scenes, 1400 rows so far
+  … 110/314 scenes, 1540 rows so far
+  … 120/314 scenes, 1680 rows so far
+  … 130/314 scenes, 1820 rows so far
+  … 140/314 scenes, 1960 rows so far
+  … 150/314 scenes, 2100 rows so far
+  … 160/314 scenes, 2240 rows so far
+  … 170/314 scenes, 2380 rows so far
+  … 180/314 scenes, 2520 rows so far
+  … 190/314 scenes, 2660 rows so far
+  … 200/314 scenes, 2800 rows so far
+  … 210/314 scenes, 2940 rows so far
+  … 220/314 scenes, 3080 rows so far
+  … 230/314 scenes, 3220 rows so far
+  … 240/314 scenes, 3360 rows so far
+  … 250/314 scenes, 3500 rows so far
+  … 260/314 scenes, 3640 rows so far
+  … 270/314 scenes, 3780 rows so far
+  … 280/314 scenes, 3920 rows so far
+  … 290/314 scenes, 4060 rows so far
+  … 300/314 scenes, 4200 rows so far
+  … 310/314 scenes, 4340 rows so far
+
+============================================================
+STAGE-1 BASELINE — MINA_AHMADI
+============================================================
+  Orbit                : rel=108 DESC
+  Catalog scenes       : 314
+  Scenes processed     : 314
+  Scenes skipped(err)  : 0
+  Rows prepared        : 4396
+  Distinct dates       : 314
+  Distinct tanks       : 14
+  Date range           : 2017-02-23 → 2026-10-05
+  Tanks/date (med/min/max): 14 / 14 / 14
+  db_mean (p5/p50/p95): -0.74 / 5.78 / 13.93 dB
+============================================================
+
+[stage1] Existing rows for mina_ahmadi: 4410
+[stage1] Deleting existing rows …
+[stage1] Inserting 4396 rows …
+[stage1] Insert complete. mina_ahmadi Stage-1 baseline committed.
