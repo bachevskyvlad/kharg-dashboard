@@ -1,0 +1,62 @@
+[stage1] Terminal : fujairah
+[stage1] Primary orbit: rel=166 DESC los=282
+[stage1] Survey start: 2017-01-01
+[stage1] Tanks (confirmed): 22
+[stage1] Checkpoint: 0 dates already processed
+
+[stage1] Querying catalog: descending rel=166 from 2017-01-01 …
+[stage1] Catalog: 321 scene dates
+[stage1] Pending (not yet processed): 321 dates
+[stage1] Date range: 2017-02-27 → 2026-10-09
+  … 10/321 scenes, 220 rows so far
+  … 20/321 scenes, 440 rows so far
+  … 30/321 scenes, 660 rows so far
+  … 40/321 scenes, 880 rows so far
+  … 50/321 scenes, 1100 rows so far
+  … 60/321 scenes, 1320 rows so far
+  … 70/321 scenes, 1540 rows so far
+  … 80/321 scenes, 1760 rows so far
+  … 90/321 scenes, 1980 rows so far
+  … 100/321 scenes, 2200 rows so far
+  … 110/321 scenes, 2420 rows so far
+  … 120/321 scenes, 2640 rows so far
+  … 130/321 scenes, 2860 rows so far
+  … 140/321 scenes, 3080 rows so far
+  … 150/321 scenes, 3300 rows so far
+  … 160/321 scenes, 3520 rows so far
+  … 170/321 scenes, 3740 rows so far
+  … 180/321 scenes, 3960 rows so far
+  … 190/321 scenes, 4180 rows so far
+  … 200/321 scenes, 4400 rows so far
+  … 210/321 scenes, 4620 rows so far
+  … 220/321 scenes, 4840 rows so far
+  … 230/321 scenes, 5060 rows so far
+  … 240/321 scenes, 5280 rows so far
+  … 250/321 scenes, 5500 rows so far
+  … 260/321 scenes, 5720 rows so far
+  … 270/321 scenes, 5940 rows so far
+  … 280/321 scenes, 6160 rows so far
+  … 290/321 scenes, 6380 rows so far
+  … 300/321 scenes, 6600 rows so far
+  … 310/321 scenes, 6820 rows so far
+  … 320/321 scenes, 7040 rows so far
+
+============================================================
+STAGE-1 BASELINE — FUJAIRAH
+============================================================
+  Orbit                : rel=166 DESC
+  Catalog scenes       : 321
+  Scenes processed     : 321
+  Scenes skipped(err)  : 0
+  Rows prepared        : 7062
+  Distinct dates       : 321
+  Distinct tanks       : 22
+  Date range           : 2017-02-27 → 2026-10-09
+  Tanks/date (med/min/max): 22 / 22 / 22
+  db_mean (p5/p50/p95): -4.04 / 6.65 / 16.26 dB
+============================================================
+
+[stage1] Existing rows for fujairah: 9042
+[stage1] Deleting existing rows …
+[stage1] Inserting 7062 rows …
+[stage1] Insert complete. fujairah Stage-1 baseline committed.
