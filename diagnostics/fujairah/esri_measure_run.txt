@@ -1,0 +1,26 @@
+Terminal: fujairah  tanks: 22
+  fj_0 … r_fit=53.6m  shift=8.5m  rms=10.6m  rays=16
+  fj_1 … r_fit=53.5m  shift=6.7m  rms=9.2m  rays=16
+  fj_2 … r_fit=50.4m  shift=14.0m  rms=7.7m  rays=16
+  fj_3 … r_fit=55.3m  shift=4.4m  rms=8.9m  rays=16
+  fj_4 … r_fit=46.8m  shift=15.5m  rms=3.5m  rays=16
+  fj_5 … r_fit=47.9m  shift=15.3m  rms=4.0m  rays=16
+  fj_6 … r_fit=50.2m  shift=12.9m  rms=5.6m  rays=16
+  fj_7 … r_fit=50.8m  shift=12.3m  rms=10.2m  rays=16
+  fj_8 … r_fit=33.5m  shift=14.0m  rms=4.2m  rays=16
+  fj_9 … r_fit=34.0m  shift=7.3m  rms=5.8m  rays=16
+  fj_10 … r_fit=34.2m  shift=8.7m  rms=5.8m  rays=16
+  fj_11 … r_fit=37.3m  shift=6.8m  rms=8.1m  rays=16
+  fj_12 … r_fit=25.2m  shift=5.1m  rms=3.0m  rays=16
+  fj_13 … r_fit=26.5m  shift=4.1m  rms=5.9m  rays=16
+  fj_14 … r_fit=29.3m  shift=4.6m  rms=5.8m  rays=16
+  fj_15 … r_fit=26.5m  shift=4.8m  rms=4.8m  rays=16
+  fj_16 … r_fit=33.5m  shift=5.5m  rms=3.0m  rays=16
+  fj_17 … r_fit=33.1m  shift=7.1m  rms=6.1m  rays=16
+  fj_18 … r_fit=32.2m  shift=8.7m  rms=5.7m  rays=16
+  fj_19 … r_fit=32.2m  shift=0.5m  rms=4.7m  rays=16
+  fj_20 … r_fit=32.8m  shift=7.1m  rms=4.4m  rays=16
+  fj_21 … r_fit=32.1m  shift=1.5m  rms=6.1m  rays=16
+Atlas → /home/runner/work/kharg-dashboard/kharg-dashboard/diagnostics/fujairah/esri_atlas.png
+Table → /home/runner/work/kharg-dashboard/kharg-dashboard/diagnostics/fujairah/ESRI_RADIUS_TABLE.md
+JSON  → /home/runner/work/kharg-dashboard/kharg-dashboard/diagnostics/fujairah/esri_raw.json
