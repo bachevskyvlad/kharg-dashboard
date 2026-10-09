@@ -58,6 +58,7 @@ jobs:
 
       - name: Upload diagnostics
         if: always()
+        continue-on-error: true
         uses: actions/upload-artifact@v4
         with:
           name: stage1-zirku
