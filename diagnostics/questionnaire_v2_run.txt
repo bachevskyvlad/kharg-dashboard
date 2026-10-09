@@ -1,0 +1,13 @@
+
+── kharg ──────────────────────────────────
+  15087 obs
+Traceback (most recent call last):
+  File "/home/runner/work/kharg-dashboard/kharg-dashboard/scripts/questionnaire_v2.py", line 282, in <module>
+    sig = pull_signals(terminal)
+          ^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/work/kharg-dashboard/kharg-dashboard/scripts/questionnaire_v2.py", line 141, in pull_signals
+    r = sb.table("kharg_daily").select("date,signal").order("date").execute()
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/hostedtoolcache/Python/3.11.17/x64/lib/python3.11/site-packages/postgrest/_sync/request_builder.py", line 96, in execute
+    raise APIError(dict(json_obj))
+postgrest.exceptions.APIError: {'message': "Could not find the table 'public.kharg_daily' in the schema cache", 'code': 'PGRST205', 'hint': "Perhaps you meant the table 'public.kharg_gross_flows'", 'details': None}
