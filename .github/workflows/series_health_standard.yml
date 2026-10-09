@@ -1,0 +1,46 @@
+name: Series Health Standard — compute reference corridors (Kharg + Yanbu)
+
+on:
+  workflow_dispatch: {}
+
+jobs:
+  series_health_standard:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: claude/oilradar-dashboard-iran-zchdva
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: pip install numpy pandas supabase -q
+
+      - name: Compute SERIES_HEALTH_STANDARD
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+        run: |
+          mkdir -p diagnostics
+          python scripts/series_health_standard.py \
+            --out diagnostics/SERIES_HEALTH_STANDARD.md
+
+      - name: Commit result
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add diagnostics/SERIES_HEALTH_STANDARD.md
+          git diff --cached --quiet && echo "no changes" || \
+            git commit -m "ci: series_health_standard — reference corridors [skip ci]"
+          git push origin claude/oilradar-dashboard-iran-zchdva
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: series-health-standard
+          path: diagnostics/SERIES_HEALTH_STANDARD.md
