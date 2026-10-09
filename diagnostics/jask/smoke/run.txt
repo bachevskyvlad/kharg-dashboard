@@ -32,23 +32,27 @@
 
 === STEP 3: SAR fetch — SAR-B old field (field=relativeOrbit) date=2026-10-04 ===
   payload dataFilter: {"timeRange": {"from": "2026-10-04T00:00:00Z", "to": "2026-10-04T23:59:59Z"}, "orbitDirection": "DESCENDING", "relativeOrbit": 93}
-  status: 400  content-type: application/json  len: 124
-  response body: {"error":{"status":400,"reason":"Bad Request","message":"Invalid script! No such unit:'DECIBEL'","code":"COMMON_EXCEPTION"}}
+  status: 200  content-type: image/tiff  len: 391
+  array shape: (1, 1)  dtype: float32
+  valid pixels: 1  min=1.00  max=1.00  std=0.000
 
 === STEP 3: SAR fetch — SAR-B new field (field=relativeOrbitNum) date=2026-10-04 ===
   payload dataFilter: {"timeRange": {"from": "2026-10-04T00:00:00Z", "to": "2026-10-04T23:59:59Z"}, "orbitDirection": "DESCENDING", "relativeOrbitNum": 93}
-  status: 400  content-type: application/json  len: 124
-  response body: {"error":{"status":400,"reason":"Bad Request","message":"Invalid script! No such unit:'DECIBEL'","code":"COMMON_EXCEPTION"}}
+  status: 200  content-type: image/tiff  len: 391
+  array shape: (1, 1)  dtype: float32
+  valid pixels: 1  min=1.00  max=1.00  std=0.000
 
 === STEP 3: SAR fetch — SAR-A old field (field=relativeOrbit) date=2026-09-16 ===
   payload dataFilter: {"timeRange": {"from": "2026-09-16T00:00:00Z", "to": "2026-09-16T23:59:59Z"}, "orbitDirection": "DESCENDING", "relativeOrbit": 93}
-  status: 400  content-type: application/json  len: 124
-  response body: {"error":{"status":400,"reason":"Bad Request","message":"Invalid script! No such unit:'DECIBEL'","code":"COMMON_EXCEPTION"}}
+  status: 200  content-type: image/tiff  len: 391
+  array shape: (1, 1)  dtype: float32
+  valid pixels: 1  min=0.10  max=0.10  std=0.000
 
 === STEP 3: SAR fetch — SAR-A new field (field=relativeOrbitNum) date=2026-09-16 ===
   payload dataFilter: {"timeRange": {"from": "2026-09-16T00:00:00Z", "to": "2026-09-16T23:59:59Z"}, "orbitDirection": "DESCENDING", "relativeOrbitNum": 93}
-  status: 400  content-type: application/json  len: 124
-  response body: {"error":{"status":400,"reason":"Bad Request","message":"Invalid script! No such unit:'DECIBEL'","code":"COMMON_EXCEPTION"}}
+  status: 200  content-type: image/tiff  len: 391
+  array shape: (1, 1)  dtype: float32
+  valid pixels: 1  min=0.10  max=0.10  std=0.000
 
 === STEP 4: S2 fetch (14d before SAR-B=2026-10-04) ===
   timeRange: 2026-09-20T00:00:00Z → 2026-10-04T23:59:59Z
