@@ -1,0 +1,28 @@
+Terminal: lavan  tanks: 24
+  lv_0 … r_fit=22.6m  shift=0.7m  rms=3.3m  rays=16
+  lv_1 … r_fit=18.5m  shift=5.6m  rms=2.2m  rays=16
+  lv_2 … r_fit=20.4m  shift=2.7m  rms=3.0m  rays=16
+  lv_3 … r_fit=17.4m  shift=5.1m  rms=2.1m  rays=16
+  lv_4 … r_fit=15.0m  shift=4.4m  rms=2.3m  rays=16
+  lv_5 … r_fit=14.8m  shift=3.4m  rms=2.1m  rays=16
+  lv_6 … r_fit=15.0m  shift=4.1m  rms=2.5m  rays=16
+  lv_7 … r_fit=14.9m  shift=3.3m  rms=1.7m  rays=16
+  lv_8 … r_fit=17.1m  shift=1.4m  rms=1.6m  rays=16
+  lv_9 … r_fit=27.9m  shift=7.6m  rms=2.6m  rays=16
+  lv_10 … r_fit=26.6m  shift=4.6m  rms=3.5m  rays=16
+  lv_11 … r_fit=24.9m  shift=4.8m  rms=3.5m  rays=16
+  lv_12 … r_fit=26.0m  shift=4.8m  rms=2.8m  rays=16
+  lv_13 … r_fit=22.8m  shift=5.6m  rms=3.4m  rays=16
+  lv_14 … r_fit=23.6m  shift=4.3m  rms=3.8m  rays=16
+  lv_15 … r_fit=22.3m  shift=6.6m  rms=2.8m  rays=16
+  lv_16 … r_fit=51.9m  shift=4.7m  rms=3.2m  rays=16
+  lv_17 … r_fit=51.4m  shift=7.9m  rms=4.9m  rays=16
+  lv_18 … r_fit=35.6m  shift=6.7m  rms=3.2m  rays=16
+  lv_19 … r_fit=35.7m  shift=5.5m  rms=5.0m  rays=16
+  lv_20 … r_fit=37.4m  shift=11.4m  rms=2.6m  rays=16
+  lv_21 … r_fit=31.8m  shift=7.5m  rms=3.9m  rays=16
+  lv_22 … r_fit=35.6m  shift=7.9m  rms=3.6m  rays=16
+  lv_23 … r_fit=34.8m  shift=3.6m  rms=5.6m  rays=16
+Atlas → /home/runner/work/kharg-dashboard/kharg-dashboard/diagnostics/lavan/esri_atlas.png
+Table → /home/runner/work/kharg-dashboard/kharg-dashboard/diagnostics/lavan/ESRI_RADIUS_TABLE.md
+JSON  → /home/runner/work/kharg-dashboard/kharg-dashboard/diagnostics/lavan/esri_raw.json
