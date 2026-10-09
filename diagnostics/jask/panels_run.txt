@@ -1,0 +1,123 @@
+Rendering 20 tank(s)...
+
+[jk_0]
+  SAR-B: 2026-10-04  db=-2.0dB
+  SAR-A: 2026-09-16  db=-2.3dB
+  S2: fetched
+  Saved: /home/runner/work/kharg-dashboard/kharg-dashboard/diagnostics/jask/panels/jk_0.png
+
+[jk_1]
+  SAR-B: 2026-10-04  db=2.6dB
+  SAR-A: 2026-09-16  db=3.4dB
+  S2: fetched
+  Saved: /home/runner/work/kharg-dashboard/kharg-dashboard/diagnostics/jask/panels/jk_1.png
+
+[jk_2]
+  SAR-B: 2026-10-04  db=3.2dB
+  SAR-A: 2026-09-16  db=3.7dB
+  S2: fetched
+  Saved: /home/runner/work/kharg-dashboard/kharg-dashboard/diagnostics/jask/panels/jk_2.png
+
+[jk_3]
+  SAR-B: 2026-10-04  db=2.9dB
+  SAR-A: 2026-09-16  db=3.4dB
+  S2: fetched
+  Saved: /home/runner/work/kharg-dashboard/kharg-dashboard/diagnostics/jask/panels/jk_3.png
+
+[jk_4]
+  SAR-B: 2026-10-04  db=6.3dB
+  SAR-A: 2026-09-16  db=7.5dB
+  S2: fetched
+  Saved: /home/runner/work/kharg-dashboard/kharg-dashboard/diagnostics/jask/panels/jk_4.png
+
+[jk_5]
+  SAR-B: 2026-10-04  db=3.6dB
+  SAR-A: 2026-09-16  db=4.7dB
+  S2: fetched
+  Saved: /home/runner/work/kharg-dashboard/kharg-dashboard/diagnostics/jask/panels/jk_5.png
+
+[jk_6]
+  SAR-B: 2026-10-04  db=6.7dB
+  SAR-A: 2026-09-16  db=6.4dB
+  S2: fetched
+  Saved: /home/runner/work/kharg-dashboard/kharg-dashboard/diagnostics/jask/panels/jk_6.png
+
+[jk_7]
+  SAR-B: 2026-10-04  db=5.2dB
+  SAR-A: 2026-09-16  db=5.0dB
+  S2: fetched
+  Saved: /home/runner/work/kharg-dashboard/kharg-dashboard/diagnostics/jask/panels/jk_7.png
+
+[jk_8]
+  SAR-B: 2026-10-04  db=7.8dB
+  SAR-A: 2026-09-16  db=6.7dB
+  S2: fetched
+  Saved: /home/runner/work/kharg-dashboard/kharg-dashboard/diagnostics/jask/panels/jk_8.png
+
+[jk_9]
+  SAR-B: 2026-10-04  db=13.6dB
+  SAR-A: 2026-09-16  db=12.6dB
+  S2: fetched
+  Saved: /home/runner/work/kharg-dashboard/kharg-dashboard/diagnostics/jask/panels/jk_9.png
+
+[jk_10]
+  SAR-B: 2026-10-04  db=11.9dB
+  SAR-A: 2026-09-16  db=11.9dB
+  S2: fetched
+  Saved: /home/runner/work/kharg-dashboard/kharg-dashboard/diagnostics/jask/panels/jk_10.png
+
+[jk_11]
+  SAR-B: 2026-10-04  db=12.9dB
+  SAR-A: 2026-09-16  db=12.9dB
+  S2: fetched
+  Saved: /home/runner/work/kharg-dashboard/kharg-dashboard/diagnostics/jask/panels/jk_11.png
+
+[jk_12]
+  SAR-B: 2026-10-04  db=6.9dB
+  SAR-A: 2026-09-16  db=6.6dB
+  S2: fetched
+  Saved: /home/runner/work/kharg-dashboard/kharg-dashboard/diagnostics/jask/panels/jk_12.png
+
+[jk_13]
+  SAR-B: 2026-10-04  db=14.7dB
+  SAR-A: 2026-09-16  db=15.3dB
+  S2: fetched
+  Saved: /home/runner/work/kharg-dashboard/kharg-dashboard/diagnostics/jask/panels/jk_13.png
+
+[jk_14]
+  SAR-B: 2026-10-04  db=3.9dB
+  SAR-A: 2026-09-16  db=3.7dB
+  S2: fetched
+  Saved: /home/runner/work/kharg-dashboard/kharg-dashboard/diagnostics/jask/panels/jk_14.png
+
+[jk_15]
+  SAR-B: 2026-10-04  db=7.3dB
+  SAR-A: 2026-09-16  db=7.0dB
+  S2: fetched
+  Saved: /home/runner/work/kharg-dashboard/kharg-dashboard/diagnostics/jask/panels/jk_15.png
+
+[jk_16]
+  SAR-B: 2026-10-04  db=1.0dB
+  SAR-A: 2026-09-16  db=-1.0dB
+  S2: fetched
+  Saved: /home/runner/work/kharg-dashboard/kharg-dashboard/diagnostics/jask/panels/jk_16.png
+
+[jk_17]
+  SAR-B: 2026-10-04  db=3.2dB
+  SAR-A: 2026-09-16  db=3.4dB
+  S2: fetched
+  Saved: /home/runner/work/kharg-dashboard/kharg-dashboard/diagnostics/jask/panels/jk_17.png
+
+[jk_18]
+  SAR-B: 2026-10-04  db=1.4dB
+  SAR-A: 2026-09-16  db=3.4dB
+  S2: fetched
+  Saved: /home/runner/work/kharg-dashboard/kharg-dashboard/diagnostics/jask/panels/jk_18.png
+
+[jk_19]
+  SAR-B: 2026-10-04  db=4.5dB
+  SAR-A: 2026-09-16  db=5.0dB
+  S2: fetched
+  Saved: /home/runner/work/kharg-dashboard/kharg-dashboard/diagnostics/jask/panels/jk_19.png
+
+Done. Panels in /home/runner/work/kharg-dashboard/kharg-dashboard/diagnostics/jask/panels
