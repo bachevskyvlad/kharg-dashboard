@@ -136,10 +136,21 @@ def pull_terminal(terminal):
 
 
 def pull_signals(terminal):
-    """Pull volume_timeseries or kharg_daily signals."""
+    """Pull volume_timeseries signals (compute from vol changes)."""
     if terminal == "kharg":
-        r = sb.table("kharg_daily").select("date,signal").order("date").execute()
-        return pd.DataFrame(r.data)
+        r = (sb.table("volume_timeseries")
+               .select("date,vol_mn_bbl")
+               .eq("aggregation", "daily")
+               .order("date")
+               .execute())
+        df = pd.DataFrame(r.data)
+        if df.empty:
+            return df
+        df["vol_mn_bbl"] = df["vol_mn_bbl"].astype(float)
+        df["change"] = df["vol_mn_bbl"].diff().abs()
+        std = df["change"].std()
+        df["signal"] = (df["change"] > std).map({True: "SIGNAL", False: None})
+        return df[["date", "signal"]]
     else:
         r = (sb.table("volume_timeseries")
                .select("date,aggregation,vol_mn_bbl")
