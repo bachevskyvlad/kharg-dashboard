@@ -61,7 +61,7 @@ METRIC_LABELS = {
     "live_fraction":      "Live fraction (step≥5% dr)",
 }
 
-DEAD_METRICS = {"delta_p90_norm", "live_fraction"}
+DEAD_METRICS = {"delta_p90_norm", "live_fraction", "cycles_per_year", "delta_p50_norm"}
 WILD_METRICS  = {"delta_p99_norm", "vel_std_norm"}
 DEAD_DR_ABS   = 0.5   # unconditional DEAD if dynamic_range_db < this
 # Metrics where "above hi" is healthy (active cycling) — only flag below lo
