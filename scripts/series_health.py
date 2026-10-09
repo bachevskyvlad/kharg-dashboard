@@ -64,6 +64,8 @@ METRIC_LABELS = {
 DEAD_METRICS = {"delta_p90_norm", "live_fraction"}
 WILD_METRICS  = {"delta_p99_norm", "vel_std_norm"}
 DEAD_DR_ABS   = 0.5   # unconditional DEAD if dynamic_range_db < this
+# Metrics where "above hi" is healthy (active cycling) — only flag below lo
+UPPER_SKIP_METRICS = {"per_tank_step_norm", "live_fraction"}
 
 # ─── load corridors ───────────────────────────────────────────────────────────
 
@@ -225,7 +227,7 @@ def apply_gate(metrics: dict, corridors: dict) -> dict:
             flag = "BELOW_LO"
             if key in DEAD_METRICS:
                 dead_flags.append((key, val, lo, hi))
-        elif val > hi:
+        elif val > hi and key not in UPPER_SKIP_METRICS:
             flag = "ABOVE_HI"
             if key in WILD_METRICS:
                 wild_flags.append((key, val, lo, hi))
