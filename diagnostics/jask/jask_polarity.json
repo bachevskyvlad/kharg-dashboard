@@ -1,0 +1,55 @@
+{
+  "run_utc": "2026-10-09 14:06",
+  "n_obs": 2180,
+  "n_dates": 109,
+  "verdict": "POLARITY_WEAK",
+  "n_match": 0,
+  "n_total": 2,
+  "anchors": [
+    {
+      "id": "war_2026",
+      "label": "Iran-Israel escalation",
+      "date": "2026-04-01",
+      "window_days": 30,
+      "expected_sign": 1,
+      "rationale": "Aerial strikes on Iranian infrastructure Apr 2026; operations disrupted, export pressure; tanks draw down \u2192 dB rises",
+      "pre_mean": 6.804,
+      "post_mean": 6.481,
+      "delta_db": -0.323,
+      "actual_sign": -1,
+      "match": false,
+      "n_pre": 77,
+      "n_post": 5
+    },
+    {
+      "id": "jask_resume",
+      "label": "NIOC Jask pipeline resumption",
+      "date": "2025-06-15",
+      "window_days": 45,
+      "expected_sign": -1,
+      "rationale": "New pipeline brought online; first fill ahead of inaugural export; tanks fill \u2192 dB falls",
+      "pre_mean": 5.294,
+      "post_mean": 6.969,
+      "delta_db": 1.675,
+      "actual_sign": 1,
+      "match": false,
+      "n_pre": 31,
+      "n_post": 5
+    },
+    {
+      "id": "iran_sanctions_2024h2",
+      "label": "Iran sanctions tightening H2 2024",
+      "date": "2024-07-01",
+      "window_days": 60,
+      "expected_sign": -1,
+      "rationale": "Secondary sanctions / tanker fleet restrictions reduce exports; oil accumulates \u2192 dB falls",
+      "pre_mean": null,
+      "post_mean": null,
+      "delta_db": null,
+      "actual_sign": null,
+      "match": null,
+      "n_pre": 2,
+      "n_post": 5
+    }
+  ]
+}

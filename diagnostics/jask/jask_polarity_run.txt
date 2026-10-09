@@ -1,0 +1,16 @@
+Pulling terminal_observations for jask…
+  2180 rows
+
+Date range: 2024-06-09 → 2026-10-04
+n_dates: 109
+Terminal mean db: 5.99  std: 0.92
+
+── Anchor evaluation ────────────────────────────────────────────────────
+  war_2026                        pre=6.80  post=6.48  Δ=-0.32  expected=UP  ✗
+  jask_resume                     pre=5.29  post=6.97  Δ=+1.67  expected=DOWN  ✗
+  iran_sanctions_2024h2           SKIP (pre=2 post=5 obs)
+
+Matched: 0/2 evaluated anchors  →  POLARITY_WEAK
+
+JSON → /home/runner/work/kharg-dashboard/kharg-dashboard/diagnostics/jask/jask_polarity.json
+MD   → /home/runner/work/kharg-dashboard/kharg-dashboard/diagnostics/jask/JASK_POLARITY.md
