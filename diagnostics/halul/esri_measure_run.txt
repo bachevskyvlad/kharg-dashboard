@@ -1,0 +1,14 @@
+Terminal: halul  tanks: 10
+  hl_0 … r_fit=39.6m  shift=9.4m  rms=2.7m  rays=16
+  hl_1 … r_fit=39.9m  shift=8.8m  rms=2.9m  rays=16
+  hl_2 … r_fit=35.7m  shift=6.8m  rms=5.7m  rays=16
+  hl_3 … r_fit=37.7m  shift=7.6m  rms=4.4m  rays=16
+  hl_4 … r_fit=40.1m  shift=7.3m  rms=4.2m  rays=16
+  hl_5 … r_fit=39.0m  shift=8.2m  rms=3.1m  rays=16
+  hl_6 … r_fit=27.5m  shift=2.4m  rms=5.1m  rays=16
+  hl_7 … r_fit=29.4m  shift=6.2m  rms=3.8m  rays=16
+  hl_8 … r_fit=30.0m  shift=3.0m  rms=1.4m  rays=16
+  hl_9 … r_fit=29.5m  shift=5.6m  rms=1.3m  rays=16
+Atlas → /home/runner/work/kharg-dashboard/kharg-dashboard/diagnostics/halul/esri_atlas.png
+Table → /home/runner/work/kharg-dashboard/kharg-dashboard/diagnostics/halul/ESRI_RADIUS_TABLE.md
+JSON  → /home/runner/work/kharg-dashboard/kharg-dashboard/diagnostics/halul/esri_raw.json
