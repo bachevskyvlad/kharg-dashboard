@@ -1,0 +1,61 @@
+[stage1] Terminal : sitra
+[stage1] Primary orbit: rel=137 DESC los=282
+[stage1] Survey start: 2017-01-01
+[stage1] Tanks (confirmed): 25
+[stage1] Checkpoint: 0 dates already processed
+
+[stage1] Querying catalog: descending rel=137 from 2017-01-01 …
+[stage1] Catalog: 311 scene dates
+[stage1] Pending (not yet processed): 311 dates
+[stage1] Date range: 2017-03-21 → 2026-10-07
+  … 10/311 scenes, 250 rows so far
+  … 20/311 scenes, 500 rows so far
+  … 30/311 scenes, 750 rows so far
+  … 40/311 scenes, 1000 rows so far
+  … 50/311 scenes, 1250 rows so far
+  … 60/311 scenes, 1500 rows so far
+  … 70/311 scenes, 1750 rows so far
+  … 80/311 scenes, 2000 rows so far
+  … 90/311 scenes, 2250 rows so far
+  … 100/311 scenes, 2500 rows so far
+  … 110/311 scenes, 2750 rows so far
+  … 120/311 scenes, 3000 rows so far
+  … 130/311 scenes, 3250 rows so far
+  … 140/311 scenes, 3500 rows so far
+  … 150/311 scenes, 3750 rows so far
+  … 160/311 scenes, 4000 rows so far
+  … 170/311 scenes, 4250 rows so far
+  … 180/311 scenes, 4500 rows so far
+  … 190/311 scenes, 4750 rows so far
+  … 200/311 scenes, 5000 rows so far
+  … 210/311 scenes, 5250 rows so far
+  … 220/311 scenes, 5500 rows so far
+  … 230/311 scenes, 5750 rows so far
+  … 240/311 scenes, 6000 rows so far
+  … 250/311 scenes, 6250 rows so far
+  … 260/311 scenes, 6500 rows so far
+  … 270/311 scenes, 6750 rows so far
+  … 280/311 scenes, 7000 rows so far
+  … 290/311 scenes, 7250 rows so far
+  … 300/311 scenes, 7500 rows so far
+  … 310/311 scenes, 7750 rows so far
+
+============================================================
+STAGE-1 BASELINE — SITRA
+============================================================
+  Orbit                : rel=137 DESC
+  Catalog scenes       : 311
+  Scenes processed     : 311
+  Scenes skipped(err)  : 0
+  Rows prepared        : 7775
+  Distinct dates       : 311
+  Distinct tanks       : 25
+  Date range           : 2017-03-21 → 2026-10-07
+  Tanks/date (med/min/max): 25 / 25 / 25
+  db_mean (p5/p50/p95): 0.64 / 5.82 / 11.85 dB
+============================================================
+
+[stage1] Existing rows for sitra: 7750
+[stage1] Deleting existing rows …
+[stage1] Inserting 7775 rows …
+[stage1] Insert complete. sitra Stage-1 baseline committed.
