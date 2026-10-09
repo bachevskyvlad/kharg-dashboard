@@ -1,0 +1,8 @@
+Traceback (most recent call last):
+  File "/home/runner/work/kharg-dashboard/kharg-dashboard/scripts/jask_stage2_screen.py", line 30, in <module>
+    jask_loc = next(l for l in LOCATIONS if l["terminal"] == "jask")
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/work/kharg-dashboard/kharg-dashboard/scripts/jask_stage2_screen.py", line 30, in <genexpr>
+    jask_loc = next(l for l in LOCATIONS if l["terminal"] == "jask")
+                                            ~^^^^^^^^^^^^
+KeyError: 'terminal'
