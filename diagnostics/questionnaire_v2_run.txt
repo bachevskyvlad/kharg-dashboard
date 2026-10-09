@@ -1,13 +1,19 @@
 
 ── kharg ──────────────────────────────────
   15087 obs
+  Features: {'dwell_days': 112.48, 'cv_level': 0.1337, 'cycle_days': 1.0, 'event_response': 0.514, 'stuck_frac': 0.0213}
+  Votes: {'ACC': 1, 'BUFFER': 1, 'FLOW': 3}
+  → FLOW (3/5)
+
+── yanbu ──────────────────────────────────
+  0 obs
 Traceback (most recent call last):
-  File "/home/runner/work/kharg-dashboard/kharg-dashboard/scripts/questionnaire_v2.py", line 282, in <module>
+  File "/home/runner/work/kharg-dashboard/kharg-dashboard/scripts/questionnaire_v2.py", line 293, in <module>
     sig = pull_signals(terminal)
           ^^^^^^^^^^^^^^^^^^^^^^
-  File "/home/runner/work/kharg-dashboard/kharg-dashboard/scripts/questionnaire_v2.py", line 141, in pull_signals
-    r = sb.table("kharg_daily").select("date,signal").order("date").execute()
-        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/work/kharg-dashboard/kharg-dashboard/scripts/questionnaire_v2.py", line 160, in pull_signals
+    .execute())
+     ^^^^^^^^^
   File "/opt/hostedtoolcache/Python/3.11.17/x64/lib/python3.11/site-packages/postgrest/_sync/request_builder.py", line 96, in execute
     raise APIError(dict(json_obj))
-postgrest.exceptions.APIError: {'message': "Could not find the table 'public.kharg_daily' in the schema cache", 'code': 'PGRST205', 'hint': "Perhaps you meant the table 'public.kharg_gross_flows'", 'details': None}
+postgrest.exceptions.APIError: {'message': 'column volume_timeseries.terminal does not exist', 'code': '42703', 'hint': None, 'details': None}
