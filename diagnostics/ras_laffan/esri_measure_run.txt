@@ -1,0 +1,38 @@
+Terminal: ras_laffan  tanks: 34
+  rl_0 … r_fit=42.4m  shift=5.7m  rms=4.0m  rays=16
+  rl_1 … r_fit=43.8m  shift=7.7m  rms=4.8m  rays=16
+  rl_2 … r_fit=38.1m  shift=4.9m  rms=2.2m  rays=16
+  rl_3 … r_fit=38.9m  shift=6.4m  rms=1.8m  rays=16
+  rl_4 … r_fit=37.1m  shift=8.0m  rms=2.1m  rays=16
+  rl_5 … r_fit=37.7m  shift=12.3m  rms=4.4m  rays=16
+  rl_6 … r_fit=33.4m  shift=10.0m  rms=4.9m  rays=16
+  rl_7 … r_fit=32.7m  shift=7.7m  rms=3.6m  rays=16
+  rl_8 … r_fit=37.0m  shift=11.6m  rms=1.3m  rays=16
+  rl_9 … r_fit=38.0m  shift=7.3m  rms=4.8m  rays=16
+  rl_10 … r_fit=37.7m  shift=12.7m  rms=3.6m  rays=16
+  rl_11 … r_fit=39.4m  shift=11.7m  rms=2.4m  rays=16
+  rl_12 … r_fit=37.5m  shift=12.9m  rms=4.2m  rays=16
+  rl_13 … r_fit=33.8m  shift=7.8m  rms=3.5m  rays=16
+  rl_14 … r_fit=33.8m  shift=10.8m  rms=3.4m  rays=16
+  rl_15 … r_fit=32.9m  shift=8.9m  rms=3.2m  rays=16
+  rl_16 … r_fit=33.3m  shift=11.0m  rms=3.0m  rays=16
+  rl_17 … r_fit=34.0m  shift=11.8m  rms=2.3m  rays=16
+  rl_18 … r_fit=32.6m  shift=7.4m  rms=4.5m  rays=16
+  rl_19 … r_fit=34.9m  shift=12.8m  rms=1.8m  rays=16
+  rl_20 … r_fit=28.0m  shift=11.0m  rms=1.7m  rays=16
+  rl_21 … r_fit=28.8m  shift=9.3m  rms=2.7m  rays=16
+  rl_22 … r_fit=29.8m  shift=9.8m  rms=1.1m  rays=16
+  rl_23 … r_fit=30.6m  shift=8.2m  rms=2.1m  rays=16
+  rl_24 … r_fit=32.7m  shift=6.8m  rms=2.9m  rays=16
+  rl_25 … r_fit=33.7m  shift=9.7m  rms=3.2m  rays=16
+  rl_26 … r_fit=31.4m  shift=8.5m  rms=2.2m  rays=16
+  rl_27 … r_fit=30.9m  shift=8.7m  rms=4.8m  rays=16
+  rl_28 … r_fit=34.0m  shift=6.6m  rms=1.6m  rays=16
+  rl_29 … r_fit=33.9m  shift=7.8m  rms=1.7m  rays=16
+  rl_30 … r_fit=32.9m  shift=5.2m  rms=2.2m  rays=16
+  rl_31 … r_fit=30.9m  shift=1.4m  rms=1.3m  rays=16
+  rl_32 … r_fit=31.7m  shift=5.0m  rms=1.0m  rays=16
+  rl_33 … r_fit=31.0m  shift=3.8m  rms=2.2m  rays=16
+Atlas → /home/runner/work/kharg-dashboard/kharg-dashboard/diagnostics/ras_laffan/esri_atlas.png
+Table → /home/runner/work/kharg-dashboard/kharg-dashboard/diagnostics/ras_laffan/ESRI_RADIUS_TABLE.md
+JSON  → /home/runner/work/kharg-dashboard/kharg-dashboard/diagnostics/ras_laffan/esri_raw.json
