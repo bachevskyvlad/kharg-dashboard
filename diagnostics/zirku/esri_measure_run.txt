@@ -1,0 +1,14 @@
+Terminal: zirku  tanks: 10
+  zi_0 … r_fit=50.2m  shift=7.3m  rms=2.6m  rays=16
+  zi_1 … r_fit=48.5m  shift=3.2m  rms=9.4m  rays=16
+  zi_2 … r_fit=47.6m  shift=4.1m  rms=5.9m  rays=16
+  zi_3 … r_fit=48.7m  shift=1.6m  rms=2.5m  rays=16
+  zi_4 … r_fit=49.4m  shift=2.7m  rms=1.7m  rays=16
+  zi_5 … r_fit=49.2m  shift=2.0m  rms=4.4m  rays=16
+  zi_6 … r_fit=46.6m  shift=6.3m  rms=3.1m  rays=16
+  zi_7 … r_fit=50.0m  shift=5.4m  rms=1.2m  rays=16
+  zi_8 … r_fit=49.0m  shift=7.4m  rms=3.3m  rays=16
+  zi_9 … r_fit=47.2m  shift=4.0m  rms=8.4m  rays=16
+Atlas → /home/runner/work/kharg-dashboard/kharg-dashboard/diagnostics/zirku/esri_atlas.png
+Table → /home/runner/work/kharg-dashboard/kharg-dashboard/diagnostics/zirku/ESRI_RADIUS_TABLE.md
+JSON  → /home/runner/work/kharg-dashboard/kharg-dashboard/diagnostics/zirku/esri_raw.json
