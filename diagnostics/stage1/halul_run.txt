@@ -1,0 +1,61 @@
+[stage1] Terminal : halul
+[stage1] Primary orbit: rel=137 DESC los=282
+[stage1] Survey start: 2017-01-01
+[stage1] Tanks (confirmed): 4
+[stage1] Checkpoint: 0 dates already processed
+
+[stage1] Querying catalog: descending rel=137 from 2017-01-01 …
+[stage1] Catalog: 311 scene dates
+[stage1] Pending (not yet processed): 311 dates
+[stage1] Date range: 2017-03-21 → 2026-10-07
+  … 10/311 scenes, 40 rows so far
+  … 20/311 scenes, 80 rows so far
+  … 30/311 scenes, 120 rows so far
+  … 40/311 scenes, 160 rows so far
+  … 50/311 scenes, 200 rows so far
+  … 60/311 scenes, 240 rows so far
+  … 70/311 scenes, 280 rows so far
+  … 80/311 scenes, 320 rows so far
+  … 90/311 scenes, 360 rows so far
+  … 100/311 scenes, 400 rows so far
+  … 110/311 scenes, 440 rows so far
+  … 120/311 scenes, 480 rows so far
+  … 130/311 scenes, 520 rows so far
+  … 140/311 scenes, 560 rows so far
+  … 150/311 scenes, 600 rows so far
+  … 160/311 scenes, 640 rows so far
+  … 170/311 scenes, 680 rows so far
+  … 180/311 scenes, 720 rows so far
+  … 190/311 scenes, 760 rows so far
+  … 200/311 scenes, 800 rows so far
+  … 210/311 scenes, 840 rows so far
+  … 220/311 scenes, 880 rows so far
+  … 230/311 scenes, 920 rows so far
+  … 240/311 scenes, 960 rows so far
+  … 250/311 scenes, 1000 rows so far
+  … 260/311 scenes, 1040 rows so far
+  … 270/311 scenes, 1080 rows so far
+  … 280/311 scenes, 1120 rows so far
+  … 290/311 scenes, 1160 rows so far
+  … 300/311 scenes, 1200 rows so far
+  … 310/311 scenes, 1240 rows so far
+
+============================================================
+STAGE-1 BASELINE — HALUL
+============================================================
+  Orbit                : rel=137 DESC
+  Catalog scenes       : 311
+  Scenes processed     : 311
+  Scenes skipped(err)  : 0
+  Rows prepared        : 1244
+  Distinct dates       : 311
+  Distinct tanks       : 4
+  Date range           : 2017-03-21 → 2026-10-07
+  Tanks/date (med/min/max): 4 / 4 / 4
+  db_mean (p5/p50/p95): -2.97 / 3.22 / 10.07 dB
+============================================================
+
+[stage1] Existing rows for halul: 6050
+[stage1] Deleting existing rows …
+[stage1] Inserting 1244 rows …
+[stage1] Insert complete. halul Stage-1 baseline committed.
