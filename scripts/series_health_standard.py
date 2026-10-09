@@ -104,9 +104,9 @@ NORMALIZATION_TABLE = """
 | dynamic_range_db | p95(mean_db) − p5(mean_db) | dB | (base — kept absolute) | dB |
 | cv_level | σ(mean_db) / μ(mean_db) | dimensionless | (self) | dimensionless |
 | vel_std_norm | std(Δmean_db) / dynamic_range_db | dB/pass | ÷ dynamic_range_db | fraction |
-| delta_p50_norm | median(|Δmean_db|) / dynamic_range_db | dB | ÷ dynamic_range_db | fraction |
-| delta_p90_norm | p90(|Δmean_db|) / dynamic_range_db | dB | ÷ dynamic_range_db | fraction |
-| delta_p99_norm | p99(|Δmean_db|) / dynamic_range_db | dB | ÷ dynamic_range_db | fraction |
+| delta_p50_norm | median(abs(Δmean_db)) / dynamic_range_db | dB | ÷ dynamic_range_db | fraction |
+| delta_p90_norm | p90(abs(Δmean_db)) / dynamic_range_db | dB | ÷ dynamic_range_db | fraction |
+| delta_p99_norm | p99(abs(Δmean_db)) / dynamic_range_db | dB | ÷ dynamic_range_db | fraction |
 | cycles_per_year | zero-crossings/2 / span_yr | 1/yr | (self) | 1/yr |
 | cycle_depth_norm | median_peak(|demeaned_30d_ma|) / dynamic_range_db | dB | ÷ dynamic_range_db | fraction |
 | max_flat_passes | longest run with |Δ| < 1% dynamic_range | passes | (self) | passes |
@@ -236,9 +236,9 @@ def compute_metrics(df: pd.DataFrame, label: str) -> dict:
 METRICS_ORDERED = [
     ("cv_level",          "CV of level (σ/μ mean_db)",          ".4f"),
     ("vel_std_norm",      "Velocity std (norm by dr)",           ".4f"),
-    ("delta_p50_norm",    "|Δ| p50 (norm by dr)",               ".4f"),
-    ("delta_p90_norm",    "|Δ| p90 (norm by dr)",               ".4f"),
-    ("delta_p99_norm",    "|Δ| p99 (norm by dr)",               ".4f"),
+    ("delta_p50_norm",    "Δ p50 (norm by dr)",                  ".4f"),
+    ("delta_p90_norm",    "Δ p90 (norm by dr)",                  ".4f"),
+    ("delta_p99_norm",    "Δ p99 (norm by dr)",                  ".4f"),
     ("cycles_per_year",   "Build-draw cycles/year",              ".2f"),
     ("cycle_depth_norm",  "Cycle depth (norm by dr)",            ".4f"),
     ("max_flat_passes",   "Max flat segment (passes)",           "d"),
