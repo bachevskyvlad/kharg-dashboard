@@ -1,0 +1,18 @@
+Terminal: mina_ahmadi  tanks: 14
+  ma_0 … r_fit=31.6m  shift=6.7m  rms=2.4m  rays=16
+  ma_1 … r_fit=31.2m  shift=5.9m  rms=1.3m  rays=16
+  ma_2 … r_fit=25.9m  shift=4.3m  rms=6.3m  rays=16
+  ma_3 … r_fit=30.3m  shift=3.6m  rms=4.3m  rays=16
+  ma_4 … r_fit=43.2m  shift=4.0m  rms=7.3m  rays=16
+  ma_5 … r_fit=41.5m  shift=5.2m  rms=5.1m  rays=16
+  ma_6 … r_fit=43.4m  shift=4.6m  rms=5.4m  rays=16
+  ma_7 … r_fit=41.9m  shift=2.7m  rms=2.7m  rays=16
+  ma_8 … r_fit=45.9m  shift=2.8m  rms=7.3m  rays=16
+  ma_9 … r_fit=44.8m  shift=6.8m  rms=1.5m  rays=16
+  ma_10 … r_fit=44.4m  shift=4.0m  rms=2.8m  rays=16
+  ma_11 … r_fit=41.3m  shift=3.6m  rms=3.6m  rays=16
+  ma_12 … r_fit=46.0m  shift=5.1m  rms=3.4m  rays=16
+  ma_13 … r_fit=44.5m  shift=3.6m  rms=2.8m  rays=16
+Atlas → /home/runner/work/kharg-dashboard/kharg-dashboard/diagnostics/mina_ahmadi/esri_atlas.png
+Table → /home/runner/work/kharg-dashboard/kharg-dashboard/diagnostics/mina_ahmadi/ESRI_RADIUS_TABLE.md
+JSON  → /home/runner/work/kharg-dashboard/kharg-dashboard/diagnostics/mina_ahmadi/esri_raw.json
