@@ -77,6 +77,116 @@ jobs:
           print("UNIT TEST: synthetic DEAD gate verdict — PASS")
           EOF
 
+      - name: Unit test — aggregate DR trap (7 constants at different levels → DEAD)
+        run: |
+          python - <<'EOF'
+          import sys
+          import numpy as np
+          import pandas as pd
+
+          # Synthetic: 7 tanks each stuck at a different constant dB level.
+          # Aggregate daily mean spans ~10 dB → DR looks healthy (~10 dB).
+          # But no tank cycles — every per-tank delta is near zero.
+          # Gate must still produce DEAD via cycling metrics, not DR.
+          rng = np.random.default_rng(99)
+          dates = pd.date_range("2020-01-01", periods=120, freq="6D")
+          levels = [-12.0, -10.0, -8.0, -6.0, -4.0, -2.0, 0.0]
+          tanks  = [f"t{i}" for i in range(7)]
+          rows = []
+          for d in dates:
+              for t, lv in zip(tanks, levels):
+                  rows.append({"date": d, "tank_id": t, "db_mean": lv + rng.normal(0, 0.05)})
+          df = pd.DataFrame(rows)
+          df["date"] = pd.to_datetime(df["date"])
+
+          # Reproduce compute_metrics (mirrors series_health.py)
+          daily = df.groupby("date")["db_mean"].mean().sort_index()
+          dr = float(daily.quantile(0.95) - daily.quantile(0.05))
+          print(f"Aggregate DR={dr:.3f}dB  (inflated by inter-tank spread, not cycling)")
+          assert dr > 0.5, f"Expected aggregate DR > 0.5, got {dr}"
+
+          flat_threshold  = 0.01 * dr
+          live_threshold  = 0.05 * dr
+
+          deltas_raw = daily.diff().dropna().abs()
+          delta_p50_norm = float(deltas_raw.quantile(0.50) / dr)
+          delta_p90_norm = float(deltas_raw.quantile(0.90) / dr)
+
+          ma = daily.rolling("30D").mean().dropna()
+          demeaned = ma - ma.mean()
+          signs = np.sign(demeaned.values)
+          crossings = int(np.sum(np.diff(signs) != 0))
+          span_years = (daily.index[-1] - daily.index[0]).days / 365.25
+          cycles_per_year = float(crossings / 2 / span_years) if span_years > 0 else 0.0
+
+          per_tank_steps = []
+          for _, tdf in df.groupby("tank_id"):
+              s = tdf.sort_values("date")["db_mean"]
+              steps = s.diff().dropna().abs()
+              if len(steps) >= 3:
+                  per_tank_steps.append(float(steps.median()))
+          live_fraction = float(np.mean([s >= live_threshold for s in per_tank_steps])) if per_tank_steps else 0.0
+
+          print(f"  delta_p50_norm={delta_p50_norm:.4f}  delta_p90_norm={delta_p90_norm:.4f}")
+          print(f"  cycles_per_year={cycles_per_year:.4f}  live_fraction={live_fraction:.4f}")
+
+          # Frozen DEAD criterion: ≥2 flags from {cycles_per_year, delta_p50_norm,
+          # delta_p90_norm, live_fraction} — DR does NOT participate.
+          # Load corridors from the just-generated standard file.
+          import re
+          from pathlib import Path
+          METRIC_LABELS = {
+              "cycles_per_year":  "Build-draw cycles/year",
+              "delta_p50_norm":   "Δ p50 (norm by dr)",
+              "delta_p90_norm":   "Δ p90 (norm by dr)",
+              "live_fraction":    "Live fraction (step≥5% dr)",
+          }
+          text = Path("diagnostics/SERIES_HEALTH_STANDARD.md").read_text()
+          table_section = re.search(r"\| Metric \|.*?Corridor hi \|\n((?:\|.*?\n)+)", text)
+          corridors = {}
+          if table_section:
+              for line in table_section.group(1).strip().split("\n"):
+                  parts = [p.strip() for p in line.split("|")[1:-1]]
+                  if len(parts) < 5:
+                      continue
+                  label = parts[0]
+                  lo_s, hi_s = parts[3], parts[4]
+                  for k, l in METRIC_LABELS.items():
+                      if l == label and lo_s not in ("n/a", "") and hi_s not in ("n/a", ""):
+                          try:
+                              corridors[k] = (float(lo_s), float(hi_s))
+                          except ValueError:
+                              pass
+          print(f"  Corridors loaded for DEAD metrics: {list(corridors.keys())}")
+
+          DEAD_DR_ABS = 0.5
+          dead_flags = []
+          metrics = {
+              "cycles_per_year": cycles_per_year,
+              "delta_p50_norm":  delta_p50_norm,
+              "delta_p90_norm":  delta_p90_norm,
+              "live_fraction":   live_fraction,
+          }
+          UPPER_SKIP = {"live_fraction"}
+          for key, (lo, hi) in corridors.items():
+              val = metrics.get(key, float("nan"))
+              if val < lo:
+                  dead_flags.append((key, val, lo, hi))
+                  print(f"  DEAD flag: {key}={val:.4f} < lo={lo:.4f}")
+              elif val > hi and key not in UPPER_SKIP:
+                  dead_flags.append((key, val, lo, hi))
+                  print(f"  DEAD flag (above hi): {key}={val:.4f} > hi={hi:.4f}")
+
+          is_dead = dr < DEAD_DR_ABS or len(dead_flags) >= 2
+          print(f"  dead_flags={len(dead_flags)}  is_dead={is_dead}")
+          assert is_dead, (
+              f"UNIT TEST FAIL: 7-constants aggregate DR trap not detected as DEAD "
+              f"(dead_flags={len(dead_flags)}, dr={dr:.3f}). "
+              f"Metrics: {metrics}"
+          )
+          print("UNIT TEST (b): aggregate DR trap — DEAD confirmed — PASS")
+          EOF
+
       - name: Gate validation — RT-DESC (orbit 35, expect PASS)
         id: rt_desc
         env:

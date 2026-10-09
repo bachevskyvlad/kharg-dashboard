@@ -43,6 +43,8 @@ try:
 except ImportError as e:
     print(f"Missing dep: {e}"); print("pip install matplotlib tifffile Pillow"); sys.exit(1)
 
+from sar_evalscript import SAR_EVALSCRIPT as _SAR_EVALSCRIPT, linear_to_db, mean_db
+
 SB_URL = (os.environ.get("SUPABASE_URL") or "https://yoekhkczwdeyauwarsyy.supabase.co").rstrip("/")
 SB_KEY = os.environ.get("SUPABASE_KEY") or "sb_publishable_7j07_zzdqTGM1LXf7-o9Tg_JJRbJQSM"
 SH_CLIENT_ID     = os.environ.get("CLIENT_ID")     or ""
@@ -165,11 +167,7 @@ def bbox_for_tank(tank, n_diam=4):
             tank["lon"] + dlon, tank["lat"] + dlat]
 
 
-SAR_EVALSCRIPT = """
-//VERSION=3
-function setup(){return {input:[{bands:["VV"]}],output:{bands:1,sampleType:"FLOAT32"}};}
-function evaluatePixel(s){var v=s.VV;return [v>0?10*Math.log10(v):-50];}
-"""
+SAR_EVALSCRIPT = _SAR_EVALSCRIPT
 
 S2_EVALSCRIPT = """
 //VERSION=3
@@ -256,11 +254,13 @@ def fetch_s2(tank, sar_b_date_str, window_days=S2_WINDOW_DAYS):
 # ─── render panel ─────────────────────────────────────────────────────────────
 
 def sar_to_rgb(arr, vmin=-15, vmax=5):
-    """Convert SAR float32 (dB) to uint8 grayscale RGB."""
+    """Convert SAR float32 (linear power) to uint8 grayscale RGB via dB."""
     if arr is None:
         return np.zeros((IMG_PX, IMG_PX, 3), dtype=np.uint8)
-    clipped = np.clip(arr, vmin, vmax)
-    normed  = ((clipped - vmin) / (vmax - vmin) * 255).astype(np.uint8)
+    db = linear_to_db(arr)
+    clipped = np.clip(db, vmin, vmax)
+    normed  = np.where(np.isfinite(clipped),
+                       ((clipped - vmin) / (vmax - vmin) * 255), 0).astype(np.uint8)
     if normed.ndim == 2:
         return np.stack([normed, normed, normed], axis=-1)
     return normed[:, :, :3]

@@ -211,6 +211,9 @@ def apply_gate(metrics: dict, corridors: dict) -> dict:
     dead_flags, wild_flags = [], []
 
     # Unconditional DEAD: dynamic_range_db too small to normalize
+    # DR does NOT participate in dead_flags count — aggregate DR inflates on
+    # multi-tank series at different baseline levels without actual movement.
+    # It is gated separately as an unconditional special case only.
     dr = metrics.get("dynamic_range_db", np.nan)
     if not np.isnan(dr) and dr < DEAD_DR_ABS:
         flags["dynamic_range_db"] = {
@@ -218,7 +221,6 @@ def apply_gate(metrics: dict, corridors: dict) -> dict:
             "flag": "BELOW_ABS_MIN",
             "metric": METRIC_LABELS["dynamic_range_db"],
         }
-        dead_flags.append(("dynamic_range_db", dr, DEAD_DR_ABS, np.nan))
 
     for key, (lo, hi) in corridors.items():
         val = metrics.get(key, np.nan)
@@ -237,7 +239,7 @@ def apply_gate(metrics: dict, corridors: dict) -> dict:
             flags[key] = {"value": val, "lo": lo, "hi": hi, "flag": flag,
                           "metric": METRIC_LABELS.get(key, key)}
 
-    is_dead = len(dead_flags) >= 2 or ("dynamic_range_db" in flags)
+    is_dead = (not np.isnan(dr) and dr < DEAD_DR_ABS) or len(dead_flags) >= 2
     is_wild = len(wild_flags) >= 1
 
     if not flags:

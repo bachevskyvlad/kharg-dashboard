@@ -8,6 +8,8 @@ from pathlib import Path
 import numpy as np
 import requests
 
+from sar_evalscript import SAR_EVALSCRIPT, linear_to_db
+
 try:
     import tifffile
     from PIL import Image
@@ -127,10 +129,6 @@ log(f"\n  bbox: {[round(x,6) for x in bbox]}")
 log(f"  window: {TANK['radius_m']*8:.0f}m × {TANK['radius_m']*8:.0f}m")
 
 # ── SAR fetch (two variants: relativeOrbit vs relativeOrbitNum) ───────────────
-SAR_ES = """//VERSION=3
-function setup(){return {input:[{bands:["VV"]}],output:{bands:1,sampleType:"FLOAT32"}};}
-function evaluatePixel(s){var v=s.VV;return [v>0?10*Math.log10(v):-50];}
-"""
 
 def fetch_sar_verbose(date_str, field_name, label):
     log(f"\n=== STEP 3: SAR fetch — {label} (field={field_name}) date={date_str} ===")
@@ -148,7 +146,7 @@ def fetch_sar_verbose(date_str, field_name, label):
         "output": {"resx": 5, "resy": 5, "responses": [
             {"identifier": "default", "format": {"type": "image/tiff"}}
         ]},
-        "evalscript": SAR_ES,
+        "evalscript": SAR_EVALSCRIPT,
     }
     log(f"  payload dataFilter: {json.dumps(payload['input']['data'][0]['dataFilter'])}")
     headers = {"Authorization": f"Bearer {token}", "Content-Type": "application/json", "Accept": "image/tiff"}
@@ -158,13 +156,17 @@ def fetch_sar_verbose(date_str, field_name, label):
         log(f"  response body: {r.text[:500]}")
         return None
     try:
-        arr = tifffile.imread(io.BytesIO(r.content)).astype(np.float32)
-        log(f"  array shape: {arr.shape}  dtype: {arr.dtype}")
-        valid = arr[np.isfinite(arr) & (arr > -50)]
-        log(f"  valid pixels: {len(valid)}  min={float(valid.min()) if len(valid) else 'n/a':.2f}  max={float(valid.max()) if len(valid) else 'n/a':.2f}  std={float(valid.std()) if len(valid) else 'n/a':.3f}")
-        if len(valid) == 0:
-            log("  !!! ALL PIXELS INVALID (NaN/fill) — NO_DATA")
-        return arr
+        arr_linear = tifffile.imread(io.BytesIO(r.content)).astype(np.float32)
+        log(f"  array shape: {arr_linear.shape}  dtype: {arr_linear.dtype}")
+        valid_linear = arr_linear[np.isfinite(arr_linear) & (arr_linear > 0)]
+        log(f"  valid pixels (linear>0): {len(valid_linear)}")
+        if len(valid_linear) == 0:
+            log("  !!! ALL PIXELS INVALID (NaN/zero fill) — NO_DATA")
+        else:
+            db_arr = linear_to_db(arr_linear)
+            valid_db = db_arr[np.isfinite(db_arr)]
+            log(f"  dB range: min={float(valid_db.min()):.2f}  max={float(valid_db.max()):.2f}  std={float(valid_db.std()):.3f}")
+        return arr_linear
     except Exception as e:
         log(f"  tifffile error: {e}")
         return None
@@ -227,8 +229,9 @@ IMG_PX = 128
 
 def to_rgb(arr, vmin=-15, vmax=5):
     if arr is None: return np.zeros((IMG_PX, IMG_PX, 3), np.uint8)
-    c = np.clip(arr, vmin, vmax)
-    n = ((c - vmin) / (vmax - vmin) * 255).astype(np.uint8)
+    db = linear_to_db(arr)
+    c = np.clip(db, vmin, vmax)
+    n = np.where(np.isfinite(c), ((c - vmin) / (vmax - vmin) * 255), 0).astype(np.uint8)
     rgb = np.stack([n, n, n], axis=-1) if n.ndim == 2 else n[:,:,:3]
     img = Image.fromarray(rgb).resize((IMG_PX, IMG_PX), Image.LANCZOS)
     return np.array(img)
