@@ -1,0 +1,51 @@
+name: Jask — smoke test jk_11 (SAR + S2 PNG)
+
+on:
+  workflow_dispatch: {}
+
+jobs:
+  jask_smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: claude/oilradar-dashboard-iran-zchdva
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: pip install numpy matplotlib tifffile Pillow requests -q
+
+      - name: Run smoke test
+        env:
+          CLIENT_ID:     ${{ secrets.CLIENT_ID }}
+          CLIENT_SECRET: ${{ secrets.CLIENT_SECRET }}
+          SUPABASE_URL:  ${{ secrets.SUPABASE_URL }}
+          SUPABASE_KEY:  ${{ secrets.SUPABASE_KEY }}
+        run: |
+          mkdir -p diagnostics/jask/smoke
+          cd scripts
+          python jask_smoke.py 2>&1 | tee ../diagnostics/jask/smoke/smoke_run.txt
+
+      - name: Commit smoke outputs
+        if: always()
+        run: |
+          git config user.email "actions@github.com"
+          git config user.name "GitHub Actions"
+          git add -f diagnostics/jask/smoke/ || true
+          git diff --cached --quiet && echo "No changes" || \
+            git commit -m "ci: jask smoke — jk_11 SAR+S2 PNG [skip ci]"
+          git pull --rebase origin claude/oilradar-dashboard-iran-zchdva || true
+          git push origin HEAD:claude/oilradar-dashboard-iran-zchdva || true
+
+      - name: Upload smoke PNG
+        continue-on-error: true
+        uses: actions/upload-artifact@v4
+        with:
+          name: jask-smoke
+          path: diagnostics/jask/smoke/
