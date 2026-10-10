@@ -1,0 +1,2 @@
+terminal_id,n_total,first_date,last_date,n_years_coverage,n_gap_years,gap_years,orbit_summary,is_mono,check_id,run_date,git_sha,verdict
+ras_tanura,566,2017-03-14,2026-10-06,10,0,none,101.0/ASC; 35.0/DESC; nan/DESCENDING,False,C11,2026-10-10,7119c0d,
