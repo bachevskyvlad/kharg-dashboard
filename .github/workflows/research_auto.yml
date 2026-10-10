@@ -1,0 +1,51 @@
+name: Research — ТЗ-АВТОНОМ v2 Block A
+
+on:
+  workflow_dispatch:
+    inputs:
+      block:
+        description: "Block to run (A / all)"
+        required: false
+        default: "A"
+
+jobs:
+  research:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: research/2026-10-auto
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: pip install numpy pandas scipy diptest supabase requests -q
+
+      - name: Run Block A hypotheses (H01–H07)
+        env:
+          SUPABASE_URL: https://yoekhkczwdeyauwarsyy.supabase.co
+          SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+        run: |
+          mkdir -p diagnostics/research/2026-10
+          cd scripts
+          python research/auto_hypotheses.py 2>&1 | tee ../diagnostics/research/2026-10/run_blockA.txt
+
+      - name: Save results
+        if: always()
+        run: |
+          git config user.email "actions@github.com"
+          git config user.name "GitHub Actions"
+          git add -f diagnostics/research/ || true
+          git diff --cached --quiet && echo "No changes" || \
+            git commit -m "research: Block A H01-H07 results [skip ci]"
+          for attempt in 1 2 3 4; do
+            git pull --rebase origin research/2026-10-auto && \
+            git push origin HEAD:research/2026-10-auto && break
+            echo "push attempt $attempt failed, retrying in ${attempt}s"
+            sleep $attempt
+          done || true
