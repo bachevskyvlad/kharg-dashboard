@@ -51,12 +51,22 @@ jobs:
             $ORBIT_ARG \
             2>&1 | tee ../diagnostics/checks/run_${{ github.event.inputs.terminal }}.txt
 
+      - name: Orbit label audit (RT + Yanbu)
+        env:
+          SUPABASE_URL: https://yoekhkczwdeyauwarsyy.supabase.co
+          SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+        if: contains('ras_tanura yanbu', github.event.inputs.terminal)
+        run: |
+          mkdir -p diagnostics/rt_orbit diagnostics/yanbu_orbit
+          cd scripts
+          python diag_orbit_labels.py 2>&1 | tee ../diagnostics/rt_orbit/run.txt
+
       - name: Save results
         if: always()
         run: |
           git config user.email "actions@github.com"
           git config user.name "GitHub Actions"
-          git add -f diagnostics/checks/ || true
+          git add -f diagnostics/checks/ diagnostics/rt_orbit/ diagnostics/yanbu_orbit/ || true
           git diff --cached --quiet && echo "No changes" || \
             git commit -m "ci: terminal-checks ${{ github.event.inputs.terminal }} [skip ci]"
           # rebase+retry loop to avoid race between concurrent terminal jobs
