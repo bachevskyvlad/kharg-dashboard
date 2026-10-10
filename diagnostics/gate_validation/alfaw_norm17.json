@@ -1,0 +1,57 @@
+{
+  "terminal": "al_flaw",
+  "relative_orbit": null,
+  "tanks": [
+    "af_1",
+    "af_4",
+    "af_5",
+    "af_8",
+    "af_10",
+    "af_12",
+    "af_13",
+    "af_14",
+    "af_15",
+    "af_16",
+    "af_17",
+    "af_18",
+    "af_19",
+    "af_20",
+    "af_21",
+    "af_22",
+    "af_23"
+  ],
+  "from_date": null,
+  "to_date": null,
+  "value_column": "db_norm",
+  "verdict": "FLAG",
+  "diagnosis": "REVIEW",
+  "flags": {
+    "cv_level": {
+      "value": -1.5966529919766599,
+      "lo": 0.098,
+      "hi": 0.6358,
+      "flag": "BELOW_LO",
+      "metric": "CV of level (\u03c3/\u03bc mean_db)"
+    },
+    "cycle_depth_norm": {
+      "value": 0.26161866421753327,
+      "lo": 0.0558,
+      "hi": 0.2533,
+      "flag": "ABOVE_HI",
+      "metric": "Cycle depth (norm by dr)"
+    }
+  },
+  "metrics": {
+    "dynamic_range_db": 1.3769960897435896,
+    "cv_level": -1.5966529919766599,
+    "vel_std_norm": 0.2706331584953818,
+    "delta_p50_norm": 0.17750851380941807,
+    "delta_p90_norm": 0.5661765832041282,
+    "delta_p99_norm": 1.2420317283920657,
+    "cycles_per_year": 1.3060190703218117,
+    "cycle_depth_norm": 0.26161866421753327,
+    "max_flat_passes": 1,
+    "per_tank_step_norm": 0.28090130602478763,
+    "live_fraction": 1.0
+  }
+}

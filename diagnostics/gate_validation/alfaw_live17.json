@@ -1,0 +1,50 @@
+{
+  "terminal": "al_flaw",
+  "relative_orbit": null,
+  "tanks": [
+    "af_1",
+    "af_4",
+    "af_5",
+    "af_8",
+    "af_10",
+    "af_12",
+    "af_13",
+    "af_14",
+    "af_15",
+    "af_16",
+    "af_17",
+    "af_18",
+    "af_19",
+    "af_20",
+    "af_21",
+    "af_22",
+    "af_23"
+  ],
+  "from_date": null,
+  "to_date": null,
+  "value_column": "db_mean",
+  "verdict": "FLAG",
+  "diagnosis": "REVIEW",
+  "flags": {
+    "cv_level": {
+      "value": -0.10652252678109234,
+      "lo": 0.098,
+      "hi": 0.6358,
+      "flag": "BELOW_LO",
+      "metric": "CV of level (\u03c3/\u03bc mean_db)"
+    }
+  },
+  "metrics": {
+    "dynamic_range_db": 1.407287058823529,
+    "cv_level": -0.10652252678109234,
+    "vel_std_norm": 0.14763860640705784,
+    "delta_p50_norm": 0.11996799850191506,
+    "delta_p90_norm": 0.3195948984863658,
+    "delta_p99_norm": 0.7600207407828551,
+    "cycles_per_year": 0.8706793802145412,
+    "cycle_depth_norm": 0.18152285872754434,
+    "max_flat_passes": 2,
+    "per_tank_step_norm": 0.34488343863955173,
+    "live_fraction": 1.0
+  }
+}

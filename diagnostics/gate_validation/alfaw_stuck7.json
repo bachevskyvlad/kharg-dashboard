@@ -10,6 +10,9 @@
     "af_9",
     "af_11"
   ],
+  "from_date": null,
+  "to_date": null,
+  "value_column": "db_mean",
   "verdict": "FLAG",
   "diagnosis": "DEAD",
   "flags": {

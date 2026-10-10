@@ -1,0 +1,39 @@
+{
+  "terminal": "zirku",
+  "relative_orbit": null,
+  "tanks": null,
+  "from_date": null,
+  "to_date": null,
+  "value_column": "db_mean",
+  "verdict": "FLAG",
+  "diagnosis": "WILD",
+  "flags": {
+    "vel_std_norm": {
+      "value": 0.31909915484467416,
+      "lo": 0.0748,
+      "hi": 0.311,
+      "flag": "ABOVE_HI",
+      "metric": "Velocity std (norm by dr)"
+    },
+    "delta_p99_norm": {
+      "value": 2.1414794845524656,
+      "lo": 0.2934,
+      "hi": 1.4662,
+      "flag": "ABOVE_HI",
+      "metric": "\u0394 p99 (norm by dr)"
+    }
+  },
+  "metrics": {
+    "dynamic_range_db": 4.742636730000001,
+    "cv_level": 0.21710277404081663,
+    "vel_std_norm": 0.31909915484467416,
+    "delta_p50_norm": 0.245472549612713,
+    "delta_p90_norm": 0.6599493569055201,
+    "delta_p99_norm": 2.1414794845524656,
+    "cycles_per_year": 2.666440022902949,
+    "cycle_depth_norm": 0.23996588462328836,
+    "max_flat_passes": 1,
+    "per_tank_step_norm": 0.743410301214447,
+    "live_fraction": 1.0
+  }
+}

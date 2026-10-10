@@ -2,6 +2,9 @@
   "terminal": "jask",
   "relative_orbit": null,
   "tanks": null,
+  "from_date": null,
+  "to_date": null,
+  "value_column": "db_mean",
   "verdict": "FLAG",
   "diagnosis": "REVIEW",
   "flags": {

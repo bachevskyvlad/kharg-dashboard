@@ -1,0 +1,24 @@
+{
+  "terminal": "ras_laffan",
+  "relative_orbit": null,
+  "tanks": null,
+  "from_date": null,
+  "to_date": null,
+  "value_column": "db_mean",
+  "verdict": "PASS",
+  "diagnosis": null,
+  "flags": {},
+  "metrics": {
+    "dynamic_range_db": 2.777212211764706,
+    "cv_level": 0.14464797443003083,
+    "vel_std_norm": 0.2877500850934658,
+    "delta_p50_norm": 0.24456210611845117,
+    "delta_p90_norm": 0.5892479661513127,
+    "delta_p99_norm": 0.9468014845466832,
+    "cycles_per_year": 2.6710281043877258,
+    "cycle_depth_norm": 0.1981790273162585,
+    "max_flat_passes": 1,
+    "per_tank_step_norm": 0.8652624706964926,
+    "live_fraction": 1.0
+  }
+}

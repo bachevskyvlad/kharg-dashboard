@@ -1,0 +1,24 @@
+{
+  "terminal": "fujairah",
+  "relative_orbit": null,
+  "tanks": null,
+  "from_date": null,
+  "to_date": null,
+  "value_column": "db_mean",
+  "verdict": "PASS",
+  "diagnosis": null,
+  "flags": {},
+  "metrics": {
+    "dynamic_range_db": 7.353394727272727,
+    "cv_level": 0.2901394354533991,
+    "vel_std_norm": 0.10135826604299744,
+    "delta_p50_norm": 0.09713484280395811,
+    "delta_p90_norm": 0.2696224119961811,
+    "delta_p99_norm": 0.45500661884154886,
+    "cycles_per_year": 1.7685132440900027,
+    "cycle_depth_norm": 0.08275465914885256,
+    "max_flat_passes": 2,
+    "per_tank_step_norm": 0.29691038370379386,
+    "live_fraction": 1.0
+  }
+}
