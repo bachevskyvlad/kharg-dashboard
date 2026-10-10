@@ -517,11 +517,11 @@ def main():
     # ── save results ──────────────────────────────────────────────────────────
     out_json = OUT_DIR / "kharg_gate_result.json"
     result = {
-        "gate_pass":         gate_pass,
+        "gate_pass":         int(gate_pass),
         "gate1_gap":         round(gap, 6),
-        "gate1_pass":        gate1_pass,
+        "gate1_pass":        int(gate1_pass),
         "gate2_med_corr":    round(med_corr, 6) if not math.isnan(med_corr) else None,
-        "gate2_pass":        gate2_pass,
+        "gate2_pass":        int(gate2_pass),
         "med_empty":         round(med_empty, 6),
         "med_full":          round(med_full, 6),
         "n_s2_scenes":       len(scenes),
