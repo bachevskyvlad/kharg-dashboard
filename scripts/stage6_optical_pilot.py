@@ -570,8 +570,8 @@ def _compute_shadow_frac(tile_rgb: np.ndarray,
                 "sector_px": 0, "threshold_used": float("nan"),
                 "low_shadow_geometry": sun_elv > LOW_SHADOW_ELV, "valid": False}
 
-    # Shadow sector: centred at (sun_az + 180°) mod 360°
-    shadow_centre = (sun_az + 180.0) % 360.0
+    # Shadow sector: centred on sun_az (shadow lies on the sun-facing side of the roof)
+    shadow_centre = sun_az % 360.0
     half_ang = SHADOW_ANGLE / 2.0  # 60°
 
     # Pixel grid (vectorised)
@@ -1003,7 +1003,7 @@ def stage2b_crop_pngs(shadow_df: pd.DataFrame, all_scenes: dict) -> list[str]:
         draw = ImageDraw.Draw(crop)
         cx_c = cx - x0
         cy_c = cy - y0
-        shadow_centre = (ex["sun_az"] + 180.0) % 360.0
+        shadow_centre = ex["sun_az"] % 360.0  # shadow on sun-facing side
         half_ang = SHADOW_ANGLE / 2.0
 
         # Tank outline (red)
@@ -1655,5 +1655,79 @@ def main():
     print("\n=== Stage 6 COMPLETE ===")
 
 
+def _unit_test_shadow_sector_direction():
+    """
+    Synthetic unit test: shadow sector must be centred on sun_azimuth (sun-facing side),
+    NOT on sun_azimuth + 180° (the former bug).
+
+    Setup: synthetic 100×100 tile where pixels in the sun-facing semicircle
+    are intentionally dark and pixels in the anti-sun semicircle are bright.
+    Correct sector (sun_az) → shadow_frac > 0.5.
+    Wrong sector (sun_az + 180°) → shadow_frac ≈ 0 (no dark pixels there).
+    """
+    import math as _math
+    sun_az = 140.0   # SE — sun facing into tank from this direction
+    r_m    = 55.0
+    res_m  = 5.0
+    r_px   = r_m / res_m   # 11px
+
+    H = W = 100
+    cx, cy = 50.0, 50.0
+
+    # Build synthetic tile: dark (20) in ±45° sun-facing wedge, bright (200) elsewhere.
+    # ±45° → ~12.5% of disk pixels dark → p30(disk) = 200 (only 12.5% ≤ 20 < 30%)
+    # threshold_p30 = 200 → count(sector_pixels < 200) = count(==20) = all dark in sector
+    # Sector (SHADOW_ANGLE/2 = ±60°) fully covers the ±45° dark wedge:
+    #   sf_correct ≈ 0.75 (45/60 of sector is dark) > 0.5 ✓
+    #   sf_wrong   = 0.0 (anti-sun sector has no dark pixels) ✓
+    DARK_HALF = 45.0   # degrees half-angle of the synthetic dark wedge
+    tile = np.full((H, W, 4), 200, dtype=np.uint8)
+    for row in range(H):
+        for col in range(W):
+            dc = col - cx
+            dr = cy - row   # positive = north
+            if dc * dc + dr * dr <= r_px ** 2:
+                az_px = (_math.degrees(_math.atan2(dc, dr)) + 360) % 360
+                diff = ((az_px - sun_az) + 180) % 360 - 180
+                if abs(diff) <= DARK_HALF:   # sun-facing wedge: shadow here
+                    tile[row, col, :3] = 20   # dark
+                else:
+                    tile[row, col, :3] = 200  # bright
+
+    # Fake tank + bbox matching resolution
+    tank = {"lat": 50.0, "lon": 50.0, "radius_m": r_m}
+    # bbox chosen so res = res_m at lat 50°
+    deg_per_m_lon = 1.0 / (111320.0 * _math.cos(_math.radians(50.0)))
+    deg_per_m_lat = 1.0 / 111320.0
+    span_lon = W * res_m * deg_per_m_lon
+    span_lat = H * res_m * deg_per_m_lat
+    bbox = [50.0 - span_lon / 2, 50.0 - span_lat / 2,
+            50.0 + span_lon / 2, 50.0 + span_lat / 2]
+
+    result_correct = _compute_shadow_frac(tile, bbox, tank, sun_az, sun_elv=30.0)
+    result_wrong   = _compute_shadow_frac(tile, bbox, tank,
+                                          (sun_az + 180.0) % 360.0, sun_elv=30.0)
+
+    sf_correct = result_correct["shadow_frac"]
+    sf_wrong   = result_wrong["shadow_frac"]
+
+    assert result_correct["valid"], "Unit test: correct-sector result should be valid"
+    assert result_wrong["valid"],   "Unit test: wrong-sector result should be valid"
+    assert sf_correct > 0.5, (
+        f"UNIT TEST FAIL: correct sector (sun_az={sun_az}°) gives shadow_frac={sf_correct:.3f} "
+        f"(expected >0.5 — sun-facing pixels are dark)"
+    )
+    assert sf_wrong < 0.2, (
+        f"UNIT TEST FAIL: wrong sector (anti-sun, {(sun_az+180)%360}°) gives shadow_frac={sf_wrong:.3f} "
+        f"(expected <0.2 — anti-sun pixels are bright)"
+    )
+    print(f"UNIT TEST shadow_sector_direction: PASS  "
+          f"(sf_correct={sf_correct:.3f} > 0.5, sf_wrong={sf_wrong:.3f} < 0.2)")
+
+
 if __name__ == "__main__":
+    import sys as _sys
+    if "--unit-test" in _sys.argv:
+        _unit_test_shadow_sector_direction()
+        _sys.exit(0)
     main()

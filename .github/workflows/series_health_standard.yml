@@ -283,9 +283,9 @@ jobs:
             --tanks $LIVE17 \
             --out diagnostics/gate_validation/alfaw_live17.json || true
 
-          echo "=== al_flaw norm17 (live17 from 2020-01-01) ==="
+          echo "=== al_flaw norm17 (live17 on db_norm column) ==="
           python scripts/series_health.py --terminal al_flaw \
-            --tanks $LIVE17 --from-date 2020-01-01 \
+            --tanks $LIVE17 --value-column db_norm \
             --out diagnostics/gate_validation/alfaw_norm17.json || true
 
           echo "=== al_flaw stuck7 (reference) ==="
@@ -298,9 +298,9 @@ jobs:
           python scripts/series_health.py --terminal jask \
             --out diagnostics/gate_validation/jask.json || true
 
-          echo "=== jask peace-window (2020-01-01+) ==="
+          echo "=== jask peace-window (–2026-02-28) ==="
           python scripts/series_health.py --terminal jask \
-            --from-date 2020-01-01 \
+            --to-date 2026-02-28 \
             --out diagnostics/gate_validation/jask_peace.json || true
 
       - name: Print summary table

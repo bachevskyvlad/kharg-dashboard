@@ -114,18 +114,29 @@ def fetch_all(table, select, filters=None):
 
 
 def load_data(terminal_id: str, relative_orbit=None, tanks=None,
-              from_date=None, to_date=None) -> pd.DataFrame:
+              from_date=None, to_date=None, value_column="db_mean") -> pd.DataFrame:
     if terminal_id == "kharg":
-        rows = fetch_all("raw_observations", "date,tank_id,db_mean")
+        select = "date,tank_id,db_mean"
+        if value_column != "db_mean":
+            select += f",{value_column}"
+        rows = fetch_all("raw_observations", select)
         df = pd.DataFrame(rows)
     else:
-        rows = fetch_all("terminal_observations",
-                         "date,tank_id,db_mean,relative_orbit,orbit_direction",
+        select = f"date,tank_id,db_mean,relative_orbit,orbit_direction"
+        if value_column != "db_mean":
+            select += f",{value_column}"
+        rows = fetch_all("terminal_observations", select,
                          filters={"terminal_id": terminal_id})
         df = pd.DataFrame(rows)
         if relative_orbit is not None and "relative_orbit" in df.columns:
             df = df[df["relative_orbit"] == relative_orbit]
     df["date"] = pd.to_datetime(df["date"])
+    if value_column != "db_mean":
+        if value_column not in df.columns:
+            print(f"WARNING: column '{value_column}' absent from table — all values will be n/a")
+            df["db_mean"] = float("nan")
+        else:
+            df["db_mean"] = df[value_column]
     df = df.dropna(subset=["db_mean"])
     if tanks is not None and "tank_id" in df.columns:
         df = df[df["tank_id"].isin(tanks)]
@@ -311,7 +322,9 @@ def main():
                         help="Include only dates >= this ISO date (e.g. 2020-01-01)")
     parser.add_argument("--to-date",   default=None, dest="to_date",
                         help="Include only dates <= this ISO date (e.g. 2024-12-31)")
-    parser.add_argument("--out",       default=None, help="Write JSON result to this path")
+    parser.add_argument("--out",          default=None, help="Write JSON result to this path")
+    parser.add_argument("--value-column", default="db_mean", dest="value_column",
+                        help="Column to use as the signal value (default: db_mean; e.g. db_norm)")
     args = parser.parse_args()
 
     tanks = [t.strip() for t in args.tanks.split(",")] if args.tanks else None
@@ -327,9 +340,11 @@ def main():
     if args.from_date: date_tag += f" from={args.from_date}"
     if args.to_date:   date_tag += f" to={args.to_date}"
     tank_tag = f" tanks={args.tanks}" if tanks else ""
-    print(f"\nFetching {args.terminal} (orbit={args.orbit or 'all'}{tank_tag}{date_tag})...")
+    vcol_tag = f" col={args.value_column}" if args.value_column != "db_mean" else ""
+    print(f"\nFetching {args.terminal} (orbit={args.orbit or 'all'}{tank_tag}{date_tag}{vcol_tag})...")
     df = load_data(args.terminal, args.orbit, tanks=tanks,
-                   from_date=args.from_date, to_date=args.to_date)
+                   from_date=args.from_date, to_date=args.to_date,
+                   value_column=args.value_column)
     if df.empty:
         print(f"ERROR: no data for terminal='{args.terminal}' orbit={args.orbit} tanks={tanks}")
         sys.exit(1)
@@ -347,6 +362,7 @@ def main():
         "tanks":          tanks,
         "from_date":      args.from_date,
         "to_date":        args.to_date,
+        "value_column":   args.value_column,
         "verdict":        gate["verdict"],
         "diagnosis":      gate["diagnosis"],
         "flags":          gate["flags"],
