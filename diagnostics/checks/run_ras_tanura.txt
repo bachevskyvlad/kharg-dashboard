@@ -1,1 +1,51 @@
-FATAL: SUPABASE_URL and SUPABASE_KEY env vars must be set
+[terminal_checks] terminal=ras_tanura  checks=['C11', 'C04', 'C05', 'C06', 'C06B', 'C07', 'C14', 'C15', 'C16', 'C12']  orbit=None
+  fetching terminal_observations for ras_tanura…
+  36,989 rows fetched, 566 dates, 66 tanks
+  registry: 66 tanks
+  running C11…
+  → /home/runner/work/kharg-dashboard/kharg-dashboard/diagnostics/checks/ras_tanura/C11_detail.csv (18 rows)
+  → /home/runner/work/kharg-dashboard/kharg-dashboard/diagnostics/checks/ras_tanura/C11.csv (1 rows)
+  running C04…
+  → /home/runner/work/kharg-dashboard/kharg-dashboard/diagnostics/checks/ras_tanura/C04.csv (66 rows)
+  running C05…
+  → /home/runner/work/kharg-dashboard/kharg-dashboard/diagnostics/checks/ras_tanura/C05.csv (66 rows)
+  running C06…
+  → /home/runner/work/kharg-dashboard/kharg-dashboard/diagnostics/checks/ras_tanura/C06.csv (66 rows)
+  running C06B…
+  → /home/runner/work/kharg-dashboard/kharg-dashboard/diagnostics/checks/ras_tanura/C06B.csv (66 rows)
+  running C07…
+  → /home/runner/work/kharg-dashboard/kharg-dashboard/diagnostics/checks/ras_tanura/C07.csv (1 rows)
+  running C14…
+  → /home/runner/work/kharg-dashboard/kharg-dashboard/diagnostics/checks/ras_tanura/C14.csv (66 rows)
+  running C15…
+  → /home/runner/work/kharg-dashboard/kharg-dashboard/diagnostics/checks/ras_tanura/C15.csv (1 rows)
+  running C16…
+  → /home/runner/work/kharg-dashboard/kharg-dashboard/diagnostics/checks/ras_tanura/C16.csv (66 rows)
+  running C12…
+  → /home/runner/work/kharg-dashboard/kharg-dashboard/diagnostics/checks/ras_tanura/C12.csv (4 rows)
+Traceback (most recent call last):
+  File "/home/runner/work/kharg-dashboard/kharg-dashboard/scripts/terminal_checks.py", line 226, in <module>
+    main()
+  File "/home/runner/work/kharg-dashboard/kharg-dashboard/scripts/terminal_checks.py", line 218, in main
+    matrix_text = build_matrix(out_root)
+                  ^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/work/kharg-dashboard/kharg-dashboard/scripts/terminal_checks.py", line 130, in build_matrix
+    df = pd.read_csv(csv_file)
+         ^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/hostedtoolcache/Python/3.11.17/x64/lib/python3.11/site-packages/pandas/io/parsers/readers.py", line 872, in read_csv
+    return _read(filepath_or_buffer, kwds)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/hostedtoolcache/Python/3.11.17/x64/lib/python3.11/site-packages/pandas/io/parsers/readers.py", line 300, in _read
+    parser = TextFileReader(filepath_or_buffer, **kwds)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/hostedtoolcache/Python/3.11.17/x64/lib/python3.11/site-packages/pandas/io/parsers/readers.py", line 1643, in __init__
+    self._engine = self._make_engine(f, self.engine)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/hostedtoolcache/Python/3.11.17/x64/lib/python3.11/site-packages/pandas/io/parsers/readers.py", line 1925, in _make_engine
+    return mapping[engine](f, **self.options)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/hostedtoolcache/Python/3.11.17/x64/lib/python3.11/site-packages/pandas/io/parsers/c_parser_wrapper.py", line 95, in __init__
+    self._reader = parsers.TextReader(src, **kwds)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "pandas/_libs/parsers.pyx", line 575, in pandas._libs.parsers.TextReader.__cinit__
+pandas.errors.EmptyDataError: No columns to parse from file
