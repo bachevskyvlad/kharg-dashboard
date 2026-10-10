@@ -113,7 +113,8 @@ def fetch_all(table, select, filters=None):
     return rows
 
 
-def load_data(terminal_id: str, relative_orbit=None, tanks=None) -> pd.DataFrame:
+def load_data(terminal_id: str, relative_orbit=None, tanks=None,
+              from_date=None, to_date=None) -> pd.DataFrame:
     if terminal_id == "kharg":
         rows = fetch_all("raw_observations", "date,tank_id,db_mean")
         df = pd.DataFrame(rows)
@@ -128,6 +129,10 @@ def load_data(terminal_id: str, relative_orbit=None, tanks=None) -> pd.DataFrame
     df = df.dropna(subset=["db_mean"])
     if tanks is not None and "tank_id" in df.columns:
         df = df[df["tank_id"].isin(tanks)]
+    if from_date is not None:
+        df = df[df["date"] >= pd.to_datetime(from_date)]
+    if to_date is not None:
+        df = df[df["date"] <= pd.to_datetime(to_date)]
     return df
 
 
@@ -300,9 +305,13 @@ def main():
     parser.add_argument("--terminal", required=True)
     parser.add_argument("--orbit",    type=int, default=None,
                         help="Filter to this relative_orbit (e.g. 35 for RT-DESC)")
-    parser.add_argument("--tanks",    default=None,
+    parser.add_argument("--tanks",     default=None,
                         help="Comma-separated tank IDs to include (e.g. af_0,af_2,af_3)")
-    parser.add_argument("--out",      default=None, help="Write JSON result to this path")
+    parser.add_argument("--from-date", default=None, dest="from_date",
+                        help="Include only dates >= this ISO date (e.g. 2020-01-01)")
+    parser.add_argument("--to-date",   default=None, dest="to_date",
+                        help="Include only dates <= this ISO date (e.g. 2024-12-31)")
+    parser.add_argument("--out",       default=None, help="Write JSON result to this path")
     args = parser.parse_args()
 
     tanks = [t.strip() for t in args.tanks.split(",")] if args.tanks else None
@@ -314,9 +323,13 @@ def main():
         print("ERROR: no corridors loaded — check SERIES_HEALTH_STANDARD.md format.")
         sys.exit(1)
 
+    date_tag = ""
+    if args.from_date: date_tag += f" from={args.from_date}"
+    if args.to_date:   date_tag += f" to={args.to_date}"
     tank_tag = f" tanks={args.tanks}" if tanks else ""
-    print(f"\nFetching {args.terminal} (orbit={args.orbit or 'all'}{tank_tag})...")
-    df = load_data(args.terminal, args.orbit, tanks=tanks)
+    print(f"\nFetching {args.terminal} (orbit={args.orbit or 'all'}{tank_tag}{date_tag})...")
+    df = load_data(args.terminal, args.orbit, tanks=tanks,
+                   from_date=args.from_date, to_date=args.to_date)
     if df.empty:
         print(f"ERROR: no data for terminal='{args.terminal}' orbit={args.orbit} tanks={tanks}")
         sys.exit(1)
@@ -332,6 +345,8 @@ def main():
         "terminal":       args.terminal,
         "relative_orbit": args.orbit,
         "tanks":          tanks,
+        "from_date":      args.from_date,
+        "to_date":        args.to_date,
         "verdict":        gate["verdict"],
         "diagnosis":      gate["diagnosis"],
         "flags":          gate["flags"],

@@ -261,26 +261,91 @@ jobs:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
         run: |
-          for terminal in al_flaw juwaymah jask; do
+          mkdir -p diagnostics/gate_validation
+
+          # ── standalone terminals ──────────────────────────────────────────
+          for terminal in fujairah ras_laffan zirku juwaymah; do
             echo "=== $terminal ==="
             python scripts/series_health.py --terminal $terminal \
               --out diagnostics/gate_validation/${terminal}.json || true
           done
 
+          # ── al_flaw: full / live17 / norm17 / stuck7-ref ─────────────────
+          STUCK7="af_0,af_2,af_3,af_6,af_7,af_9,af_11"
+          LIVE17="af_1,af_4,af_5,af_8,af_10,af_12,af_13,af_14,af_15,af_16,af_17,af_18,af_19,af_20,af_21,af_22,af_23"
+
+          echo "=== al_flaw full ==="
+          python scripts/series_health.py --terminal al_flaw \
+            --out diagnostics/gate_validation/alfaw_full.json || true
+
+          echo "=== al_flaw live17 ==="
+          python scripts/series_health.py --terminal al_flaw \
+            --tanks $LIVE17 \
+            --out diagnostics/gate_validation/alfaw_live17.json || true
+
+          echo "=== al_flaw norm17 (live17 from 2020-01-01) ==="
+          python scripts/series_health.py --terminal al_flaw \
+            --tanks $LIVE17 --from-date 2020-01-01 \
+            --out diagnostics/gate_validation/alfaw_norm17.json || true
+
+          echo "=== al_flaw stuck7 (reference) ==="
+          python scripts/series_health.py --terminal al_flaw \
+            --tanks $STUCK7 \
+            --out diagnostics/gate_validation/alfaw_stuck7.json || true
+
+          # ── jask: full + peace-window (2020-01-01 onwards) ───────────────
+          echo "=== jask full ==="
+          python scripts/series_health.py --terminal jask \
+            --out diagnostics/gate_validation/jask.json || true
+
+          echo "=== jask peace-window (2020-01-01+) ==="
+          python scripts/series_health.py --terminal jask \
+            --from-date 2020-01-01 \
+            --out diagnostics/gate_validation/jask_peace.json || true
+
       - name: Print summary table
         run: |
           python - <<'EOF'
-          import json, pathlib, math
+          import json, pathlib
           results_dir = pathlib.Path("diagnostics/gate_validation")
+
+          # Display order
+          ORDER = [
+              "rt_desc", "alfaw_stuck7",
+              "fujairah", "ras_laffan", "zirku", "juwaymah",
+              "alfaw_full", "alfaw_live17", "alfaw_norm17",
+              "jask", "jask_peace",
+          ]
+
+          files = {f.stem: f for f in results_dir.glob("*.json")}
+          ordered = [files[k] for k in ORDER if k in files]
+          ordered += [v for k, v in sorted(files.items()) if k not in ORDER]
+
           print("\n=== SERIES_HEALTH SUMMARY ===")
-          print(f"{'Terminal':<20} {'Orbit':<8} {'Verdict':<8} {'Diagnosis':<10}")
-          print("-" * 50)
-          for f in sorted(results_dir.glob("*.json")):
+          hdr = f"{'Label':<22} {'Orbit':<6} {'Window':<12} {'Verdict':<8} {'Diagnosis':<8}"
+          print(hdr)
+          print("-" * 60)
+          for f in ordered:
               r = json.load(f.open())
-              orb = str(r.get("relative_orbit") or "all")
+              orb  = str(r.get("relative_orbit") or "all")
               tanks = r.get("tanks")
-              term_label = r["terminal"] + (f"[{len(tanks)}t]" if tanks else "")
-              print(f"  {term_label:<18} {orb:<8} {r['verdict']:<8} {r.get('diagnosis') or '—':<10}")
+              fd   = (r.get("from_date") or "")[:7]
+              td   = (r.get("to_date")   or "")[:7]
+              win  = f"{fd}–" if fd and not td else (f"–{td}" if td and not fd else
+                     f"{fd}–{td}" if fd and td else "full")
+              n    = f"[{len(tanks)}t]" if tanks else ""
+              lbl  = f.stem + n
+              print(f"  {lbl:<22} {orb:<6} {win:<12} {r['verdict']:<8} {r.get('diagnosis') or '—'}")
+
+          print("\n=== KEY METRICS (flagged terminals) ===")
+          for f in ordered:
+              r = json.load(f.open())
+              if r["verdict"] != "PASS":
+                  print(f"\n  [{f.stem}]  {r['verdict']} / {r.get('diagnosis') or 'REVIEW'}")
+                  for k, v in r.get("metrics", {}).items():
+                      flag = " ◄" if k in r.get("flags", {}) else ""
+                      val  = f"{v:.4f}" if isinstance(v, float) else str(v)
+                      print(f"    {k:<30} {val}{flag}")
           EOF
 
       - name: Commit results
