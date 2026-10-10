@@ -32,7 +32,7 @@ jobs:
           python-version: "3.11"
 
       - name: Install dependencies
-        run: pip install numpy pandas supabase requests -q
+        run: pip install numpy pandas supabase requests sentinelhub -q
 
       - name: Run checks
         env:
