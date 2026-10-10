@@ -1,7 +1,7 @@
 name: Optical — Kharg-30 gate numbers
 
 on:
-  workflow_dispatch: {}
+  workflow_dispatch:
 
 jobs:
   optical_kharg_gate:
