@@ -61,12 +61,24 @@ jobs:
           cd scripts
           python diag_orbit_labels.py 2>&1 | tee ../diagnostics/rt_orbit/run.txt
 
+      - name: Closure audit (items 1–5)
+        env:
+          SUPABASE_URL: https://yoekhkczwdeyauwarsyy.supabase.co
+          SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+          CLIENT_ID: ${{ secrets.CLIENT_ID }}
+          CLIENT_SECRET: ${{ secrets.CLIENT_SECRET }}
+        if: github.event.inputs.terminal == 'ras_tanura'
+        run: |
+          mkdir -p diagnostics/closure
+          cd scripts
+          python diag_closure.py 2>&1 | tee ../diagnostics/closure/run.txt
+
       - name: Save results
         if: always()
         run: |
           git config user.email "actions@github.com"
           git config user.name "GitHub Actions"
-          git add -f diagnostics/checks/ diagnostics/rt_orbit/ diagnostics/yanbu_orbit/ || true
+          git add -f diagnostics/checks/ diagnostics/rt_orbit/ diagnostics/yanbu_orbit/ diagnostics/closure/ || true
           git diff --cached --quiet && echo "No changes" || \
             git commit -m "ci: terminal-checks ${{ github.event.inputs.terminal }} [skip ci]"
           # rebase+retry loop to avoid race between concurrent terminal jobs
