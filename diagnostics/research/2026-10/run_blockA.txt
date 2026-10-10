@@ -1,16 +1,34 @@
 P1: SUPABASE_URL=env SUPABASE_KEY=fallback (publishable)
 === PREFLIGHT P3: terminal_id canonicality ===
   Registry terminal IDs: ['al_flaw', 'das_island', 'de_kastri', 'fujairah', 'halul', 'jask', 'juwaymah', 'kharg', 'kozmino', 'lavan', 'mina_ahmadi', 'novorossiysk', 'primorsk', 'ras_laffan', 'ras_tanura', 'ruwais', 'siri', 'sitra', 'yanbu', 'zirku']
-  DB terminal_ids (sample): ['al_flaw']
+  DB terminal_ids (probed): ['al_flaw', 'das_island', 'de_kastri', 'fujairah', 'halul', 'jask', 'juwaymah', 'kozmino', 'lavan', 'mina_ahmadi', 'novorossiysk', 'primorsk', 'ras_laffan', 'ras_tanura', 'ruwais', 'siri', 'sitra', 'yanbu', 'zirku']
   In DB but NOT in registry: set()
-  In registry but NOT in DB: {'siri', 'de_kastri', 'primorsk', 'kharg', 'juwaymah', 'yanbu', 'lavan', 'fujairah', 'kozmino', 'ras_laffan', 'sitra', 'novorossiysk', 'das_island', 'ras_tanura', 'jask', 'zirku', 'ruwais', 'mina_ahmadi', 'halul'}
+  In registry but NOT in DB: {'kharg'}
 
 === H01: Ingest regression systemic ===
   Kharg raw_observations orbit check FAILED: {'message': 'column raw_observations.orbit_direction does not exist', 'code': '42703', 'hint': None, 'details': None}
   al_flaw: 261 post-cutoff rows, 261 DESCENDING/NULL → has_regression=True
+  das_island: 84 post-cutoff rows, 0 DESCENDING/NULL → has_regression=False
+  de_kastri: 12 post-cutoff rows, 12 DESCENDING/NULL → has_regression=True
+  fujairah: 154 post-cutoff rows, 0 DESCENDING/NULL → has_regression=False
+  halul: 28 post-cutoff rows, 0 DESCENDING/NULL → has_regression=False
+  jask: 80 post-cutoff rows, 0 DESCENDING/NULL → has_regression=False
+  juwaymah: 94 post-cutoff rows, 94 DESCENDING/NULL → has_regression=True
+  kozmino: 0 rows post-2026-09-01
+  lavan: 144 post-cutoff rows, 144 DESCENDING/NULL → has_regression=True
+  mina_ahmadi: 84 post-cutoff rows, 0 DESCENDING/NULL → has_regression=False
+  novorossiysk: 180 post-cutoff rows, 180 DESCENDING/NULL → has_regression=True
+  primorsk: 216 post-cutoff rows, 216 DESCENDING/NULL → has_regression=True
+  ras_laffan: 238 post-cutoff rows, 0 DESCENDING/NULL → has_regression=False
+  ras_tanura: 689 post-cutoff rows, 161 DESCENDING/NULL → has_regression=True
+  ruwais: 280 post-cutoff rows, 0 DESCENDING/NULL → has_regression=False
+  siri: 6 post-cutoff rows, 0 DESCENDING/NULL → has_regression=False
+  sitra: 175 post-cutoff rows, 0 DESCENDING/NULL → has_regression=False
+  yanbu: 24 post-cutoff rows, 24 DESCENDING/NULL → has_regression=True
+  zirku: 70 post-cutoff rows, 0 DESCENDING/NULL → has_regression=False
 
-H01 RESULT: regression terminals = ['al_flaw']
-H01 VERDICT: NOT_CONFIRMED — systemic if ≥2 terminals affected
+H01 RESULT: regression terminals = ['al_flaw', 'de_kastri', 'juwaymah', 'lavan', 'novorossiysk', 'primorsk', 'ras_tanura', 'yanbu']
+H01 VERDICT: CONFIRMED — systemic if ≥2 terminals affected
 
 === H02: TVT RT ASC contamination ===
   TVT RT daily rows: 561
@@ -63,7 +81,73 @@ H05 ras_tanura: NOT_CONFIRMED — 0 sub-50% dates in TVT
   2026-10-06: in_tvt=True, n_tanks=45/66 (68%), orbits={'DESCENDING': 45}, relOrbit=[]
 
 === H06: WL RT git history ===
-  H06 git check FAILED: [Errno 2] No such file or directory: '/home/user/kharg-dashboard'
+  No git log output
+commit 818247d4be30b6b8afa13e11f286e48ba90ac869
+Author: Claude <noreply@anthropic.com>
+Date:   Sat Oct 10 13:39:51 2026 +0000
+
+    feat(checks): Block B — checks module C04/C05/C06/C07/C11/C12/C14/C15/C16 + runner
+    
+    - scripts/checks/__init__.py: common constants (DB_FLOOR, thresholds, SHA, run_date)
+    - C04: per-tank liveness (Al-Faw stuck criterion: frac_at_floor >= 0.50)
+    - C05: level range p95-p05 vs Kharg 8-10 dB reference
+    - C06: tank median vs terminal median offset
+    - C07: mask contamination — NOT_RUN (needs pixel crops, not available from db_mean)
+    - C11: orbit/cadence histogram per year, gap detection, mono/mix
+    - C12: polarity anchor episodes (delta >= 3 dB within 14 days)
+    - C14: S2 shadow resolvability (h_max × tan(zenith) / 10m using approximate solar noon)
+    - C15: optical label independence (text; EMPTY/FULL derived from SAR dB, not independent)
+    - C16: scene validity (valid_fraction = non-null db_mean rows)
+    - terminal_checks.py: runner --terminal X --checks C11,C04,... --orbit N
+    - terminal_checks.yml: CI workflow (workflow_dispatch, yanbu/ras_tanura/...)
+    - Output: diagnostics/checks/<terminal>/<check>.csv + CHECK_MATRIX.md
+    
+    Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>
+    Claude-Session: https://claude.ai/code/session_01VBJUxpJfFNw5i6YD1SXibt
+
+diff --git a/scripts/checks/__init__.py b/scripts/checks/__init__.py
+new file mode 100644
+index 0000000..901a21e
+--- /dev/null
++++ b/scripts/checks/__init__.py
+@@ -0,0 +1,36 @@
++"""
++checks/ — Terminal health check module for OilRadar.
++
++Each submodule implements one check (C04, C05, …) and exports:
++  run(terminal_id, df, registry_tanks) -> pd.DataFrame
++
++  df columns required: date, tank_id, db_mean, relative_orbit, orbit_direction
++  registry_tanks: list of tank dicts from tank_registry.LOCATIONS
++
++Common CSV columns in every output:
++  terminal_id, tank_id, check_id, run_date, git_sha, <metric cols>, verdict
++
++NOT_RUN / NOT_DETECTABLE / N_A are string sentinels in the verdict column.
++"""
++
++import subprocess
++from datetime import date as _date
++
++
++def git_sha() -> str:
++    try:
++        return subprocess.check_output(
++            ["git", "rev-parse", "--short", "HEAD"],
++            stderr=subprocess.DEVNULL,
++        ).decode().strip()
++    except Exception:
++        return "unknown"
++
++
++RUN_DATE = str(_date.today())
++SHA = git_sha()
++
++DB_FLOOR = -5.0  # canonical clip floor from config.py
++STUCK_FLOOR_THRESH = 0.50  # Al-Faw onset criterion: frac_at_floor >= 50%
++FLAT_DELTA_THRESH = 0.3   # |Δdb| < 0.3 dB → "flat" pass
++STEP_WL_THRESHOLD = 2.5   # frozen whitelist step threshold (dB)
+
 
 === H06b: WL composition vs frozen gate ===
   Last 18 DESC dates: 66 tanks computed
@@ -117,17 +201,58 @@ H06b VERDICT: WL has 21/66 tanks (gate: step_db >= 2.5)
  2026       26
 
   TVT Yanbu daily rows: 332
+  TVT-only dates (in TVT but not in obs): n=83
+    first 10: ['2017-03-18', '2017-03-30', '2017-04-11', '2017-04-23', '2017-05-05', '2017-05-17', '2017-05-29', '2017-06-10', '2017-06-22', '2017-07-04']
+    last 10: ['2019-08-11', '2019-08-23', '2019-09-04', '2019-09-16', '2019-09-28', '2019-10-10', '2019-10-22', '2019-11-03', '2019-11-15', '2019-11-27']
+  Obs-only dates (in obs but not in TVT): n=0
 
 H07 SUMMARY:
-  terminal_observations yanbu: 249 calendar dates (not 249)
-  249 likely from C11 run on older data state before additional passes ingested
+  terminal_observations yanbu: 249 calendar dates
+  terminal_volume_timeseries yanbu daily: 332 rows
+  TVT-only dates (extra in TVT): 83
+  Obs-only dates (in obs but absent from TVT): 0
   Orbit diversity: 0 directions, 0 relative orbits
 
 === Writing HYPOTHESES_REPORT.md ===
   Written: diagnostics/research/2026-10/HYPOTHESES_REPORT.md
 
 === H24: backCoeff / processing options audit (code, no DB) ===
-  H24 FAILED: [Errno 2] No such file or directory: '/home/user/kharg-dashboard'
+# H24: Processing options in ingest + panels
+
+
+## backCoeff
+  scripts/verify_orbit_fix.py:124:                "backCoeff": "GAMMA0_TERRAIN",
+  scripts/hormuz_timeseries.py:92:                "backCoeff": "GAMMA0_TERRAIN",
+  scripts/diag_juwaymah_yanbu_5.py:274:                "processing": {"orthorectify": True, "backCoeff": "GAMMA0_TERRAIN",
+  scripts/verify_orbit_fix_3.py:123:                "backCoeff": "GAMMA0_TERRAIN",
+  scripts/diag_equiv_7_6.py:137:                    "processing": {"orthorectify": True, "backCoeff": "GAMMA0_TERRAIN",
+  scripts/gulf_fragility_pipeline.py:248:                other_args={"processing": {"orthorectify": True, "backCoeff": "GAMMA0_TERRAIN", "demInstance": "COPERNICUS_30"}}
+  scripts/reingest_alfaw_retry.py:196:            }, "processing": {"backCoeff": "SIGMA0_ELLIPSOID", "orthorectify": True,
+  scripts/diag_juwaymah_yanbu_6.py:295:                "processing": {"orthorectify": True, "backCoeff": "GAMMA0_TERRAIN",
+  scripts/recenter_saudi.py:117:                    "processing": {"orthorectify": True, "backCoeff": "GAMMA0_TERRAIN",
+  scripts/diagnose_ras_tanura_imagery.py:210:                "backCoeff":     PROD_BACK_COEFF,
+  scripts/diag_juwaymah_yanbu_2.py:188:                    "backCoeff": "GAMMA0_TERRAIN",
+  scripts/diag_welldepth_7_7.py:149:                    "processing": {"orthorectify": True, "backCoeff": "GAMMA0_TERRAIN",
+  scripts/stage6_accuracy_grid.py:418:                        "processing": {"orthorectify": True, "backCoeff": "GAMMA0_TERRAIN",
+  scripts/hormuz_ships.py:97:            "backCoeff": "GAMMA0_TERRAIN",
+  scripts/verify_orbit_fix_2.py:170:                "backCoeff": "GAMMA0_TERRAIN",
+  scripts/stage_h1_db_norm.py:145:            }, "processing": {"backCoeff": "SIGMA0_ELLIPSOID", "orthorectify": True,
+  scripts/stage_gate_abc.py:137:                    "backCoeff":    "SIGMA0_ELLIPSOID",
+  scripts/stage5_asc_backfill.py:240:                        "processing": {"orthorectify": True, "backCoeff": "GAMMA0_TERRAIN", "demInstance": "COPERNICUS_30"},
+  scripts/diag_juwaymah_yanbu.py:329:                "backCoeff": "GAMMA0_TERRAIN",
+  scripts/sar_fetch.py:237:            "backCoeff": "GAMMA0_TERRAIN",
+
+## orthorectify
+  scripts/verify_orbit_fix.py:123:                "orthorectify": True,
+  scripts/hormuz_timeseries.py:91:                "orthorectify": True,
+  scripts/diag_juwaymah_yanbu_5.py:274:                "processing": {"orthorectify": True, "backCoeff": "GAMMA0_TERRAIN",
+  scripts/verify_orbit_fix_3.py:122:                "orthorectify": True,
+  scripts/diag_equiv_7_6.py:137:                    "processing": {"orthorectify": True, "backCoeff": "GAMMA0_TERRAIN",
+  scripts/gulf_fragility_pipeline.py:248:                other_args={"processing": {"orthorectify": True, "backCoeff": "GAMMA0_TERRAIN", "demInstance": "COPERNICUS_30"}}
+  scripts/reingest_alfaw_retry.py:196:            }, "processing": {"backCoeff": "SIGMA0_ELLIPSOID", "orthorectify": True,
+  scripts/diag_juwaymah_yanb
+
+H24: found 10 distinct option keywords in codebase
 
 === H25: R-point shift prediction ===
 H25 prediction (written before run):
@@ -153,10 +278,46 @@ Frozen geometry values from registry (r_m, h_max_m per tank) are the baseline.
 
 
 === D6: SLC bursts CDSE availability estimate ===
-  D6 FAILED: [Errno 2] No such file or directory: '/home/user/kharg-dashboard'
+  SLC references in codebase:
+scripts/research/auto_hypotheses.py:616:D6: SLC bursts CDSE availability + cost estimate.
+scripts/research/auto_hypotheses.py:688:# ── D6: SLC bursts availability estimate (code audit only, no CDSE call) ──────
+scripts/research/auto_hypotheses.py:689:print("\n=== D6: SLC bursts CDSE availability estimate ===")
+scripts/research/auto_hypotheses.py:695:    # Find SLC references in codebase
+scripts/research/auto_hypotheses.py:696:    slc_res = subprocess.run(
+scripts/research/auto_hypotheses.py:697:        ["grep", "-rn", "--include=*.py", "-i", "SLC\\|burst\\|IW_SLC\\|S1_SLC", "scripts/"],
+scripts/research/auto_hypotheses.py:700:    slc_refs = slc_res.stdout.strip()
+scripts/research/auto_hypotheses.py:701:    print(f"  SLC references in codebase:\n{slc_refs[:1000] if slc_refs else '  None found'}")
+scripts/research/auto_hypotheses.py:703:    d6_note = """D6: SLC bursts CDSE — availability estimate
+scripts/research/auto_hypotheses.py:704:- Sentinel-1 IW SLC available from 2014-04 over Midd
+D6: SLC bursts CDSE — availability estimate
+- Sentinel-1 IW SLC available from 2014-04 over Middle East (launch: 2014-04-03)
+- Kharg Island: ~6-day revisit (descending orbit 35), IW mode, VV+VH
+- Single IW burst over Kharg: ~2.5GB (full subswath ~7GB, one burst ~250MB compressed)
+- CDSE Copernicus Data Space Ecosystem: free access, OData API + S3 direct download
+- GHA download: ~1-2 min per burst (250MB @ ~2Mbps GHA network)
+- ESA SNAP processing (Range Doppler TC + backscatter): ~3-5 min/scene on ubuntu-latest
+- Total per scene (download + process + crop): ~5-8 min in GHA
+- Alternative: SentinelHub ProcessingAPI (GRD only, no SLC) — much faster (<30s/scene)
+- SLC NOT needed for current pipeline (GRD sufficient for crescent radiometry)
+- SLC would be needed ONLY for: precise R-point shift (H25) or interferometric coherence
+
 
 === D7: Cushing floating-roof tanks (registry check) ===
   Cushing in tank_registry: False
-  D7 FAILED: [Errno 2] No such file or directory: '/home/user/kharg-dashboard'
+  Cushing references in codebase:
+scripts/diagnostics/research/2026-10/HYPOTHESES_REPORT.md:56:D7: Cushing floating-roof tank list + orbit catalog + EIA weekly CSV.
+scripts/research/auto_hypotheses.py:617:D7: Cushing floating-roof tank list + orbit catalog + EIA weekly CSV.
+scripts/research/auto_hypotheses.py:722:# ── D7: Cushing floating-roof tank list (code audit, no external calls) ───────
+scripts/research/auto_hypotheses.py:723:print("\n=== D7: Cushing floating-roof tanks (registry check) ===")
+scripts/research/auto_hypothes
+D7: Cushing floating-roof tanks
+STATUS: NOT_RUN — no Cushing entry in tank_registry.py; no scripts reference Cushing.
+To execute:
+1. Identify FRT tanks at Cushing, OK via Esri World Imagery (coordinate scrape)
+2. Query S1 CDSE catalog for orbit coverage over ~36.9°N 96.2°W
+3. Download EIA Cushing weekly stocks (EIA API series: PET.W_EPC0_SAX_YCUOK_MBBL.W)
+4. Save all as CSV to d7/ dir
+This is a data collection task — no correlation calculations in code.
+
 
 === Block A + H24-H26 + D6-D7 complete ===
