@@ -49,7 +49,7 @@ METRIC_KEYS = [
 
 METRIC_LABELS = {
     "dynamic_range_db":   "Dynamic range (absolute, dB)",
-    "cv_level":           "CV of level (σ/μ mean_db)",
+    "cv_level":           "CV of level in linear power domain: σ(10^(dB/10)) / μ(10^(dB/10))",
     "vel_std_norm":       "Velocity std (norm by dr)",
     "delta_p50_norm":     "Δ p50 (norm by dr)",
     "delta_p90_norm":     "Δ p90 (norm by dr)",
@@ -157,7 +157,10 @@ def compute_metrics(df: pd.DataFrame) -> dict:
     flat_threshold = 0.01 * dr if not np.isnan(dr) else 0.1
     live_threshold = 0.05 * dr if not np.isnan(dr) else 0.5
 
-    cv_level = float(daily.std() / daily.mean()) if daily.mean() != 0 else np.nan
+    # cv_level in LINEAR power domain — avoids sign/explosion when mean_dB ≤ 0.
+    # linear = 10^(dB/10) is always > 0, so std/mean is always ≥ 0.
+    linear = 10.0 ** (daily / 10.0)
+    cv_level = float(linear.std() / linear.mean()) if linear.mean() > 0 else np.nan
 
     deltas_raw = daily.diff().dropna().abs()
     vel_std_norm   = float(deltas_raw.std()          / dr) if not np.isnan(dr) else np.nan
@@ -309,11 +312,50 @@ def print_report(terminal_id: str, metrics: dict, corridors: dict, gate: dict,
     print(f"{'='*64}\n")
 
 
+# ─── unit tests ──────────────────────────────────────────────────────────────
+
+def _unit_test_cv_level():
+    """
+    cv_level must satisfy two properties:
+      1. A series with negative mean dB (e.g. -1 dB) gives cv > 0.
+         Old dB formula: std/mean → negative/positive or negative sign → wrong.
+         Linear formula: 10^(-1/10) ≈ 0.794 > 0 always → cv > 0.
+      2. A db_norm series with mean ≈ 0 dB (e.g. mean=0.01 dB) does not
+         explode or return NaN. Old formula: std/0.01 → huge. Linear:
+         10^(0/10) = 1.0, so mean_linear ≈ 1.0 → cv = std/1.0 finite.
+    """
+    import pandas as pd
+    dates = pd.date_range("2024-01-01", periods=100, freq="6D")
+
+    # Test 1: series centred at -1 dB (negative mean)
+    rng = np.random.default_rng(42)
+    vals_neg = rng.normal(loc=-1.0, scale=1.5, size=100)
+    df_neg = pd.DataFrame({"date": dates, "db_mean": vals_neg, "tank_id": "t0"})
+    df_neg["date"] = pd.to_datetime(df_neg["date"])
+    m = compute_metrics(df_neg)
+    assert m["cv_level"] > 0, \
+        f"FAIL: cv_level={m['cv_level']:.4f} for negative-mean series (expected > 0)"
+
+    # Test 2: db_norm series with mean ≈ 0 dB
+    vals_zero = rng.normal(loc=0.0, scale=0.5, size=100)
+    df_zero = pd.DataFrame({"date": dates, "db_mean": vals_zero, "tank_id": "t0"})
+    df_zero["date"] = pd.to_datetime(df_zero["date"])
+    m2 = compute_metrics(df_zero)
+    assert np.isfinite(m2["cv_level"]) and m2["cv_level"] >= 0, \
+        f"FAIL: cv_level={m2['cv_level']} for near-zero-mean series (expected finite ≥ 0)"
+
+    print("cv_level unit tests PASS")
+    print(f"  test1 (mean=-1dB): cv_level={m['cv_level']:.4f}  (linear domain, always ≥ 0)")
+    print(f"  test2 (mean≈0dB):  cv_level={m2['cv_level']:.4f}  (finite, no explosion)")
+
+
 # ─── main ─────────────────────────────────────────────────────────────────────
 
 def main():
     parser = argparse.ArgumentParser(description="Run series health gate on a terminal")
-    parser.add_argument("--terminal", required=True)
+    parser.add_argument("--unit-test", action="store_true", dest="unit_test",
+                        help="Run built-in unit tests and exit")
+    parser.add_argument("--terminal", required=False)
     parser.add_argument("--orbit",    type=int, default=None,
                         help="Filter to this relative_orbit (e.g. 35 for RT-DESC)")
     parser.add_argument("--tanks",     default=None,
@@ -326,6 +368,13 @@ def main():
     parser.add_argument("--value-column", default="db_mean", dest="value_column",
                         help="Column to use as the signal value (default: db_mean; e.g. db_norm)")
     args = parser.parse_args()
+
+    if args.unit_test:
+        _unit_test_cv_level()
+        sys.exit(0)
+
+    if not args.terminal:
+        parser.error("--terminal is required (unless --unit-test is passed)")
 
     tanks = [t.strip() for t in args.tanks.split(",")] if args.tanks else None
 
