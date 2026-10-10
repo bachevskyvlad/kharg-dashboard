@@ -169,15 +169,34 @@ def bbox_for_tank(tank, n_diam=4):
 
 SAR_EVALSCRIPT = _SAR_EVALSCRIPT
 
+# gain 3.5 matches stage6_optical_pilot — avoids over-saturation on bright desert
 S2_EVALSCRIPT = """
 //VERSION=3
 function setup(){return {input:[{bands:["B04","B03","B02"]}],output:{bands:3,sampleType:"UINT8"}};}
-function evaluatePixel(s){return [Math.min(255,s.B04*4*255),Math.min(255,s.B03*4*255),Math.min(255,s.B02*4*255)];}
+function evaluatePixel(s){return [Math.min(255,Math.round(3.5*s.B04*255)),Math.min(255,Math.round(3.5*s.B03*255)),Math.min(255,Math.round(3.5*s.B02*255))];}
 """
+
+
+def _tile_px(bbox, res_m, size=IMG_PX):
+    """Return (width_px, height_px) for a geographic bbox at res_m metres/pixel.
+
+    Uses width/height counts (NOT resx/resy), because the CRS is WGS84 and
+    resx/resy would be interpreted as DEGREES — causing 1×1 pixel tiles.
+    """
+    lon0, lat0, lon1, lat1 = bbox
+    lat_c = (lat0 + lat1) / 2
+    span_m_lon = (lon1 - lon0) * 111320 * math.cos(math.radians(lat_c))
+    span_m_lat = (lat1 - lat0) * 111320
+    w = max(size, int(round(span_m_lon / res_m)))
+    h = max(size, int(round(span_m_lat / res_m)))
+    return min(w, 512), min(h, 512)
 
 
 def fetch_sar(tank, date_str, res_m=5):
     bbox = bbox_for_tank(tank)
+    w_px, h_px = _tile_px(bbox, res_m)
+    print(f"    SAR  bbox={[round(x,5) for x in bbox]}  CRS=WGS84  "
+          f"res={res_m}m/px  width={w_px}  height={h_px}")
     token = get_sh_token()
     payload = {
         "input": {
@@ -194,7 +213,7 @@ def fetch_sar(tank, date_str, res_m=5):
                       "processing": {"backCoeff": "SIGMA0_ELLIPSOID", "orthorectify": True}}],
         },
         "output": {
-            "resx": res_m, "resy": res_m, "responses": [
+            "width": w_px, "height": h_px, "responses": [
                 {"identifier": "default", "format": {"type": "image/tiff"}}
             ],
         },
@@ -207,18 +226,33 @@ def fetch_sar(tank, date_str, res_m=5):
             r = requests.post(SH_PROCESS_URL, json=payload, headers=headers, timeout=60)
             if r.status_code == 200:
                 arr = tifffile.imread(io.BytesIO(r.content))
-                return arr.astype(np.float32)
+                arr = arr.astype(np.float32)
+                db = 10.0 * np.log10(np.clip(arr, 1e-10, None))
+                n_unique = len(np.unique(arr))
+                print(f"    SAR  dtype={arr.dtype}  shape={arr.shape}  "
+                      f"n_unique={n_unique}  db min={np.nanmin(db):.1f}  "
+                      f"max={np.nanmax(db):.1f}  std={np.nanstd(db):.2f}")
+                assert n_unique > 100 and np.nanstd(db) > 0, \
+                    f"FAIL: SAR tile degenerate (n_unique={n_unique}, std={np.nanstd(db):.3f})"
+                return arr
+            else:
+                print(f"    SAR HTTP {r.status_code}: {r.text[:200]}")
+        except AssertionError as e:
+            print(f"    {e}"); return None
         except Exception as e:
             print(f"    SAR fetch attempt {attempt+1} failed: {e}")
             time.sleep(2)
     return None
 
 
-def fetch_s2(tank, sar_b_date_str, window_days=S2_WINDOW_DAYS):
+def fetch_s2(tank, sar_b_date_str, window_days=S2_WINDOW_DAYS, res_m=10):
     sar_dt = datetime.strptime(sar_b_date_str[:10], "%Y-%m-%d")
     t_from = (sar_dt - timedelta(days=window_days)).strftime("%Y-%m-%dT00:00:00Z")
     t_to   = sar_dt.strftime("%Y-%m-%dT23:59:59Z")
     bbox = bbox_for_tank(tank)
+    w_px, h_px = _tile_px(bbox, res_m)
+    print(f"    S2   bbox={[round(x,5) for x in bbox]}  CRS=WGS84  "
+          f"res={res_m}m/px  width={w_px}  height={h_px}  window={t_from[:10]}–{t_to[:10]}")
     token = get_sh_token()
     payload = {
         "input": {
@@ -231,7 +265,7 @@ def fetch_s2(tank, sar_b_date_str, window_days=S2_WINDOW_DAYS):
                       }}],
         },
         "output": {
-            "resx": 10, "resy": 10, "responses": [
+            "width": w_px, "height": h_px, "responses": [
                 {"identifier": "default", "format": {"type": "image/tiff"}}
             ],
         },
@@ -244,7 +278,20 @@ def fetch_s2(tank, sar_b_date_str, window_days=S2_WINDOW_DAYS):
             r = requests.post(SH_PROCESS_URL, json=payload, headers=headers, timeout=60)
             if r.status_code == 200:
                 arr = tifffile.imread(io.BytesIO(r.content))
+                n_unique = len(np.unique(arr))
+                saturated_frac = float((arr >= 250).mean()) if arr.size else 1.0
+                print(f"    S2   dtype={arr.dtype}  shape={arr.shape}  "
+                      f"n_unique={n_unique}  min={arr.min()}  max={arr.max()}  "
+                      f"std={arr.std():.1f}  sat_frac={saturated_frac:.3f}")
+                assert n_unique > 100 and arr.std() > 0, \
+                    f"FAIL: S2 tile degenerate (n_unique={n_unique}, std={arr.std():.3f})"
+                assert saturated_frac < 0.50, \
+                    f"FAIL: S2 tile over-saturated (sat_frac={saturated_frac:.3f})"
                 return arr
+            else:
+                print(f"    S2 HTTP {r.status_code}: {r.text[:200]}")
+        except AssertionError as e:
+            print(f"    {e}"); return None
         except Exception as e:
             print(f"    S2 fetch attempt {attempt+1} failed: {e}")
             time.sleep(2)
@@ -288,9 +335,10 @@ def render_tank(tank, sar_a_arr, sar_a_meta, sar_b_arr, sar_b_meta, s2_arr, out_
     ]
 
     r = tank["radius_m"]
-    # approximate pixel radius: 4-diam window = 8r across; SAR at 5m/px
-    r_px_sar = r / 5 * (IMG_PX / (8 * r / 5))   # = IMG_PX / 8
-    r_px_s2  = r / 10 * (IMG_PX / (8 * r / 10))  # same fraction
+    # ring radius in pixels after resize to IMG_PX:
+    # window = 8r total; ring at r → fraction = 1/8 of tile width
+    r_px_sar = IMG_PX / 8   # = 16px for 128px tile
+    r_px_s2  = IMG_PX / 8   # same fraction
 
     for ax, (title, arr, meta) in zip(axes, panels):
         if arr is None:

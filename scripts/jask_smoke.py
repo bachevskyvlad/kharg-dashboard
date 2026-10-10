@@ -124,6 +124,13 @@ def bbox_for_tank(t, n_diam=4):
     dlon = half_m / (111320.0 * math.cos(math.radians(t["lat"])))
     return [t["lon"] - dlon, t["lat"] - dlat, t["lon"] + dlon, t["lat"] + dlat]
 
+def _tile_px(bbox, res_m, size=128):
+    """Return pixel count (scalar, used for both width and height assuming square tile)."""
+    lon0, lat0, lon1, lat1 = bbox
+    lat_c = (lat0 + lat1) / 2
+    span_m = (lon1 - lon0) * 111320 * math.cos(math.radians(lat_c))
+    return min(512, max(size, int(round(span_m / res_m))))
+
 bbox = bbox_for_tank(TANK)
 log(f"\n  bbox: {[round(x,6) for x in bbox]}")
 log(f"  window: {TANK['radius_m']*8:.0f}m × {TANK['radius_m']*8:.0f}m")
@@ -143,12 +150,13 @@ def fetch_sar_verbose(date_str, field_name, label):
                       },
                       "processing": {"backCoeff": "SIGMA0_ELLIPSOID", "orthorectify": True}}],
         },
-        "output": {"resx": 5, "resy": 5, "responses": [
+        "output": {"width": _tile_px(bbox, 5), "height": _tile_px(bbox, 5), "responses": [
             {"identifier": "default", "format": {"type": "image/tiff"}}
         ]},
         "evalscript": SAR_EVALSCRIPT,
     }
     log(f"  payload dataFilter: {json.dumps(payload['input']['data'][0]['dataFilter'])}")
+    log(f"  tile width/height={_tile_px(bbox, 5)}  CRS=WGS84  res=5m/px")
     headers = {"Authorization": f"Bearer {token}", "Content-Type": "application/json", "Accept": "image/tiff"}
     r = requests.post(SH_PROCESS_URL, json=payload, headers=headers, timeout=60)
     log(f"  status: {r.status_code}  content-type: {r.headers.get('content-type')}  len: {len(r.content)}")
@@ -190,7 +198,7 @@ t_from = (sar_dt - timedelta(days=14)).strftime("%Y-%m-%dT00:00:00Z")
 t_to   = sar_dt.strftime("%Y-%m-%dT23:59:59Z")
 S2_ES = """//VERSION=3
 function setup(){return {input:[{bands:["B04","B03","B02"]}],output:{bands:3,sampleType:"UINT8"}};}
-function evaluatePixel(s){return [Math.min(255,s.B04*4*255),Math.min(255,s.B03*4*255),Math.min(255,s.B02*4*255)];}
+function evaluatePixel(s){return [Math.min(255,Math.round(3.5*s.B04*255)),Math.min(255,Math.round(3.5*s.B03*255)),Math.min(255,Math.round(3.5*s.B02*255))];}
 """
 s2_payload = {
     "input": {
@@ -200,11 +208,12 @@ s2_payload = {
             "maxCloudCoverage": 30, "mosaickingOrder": "leastCC",
         }}],
     },
-    "output": {"resx": 10, "resy": 10, "responses": [
+    "output": {"width": _tile_px(bbox, 10), "height": _tile_px(bbox, 10), "responses": [
         {"identifier": "default", "format": {"type": "image/tiff"}}
     ]},
     "evalscript": S2_ES,
 }
+log(f"  tile width/height={_tile_px(bbox, 10)}  CRS=WGS84  res=10m/px")
 log(f"  timeRange: {t_from} → {t_to}")
 s2_headers = {"Authorization": f"Bearer {token}", "Content-Type": "application/json", "Accept": "image/tiff"}
 s2_r = requests.post(SH_PROCESS_URL, json=s2_payload, headers=s2_headers, timeout=60)
