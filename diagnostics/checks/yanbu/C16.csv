@@ -1,0 +1,13 @@
+terminal_id,tank_id,n_total,n_valid,n_null,valid_fraction,note,check_id,run_date,git_sha,verdict
+yanbu,yb_0,332,332,0,1.0,null db_mean = scene rejected or missing; cloud tracking not stored separately,C16,2026-10-10,7119c0d,
+yanbu,yb_1,332,332,0,1.0,null db_mean = scene rejected or missing; cloud tracking not stored separately,C16,2026-10-10,7119c0d,
+yanbu,yb_2,332,332,0,1.0,null db_mean = scene rejected or missing; cloud tracking not stored separately,C16,2026-10-10,7119c0d,
+yanbu,yb_3,332,332,0,1.0,null db_mean = scene rejected or missing; cloud tracking not stored separately,C16,2026-10-10,7119c0d,
+yanbu,yb_4,332,332,0,1.0,null db_mean = scene rejected or missing; cloud tracking not stored separately,C16,2026-10-10,7119c0d,
+yanbu,yb_5,332,332,0,1.0,null db_mean = scene rejected or missing; cloud tracking not stored separately,C16,2026-10-10,7119c0d,
+yanbu,yb_6,332,332,0,1.0,null db_mean = scene rejected or missing; cloud tracking not stored separately,C16,2026-10-10,7119c0d,
+yanbu,yb_7,332,332,0,1.0,null db_mean = scene rejected or missing; cloud tracking not stored separately,C16,2026-10-10,7119c0d,
+yanbu,yb_8,332,332,0,1.0,null db_mean = scene rejected or missing; cloud tracking not stored separately,C16,2026-10-10,7119c0d,
+yanbu,yb_9,332,332,0,1.0,null db_mean = scene rejected or missing; cloud tracking not stored separately,C16,2026-10-10,7119c0d,
+yanbu,yb_10,332,332,0,1.0,null db_mean = scene rejected or missing; cloud tracking not stored separately,C16,2026-10-10,7119c0d,
+yanbu,yb_11,332,332,0,1.0,null db_mean = scene rejected or missing; cloud tracking not stored separately,C16,2026-10-10,7119c0d,

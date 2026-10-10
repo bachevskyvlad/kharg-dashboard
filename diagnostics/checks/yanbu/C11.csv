@@ -1,0 +1,2 @@
+terminal_id,n_total,first_date,last_date,n_years_coverage,n_gap_years,gap_years,orbit_summary,is_mono,check_id,run_date,git_sha,verdict
+yanbu,249,2014-10-09,2026-09-22,12,1,[2018],None/None,True,C11,2026-10-10,7119c0d,
