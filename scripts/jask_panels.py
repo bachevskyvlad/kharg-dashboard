@@ -2,9 +2,13 @@
 jask_panels.py — Per-tank SAR panels for Jask (20 tanks, human verdicts)
 =========================================================================
 For each of the 20 jk_* tanks, renders a 3-panel image:
-  - SAR-A: DESC rel=93 pass, ≥18d before SAR-B
-  - SAR-B: DESC rel=93 pass, most recent with valid data
-  - S2:    most recent Sentinel-2 optical within 14d of SAR-B
+  - SAR-1: DESC rel=93 pass, ≥18d before SAR-2  (earlier scene)
+  - SAR-2: DESC rel=93 pass, most recent with valid data  (current scene)
+  - S2:    most recent Sentinel-2 optical within 14d of SAR-2
+
+Labels show platform from SH Catalog (S1A/S1C).
+S1B decommissioned 2021-12-23 — "SAR-1/SAR-2" are TEMPORAL labels, not platform.
+Both scenes always from the same relOrbit (filtered by ORBIT_REL=93 in Supabase).
 
 Layout (canonical):
   - 4-diameter window (8× r_fit across) centred on tank
@@ -51,6 +55,7 @@ SH_CLIENT_ID     = os.environ.get("CLIENT_ID")     or ""
 SH_CLIENT_SECRET = os.environ.get("CLIENT_SECRET") or ""
 SH_TOKEN_URL     = "https://identity.dataspace.copernicus.eu/auth/realms/CDSE/protocol/openid-connect/token"
 SH_PROCESS_URL   = "https://sh.dataspace.copernicus.eu/api/v1/process"
+SH_CATALOG_URL   = "https://sh.dataspace.copernicus.eu/api/v1/catalog/1.0.0/search"
 
 TERMINAL_ID        = "jask"
 ORBIT_REL          = 93
@@ -105,6 +110,38 @@ def get_sh_token():
     _sh_token = data["access_token"]
     _sh_token_exp = time.time() + data.get("expires_in", 3600)
     return _sh_token
+
+
+def fetch_sar_platform(date_str, bbox, rel_orbit):
+    """Return platform string ('S1A'/'S1C') from SH Catalog, or 'S1?' on failure."""
+    token = get_sh_token()
+    payload = {
+        "collections": ["sentinel-1-grd"],
+        "datetime": f"{date_str}T00:00:00Z/{date_str}T23:59:59Z",
+        "bbox": bbox,
+        "filter": {
+            "op": "=",
+            "args": [{"property": "sat:relative_orbit"}, rel_orbit],
+        },
+        "filter-lang": "cql2-json",
+        "limit": 1,
+    }
+    headers = {"Authorization": f"Bearer {token}", "Content-Type": "application/json"}
+    try:
+        r = requests.post(SH_CATALOG_URL, json=payload, headers=headers, timeout=20)
+        if r.status_code == 200:
+            feats = r.json().get("features", [])
+            if feats:
+                p = feats[0].get("properties", {}).get("platform", "").upper()
+                if "1A" in p:
+                    return "S1A"
+                if "1C" in p:
+                    return "S1C"
+                if "1B" in p:
+                    return "S1B"
+    except Exception:
+        pass
+    return "S1?"
 
 
 # ─── Supabase fetch ───────────────────────────────────────────────────────────
@@ -169,11 +206,12 @@ def bbox_for_tank(tank, n_diam=4):
 
 SAR_EVALSCRIPT = _SAR_EVALSCRIPT
 
-# gain 3.5 matches stage6_optical_pilot — avoids over-saturation on bright desert
+# S2: return raw FLOAT32 reflectance; Python applies 2-98% per-tile percentile stretch.
+# Fixed gain (3.5×255) over-saturates bright desert sand — percentile stretch adapts.
 S2_EVALSCRIPT = """
 //VERSION=3
-function setup(){return {input:[{bands:["B04","B03","B02"]}],output:{bands:3,sampleType:"UINT8"}};}
-function evaluatePixel(s){return [Math.min(255,Math.round(3.5*s.B04*255)),Math.min(255,Math.round(3.5*s.B03*255)),Math.min(255,Math.round(3.5*s.B02*255))];}
+function setup(){return {input:[{bands:["B04","B03","B02"]}],output:{bands:3,sampleType:"FLOAT32"}};}
+function evaluatePixel(s){return [s.B04, s.B03, s.B02];}
 """
 
 
@@ -277,17 +315,28 @@ def fetch_s2(tank, sar_b_date_str, window_days=S2_WINDOW_DAYS, res_m=10):
         try:
             r = requests.post(SH_PROCESS_URL, json=payload, headers=headers, timeout=60)
             if r.status_code == 200:
-                arr = tifffile.imread(io.BytesIO(r.content))
+                arr = tifffile.imread(io.BytesIO(r.content))  # float32 reflectance HxWx3
+                # sat_frac: fraction of pixels where ANY band ≥ 0.5 (cloud/specular)
+                if arr.ndim == 3:
+                    sat_mask = arr.max(axis=-1) >= 0.5
+                else:
+                    sat_mask = arr >= 0.5
+                saturated_frac = float(sat_mask.mean())
                 n_unique = len(np.unique(arr))
-                saturated_frac = float((arr >= 250).mean()) if arr.size else 1.0
                 print(f"    S2   dtype={arr.dtype}  shape={arr.shape}  "
-                      f"n_unique={n_unique}  min={arr.min()}  max={arr.max()}  "
-                      f"std={arr.std():.1f}  sat_frac={saturated_frac:.3f}")
+                      f"n_unique={n_unique}  refl min={arr.min():.3f}  max={arr.max():.3f}  "
+                      f"std={arr.std():.3f}  sat_frac={saturated_frac:.3f}")
                 assert n_unique > 100 and arr.std() > 0, \
-                    f"FAIL: S2 tile degenerate (n_unique={n_unique}, std={arr.std():.3f})"
+                    f"FAIL: S2 tile degenerate (n_unique={n_unique}, std={arr.std():.4f})"
                 assert saturated_frac < 0.50, \
                     f"FAIL: S2 tile over-saturated (sat_frac={saturated_frac:.3f})"
-                return arr
+                # 2-98% per-tile percentile stretch → uint8 RGB
+                vals = arr[arr > 0] if (arr > 0).any() else arr.ravel()
+                p2, p98 = (np.percentile(vals, [2, 98]) if len(vals) > 0
+                           else (0.0, 0.6))
+                denom = max(float(p98 - p2), 1e-6)
+                stretched = np.clip((arr - p2) / denom * 255, 0, 255).astype(np.uint8)
+                return stretched
             else:
                 print(f"    S2 HTTP {r.status_code}: {r.text[:200]}")
         except AssertionError as e:
@@ -324,35 +373,36 @@ def draw_ring(ax, cx, cy, r_px, color="cyan", lw=1):
     ax.add_patch(circle)
 
 
-def render_tank(tank, sar_a_arr, sar_a_meta, sar_b_arr, sar_b_meta, s2_arr, out_path):
+def render_tank(tank, sar_1_arr, sar_1_meta, sar_1_platform,
+               sar_2_arr, sar_2_meta, sar_2_platform,
+               s2_arr, out_path):
     fig, axes = plt.subplots(1, 3, figsize=(9, 3.2), facecolor="black")
     fig.subplots_adjust(wspace=0.02, left=0.01, right=0.99, top=0.92, bottom=0.01)
 
     panels = [
-        ("SAR-A", sar_a_arr, sar_a_meta),
-        ("SAR-B", sar_b_arr, sar_b_meta),
-        ("S2",    s2_arr,    None),
+        ("SAR-1", sar_1_arr, sar_1_meta, sar_1_platform),
+        ("SAR-2", sar_2_arr, sar_2_meta, sar_2_platform),
+        ("S2",    s2_arr,    None,        None),
     ]
 
-    r = tank["radius_m"]
-    # ring radius in pixels after resize to IMG_PX:
-    # window = 8r total; ring at r → fraction = 1/8 of tile width
-    r_px_sar = IMG_PX / 8   # = 16px for 128px tile
-    r_px_s2  = IMG_PX / 8   # same fraction
+    r_px_sar = IMG_PX / 8
+    r_px_s2  = IMG_PX / 8
 
-    for ax, (title, arr, meta) in zip(axes, panels):
+    for ax, (title, arr, meta, platform) in zip(axes, panels):
         if arr is None:
             rgb = np.zeros((IMG_PX, IMG_PX, 3), dtype=np.uint8)
             label_text = f"{title}  NO DATA"
         elif title == "S2":
             rgb = resize_to_square(arr if arr.ndim == 3 else
                                    np.stack([arr]*3, axis=-1))
-            label_text = f"S2"
+            label_text = "S2"
         else:
             rgb = resize_to_square(sar_to_rgb(arr))
-            db_val  = meta.get("db_mean") if meta else None
-            date_s  = meta.get("date", "")[:10] if meta else ""
-            label_text = f"{tank['id']}  {date_s}  db={db_val:.1f}dB" if db_val is not None else f"{tank['id']}  {date_s}"
+            db_val = meta.get("db_mean") if meta else None
+            date_s = meta.get("date", "")[:10] if meta else ""
+            plat   = platform or "S1?"
+            db_str = f"  db={db_val:.1f}dB" if db_val is not None else ""
+            label_text = f"{plat}  {date_s}  orb={ORBIT_REL}  {ORBIT_DIR}{db_str}"
 
         ax.imshow(rgb, origin="upper")
         r_px = r_px_s2 if title == "S2" else r_px_sar
@@ -360,7 +410,6 @@ def render_tank(tank, sar_a_arr, sar_a_meta, sar_b_arr, sar_b_meta, s2_arr, out_
         ax.set_xlim(0, IMG_PX); ax.set_ylim(IMG_PX, 0)
         ax.axis("off")
 
-        # Corner label with dark chip
         ax.text(4, 4, label_text, color="white", fontsize=6.5,
                 va="top", ha="left",
                 bbox=dict(boxstyle="round,pad=0.2", facecolor="black",
@@ -384,24 +433,33 @@ def process_tank(tank):
         print(f"  No data in terminal_observations — skipping")
         return
 
-    sar_a_meta, sar_b_meta = pick_sar_pair(rows)
-    if sar_b_meta is None:
+    sar_1_meta, sar_2_meta = pick_sar_pair(rows)  # sar_1=earlier, sar_2=current
+    if sar_2_meta is None:
         print(f"  Cannot pick SAR pair — skipping")
         return
 
-    print(f"  SAR-B: {sar_b_meta['date'][:10]}  db={sar_b_meta['db_mean']:.1f}dB")
-    if sar_a_meta:
-        print(f"  SAR-A: {sar_a_meta['date'][:10]}  db={sar_a_meta['db_mean']:.1f}dB")
+    bbox = bbox_for_tank(tank)
+    print(f"  SAR-2 (current): {sar_2_meta['date'][:10]}  db={sar_2_meta['db_mean']:.1f}dB")
+    if sar_1_meta:
+        print(f"  SAR-1 (earlier): {sar_1_meta['date'][:10]}  db={sar_1_meta['db_mean']:.1f}dB")
     else:
-        print(f"  SAR-A: not found (need ≥{SAR_B_MIN_AGE_DAYS}d before SAR-B)")
+        print(f"  SAR-1: not found (need ≥{SAR_B_MIN_AGE_DAYS}d before SAR-2)")
 
-    sar_b_arr = fetch_sar(tank, sar_b_meta["date"][:10])
-    sar_a_arr = fetch_sar(tank, sar_a_meta["date"][:10]) if sar_a_meta else None
+    # Both scenes filtered by ORBIT_REL=93 in Supabase — same relOrbit guaranteed.
+    sar_2_platform = fetch_sar_platform(sar_2_meta["date"][:10], bbox, ORBIT_REL)
+    sar_1_platform = fetch_sar_platform(sar_1_meta["date"][:10], bbox, ORBIT_REL) if sar_1_meta else None
+    print(f"  platforms: SAR-2={sar_2_platform}  SAR-1={sar_1_platform}")
 
-    s2_arr = fetch_s2(tank, sar_b_meta["date"][:10])
+    sar_2_arr = fetch_sar(tank, sar_2_meta["date"][:10])
+    sar_1_arr = fetch_sar(tank, sar_1_meta["date"][:10]) if sar_1_meta else None
+
+    s2_arr = fetch_s2(tank, sar_2_meta["date"][:10])
     print(f"  S2: {'fetched' if s2_arr is not None else 'not available'}")
 
-    render_tank(tank, sar_a_arr, sar_a_meta, sar_b_arr, sar_b_meta, s2_arr, out_path)
+    render_tank(tank,
+                sar_1_arr, sar_1_meta, sar_1_platform,
+                sar_2_arr, sar_2_meta, sar_2_platform,
+                s2_arr, out_path)
     print(f"  Saved: {out_path}")
 
 

@@ -11,7 +11,7 @@ dB metrics in corridors (except dynamic_range_db itself, which is the base).
 
 Metric list (11 metrics):
   1.  dynamic_range_db  — p95−p5 of per-date mean_db (dB); base for normalization; kept absolute
-  2.  cv_level          — σ(mean_db) / μ(mean_db); dimensionless (self-normalizing)
+  2.  cv_level          — σ(10^(mean_db/10)) / μ(10^(mean_db/10)); linear power domain (self-normalizing)
   3.  vel_std_norm      — std(Δmean_db) / dynamic_range_db
   4.  delta_p50_norm    — median(|Δmean_db|) / dynamic_range_db
   5.  delta_p90_norm    — p90(|Δmean_db|) / dynamic_range_db
@@ -102,7 +102,7 @@ NORMALIZATION_TABLE = """
 | Metric key | Raw formula | Raw unit | Normalization | Normalized |
 |---|---|---|---|---|
 | dynamic_range_db | p95(mean_db) − p5(mean_db) | dB | (base — kept absolute) | dB |
-| cv_level | σ(mean_db) / μ(mean_db) | dimensionless | (self) | dimensionless |
+| cv_level | σ(10^(dB/10)) / μ(10^(dB/10)) | dimensionless | (self) | dimensionless |
 | vel_std_norm | std(Δmean_db) / dynamic_range_db | dB/pass | ÷ dynamic_range_db | fraction |
 | delta_p50_norm | median(abs(Δmean_db)) / dynamic_range_db | dB | ÷ dynamic_range_db | fraction |
 | delta_p90_norm | p90(abs(Δmean_db)) / dynamic_range_db | dB | ÷ dynamic_range_db | fraction |
@@ -143,8 +143,9 @@ def compute_metrics(df: pd.DataFrame, label: str) -> dict:
     flat_threshold = 0.01 * dr if not np.isnan(dr) else 0.1    # 1% dr
     live_threshold = 0.05 * dr if not np.isnan(dr) else 0.5    # 5% dr
 
-    # cv_level: dimensionless
-    cv_level = float(daily.std() / daily.mean()) if daily.mean() != 0 else np.nan
+    # cv_level: linear power domain — avoids sign/explosion when mean_dB ≤ 0.
+    linear = 10.0 ** (daily / 10.0)
+    cv_level = float(linear.std() / linear.mean()) if linear.mean() > 0 else np.nan
 
     # deltas; raw and normalized
     deltas_raw = daily.diff().dropna().abs()
@@ -234,7 +235,7 @@ def compute_metrics(df: pd.DataFrame, label: str) -> dict:
 # Ordered list of metrics for corridor table output
 # (dynamic_range_db excluded — it's the normalization base, not in corridor)
 METRICS_ORDERED = [
-    ("cv_level",          "CV of level (σ/μ mean_db)",          ".4f"),
+    ("cv_level",          "CV of level (σ/μ linear power)",      ".4f"),
     ("vel_std_norm",      "Velocity std (norm by dr)",           ".4f"),
     ("delta_p50_norm",    "Δ p50 (norm by dr)",                  ".4f"),
     ("delta_p90_norm",    "Δ p90 (norm by dr)",                  ".4f"),
