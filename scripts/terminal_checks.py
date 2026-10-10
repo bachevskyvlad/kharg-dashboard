@@ -127,7 +127,12 @@ def build_matrix(out_root: Path) -> str:
     for csv_file in sorted(out_root.glob("*/*.csv")):
         terminal_id = csv_file.parent.name
         check_id = csv_file.stem.upper()
-        df = pd.read_csv(csv_file)
+        try:
+            df = pd.read_csv(csv_file)
+        except Exception:
+            continue
+        if df.empty:
+            continue
 
         if "verdict" not in df.columns:
             val = str(len(df))
