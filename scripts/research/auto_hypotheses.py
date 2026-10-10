@@ -14,6 +14,8 @@ from pathlib import Path
 import pandas as pd
 import numpy as np
 
+REPO_ROOT = Path(__file__).resolve().parents[2]
+
 # ── Env check (P1) ─────────────────────────────────────────────────────────────
 _FALLBACK_URL = "https://yoekhkczwdeyauwarsyy.supabase.co"
 _FALLBACK_KEY = "sb_publishable_7j07_zzdqTGM1LXf7-o9Tg_JJRbJQSM"
@@ -42,10 +44,16 @@ from tank_registry import LOCATIONS
 registry_ids = {loc["id"] for loc in LOCATIONS}
 print(f"  Registry terminal IDs: {sorted(registry_ids)}")
 
-# Check what terminal_ids exist in terminal_observations
-p3_rows = sb.table("terminal_observations").select("terminal_id").limit(1000).execute().data
-p3_ids = {r["terminal_id"] for r in p3_rows}
-print(f"  DB terminal_ids (sample): {sorted(p3_ids)}")
+# Check what terminal_ids exist in terminal_observations — probe each registry id
+p3_ids = set()
+for _tid in sorted(registry_ids):
+    try:
+        _r = sb.table("terminal_observations").select("terminal_id").eq("terminal_id", _tid).limit(1).execute().data
+        if _r:
+            p3_ids.add(_tid)
+    except Exception:
+        pass
+print(f"  DB terminal_ids (probed): {sorted(p3_ids)}")
 not_in_registry = p3_ids - registry_ids
 not_in_db = registry_ids - p3_ids
 print(f"  In DB but NOT in registry: {not_in_registry}")
@@ -395,7 +403,7 @@ try:
     result = subprocess.run(
         ["git", "log", "--all", "--oneline", "--follow", "-20",
          "--", "scripts/checks/__init__.py", "scripts/stage3_whitelist.py"],
-        capture_output=True, text=True, cwd="/home/user/kharg-dashboard"
+        capture_output=True, text=True, cwd=str(REPO_ROOT)
     )
     print(result.stdout or "  No git log output")
     (h06_dir / "h06_wl_git_log.txt").write_text(result.stdout)
@@ -405,7 +413,7 @@ try:
         ["git", "log", "--all", "-p", "--follow",
          "-S", "STEP_WL_THRESHOLD",
          "--", "scripts/checks/__init__.py"],
-        capture_output=True, text=True, cwd="/home/user/kharg-dashboard"
+        capture_output=True, text=True, cwd=str(REPO_ROOT)
     )
     print(result2.stdout[:3000] if result2.stdout else "  No threshold changes found")
     (h06_dir / "h06_wl_threshold_history.txt").write_text(result2.stdout)
@@ -445,7 +453,7 @@ try:
     desc35_last = desc35[desc35["date"].isin(last_dates)]
 
     # Compute step_db per tank from metrics module
-    sys.path.insert(0, "/home/user/kharg-dashboard/scripts")
+    sys.path.insert(0, str(REPO_ROOT / "scripts"))
     from metrics import tank_step_db
 
     wl_rows = []
@@ -518,13 +526,29 @@ try:
     tvt_yb = fetch_all("terminal_volume_timeseries", "date,vol_mn_bbl,aggregation",
                        {"terminal_id": "yanbu"})
     df_tvt_yb = pd.DataFrame(tvt_yb)
-    df_tvt_yb_d = df_tvt_yb[df_tvt_yb["aggregation"] == "daily"]
+    df_tvt_yb_d = df_tvt_yb[df_tvt_yb["aggregation"] == "daily"].copy()
+    df_tvt_yb_d["tvt_date"] = pd.to_datetime(df_tvt_yb_d["date"]).dt.date
+    tvt_dates_yb = set(df_tvt_yb_d["tvt_date"].astype(str))
+    obs_dates_yb = set(df_yb["cal_date"].astype(str))
+    in_tvt_only = sorted(tvt_dates_yb - obs_dates_yb)
+    in_obs_only = sorted(obs_dates_yb - tvt_dates_yb)
     print(f"\n  TVT Yanbu daily rows: {len(df_tvt_yb_d)}")
+    print(f"  TVT-only dates (in TVT but not in obs): n={len(in_tvt_only)}")
+    if in_tvt_only:
+        print(f"    first 10: {in_tvt_only[:10]}")
+        print(f"    last 10: {in_tvt_only[-10:]}")
+    print(f"  Obs-only dates (in obs but not in TVT): n={len(in_obs_only)}")
+    if in_obs_only:
+        print(f"    first 10: {in_obs_only[:10]}")
+    pd.DataFrame({"tvt_only_date": in_tvt_only}).to_csv(h07_dir / "h07_tvt_only_dates.csv", index=False)
+    pd.DataFrame({"obs_only_date": in_obs_only}).to_csv(h07_dir / "h07_obs_only_dates.csv", index=False)
 
     # Explanation for 249: likely a snapshot before Yanbu additions
     print(f"\nH07 SUMMARY:")
-    print(f"  terminal_observations yanbu: {n_unique_dates} calendar dates (not 249)")
-    print(f"  249 likely from C11 run on older data state before additional passes ingested")
+    print(f"  terminal_observations yanbu: {n_unique_dates} calendar dates")
+    print(f"  terminal_volume_timeseries yanbu daily: {len(df_tvt_yb_d)} rows")
+    print(f"  TVT-only dates (extra in TVT): {len(in_tvt_only)}")
+    print(f"  Obs-only dates (in obs but absent from TVT): {len(in_obs_only)}")
     print(f"  Orbit diversity: {orbit_g['orbit_direction'].nunique()} directions, {orbit_g['relative_orbit'].dropna().nunique()} relative orbits")
 
 except Exception as e:
@@ -606,7 +630,7 @@ try:
     for pattern in ["backCoeff", "orthorectify", "speckleFilter", "upsampling", "GAMMA0", "BETA0", "SIGMA0", "LEE", "BILINEAR", "BICUBIC"]:
         res = subprocess.run(
             ["grep", "-rn", "--include=*.py", "--include=*.json", "--include=*.yml", pattern, "scripts/"],
-            capture_output=True, text=True, cwd="/home/user/kharg-dashboard"
+            capture_output=True, text=True, cwd=str(REPO_ROOT)
         )
         if res.stdout.strip():
             findings[pattern] = res.stdout.strip().split("\n")
@@ -671,7 +695,7 @@ try:
     # Find SLC references in codebase
     slc_res = subprocess.run(
         ["grep", "-rn", "--include=*.py", "-i", "SLC\\|burst\\|IW_SLC\\|S1_SLC", "scripts/"],
-        capture_output=True, text=True, cwd="/home/user/kharg-dashboard"
+        capture_output=True, text=True, cwd=str(REPO_ROOT)
     )
     slc_refs = slc_res.stdout.strip()
     print(f"  SLC references in codebase:\n{slc_refs[:1000] if slc_refs else '  None found'}")
@@ -710,7 +734,7 @@ try:
     import subprocess
     cush_res = subprocess.run(
         ["grep", "-rn", "-i", "cushing\\|oklahoma\\|WTI", "scripts/"],
-        capture_output=True, text=True, cwd="/home/user/kharg-dashboard"
+        capture_output=True, text=True, cwd=str(REPO_ROOT)
     )
     print(f"  Cushing references in codebase:\n{cush_res.stdout[:500] if cush_res.stdout else '  None'}")
 
