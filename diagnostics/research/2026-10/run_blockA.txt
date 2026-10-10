@@ -1,54 +1,162 @@
+P1: SUPABASE_URL=env SUPABASE_KEY=fallback (publishable)
 === PREFLIGHT P3: terminal_id canonicality ===
   Registry terminal IDs: ['al_flaw', 'das_island', 'de_kastri', 'fujairah', 'halul', 'jask', 'juwaymah', 'kharg', 'kozmino', 'lavan', 'mina_ahmadi', 'novorossiysk', 'primorsk', 'ras_laffan', 'ras_tanura', 'ruwais', 'siri', 'sitra', 'yanbu', 'zirku']
-Traceback (most recent call last):
-  File "/usr/local/lib/python3.11/dist-packages/httpx/_transports/default.py", line 101, in map_httpcore_exceptions
-    yield
-  File "/usr/local/lib/python3.11/dist-packages/httpx/_transports/default.py", line 250, in handle_request
-    resp = self._pool.handle_request(req)
-           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/usr/local/lib/python3.11/dist-packages/httpcore/_sync/connection_pool.py", line 256, in handle_request
-    raise exc from None
-  File "/usr/local/lib/python3.11/dist-packages/httpcore/_sync/connection_pool.py", line 236, in handle_request
-    response = connection.handle_request(
-               ^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/usr/local/lib/python3.11/dist-packages/httpcore/_sync/http_proxy.py", line 297, in handle_request
-    raise ProxyError(msg)
-httpcore.ProxyError: 403 Forbidden
+  DB terminal_ids (sample): ['al_flaw']
+  In DB but NOT in registry: set()
+  In registry but NOT in DB: {'siri', 'de_kastri', 'primorsk', 'kharg', 'juwaymah', 'yanbu', 'lavan', 'fujairah', 'kozmino', 'ras_laffan', 'sitra', 'novorossiysk', 'das_island', 'ras_tanura', 'jask', 'zirku', 'ruwais', 'mina_ahmadi', 'halul'}
 
-The above exception was the direct cause of the following exception:
+=== H01: Ingest regression systemic ===
+  Kharg raw_observations orbit check FAILED: {'message': 'column raw_observations.orbit_direction does not exist', 'code': '42703', 'hint': None, 'details': None}
+  al_flaw: 261 post-cutoff rows, 261 DESCENDING/NULL → has_regression=True
 
-Traceback (most recent call last):
-  File "/home/user/kharg-dashboard/scripts/research/auto_hypotheses.py", line 40, in <module>
-    p3_rows = sb.table("terminal_observations").select("terminal_id").limit(1000).execute().data
-              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/usr/local/lib/python3.11/dist-packages/postgrest/_sync/request_builder.py", line 90, in execute
-    r = send_with_retry(self.request)
-        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/usr/local/lib/python3.11/dist-packages/postgrest/_sync/request_builder.py", line 51, in send_with_retry
-    resp = req.send(headers)
-           ^^^^^^^^^^^^^^^^^
-  File "/usr/local/lib/python3.11/dist-packages/postgrest/base_request_builder.py", line 90, in send
-    return self.session.request(
-           ^^^^^^^^^^^^^^^^^^^^^
-  File "/usr/local/lib/python3.11/dist-packages/httpx/_client.py", line 825, in request
-    return self.send(request, auth=auth, follow_redirects=follow_redirects)
-           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/usr/local/lib/python3.11/dist-packages/httpx/_client.py", line 914, in send
-    response = self._send_handling_auth(
-               ^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/usr/local/lib/python3.11/dist-packages/httpx/_client.py", line 942, in _send_handling_auth
-    response = self._send_handling_redirects(
-               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/usr/local/lib/python3.11/dist-packages/httpx/_client.py", line 979, in _send_handling_redirects
-    response = self._send_single_request(request)
-               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/usr/local/lib/python3.11/dist-packages/httpx/_client.py", line 1014, in _send_single_request
-    response = transport.handle_request(request)
-               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/usr/local/lib/python3.11/dist-packages/httpx/_transports/default.py", line 249, in handle_request
-    with map_httpcore_exceptions():
-  File "/usr/lib/python3.11/contextlib.py", line 158, in __exit__
-    self.gen.throw(typ, value, traceback)
-  File "/usr/local/lib/python3.11/dist-packages/httpx/_transports/default.py", line 118, in map_httpcore_exceptions
-    raise mapped_exc(message) from exc
-httpx.ProxyError: 403 Forbidden
+H01 RESULT: regression terminals = ['al_flaw']
+H01 VERDICT: NOT_CONFIRMED — systemic if ≥2 terminals affected
+
+=== H02: TVT RT ASC contamination ===
+  TVT RT daily rows: 561
+  TVT dates with ASC-only observations: 243 (43.3%)
+  TVT dates with DESCENDING observations: 318
+  TVT dates with NULL-only observations: 0
+  TVT total matched dates: 561
+  TVT dates NOT in obs table: 0
+
+H02 VERDICT: CONFIRMED — ASC-only dates = 43.3% (threshold 30%)
+
+=== H03: RT DESC historical single orbit ===
+  Pre-regression orbit breakdown:
+orbit_direction  relative_orbit     n  n_dates
+            ASC           101.0 15774      239
+           DESC            35.0 20658      313
+
+  Post-regression orbit breakdown:
+orbit_direction  relative_orbit   n  n_dates
+            ASC           101.0 264        4
+           DESC            35.0 132        2
+     DESCENDING             NaN 161        8
+
+  Pre-reg DESCENDING relative_orbits: [35.0]
+  Pre-reg DESCENDING null relative_orbit rows: 0
+
+H03 VERDICT: CONFIRMED — single orbit = True, orbits = [35.0]
+
+=== H05: TVT coverage contamination ===
+
+  ras_tanura: TVT daily rows=561, obs dates=566
+  ras_tanura: dates below 50% coverage: 0
+H05 ras_tanura: NOT_CONFIRMED — 0 sub-50% dates in TVT
+
+=== H05b: Partial coverage (50-99%) in TVT ===
+  ras_tanura: full coverage dates=559, partial (50-99%)=2
+  Partial dates sample:
+      date  n_tanks  db_mean_avg       pct
+2026-09-30       45     7.120778 68.181818
+2026-10-06       45     6.373319 68.181818
+
+=== H05c: 8 new RT dates in TVT + calibration ===
+  2026-09-07: in_tvt=False, n_tanks=1/66 (2%), orbits={'DESCENDING': 1}, relOrbit=[]
+  2026-09-13: in_tvt=False, n_tanks=1/66 (2%), orbits={'DESCENDING': 1}, relOrbit=[]
+  2026-09-19: in_tvt=False, n_tanks=1/66 (2%), orbits={'DESCENDING': 1}, relOrbit=[]
+  2026-09-24: in_tvt=True, n_tanks=66/66 (100%), orbits={'DESCENDING': 66}, relOrbit=[]
+  2026-09-25: in_tvt=False, n_tanks=1/66 (2%), orbits={'DESCENDING': 1}, relOrbit=[]
+  2026-09-30: in_tvt=True, n_tanks=45/66 (68%), orbits={'DESCENDING': 45}, relOrbit=[]
+  2026-10-01: in_tvt=False, n_tanks=1/66 (2%), orbits={'DESCENDING': 1}, relOrbit=[]
+  2026-10-06: in_tvt=True, n_tanks=45/66 (68%), orbits={'DESCENDING': 45}, relOrbit=[]
+
+=== H06: WL RT git history ===
+  H06 git check FAILED: [Errno 2] No such file or directory: '/home/user/kharg-dashboard'
+
+=== H06b: WL composition vs frozen gate ===
+  Last 18 DESC dates: 66 tanks computed
+  Tanks with step_db >= 2.5: 21
+tank_id  n_obs  step_db  in_wl
+  rt_50     18   9.2392   True
+  rt_48     18   8.5439   True
+  rt_43     18   5.6636   True
+  rt_47     18   5.5272   True
+  rt_52     18   5.4377   True
+  rt_55     18   5.0102   True
+  rt_58     18   4.4964   True
+  rt_49     18   4.3203   True
+  rt_54     18   4.2014   True
+  rt_39     18   3.6975   True
+  rt_53     18   3.6345   True
+   rt_3     18   3.5277   True
+  rt_10     18   3.5136   True
+  rt_45     18   3.2827   True
+  rt_57     18   3.1088   True
+  rt_51     18   2.9393   True
+  rt_40     18   2.8828   True
+   rt_0     18   2.8434   True
+   rt_1     18   2.6945   True
+  rt_56     18   2.6671   True
+
+H06b VERDICT: WL has 21/66 tanks (gate: step_db >= 2.5)
+
+=== H07: Yanbu 332 vs 249 pass count ===
+  Total rows: 3984
+  Unique calendar dates: 249
+  Unique datetime strings: 249
+
+  Yanbu orbit breakdown:
+ orbit_direction  relative_orbit  n_rows  n_dates
+             NaN             NaN    3984      249
+
+  Yanbu passes per year:
+ year  n_dates
+ 2014        5
+ 2015       25
+ 2016        6
+ 2017        4
+ 2019        2
+ 2020       31
+ 2021       30
+ 2022       27
+ 2023       30
+ 2024       30
+ 2025       33
+ 2026       26
+
+  TVT Yanbu daily rows: 332
+
+H07 SUMMARY:
+  terminal_observations yanbu: 249 calendar dates (not 249)
+  249 likely from C11 run on older data state before additional passes ingested
+  Orbit diversity: 0 directions, 0 relative orbits
+
+=== Writing HYPOTHESES_REPORT.md ===
+  Written: diagnostics/research/2026-10/HYPOTHESES_REPORT.md
+
+=== H24: backCoeff / processing options audit (code, no DB) ===
+  H24 FAILED: [Errno 2] No such file or directory: '/home/user/kharg-dashboard'
+
+=== H25: R-point shift prediction ===
+H25 prediction (written before run):
+On GRD data, the specular return from the oil surface within a floating-roof tank
+shifts in the range direction as fill level changes. For Kharg repere tanks
+(known empty/full episodes), the peak brightness location within the tank footprint
+should shift ≥1 px (10 m GRD pixel) in range between an empty episode and a full one.
+REFUTED if shift < 0.5 px on all repere tanks.
+STATUS: NOT_RUN — requires GRD imagery download from CDSE/SH (optical validation
+framework not yet wired). This hypothesis requires stage0_optical_measure.py extension
+or dedicated GRD crop pipeline. Record here for when CDSE auth is resolved.
+Repere tanks expected: t60_1 (chronically full, db<1), t55_5 / t55_10 (chronically empty, db>14).
+
+
+=== H26: Averaged-stack geometry vs current ===
+H26 prediction (written before run):
+An averaged GRD stack (N≥30 Kharg DESC scenes) will produce a stable brightness
+map per tank. Fitting center/r/h to the maximum-brightness ring on the tank base+rim
+should yield geometry parameters at least as good (step_db ≥ current) as the current
+tank_registry values, potentially better for tanks with uncertain=True.
+STATUS: NOT_RUN — requires GRD stack download and 2D fitting code.
+Frozen geometry values from registry (r_m, h_max_m per tank) are the baseline.
+
+
+=== D6: SLC bursts CDSE availability estimate ===
+  D6 FAILED: [Errno 2] No such file or directory: '/home/user/kharg-dashboard'
+
+=== D7: Cushing floating-roof tanks (registry check) ===
+  Cushing in tank_registry: False
+  D7 FAILED: [Errno 2] No such file or directory: '/home/user/kharg-dashboard'
+
+=== Block A + H24-H26 + D6-D7 complete ===
