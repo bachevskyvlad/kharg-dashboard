@@ -31,8 +31,8 @@ SH_TOKEN_URL     = "https://identity.dataspace.copernicus.eu/auth/realms/CDSE/pr
 SH_CATALOG_URL   = "https://sh.dataspace.copernicus.eu/api/v1/catalog/1.0.0/search"
 SH_PROCESS_URL   = "https://sh.dataspace.copernicus.eu/api/v1/process"
 
-SB_URL = os.environ.get("SUPABASE_URL", "https://yoekhkczwdeyauwarsyy.supabase.co")
-SB_KEY = os.environ.get("SUPABASE_KEY", "sb_publishable_7j07_zzdqTGM1LXf7-o9Tg_JJRbJQSM")
+SB_URL = os.environ.get("SUPABASE_URL", "")
+SB_KEY = os.environ.get("SUPABASE_KEY", "")
 
 # ── constants ─────────────────────────────────────────────────────────────────
 MAX_CLOUD        = 20
@@ -388,6 +388,10 @@ def _nearest_pair_corr(sf_df: pd.DataFrame, sar_df: pd.DataFrame) -> pd.DataFram
 
 # ── main ──────────────────────────────────────────────────────────────────────
 def main():
+    if not SB_URL.strip() or not SB_KEY.strip():
+        print("FATAL: SUPABASE_URL or SUPABASE_KEY is empty — set secrets before running")
+        sys.exit(2)
+
     print("OPTICAL: шаг 4 — запуск Kharg-30 gate\n")
 
     tanks = list(GATE_TANK_INFO.values())
