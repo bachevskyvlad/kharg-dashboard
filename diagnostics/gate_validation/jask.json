@@ -1,6 +1,7 @@
 {
   "terminal": "jask",
   "relative_orbit": null,
+  "tanks": null,
   "verdict": "FLAG",
   "diagnosis": "REVIEW",
   "flags": {

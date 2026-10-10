@@ -1,8 +1,9 @@
 {
   "terminal": "al_flaw",
   "relative_orbit": null,
+  "tanks": null,
   "verdict": "FLAG",
-  "diagnosis": "REVIEW",
+  "diagnosis": "DEAD",
   "flags": {
     "cv_level": {
       "value": -0.14948937064879977,
@@ -10,6 +11,20 @@
       "hi": 0.6358,
       "flag": "BELOW_LO",
       "metric": "CV of level (\u03c3/\u03bc mean_db)"
+    },
+    "delta_p50_norm": {
+      "value": 0.06391645993448733,
+      "lo": 0.079,
+      "hi": 0.3468,
+      "flag": "BELOW_LO",
+      "metric": "\u0394 p50 (norm by dr)"
+    },
+    "delta_p90_norm": {
+      "value": 0.18627087572341783,
+      "lo": 0.1954,
+      "hi": 0.7954,
+      "flag": "BELOW_LO",
+      "metric": "\u0394 p90 (norm by dr)"
     },
     "cycles_per_year": {
       "value": 0.4353396901072706,

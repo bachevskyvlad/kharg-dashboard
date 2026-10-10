@@ -4,7 +4,7 @@ Reference health passport from Kharg (Iran) and Yanbu (Saudi Arabia).
 Corridors = union of both references × [0.5, 2.0].
 **These corridors are fixed. Do not adjust after numbers are known.**
 
-Generated: 2026-10-09
+Generated: 2026-10-10
 
 ## Reference Coverage
 
@@ -20,9 +20,9 @@ Generated: 2026-10-09
 | dynamic_range_db | p95(mean_db) − p5(mean_db) | dB | (base — kept absolute) | dB |
 | cv_level | σ(mean_db) / μ(mean_db) | dimensionless | (self) | dimensionless |
 | vel_std_norm | std(Δmean_db) / dynamic_range_db | dB/pass | ÷ dynamic_range_db | fraction |
-| delta_p50_norm | median(|Δmean_db|) / dynamic_range_db | dB | ÷ dynamic_range_db | fraction |
-| delta_p90_norm | p90(|Δmean_db|) / dynamic_range_db | dB | ÷ dynamic_range_db | fraction |
-| delta_p99_norm | p99(|Δmean_db|) / dynamic_range_db | dB | ÷ dynamic_range_db | fraction |
+| delta_p50_norm | median(abs(Δmean_db)) / dynamic_range_db | dB | ÷ dynamic_range_db | fraction |
+| delta_p90_norm | p90(abs(Δmean_db)) / dynamic_range_db | dB | ÷ dynamic_range_db | fraction |
+| delta_p99_norm | p99(abs(Δmean_db)) / dynamic_range_db | dB | ÷ dynamic_range_db | fraction |
 | cycles_per_year | zero-crossings/2 / span_yr | 1/yr | (self) | 1/yr |
 | cycle_depth_norm | median_peak(|demeaned_30d_ma|) / dynamic_range_db | dB | ÷ dynamic_range_db | fraction |
 | max_flat_passes | longest run with |Δ| < 1% dynamic_range | passes | (self) | passes |
@@ -44,9 +44,9 @@ Notes:
 |---|---|---|---|---|
 | CV of level (σ/μ mean_db) | 0.1960 | 0.3179 | 0.0980 | 0.6358 |
 | Velocity std (norm by dr) | 0.1555 | 0.1495 | 0.0748 | 0.3110 |
-| |Δ| p50 (norm by dr) | 0.1581 | 0.1734 | 0.0790 | 0.3468 |
-| |Δ| p90 (norm by dr) | 0.3908 | 0.3977 | 0.1954 | 0.7954 |
-| |Δ| p99 (norm by dr) | 0.7331 | 0.5868 | 0.2934 | 1.4662 |
+| Δ p50 (norm by dr) | 0.1581 | 0.1734 | 0.0790 | 0.3468 |
+| Δ p90 (norm by dr) | 0.3908 | 0.3977 | 0.1954 | 0.7954 |
+| Δ p99 (norm by dr) | 0.7331 | 0.5868 | 0.2934 | 1.4662 |
 | Build-draw cycles/year | 1.83 | 1.34 | 0.67 | 3.65 |
 | Cycle depth (norm by dr) | 0.1115 | 0.1267 | 0.0558 | 0.2533 |
 | Max flat segment (passes) | 1 | 1 | 0 | 2 |
@@ -70,9 +70,18 @@ Notes:
 
 Run before applying to any new terminal:
 - **RT-DESC** (`--terminal ras_tanura --orbit 35`): expect PASS
-- **RT-ASC-archive** (`--terminal ras_tanura --orbit 101`): expect DEAD
+- **alfaw_stuck7** (`--terminal al_flaw --tanks af_0,af_2,af_3,af_6,af_7,af_9,af_11`): expect FLAG/DEAD
 
 PASS + DEAD → instrument valid. Else fix health-check before proceeding.
+
+### Note: RT-ASC orbit 101 excluded from gate
+
+RT-ASC orbit 101 passes health-check (dynamic_range=2.5dB, cycles=3/yr,
+live_fraction=1.0) and is therefore alive. It is excluded from the gate because
+it is E1-blind (decoupled from storage events). This is the canonical example
+that **health-check ≠ informativeness**: a series can be alive and still carry
+no storage signal. Informativeness is verified only at step 7 (event-response),
+not here. Using RT-ASC as a dead control would be a type error.
 
 ## Notes
 

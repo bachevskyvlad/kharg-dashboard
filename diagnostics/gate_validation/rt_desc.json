@@ -1,6 +1,7 @@
 {
   "terminal": "ras_tanura",
   "relative_orbit": 35,
+  "tanks": null,
   "verdict": "PASS",
   "diagnosis": null,
   "flags": {},

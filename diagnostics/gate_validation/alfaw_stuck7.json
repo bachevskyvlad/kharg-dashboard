@@ -1,0 +1,65 @@
+{
+  "terminal": "al_flaw",
+  "relative_orbit": null,
+  "tanks": [
+    "af_0",
+    "af_2",
+    "af_3",
+    "af_6",
+    "af_7",
+    "af_9",
+    "af_11"
+  ],
+  "verdict": "FLAG",
+  "diagnosis": "DEAD",
+  "flags": {
+    "cv_level": {
+      "value": -0.24933440507455196,
+      "lo": 0.098,
+      "hi": 0.6358,
+      "flag": "BELOW_LO",
+      "metric": "CV of level (\u03c3/\u03bc mean_db)"
+    },
+    "vel_std_norm": {
+      "value": 0.0745737888006507,
+      "lo": 0.0748,
+      "hi": 0.311,
+      "flag": "BELOW_LO",
+      "metric": "Velocity std (norm by dr)"
+    },
+    "delta_p50_norm": {
+      "value": 0.0570496922071737,
+      "lo": 0.079,
+      "hi": 0.3468,
+      "flag": "BELOW_LO",
+      "metric": "\u0394 p50 (norm by dr)"
+    },
+    "delta_p90_norm": {
+      "value": 0.17896076837836036,
+      "lo": 0.1954,
+      "hi": 0.7954,
+      "flag": "BELOW_LO",
+      "metric": "\u0394 p90 (norm by dr)"
+    },
+    "cycles_per_year": {
+      "value": 0.4353396901072706,
+      "lo": 0.67,
+      "hi": 3.65,
+      "flag": "BELOW_LO",
+      "metric": "Build-draw cycles/year"
+    }
+  },
+  "metrics": {
+    "dynamic_range_db": 5.164419999999998,
+    "cv_level": -0.24933440507455196,
+    "vel_std_norm": 0.0745737888006507,
+    "delta_p50_norm": 0.0570496922071737,
+    "delta_p90_norm": 0.17896076837836036,
+    "delta_p99_norm": 0.33644408693107364,
+    "cycles_per_year": 0.4353396901072706,
+    "cycle_depth_norm": 0.17396608083103024,
+    "max_flat_passes": 2,
+    "per_tank_step_norm": 0.12936593073375144,
+    "live_fraction": 1.0
+  }
+}
