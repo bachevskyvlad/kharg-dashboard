@@ -1,9 +1,11 @@
-Rendering 1 tank(s)...
+Rendering 20 tank(s)...
 
 [jk_0]
   SAR-2 (current): 2026-10-04  db=-2.0dB
   SAR-1 (earlier): 2026-09-16  db=-2.3dB
-  platforms: SAR-2=S1?  SAR-1=S1C
+    catalog: date=2026-10-04  platform=S1?  rel_orbit=93  (scene_dt=2026-10-04T02:06)
+    catalog: date=2026-09-16  platform=S1C  rel_orbit=93  (scene_dt=2026-09-16T02:06)
+  platforms: SAR-2=S1?(orb=93)  SAR-1=S1C(orb=93)
     SAR  bbox=[57.30265, 25.8532, 57.30571, 25.85595]  CRS=WGS84  res=5m/px  width=128  height=128
     SAR  dtype=float32  shape=(128, 128)  n_unique=971  db min=-29.4  max=13.1  std=7.04
     SAR  bbox=[57.30265, 25.8532, 57.30571, 25.85595]  CRS=WGS84  res=5m/px  width=128  height=128
@@ -12,5 +14,290 @@ Rendering 1 tank(s)...
     S2   dtype=float32  shape=(128, 128, 3)  n_unique=1211  refl min=0.118  max=0.633  std=0.093  sat_frac=0.117
   S2: fetched
   Saved: /home/runner/work/kharg-dashboard/kharg-dashboard/diagnostics/jask/panels/jk_0.png
+
+[jk_1]
+  SAR-2 (current): 2026-10-04  db=2.6dB
+  SAR-1 (earlier): 2026-09-16  db=3.4dB
+    catalog: date=2026-10-04  platform=S1?  rel_orbit=93  (scene_dt=2026-10-04T02:06)
+    catalog: date=2026-09-16  platform=S1C  rel_orbit=93  (scene_dt=2026-09-16T02:06)
+  platforms: SAR-2=S1?(orb=93)  SAR-1=S1C(orb=93)
+    SAR  bbox=[57.30129, 25.85293, 57.30432, 25.85565]  CRS=WGS84  res=5m/px  width=128  height=128
+    SAR  dtype=float32  shape=(128, 128)  n_unique=955  db min=-27.9  max=9.7  std=6.76
+    SAR  bbox=[57.30129, 25.85293, 57.30432, 25.85565]  CRS=WGS84  res=5m/px  width=128  height=128
+    SAR  dtype=float32  shape=(128, 128)  n_unique=955  db min=-29.5  max=16.5  std=7.15
+    S2   bbox=[57.30129, 25.85293, 57.30432, 25.85565]  CRS=WGS84  res=10m/px  width=128  height=128  window=2026-09-20–2026-10-04
+    S2   dtype=float32  shape=(128, 128, 3)  n_unique=1229  refl min=0.118  max=0.633  std=0.096  sat_frac=0.124
+  S2: fetched
+  Saved: /home/runner/work/kharg-dashboard/kharg-dashboard/diagnostics/jask/panels/jk_1.png
+
+[jk_2]
+  SAR-2 (current): 2026-10-04  db=3.2dB
+  SAR-1 (earlier): 2026-09-16  db=3.7dB
+    catalog: date=2026-10-04  platform=S1?  rel_orbit=93  (scene_dt=2026-10-04T02:06)
+    catalog: date=2026-09-16  platform=S1C  rel_orbit=93  (scene_dt=2026-09-16T02:06)
+  platforms: SAR-2=S1?(orb=93)  SAR-1=S1C(orb=93)
+    SAR  bbox=[57.30156, 25.85173, 57.30449, 25.85437]  CRS=WGS84  res=5m/px  width=128  height=128
+    SAR  dtype=float32  shape=(128, 128)  n_unique=899  db min=-24.2  max=9.7  std=6.96
+    SAR  bbox=[57.30156, 25.85173, 57.30449, 25.85437]  CRS=WGS84  res=5m/px  width=128  height=128
+    SAR  dtype=float32  shape=(128, 128)  n_unique=898  db min=-26.8  max=11.0  std=6.87
+    S2   bbox=[57.30156, 25.85173, 57.30449, 25.85437]  CRS=WGS84  res=10m/px  width=128  height=128  window=2026-09-20–2026-10-04
+    S2   dtype=float32  shape=(128, 128, 3)  n_unique=1187  refl min=0.118  max=0.633  std=0.096  sat_frac=0.124
+  S2: fetched
+  Saved: /home/runner/work/kharg-dashboard/kharg-dashboard/diagnostics/jask/panels/jk_2.png
+
+[jk_3]
+  SAR-2 (current): 2026-10-04  db=2.9dB
+  SAR-1 (earlier): 2026-09-16  db=3.4dB
+    catalog: date=2026-10-04  platform=S1?  rel_orbit=93  (scene_dt=2026-10-04T02:06)
+    catalog: date=2026-09-16  platform=S1C  rel_orbit=93  (scene_dt=2026-09-16T02:06)
+  platforms: SAR-2=S1?(orb=93)  SAR-1=S1C(orb=93)
+    SAR  bbox=[57.3029, 25.85184, 57.30606, 25.85469]  CRS=WGS84  res=5m/px  width=128  height=128
+    SAR  dtype=float32  shape=(128, 128)  n_unique=1033  db min=-29.4  max=13.1  std=7.06
+    SAR  bbox=[57.3029, 25.85184, 57.30606, 25.85469]  CRS=WGS84  res=5m/px  width=128  height=128
+    SAR  dtype=float32  shape=(128, 128)  n_unique=1034  db min=-25.0  max=13.1  std=7.14
+    S2   bbox=[57.3029, 25.85184, 57.30606, 25.85469]  CRS=WGS84  res=10m/px  width=128  height=128  window=2026-09-20–2026-10-04
+    S2   dtype=float32  shape=(128, 128, 3)  n_unique=1198  refl min=0.118  max=0.618  std=0.096  sat_frac=0.133
+  S2: fetched
+  Saved: /home/runner/work/kharg-dashboard/kharg-dashboard/diagnostics/jask/panels/jk_3.png
+
+[jk_4]
+  SAR-2 (current): 2026-10-04  db=6.3dB
+  SAR-1 (earlier): 2026-09-16  db=7.5dB
+    catalog: date=2026-10-04  platform=S1?  rel_orbit=93  (scene_dt=2026-10-04T02:06)
+    catalog: date=2026-09-16  platform=S1C  rel_orbit=93  (scene_dt=2026-09-16T02:06)
+  platforms: SAR-2=S1?(orb=93)  SAR-1=S1C(orb=93)
+    SAR  bbox=[57.29993, 25.85992, 57.30287, 25.86257]  CRS=WGS84  res=5m/px  width=128  height=128
+    SAR  dtype=float32  shape=(128, 128)  n_unique=906  db min=-31.6  max=13.7  std=7.17
+    SAR  bbox=[57.29993, 25.85992, 57.30287, 25.86257]  CRS=WGS84  res=5m/px  width=128  height=128
+    SAR  dtype=float32  shape=(128, 128)  n_unique=908  db min=-23.6  max=15.5  std=7.28
+    S2   bbox=[57.29993, 25.85992, 57.30287, 25.86257]  CRS=WGS84  res=10m/px  width=128  height=128  window=2026-09-20–2026-10-04
+    S2   dtype=float32  shape=(128, 128, 3)  n_unique=1051  refl min=0.137  max=0.628  std=0.081  sat_frac=0.120
+  S2: fetched
+  Saved: /home/runner/work/kharg-dashboard/kharg-dashboard/diagnostics/jask/panels/jk_4.png
+
+[jk_5]
+  SAR-2 (current): 2026-10-04  db=3.6dB
+  SAR-1 (earlier): 2026-09-16  db=4.7dB
+    catalog: date=2026-10-04  platform=S1?  rel_orbit=93  (scene_dt=2026-10-04T02:06)
+    catalog: date=2026-09-16  platform=S1C  rel_orbit=93  (scene_dt=2026-09-16T02:06)
+  platforms: SAR-2=S1?(orb=93)  SAR-1=S1C(orb=93)
+    SAR  bbox=[57.30022, 25.85869, 57.30312, 25.8613]  CRS=WGS84  res=5m/px  width=128  height=128
+    SAR  dtype=float32  shape=(128, 128)  n_unique=879  db min=-31.6  max=13.7  std=6.40
+    SAR  bbox=[57.30022, 25.85869, 57.30312, 25.8613]  CRS=WGS84  res=5m/px  width=128  height=128
+    SAR  dtype=float32  shape=(128, 128)  n_unique=882  db min=-24.1  max=15.5  std=6.72
+    S2   bbox=[57.30022, 25.85869, 57.30312, 25.8613]  CRS=WGS84  res=10m/px  width=128  height=128  window=2026-09-20–2026-10-04
+    S2   dtype=float32  shape=(128, 128, 3)  n_unique=1092  refl min=0.037  max=0.628  std=0.083  sat_frac=0.100
+  S2: fetched
+  Saved: /home/runner/work/kharg-dashboard/kharg-dashboard/diagnostics/jask/panels/jk_5.png
+
+[jk_6]
+  SAR-2 (current): 2026-10-04  db=6.7dB
+  SAR-1 (earlier): 2026-09-16  db=6.4dB
+    catalog: date=2026-10-04  platform=S1?  rel_orbit=93  (scene_dt=2026-10-04T02:06)
+    catalog: date=2026-09-16  platform=S1C  rel_orbit=93  (scene_dt=2026-09-16T02:06)
+  platforms: SAR-2=S1?(orb=93)  SAR-1=S1C(orb=93)
+    SAR  bbox=[57.3015, 25.85893, 57.30443, 25.86157]  CRS=WGS84  res=5m/px  width=128  height=128
+    SAR  dtype=float32  shape=(128, 128)  n_unique=894  db min=-26.0  max=12.3  std=6.61
+    SAR  bbox=[57.3015, 25.85893, 57.30443, 25.86157]  CRS=WGS84  res=5m/px  width=128  height=128
+    SAR  dtype=float32  shape=(128, 128)  n_unique=898  db min=-29.5  max=12.4  std=6.74
+    S2   bbox=[57.3015, 25.85893, 57.30443, 25.86157]  CRS=WGS84  res=10m/px  width=128  height=128  window=2026-09-20–2026-10-04
+    S2   dtype=float32  shape=(128, 128, 3)  n_unique=1078  refl min=0.137  max=0.599  std=0.079  sat_frac=0.106
+  S2: fetched
+  Saved: /home/runner/work/kharg-dashboard/kharg-dashboard/diagnostics/jask/panels/jk_6.png
+
+[jk_7]
+  SAR-2 (current): 2026-10-04  db=5.2dB
+  SAR-1 (earlier): 2026-09-16  db=5.0dB
+    catalog: date=2026-10-04  platform=S1?  rel_orbit=93  (scene_dt=2026-10-04T02:06)
+    catalog: date=2026-09-16  platform=S1C  rel_orbit=93  (scene_dt=2026-09-16T02:06)
+  platforms: SAR-2=S1?(orb=93)  SAR-1=S1C(orb=93)
+    SAR  bbox=[57.30121, 25.8602, 57.30415, 25.86285]  CRS=WGS84  res=5m/px  width=128  height=128
+    SAR  dtype=float32  shape=(128, 128)  n_unique=901  db min=-25.0  max=12.3  std=6.07
+    SAR  bbox=[57.30121, 25.8602, 57.30415, 25.86285]  CRS=WGS84  res=5m/px  width=128  height=128
+    SAR  dtype=float32  shape=(128, 128)  n_unique=902  db min=-23.6  max=11.9  std=6.08
+    S2   bbox=[57.30121, 25.8602, 57.30415, 25.86285]  CRS=WGS84  res=10m/px  width=128  height=128  window=2026-09-20–2026-10-04
+    S2   dtype=float32  shape=(128, 128, 3)  n_unique=1061  refl min=0.137  max=0.628  std=0.079  sat_frac=0.108
+  S2: fetched
+  Saved: /home/runner/work/kharg-dashboard/kharg-dashboard/diagnostics/jask/panels/jk_7.png
+
+[jk_8]
+  SAR-2 (current): 2026-10-04  db=7.8dB
+  SAR-1 (earlier): 2026-09-16  db=6.7dB
+    catalog: date=2026-10-04  platform=S1?  rel_orbit=93  (scene_dt=2026-10-04T02:06)
+    catalog: date=2026-09-16  platform=S1C  rel_orbit=93  (scene_dt=2026-09-16T02:06)
+  platforms: SAR-2=S1?(orb=93)  SAR-1=S1C(orb=93)
+    SAR  bbox=[57.30534, 25.85221, 57.30863, 25.85517]  CRS=WGS84  res=5m/px  width=128  height=128
+    SAR  dtype=float32  shape=(128, 128)  n_unique=1120  db min=-29.4  max=19.0  std=7.40
+    SAR  bbox=[57.30534, 25.85221, 57.30863, 25.85517]  CRS=WGS84  res=5m/px  width=128  height=128
+    SAR  dtype=float32  shape=(128, 128)  n_unique=1121  db min=-26.8  max=18.9  std=7.28
+    S2   bbox=[57.30534, 25.85221, 57.30863, 25.85517]  CRS=WGS84  res=10m/px  width=128  height=128  window=2026-09-20–2026-10-04
+    S2   dtype=float32  shape=(128, 128, 3)  n_unique=1175  refl min=0.127  max=0.632  std=0.080  sat_frac=0.090
+  S2: fetched
+  Saved: /home/runner/work/kharg-dashboard/kharg-dashboard/diagnostics/jask/panels/jk_8.png
+
+[jk_9]
+  SAR-2 (current): 2026-10-04  db=13.6dB
+  SAR-1 (earlier): 2026-09-16  db=12.6dB
+    catalog: date=2026-10-04  platform=S1?  rel_orbit=93  (scene_dt=2026-10-04T02:06)
+    catalog: date=2026-09-16  platform=S1C  rel_orbit=93  (scene_dt=2026-09-16T02:06)
+  platforms: SAR-2=S1?(orb=93)  SAR-1=S1C(orb=93)
+    SAR  bbox=[57.30676, 25.85253, 57.30992, 25.85538]  CRS=WGS84  res=5m/px  width=128  height=128
+    SAR  dtype=float32  shape=(128, 128)  n_unique=1038  db min=-21.0  max=18.8  std=6.92
+    SAR  bbox=[57.30676, 25.85253, 57.30992, 25.85538]  CRS=WGS84  res=5m/px  width=128  height=128
+    SAR  dtype=float32  shape=(128, 128)  n_unique=1041  db min=-22.8  max=17.7  std=6.98
+    S2   bbox=[57.30676, 25.85253, 57.30992, 25.85538]  CRS=WGS84  res=10m/px  width=128  height=128  window=2026-09-20–2026-10-04
+    S2   dtype=float32  shape=(128, 128, 3)  n_unique=1196  refl min=0.115  max=0.632  std=0.082  sat_frac=0.092
+  S2: fetched
+  Saved: /home/runner/work/kharg-dashboard/kharg-dashboard/diagnostics/jask/panels/jk_9.png
+
+[jk_10]
+  SAR-2 (current): 2026-10-04  db=11.9dB
+  SAR-1 (earlier): 2026-09-16  db=11.9dB
+    catalog: date=2026-10-04  platform=S1?  rel_orbit=93  (scene_dt=2026-10-04T02:06)
+    catalog: date=2026-09-16  platform=S1C  rel_orbit=93  (scene_dt=2026-09-16T02:06)
+  platforms: SAR-2=S1?(orb=93)  SAR-1=S1C(orb=93)
+    SAR  bbox=[57.30635, 25.85373, 57.30973, 25.85677]  CRS=WGS84  res=5m/px  width=128  height=128
+    SAR  dtype=float32  shape=(128, 128)  n_unique=1178  db min=-22.0  max=19.0  std=6.97
+    SAR  bbox=[57.30635, 25.85373, 57.30973, 25.85677]  CRS=WGS84  res=5m/px  width=128  height=128
+    SAR  dtype=float32  shape=(128, 128)  n_unique=1179  db min=-22.6  max=17.7  std=7.11
+    S2   bbox=[57.30635, 25.85373, 57.30973, 25.85677]  CRS=WGS84  res=10m/px  width=128  height=128  window=2026-09-20–2026-10-04
+    S2   dtype=float32  shape=(128, 128, 3)  n_unique=1212  refl min=0.115  max=0.623  std=0.080  sat_frac=0.090
+  S2: fetched
+  Saved: /home/runner/work/kharg-dashboard/kharg-dashboard/diagnostics/jask/panels/jk_10.png
+
+[jk_11]
+  SAR-2 (current): 2026-10-04  db=12.9dB
+  SAR-1 (earlier): 2026-09-16  db=12.9dB
+    catalog: date=2026-10-04  platform=S1?  rel_orbit=93  (scene_dt=2026-10-04T02:06)
+    catalog: date=2026-09-16  platform=S1C  rel_orbit=93  (scene_dt=2026-09-16T02:06)
+  platforms: SAR-2=S1?(orb=93)  SAR-1=S1C(orb=93)
+    SAR  bbox=[57.30498, 25.8535, 57.30832, 25.8565]  CRS=WGS84  res=5m/px  width=128  height=128
+    SAR  dtype=float32  shape=(128, 128)  n_unique=1151  db min=-25.0  max=19.0  std=7.65
+    SAR  bbox=[57.30498, 25.8535, 57.30832, 25.8565]  CRS=WGS84  res=5m/px  width=128  height=128
+    SAR  dtype=float32  shape=(128, 128)  n_unique=1151  db min=-26.8  max=18.9  std=7.76
+    S2   bbox=[57.30498, 25.8535, 57.30832, 25.8565]  CRS=WGS84  res=10m/px  width=128  height=128  window=2026-09-20–2026-10-04
+    S2   dtype=float32  shape=(128, 128, 3)  n_unique=1147  refl min=0.127  max=0.632  std=0.079  sat_frac=0.091
+  S2: fetched
+  Saved: /home/runner/work/kharg-dashboard/kharg-dashboard/diagnostics/jask/panels/jk_11.png
+
+[jk_12]
+  SAR-2 (current): 2026-10-04  db=6.9dB
+  SAR-1 (earlier): 2026-09-16  db=6.6dB
+    catalog: date=2026-10-04  platform=S1?  rel_orbit=93  (scene_dt=2026-10-04T02:06)
+    catalog: date=2026-09-16  platform=S1C  rel_orbit=93  (scene_dt=2026-09-16T02:06)
+  platforms: SAR-2=S1?(orb=93)  SAR-1=S1C(orb=93)
+    SAR  bbox=[57.30384, 25.86069, 57.30664, 25.8632]  CRS=WGS84  res=5m/px  width=128  height=128
+    SAR  dtype=float32  shape=(128, 128)  n_unique=817  db min=-23.7  max=24.6  std=8.09
+    SAR  bbox=[57.30384, 25.86069, 57.30664, 25.8632]  CRS=WGS84  res=5m/px  width=128  height=128
+    SAR  dtype=float32  shape=(128, 128)  n_unique=818  db min=-24.1  max=23.9  std=7.88
+    S2   bbox=[57.30384, 25.86069, 57.30664, 25.8632]  CRS=WGS84  res=10m/px  width=128  height=128  window=2026-09-20–2026-10-04
+    S2   dtype=float32  shape=(128, 128, 3)  n_unique=1073  refl min=0.113  max=0.627  std=0.080  sat_frac=0.081
+  S2: fetched
+  Saved: /home/runner/work/kharg-dashboard/kharg-dashboard/diagnostics/jask/panels/jk_12.png
+
+[jk_13]
+  SAR-2 (current): 2026-10-04  db=14.7dB
+  SAR-1 (earlier): 2026-09-16  db=15.3dB
+    catalog: date=2026-10-04  platform=S1?  rel_orbit=93  (scene_dt=2026-10-04T02:06)
+    catalog: date=2026-09-16  platform=S1C  rel_orbit=93  (scene_dt=2026-09-16T02:06)
+  platforms: SAR-2=S1?(orb=93)  SAR-1=S1C(orb=93)
+    SAR  bbox=[57.30526, 25.86104, 57.30791, 25.86342]  CRS=WGS84  res=5m/px  width=128  height=128
+    SAR  dtype=float32  shape=(128, 128)  n_unique=740  db min=-23.3  max=24.6  std=7.70
+    SAR  bbox=[57.30526, 25.86104, 57.30791, 25.86342]  CRS=WGS84  res=5m/px  width=128  height=128
+    SAR  dtype=float32  shape=(128, 128)  n_unique=742  db min=-24.7  max=23.9  std=7.73
+    S2   bbox=[57.30526, 25.86104, 57.30791, 25.86342]  CRS=WGS84  res=10m/px  width=128  height=128  window=2026-09-20–2026-10-04
+    S2   dtype=float32  shape=(128, 128, 3)  n_unique=1057  refl min=0.113  max=0.623  std=0.075  sat_frac=0.063
+  S2: fetched
+  Saved: /home/runner/work/kharg-dashboard/kharg-dashboard/diagnostics/jask/panels/jk_13.png
+
+[jk_14]
+  SAR-2 (current): 2026-10-04  db=3.9dB
+  SAR-1 (earlier): 2026-09-16  db=3.7dB
+    catalog: date=2026-10-04  platform=S1?  rel_orbit=93  (scene_dt=2026-10-04T02:06)
+    catalog: date=2026-09-16  platform=S1C  rel_orbit=93  (scene_dt=2026-09-16T02:06)
+  platforms: SAR-2=S1?(orb=93)  SAR-1=S1C(orb=93)
+    SAR  bbox=[57.30418, 25.85954, 57.30677, 25.86187]  CRS=WGS84  res=5m/px  width=128  height=128
+    SAR  dtype=float32  shape=(128, 128)  n_unique=710  db min=-21.1  max=21.6  std=6.99
+    SAR  bbox=[57.30418, 25.85954, 57.30677, 25.86187]  CRS=WGS84  res=5m/px  width=128  height=128
+    SAR  dtype=float32  shape=(128, 128)  n_unique=713  db min=-20.6  max=20.6  std=6.76
+    S2   bbox=[57.30418, 25.85954, 57.30677, 25.86187]  CRS=WGS84  res=10m/px  width=128  height=128  window=2026-09-20–2026-10-04
+    S2   dtype=float32  shape=(128, 128, 3)  n_unique=946  refl min=0.113  max=0.603  std=0.071  sat_frac=0.063
+  S2: fetched
+  Saved: /home/runner/work/kharg-dashboard/kharg-dashboard/diagnostics/jask/panels/jk_14.png
+
+[jk_15]
+  SAR-2 (current): 2026-10-04  db=7.3dB
+  SAR-1 (earlier): 2026-09-16  db=7.0dB
+    catalog: date=2026-10-04  platform=S1?  rel_orbit=93  (scene_dt=2026-10-04T02:06)
+    catalog: date=2026-09-16  platform=S1C  rel_orbit=93  (scene_dt=2026-09-16T02:06)
+  platforms: SAR-2=S1?(orb=93)  SAR-1=S1C(orb=93)
+    SAR  bbox=[57.30559, 25.85971, 57.30824, 25.8621]  CRS=WGS84  res=5m/px  width=128  height=128
+    SAR  dtype=float32  shape=(128, 128)  n_unique=743  db min=-26.7  max=21.6  std=7.23
+    SAR  bbox=[57.30559, 25.85971, 57.30824, 25.8621]  CRS=WGS84  res=5m/px  width=128  height=128
+    SAR  dtype=float32  shape=(128, 128)  n_unique=738  db min=-22.6  max=20.6  std=7.24
+    S2   bbox=[57.30559, 25.85971, 57.30824, 25.8621]  CRS=WGS84  res=10m/px  width=128  height=128  window=2026-09-20–2026-10-04
+    S2   dtype=float32  shape=(128, 128, 3)  n_unique=922  refl min=0.113  max=0.618  std=0.070  sat_frac=0.057
+  S2: fetched
+  Saved: /home/runner/work/kharg-dashboard/kharg-dashboard/diagnostics/jask/panels/jk_15.png
+
+[jk_16]
+  SAR-2 (current): 2026-10-04  db=1.0dB
+  SAR-1 (earlier): 2026-09-16  db=-1.0dB
+    catalog: date=2026-10-04  platform=S1?  rel_orbit=93  (scene_dt=2026-10-04T02:06)
+    catalog: date=2026-09-16  platform=S1C  rel_orbit=93  (scene_dt=2026-09-16T02:06)
+  platforms: SAR-2=S1?(orb=93)  SAR-1=S1C(orb=93)
+    SAR  bbox=[57.30437, 25.85705, 57.30748, 25.85985]  CRS=WGS84  res=5m/px  width=128  height=128
+    SAR  dtype=float32  shape=(128, 128)  n_unique=1006  db min=-26.0  max=9.6  std=5.85
+    SAR  bbox=[57.30437, 25.85705, 57.30748, 25.85985]  CRS=WGS84  res=5m/px  width=128  height=128
+    SAR  dtype=float32  shape=(128, 128)  n_unique=1007  db min=-25.3  max=14.6  std=6.27
+    S2   bbox=[57.30437, 25.85705, 57.30748, 25.85985]  CRS=WGS84  res=10m/px  width=128  height=128  window=2026-09-20–2026-10-04
+    S2   dtype=float32  shape=(128, 128, 3)  n_unique=1091  refl min=0.146  max=0.577  std=0.071  sat_frac=0.075
+  S2: fetched
+  Saved: /home/runner/work/kharg-dashboard/kharg-dashboard/diagnostics/jask/panels/jk_16.png
+
+[jk_17]
+  SAR-2 (current): 2026-10-04  db=3.2dB
+  SAR-1 (earlier): 2026-09-16  db=3.4dB
+    catalog: date=2026-10-04  platform=S1?  rel_orbit=93  (scene_dt=2026-10-04T02:06)
+    catalog: date=2026-09-16  platform=S1C  rel_orbit=93  (scene_dt=2026-09-16T02:06)
+  platforms: SAR-2=S1?(orb=93)  SAR-1=S1C(orb=93)
+    SAR  bbox=[57.30586, 25.85738, 57.30878, 25.86001]  CRS=WGS84  res=5m/px  width=128  height=128
+    SAR  dtype=float32  shape=(128, 128)  n_unique=885  db min=-23.3  max=11.7  std=5.42
+    SAR  bbox=[57.30586, 25.85738, 57.30878, 25.86001]  CRS=WGS84  res=5m/px  width=128  height=128
+    SAR  dtype=float32  shape=(128, 128)  n_unique=890  db min=-21.7  max=14.6  std=5.81
+    S2   bbox=[57.30586, 25.85738, 57.30878, 25.86001]  CRS=WGS84  res=10m/px  width=128  height=128  window=2026-09-20–2026-10-04
+    S2   dtype=float32  shape=(128, 128, 3)  n_unique=1079  refl min=0.139  max=0.577  std=0.071  sat_frac=0.060
+  S2: fetched
+  Saved: /home/runner/work/kharg-dashboard/kharg-dashboard/diagnostics/jask/panels/jk_17.png
+
+[jk_18]
+  SAR-2 (current): 2026-10-04  db=1.4dB
+  SAR-1 (earlier): 2026-09-16  db=3.4dB
+    catalog: date=2026-10-04  platform=S1?  rel_orbit=93  (scene_dt=2026-10-04T02:06)
+    catalog: date=2026-09-16  platform=S1C  rel_orbit=93  (scene_dt=2026-09-16T02:06)
+  platforms: SAR-2=S1?(orb=93)  SAR-1=S1C(orb=93)
+    SAR  bbox=[57.30469, 25.85585, 57.30769, 25.85855]  CRS=WGS84  res=5m/px  width=128  height=128
+    SAR  dtype=float32  shape=(128, 128)  n_unique=937  db min=-24.0  max=9.6  std=6.10
+    SAR  bbox=[57.30469, 25.85585, 57.30769, 25.85855]  CRS=WGS84  res=5m/px  width=128  height=128
+    SAR  dtype=float32  shape=(128, 128)  n_unique=938  db min=-22.6  max=14.6  std=6.39
+    S2   bbox=[57.30469, 25.85585, 57.30769, 25.85855]  CRS=WGS84  res=10m/px  width=128  height=128  window=2026-09-20–2026-10-04
+    S2   dtype=float32  shape=(128, 128, 3)  n_unique=998  refl min=0.146  max=0.577  std=0.070  sat_frac=0.077
+  S2: fetched
+  Saved: /home/runner/work/kharg-dashboard/kharg-dashboard/diagnostics/jask/panels/jk_18.png
+
+[jk_19]
+  SAR-2 (current): 2026-10-04  db=4.5dB
+  SAR-1 (earlier): 2026-09-16  db=5.0dB
+    catalog: date=2026-10-04  platform=S1?  rel_orbit=93  (scene_dt=2026-10-04T02:06)
+    catalog: date=2026-09-16  platform=S1C  rel_orbit=93  (scene_dt=2026-09-16T02:06)
+  platforms: SAR-2=S1?(orb=93)  SAR-1=S1C(orb=93)
+    SAR  bbox=[57.30621, 25.85609, 57.30913, 25.85871]  CRS=WGS84  res=5m/px  width=128  height=128
+    SAR  dtype=float32  shape=(128, 128)  n_unique=884  db min=-23.3  max=11.7  std=5.99
+    SAR  bbox=[57.30621, 25.85609, 57.30913, 25.85871]  CRS=WGS84  res=5m/px  width=128  height=128
+    SAR  dtype=float32  shape=(128, 128)  n_unique=886  db min=-23.3  max=14.6  std=6.32
+    S2   bbox=[57.30621, 25.85609, 57.30913, 25.85871]  CRS=WGS84  res=10m/px  width=128  height=128  window=2026-09-20–2026-10-04
+    S2   dtype=float32  shape=(128, 128, 3)  n_unique=1081  refl min=0.146  max=0.563  std=0.069  sat_frac=0.049
+  S2: fetched
+  Saved: /home/runner/work/kharg-dashboard/kharg-dashboard/diagnostics/jask/panels/jk_19.png
 
 Done. Panels in /home/runner/work/kharg-dashboard/kharg-dashboard/diagnostics/jask/panels
