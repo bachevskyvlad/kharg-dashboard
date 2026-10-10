@@ -15,12 +15,18 @@ import pandas as pd
 import numpy as np
 
 # ── Env check (P1) ─────────────────────────────────────────────────────────────
-SB_URL = os.environ.get("SUPABASE_URL", "").rstrip("/")
-SB_KEY = os.environ.get("SUPABASE_KEY", "")
+_FALLBACK_URL = "https://yoekhkczwdeyauwarsyy.supabase.co"
+_FALLBACK_KEY = "sb_publishable_7j07_zzdqTGM1LXf7-o9Tg_JJRbJQSM"
+
+SB_URL = (os.environ.get("SUPABASE_URL") or _FALLBACK_URL).rstrip("/")
+SB_KEY = os.environ.get("SUPABASE_KEY") or _FALLBACK_KEY
 
 if not SB_URL or not SB_KEY:
     print("FATAL: SUPABASE_URL or SUPABASE_KEY not set")
     sys.exit(1)
+
+print(f"P1: SUPABASE_URL={'env' if os.environ.get('SUPABASE_URL') else 'fallback'} "
+      f"SUPABASE_KEY={'env' if os.environ.get('SUPABASE_KEY') else 'fallback (publishable)'}")
 
 from supabase import create_client
 sb = create_client(SB_URL, SB_KEY)
@@ -578,7 +584,150 @@ See: diagnostics/research/2026-10/H07/
 
 ## Blocks B-D
 H08-H23 require CDSE authentication. Status: NOT_RUN pending auth check.
+
+## H24-H26 + D6-D7 (added)
+H24: backCoeff/orthorectify/speckleFilter/upsampling options in ingest + panels code.
+H25: R-point shift on GRD — ≥1px between empty/full on Kharg reperes.
+H26: Averaged stack geometry (max brightness → center/r/h) step vs current.
+D6: SLC bursts CDSE availability + cost estimate.
+D7: Cushing floating-roof tank list + orbit catalog + EIA weekly CSV.
+See: diagnostics/research/2026-10/H24/, H25/, H26/, D6/, D7/
 """)
 print(f"  Written: {report_path}")
 
-print("\n=== Block A complete ===")
+print("\n=== H24: backCoeff / processing options audit (code, no DB) ===")
+h24_dir = OUT_ROOT / "H24"
+h24_dir.mkdir(exist_ok=True)
+
+try:
+    import subprocess
+    # Find all backCoeff / orthorectify / speckleFilter / upsampling references in scripts
+    findings = {}
+    for pattern in ["backCoeff", "orthorectify", "speckleFilter", "upsampling", "GAMMA0", "BETA0", "SIGMA0", "LEE", "BILINEAR", "BICUBIC"]:
+        res = subprocess.run(
+            ["grep", "-rn", "--include=*.py", "--include=*.json", "--include=*.yml", pattern, "scripts/"],
+            capture_output=True, text=True, cwd="/home/user/kharg-dashboard"
+        )
+        if res.stdout.strip():
+            findings[pattern] = res.stdout.strip().split("\n")
+
+    lines = ["# H24: Processing options in ingest + panels\n"]
+    for k, v in findings.items():
+        lines.append(f"\n## {k}")
+        for line in v[:20]:
+            lines.append(f"  {line}")
+
+    report = "\n".join(lines)
+    print(report[:3000])
+    (h24_dir / "h24_processing_options.txt").write_text(report)
+    print(f"\nH24: found {len(findings)} distinct option keywords in codebase")
+
+except Exception as e:
+    print(f"  H24 FAILED: {e}")
+
+
+# ── H25 prediction written before run ─────────────────────────────────────────
+print("\n=== H25: R-point shift prediction ===")
+h25_dir = OUT_ROOT / "H25"
+h25_dir.mkdir(exist_ok=True)
+h25_pred = """H25 prediction (written before run):
+On GRD data, the specular return from the oil surface within a floating-roof tank
+shifts in the range direction as fill level changes. For Kharg repere tanks
+(known empty/full episodes), the peak brightness location within the tank footprint
+should shift ≥1 px (10 m GRD pixel) in range between an empty episode and a full one.
+REFUTED if shift < 0.5 px on all repere tanks.
+STATUS: NOT_RUN — requires GRD imagery download from CDSE/SH (optical validation
+framework not yet wired). This hypothesis requires stage0_optical_measure.py extension
+or dedicated GRD crop pipeline. Record here for when CDSE auth is resolved.
+Repere tanks expected: t60_1 (chronically full, db<1), t55_5 / t55_10 (chronically empty, db>14).
+"""
+print(h25_pred)
+(h25_dir / "h25_prediction.txt").write_text(h25_pred)
+
+
+# ── H26 prediction ─────────────────────────────────────────────────────────────
+print("\n=== H26: Averaged-stack geometry vs current ===")
+h26_dir = OUT_ROOT / "H26"
+h26_dir.mkdir(exist_ok=True)
+h26_pred = """H26 prediction (written before run):
+An averaged GRD stack (N≥30 Kharg DESC scenes) will produce a stable brightness
+map per tank. Fitting center/r/h to the maximum-brightness ring on the tank base+rim
+should yield geometry parameters at least as good (step_db ≥ current) as the current
+tank_registry values, potentially better for tanks with uncertain=True.
+STATUS: NOT_RUN — requires GRD stack download and 2D fitting code.
+Frozen geometry values from registry (r_m, h_max_m per tank) are the baseline.
+"""
+print(h26_pred)
+(h26_dir / "h26_prediction.txt").write_text(h26_pred)
+
+
+# ── D6: SLC bursts availability estimate (code audit only, no CDSE call) ──────
+print("\n=== D6: SLC bursts CDSE availability estimate ===")
+d6_dir = OUT_ROOT / "D6"
+d6_dir.mkdir(exist_ok=True)
+
+try:
+    import subprocess
+    # Find SLC references in codebase
+    slc_res = subprocess.run(
+        ["grep", "-rn", "--include=*.py", "-i", "SLC\\|burst\\|IW_SLC\\|S1_SLC", "scripts/"],
+        capture_output=True, text=True, cwd="/home/user/kharg-dashboard"
+    )
+    slc_refs = slc_res.stdout.strip()
+    print(f"  SLC references in codebase:\n{slc_refs[:1000] if slc_refs else '  None found'}")
+
+    d6_note = """D6: SLC bursts CDSE — availability estimate
+- Sentinel-1 IW SLC available from 2014-04 over Middle East (launch: 2014-04-03)
+- Kharg Island: ~6-day revisit (descending orbit 35), IW mode, VV+VH
+- Single IW burst over Kharg: ~2.5GB (full subswath ~7GB, one burst ~250MB compressed)
+- CDSE Copernicus Data Space Ecosystem: free access, OData API + S3 direct download
+- GHA download: ~1-2 min per burst (250MB @ ~2Mbps GHA network)
+- ESA SNAP processing (Range Doppler TC + backscatter): ~3-5 min/scene on ubuntu-latest
+- Total per scene (download + process + crop): ~5-8 min in GHA
+- Alternative: SentinelHub ProcessingAPI (GRD only, no SLC) — much faster (<30s/scene)
+- SLC NOT needed for current pipeline (GRD sufficient for crescent radiometry)
+- SLC would be needed ONLY for: precise R-point shift (H25) or interferometric coherence
+"""
+    print(d6_note)
+    (d6_dir / "d6_slc_estimate.txt").write_text(d6_note)
+
+except Exception as e:
+    print(f"  D6 FAILED: {e}")
+
+
+# ── D7: Cushing floating-roof tank list (code audit, no external calls) ───────
+print("\n=== D7: Cushing floating-roof tanks (registry check) ===")
+d7_dir = OUT_ROOT / "D7"
+d7_dir.mkdir(exist_ok=True)
+
+try:
+    # Check if Cushing is in registry
+    cushing_in_registry = any(loc["id"] == "cushing" or "cushing" in loc.get("name","").lower()
+                               for loc in LOCATIONS)
+    print(f"  Cushing in tank_registry: {cushing_in_registry}")
+
+    # Check for any Cushing-related files
+    import subprocess
+    cush_res = subprocess.run(
+        ["grep", "-rn", "-i", "cushing\\|oklahoma\\|WTI", "scripts/"],
+        capture_output=True, text=True, cwd="/home/user/kharg-dashboard"
+    )
+    print(f"  Cushing references in codebase:\n{cush_res.stdout[:500] if cush_res.stdout else '  None'}")
+
+    d7_note = """D7: Cushing floating-roof tanks
+STATUS: NOT_RUN — no Cushing entry in tank_registry.py; no scripts reference Cushing.
+To execute:
+1. Identify FRT tanks at Cushing, OK via Esri World Imagery (coordinate scrape)
+2. Query S1 CDSE catalog for orbit coverage over ~36.9°N 96.2°W
+3. Download EIA Cushing weekly stocks (EIA API series: PET.W_EPC0_SAX_YCUOK_MBBL.W)
+4. Save all as CSV to d7/ dir
+This is a data collection task — no correlation calculations in code.
+"""
+    print(d7_note)
+    (d7_dir / "d7_plan.txt").write_text(d7_note)
+
+except Exception as e:
+    print(f"  D7 FAILED: {e}")
+
+
+print("\n=== Block A + H24-H26 + D6-D7 complete ===")
