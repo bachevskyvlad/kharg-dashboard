@@ -26,7 +26,7 @@ jobs:
       - name: Install dependencies
         run: pip install numpy pandas scipy diptest supabase requests -q
 
-      - name: Run Block A hypotheses (H01–H07)
+      - name: Run Block A hypotheses (H01–H07) + H24-H26 + D6-D7
         env:
           SUPABASE_URL: https://yoekhkczwdeyauwarsyy.supabase.co
           SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
@@ -42,10 +42,12 @@ jobs:
           git config user.name "GitHub Actions"
           git add -f diagnostics/research/ || true
           git diff --cached --quiet && echo "No changes" || \
-            git commit -m "research: Block A H01-H07 results [skip ci]"
+            git commit -m "research: Block A + H24-H26 + D6-D7 results [skip ci]"
           for attempt in 1 2 3 4; do
-            git pull --rebase origin research/2026-10-auto && \
+            git fetch origin research/2026-10-auto && \
+            git rebase -X theirs origin/research/2026-10-auto && \
             git push origin HEAD:research/2026-10-auto && break
+            git rebase --abort 2>/dev/null || true
             echo "push attempt $attempt failed, retrying in ${attempt}s"
             sleep $attempt
           done || true
