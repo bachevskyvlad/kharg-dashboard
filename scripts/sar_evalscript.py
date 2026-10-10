@@ -11,9 +11,27 @@ Physics:
     dB conversion must be done in Python after pixel extraction.
   - nodata / fill pixels arrive as NaN or ≤0 — clip to 1e-10 before
     log, so result stays finite (no -inf).
+
+Resolution rule (MANDATORY):
+  Use width/height pixel counts, NEVER resx/resy with a geographic CRS.
+  With CRS=EPSG:4326 (WGS84), resx=5 means 5 DEGREES → 1×1 pixel tile.
+  Compute pixel counts from physical metres:
+    w_px = round(span_lon_m / res_m);  h_px = round(span_lat_m / res_m)
+  Enforce assert_tile_size() after every fetch.
 """
 
 import numpy as np
+
+MIN_TILE_PX = 64  # minimum acceptable tile dimension in pixels
+
+
+def assert_tile_size(arr: np.ndarray, label: str = "") -> None:
+    """Raise AssertionError if either tile dimension is below MIN_TILE_PX."""
+    h, w = arr.shape[:2]
+    assert h >= MIN_TILE_PX and w >= MIN_TILE_PX, (
+        f"Tile too small: {h}×{w}px{' (' + label + ')' if label else ''} — "
+        f"check that width/height counts are used, not resx/resy in degrees"
+    )
 
 # Canonical evalscript — returns raw linear VV power.
 # Identical to sar_fetch._EVALSCRIPT (Kharg ingest path).
