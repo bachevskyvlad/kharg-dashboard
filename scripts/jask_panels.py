@@ -113,34 +113,47 @@ def get_sh_token():
 
 
 def fetch_sar_platform(date_str, bbox, rel_orbit):
-    """Return platform string ('S1A'/'S1C') from SH Catalog, or 'S1?' on failure."""
+    """Return platform string ('S1A'/'S1C') from SH Catalog, or 'S1?' on failure.
+
+    CDSE catalog: filter by datetime+bbox only (rel_orbit filter returned empty
+    in testing — possibly field name differs). Take first feature on the date.
+    Platform field: 'properties.platform' e.g. 'sentinel-1a'.
+    """
     token = get_sh_token()
     payload = {
         "collections": ["sentinel-1-grd"],
         "datetime": f"{date_str}T00:00:00Z/{date_str}T23:59:59Z",
         "bbox": bbox,
-        "filter": {
-            "op": "=",
-            "args": [{"property": "sat:relative_orbit"}, rel_orbit],
-        },
-        "filter-lang": "cql2-json",
-        "limit": 1,
+        "limit": 5,
     }
     headers = {"Authorization": f"Bearer {token}", "Content-Type": "application/json"}
     try:
         r = requests.post(SH_CATALOG_URL, json=payload, headers=headers, timeout=20)
         if r.status_code == 200:
             feats = r.json().get("features", [])
-            if feats:
-                p = feats[0].get("properties", {}).get("platform", "").upper()
+            for feat in feats:
+                props = feat.get("properties", {})
+                # Filter by relative orbit if field present
+                ro = props.get("sat:relative_orbit") or props.get("relativeOrbit")
+                if ro is not None and int(ro) != rel_orbit:
+                    continue
+                p = props.get("platform", "").upper()
                 if "1A" in p:
                     return "S1A"
                 if "1C" in p:
                     return "S1C"
                 if "1B" in p:
                     return "S1B"
-    except Exception:
-        pass
+            # No orbit match — return platform of first result
+            if feats:
+                p = feats[0].get("properties", {}).get("platform", "").upper()
+                if "1A" in p: return "S1A"
+                if "1C" in p: return "S1C"
+                if "1B" in p: return "S1B"
+        else:
+            print(f"    catalog HTTP {r.status_code}")
+    except Exception as e:
+        print(f"    catalog error: {e}")
     return "S1?"
 
 
@@ -330,12 +343,22 @@ def fetch_s2(tank, sar_b_date_str, window_days=S2_WINDOW_DAYS, res_m=10):
                     f"FAIL: S2 tile degenerate (n_unique={n_unique}, std={arr.std():.4f})"
                 assert saturated_frac < 0.50, \
                     f"FAIL: S2 tile over-saturated (sat_frac={saturated_frac:.3f})"
-                # 2-98% per-tile percentile stretch → uint8 RGB
-                vals = arr[arr > 0] if (arr > 0).any() else arr.ravel()
-                p2, p98 = (np.percentile(vals, [2, 98]) if len(vals) > 0
-                           else (0.0, 0.6))
-                denom = max(float(p98 - p2), 1e-6)
-                stretched = np.clip((arr - p2) / denom * 255, 0, 255).astype(np.uint8)
+                # per-channel 2-98% percentile stretch → uint8 RGB
+                # Must be per-channel: desert reflectance differs by band
+                # (B04~0.45, B02~0.35); a single combined range causes colour imbalance.
+                n_ch = arr.shape[2] if arr.ndim == 3 else 1
+                stretched = np.zeros(arr.shape, dtype=np.uint8)
+                for c in range(n_ch):
+                    band = arr[:, :, c] if arr.ndim == 3 else arr
+                    valid = band[band > 0]
+                    p2c, p98c = (np.percentile(valid, [2, 98])
+                                 if len(valid) > 10 else (0.0, 0.6))
+                    denom = max(float(p98c - p2c), 1e-6)
+                    s = np.clip((band - p2c) / denom * 255, 0, 255).astype(np.uint8)
+                    if arr.ndim == 3:
+                        stretched[:, :, c] = s
+                    else:
+                        stretched = s
                 return stretched
             else:
                 print(f"    S2 HTTP {r.status_code}: {r.text[:200]}")
