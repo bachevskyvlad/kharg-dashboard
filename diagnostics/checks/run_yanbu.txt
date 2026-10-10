@@ -1,6 +1,6 @@
 [terminal_checks] terminal=yanbu  checks=['C04']  orbit=None
   fetching terminal_observations for yanbu…
-  3,984 rows fetched, 249 dates, 12 tanks
+  3,984 rows fetched, 332 dates, 12 tanks
   registry: 12 tanks
   running C04…
   → /home/runner/work/kharg-dashboard/kharg-dashboard/diagnostics/checks/yanbu/C04.csv (12 rows)
