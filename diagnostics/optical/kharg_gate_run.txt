@@ -1,1 +1,93 @@
-FATAL: SUPABASE_URL or SUPABASE_KEY is empty — set secrets before running
+OPTICAL: шаг 4 — запуск Kharg-30 gate
+
+Bbox: [50.3011, 29.2162, 50.3212, 29.243]
+Cataloging S2 scenes 2024-10-10 → 2026-10-10, cloud<20% …
+  30 scenes selected
+  [01/30] 2026-10-08  sun_az=157.2° elv=52.7°  cloud=0.12%  tile 391×596px
+  [02/30] 2026-10-05  sun_az=156.2° elv=53.7°  cloud=0.39%  tile 391×596px
+  [03/30] 2026-10-03  sun_az=155.5° elv=54.4°  cloud=8.27%  tile 391×596px
+  [04/30] 2026-09-28  sun_az=153.6° elv=56.1°  cloud=0.04%  tile 391×596px
+  [05/30] 2026-09-25  sun_az=152.3° elv=57.1°  cloud=0.11%  tile 391×596px
+  [06/30] 2026-09-23  sun_az=151.3° elv=57.7°  cloud=0.81%  tile 391×596px
+  [07/30] 2026-09-18  sun_az=148.9° elv=59.3°  cloud=1.1%  tile 391×596px
+  [08/30] 2026-09-15  sun_az=147.3° elv=60.2°  cloud=0.05%  tile 391×596px
+  [09/30] 2026-09-13  sun_az=146.2° elv=60.8°  cloud=0.02%  tile 391×596px
+  [10/30] 2026-09-08  sun_az=143.4° elv=62.3°  cloud=0.13%  tile 391×596px
+  [11/30] 2026-09-03  sun_az=140.3° elv=63.6°  cloud=0.21%  tile 391×596px
+  [12/30] 2026-08-29  sun_az=137.1° elv=64.9°  cloud=0.23%  tile 391×596px
+  [13/30] 2026-08-26  sun_az=135.1° elv=65.6°  cloud=15.83%  tile 391×596px
+  [14/30] 2026-08-24  sun_az=133.8° elv=66.0°  cloud=11.47%  tile 391×596px
+  [15/30] 2026-08-19  sun_az=130.5° elv=67.0°  cloud=2.02%  tile 391×596px
+  [16/30] 2026-08-14  sun_az=127.1° elv=68.0°  cloud=3.83%  tile 391×596px
+  [17/30] 2026-08-14  sun_az=127.1° elv=68.0°  cloud=1.43%  tile 391×596px
+  [18/30] 2026-08-09  sun_az=123.8° elv=68.8°  cloud=2.46%  tile 391×596px
+  [19/30] 2026-07-30  sun_az=117.7° elv=70.2°  cloud=4.81%  tile 391×596px
+  [20/30] 2026-07-25  sun_az=115.0° elv=70.8°  cloud=2.67%  tile 391×596px
+  [21/30] 2026-07-20  sun_az=112.6° elv=71.3°  cloud=5.93%  tile 391×596px
+  [22/30] 2026-07-17  sun_az=111.4° elv=71.6°  cloud=9.52%  tile 391×596px
+  [23/30] 2026-07-10  sun_az=108.9° elv=72.2°  cloud=6.39%  tile 391×596px
+  [24/30] 2026-07-07  sun_az=108.2° elv=72.5°  cloud=4.6%  tile 391×596px
+  [25/30] 2026-07-05  sun_az=107.7° elv=72.6°  cloud=16.64%  tile 391×596px
+  [26/30] 2026-06-30  sun_az=107.0° elv=72.9°  cloud=8.87%  tile 391×596px
+  [27/30] 2026-06-20  sun_az=107.1° elv=73.4°  cloud=11.68%  tile 391×596px
+  [28/30] 2026-06-17  sun_az=107.5° elv=73.5°  cloud=16.97%  tile 391×596px
+  [29/30] 2026-06-10  sun_az=109.2° elv=73.7°  cloud=14.08%  tile 391×596px
+  [30/30] 2026-06-05  sun_az=111.0° elv=73.6°  cloud=4.56%  tile 391×596px
+
+  shadow_frac rows: 150, tanks: 5
+
+── Gate 1: median shadow_frac by group ──
+  EMPTY (t55_5,t55_10): median shadow_frac = 0.4546
+  FULL  (t60_1,t40_33,t55_31):  median shadow_frac = 0.3058
+  gap (EMPTY − FULL) = +0.1487
+  Gate 1: PASS ✓ (gap > 0)
+
+  Per-tank median shadow_frac:
+    t55_5      [EMPTY]  n= 30  median=0.5370  p25=0.4317  p75=0.6569
+    t55_10     [EMPTY]  n= 30  median=0.3941  p25=0.1293  p75=0.5060
+    t60_1      [FULL]  n= 30  median=0.3520  p25=0.3200  p75=0.3936
+    t40_33     [FULL]  n= 30  median=0.3137  p25=0.3019  p75=0.3333
+    t55_31     [FULL]  n= 30  median=0.0095  p25=0.0000  p75=0.0833
+
+── Gate 2: corr(shadow_frac, db_mean) — loading SAR from Supabase ──
+  Fetching SAR for 47 Kharg tanks …
+  SAR rows: 15087, dates: 2015-04-06 → 2026-10-06
+
+  Per-tank corr (≤3d pairs, min 4 pairs):
+    t55_10     [EMPTY]  n_pairs= 29  r=-0.6407
+    t60_1      [FULL]  n_pairs= 29  r=+0.2505
+    t55_5      [EMPTY]  n_pairs= 29  r=+0.2353
+    t55_31     [FULL]  n_pairs= 29  r=+0.2059
+    t40_33     [FULL]  n_pairs= 29  r=+0.1471
+
+  top-5 median |r| = 0.2353
+  Gate 2: FAIL ✗ (median |r| < 0.40)
+
+══════════════════════════════════════════
+OPTICAL шаг 4 GATE: FAIL ✗
+  Gate 1 gap     = +0.1487  (PASS)
+  Gate 2 med|r|  = 0.2353  (FAIL)
+══════════════════════════════════════════
+Traceback (most recent call last):
+  File "/home/runner/work/kharg-dashboard/kharg-dashboard/scripts/optical_kharg_gate.py", line 544, in <module>
+    sys.exit(main())
+             ^^^^^^
+  File "/home/runner/work/kharg-dashboard/kharg-dashboard/scripts/optical_kharg_gate.py", line 533, in main
+    out_json.write_text(json.dumps(result, indent=2))
+                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/hostedtoolcache/Python/3.11.17/x64/lib/python3.11/json/__init__.py", line 238, in dumps
+    **kw).encode(obj)
+          ^^^^^^^^^^^
+  File "/opt/hostedtoolcache/Python/3.11.17/x64/lib/python3.11/json/encoder.py", line 202, in encode
+    chunks = list(chunks)
+             ^^^^^^^^^^^^
+  File "/opt/hostedtoolcache/Python/3.11.17/x64/lib/python3.11/json/encoder.py", line 432, in _iterencode
+    yield from _iterencode_dict(o, _current_indent_level)
+  File "/opt/hostedtoolcache/Python/3.11.17/x64/lib/python3.11/json/encoder.py", line 406, in _iterencode_dict
+    yield from chunks
+  File "/opt/hostedtoolcache/Python/3.11.17/x64/lib/python3.11/json/encoder.py", line 439, in _iterencode
+    o = _default(o)
+        ^^^^^^^^^^^
+  File "/opt/hostedtoolcache/Python/3.11.17/x64/lib/python3.11/json/encoder.py", line 180, in default
+    raise TypeError(f'Object of type {o.__class__.__name__} '
+TypeError: Object of type bool is not JSON serializable
