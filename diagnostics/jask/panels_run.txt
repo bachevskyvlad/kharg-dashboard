@@ -3,7 +3,7 @@ Rendering 1 tank(s)...
 [jk_0]
   SAR-2 (current): 2026-10-04  db=-2.0dB
   SAR-1 (earlier): 2026-09-16  db=-2.3dB
-  platforms: SAR-2=S1?  SAR-1=S1?
+  platforms: SAR-2=S1?  SAR-1=S1C
     SAR  bbox=[57.30265, 25.8532, 57.30571, 25.85595]  CRS=WGS84  res=5m/px  width=128  height=128
     SAR  dtype=float32  shape=(128, 128)  n_unique=971  db min=-29.4  max=13.1  std=7.04
     SAR  bbox=[57.30265, 25.8532, 57.30571, 25.85595]  CRS=WGS84  res=5m/px  width=128  height=128
