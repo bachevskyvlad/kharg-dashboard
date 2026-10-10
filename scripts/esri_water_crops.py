@@ -31,8 +31,8 @@ CROP_DIAMS = 4
 TILE_SIZE  = 256
 ESRI_URL   = "https://services.arcgisonline.com/arcgis/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
 
-SH_CLIENT_ID     = os.environ.get("CLIENT_ID")     or "sh-5215639c-a2e5-47db-8d46-7e28a3150cde"
-SH_CLIENT_SECRET = os.environ.get("CLIENT_SECRET") or "UyosmDOgQ4ejiHbrWpDCT0WzLYgvhfloa3VgOLTtLd7c050tvejLgIVCcXfr3eLXT2JWqfrqjQhBgewF3g6nGF"
+SH_CLIENT_ID     = os.environ.get("CLIENT_ID")     or ""
+SH_CLIENT_SECRET = os.environ.get("CLIENT_SECRET") or ""
 SH_TOKEN_URL     = "https://identity.dataspace.copernicus.eu/auth/realms/CDSE/protocol/openid-connect/token"
 SH_PROCESS_URL   = "https://sh.dataspace.copernicus.eu/api/v1/process"
 

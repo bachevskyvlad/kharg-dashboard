@@ -30,8 +30,8 @@ sys.path.insert(0, os.path.dirname(__file__))
 
 from metrics import tank_step_db  # canonical; no inline formulas allowed
 
-SUPABASE_URL = os.environ.get("SUPABASE_URL") or "https://yoekhkczwdeyauwarsyy.supabase.co"
-SUPABASE_KEY = os.environ.get("SUPABASE_KEY") or "sb_publishable_7j07_zzdqTGM1LXf7-o9Tg_JJRbJQSM"
+SUPABASE_URL = os.environ.get("SUPABASE_URL") or ""
+SUPABASE_KEY = os.environ.get("SUPABASE_KEY") or ""
 
 TERMINAL_ID  = "ras_tanura"
 STEP_THRESH  = 2.5    # dB — MUST NOT change

@@ -30,8 +30,8 @@ from datetime import date, timedelta
 # ── Constants ─────────────────────────────────────────────────────────────────
 SH_CLIENT_ID     = os.environ.get("CLIENT_ID")     or ""
 SH_CLIENT_SECRET = os.environ.get("CLIENT_SECRET") or ""
-SUPABASE_URL     = os.environ.get("SUPABASE_URL")  or "https://yoekhkczwdeyauwarsyy.supabase.co"
-SUPABASE_KEY     = os.environ.get("SUPABASE_KEY")  or "sb_publishable_7j07_zzdqTGM1LXf7-o9Tg_JJRbJQSM"
+SUPABASE_URL     = os.environ.get("SUPABASE_URL")  or ""
+SUPABASE_KEY     = os.environ.get("SUPABASE_KEY")  or ""
 
 # Bounding boxes (WGS84 [lon_min, lat_min, lon_max, lat_max])
 BBOX_JUWAYMAH   = [49.965, 26.805, 50.008, 26.835]  # ~4.8×3.3 km

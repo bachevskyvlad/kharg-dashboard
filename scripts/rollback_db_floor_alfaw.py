@@ -21,8 +21,8 @@ for i, a in enumerate(sys.argv):
 if not CSV_PATH:
     print("ERROR: --csv <path> required"); sys.exit(1)
 
-SB_URL = (os.environ.get("SUPABASE_URL") or "https://yoekhkczwdeyauwarsyy.supabase.co").rstrip("/")
-SB_KEY = os.environ.get("SUPABASE_KEY") or "sb_publishable_7j07_zzdqTGM1LXf7-o9Tg_JJRbJQSM"
+SB_URL = (os.environ.get("SUPABASE_URL") or "").rstrip("/")
+SB_KEY = os.environ.get("SUPABASE_KEY") or ""
 TERMINAL_ID = "al_flaw"
 
 def sb_patch(path, params, data):

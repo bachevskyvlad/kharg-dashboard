@@ -4,7 +4,7 @@ Run once before stage_h1_db_norm.py --force.
 """
 import os, sys, requests
 
-SB_URL = (os.environ.get("SUPABASE_URL") or "https://yoekhkczwdeyauwarsyy.supabase.co").rstrip("/")
+SB_URL = (os.environ.get("SUPABASE_URL") or "").rstrip("/")
 SB_SERVICE_KEY = os.environ.get("SUPABASE_SERVICE_KEY") or os.environ.get("SUPABASE_KEY")
 
 # Use the REST API with service role key to run DDL via rpc or direct SQL

@@ -25,10 +25,10 @@ import requests
 
 DRY_RUN = "--force" not in sys.argv
 
-SB_URL = (os.environ.get("SUPABASE_URL") or "https://yoekhkczwdeyauwarsyy.supabase.co").rstrip("/")
-SB_KEY = os.environ.get("SUPABASE_KEY") or "sb_publishable_7j07_zzdqTGM1LXf7-o9Tg_JJRbJQSM"
-SH_CLIENT_ID     = os.environ.get("CLIENT_ID")     or "sh-5215639c-a2e5-47db-8d46-7e28a3150cde"
-SH_CLIENT_SECRET = os.environ.get("CLIENT_SECRET") or "UyosmDOgQ4ejiHbrWpDCT0WzLYgvhfloa3VgOLTtLd7c050tvejLgIVCcXfr3eLXT2JWqfrqjQhBgewF3g6nGF"
+SB_URL = (os.environ.get("SUPABASE_URL") or "").rstrip("/")
+SB_KEY = os.environ.get("SUPABASE_KEY") or ""
+SH_CLIENT_ID     = os.environ.get("CLIENT_ID")     or ""
+SH_CLIENT_SECRET = os.environ.get("CLIENT_SECRET") or ""
 
 SH_TOKEN_URL   = "https://identity.dataspace.copernicus.eu/auth/realms/CDSE/protocol/openid-connect/token"
 SH_PROCESS_URL = "https://sh.dataspace.copernicus.eu/api/v1/process"

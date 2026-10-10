@@ -45,8 +45,8 @@ from scipy import stats
 warnings.filterwarnings("ignore")
 sys.path.insert(0, os.path.dirname(__file__))
 
-SUPABASE_URL = os.environ.get("SUPABASE_URL") or "https://yoekhkczwdeyauwarsyy.supabase.co"
-SUPABASE_KEY = os.environ.get("SUPABASE_KEY") or "sb_publishable_7j07_zzdqTGM1LXf7-o9Tg_JJRbJQSM"
+SUPABASE_URL = os.environ.get("SUPABASE_URL") or ""
+SUPABASE_KEY = os.environ.get("SUPABASE_KEY") or ""
 SH_CLIENT_ID = os.environ.get("CLIENT_ID") or ""
 SH_CLIENT_SECRET = os.environ.get("CLIENT_SECRET") or ""
 

@@ -10,8 +10,10 @@ import json
 import os
 from supabase import create_client
 
-SUPABASE_URL = "https://yoekhkczwdeyauwarsyy.supabase.co"
-SUPABASE_KEY = os.environ.get("SUPABASE_KEY") or "sb_publishable_7j07_zzdqTGM1LXf7-o9Tg_JJRbJQSM"
+SUPABASE_URL = os.environ.get("SUPABASE_URL") or ""
+SUPABASE_KEY = os.environ.get("SUPABASE_KEY") or ""
+if not SUPABASE_URL or not SUPABASE_KEY:
+    import sys; sys.exit("FATAL: SUPABASE_URL and SUPABASE_KEY env vars must be set")
 sb = create_client(SUPABASE_URL, SUPABASE_KEY)
 
 OUTPUT_DIR = os.path.join(os.path.dirname(__file__), "..", "data", "terminals")

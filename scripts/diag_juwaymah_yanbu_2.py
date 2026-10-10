@@ -41,8 +41,8 @@ CDSE_URL = "https://sh.dataspace.copernicus.eu"
 S1_CDSE = DataCollection.SENTINEL1_IW.define_from("s1iw_cdse2", service_url=CDSE_URL)
 S2_CDSE = DataCollection.SENTINEL2_L2A.define_from("s2l2a_cdse2", service_url=CDSE_URL)
 
-SUPABASE_URL = os.environ.get("SUPABASE_URL", "https://yoekhkczwdeyauwarsyy.supabase.co")
-SUPABASE_KEY = os.environ.get("SUPABASE_KEY", "sb_publishable_7j07_zzdqTGM1LXf7-o9Tg_JJRbJQSM")
+SUPABASE_URL = os.environ.get("SUPABASE_URL") or ""
+SUPABASE_KEY = os.environ.get("SUPABASE_KEY", "")
 
 _EVALSCRIPT_VV = """
 //VERSION=3

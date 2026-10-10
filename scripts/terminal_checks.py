@@ -78,7 +78,7 @@ def get_registry_tanks(terminal_id: str):
 
 # ─── check imports ────────────────────────────────────────────────────────────
 
-AVAILABLE_CHECKS = ["C04", "C05", "C06", "C07", "C11", "C12", "C14", "C15", "C16"]
+AVAILABLE_CHECKS = ["C04", "C05", "C06", "C06B", "C07", "C11", "C12", "C14", "C15", "C16"]
 
 def load_check(check_id: str):
     import importlib

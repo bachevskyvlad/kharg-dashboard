@@ -10,7 +10,7 @@ on:
       checks:
         description: "Comma-separated check IDs (default: all)"
         required: false
-        default: "C11,C04,C05,C06,C07,C14,C15,C16,C12"
+        default: "C11,C04,C05,C06,C06B,C07,C14,C15,C16,C12"
       orbit:
         description: "Filter by relative orbit (leave blank for all)"
         required: false
@@ -59,5 +59,10 @@ jobs:
           git add -f diagnostics/checks/ || true
           git diff --cached --quiet && echo "No changes" || \
             git commit -m "ci: terminal-checks ${{ github.event.inputs.terminal }} [skip ci]"
-          git pull --rebase origin claude/oilradar-dashboard-iran-zchdva || true
-          git push origin HEAD:claude/oilradar-dashboard-iran-zchdva || true
+          # rebase+retry loop to avoid race between concurrent terminal jobs
+          for attempt in 1 2 3 4; do
+            git pull --rebase origin claude/oilradar-dashboard-iran-zchdva && \
+            git push origin HEAD:claude/oilradar-dashboard-iran-zchdva && break
+            echo "push attempt $attempt failed, retrying in ${attempt}s"
+            sleep $attempt
+          done || true

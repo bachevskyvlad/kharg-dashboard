@@ -19,14 +19,20 @@ def run(terminal_id: str, df: pd.DataFrame, registry_tanks: list) -> pd.DataFram
         tid = t["id"]
         td = df[df["tank_id"] == tid].dropna(subset=["db_mean"])
         if len(td) == 0:
-            step = None
+            p25 = p50 = p75 = step = None
         else:
             db = td["db_mean"].values.astype(float)
+            p25 = round(float(np.percentile(db, 25)), 4)
+            p50 = round(float(np.percentile(db, 50)), 4)
+            p75 = round(float(np.percentile(db, 75)), 4)
             step = round(float(np.percentile(db, 95) - np.percentile(db, 5)), 4)
 
         rows.append({
             "terminal_id": terminal_id, "tank_id": tid,
             "n": len(td),
+            "p25_db": p25,
+            "p50_db": p50,
+            "p75_db": p75,
             "step_p95_p05_db": step,
             "kharg_ref_contrast_db": KHARG_REF_CONTRAST,
             "check_id": "C05", "run_date": RUN_DATE, "git_sha": SHA,

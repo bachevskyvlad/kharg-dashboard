@@ -85,12 +85,35 @@ def run(terminal_id: str, df: pd.DataFrame, registry_tanks: list) -> pd.DataFram
             p10 = round(float(np.percentile(shadow_pxs, 10)), 2)
             p90 = round(float(np.percentile(shadow_pxs, 90)), 2)
 
+        # Sample calc for the median date (for audit/verification)
+        sample_date = None
+        sample_zenith = None
+        sample_shadow_m = None
+        sample_shadow_px = None
+        if shadow_pxs:
+            sorted_dates = sorted(tank_dates)
+            mid_idx = len(sorted_dates) // 2
+            for d in [sorted_dates[mid_idx]]:
+                z = zenith_by_date.get(d, float("nan"))
+                if not np.isnan(z) and z < 90.0:
+                    sample_date = str(d.date())
+                    sample_zenith = round(z, 2)
+                    sample_shadow_m = round(h_max * math.tan(math.radians(z)), 2)
+                    sample_shadow_px = round(sample_shadow_m / S2_RESOLUTION_M, 3)
+
+        h_source = "registry_measured" if "h_max_m" in t else "assumed_default"
+
         rows.append({
             "terminal_id": terminal_id, "tank_id": tid,
-            "h_max_m": h_max, "n_dates": len(tank_dates),
+            "h_max_m": h_max, "h_source": h_source,
+            "n_dates": len(tank_dates),
             "shadow_px_median": med,
             "shadow_px_p10": p10,
             "shadow_px_p90": p90,
+            "sample_date": sample_date,
+            "sample_zenith_deg": sample_zenith,
+            "sample_shadow_m": sample_shadow_m,
+            "sample_shadow_px": sample_shadow_px,
             "check_id": "C14", "run_date": RUN_DATE, "git_sha": SHA,
             "verdict": "",
         })

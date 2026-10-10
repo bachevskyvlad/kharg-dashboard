@@ -1,64 +1,86 @@
 """
-C12 — Polarity: inventory of anchor episodes with clear sign from the DB.
+C12 — Polarity anchor: inventory of documented loading/export events.
 
-Looks for rows in terminal_observations where db_mean shows a clear directional
-step (consecutive-date drawdown or buildup >= 3 dB) and cross-references against
-any events stored in the terminal series (volume_timeseries or kharg_signals for
-Kharg; terminal-level equivalent for others).
+This check does NOT count SAR δdB episodes automatically.
+It enumerates documented events from the known record (cross-referenced
+against published reports, AIS confirms, or internal session notes)
+and records: event label, date range, source, expected SAR sign, and
+whether the sign is unambiguous.
 
-For non-Kharg terminals using terminal_observations: computes per-tank
-consecutive step events (delta >= 3 dB over 1-2 passes) as proxy anchor episodes.
-No export-linkage computation (per ТЗ §14 rule).
+For terminals without documented events in the known record, outputs a
+single NOT_DOCUMENTED row rather than auto-generating noise from δdB.
 
-Output per terminal: episode count with clear positive sign, clear negative sign,
-ambiguous. One row per candidate episode.
+Polarity sign convention:
+  POSITIVE db_mean change (+Δ) = radar brighter = less liquid = drawdown / export
+  NEGATIVE db_mean change (−Δ) = radar darker  = more liquid = buildup / import
+
+Documented events per terminal — extend this dict as events are confirmed:
 """
 
-import numpy as np
 import pandas as pd
 from . import RUN_DATE, SHA
 
-ANCHOR_DELTA_DB = 3.0   # minimum step to qualify as anchor episode
-ANCHOR_MAX_DAYS = 14    # maximum days between consecutive passes for delta
+# Keys are terminal_id values. Each entry is a list of dicts:
+#   event_label, date_start, date_end, source, expected_sign, unambiguous (bool), note
+KNOWN_EVENTS: dict[str, list[dict]] = {
+    "kharg": [
+        {
+            "event_label": "2022-02 buildup peak",
+            "date_start": "2022-01-15",
+            "date_end": "2022-02-28",
+            "source": "kharg_gate_run / Gate1 repère corr",
+            "expected_sign": "NEGATIVE",
+            "unambiguous": True,
+            "note": "Gate 1 repère tanks t60_1/t40_33/t55_31 at db_mean < 1 dB",
+        },
+        {
+            "event_label": "t55_5 / t55_10 persistent idle",
+            "date_start": "2020-01-01",
+            "date_end": "2026-12-31",
+            "source": "repere_analysis / Gate1",
+            "expected_sign": "POSITIVE",
+            "unambiguous": True,
+            "note": "db_mean > 14 dB across 18 months; EMPTY structural state",
+        },
+    ],
+    # ras_tanura, yanbu, jask, al_faw, juwaymah: no confirmed events in record yet
+}
 
 
 def run(terminal_id: str, df: pd.DataFrame, _registry_tanks: list) -> pd.DataFrame:
-    df = df.copy()
-    df["date"] = pd.to_datetime(df["date"])
-    df = df.dropna(subset=["db_mean"]).sort_values(["tank_id", "date"])
+    events = KNOWN_EVENTS.get(terminal_id, [])
+
+    if not events:
+        return pd.DataFrame([{
+            "terminal_id": terminal_id,
+            "event_label": "NOT_DOCUMENTED",
+            "date_start": None,
+            "date_end": None,
+            "source": None,
+            "expected_sign": None,
+            "unambiguous": None,
+            "note": "No confirmed anchor events in known record for this terminal.",
+            "check_id": "C12",
+            "run_date": RUN_DATE,
+            "git_sha": SHA,
+            "verdict": "",
+        }])
 
     rows = []
-    for tid, td in df.groupby("tank_id"):
-        td = td.sort_values("date").reset_index(drop=True)
-        for i in range(1, len(td)):
-            gap_days = (td.loc[i, "date"] - td.loc[i - 1, "date"]).days
-            if gap_days > ANCHOR_MAX_DAYS:
-                continue
-            delta = td.loc[i, "db_mean"] - td.loc[i - 1, "db_mean"]
-            if abs(delta) < ANCHOR_DELTA_DB:
-                continue
-            sign = "POSITIVE" if delta > 0 else "NEGATIVE"
-            rows.append({
-                "terminal_id": terminal_id,
-                "tank_id": tid,
-                "date_start": str(td.loc[i - 1, "date"].date()),
-                "date_end": str(td.loc[i, "date"].date()),
-                "gap_days": gap_days,
-                "delta_db": round(delta, 3),
-                "sign": sign,
-                "check_id": "C12",
-                "run_date": RUN_DATE,
-                "git_sha": SHA,
-                "verdict": "",
-            })
-
-    if not rows:
-        return pd.DataFrame([{
-            "terminal_id": terminal_id, "tank_id": "ALL",
-            "date_start": None, "date_end": None, "gap_days": None,
-            "delta_db": None, "sign": None,
-            "check_id": "C12", "run_date": RUN_DATE, "git_sha": SHA,
-            "verdict": "NO_EPISODES",
-        }])
+    for ev in events:
+        rows.append({
+            "terminal_id": terminal_id,
+            "event_label": ev["event_label"],
+            "date_start": ev["date_start"],
+            "date_end": ev["date_end"],
+            "source": ev["source"],
+            "expected_sign": ev["expected_sign"],
+            "unambiguous": ev["unambiguous"],
+            "note": ev.get("note", ""),
+            "check_id": "C12",
+            "run_date": RUN_DATE,
+            "git_sha": SHA,
+            "verdict": "",
+        })
 
     return pd.DataFrame(rows)

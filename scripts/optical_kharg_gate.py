@@ -25,14 +25,14 @@ from datetime import datetime, timedelta
 from io import BytesIO
 
 # ── credentials ──────────────────────────────────────────────────────────────
-SH_CLIENT_ID     = os.environ.get("CLIENT_ID",     "sh-5215639c-a2e5-47db-8d46-7e28a3150cde")
-SH_CLIENT_SECRET = os.environ.get("CLIENT_SECRET", "UyosmDOgQ4ejiHbrWpDCT0WzLYgvhfloa3VgOLTtLd7c050tvejLgIVCcXfr3eLXT2JWqfrqjQhBgewF3g6nGF")
+SH_CLIENT_ID     = os.environ.get("CLIENT_ID",     "")
+SH_CLIENT_SECRET = os.environ.get("CLIENT_SECRET", "")
 SH_TOKEN_URL     = "https://identity.dataspace.copernicus.eu/auth/realms/CDSE/protocol/openid-connect/token"
 SH_CATALOG_URL   = "https://sh.dataspace.copernicus.eu/api/v1/catalog/1.0.0/search"
 SH_PROCESS_URL   = "https://sh.dataspace.copernicus.eu/api/v1/process"
 
-SB_URL = os.environ.get("SUPABASE_URL") or "https://yoekhkczwdeyauwarsyy.supabase.co"
-SB_KEY = os.environ.get("SUPABASE_KEY") or "sb_publishable_7j07_zzdqTGM1LXf7-o9Tg_JJRbJQSM"
+SB_URL = os.environ.get("SUPABASE_URL") or ""
+SB_KEY = os.environ.get("SUPABASE_KEY") or ""
 
 # ── constants ─────────────────────────────────────────────────────────────────
 MAX_CLOUD        = 20
