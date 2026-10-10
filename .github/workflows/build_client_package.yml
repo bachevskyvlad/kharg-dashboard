@@ -42,7 +42,7 @@ jobs:
 
       - name: Run build_package.py
         env:
-          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_URL: https://yoekhkczwdeyauwarsyy.supabase.co
           SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
         run: |
           ARGS=""

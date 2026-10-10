@@ -22,7 +22,7 @@ jobs:
 
       - name: Run series_v2
         env:
-          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_URL: https://yoekhkczwdeyauwarsyy.supabase.co
           SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
         run: |
           mkdir -p diagnostics/al_faw

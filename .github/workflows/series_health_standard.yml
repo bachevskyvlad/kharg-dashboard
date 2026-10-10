@@ -23,7 +23,7 @@ jobs:
 
       - name: Stage 1 — compute SERIES_HEALTH_STANDARD corridors
         env:
-          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_URL: https://yoekhkczwdeyauwarsyy.supabase.co
           SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
         run: |
           mkdir -p diagnostics
@@ -199,7 +199,7 @@ jobs:
       - name: Gate validation — RT-DESC (orbit 35, expect PASS)
         id: rt_desc
         env:
-          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_URL: https://yoekhkczwdeyauwarsyy.supabase.co
           SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
         run: |
           mkdir -p diagnostics/gate_validation
@@ -212,7 +212,7 @@ jobs:
       - name: Gate validation — Al-Faw stuck-7 (expect DEAD)
         id: alfaw_stuck7
         env:
-          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_URL: https://yoekhkczwdeyauwarsyy.supabase.co
           SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
         run: |
           python scripts/series_health.py \
@@ -258,7 +258,7 @@ jobs:
       - name: Run post-validation terminals
         if: success()
         env:
-          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_URL: https://yoekhkczwdeyauwarsyy.supabase.co
           SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
         run: |
           mkdir -p diagnostics/gate_validation

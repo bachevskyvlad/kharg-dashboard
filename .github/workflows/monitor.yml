@@ -132,7 +132,7 @@ jobs:
           COUNT=$(python3 scripts/count_sb_dates.py)
           echo "count=$COUNT" >> $GITHUB_OUTPUT
         env:
-          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_URL: https://yoekhkczwdeyauwarsyy.supabase.co
           SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
       - name: Run export
         run: python scripts/export.py
@@ -145,7 +145,7 @@ jobs:
           COUNT=$(python3 scripts/count_sb_dates.py)
           echo "count=$COUNT" >> $GITHUB_OUTPUT
         env:
-          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_URL: https://yoekhkczwdeyauwarsyy.supabase.co
           SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
       - name: Save volume graph
         uses: actions/cache/save@v4

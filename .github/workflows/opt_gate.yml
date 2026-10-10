@@ -25,7 +25,7 @@ jobs:
         env:
           CLIENT_ID:     ${{ secrets.CLIENT_ID }}
           CLIENT_SECRET: ${{ secrets.CLIENT_SECRET }}
-          SUPABASE_URL:  ${{ secrets.SUPABASE_URL }}
+          SUPABASE_URL:  https://yoekhkczwdeyauwarsyy.supabase.co
           SUPABASE_KEY:  ${{ secrets.SUPABASE_KEY }}
         run: |
           mkdir -p diagnostics/optical

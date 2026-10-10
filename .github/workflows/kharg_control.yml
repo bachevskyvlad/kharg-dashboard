@@ -21,7 +21,7 @@ jobs:
 
       - name: Run kharg_control
         env:
-          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_URL: https://yoekhkczwdeyauwarsyy.supabase.co
           SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
         run: python scripts/kharg_control.py
 
