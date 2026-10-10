@@ -26,6 +26,18 @@ jobs:
       - name: Install dependencies
         run: pip install numpy pandas sentinelhub supabase shapely matplotlib tifffile Pillow requests -q
 
+      - name: Diagnostic — jk_0 single panel (assert tile quality)
+        env:
+          CLIENT_ID:     ${{ secrets.CLIENT_ID }}
+          CLIENT_SECRET: ${{ secrets.CLIENT_SECRET }}
+          SUPABASE_URL:  ${{ secrets.SUPABASE_URL }}
+          SUPABASE_KEY:  ${{ secrets.SUPABASE_KEY }}
+        run: |
+          mkdir -p diagnostics/jask/panels
+          cd scripts
+          python jask_panels.py --tank jk_0 2>&1 | tee ../diagnostics/jask/jk0_diag.txt
+          echo "=== jk_0 diagnostic done ==="
+
       - name: Render panels
         env:
           CLIENT_ID:     ${{ secrets.CLIENT_ID }}
