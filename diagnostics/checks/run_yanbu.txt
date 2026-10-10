@@ -3,16 +3,6 @@
   3,984 rows fetched, 249 dates, 12 tanks
   registry: 12 tanks
   running C04…
-Traceback (most recent call last):
-  File "/home/runner/work/kharg-dashboard/kharg-dashboard/scripts/terminal_checks.py", line 231, in <module>
-    main()
-  File "/home/runner/work/kharg-dashboard/kharg-dashboard/scripts/terminal_checks.py", line 219, in main
-    result_df = run_fn(terminal_id, df, registry_tanks)
-                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/home/runner/work/kharg-dashboard/kharg-dashboard/scripts/checks/c04.py", line 65, in run
-    dip = _dip_stat(db)
-          ^^^^^^^^^^^^^
-  File "/home/runner/work/kharg-dashboard/kharg-dashboard/scripts/checks/c04.py", line 24, in _dip_stat
-    return float(_diptest.dip(x)[0])
-                 ^^^^^^^^^^^^
-AttributeError: module 'diptest' has no attribute 'dip'
+  → /home/runner/work/kharg-dashboard/kharg-dashboard/diagnostics/checks/yanbu/C04.csv (12 rows)
+  → /home/runner/work/kharg-dashboard/kharg-dashboard/diagnostics/checks/CHECK_MATRIX.md
+done.
