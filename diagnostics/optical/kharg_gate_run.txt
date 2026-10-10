@@ -1,0 +1,63 @@
+OPTICAL: шаг 4 — запуск Kharg-30 gate
+
+Bbox: [50.3011, 29.2162, 50.3212, 29.243]
+Cataloging S2 scenes 2024-10-10 → 2026-10-10, cloud<20% …
+Traceback (most recent call last):
+  File "/root/.local/lib/python3.11/site-packages/urllib3/connectionpool.py", line 773, in urlopen
+    self._prepare_proxy(conn)
+  File "/root/.local/lib/python3.11/site-packages/urllib3/connectionpool.py", line 1042, in _prepare_proxy
+    conn.connect()
+  File "/root/.local/lib/python3.11/site-packages/urllib3/connection.py", line 776, in connect
+    self._tunnel()
+  File "/usr/lib/python3.11/http/client.py", line 963, in _tunnel
+    raise OSError(f"Tunnel connection failed: {code} {message.strip()}")
+OSError: Tunnel connection failed: 403 Forbidden
+
+The above exception was the direct cause of the following exception:
+
+urllib3.exceptions.ProxyError: ('Unable to connect to proxy', OSError('Tunnel connection failed: 403 Forbidden'))
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/root/.local/lib/python3.11/site-packages/requests/adapters.py", line 645, in send
+    resp = conn.urlopen(
+           ^^^^^^^^^^^^^
+  File "/root/.local/lib/python3.11/site-packages/urllib3/connectionpool.py", line 841, in urlopen
+    retries = retries.increment(
+              ^^^^^^^^^^^^^^^^^^
+  File "/root/.local/lib/python3.11/site-packages/urllib3/util/retry.py", line 535, in increment
+    raise MaxRetryError(_pool, url, reason) from reason  # type: ignore[arg-type]
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+urllib3.exceptions.MaxRetryError: HTTPSConnectionPool(host='identity.dataspace.copernicus.eu', port=443): Max retries exceeded with url: /auth/realms/CDSE/protocol/openid-connect/token (Caused by ProxyError('Unable to connect to proxy', OSError('Tunnel connection failed: 403 Forbidden')))
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/home/user/kharg-dashboard/scripts/optical_kharg_gate.py", line 544, in <module>
+    sys.exit(main())
+             ^^^^^^
+  File "/home/user/kharg-dashboard/scripts/optical_kharg_gate.py", line 404, in main
+    scenes = _catalog_search(bbox, date_from, date_to)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/user/kharg-dashboard/scripts/optical_kharg_gate.py", line 151, in _catalog_search
+    token = _get_token()
+            ^^^^^^^^^^^^
+  File "/home/user/kharg-dashboard/scripts/optical_kharg_gate.py", line 80, in _get_token
+    r = requests.post(SH_TOKEN_URL, data={
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/root/.local/lib/python3.11/site-packages/requests/api.py", line 115, in post
+    return request("post", url, data=data, json=json, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/root/.local/lib/python3.11/site-packages/requests/api.py", line 59, in request
+    return session.request(method=method, url=url, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/root/.local/lib/python3.11/site-packages/requests/sessions.py", line 592, in request
+    resp = self.send(prep, **send_kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/root/.local/lib/python3.11/site-packages/requests/sessions.py", line 706, in send
+    r = adapter.send(request, **kwargs)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/root/.local/lib/python3.11/site-packages/requests/adapters.py", line 672, in send
+    raise ProxyError(e, request=request)
+requests.exceptions.ProxyError: HTTPSConnectionPool(host='identity.dataspace.copernicus.eu', port=443): Max retries exceeded with url: /auth/realms/CDSE/protocol/openid-connect/token (Caused by ProxyError('Unable to connect to proxy', OSError('Tunnel connection failed: 403 Forbidden')))
