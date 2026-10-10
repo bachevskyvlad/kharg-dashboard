@@ -112,49 +112,63 @@ def get_sh_token():
     return _sh_token
 
 
-def fetch_sar_platform(date_str, bbox, rel_orbit):
-    """Return platform string ('S1A'/'S1C') from SH Catalog, or 'S1?' on failure.
+def fetch_sar_scene_meta(date_str, bbox):
+    """Return (platform, rel_orbit) from SH Catalog for the scene covering date_str.
 
-    CDSE catalog: filter by datetime+bbox only (rel_orbit filter returned empty
-    in testing — possibly field name differs). Take first feature on the date.
+    Uses ±1 day window to handle UTC-midnight straddle.  Picks the feature whose
+    datetime is closest to date_str noon.  Returns ('S1?', None) on any failure.
     Platform field: 'properties.platform' e.g. 'sentinel-1a'.
+    Orbit field:    'properties.sat:relative_orbit' or 'properties.relativeOrbit'.
     """
     token = get_sh_token()
+    dt = datetime.strptime(date_str[:10], "%Y-%m-%d")
+    t_from = (dt - timedelta(days=1)).strftime("%Y-%m-%dT00:00:00Z")
+    t_to   = (dt + timedelta(days=1)).strftime("%Y-%m-%dT23:59:59Z")
     payload = {
         "collections": ["sentinel-1-grd"],
-        "datetime": f"{date_str}T00:00:00Z/{date_str}T23:59:59Z",
+        "datetime": f"{t_from}/{t_to}",
         "bbox": bbox,
-        "limit": 5,
+        "limit": 10,
     }
     headers = {"Authorization": f"Bearer {token}", "Content-Type": "application/json"}
     try:
         r = requests.post(SH_CATALOG_URL, json=payload, headers=headers, timeout=20)
-        if r.status_code == 200:
-            feats = r.json().get("features", [])
-            for feat in feats:
-                props = feat.get("properties", {})
-                # Filter by relative orbit if field present
-                ro = props.get("sat:relative_orbit") or props.get("relativeOrbit")
-                if ro is not None and int(ro) != rel_orbit:
-                    continue
-                p = props.get("platform", "").upper()
-                if "1A" in p:
-                    return "S1A"
-                if "1C" in p:
-                    return "S1C"
-                if "1B" in p:
-                    return "S1B"
-            # No orbit match — return platform of first result
-            if feats:
-                p = feats[0].get("properties", {}).get("platform", "").upper()
-                if "1A" in p: return "S1A"
-                if "1C" in p: return "S1C"
-                if "1B" in p: return "S1B"
-        else:
+        if r.status_code != 200:
             print(f"    catalog HTTP {r.status_code}")
+            return "S1?", None
+        feats = r.json().get("features", [])
+        if not feats:
+            print(f"    catalog: no features returned for {date_str} ±1d")
+            return "S1?", None
+        # Pick feature whose datetime is closest to target date noon
+        target_ts = dt.replace(hour=12).timestamp()
+        def feat_ts(f):
+            d = f.get("properties", {}).get("datetime", "")
+            try:
+                return abs(datetime.strptime(d[:19], "%Y-%m-%dT%H:%M:%S").timestamp() - target_ts)
+            except Exception:
+                return 1e9
+        best = min(feats, key=feat_ts)
+        props = best.get("properties", {})
+        # Platform
+        p = props.get("platform", "").upper()
+        if "1A" in p:
+            plat = "S1A"
+        elif "1C" in p:
+            plat = "S1C"
+        elif "1B" in p:
+            plat = "S1B"
+        else:
+            plat = "S1?"
+        # Relative orbit — try both field names
+        ro_raw = props.get("sat:relative_orbit") or props.get("relativeOrbit")
+        ro = int(ro_raw) if ro_raw is not None else None
+        print(f"    catalog: date={date_str}  platform={plat}  rel_orbit={ro}  "
+              f"(scene_dt={props.get('datetime','?')[:16]})")
+        return plat, ro
     except Exception as e:
         print(f"    catalog error: {e}")
-    return "S1?"
+    return "S1?", None
 
 
 # ─── Supabase fetch ───────────────────────────────────────────────────────────
@@ -396,22 +410,22 @@ def draw_ring(ax, cx, cy, r_px, color="cyan", lw=1):
     ax.add_patch(circle)
 
 
-def render_tank(tank, sar_1_arr, sar_1_meta, sar_1_platform,
-               sar_2_arr, sar_2_meta, sar_2_platform,
+def render_tank(tank, sar_1_arr, sar_1_meta, sar_1_platform, sar_1_orbit,
+               sar_2_arr, sar_2_meta, sar_2_platform, sar_2_orbit,
                s2_arr, out_path):
     fig, axes = plt.subplots(1, 3, figsize=(9, 3.2), facecolor="black")
     fig.subplots_adjust(wspace=0.02, left=0.01, right=0.99, top=0.92, bottom=0.01)
 
     panels = [
-        ("SAR-1", sar_1_arr, sar_1_meta, sar_1_platform),
-        ("SAR-2", sar_2_arr, sar_2_meta, sar_2_platform),
-        ("S2",    s2_arr,    None,        None),
+        ("SAR-1", sar_1_arr, sar_1_meta, sar_1_platform, sar_1_orbit),
+        ("SAR-2", sar_2_arr, sar_2_meta, sar_2_platform, sar_2_orbit),
+        ("S2",    s2_arr,    None,        None,           None),
     ]
 
     r_px_sar = IMG_PX / 8
     r_px_s2  = IMG_PX / 8
 
-    for ax, (title, arr, meta, platform) in zip(axes, panels):
+    for ax, (title, arr, meta, platform, orb) in zip(axes, panels):
         if arr is None:
             rgb = np.zeros((IMG_PX, IMG_PX, 3), dtype=np.uint8)
             label_text = f"{title}  NO DATA"
@@ -424,8 +438,9 @@ def render_tank(tank, sar_1_arr, sar_1_meta, sar_1_platform,
             db_val = meta.get("db_mean") if meta else None
             date_s = meta.get("date", "")[:10] if meta else ""
             plat   = platform or "S1?"
+            orb_s  = str(orb) if orb is not None else "?"
             db_str = f"  db={db_val:.1f}dB" if db_val is not None else ""
-            label_text = f"{plat}  {date_s}  orb={ORBIT_REL}  {ORBIT_DIR}{db_str}"
+            label_text = f"{plat}  {date_s}  orb={orb_s}  {ORBIT_DIR}{db_str}"
 
         ax.imshow(rgb, origin="upper")
         r_px = r_px_s2 if title == "S2" else r_px_sar
@@ -468,10 +483,20 @@ def process_tank(tank):
     else:
         print(f"  SAR-1: not found (need ≥{SAR_B_MIN_AGE_DAYS}d before SAR-2)")
 
-    # Both scenes filtered by ORBIT_REL=93 in Supabase — same relOrbit guaranteed.
-    sar_2_platform = fetch_sar_platform(sar_2_meta["date"][:10], bbox, ORBIT_REL)
-    sar_1_platform = fetch_sar_platform(sar_1_meta["date"][:10], bbox, ORBIT_REL) if sar_1_meta else None
-    print(f"  platforms: SAR-2={sar_2_platform}  SAR-1={sar_1_platform}")
+    # Get platform AND actual relOrbit from scene metadata (±1d catalog search).
+    # Do NOT assume relOrbit from query params — must confirm from metadata.
+    sar_2_platform, sar_2_orbit = fetch_sar_scene_meta(sar_2_meta["date"][:10], bbox)
+    sar_1_platform, sar_1_orbit = (fetch_sar_scene_meta(sar_1_meta["date"][:10], bbox)
+                                   if sar_1_meta else (None, None))
+    print(f"  platforms: SAR-2={sar_2_platform}(orb={sar_2_orbit})  "
+          f"SAR-1={sar_1_platform}(orb={sar_1_orbit})")
+
+    # Assert: both scenes must come from the same relOrbit.
+    if (sar_1_orbit is not None and sar_2_orbit is not None
+            and sar_1_orbit != sar_2_orbit):
+        print(f"  PANEL FAIL: relOrbit mismatch "
+              f"SAR-1={sar_1_orbit} vs SAR-2={sar_2_orbit} — skipping")
+        return
 
     sar_2_arr = fetch_sar(tank, sar_2_meta["date"][:10])
     sar_1_arr = fetch_sar(tank, sar_1_meta["date"][:10]) if sar_1_meta else None
@@ -480,8 +505,8 @@ def process_tank(tank):
     print(f"  S2: {'fetched' if s2_arr is not None else 'not available'}")
 
     render_tank(tank,
-                sar_1_arr, sar_1_meta, sar_1_platform,
-                sar_2_arr, sar_2_meta, sar_2_platform,
+                sar_1_arr, sar_1_meta, sar_1_platform, sar_1_orbit,
+                sar_2_arr, sar_2_meta, sar_2_platform, sar_2_orbit,
                 s2_arr, out_path)
     print(f"  Saved: {out_path}")
 
