@@ -1,0 +1,133 @@
+Traceback (most recent call last):
+  File "/home/runner/work/kharg-dashboard/kharg-dashboard/scripts/diag_closure.py", line 236, in <module>
+    scenes = sh_scenes(RT_BBOX, d0, d1)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/work/kharg-dashboard/kharg-dashboard/scripts/diag_closure.py", line 220, in sh_scenes
+    for item in search_iter:
+  File "/opt/hostedtoolcache/Python/3.11.17/x64/lib/python3.11/site-packages/sentinelhub/base.py", line 277, in __next__
+    new_features = self._fetch_features()
+                   ^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/hostedtoolcache/Python/3.11.17/x64/lib/python3.11/site-packages/sentinelhub/api/catalog.py", line 245, in _fetch_features
+    results = self.client.get_json_dict(self.url, post_values=payload, use_session=True)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/hostedtoolcache/Python/3.11.17/x64/lib/python3.11/site-packages/sentinelhub/download/client.py", line 248, in get_json_dict
+    response = self.get_json(url, *args, **kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/hostedtoolcache/Python/3.11.17/x64/lib/python3.11/site-packages/sentinelhub/download/client.py", line 238, in get_json
+    return self._single_download_decoded(request)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/hostedtoolcache/Python/3.11.17/x64/lib/python3.11/site-packages/sentinelhub/download/client.py", line 116, in _single_download_decoded
+    response = self._single_download(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/hostedtoolcache/Python/3.11.17/x64/lib/python3.11/site-packages/sentinelhub/download/client.py", line 129, in _single_download
+    response = self._execute_download(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/hostedtoolcache/Python/3.11.17/x64/lib/python3.11/site-packages/sentinelhub/download/handlers.py", line 67, in new_download_func
+    return download_func(self, request)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/hostedtoolcache/Python/3.11.17/x64/lib/python3.11/site-packages/sentinelhub/download/handlers.py", line 40, in new_download_func
+    return download_func(self, request)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/hostedtoolcache/Python/3.11.17/x64/lib/python3.11/site-packages/sentinelhub/download/sentinelhub_client.py", line 90, in _execute_download
+    response = self._do_download(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/hostedtoolcache/Python/3.11.17/x64/lib/python3.11/site-packages/sentinelhub/download/sentinelhub_client.py", line 125, in _do_download
+    headers=self._prepare_headers(request),
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/hostedtoolcache/Python/3.11.17/x64/lib/python3.11/site-packages/sentinelhub/download/sentinelhub_client.py", line 136, in _prepare_headers
+    session_headers = self._execute_thread_safe(self._get_session_headers)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/hostedtoolcache/Python/3.11.17/x64/lib/python3.11/site-packages/sentinelhub/download/sentinelhub_client.py", line 111, in _execute_thread_safe
+    return thread_unsafe_function(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/hostedtoolcache/Python/3.11.17/x64/lib/python3.11/site-packages/sentinelhub/download/sentinelhub_client.py", line 146, in _get_session_headers
+    return self.get_session().session_headers
+           ^^^^^^^^^^^^^^^^^^
+  File "/opt/hostedtoolcache/Python/3.11.17/x64/lib/python3.11/site-packages/sentinelhub/download/sentinelhub_client.py", line 162, in get_session
+    session = SentinelHubSession(config=self.config)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/hostedtoolcache/Python/3.11.17/x64/lib/python3.11/site-packages/sentinelhub/download/session.py", line 73, in __init__
+    self._token = self._collect_new_token() if _token is None else _token
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/hostedtoolcache/Python/3.11.17/x64/lib/python3.11/site-packages/sentinelhub/download/session.py", line 127, in _collect_new_token
+    return self._fetch_token(request)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/hostedtoolcache/Python/3.11.17/x64/lib/python3.11/site-packages/sentinelhub/download/handlers.py", line 67, in new_download_func
+    return download_func(self, request)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/hostedtoolcache/Python/3.11.17/x64/lib/python3.11/site-packages/sentinelhub/download/handlers.py", line 40, in new_download_func
+    return download_func(self, request)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/hostedtoolcache/Python/3.11.17/x64/lib/python3.11/site-packages/sentinelhub/download/session.py", line 139, in _fetch_token
+    return oauth_session.fetch_token(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/hostedtoolcache/Python/3.11.17/x64/lib/python3.11/site-packages/requests_oauthlib/oauth2_session.py", line 406, in fetch_token
+    self._client.parse_request_body_response(r.text, scope=self.scope)
+  File "/opt/hostedtoolcache/Python/3.11.17/x64/lib/python3.11/site-packages/oauthlib/oauth2/rfc6749/clients/base.py", line 409, in parse_request_body_response
+    self.token = parse_token_response(body, scope=scope)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/hostedtoolcache/Python/3.11.17/x64/lib/python3.11/site-packages/oauthlib/oauth2/rfc6749/parameters.py", line 443, in parse_token_response
+    validate_token_parameters(params)
+  File "/opt/hostedtoolcache/Python/3.11.17/x64/lib/python3.11/site-packages/oauthlib/oauth2/rfc6749/parameters.py", line 450, in validate_token_parameters
+    raise_from_error(params.get('error'), params)
+  File "/opt/hostedtoolcache/Python/3.11.17/x64/lib/python3.11/site-packages/oauthlib/oauth2/rfc6749/errors.py", line 398, in raise_from_error
+    raise cls(**kwargs)
+oauthlib.oauth2.rfc6749.errors.InvalidClientError: (invalid_client) Invalid client or Invalid client credentials
+=== Item 1: terminal_volume_timeseries RT ===
+aggregation   n   min_date   max_date
+      daily 561 2017-03-14 2026-10-06
+  last row date: 2026-10-06
+
+=== Item 2: Orbit label breakdown all terminals ===
+  ras_tanura:
+terminal_id orbit_direction  relative_orbit     n   min_date   max_date
+ ras_tanura             ASC           101.0 16038 2020-01-02 2026-09-28
+ ras_tanura            DESC            35.0 20790 2017-03-14 2026-09-18
+ ras_tanura      DESCENDING             NaN   161 2026-09-07 2026-10-06
+  yanbu:
+terminal_id  orbit_direction  relative_orbit    n   min_date   max_date
+      yanbu              NaN             NaN 3984 2014-10-09 2026-09-22
+  al_faw: 0 rows
+  jask:
+terminal_id orbit_direction  relative_orbit    n   min_date   max_date
+       jask            DESC              93 2180 2024-06-09 2026-10-04
+  juwaymah:
+terminal_id orbit_direction  relative_orbit    n   min_date   max_date
+   juwaymah      DESCENDING             NaN   37 2026-09-24 2026-10-06
+   juwaymah             NaN             NaN 5985 2017-03-14 2026-09-18
+
+=== Item 4: RT DESCENDING rows per date ===
+      date  n_tanks  n_rows  expected  missing
+2026-09-07        1       1        66       65
+2026-09-13        1       1        66       65
+2026-09-19        1       1        66       65
+2026-09-24       66      66        66        0
+2026-09-25        1       1        66       65
+2026-09-30       45      45        66       21
+2026-10-01        1       1        66       65
+2026-10-06       45      45        66       21
+
+  Total DESCENDING rows: 161
+  Unique tanks seen: 66
+  All tank list: ['rt_0', 'rt_1', 'rt_10', 'rt_11', 'rt_12', 'rt_13', 'rt_14', 'rt_15', 'rt_16', 'rt_17', 'rt_18', 'rt_19', 'rt_2', 'rt_20', 'rt_21', 'rt_22', 'rt_23', 'rt_24', 'rt_25', 'rt_26', 'rt_27', 'rt_28', 'rt_29', 'rt_3', 'rt_30', 'rt_31', 'rt_32', 'rt_33', 'rt_34', 'rt_35', 'rt_36', 'rt_37', 'rt_38', 'rt_39', 'rt_4', 'rt_40', 'rt_41', 'rt_42', 'rt_43', 'rt_44', 'rt_45', 'rt_46', 'rt_47', 'rt_48', 'rt_49', 'rt_5', 'rt_50', 'rt_51', 'rt_52', 'rt_53', 'rt_54', 'rt_55', 'rt_56', 'rt_57', 'rt_58', 'rt_59', 'rt_6', 'rt_60', 'rt_61', 'rt_62', 'rt_63', 'rt_64', 'rt_65', 'rt_7', 'rt_8', 'rt_9']
+
+=== Item 5: Yanbu yb_0 date vs datetime ===
+  All Yanbu rows: 3984
+  Unique tank_ids: 12
+  date field sample (raw): ['2026-09-22', '2026-09-22', '2026-09-22']
+
+  yb_0 n rows: 332
+  yb_0 raw date sample: ['2026-09-22', '2026-09-10', '2026-08-29', '2026-08-17', '2026-08-05']
+  yb_0 dates contain time component: False
+  yb_0 unique raw date strings: 332
+  yb_0 unique calendar dates: 332
+  yb_0 dates with >1 observation: 0
+
+  n_all_yanbu_dates (nunique as datetime): 332
+  n unique calendar dates (all yanbu): 332
+
+=== Item 3: SH catalog date-match ===
+  RT 8 DESCENDING dates:
+  SH catalog FAILED: (invalid_client) Invalid client or Invalid client credentials
+
+done.
