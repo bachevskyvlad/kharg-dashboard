@@ -1,0 +1,28 @@
+Item 1: RT orbit label breakdown…
+  RT total rows: 36989
+     label  relOrbit     n
+      DESC      35.0 20790
+       ASC     101.0 16038
+DESCENDING       NaN   161
+
+Item 1b: RT prod series counts…
+  terminal_volume_timeseries query failed: {'message': 'column terminal_volume_timeseries.relative_orbit does not exist', 'code': '42703', 'hint': None, 'details': None}
+
+Item 2: RT DESCENDING/NaN rows…
+  Matching rows: 161, unique dates: 8
+  Dates: ['2026-09-07', '2026-09-13', '2026-09-19', '2026-09-24', '2026-09-25', '2026-09-30', '2026-10-01', '2026-10-06']
+      date event_windows
+2026-09-07          none
+2026-09-13          none
+2026-09-19          none
+2026-09-24          none
+2026-09-25          none
+2026-09-30          none
+2026-10-01          none
+2026-10-06          none
+
+Item 4: Yanbu orbit date-match…
+  Yanbu unique dates: 249
+  Orbits seen: []
+  Directions seen: []
+done.
