@@ -21,7 +21,7 @@ from metrics import tank_step_db
 try:
     import diptest as _diptest
     def _dip_stat(x):
-        return float(_diptest.dip(x)[0])
+        return float(_diptest.dipstat(x))
 except ImportError:
     from scipy.stats import skew, kurtosis as _kurtosis
     def _dip_stat(x):
