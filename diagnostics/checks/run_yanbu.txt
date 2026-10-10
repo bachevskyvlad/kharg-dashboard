@@ -1,27 +1,18 @@
-[terminal_checks] terminal=yanbu  checks=['C11', 'C04', 'C05', 'C06', 'C06B', 'C07', 'C14', 'C15', 'C16', 'C12']  orbit=None
+[terminal_checks] terminal=yanbu  checks=['C04']  orbit=None
   fetching terminal_observations for yanbu…
   3,984 rows fetched, 249 dates, 12 tanks
   registry: 12 tanks
-  running C11…
-  → /home/runner/work/kharg-dashboard/kharg-dashboard/diagnostics/checks/yanbu/C11_detail.csv (12 rows)
-  → /home/runner/work/kharg-dashboard/kharg-dashboard/diagnostics/checks/yanbu/C11.csv (1 rows)
   running C04…
-  → /home/runner/work/kharg-dashboard/kharg-dashboard/diagnostics/checks/yanbu/C04.csv (12 rows)
-  running C05…
-  → /home/runner/work/kharg-dashboard/kharg-dashboard/diagnostics/checks/yanbu/C05.csv (12 rows)
-  running C06…
-  → /home/runner/work/kharg-dashboard/kharg-dashboard/diagnostics/checks/yanbu/C06.csv (12 rows)
-  running C06B…
-  → /home/runner/work/kharg-dashboard/kharg-dashboard/diagnostics/checks/yanbu/C06B.csv (12 rows)
-  running C07…
-  → /home/runner/work/kharg-dashboard/kharg-dashboard/diagnostics/checks/yanbu/C07.csv (1 rows)
-  running C14…
-  → /home/runner/work/kharg-dashboard/kharg-dashboard/diagnostics/checks/yanbu/C14.csv (12 rows)
-  running C15…
-  → /home/runner/work/kharg-dashboard/kharg-dashboard/diagnostics/checks/yanbu/C15.csv (1 rows)
-  running C16…
-  → /home/runner/work/kharg-dashboard/kharg-dashboard/diagnostics/checks/yanbu/C16.csv (12 rows)
-  running C12…
-  → /home/runner/work/kharg-dashboard/kharg-dashboard/diagnostics/checks/yanbu/C12.csv (1 rows)
-  → /home/runner/work/kharg-dashboard/kharg-dashboard/diagnostics/checks/CHECK_MATRIX.md
-done.
+Traceback (most recent call last):
+  File "/home/runner/work/kharg-dashboard/kharg-dashboard/scripts/terminal_checks.py", line 231, in <module>
+    main()
+  File "/home/runner/work/kharg-dashboard/kharg-dashboard/scripts/terminal_checks.py", line 219, in main
+    result_df = run_fn(terminal_id, df, registry_tanks)
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/work/kharg-dashboard/kharg-dashboard/scripts/checks/c04.py", line 65, in run
+    dip = _dip_stat(db)
+          ^^^^^^^^^^^^^
+  File "/home/runner/work/kharg-dashboard/kharg-dashboard/scripts/checks/c04.py", line 24, in _dip_stat
+    return float(_diptest.dip(x)[0])
+                 ^^^^^^^^^^^^
+AttributeError: module 'diptest' has no attribute 'dip'
