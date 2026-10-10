@@ -1,2 +1,2 @@
 terminal_id,label_class,tanks,source,independent_of_sar,note,check_id,run_date,git_sha,verdict
-ras_tanura,,,no optical gate for this terminal,,,C15,2026-10-10,f87b1bf,N_A
+ras_tanura,,,no optical gate for this terminal,,,C15,2026-10-10,1c379a9,N_A

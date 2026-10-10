@@ -1,2 +1,2 @@
 terminal_id,tank_id,note,check_id,run_date,git_sha,verdict
-ras_tanura,ALL,requires per-pixel SAR crops; not available from terminal_observations aggregate,C07,2026-10-10,f87b1bf,NOT_RUN
+ras_tanura,ALL,requires per-pixel SAR crops; not available from terminal_observations aggregate,C07,2026-10-10,1c379a9,NOT_RUN
