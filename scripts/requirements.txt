@@ -8,3 +8,4 @@ supabase
 yfinance
 websockets
 pyarrow
+diptest

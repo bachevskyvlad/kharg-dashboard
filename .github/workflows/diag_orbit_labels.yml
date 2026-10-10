@@ -1,0 +1,45 @@
+name: Diag — Orbit label audit (RT + Yanbu)
+
+on:
+  workflow_dispatch:
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: claude/oilradar-dashboard-iran-zchdva
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: pip install numpy pandas supabase -q
+
+      - name: Run orbit label audit
+        env:
+          SUPABASE_URL: https://yoekhkczwdeyauwarsyy.supabase.co
+          SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+        run: |
+          mkdir -p diagnostics/rt_orbit diagnostics/yanbu_orbit
+          cd scripts
+          python diag_orbit_labels.py 2>&1 | tee ../diagnostics/rt_orbit/run.txt
+
+      - name: Save results
+        if: always()
+        run: |
+          git config user.email "actions@github.com"
+          git config user.name "GitHub Actions"
+          git add -f diagnostics/rt_orbit/ diagnostics/yanbu_orbit/ || true
+          git diff --cached --quiet && echo "No changes" || \
+            git commit -m "ci: orbit-label-audit RT+Yanbu [skip ci]"
+          for attempt in 1 2 3 4; do
+            git pull --rebase origin claude/oilradar-dashboard-iran-zchdva && \
+            git push origin HEAD:claude/oilradar-dashboard-iran-zchdva && break
+            echo "push attempt $attempt failed, retrying in ${attempt}s"
+            sleep $attempt
+          done || true
