@@ -26,8 +26,8 @@ import pandas as pd
 sys.path.insert(0, os.path.dirname(__file__))
 from supabase import create_client as _create_client
 
-_sb_url = os.environ.get("SUPABASE_URL") or ""
-_sb_key = os.environ.get("SUPABASE_KEY") or ""
+_sb_url = os.environ.get("SUPABASE_URL") or "https://yoekhkczwdeyauwarsyy.supabase.co"
+_sb_key = os.environ.get("SUPABASE_KEY") or "sb_publishable_7j07_zzdqTGM1LXf7-o9Tg_JJRbJQSM"
 if not _sb_url or not _sb_key:
     sys.exit("FATAL: SUPABASE_URL and SUPABASE_KEY env vars must be set")
 sb = _create_client(_sb_url, _sb_key)
