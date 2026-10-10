@@ -1,1 +1,13 @@
-
+terminal_id,year,relative_orbit,orbit_direction_raw,orbit_direction,n_passes,check_id,run_date,git_sha
+yanbu,2014,,,UNKNOWN,5,C11,2026-10-10,f87b1bf
+yanbu,2015,,,UNKNOWN,25,C11,2026-10-10,f87b1bf
+yanbu,2016,,,UNKNOWN,6,C11,2026-10-10,f87b1bf
+yanbu,2017,,,UNKNOWN,4,C11,2026-10-10,f87b1bf
+yanbu,2019,,,UNKNOWN,2,C11,2026-10-10,f87b1bf
+yanbu,2020,,,UNKNOWN,31,C11,2026-10-10,f87b1bf
+yanbu,2021,,,UNKNOWN,30,C11,2026-10-10,f87b1bf
+yanbu,2022,,,UNKNOWN,27,C11,2026-10-10,f87b1bf
+yanbu,2023,,,UNKNOWN,30,C11,2026-10-10,f87b1bf
+yanbu,2024,,,UNKNOWN,30,C11,2026-10-10,f87b1bf
+yanbu,2025,,,UNKNOWN,33,C11,2026-10-10,f87b1bf
+yanbu,2026,,,UNKNOWN,26,C11,2026-10-10,f87b1bf
