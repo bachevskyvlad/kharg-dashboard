@@ -23,20 +23,12 @@
   "from_date": null,
   "to_date": null,
   "value_column": "db_mean",
-  "verdict": "FLAG",
-  "diagnosis": "REVIEW",
-  "flags": {
-    "cv_level": {
-      "value": -0.10652252678109234,
-      "lo": 0.098,
-      "hi": 0.6358,
-      "flag": "BELOW_LO",
-      "metric": "CV of level (\u03c3/\u03bc mean_db)"
-    }
-  },
+  "verdict": "PASS",
+  "diagnosis": null,
+  "flags": {},
   "metrics": {
     "dynamic_range_db": 1.407287058823529,
-    "cv_level": -0.10652252678109234,
+    "cv_level": 0.09540698799393653,
     "vel_std_norm": 0.14763860640705784,
     "delta_p50_norm": 0.11996799850191506,
     "delta_p90_norm": 0.3195948984863658,

@@ -18,7 +18,7 @@ Generated: 2026-10-10
 | Metric key | Raw formula | Raw unit | Normalization | Normalized |
 |---|---|---|---|---|
 | dynamic_range_db | p95(mean_db) − p5(mean_db) | dB | (base — kept absolute) | dB |
-| cv_level | σ(mean_db) / μ(mean_db) | dimensionless | (self) | dimensionless |
+| cv_level | σ(10^(dB/10)) / μ(10^(dB/10)) | dimensionless | (self) | dimensionless |
 | vel_std_norm | std(Δmean_db) / dynamic_range_db | dB/pass | ÷ dynamic_range_db | fraction |
 | delta_p50_norm | median(abs(Δmean_db)) / dynamic_range_db | dB | ÷ dynamic_range_db | fraction |
 | delta_p90_norm | p90(abs(Δmean_db)) / dynamic_range_db | dB | ÷ dynamic_range_db | fraction |
@@ -42,7 +42,7 @@ Notes:
 
 | Metric | Kharg | Yanbu | Corridor lo | Corridor hi |
 |---|---|---|---|---|
-| CV of level (σ/μ mean_db) | 0.1960 | 0.3179 | 0.0980 | 0.6358 |
+| CV of level (σ/μ linear power) | 0.2685 | 0.6296 | 0.1342 | 1.2592 |
 | Velocity std (norm by dr) | 0.1555 | 0.1495 | 0.0748 | 0.3110 |
 | Δ p50 (norm by dr) | 0.1581 | 0.1734 | 0.0790 | 0.3468 |
 | Δ p90 (norm by dr) | 0.3908 | 0.3977 | 0.1954 | 0.7954 |

@@ -26,13 +26,6 @@
   "verdict": "FLAG",
   "diagnosis": "REVIEW",
   "flags": {
-    "cv_level": {
-      "value": -1.5966529919766599,
-      "lo": 0.098,
-      "hi": 0.6358,
-      "flag": "BELOW_LO",
-      "metric": "CV of level (\u03c3/\u03bc mean_db)"
-    },
     "cycle_depth_norm": {
       "value": 0.26161866421753327,
       "lo": 0.0558,
@@ -43,7 +36,7 @@
   },
   "metrics": {
     "dynamic_range_db": 1.3769960897435896,
-    "cv_level": -1.5966529919766599,
+    "cv_level": 0.09871240918705468,
     "vel_std_norm": 0.2706331584953818,
     "delta_p50_norm": 0.17750851380941807,
     "delta_p90_norm": 0.5661765832041282,

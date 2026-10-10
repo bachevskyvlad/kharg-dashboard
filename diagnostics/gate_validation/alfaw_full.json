@@ -8,13 +8,6 @@
   "verdict": "FLAG",
   "diagnosis": "DEAD",
   "flags": {
-    "cv_level": {
-      "value": -0.14948937064879977,
-      "lo": 0.098,
-      "hi": 0.6358,
-      "flag": "BELOW_LO",
-      "metric": "CV of level (\u03c3/\u03bc mean_db)"
-    },
     "delta_p50_norm": {
       "value": 0.06391645993448733,
       "lo": 0.079,
@@ -39,7 +32,7 @@
   },
   "metrics": {
     "dynamic_range_db": 2.398769166666667,
-    "cv_level": -0.14948937064879977,
+    "cv_level": 0.14478461178907281,
     "vel_std_norm": 0.09312807384534506,
     "delta_p50_norm": 0.06391645993448733,
     "delta_p90_norm": 0.18627087572341783,
