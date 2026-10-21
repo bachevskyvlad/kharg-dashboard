@@ -5,30 +5,31 @@ P1: SUPABASE_URL=env SUPABASE_KEY=fallback (publishable)
   In DB but NOT in registry: set()
   In registry but NOT in DB: {'kharg'}
 
-=== H01: Ingest regression systemic ===
+=== H01: Ingest regression systemic (with contradiction explanation) ===
   Kharg raw_observations orbit check FAILED: {'message': 'column raw_observations.orbit_direction does not exist', 'code': '42703', 'hint': None, 'details': None}
-  al_flaw: 232 post-cutoff rows, 232 DESCENDING/NULL → has_regression=True
-  das_island: 99 post-cutoff rows, 15 DESCENDING/NULL → has_regression=True
-  de_kastri: 16 post-cutoff rows, 16 DESCENDING/NULL → has_regression=True
-  fujairah: 242 post-cutoff rows, 88 DESCENDING/NULL → has_regression=True
-  halul: 78 post-cutoff rows, 50 DESCENDING/NULL → has_regression=True
-  jask: 120 post-cutoff rows, 40 DESCENDING/NULL → has_regression=True
-  juwaymah: 112 post-cutoff rows, 112 DESCENDING/NULL → has_regression=True
+  al_flaw: post=232, DESC_strict=232, DESC_or_NULL=232
+  das_island: post=99, DESC_strict=15, DESC_or_NULL=15
+  de_kastri: post=16, DESC_strict=8, DESC_or_NULL=16
+  fujairah: post=242, DESC_strict=88, DESC_or_NULL=88
+  halul: post=78, DESC_strict=50, DESC_or_NULL=50
+  jask: post=120, DESC_strict=40, DESC_or_NULL=40
+  juwaymah: post=112, DESC_strict=55, DESC_or_NULL=112
   kozmino: 0 rows post-2026-09-01
-  lavan: 192 post-cutoff rows, 192 DESCENDING/NULL → has_regression=True
-  mina_ahmadi: 112 post-cutoff rows, 28 DESCENDING/NULL → has_regression=True
-  novorossiysk: 240 post-cutoff rows, 240 DESCENDING/NULL → has_regression=True
-  primorsk: 288 post-cutoff rows, 288 DESCENDING/NULL → has_regression=True
-  ras_laffan: 272 post-cutoff rows, 34 DESCENDING/NULL → has_regression=True
-  ras_tanura: 781 post-cutoff rows, 253 DESCENDING/NULL → has_regression=True
-  ruwais: 320 post-cutoff rows, 40 DESCENDING/NULL → has_regression=True
-  siri: 48 post-cutoff rows, 42 DESCENDING/NULL → has_regression=True
-  sitra: 200 post-cutoff rows, 25 DESCENDING/NULL → has_regression=True
-  yanbu: 24 post-cutoff rows, 24 DESCENDING/NULL → has_regression=True
-  zirku: 80 post-cutoff rows, 10 DESCENDING/NULL → has_regression=True
+  lavan: post=192, DESC_strict=96, DESC_or_NULL=192
+  mina_ahmadi: post=112, DESC_strict=28, DESC_or_NULL=28
+  novorossiysk: post=240, DESC_strict=120, DESC_or_NULL=240
+  primorsk: post=288, DESC_strict=144, DESC_or_NULL=288
+  ras_laffan: post=272, DESC_strict=34, DESC_or_NULL=34
+  ras_tanura: post=781, DESC_strict=253, DESC_or_NULL=253
+  ruwais: post=320, DESC_strict=40, DESC_or_NULL=40
+  siri: post=48, DESC_strict=42, DESC_or_NULL=42
+  sitra: post=200, DESC_strict=25, DESC_or_NULL=25
+  yanbu: post=24, DESC_strict=0, DESC_or_NULL=24
+  zirku: post=80, DESC_strict=10, DESC_or_NULL=10
 
-H01 RESULT: regression terminals = ['al_flaw', 'das_island', 'de_kastri', 'fujairah', 'halul', 'jask', 'juwaymah', 'lavan', 'mina_ahmadi', 'novorossiysk', 'primorsk', 'ras_laffan', 'ras_tanura', 'ruwais', 'siri', 'sitra', 'yanbu', 'zirku']
-H01 VERDICT: CONFIRMED — systemic if ≥2 terminals affected
+H01 RESULT strict (DESCENDING only, run 38070901242 criterion): 17 terminals: ['al_flaw', 'das_island', 'de_kastri', 'fujairah', 'halul', 'jask', 'juwaymah', 'lavan', 'mina_ahmadi', 'novorossiysk', 'primorsk', 'ras_laffan', 'ras_tanura', 'ruwais', 'siri', 'sitra', 'zirku']
+H01 RESULT broad  (DESCENDING OR NULL, run #4 criterion):      18 terminals: ['al_flaw', 'das_island', 'de_kastri', 'fujairah', 'halul', 'jask', 'juwaymah', 'lavan', 'mina_ahmadi', 'novorossiysk', 'primorsk', 'ras_laffan', 'ras_tanura', 'ruwais', 'siri', 'sitra', 'yanbu', 'zirku']
+H01 VERDICT: CONFIRMED — systemic if ≥2 terminals (broad)
 
 === H02: TVT RT ASC contamination ===
   TVT RT daily rows: 563
@@ -152,31 +153,106 @@ index 0000000..901a21e
 
 
 === H06b: WL composition vs frozen gate ===
-  Last 18 DESC dates: 66 tanks computed
-  Tanks with step_db >= 2.5: 21
-tank_id  n_obs  step_db  in_wl
-  rt_50     18   9.2392   True
-  rt_48     18   8.5439   True
-  rt_43     18   5.6636   True
-  rt_47     18   5.5272   True
-  rt_52     18   5.4377   True
-  rt_55     18   5.0102   True
-  rt_58     18   4.4964   True
-  rt_49     18   4.3203   True
-  rt_54     18   4.2014   True
-  rt_39     18   3.6975   True
-  rt_53     18   3.6345   True
-   rt_3     18   3.5277   True
-  rt_10     18   3.5136   True
-  rt_45     18   3.2827   True
-  rt_57     18   3.1088   True
-  rt_51     18   2.9393   True
-  rt_40     18   2.8828   True
-   rt_0     18   2.8434   True
-   rt_1     18   2.6945   True
-  rt_56     18   2.6671   True
+  NOTE: WL = tanks with step_db < 2.5 (quiet); EXCLUDED = step_db >= 2.5
+  Source of truth: diagnostics/stage3/whitelist_results.json, run_date=2026-09-29
+  WL-45: n_whitelist=45/66, pct_cap=63.3% (satisfies WL-60 gate)
+  Excluded-21: tanks with step>=2.5 (noisy, not in WL)
+  Last 18 DESC dates, 66 tanks computed
+  LIVE (recomputed): in_wl (step<2.5)=45, excluded (step>=2.5)=21
+  CANONICAL (whitelist_results.json): in_wl=45/66
 
-H06b VERDICT: WL has 21/66 tanks (gate: step_db >= 2.5)
+  tank_id | step_db | in_wl_live | in_wl_canonical
+tank_id  n_obs  step_db  in_wl_live  in_wl_canonical
+  rt_38     18   0.3437        True             True
+  rt_29     18   0.3532        True             True
+   rt_2     18   0.3679        True             True
+  rt_59     18   0.3905        True             True
+   rt_6     18   0.3999        True             True
+  rt_42     18   0.4087        True             True
+  rt_18     18   0.5400        True             True
+  rt_20     18   0.7168        True             True
+  rt_19     18   0.8117        True             True
+  rt_22     18   0.8276        True             True
+  rt_26     18   0.8901        True             True
+  rt_16     18   0.8913        True             True
+  rt_23     18   0.9584        True             True
+  rt_60     18   1.0100        True             True
+  rt_13     18   1.0149        True             True
+  rt_34     18   1.0394        True             True
+  rt_25     18   1.0679        True             True
+  rt_35     18   1.1231        True             True
+   rt_4     18   1.1435        True             True
+  rt_30     18   1.1658        True             True
+  rt_31     18   1.1685        True             True
+  rt_27     18   1.2238        True             True
+  rt_36     18   1.2299        True             True
+  rt_63     18   1.2392        True             True
+  rt_32     18   1.2625        True             True
+  rt_14     18   1.2867        True             True
+   rt_5     18   1.2942        True             True
+  rt_11     18   1.3165        True             True
+  rt_28     18   1.3312        True             True
+  rt_15     18   1.3943        True             True
+  rt_37     18   1.4021        True             True
+   rt_8     18   1.4567        True             True
+  rt_24     18   1.5653        True             True
+  rt_65     18   1.7123        True             True
+  rt_17     18   1.7188        True             True
+  rt_33     18   1.7205        True             True
+  rt_61     18   1.7231        True             True
+  rt_41     18   1.8035        True             True
+  rt_46     18   1.8893        True            False
+  rt_21     18   1.9505        True             True
+  rt_12     18   1.9741        True             True
+  rt_64     18   1.9934        True             True
+   rt_7     18   2.0772        True             True
+  rt_44     18   2.2973        True             True
+  rt_62     18   2.3980        True             True
+   rt_9     18   2.6604       False            False
+  rt_56     18   2.6671       False            False
+   rt_1     18   2.6945       False            False
+   rt_0     18   2.8434       False            False
+  rt_40     18   2.8828       False            False
+  rt_51     18   2.9393       False            False
+  rt_57     18   3.1088       False             True
+  rt_45     18   3.2827       False            False
+  rt_10     18   3.5136       False            False
+   rt_3     18   3.5277       False            False
+  rt_53     18   3.6345       False            False
+  rt_39     18   3.6975       False            False
+  rt_54     18   4.2014       False            False
+  rt_49     18   4.3203       False            False
+  rt_58     18   4.4964       False            False
+  rt_55     18   5.0102       False            False
+  rt_52     18   5.4377       False            False
+  rt_47     18   5.5272       False            False
+  rt_43     18   5.6636       False            False
+  rt_48     18   8.5439       False            False
+  rt_50     18   9.2392       False            False
+
+H06b VERDICT: WL-45 (canonical, step<2.5): 45/66 tanks. Live recompute: 45/66
+  The 21 EXCLUDED tanks (step>=2.5, all 66 RT tanks, NOT within WL):
+    rt_0 | step=2.64 | EXCL
+    rt_56 | step=2.64 | EXCL
+    rt_40 | step=2.65 | EXCL
+    rt_1 | step=2.84 | EXCL
+    rt_51 | step=2.91 | EXCL
+    rt_53 | step=2.93 | EXCL
+    rt_58 | step=2.98 | EXCL
+    rt_45 | step=2.99 | EXCL
+    rt_54 | step=3.04 | EXCL
+    rt_46 | step=3.05 | EXCL
+    rt_10 | step=3.32 | EXCL
+    rt_9 | step=3.7 | EXCL
+    rt_39 | step=3.77 | EXCL
+    rt_3 | step=3.84 | EXCL
+    rt_49 | step=4.07 | EXCL
+    rt_55 | step=4.3 | EXCL
+    rt_43 | step=4.37 | EXCL
+    rt_52 | step=5.12 | EXCL
+    rt_48 | step=5.29 | EXCL
+    rt_47 | step=6.33 | EXCL
+    rt_50 | step=9.2 | EXCL
 
 === H07: Yanbu 332 vs 249 pass count ===
   Total rows: 3984
@@ -225,13 +301,15 @@ H07 SUMMARY:
 ## backCoeff
   scripts/reingest_alfaw_v2.py:155:            }, "processing": {"backCoeff": "SIGMA0_ELLIPSOID", "orthorectify": True,
   scripts/hormuz_timeseries.py:92:                "backCoeff": "GAMMA0_TERRAIN",
-  scripts/research/auto_hypotheses.py:613:H24: backCoeff/orthorectify/speckleFilter/upsampling options in ingest + panels code.
-  scripts/research/auto_hypotheses.py:622:print("\n=== H24: backCoeff / processing options audit (code, no DB) ===")
-  scripts/research/auto_hypotheses.py:628:    # Find all backCoeff / orthorectify / speckleFilter / upsampling references in scripts
-  scripts/research/auto_hypotheses.py:630:    for pattern in ["backCoeff", "orthorectify", "speckleFilter", "upsampling", "GAMMA0", "BETA0", "SIGMA0", "LEE", "BILINEAR", "BICUBIC"]:
-  scripts/research/auto_hypotheses.py:1000:# Query: check if terminal_observations has backCoeff column at all
-  scripts/research/auto_hypotheses.py:1006:    print(f"  has backCoeff column: {has_backcoeff_col}")
-  scripts/research/auto_hypotheses.py:1034:    print(f"\nH24b: terminal_observations has no backCoeff column → SIGMA0 label not queryable from DB; "
+  scripts/research/auto_hypotheses.py:694:H24: backCoeff/orthorectify/speckleFilter/upsampling options in ingest + panels code.
+  scripts/research/auto_hypotheses.py:703:print("\n=== H24: backCoeff / processing options audit (code, no DB) ===")
+  scripts/research/auto_hypotheses.py:709:    # Find all backCoeff / orthorectify / speckleFilter / upsampling references in scripts
+  scripts/research/auto_hypotheses.py:711:    for pattern in ["backCoeff", "orthorectify", "speckleFilter", "upsampling", "GAMMA0", "BETA0", "SIGMA0", "LEE", "BILINEAR", "BICUBIC"]:
+  scripts/research/auto_hypotheses.py:1193:# Query: check if terminal_observations has backCoeff column at all
+  scripts/research/auto_hypotheses.py:1199:    print(f"  has backCoeff column: {has_backcoeff_col}")
+  scripts/research/auto_hypotheses.py:1227:    print(f"\nH24b: terminal_observations has no backCoeff column → SIGMA0 label not queryable from DB; "
+  scripts/research/auto_hypotheses.py:1612:#   If this is a level shift post-regression, backCoeff or ingest path change is the
+  scripts/research/auto_hypotheses.py:1648:        print("  For these terminals, ingest path (backCoeff/script version) after 2026-09-07 must be audited.")
   scripts/stage_gate_abc.py:137:                    "backCoeff":    "SIGMA0_ELLIPSOID",
   scripts/verify_orbit_fix_3.py:123:                "backCoeff": "GAMMA0_TERRAIN",
   scripts/panels_v2.py:147:            }, "processing": {"backCoeff": "SIGMA0_ELLIPSOID", "orthorectify": True,
@@ -241,15 +319,13 @@ H07 SUMMARY:
   scripts/diagnose_ras_tanura_imagery.py:210:                "backCoeff":     PROD_BACK_COEFF,
   scripts/diag_juwaymah_yanbu_4.py:230:                "processing": {"orthorectify": True, "backCoeff": "GAMMA0_TERRAIN",
   scripts/diag_juwaymah_yanbu_6.py:295:                "processing": {"orthorectify": True, "backCoeff": "GAMMA0_TERRAIN",
-  scripts/diag_welldepth_7_7.py:149:                    "processing": {"orthorectify": True, "backCoeff": "GAMMA0_TERRAIN",
-  scripts/verify_orbit_fix_2.py:170:                "backCoeff": "GAMMA0_TERRAIN",
 
 ## orthorectify
   scripts/reingest_alfaw_v2.py:155:            }, "processing": {"backCoeff": "SIGMA0_ELLIPSOID", "orthorectify": True,
   scripts/hormuz_timeseries.py:91:                "orthorectify": True,
-  scripts/research/auto_hypotheses.py:613:H24: backCoeff/orthorectify/speckleFilter/upsampling options in ingest + panels code.
-  scripts/research/auto_hypotheses.py:628:    # Find all backCoeff / orthorectify / speckleFilter / upsampling references in scripts
-  scripts/research/auto_hypotheses.py:630:    for pattern in ["backCoeff", "orthorectify", "speckleFilter", "upsampling", "GAMMA0", "BETA0", "
+  scripts/research/auto_hypotheses.py:694:H24: backCoeff/orthorectify/speckleFilter/upsampling options in ingest + panels code.
+  scripts/research/auto_hypotheses.py:709:    # Find all backCoeff / orthorectify / speckleFilter / upsampling references in scripts
+  scripts/research/auto_hypotheses.py:711:    for pattern in ["ba
 
 H24: found 10 distinct option keywords in codebase
 
@@ -278,16 +354,16 @@ Frozen geometry values from registry (r_m, h_max_m per tank) are the baseline.
 
 === D6: SLC bursts CDSE availability estimate ===
   SLC references in codebase:
-scripts/research/auto_hypotheses.py:616:D6: SLC bursts CDSE availability + cost estimate.
-scripts/research/auto_hypotheses.py:688:# ── D6: SLC bursts availability estimate (code audit only, no CDSE call) ──────
-scripts/research/auto_hypotheses.py:689:print("\n=== D6: SLC bursts CDSE availability estimate ===")
-scripts/research/auto_hypotheses.py:695:    # Find SLC references in codebase
-scripts/research/auto_hypotheses.py:696:    slc_res = subprocess.run(
-scripts/research/auto_hypotheses.py:697:        ["grep", "-rn", "--include=*.py", "-i", "SLC\\|burst\\|IW_SLC\\|S1_SLC", "scripts/"],
-scripts/research/auto_hypotheses.py:700:    slc_refs = slc_res.stdout.strip()
-scripts/research/auto_hypotheses.py:701:    print(f"  SLC references in codebase:\n{slc_refs[:1000] if slc_refs else '  None found'}")
-scripts/research/auto_hypotheses.py:703:    d6_note = """D6: SLC bursts CDSE — availability estimate
-scripts/research/auto_hypotheses.py:704:- Sentinel-1 IW SLC available from 2014-04 over Midd
+scripts/research/auto_hypotheses.py:697:D6: SLC bursts CDSE availability + cost estimate.
+scripts/research/auto_hypotheses.py:769:# ── D6: SLC bursts availability estimate (code audit only, no CDSE call) ──────
+scripts/research/auto_hypotheses.py:770:print("\n=== D6: SLC bursts CDSE availability estimate ===")
+scripts/research/auto_hypotheses.py:776:    # Find SLC references in codebase
+scripts/research/auto_hypotheses.py:777:    slc_res = subprocess.run(
+scripts/research/auto_hypotheses.py:778:        ["grep", "-rn", "--include=*.py", "-i", "SLC\\|burst\\|IW_SLC\\|S1_SLC", "scripts/"],
+scripts/research/auto_hypotheses.py:781:    slc_refs = slc_res.stdout.strip()
+scripts/research/auto_hypotheses.py:782:    print(f"  SLC references in codebase:\n{slc_refs[:1000] if slc_refs else '  None found'}")
+scripts/research/auto_hypotheses.py:784:    d6_note = """D6: SLC bursts CDSE — availability estimate
+scripts/research/auto_hypotheses.py:785:- Sentinel-1 IW SLC available from 2014-04 over Midd
 D6: SLC bursts CDSE — availability estimate
 - Sentinel-1 IW SLC available from 2014-04 over Middle East (launch: 2014-04-03)
 - Kharg Island: ~6-day revisit (descending orbit 35), IW mode, VV+VH
@@ -303,11 +379,11 @@ D6: SLC bursts CDSE — availability estimate
 === D7: Cushing floating-roof tanks (registry check) ===
   Cushing in tank_registry: False
   Cushing references in codebase:
-scripts/research/auto_hypotheses.py:617:D7: Cushing floating-roof tank list + orbit catalog + EIA weekly CSV.
-scripts/research/auto_hypotheses.py:721:# ── D7: Cushing floating-roof tank list (code audit, no external calls) ───────
-scripts/research/auto_hypotheses.py:722:print("\n=== D7: Cushing floating-roof tanks (registry check) ===")
-scripts/research/auto_hypotheses.py:727:    # Check if Cushing is in registry
-scripts/research/auto_hypotheses.py:728:    cushing_in_registry = any(loc["id"] == 
+scripts/research/auto_hypotheses.py:698:D7: Cushing floating-roof tank list + orbit catalog + EIA weekly CSV.
+scripts/research/auto_hypotheses.py:802:# ── D7: Cushing floating-roof tank list (code audit, no external calls) ───────
+scripts/research/auto_hypotheses.py:803:print("\n=== D7: Cushing floating-roof tanks (registry check) ===")
+scripts/research/auto_hypotheses.py:808:    # Check if Cushing is in registry
+scripts/research/auto_hypotheses.py:809:    cushing_in_registry = any(loc["id"] == 
 D7: Cushing floating-roof tanks
 STATUS: NOT_RUN — no Cushing entry in tank_registry.py; no scripts reference Cushing.
 To execute:
@@ -319,7 +395,8 @@ This is a data collection task — no correlation calculations in code.
 
 
 === PREFLIGHT P2: CDSE auth ===
-  P2: CDSE_CLIENT_ID/CDSE_CLIENT_SECRET not set — CDSE hypotheses skipped
+  P2: CDSE auth OK token_length=1999
+P2 RESULT: OK token_length=1999
 
 === Kharg raw_observations audit ===
   raw_observations columns: ['id', 'date', 'tank_id', 'radius_m', 'diameter', 'h_max', 'db_mean', 'created_at']
@@ -338,63 +415,34 @@ This is a data collection task — no correlation calculations in code.
 2023-11-14      24.0       47
   Anomaly dates (n_tanks≠47): n=0
 
-=== H02b: DESC-35 only RT series ===
-  DESC-35 rows: 20790
-  DESC-35 unique dates: 315
-      date  n_tanks  db_mean_avg  db_mean_std
-2026-07-26       66     4.699888     4.905009
-2026-08-01       66     5.040527     4.978589
-2026-08-07       66     5.240876     4.963264
-2026-08-13       66     4.667318     5.057878
-2026-08-19       66     6.159979     5.636479
-2026-08-25       66     5.758880     4.974542
-2026-08-31       66     6.283817     4.990723
-2026-09-06       66     5.284877     5.049583
-2026-09-12       66     5.239103     4.871078
-2026-09-18       66     6.279807     5.725988
-  E-events (db_delta_6d >= 1.0 dB): n=36
-      date  n_tanks  db_mean_avg  db_delta_6d
-2017-12-27       66     6.821515     1.028067
-2018-04-14       66     5.912807     1.034129
-2018-06-01       66     6.327207     1.933658
-2018-06-25       66     6.014454     1.505572
-2018-09-29       66     5.475631     1.153181
-2018-11-16       66     5.181863     1.099869
-2019-03-04       66     6.045172     1.703975
-2019-05-03       66     6.000140     1.251773
-2019-09-24       66     6.172422     2.206102
-2019-10-30       66     5.150599     1.131106
-2019-12-17       66     7.316562     1.348150
-2020-01-10       66     8.892079     2.808804
-2020-04-03       66     6.623336     1.011095
-2020-08-25       66     7.193616     1.456276
-2020-11-29       66     6.769583     1.175526
-2021-02-09       66     6.635566     2.113184
-2021-03-05       66     6.465457     1.491342
-2021-10-19       66     6.390049     1.034989
-2022-01-11       66     7.605870     1.508307
-2023-03-31       66     6.723073     1.842770
-2023-11-26       66     6.379903     1.363046
-2024-02-18       66     6.229633     1.014839
-2024-04-18       66     6.931280     1.880796
-2024-06-05       66     6.018564     1.357892
-2024-07-23       66     6.021662     1.041026
-2024-12-14       66     6.268113     1.124521
-2025-04-13       66     6.133201     1.634038
-2025-07-30       66     6.321455     1.068371
-2025-09-10       66     5.687463     1.062826
-2025-10-10       66     6.158696     1.140594
-2025-12-03       66     6.080275     1.660371
-2026-03-09       66     6.551640     1.221662
-2026-06-14       66     5.575271     1.282387
-2026-07-02       66     6.864771     1.848504
-2026-08-19       66     6.159979     1.492662
-2026-09-18       66     6.279807     1.040704
-  E-events all-orbit series: n=85
-  Dates in all-orbit but NOT in DESC-35: n=255
-    first 10: ['2020-01-02', '2020-01-14', '2020-01-26', '2020-02-07', '2020-02-19', '2020-03-02', '2020-03-08', '2020-03-14', '2020-03-26', '2020-04-07']
+=== H02b: E1/E2/E3 events on DESC-35 + TVT RT ===
+  DESC-35 rows: 20790, unique dates: 315
+  DESC-35 candidate: 315 dates; written h02b_desc35_rt_candidate.csv
+  TVT RT daily: 563 rows, 2017-03-14 – 2026-10-18
 
-=== H05b: Volume delta on 2026-09-30 and 2026-10-06 ===
+  Placebo: n=449 4–12d steps outside events; p90_|Δvol|=2.052 Mn bbl
+
+  Event checks on TVT RT (actual vol_mn_bbl):
+  E1 (2026-03-02) Drone attack RT ops suspended: vol_pre=12.111, vol_post=14.352, Δ=+2.241 Mn bbl, expected=BUILD, sign_ok=True, |Δ|>p90=True (p90=2.052)
+  E2 (2026-04-15) Mid-shutdown plateau ~4 months: vol_pre=11.835, vol_post=12.648, Δ=+0.813 Mn bbl, expected=BUILD, sign_ok=True, |Δ|>p90=False (p90=2.052)
+  E3 (2026-06-27) Operations resume ~4 VLCC ~8 Mb: vol_pre=12.187, vol_post=10.921, Δ=-1.266 Mn bbl, expected=DRAWDOWN, sign_ok=True, |Δ|>p90=False (p90=2.052)
+
+  Event checks on DESC-35 series (db_mean proxy):
+  E1 (2026-03-02): db_pre=6.30 db_post=4.63 Δdb=-1.67 → implied=BUILD, expected=BUILD, sign_ok=True
+  E2 (2026-04-15): db_pre=5.07 db_post=6.12 Δdb=+1.05 → implied=DRAWDOWN, expected=BUILD, sign_ok=False
+  E3 (2026-06-27): db_pre=5.58 db_post=5.58 Δdb=+0.00 → implied=DRAWDOWN, expected=DRAWDOWN, sign_ok=True
+
+=== H05b: Orbit check 2026-09-28 + volume delta ===
+  Excluded-21 capacity share (approximate):
+  n_excl=21, n_total_rt=66, tank_count_fraction=31.8%
+  NOTE: exact vol_capacity share requires per-tank r_m and h_max from registry (read-only).
+
+  H05b orbit check 2026-09-28: n_tanks=66, orbit_dirs={'ASC': 66}, relative_orbits=[101.0]
+  WARNING: 2026-09-28 has ASC observations — deltas for 09-30/10-06 should be computed against last full-coverage DESC date, not 09-28
+
+  2026-09-28: vol=11.668 Mn bbl, n_tanks=66/66 (100.0%)
+    prev full date: 2026-09-24, vol=11.487, delta=0.181 Mn bbl
+    missing tanks: 0/66
 
   2026-09-30: vol=10.974 Mn bbl, n_tanks=45/66 (68.2%)
     prev full date: 2026-09-28, vol=11.668, delta=-0.694 Mn bbl
@@ -411,11 +459,11 @@ This is a data collection task — no correlation calculations in code.
   has backCoeff column: False
   SIGMA0_ELLIPSOID in ingest scripts:
 scripts/reingest_alfaw_v2.py:155:            }, "processing": {"backCoeff": "SIGMA0_ELLIPSOID", "orthorectify": True,
-scripts/research/auto_hypotheses.py:995:# ── H24 continuation: DB rows with SIGMA0_ELLIPSOID (item 8) ─────────────────
-scripts/research/auto_hypotheses.py:996:print("\n=== H24b: DB rows with SIGMA0_ELLIPSOID ===")
-scripts/research/auto_hypotheses.py:1012:        ["grep", "-rn", "--include=*.py", "SIGMA0_ELLIPSOID", "scripts/"],
-scripts/research/auto_hypotheses.py:1016:    print(f"  SIGMA0_ELLIPSOID in ingest scripts:\n{sigma_files if sigma_files else '  None'}")
-scripts/research/auto_hypotheses.py:1021:        ["grep", "-rn", "--include=*.py", "-A2", "SIGMA0_ELLIPSOID", "scripts/"],
+scripts/research/auto_hypotheses.py:1188:# ── H24 continuation: DB rows with SIGMA0_ELLIPSOID (item 8) ─────────────────
+scripts/research/auto_hypotheses.py:1189:print("\n=== H24b: DB rows with SIGMA0_ELLIPSOID ===")
+scripts/research/auto_hypotheses.py:1205:        ["grep", "-rn", "--include=*.py", "SIGMA0_ELLIPSOID", "scripts/"],
+scripts/research/auto_hypotheses.py:1209:    print(f"  SIGMA0_ELLIPSOID in ingest scripts:\n{sigma_files if sigma_files else '  None'}")
+scripts/research/auto_hypotheses.py:1214:        ["grep", "-rn", "--include=*.py", "-A2", "SIGMA0_ELLIPSOID", "scripts/"],
 scripts/stage_gate_abc.py:137:                    "backCoeff":    "SIGMA0_ELLIPSOID",
 scripts/panels_v2.py:147:            }, "processing": {"backCoeff": "SIGMA0_ELLIPSOID", "orthorectify": True,
 scripts/jask_panels.py:278:                      "processing": {"backCoeff": "SIGMA0_ELLIPSOID", "orthorectify": True}}],
@@ -426,22 +474,22 @@ scripts/reingest_alfaw_v2.py:155:            }, "processing": {"backCoeff": "SIG
 scripts/reingest_alfaw_v2.py-156-                              "demInstance": "COPERNICUS_30"}}]
 scripts/reingest_alfaw_v2.py-157-        },
 --
-scripts/research/auto_hypotheses.py:995:# ── H24 continuation: DB rows with SIGMA0_ELLIPSOID (item 8) ─────────────────
-scripts/research/auto_hypotheses.py:996:print("\n=== H24b: DB rows with SIGMA0_ELLIPSOID ===")
-scripts/research/auto_hypotheses.py-997-h24b_dir = OUT_ROOT / "H24b"
-scripts/research/auto_hypotheses.py-998-h24b_dir.mkdir(exist_ok=True)
+scripts/research/auto_hypotheses.py:1188:# ── H24 continuation: DB rows with SIGMA0_ELLIPSOID (item 8) ─────────────────
+scripts/research/auto_hypotheses.py:1189:print("\n=== H24b: DB rows with SIGMA0_ELLIPSOID ===")
+scripts/research/auto_hypotheses.py-1190-h24b_dir = OUT_ROOT / "H24b"
+scripts/research/auto_hypotheses.py-1191-h24b_dir.mkdir(exist_ok=True)
 --
-scripts/research/auto_hypotheses.py:1012:        ["grep", "-rn", "--include=*.py", "SIGMA0_ELLIPSOID", "scripts/"],
-scripts/research/auto_hypotheses.py-1013-        capture_output=True, text=True, cwd=str(REPO_ROOT)
-scripts/research/auto_hypotheses.py-1014-    )
+scripts/research/auto_hypotheses.py:1205:        ["grep", "-rn", "--include=*.py", "SIGMA0_ELLIPSOID", "scripts/"],
+scripts/research/auto_hypotheses.py-1206-        capture_output=True, text=True, cwd=str(REPO_ROOT)
+scripts/research/auto_hypotheses.py-1207-    )
 --
-scripts/research/auto_hypotheses.py:1016:    print(f"  SIGMA0_ELLIPSOID in ingest scripts:\n{sigma_files if sigma_files else '  None'}")
-scripts/research/auto_hypotheses.py-1017-
-scripts/research/auto_hypotheses.py-1018-    # Which terminals / date ranges used SIGMA0 path?
+scripts/research/auto_hypotheses.py:1209:    print(f"  SIGMA0_ELLIPSOID in ingest scripts:\n{sigma_files if sigma_files else '  None'}")
+scripts/research/auto_hypotheses.py-1210-
+scripts/research/auto_hypotheses.py-1211-    # Which terminals / date ranges used SIGMA0 path?
 --
-scripts/research/auto_hypotheses.py:1021:        ["grep", "-rn", "--include=*.py", "-A2", "SIGMA0_ELLIPSOID", "scripts/"],
-scripts/research/auto_hypotheses.py-1022-        capture_output=True, text=True, cwd=str(REPO_ROOT)
-scripts/research/auto_hypotheses.py-1023-    )
+scripts/research/auto_hypotheses.py:1214:        ["grep", "-rn", "--include=*.py", "-A2", "SIGMA0_ELLIPSOID", "scripts/"],
+scripts/research/auto_hypotheses.py-1215-        capture_output=True, text=True, cwd=str(REPO_ROOT)
+scripts/research/auto_hypotheses.py-1216-    )
 --
 scripts/stage_gate_abc.py:137:                    "backCoeff":    "SIGMA0_ELLIPSOID",
 scripts/stage_gate_abc.py-138-                    "orthorectify": True,
@@ -451,7 +499,7 @@ scripts/panels_v2.py:147:            }, "processing": {"backCoeff": "SIGMA0_ELLI
 scripts/panels_v2.py-148-                              "demInstance": "COPERNICUS_30"}}]
 scripts/panels_v2.py-149-        },
 --
-scripts/jask_panels.py:278:                      "processing": {"backCoeff": "SIGMA0
+scripts/jask_panels.py:278:                      "processing": {"backCoeff": "SI
 
 H24b: terminal_observations has no backCoeff column → SIGMA0 label not queryable from DB; source of truth is ingest script parameters at run time
 
@@ -472,22 +520,101 @@ H24b: terminal_observations has no backCoeff column → SIGMA0 label not queryab
 2026-10-07        1
 2026-10-13        1
 
-  Ingest commits Sep–Oct 2026:
-ae26524 stage4: whitelist rollout — registry enabled flags + ingest/compute filter + QA scripts
+  Scanning for rt_65 / DESC-137 / single-tank ingest source...
+
+  Relevant ingest commits Aug–Oct 2026:
+5e01edf fix(checks+secrets): C04/C05/C11/C12/C14 rework + C06b new + remove hardcoded credentials
+3e10f3d security: remove all hardcoded credentials from codebase
 3e75605 feat: Stage 1 prod fixes — v2 geometry, orbit dataFilter, DB_FLOOR, calibration freeze
+fb870aa patch shadow→dihedral comments in sar_fetch.py and config.py
 57ae808 Ras Tanura: ingest fix + full history rebuild + external validation
-f0d3c11 fix: ras_tanura partial-coverage filter + compute workflow + JSON export
 4ef88c9 Support ascending orbit for Yanbu + parameterise LOS azimuth; add db_mean fix script
 437d73d Fix terminal max_capacity and add db_mean floor clipping
-9d4eefe Unify pipeline: ingest.py handles all terminals, terminals.yml calls ingest.py
-f0c0331 feat: group Telegram SUCCESS message by country with flag emojis
-109bde4 feat: per-terminal new-dates breakdown in Telegram SUCCESS message
+7f5b0bf fix: limit terminal catalog lookback to 1yr (or since last known date)
+082e932 Add Zirku Island terminal (UAE): 10 tanks (10×r50); 364 tanks total
+a162d88 Add Das Island terminal (UAE): 15 tanks (1×r50, 14×r35); 354 tanks total
+3231ebe Add Ruwais terminal (UAE): 40 tanks (29×r35, 11×r30); 339 tanks total
+f621e4a fix: ship_backfill git pull --rebase before push; update Fujairah to 22 tanks (8×r55, 4×r35, 10×r30)
+576649b feat: add Ras Tanura (SA), Fujairah (UAE), Mina Al Ahmadi (KW) — 54 tanks
+6a6ab97 feat: add Ras Laffan terminal (QA) — 34 tanks (6×r45, 10×r40, 3×r35, 15×r30)
+9f0cf00 Fix SAR scene dedup: use relative_orbit_number instead of 12h window
+0282d75 Process all terminals in SAR pipeline, not only Iranian
+5ffa78a Consolidate tank/terminal data into locations.py reading from data/locations.json
+17bb6d5 merge: add Iran terminal dropdown + integrate terminals into main pipeline
+3cc42a1 feat: merge Iranian termina
 
+  Pattern 'DESC-137':
+scripts/research/auto_hypotheses.py:1278:    # Key clue from sar_fetch.py:224: "rt_65 / DESC-137 contamination mechanism"
+scripts/research/auto_hypotheses.py:1281:    print("\n  Scanning for rt_65 / DESC-137 / single-tank ingest source...")
+scripts/research/auto_hypotheses.py:1292:    # Check which scripts reference DESC-137 or orbit 137
+scripts/research/auto_hypotheses.py:1293:    for _pat in ["DESC-137", "orbit.*137", "137.*orbit", "single.tank", "rt_65.*DESC", "backfill_ras_tanura"]:
+scripts/
+
+  Pattern 'orbit.*137':
+scripts/research/auto_hypotheses.py:1279:    # Key clue from verify_orbit_fix_3.py: "213 single-tank dates vs orbit 137 12-day cycle"
+scripts/research/auto_hypotheses.py:1292:    # Check which scripts reference DESC-137 or orbit 137
+scripts/research/auto_hypotheses.py:1293:    for _pat in ["DESC-137", "orbit.*137", "137.*orbit", "single.tank", "rt_65.*DESC", "backfill_ras_tanura"]:
+scripts/verify_orbit_fix_3.py:14:  3. 213 single-tank dates vs orbit 137 12-day cycle.
+scripts/verify_orbit_fix_3.p
+
+  Pattern '137.*orbit':
+scripts/research/auto_hypotheses.py:1292:    # Check which scripts reference DESC-137 or orbit 137
+scripts/research/auto_hypotheses.py:1293:    for _pat in ["DESC-137", "orbit.*137", "137.*orbit", "single.tank", "rt_65.*DESC", "backfill_ras_tanura"]:
+scripts/verify_orbit_fix_3.py:759:        # Orbit 137 is offset ~5-6 days from orbit 35
+scripts/verify_orbit_fix_3.py:778:        f"**Orbit 137 offset from orbit 35**: 4–7 days within 12-day cycle\n",
+scripts/diag_juwaymah_yanbu_3.py:592:           
+
+  Pattern 'single.tank':
+scripts/research/auto_hypotheses.py:1279:    # Key clue from verify_orbit_fix_3.py: "213 single-tank dates vs orbit 137 12-day cycle"
+scripts/research/auto_hypotheses.py:1280:    # Key clue from backfill_ras_tanura.py: tracks single_tank dates
+scripts/research/auto_hypotheses.py:1281:    print("\n  Scanning for rt_65 / DESC-137 / single-tank ingest source...")
+scripts/research/auto_hypotheses.py:1293:    for _pat in ["DESC-137", "orbit.*137", "137.*orbit", "single.tank", "rt_65.*DESC", "backfill
+
+  Pattern 'rt_65.*DESC':
+scripts/research/auto_hypotheses.py:1278:    # Key clue from sar_fetch.py:224: "rt_65 / DESC-137 contamination mechanism"
+scripts/research/auto_hypotheses.py:1281:    print("\n  Scanning for rt_65 / DESC-137 / single-tank ingest source...")
+scripts/research/auto_hypotheses.py:1293:    for _pat in ["DESC-137", "orbit.*137", "137.*orbit", "single.tank", "rt_65.*DESC", "backfill_ras_tanura"]:
+scripts/sar_fetch.py:224:      illumination (the rt_65 / DESC-137 contamination mechanism).
+
+  Pattern 'backfill_ras_tanura':
+scripts/research/auto_hypotheses.py:1280:    # Key clue from backfill_ras_tanura.py: tracks single_tank dates
+scripts/research/auto_hypotheses.py:1286:         "scripts/backfill_ras_tanura.py", "scripts/verify_orbit_fix_3.py"],
+scripts/research/auto_hypotheses.py:1293:    for _pat in ["DESC-137", "orbit.*137", "137.*orbit", "single.tank", "rt_65.*DESC", "backfill_ras_tanura"]:
+scripts/backfill_saudi.py:4:Generalised version of backfill_ras_tanura.py. Supports ras_tanura, juwaymah,
+scripts/stage1
+
+  GHA workflows with ras_tanura/rt_65:
+.github/workflows/series_health_standard.yml:207:            --terminal ras_tanura --orbit 35 \
+.github/workflows/stage5_asc_backfill.yml:92:        run: ls -lh diagnostics/rt_decomp/backup_ras_tanura_*.csv 2>/dev/null || echo "No backup file found"
+.github/workflows/terminal_checks.yml:7:        description: "Terminal ID (yanbu / ras_tanura / jask / …)"
+.github/workflows/terminal_checks.yml:58:        if: contains('ras_tanura yanbu', github.event.inputs.terminal)
+.github/workflows/terminal_checks.yml:70:        if: github.event.inputs.terminal == 'ras_tanura'
+.github/workflows/diag_ras_tanura.yml:22:        run: python scripts/diagnose_ras_tanura_imagery.py
+.github/workflows/diag_ras_tanura.yml:32:          path: diagnostics/ras_tanura/
+.github/workflows/compute_export_yanbu.yml:57:          rt_path = f"{BASE}/terminals/ras_tanura_daily.json"
+.github/workflows/compute_export_yanbu.yml:62:              print("(b) RT: ras_tanura_daily.json not found (may use separate export)")
 
 === Security: RLS policies audit ===
   RLS in SQL files:
-  None found
-  pg_policies query FAILED: {'message': "Could not find the table 'public.pg_policies' in the schema cache", 'code': 'PGRST205', 'hint': "Perhaps you meant the table 'public.ais_positions'", 'details': None} → RLS likely not configured or not accessible via REST
+./scripts/research/rls_policy_draft.sql:1:-- RLS policy draft for OilRadar Supabase tables
+./scripts/research/rls_policy_draft.sql:9:-- Apply order: (1) enable RLS, (2) add policies, (3) verify with pg_policies
+./scripts/research/rls_policy_draft.sql:12:ALTER TABLE terminal_observations ENABLE ROW LEVEL SECURITY;
+./scripts/research/rls_policy_draft.sql:15:CREATE POLICY "anon_select_terminal_observations"
+./scripts/research/rls_policy_draft.sql:22:-- service_role bypasses RLS by default in Supabase; no explicit policy needed.
+./scripts/research/rls_policy_draft.sql:23:-- To restrict even service_role: ALTER TABLE terminal_observations FORCE ROW LEVEL SECURITY;
+./scripts/research/rls_policy_draft.sql:24:-- then add: CREATE POLICY "service_role_all" ON terminal_observations FOR ALL TO service_role USING (true);
+./scripts/research/rls_policy_draft.sql:27:ALTER TABLE terminal_volume_timeseries ENABLE ROW LEVEL SECURITY;
+./scripts/research/rls_policy_draft.sql:29:CREATE POLICY "anon_select_terminal_volume_timeseries"
+./scripts/research/rls_policy_draft.sql:36:ALTER TABLE raw_observations ENABLE ROW LEVEL SECURITY;
+./scripts/research/rls_policy_draft.sql:38:CREATE POLICY "anon_select_raw_observations"
+./scripts/research/rls_policy_draft.sql:45:ALTER TABLE volume_timeseries ENABLE ROW LEVEL SECURITY;
+./scripts/research/rls_policy_draft.sql:47:CREATE POLICY "anon_select_volume_timeseries"
+./scripts/research/rls_policy_draft.sql:54:ALTER TABLE kharg_daily ENABLE ROW LEVEL SECURITY;
+./scripts/research/rls_policy_draft.sql:56:CREATE POLICY "anon_select_kharg_daily"
+./scripts/research/rls_policy_draft.sql:63:ALTER TABLE kharg_signals ENABLE ROW LEVEL SECURITY;
+./scripts/research/rls_policy_draft.sql:65:CREATE POLICY "anon_select_kharg_signals"
+  SUPABASE_DB_PASSWORD not set — skipping psql RLS check
+  pg_policies REST FAILED: {'message': "Could not find the table 'public.pg_policies' in the schema cache", 'code': 'PGRST205', 'hint': "Perhaps you meant the table 'public.ais_positions'", 'details': None}
 
   Hardcoded publishable key occurrences: n=12
     ./product/dashboard.html:1180
@@ -495,7 +622,7 @@ f0c0331 feat: group Telegram SUCCESS message by country with flag emojis
     ./product/zh-dashboard.html:1796
     ./scripts/diag_closure.py:27
     ./scripts/research/auto_hypotheses.py:21
-    ./scripts/research/auto_hypotheses.py:1130
+    ./scripts/research/auto_hypotheses.py:1386
     ./scripts/terminal_checks.py:30
     ./scripts/diag_orbit_labels.py:23
     ./marketing/zh-monitor.html:187
@@ -503,9 +630,12 @@ f0c0331 feat: group Telegram SUCCESS message by country with flag emojis
     ./analysis/kharg_patterns/analyze_patterns.py:32
     ./calibration/calibrate_kharg.py:36
 
+  SQL RLS policy draft: /home/runner/work/kharg-dashboard/kharg-dashboard/scripts/research/rls_policy_draft.sql (NOT applied — draft only)
+  Draft exists: True
+
   Written: diagnostics/research/2026-10/SECURITY/security_rls_audit.txt
 
-=== H11: Duplicate (date, tank_id) check ===
+=== CC01: Duplicate (date, tank_id) check [was H11] ===
   al_flaw: rows=7656, dupes=0
   das_island: rows=3615, dupes=0
   de_kastri: rows=832, dupes=0
@@ -526,9 +656,9 @@ f0c0331 feat: group Telegram SUCCESS message by country with flag emojis
   yanbu: rows=3984, dupes=0
   zirku: rows=3010, dupes=0
 
-H11 VERDICT: NOT_CONFIRMED — total duplicate rows=0
+CC01 RESULT: total duplicate rows=0
 
-=== H12: db_mean outliers ===
+=== CC06: db_mean outliers [was H12] ===
   al_flaw: min=-20.35 max=8.05 q01=-14.50 q99=-0.98 n=7656
   das_island: min=-5.00 max=19.18 q01=-4.45 q99=15.31 n=3615
   de_kastri: min=-5.00 max=16.00 q01=-4.72 q99=11.88 n=832
@@ -549,13 +679,13 @@ H11 VERDICT: NOT_CONFIRMED — total duplicate rows=0
   yanbu: min=-4.73 max=23.73 q01=-2.94 q99=18.03 n=3984
   zirku: min=-5.00 max=24.79 q01=-1.95 q99=19.89 n=3010
 
-H12: outlier summary written for 19 terminals
+CC06: outlier summary written for 19 terminals
 
-=== H13: TVT sudden volume jumps ===
+=== CC02: TVT sudden volume jumps [was H13] ===
 
-H13 VERDICT: NOT_CONFIRMED — terminals with jumps=0
+CC02 RESULT: terminals with jumps=0
 
-=== H14: TVT completeness ===
+=== CC03: TVT completeness [was H14] ===
   al_flaw: obs_dates=319, tvt=319, missing=0
   das_island: obs_dates=301, tvt=301, missing=0
   de_kastri: obs_dates=416, tvt=416, missing=0
@@ -576,9 +706,9 @@ H13 VERDICT: NOT_CONFIRMED — terminals with jumps=0
   yanbu: obs_dates=332, tvt=332, missing=0
   zirku: obs_dates=301, tvt=301, missing=0
 
-H14 VERDICT: CONFIRMED — total obs dates not in TVT=318
+CC03 RESULT: total obs dates not in TVT=318
 
-=== H16: Persistently missing tanks ===
+=== CC04: Persistently missing tanks [was H16] ===
   al_flaw: total_dates=319, tanks_missing>50%=0
   das_island: total_dates=301, tanks_missing>50%=3
 tank_id  n_dates_present  pct_present
@@ -610,7 +740,7 @@ tank_id  n_dates_present  pct_present
   yanbu: total_dates=332, tanks_missing>50%=0
   zirku: total_dates=301, tanks_missing>50%=0
 
-=== H18: Pass interval regularity ===
+=== CC07: Pass interval regularity [was H18] ===
   al_flaw: passes=319, median_gap=12.0d, irregular=241
   das_island: passes=301, median_gap=12.0d, irregular=230
   de_kastri: passes=416, median_gap=7.0d, irregular=24
@@ -631,32 +761,145 @@ tank_id  n_dates_present  pct_present
   yanbu: passes=332, median_gap=12.0d, irregular=323
   zirku: passes=301, median_gap=12.0d, irregular=230
 
-=== H19: db_mean distribution shift pre/post 2026-09-07 ===
-  al_flaw: pre_mean=-4.724 post_mean=-3.862 delta=0.862
-  das_island: pre_mean=4.389 post_mean=4.727 delta=0.338
-  de_kastri: pre_mean=2.263 post_mean=1.406 delta=-0.857
-  fujairah: pre_mean=6.775 post_mean=5.414 delta=-1.361
-  halul: pre_mean=3.247 post_mean=6.752 delta=3.505
-  jask: pre_mean=6.002 post_mean=5.760 delta=-0.242
-  juwaymah: pre_mean=6.425 post_mean=7.733 delta=1.308
-  lavan: pre_mean=4.224 post_mean=3.924 delta=-0.300
-  mina_ahmadi: pre_mean=6.018 post_mean=4.940 delta=-1.078
-  novorossiysk: pre_mean=3.847 post_mean=-0.022 delta=-3.869
-  primorsk: pre_mean=2.378 post_mean=2.627 delta=0.250
-  ras_laffan: pre_mean=7.127 post_mean=7.079 delta=-0.048
-  ras_tanura: pre_mean=5.956 post_mean=6.253 delta=0.298
-  ruwais: pre_mean=7.171 post_mean=7.540 delta=0.369
-  sitra: pre_mean=5.984 post_mean=6.719 delta=0.735
-  yanbu: pre_mean=5.822 post_mean=7.450 delta=1.628
-  zirku: pre_mean=7.732 post_mean=8.376 delta=0.645
+=== CC05: db_mean distribution shift pre/post 2026-09-07 [was H19] ===
+  DEFINITION: pre=date<2026-09-07, post=date>=2026-09-07; delta_mean=post_mean-pre_mean per terminal
+  al_flaw: pre_mean=-4.724 (n=7448) post_mean=-3.862 (n=208) delta=0.862
+  das_island: pre_mean=4.389 (n=3528) post_mean=4.727 (n=87) delta=0.338
+  de_kastri: pre_mean=2.263 (n=818) post_mean=1.406 (n=14) delta=-0.857
+  fujairah: pre_mean=6.775 (n=6930) post_mean=5.414 (n=220) delta=-1.361
+  halul: pre_mean=3.247 (n=1220) post_mean=6.752 (n=74) delta=3.505
+  jask: pre_mean=6.002 (n=2100) post_mean=5.760 (n=120) delta=-0.242
+  juwaymah: pre_mean=6.425 (n=5947) post_mean=7.733 (n=93) delta=1.308
+  lavan: pre_mean=4.224 (n=7056) post_mean=3.924 (n=168) delta=-0.300
+  mina_ahmadi: pre_mean=6.018 (n=4326) post_mean=4.940 (n=98) delta=-1.078
+  novorossiysk: pre_mean=3.847 (n=15975) post_mean=-0.022 (n=210) delta=-3.869
+  primorsk: pre_mean=2.378 (n=16020) post_mean=2.627 (n=252) delta=0.250
+  ras_laffan: pre_mean=7.127 (n=10370) post_mean=7.079 (n=238) delta=-0.048
+  ras_tanura: pre_mean=5.956 (n=36432) post_mean=6.253 (n=649) delta=0.298
+  ruwais: pre_mean=7.171 (n=11640) post_mean=7.540 (n=280) delta=0.369
+  sitra: pre_mean=5.984 (n=7625) post_mean=6.719 (n=175) delta=0.735
+  yanbu: pre_mean=5.822 (n=3960) post_mean=7.450 (n=24) delta=1.628
+  zirku: pre_mean=7.732 (n=2940) post_mean=8.376 (n=70) delta=0.645
 
-H19: terminals with |delta_mean| > 1.0 dB: 6
+CC05 RESULT: terminals with |delta_mean| > 1.0 dB: 6
+  For these terminals, ingest path (backCoeff/script version) after 2026-09-07 must be audited.
+ terminal_id  pre_mean  post_mean  delta_mean  pre_n  post_n
+    fujairah     6.775      5.414      -1.361   6930     220
+       halul     3.247      6.752       3.505   1220      74
+    juwaymah     6.425      7.733       1.308   5947      93
+ mina_ahmadi     6.018      4.940      -1.078   4326      98
+novorossiysk     3.847     -0.022      -3.869  15975     210
+       yanbu     5.822      7.450       1.628   3960      24
 
-=== H20: Cross-terminal orbit synchrony ===
+=== CC08: Cross-terminal orbit synchrony [was H20] ===
   Dates in ≥2 terminals: 2116/2948 (71.8%)
 
+=== H11 (REAL): Per-tank IQR for WL tanks in 3–10 dB range ===
+  jask: n_tanks=20, pct_iqr_in_3_10=55.0%, median_iqr=3.97
+  ras_tanura: n_tanks=66, pct_iqr_in_3_10=77.3%, median_iqr=6.27
+  H11 yanbu: no DESCENDING rows; using all orbits
+  yanbu: n_tanks=12, pct_iqr_in_3_10=91.7%, median_iqr=6.97
+H11 jask: NOT_CONFIRMED — 55.0% tanks in 3–10 dB IQR, median_IQR=3.973
+H11 ras_tanura: CONFIRMED — 77.3% tanks in 3–10 dB IQR, median_IQR=6.266
+H11 yanbu: CONFIRMED — 91.7% tanks in 3–10 dB IQR, median_IQR=6.97
+
+=== H12 (REAL): alfaw_stuck7 vs live17 step_db (Mann-Whitney) ===
+  stuck7: n=7, median_step=0.010
+  live17: n=17,  median_step=0.005
+  Mann-Whitney U=91.5, p=0.9805 (alternative='stuck<live')
+H12 VERDICT: NOT_CONFIRMED — stuck7 median=0.010 vs live17=0.005, p=0.9805
+
+=== H13 (REAL): Annual dB offset stability std<1.5 dB per tank ===
+  ras_tanura: 66 tanks, pct_stable(std<1.5)=45.5%
+H13 ras_tanura VERDICT: NOT_CONFIRMED
+  yanbu: 12 tanks, pct_stable(std<1.5)=25.0%
+H13 yanbu VERDICT: NOT_CONFIRMED
+  kharg: 47 tanks, pct_stable=36.2%
+H13 kharg VERDICT: NOT_CONFIRMED
+
+=== H14 (REAL): Clip>15% tank variance share vs capacity share ===
+  ras_tanura: n_tanks=66, clip_heavy(>15%)=15, var_share=0.370, cap_share=0.227
+H14 ras_tanura VERDICT: NOT_CONFIRMED — var_share < cap_share = False
+  yanbu: n_tanks=12, clip_heavy(>15%)=3, var_share=0.295, cap_share=0.250
+H14 yanbu VERDICT: NOT_CONFIRMED — var_share < cap_share = False
+  kharg: n_tanks=47, clip_heavy=11, var_share=0.312, cap_share=0.234
+H14 kharg VERDICT: NOT_CONFIRMED
+
+=== H16 (REAL): Monthly median amplitude ≥1 dB, adjacent-year corr ≥0.5 ===
+  al_flaw: years=10, median_amplitude=0.87, n_years_amp>=1dB=4
+  al_flaw: adjacent-year pairs=9, median_r=-0.099, n_r>=0.5=0
+H16 al_flaw VERDICT: NOT_CONFIRMED
+  das_island: years=10, median_amplitude=3.18, n_years_amp>=1dB=10
+  das_island: adjacent-year pairs=9, median_r=-0.021, n_r>=0.5=0
+H16 das_island VERDICT: NOT_CONFIRMED
+  de_kastri: years=7, median_amplitude=4.16, n_years_amp>=1dB=7
+  de_kastri: adjacent-year pairs=6, median_r=0.369, n_r>=0.5=3
+H16 de_kastri VERDICT: NOT_CONFIRMED
+  fujairah: years=10, median_amplitude=3.92, n_years_amp>=1dB=10
+  fujairah: adjacent-year pairs=9, median_r=-0.234, n_r>=0.5=0
+H16 fujairah VERDICT: NOT_CONFIRMED
+  halul: years=10, median_amplitude=4.70, n_years_amp>=1dB=10
+  halul: adjacent-year pairs=9, median_r=-0.005, n_r>=0.5=1
+H16 halul VERDICT: NOT_CONFIRMED
+  jask: years=3, median_amplitude=2.05, n_years_amp>=1dB=3
+  jask: adjacent-year pairs=2, median_r=0.165, n_r>=0.5=0
+H16 jask VERDICT: NOT_CONFIRMED
+  juwaymah: years=10, median_amplitude=3.84, n_years_amp>=1dB=10
+  juwaymah: adjacent-year pairs=9, median_r=0.119, n_r>=0.5=0
+H16 juwaymah VERDICT: NOT_CONFIRMED
+  kozmino: years=2, median_amplitude=2.36, n_years_amp>=1dB=2
+  kozmino: adjacent-year pairs=1, median_r=-0.887, n_r>=0.5=0
+H16 kozmino VERDICT: NOT_CONFIRMED
+  lavan: years=10, median_amplitude=2.54, n_years_amp>=1dB=10
+  lavan: adjacent-year pairs=9, median_r=-0.047, n_r>=0.5=1
+H16 lavan VERDICT: NOT_CONFIRMED
+  mina_ahmadi: years=10, median_amplitude=2.76, n_years_amp>=1dB=10
+  mina_ahmadi: adjacent-year pairs=9, median_r=0.079, n_r>=0.5=0
+H16 mina_ahmadi VERDICT: NOT_CONFIRMED
+  novorossiysk: years=12, median_amplitude=2.77, n_years_amp>=1dB=12
+  novorossiysk: adjacent-year pairs=11, median_r=0.458, n_r>=0.5=5
+H16 novorossiysk VERDICT: NOT_CONFIRMED
+  primorsk: years=12, median_amplitude=1.85, n_years_amp>=1dB=11
+  primorsk: adjacent-year pairs=11, median_r=-0.032, n_r>=0.5=2
+H16 primorsk VERDICT: NOT_CONFIRMED
+  ras_laffan: years=10, median_amplitude=2.82, n_years_amp>=1dB=10
+  ras_laffan: adjacent-year pairs=9, median_r=0.240, n_r>=0.5=1
+H16 ras_laffan VERDICT: NOT_CONFIRMED
+  ras_tanura: years=10, median_amplitude=1.63, n_years_amp>=1dB=9
+  ras_tanura: adjacent-year pairs=9, median_r=-0.278, n_r>=0.5=0
+H16 ras_tanura VERDICT: NOT_CONFIRMED
+  ruwais: years=10, median_amplitude=2.52, n_years_amp>=1dB=10
+  ruwais: adjacent-year pairs=9, median_r=-0.224, n_r>=0.5=1
+H16 ruwais VERDICT: NOT_CONFIRMED
+  sitra: years=10, median_amplitude=1.94, n_years_amp>=1dB=10
+  sitra: adjacent-year pairs=9, median_r=-0.028, n_r>=0.5=1
+H16 sitra VERDICT: NOT_CONFIRMED
+  yanbu: years=11, median_amplitude=4.12, n_years_amp>=1dB=11
+  yanbu: adjacent-year pairs=9, median_r=0.190, n_r>=0.5=1
+H16 yanbu VERDICT: NOT_CONFIRMED
+  zirku: years=10, median_amplitude=3.96, n_years_amp>=1dB=10
+  zirku: adjacent-year pairs=9, median_r=0.015, n_r>=0.5=0
+H16 zirku VERDICT: NOT_CONFIRMED
+
+=== H18 (REAL): WL-45 health check on DESC-35-only series ===
+  WL-45 tanks present in DESC-35: 45/45 (100.0%)
+  WL-45 DESC-35 dates: 315
+  WL-45 cap_fraction=100.0% (gate>=60%), missing>50%=0
+H18 VERDICT: PASS — WL-45 on DESC-35: cap=100.0%, tanks_missing_50pct=0
+
+=== H19 (REAL): E1/E2/E3 on DESC-35 — sign and magnitude ===
+  NOTE: E1/E2/E3 results computed in H02b block above.
+  See: diagnostics/research/2026-10/H02b/h02b_e1e2e3_tvt.csv
+  DESC-35 db_mean proxy checks printed above in H02b section.
+
+=== H20 (REAL): Per-tank Kharg calibration p05/p95 → CSV ===
+  Kharg per-tank calibration: 47 tanks
+  Fill range proxy (p95-p05): min=7.30, median=12.45, max=18.27
+  Written: h20_kharg_per_tank_calibration.csv
+  NOTE: No UANI correlations per ТЗ rules.
+
 === D3: db_mean normalization audit ===
-  Normalization references: 666 lines
+  Normalization references: 712 lines
 scripts/series_health_standard.py:7:All metrics are dimensionless or normalized by the terminal's own dynamic_range_db
 scripts/series_health_standard.py:71:    rows = fetch_all("raw_observations", "date,tank_id,db_mean")
 scripts/series_health_standard.py:74:    df = df.dropna(subset=["db_mean"])
@@ -673,7 +916,7 @@ scripts/series_health_standard.py:154:    delta_p90_norm= float(deltas_raw.quant
 scripts/series_health_standard.py:155:    delta_p99_norm= float(deltas_raw.quantile(0.99)  / dr) if not np.
 
 === D4: Terminal volume computation audit ===
-  Volume computation references: 240 lines
+  Volume computation references: 247 lines
 scripts/diag_closure.py:54:    tvt = fetch_all("terminal_volume_timeseries", "date,vol_mn_bbl,aggregation,smoothed",
 scripts/reingest_alfaw_v2.py:39:BARREL_PER_M3 = 6.2898
 scripts/export_terminal_json.py:52:            .select("date,vol_mn_bbl")
@@ -682,14 +925,71 @@ scripts/export_terminal_json.py:80:            .select("date,vol_mn_bbl")
 scripts/export_terminal_json.py:93:        return pd.DataFrame(columns=["date", "vol_mn_bbl"])
 scripts/export_terminal_json.py:107:        "values": [round(v, 3) for v in df["vol_mn_bbl"].tolist()],
 scripts/export_terminal_json.py:143:    df2 = df.rename(columns={"vol_mn_bbl": tid})
-scripts/research/auto_hypotheses.py:170:    tvt_rt = fetch_all("terminal_volume_timeseries", "date,vol_mn_bbl,aggregation,smoothed",
-scripts/research/auto_hypotheses.py:278:# (these would be filtered by apply_coverage_filter at next compute run,
-scripts/research/auto_hypotheses.py:296:        tvt_rows = fetch_all("terminal_volume_timeseries", "date,vol_mn_bbl,aggregation",
-scripts/research/auto_hypotheses.py:357:    tvt_rt2 = fetch_all("terminal_volume_timeseries", "date,vol_mn_bbl,aggregation",
-scripts/research/auto_hypotheses.py:526:    tvt_yb = fetch_all("terminal_volume_timeseries", "date,vol_mn_bbl,aggregation",
-scripts/research/auto_hypotheses.py:589:coverage_filter would drop at next run, but TVT currently includes.
-scripts/research/auto_hypotheses.py:936:    tvt_rt3 = fetch_all("ter
+scripts/research/auto_hypotheses.py:190:    tvt_rt = fetch_all("terminal_volume_timeseries", "date,vol_mn_bbl,aggregation,smoothed",
+scripts/research/auto_hypotheses.py:298:# (these would be filtered by apply_coverage_filter at next compute run,
+scripts/research/auto_hypotheses.py:316:        tvt_rows = fetch_all("terminal_volume_timeseries", "date,vol_mn_bbl,aggregation",
+scripts/research/auto_hypotheses.py:377:    tvt_rt2 = fetch_all("terminal_volume_timeseries", "date,vol_mn_bbl,aggregation",
+scripts/research/auto_hypotheses.py:607:    tvt_yb = fetch_all("terminal_volume_timeseries", "date,vol_mn_bbl,aggregation",
+scripts/research/auto_hypotheses.py:670:coverage_filter would drop at next run, but TVT currently includes.
+scripts/research/auto_hypotheses.py:948:# Check: Δ vol_mn_bbl in win
 
-  CDSE block SKIPPED (P2 auth not available)
+=== CDSE block: H04/H08-H10/H15/H17/H21/H22 ===
+
+--- H04: Kharg S1 GRD catalog ---
+  Kharg scenes Aug–Oct 2026: n=50
+                                                                    name       date
+S1D_IW_GRDH_1SDV_20260801T023807_20260801T023832_003926_0071B0_25FB.SAFE 2026-08-01
+S1D_IW_GRDH_1SDV_20260801T023832_20260801T023857_003926_0071B0_9F97.SAFE 2026-08-01
+S1C_IW_GRDH_1SDV_20260804T144945_20260804T145016_008847_0118CC_0DC5.SAFE 2026-08-04
+S1D_IW_GRDH_1SDV_20260805T144146_20260805T144211_003992_007402_A278.SAFE 2026-08-05
+S1D_IW_GRDH_1SDV_20260806T024624_20260806T024649_003999_007444_342B.SAFE 2026-08-06
+S1C_IW_GRDH_1SDV_20260807T023802_20260807T023831_008883_0119F0_B30C.SAFE 2026-08-07
+S1D_IW_GRDH_1SDV_20260810T144958_20260810T145023_004065_007680_D0A7.SAFE 2026-08-10
+S1C_IW_GRDH_1SDV_20260811T144129_20260811T144154_008949_011C12_6040.SAFE 2026-08-11
+S1C_IW_GRDH_1SDV_20260811T144154_20260811T144219_008949_011C12_F648.SAFE 2026-08-11
+S1C_IW_GRDH_1SDV_20260812T024611_20260812T024640_008956_011C50_51D9.SAFE 2026-08-12
+S1D_IW_GRDH_1SDV_20260813T023807_20260813T023832_004101_0077C4_9CA2.SAFE 2026-08-13
+S1D_IW_GRDH_1SDV_20260813T023832_20260813T023857_004101_0077C4_28EF.SAFE 2026-08-13
+S1C_IW_GRDH_1SDV_20260816T144946_20260816T145017_009022_011E91_AEF9.SAFE 2026-08-16
+S1D_IW_GRDH_1SDV_20260817T144146_20260817T144211_004167_007A05_2E7F.SAFE 2026-08-17
+S1D_IW_GRDH_1SDV_20260818T024625_20260818T024650_004174_007A47_79A7.SAFE 2026-08-18
+S1C_IW_GRDH_1SDV_20260819T023802_20260819T023832_009058_011FAF_8FD4.SAFE 2026-08-19
+S1D_IW_GRDH_1SDV_20260822T144959_20260822T145024_004240_007C9A_824C.SAFE 2026-08-22
+S1C_IW_GRDH_1SDV_20260823T144130_20260823T144155_009124_0121D7_70E0.SAFE 2026-08-23
+S1C_IW_GRDH_1SDV_20260823T144155_20260823T144220_009124_0121D7_1EEE.SAFE 2026-08-23
+S1C_IW_GRDH_1SDV_20260824T024612_20260824T024641_009131_01221B_9939.SAFE 2026-08-24
+S1D_IW_GRDH_1SDV_20260825T023808_20260825T023833_004276_007DE2_FAB9.SAFE 2026-08-25
+S1D_IW_GRDH_1SDV_20260825T023833_20260825T023858_004276_007DE2_F3A3.SAFE 2026-08-25
+S1C_IW_GRDH_1SDV_20260828T144947_20260828T145018_009197_012460_DDB1.SAFE 2026-08-28
+S1D_IW_GRDH_1SDV_20260829T144147_20260829T144212_004342_008030_0AB4.SAFE 2026-08-29
+S1D_IW_GRDH_1SDV_20260830T024626_20260830T024651_004349_008072_08E6.SAFE 2026-08-30
+S1C_IW_GRDH_1SDV_20260831T023803_20260831T023832_009233_012589_476B.SAFE 2026-08-31
+S1D_IW_GRDH_1SDV_20260903T144959_20260903T145024_004415_0082C0_EFC6.SAFE 2026-09-03
+S1C_IW_GRDH_1SDV_20260904T144130_20260904T144155_009299_0127C0_BA17.SAFE 2026-09-04
+S1C_IW_GRDH_1SDV_20260904T144155_20260904T144220_009299_0127C0_EC67.SAFE 2026-09-04
+S1C_IW_GRDH_1SDV_20260905T024612_20260905T024641_009306_012806_D660.SAFE 2026-09-05
+S1D_IW_GRDH_1SDV_20260906T023808_20260906T023833_004451_0083FC_D081.SAFE 2026-09-06
+S1D_IW_GRDH_1SDV_20260906T023833_20260906T023858_004451_0083FC_B1C9.SAFE 2026-09-06
+S1C_IW_GRDH_1SDV_20260909T144947_20260909T145018_009372_012A45_C82B.SAFE 2026-09-09
+S1D_IW_GRDH_1SDV_20260910T144147_20260910T144212_004517_00864C_EB34.SAFE 2026-09-10
+S1D_IW_GRDH_1SDV_20260911T024626_20260911T024651_004524_00868E_4F4F.SAFE 2026-09-11
+S1C_IW_GRDH_1SDV_20260912T023803_20260912T023833_009408_012B66_A944.SAFE 2026-09-12
+S1D_IW_GRDH_1SDV_20260915T145000_20260915T145025_004590_0088C9_96FC.SAFE 2026-09-15
+S1C_IW_GRDH_1SDV_20260916T144130_20260916T144155_009474_012D86_B5DD.SAFE 2026-09-16
+S1C_IW_GRDH_1SDV_20260916T144155_20260916T144220_009474_012D86_2B31.SAFE 2026-09-16
+S1C_IW_GRDH_1SDV_20260917T024612_20260917T024642_009481_012DC8_0B7E.SAFE 2026-09-17
+S1D_IW_GRDH_1SDV_20260918T023809_20260918T023834_004626_008A06_1C99.SAFE 2026-09-18
+S1D_IW_GRDH_1SDV_20260918T023834_20260918T023859_004626_008A06_CD7D.SAFE 2026-09-18
+S1C_IW_GRDH_1SDV_20260921T144947_20260921T145018_009547_012FFE_FB8C.SAFE 2026-09-21
+S1D_IW_GRDH_1SDV_20260922T144148_20260922T144213_004692_008C4C_3761.SAFE 2026-09-22
+S1D_IW_GRDH_1SDV_20260923T024626_20260923T024651_004699_008C8E_AA4E.SAFE 2026-09-23
+S1C_IW_GRDH_1SDV_20260924T023804_20260924T023833_009583_013122_489F.SAFE 2026-09-24
+S1D_IW_GRDH_1SDV_20260927T145000_20260927T145025_004765_008ED3_C897.SAFE 2026-09-27
+S1C_IW_GRDH_1SDV_20260928T144131_20260928T144155_009649_01334E_0B23.SAFE 2026-09-28
+S1C_IW_GRDH_1SDV_20260928T144156_20260928T144221_009649_01334E_E5EA.SAFE 2026-09-28
+S1C_IW_GRDH_1SDV_20260929T024613_20260929T024642_009656_013390_25AA.SAFE 2026-09-29
+
+--- H08: RT S1 GRD catalog ---
+  RT scenes Aug–Oct 2026: n=50
 
 === Block A + B/C/D complete ===
