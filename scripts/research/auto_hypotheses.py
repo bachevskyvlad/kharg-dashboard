@@ -2551,47 +2551,69 @@ if CDSE_OK and cdse_token:
     _rt_scenes_aug = cdse_search_with_attrs(_RT_WKT, "2026-08-01", "2026-10-20", max_results=200)
     print(f"  RT CDSE scenes Aug–Oct 2026: n={len(_rt_scenes_aug)}")
 
-    # ── H08: All Yanbu dates × CDSE catalog → relOrbit/direction ──────────────
+    # ── H08: Yanbu DB observation dates × CDSE catalog → orbit per DB date ──────
+    # Per ТЗ v2: verdict by share of YANBU DB DATES on secondary orbit (not CDSE dates)
     print_hypothesis("H08")
-    print("\n--- H08: All Yanbu dates × CDSE catalog (per ТЗ v2) ---")
+    print("\n--- H08: Yanbu DB dates × CDSE catalog (per ТЗ v2) ---")
     h08_dir = OUT_ROOT / "H08"
     h08_dir.mkdir(exist_ok=True)
     _YNB_WKT = "POLYGON((37.9 23.9,38.6 23.9,38.6 24.4,37.9 24.4,37.9 23.9))"
-    # Fetch Yanbu scenes all-time (from 2017 to now)
+    # Step 1: Fetch all Yanbu DB observation dates
+    _ynb_obs_all = fetch_all("terminal_observations", "date", {"terminal_id": "yanbu"})
+    _ynb_db_dates = sorted({r["date"][:10] for r in _ynb_obs_all if r.get("date")})
+    print(f"  Yanbu DB observation dates: n={len(_ynb_db_dates)}")
+    # Step 2: Fetch Yanbu CDSE scenes all-time to build date→orbit lookup
     _ynb_scenes_all = cdse_search_with_attrs(_YNB_WKT, "2017-01-01", "2026-10-20", max_results=500)
     print(f"  Yanbu CDSE scenes (all time): n={len(_ynb_scenes_all)}")
-    _h08_rows = []
+    _h08_cdse_rows = []
     for _s in _ynb_scenes_all:
         _sdate = _s.get("ContentDate", {}).get("Start", "")[:10]
         _sname = _s.get("Name", "")
         _orb_dir, _rel_orb = _extract_orbit_attrs(_s)
-        _h08_rows.append({"date": _sdate, "name": _sname,
-                           "orbitDirection": _orb_dir, "relativeOrbit": _rel_orb})
-    _df_h08 = pd.DataFrame(_h08_rows) if _h08_rows else pd.DataFrame(
+        _h08_cdse_rows.append({"date": _sdate, "name": _sname,
+                                "orbitDirection": _orb_dir, "relativeOrbit": _rel_orb})
+    _df_h08_cdse = pd.DataFrame(_h08_cdse_rows) if _h08_cdse_rows else pd.DataFrame(
         columns=["date","name","orbitDirection","relativeOrbit"])
-    _df_h08.to_csv(h08_dir / "h08_yanbu_all_scenes.csv", index=False)
-    # Orbit breakdown
-    _h08_orb = _df_h08.groupby(["orbitDirection","relativeOrbit"], dropna=False).agg(
-        n_dates=("date","nunique"), n_scenes=("name","count")
-    ).reset_index() if len(_df_h08) else pd.DataFrame()
-    print(f"  Yanbu orbit breakdown:")
+    _df_h08_cdse.to_csv(h08_dir / "h08_yanbu_all_cdse_scenes.csv", index=False)
+    # Step 3: For each DB date, find matching CDSE orbit (prefer unique match; multiple → list all)
+    _h08_db_rows = []
+    for _d in _ynb_db_dates:
+        _match = _df_h08_cdse[_df_h08_cdse["date"] == _d] if len(_df_h08_cdse) else pd.DataFrame()
+        if len(_match):
+            for _, _mr in _match.drop_duplicates(["orbitDirection","relativeOrbit"]).iterrows():
+                _h08_db_rows.append({"date": _d, "orbitDirection": _mr["orbitDirection"],
+                                     "relativeOrbit": _mr["relativeOrbit"]})
+        else:
+            _h08_db_rows.append({"date": _d, "orbitDirection": None, "relativeOrbit": None})
+    _df_h08_db = pd.DataFrame(_h08_db_rows) if _h08_db_rows else pd.DataFrame(
+        columns=["date","orbitDirection","relativeOrbit"])
+    _df_h08_db.to_csv(h08_dir / "h08_yanbu_db_dates_orbit.csv", index=False)
+    # Step 4: Table: orbit | n_dates_Yanbu | years
+    _h08_orb = _df_h08_db.dropna(subset=["orbitDirection"]).groupby(
+        ["orbitDirection","relativeOrbit"], dropna=False
+    ).agg(
+        n_dates_yanbu=("date","nunique"),
+        years=("date", lambda x: ",".join(sorted({str(d[:4]) for d in x if d}))),
+    ).reset_index() if len(_df_h08_db) else pd.DataFrame()
+    print(f"\n  Yanbu DB dates per orbit (from CDSE match):")
     print(_h08_orb.to_string(index=False) if len(_h08_orb) else "  (no data)")
-    _h08_orb.to_csv(h08_dir / "h08_yanbu_orbit_breakdown.csv", index=False)
-    # Check: ≥2 orbits AND ≥20% dates on secondary orbit
-    _n_ynb_total_dates = _df_h08["date"].nunique() if len(_df_h08) else 0
-    _ynb_orb_counts = _df_h08.groupby(["orbitDirection","relativeOrbit"], dropna=False)["date"].nunique() \
-        if len(_df_h08) else pd.Series(dtype=int)
-    _n_ynb_orbit_tracks = len(_ynb_orb_counts)
+    _h08_orb.to_csv(h08_dir / "h08_yanbu_orbit_summary.csv", index=False)
+    # Step 5: Verdict by % of YANBU DB dates on secondary orbit
+    _n_ynb_db_total = len(_ynb_db_dates)
+    _n_matched = _df_h08_db["orbitDirection"].notna().sum()
+    _h08_orb_counts = _df_h08_db.dropna(subset=["orbitDirection"]).groupby(
+        ["orbitDirection","relativeOrbit"], dropna=False
+    )["date"].nunique() if len(_df_h08_db) else pd.Series(dtype=int)
+    _n_ynb_orbit_tracks = len(_h08_orb_counts)
     _secondary_pct = 0.0
-    if _n_ynb_orbit_tracks >= 2 and _n_ynb_total_dates > 0:
-        # Primary = most common orbit track; secondary = 2nd most
-        _ynb_orb_sorted = _ynb_orb_counts.sort_values(ascending=False)
+    if _n_ynb_orbit_tracks >= 2 and _n_ynb_db_total > 0:
+        _ynb_orb_sorted = _h08_orb_counts.sort_values(ascending=False)
         _secondary_n = _ynb_orb_sorted.iloc[1] if len(_ynb_orb_sorted) >= 2 else 0
-        _secondary_pct = _secondary_n / _n_ynb_total_dates * 100
+        _secondary_pct = _secondary_n / _n_ynb_db_total * 100
     _verdict_h08 = "SUPPORTED" if _n_ynb_orbit_tracks >= 2 and _secondary_pct >= 20 else "NOT_SUPPORTED"
-    print(f"\n  Yanbu: total_dates={_n_ynb_total_dates}, orbit_tracks={_n_ynb_orbit_tracks}, "
-          f"secondary_pct={_secondary_pct:.1f}%")
-    print(f"H08 VERDICT: {_verdict_h08} — tracks={_n_ynb_orbit_tracks}, secondary_pct={_secondary_pct:.1f}% (threshold ≥20%)")
+    print(f"\n  Yanbu: db_dates={_n_ynb_db_total}, matched={_n_matched}, orbit_tracks={_n_ynb_orbit_tracks}, "
+          f"secondary_pct={_secondary_pct:.1f}% (threshold ≥20%)")
+    print(f"H08 VERDICT: {_verdict_h08} — tracks={_n_ynb_orbit_tracks}, secondary_pct={_secondary_pct:.1f}% (YANBU DB dates)")
 
     # ── H09: Within one orbit per-tank range ≤12 dB; inter-orbit offset 3–7 dB ─
     print_hypothesis("H09")
@@ -2671,8 +2693,26 @@ if CDSE_OK and cdse_token:
     else:
         (h10_dir / "h10_status.txt").write_text("n_scenes=0\n")
     _n_2018 = len(_ynb_scenes_2018)
-    _verdict_h10 = "REFUTED" if _n_2018 < 5 else "NOT_REFUTED"
-    print(f"H10 VERDICT: {_verdict_h10} — n_scenes_2018={_n_2018} (<5 = REFUTED ingest gaps)")
+    # Per ТЗ v2: ≥5 CDSE 2018 scenes means satellite DID pass over Yanbu in 2018.
+    # Check if DB has Yanbu rows for 2018 — if CDSE has scenes but DB has none/few → SUPPORTED (ingest gap).
+    _ynb_obs_2018 = fetch_all("terminal_observations", "date",
+                               {"terminal_id": "yanbu"})
+    _ynb_db_2018_dates = [r["date"][:10] for r in _ynb_obs_2018
+                          if r.get("date") and r["date"][:4] == "2018"]
+    _n_db_2018 = len(set(_ynb_db_2018_dates))
+    print(f"  Yanbu DB dates in 2018: n={_n_db_2018}")
+    # SUPPORTED = CDSE has ≥5 scenes AND DB has 0 dates (confirmed ingest gap)
+    # NOT_SUPPORTED = CDSE has <5 scenes (no SAR coverage), or DB already has 2018 rows
+    if _n_2018 >= 5 and _n_db_2018 == 0:
+        _verdict_h10 = "SUPPORTED"
+        _h10_reason = f"CDSE={_n_2018} 2018 scenes but DB has 0 Yanbu 2018 dates → ingest gap confirmed"
+    elif _n_2018 >= 5 and _n_db_2018 > 0:
+        _verdict_h10 = "PARTIAL"
+        _h10_reason = f"CDSE={_n_2018} 2018 scenes; DB has {_n_db_2018} Yanbu 2018 dates → partial ingest"
+    else:
+        _verdict_h10 = "NOT_SUPPORTED"
+        _h10_reason = f"CDSE={_n_2018} 2018 scenes < 5 → no SAR coverage, no ingest gap expected"
+    print(f"H10 VERDICT: {_verdict_h10} — {_h10_reason}")
 
     # Keep _ynb_scenes for H22
     _ynb_scenes = _ynb_scenes_all
@@ -2789,8 +2829,12 @@ if CDSE_OK and cdse_token:
     h22_dir = OUT_ROOT / "H22"
     h22_dir.mkdir(exist_ok=True)
     try:
+        # Fetch Kharg CDSE scenes (2026-08-01..now) for synchrony check
+        _KHARG_WKT = "POLYGON((49.97 29.19,50.42 29.19,50.42 29.55,49.97 29.55,49.97 29.19))"
+        _kharg_scenes = cdse_search(_KHARG_WKT, "2026-08-01", "2026-10-20", max_results=50)
+        print(f"  Kharg CDSE scenes Aug–Oct 2026: n={len(_kharg_scenes)}")
         _cdse_dates = {
-            "kharg": set(s.get("ContentDate", {}).get("Start", "")[:10] for s in _scenes),
+            "kharg": set(s.get("ContentDate", {}).get("Start", "")[:10] for s in _kharg_scenes),
             "rt": set(s.get("ContentDate", {}).get("Start", "")[:10] for s in _rt_scenes),
             "yanbu": set(s.get("ContentDate", {}).get("Start", "")[:10] for s in _ynb_scenes),
             "jask": set(s.get("ContentDate", {}).get("Start", "")[:10] for s in _jsk_scenes),
