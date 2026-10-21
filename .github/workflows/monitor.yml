@@ -57,6 +57,7 @@ jobs:
         env:
           CLIENT_ID: ${{ secrets.CLIENT_ID }}
           CLIENT_SECRET: ${{ secrets.CLIENT_SECRET }}
+          KHARG_ONLY: "true"
       - name: Save ingest summary
         if: success()
         uses: actions/cache/save@v4

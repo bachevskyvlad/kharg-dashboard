@@ -116,6 +116,16 @@ if run_kharg:
 
 
 # ── Terminals ─────────────────────────────────────────────────────────────────
+# PHASE-0 GUARD: KHARG_ONLY=true disables all terminal writes until single-ingest
+# refactor is complete and validated. Set in monitor.yml env block.
+_KHARG_ONLY = os.environ.get("KHARG_ONLY", "false").lower() == "true"
+if _KHARG_ONLY:
+    print("[ingest] KHARG_ONLY=true — terminal writes DISABLED (phase-0 guard)")
+    with open("data/ingest_summary.json", "w") as f:
+        json.dump(summary, f)
+    print("\n[ingest] Done (kharg-only mode).")
+    sys.exit(0)
+
 for terminal in TERMINALS:
     tid   = terminal["id"]
     tanks = terminal["tanks"]
