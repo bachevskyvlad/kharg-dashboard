@@ -1460,15 +1460,16 @@ try:
         # gh api: list ALL workflow runs for Oct 10–21, all branches
         _gh_env_ok = bool(os.environ.get("GITHUB_TOKEN") or os.environ.get("GH_TOKEN"))
         print(f"  GH token available: {_gh_env_ok}")
+        # Use per_page=100 (no --paginate) with created filter to avoid timeout
         _gh_res = _gsp.run(
             ["gh", "api",
-             "/repos/bachevskyvlad/kharg-dashboard/actions/runs",
-             "--paginate",
+             "/repos/bachevskyvlad/kharg-dashboard/actions/runs"
+             "?per_page=100&created=>=2026-10-10",
              "-q", ".workflow_runs[] | {id: .id, name: .name, branch: .head_branch, "
                    "status: .status, conclusion: .conclusion, "
                    "run_started_at: .run_started_at, updated_at: .updated_at, "
                    "workflow_id: .workflow_id}"],
-            capture_output=True, text=True, timeout=60
+            capture_output=True, text=True, timeout=30
         )
         _gh_out = _gh_res.stdout.strip()
         _gh_err = _gh_res.stderr.strip()
@@ -2850,8 +2851,14 @@ if CDSE_OK and cdse_token:
         _df_h22 = pd.DataFrame(_sync_rows)
         _df_h22.to_csv(h22_dir / "h22_cdse_synchrony.csv", index=False)
         _n_multi = (_df_h22["n_terminals"] >= 2).sum() if len(_df_h22) else 0
-        print(f"  CDSE dates in >=2 terminals: {_n_multi}/{len(_df_h22)}")
-        print(_df_h22.head(20).to_string(index=False))
+        _n_total = len(_df_h22)
+        print(f"  CDSE dates in >=2 terminals: {_n_multi}/{_n_total} ({100*_n_multi/_n_total:.1f}%)" if _n_total else "  No dates found")
+        _df_multi = _df_h22[_df_h22["n_terminals"] >= 2].sort_values("date")
+        print(f"\n  Shared dates (n_terminals >= 2, showing all {len(_df_multi)}):")
+        print(_df_multi.to_string(index=False) if len(_df_multi) else "  (none)")
+        _pct_shared = 100 * _n_multi / _n_total if _n_total else 0
+        _verdict_h22 = "SUPPORTED" if _pct_shared >= 80 else ("PARTIAL" if _pct_shared >= 50 else "NOT_SUPPORTED")
+        print(f"\nH22 VERDICT: {_verdict_h22} — {_n_multi}/{_n_total} dates ({_pct_shared:.1f}%) in >=2 terminals")
     except Exception as _e22:
         print(f"  H22 FAILED: {_e22}")
 
@@ -2989,6 +2996,87 @@ _grep_backfill = _sp2.run(
     capture_output=True, text=True, cwd=str(REPO_ROOT)
 )
 print(f"  backfill_ras_tanura.py orbit_cfg:\n{_grep_backfill.stdout.strip()}\n")
+
+
+# ── 4.11: Rebuild Assessment — scene counts per terminal (working orbit, historical) ──
+# Per ТЗ VARIABLE_AUDIT: n scenes working orbit all-time, CDSE quota (PU/requests/month),
+# GHA time estimate, V0 cache volume. READ ONLY — no DB writes.
+print("\n=== 4.11: Rebuild Assessment (V0 scene counts per terminal) ===")
+_411_dir = OUT_ROOT / "4_11"
+_411_dir.mkdir(exist_ok=True)
+
+# Terminal configs: id, WKT bbox, working orbit direction, relOrbit (None=all), start date
+# Bbox WKTs: same as used above for CDSE queries + al_flaw added
+_411_TERMINALS = [
+    {"id": "kharg",     "wkt": "POLYGON((49.97 29.19,50.42 29.19,50.42 29.55,49.97 29.55,49.97 29.19))",
+     "orbit_dir": "DESCENDING", "rel_orbit": None,  "start": "2017-01-01",
+     "n_tanks": 47, "bbox_km2": 2.5,   "tiles": 1},
+    {"id": "ras_tanura","wkt": "POLYGON((50.0 26.5,50.6 26.5,50.6 27.2,50.0 27.2,50.0 26.5))",
+     "orbit_dir": "DESCENDING", "rel_orbit": 35,    "start": "2017-01-01",
+     "n_tanks": 66, "bbox_km2": 22.0,  "tiles": 2},
+    {"id": "yanbu",     "wkt": "POLYGON((37.9 23.9,38.6 23.9,38.6 24.4,37.9 24.4,37.9 23.9))",
+     "orbit_dir": "ASCENDING",  "rel_orbit": 14,    "start": "2017-01-01",
+     "n_tanks": 12, "bbox_km2": 3.0,   "tiles": 1},
+    {"id": "al_flaw",   "wkt": "POLYGON((48.3 29.85,48.6 29.85,48.6 30.1,48.3 30.1,48.3 29.85))",
+     "orbit_dir": "DESCENDING", "rel_orbit": None,  "start": "2017-01-01",
+     "n_tanks": 24, "bbox_km2": 4.0,   "tiles": 1},
+    {"id": "jask",      "wkt": "POLYGON((57.7 25.5,58.2 25.5,58.2 25.9,57.7 25.9,57.7 25.5))",
+     "orbit_dir": "DESCENDING", "rel_orbit": 93,    "start": "2017-01-01",
+     "n_tanks": 20, "bbox_km2": 2.5,   "tiles": 1},
+]
+
+# PU estimate: ~3 PU/scene for 1-tile bbox, ~6 PU/scene for 2-tile bbox (RT)
+# S1 CDSE: 30,000 PU/month free tier; 1 request = 1 scene fetch
+# GHA: ~5s/scene at 10m/px 1-tile; ~10s/scene for RT 2-tile
+_411_rows = []
+if CDSE_OK and cdse_token:
+    for _t411 in _411_TERMINALS:
+        try:
+            _t411_scenes = cdse_search_with_attrs(
+                _t411["wkt"], _t411["start"], "2026-10-21", max_results=2000
+            )
+            # Filter to working orbit direction
+            _t411_filtered = [s for s in _t411_scenes
+                               if s.get("orbitDirection", "").upper() == _t411["orbit_dir"].upper()
+                               and (_t411["rel_orbit"] is None
+                                    or s.get("relativeOrbit") == _t411["rel_orbit"]
+                                    or str(s.get("relativeOrbit", "")) == str(_t411["rel_orbit"]))]
+            _n_scenes = len(_t411_filtered)
+            _pu_per_scene = 6 if _t411["tiles"] == 2 else 3
+            _total_pu = _n_scenes * _pu_per_scene
+            _pu_per_month = _total_pu / max(1, (2026 - 2017) * 12)
+            _gha_hrs = _n_scenes * (10 if _t411["tiles"] == 2 else 5) / 3600
+            # V0 cache volume: 10m/px, 1-band float32; bbox_km² × (1000/10)² × 4 bytes
+            _px_side = int(_t411["bbox_km2"] ** 0.5 * 100)  # approx px per side at 10m
+            _mb_per_scene = (_px_side ** 2 * 4) / 1e6
+            _total_gb = _n_scenes * _mb_per_scene / 1000
+            print(f"  {_t411['id']:12s}: n_scenes={_n_scenes:4d} | PU_total={_total_pu:6d} "
+                  f"({_pu_per_month:.0f}/mo) | GHA={_gha_hrs:.1f}h | V0≈{_total_gb:.1f}GB "
+                  f"(orbit={_t411['orbit_dir'][:4]} relOrbit={_t411['rel_orbit']})")
+            _411_rows.append({
+                "terminal": _t411["id"],
+                "orbit_dir": _t411["orbit_dir"],
+                "rel_orbit": _t411["rel_orbit"],
+                "n_scenes_working_orbit": _n_scenes,
+                "pu_per_scene": _pu_per_scene,
+                "pu_total": _total_pu,
+                "pu_per_month_avg": round(_pu_per_month),
+                "gha_hours": round(_gha_hrs, 1),
+                "v0_cache_gb": round(_total_gb, 1),
+                "n_tanks": _t411["n_tanks"],
+            })
+        except Exception as _e411:
+            print(f"  {_t411['id']}: FAILED — {_e411}")
+    if _411_rows:
+        _df_411 = pd.DataFrame(_411_rows)
+        _df_411.to_csv(_411_dir / "4_11_rebuild_assessment.csv", index=False)
+        print(f"\n  4.11 TOTAL: PU={_df_411['pu_total'].sum():,} | GHA={_df_411['gha_hours'].sum():.1f}h "
+              f"| V0≈{_df_411['v0_cache_gb'].sum():.1f}GB")
+        print(f"  At free tier (30k PU/mo): {_df_411['pu_total'].sum()/30000:.1f} months to rebuild")
+        print("\n  Full table:")
+        print(_df_411.to_string(index=False))
+else:
+    print("  4.11 SKIPPED — CDSE auth not available")
 
 
 print("\n=== Block A + B/C/D complete ===")
