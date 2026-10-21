@@ -30,6 +30,8 @@ jobs:
         env:
           SUPABASE_URL: https://yoekhkczwdeyauwarsyy.supabase.co
           SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+          CDSE_CLIENT_ID: ${{ secrets.CDSE_CLIENT_ID }}
+          CDSE_CLIENT_SECRET: ${{ secrets.CDSE_CLIENT_SECRET }}
         run: |
           mkdir -p diagnostics/research/2026-10
           cd scripts
@@ -40,7 +42,7 @@ jobs:
         run: |
           git config user.email "actions@github.com"
           git config user.name "GitHub Actions"
-          git add -f diagnostics/research/ || true
+          git add -A diagnostics/research/ || true
           git diff --cached --quiet && echo "No changes" || \
             git commit -m "research: Block A + H24-H26 + D6-D7 results [skip ci]"
           for attempt in 1 2 3 4; do

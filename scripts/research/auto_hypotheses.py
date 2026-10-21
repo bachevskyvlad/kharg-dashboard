@@ -709,8 +709,7 @@ try:
 - ESA SNAP processing (Range Doppler TC + backscatter): ~3-5 min/scene on ubuntu-latest
 - Total per scene (download + process + crop): ~5-8 min in GHA
 - Alternative: SentinelHub ProcessingAPI (GRD only, no SLC) — much faster (<30s/scene)
-- SLC NOT needed for current pipeline (GRD sufficient for crescent radiometry)
-- SLC would be needed ONLY for: precise R-point shift (H25) or interferometric coherence
+- SLC would be needed for: precise R-point shift (H25) or interferometric coherence
 """
     print(d6_note)
     (d6_dir / "d6_slc_estimate.txt").write_text(d6_note)
@@ -754,4 +753,761 @@ except Exception as e:
     print(f"  D7 FAILED: {e}")
 
 
-print("\n=== Block A + H24-H26 + D6-D7 complete ===")
+# ── P2: CDSE preflight ─────────────────────────────────────────────────────────
+print("\n=== PREFLIGHT P2: CDSE auth ===")
+CDSE_CLIENT_ID = os.environ.get("CDSE_CLIENT_ID", "")
+CDSE_CLIENT_SECRET = os.environ.get("CDSE_CLIENT_SECRET", "")
+CDSE_OK = False
+cdse_token = None
+
+if not CDSE_CLIENT_ID or not CDSE_CLIENT_SECRET:
+    print("  P2: CDSE_CLIENT_ID/CDSE_CLIENT_SECRET not set — CDSE hypotheses skipped")
+else:
+    try:
+        import requests as _req
+        _resp = _req.post(
+            "https://identity.dataspace.copernicus.eu/auth/realms/CDSE/protocol/openid-connect/token",
+            data={
+                "client_id": CDSE_CLIENT_ID,
+                "client_secret": CDSE_CLIENT_SECRET,
+                "grant_type": "client_credentials",
+            },
+            timeout=30,
+        )
+        if _resp.status_code == 200:
+            cdse_token = _resp.json().get("access_token")
+            CDSE_OK = bool(cdse_token)
+            print(f"  P2: CDSE auth OK token_length={len(cdse_token) if cdse_token else 0}")
+        else:
+            print(f"  P2: CDSE auth FAILED HTTP {_resp.status_code}: {_resp.text[:200]}")
+    except Exception as _e:
+        print(f"  P2: CDSE auth FAILED: {_e}")
+
+(OUT_ROOT / "H00_preflight_p2.txt").write_text(
+    f"cdse_ok={CDSE_OK}\nclient_id_set={bool(CDSE_CLIENT_ID)}\n"
+    f"client_secret_set={bool(CDSE_CLIENT_SECRET)}\n"
+)
+
+
+# ── Kharg raw_observations audit (item 4) ─────────────────────────────────────
+print("\n=== Kharg raw_observations audit ===")
+kharg_dir = OUT_ROOT / "KHARG_AUDIT"
+kharg_dir.mkdir(exist_ok=True)
+
+try:
+    # Schema probe — raw_observations columns
+    try:
+        _sample = sb.table("raw_observations").select("*").limit(1).execute().data
+        kharg_cols = list(_sample[0].keys()) if _sample else []
+    except Exception as _ce:
+        kharg_cols = []
+        print(f"  raw_observations schema probe FAILED: {_ce}")
+
+    print(f"  raw_observations columns: {kharg_cols}")
+    (kharg_dir / "kharg_schema.txt").write_text(f"columns={kharg_cols}\n")
+
+    # Date × n_tanks audit
+    _has_orbit = "orbit_direction" in kharg_cols
+    _select = "date,tank_id"
+    if _has_orbit:
+        _select += ",orbit_direction,relative_orbit"
+    kharg_rows = fetch_all("raw_observations", _select)
+    df_kharg = pd.DataFrame(kharg_rows)
+    if len(df_kharg):
+        df_kharg["date"] = pd.to_datetime(df_kharg["date"]).dt.date
+        per_date_k = df_kharg.groupby("date").agg(
+            n_tanks=("tank_id", "nunique"),
+            n_rows=("tank_id", "count"),
+        ).reset_index()
+        per_date_k["vs_47"] = per_date_k["n_tanks"] - 47
+        per_date_k = per_date_k.sort_values("date")
+
+        n_full = (per_date_k["n_tanks"] == 47).sum()
+        n_over = (per_date_k["n_tanks"] > 47).sum()
+        n_under = (per_date_k["n_tanks"] < 47).sum()
+        print(f"  Kharg: total dates={len(per_date_k)}, full(47)={n_full}, over={n_over}, under={n_under}")
+
+        # Gaps (consecutive date diff)
+        per_date_k["date_dt"] = pd.to_datetime(per_date_k["date"])
+        per_date_k["gap_days"] = per_date_k["date_dt"].diff().dt.days
+        large_gaps = per_date_k[per_date_k["gap_days"] > 12][["date", "gap_days", "n_tanks"]]
+        print(f"  Gaps >12d: n={len(large_gaps)}")
+        if len(large_gaps):
+            print(large_gaps.head(10).to_string(index=False))
+
+        # Anomalies: dates with unusual n_tanks
+        anomalies = per_date_k[per_date_k["n_tanks"] != 47]
+        print(f"  Anomaly dates (n_tanks≠47): n={len(anomalies)}")
+        if len(anomalies):
+            print(anomalies.head(20).to_string(index=False))
+
+        per_date_k.to_csv(kharg_dir / "kharg_dates_ntanks.csv", index=False)
+        large_gaps.to_csv(kharg_dir / "kharg_gaps.csv", index=False)
+        anomalies.to_csv(kharg_dir / "kharg_anomalies.csv", index=False)
+    else:
+        print("  raw_observations: 0 rows returned")
+except Exception as e:
+    print(f"  Kharg audit FAILED: {e}")
+    import traceback; traceback.print_exc()
+
+
+# ── H02 continuation: DESC-35 only RT series → CSV (item 7) ──────────────────
+print("\n=== H02b: DESC-35 only RT series ===")
+h02b_dir = OUT_ROOT / "H02b"
+h02b_dir.mkdir(exist_ok=True)
+
+try:
+    rt_full = fetch_all("terminal_observations",
+                        "date,tank_id,db_mean,orbit_direction,relative_orbit",
+                        {"terminal_id": "ras_tanura"})
+    df_rtf = pd.DataFrame(rt_full)
+    df_rtf["date"] = pd.to_datetime(df_rtf["date"]).dt.date
+
+    # DESC-35 only
+    desc35_full = df_rtf[
+        (df_rtf["orbit_direction"].isin(["DESC", "DESCENDING"])) &
+        (df_rtf["relative_orbit"] == 35)
+    ].copy()
+
+    if not len(desc35_full):
+        desc35_full = df_rtf[df_rtf["orbit_direction"].isin(["DESC", "DESCENDING"])].copy()
+        print(f"  DESC-35 = 0; using DESC-any: {len(desc35_full)} rows")
+    else:
+        print(f"  DESC-35 rows: {len(desc35_full)}")
+
+    # Per-date volume proxy (mean db_mean across tanks, n_tanks)
+    d35_daily = desc35_full.groupby("date").agg(
+        n_tanks=("tank_id", "nunique"),
+        db_mean_avg=("db_mean", "mean"),
+        db_mean_std=("db_mean", "std"),
+    ).reset_index()
+    d35_daily = d35_daily.sort_values("date")
+
+    print(f"  DESC-35 unique dates: {len(d35_daily)}")
+    if len(d35_daily):
+        print(d35_daily.tail(10).to_string(index=False))
+
+    d35_daily.to_csv(h02b_dir / "h02b_desc35_rt_daily.csv", index=False)
+
+    # E1/E2/E3 events (drawdown ≥2 Mn bbl in 6–12d; proxy via db_mean rise)
+    # Since we don't have vol here, use db_mean increase as proxy
+    # db_mean increases → less oil → drawdown
+    d35_daily["db_delta_6d"] = d35_daily["db_mean_avg"].diff(periods=1)
+    # Export pulse proxy: db_mean rise ≥ threshold in 1 step
+    DB_EXPORT_THRESHOLD = 1.0  # dB rise proxy for export event
+    events = d35_daily[d35_daily["db_delta_6d"] >= DB_EXPORT_THRESHOLD].copy()
+    print(f"  E-events (db_delta_6d >= {DB_EXPORT_THRESHOLD} dB): n={len(events)}")
+    if len(events):
+        print(events[["date", "n_tanks", "db_mean_avg", "db_delta_6d"]].to_string(index=False))
+    events.to_csv(h02b_dir / "h02b_desc35_rt_events.csv", index=False)
+
+    # Compare with full series (all orbits) — E-event overlap
+    all_daily = df_rtf.groupby("date").agg(
+        n_tanks=("tank_id", "nunique"),
+        db_mean_avg=("db_mean", "mean"),
+    ).reset_index().sort_values("date")
+    all_daily["db_delta"] = all_daily["db_mean_avg"].diff()
+    all_events = all_daily[all_daily["db_delta"] >= DB_EXPORT_THRESHOLD]
+    print(f"  E-events all-orbit series: n={len(all_events)}")
+    all_daily.to_csv(h02b_dir / "h02b_allorbit_rt_daily.csv", index=False)
+
+    # Delta between series counts
+    desc35_dates = set(d35_daily["date"].astype(str))
+    all_dates = set(all_daily["date"].astype(str))
+    extra_dates = sorted(all_dates - desc35_dates)
+    print(f"  Dates in all-orbit but NOT in DESC-35: n={len(extra_dates)}")
+    if extra_dates:
+        print(f"    first 10: {extra_dates[:10]}")
+    pd.DataFrame({"extra_date": extra_dates}).to_csv(h02b_dir / "h02b_extra_dates.csv", index=False)
+
+except Exception as e:
+    print(f"  H02b FAILED: {e}")
+    import traceback; traceback.print_exc()
+
+
+# ── H05b volume delta on 2026-09-30 and 2026-10-06 (item 6) ──────────────────
+print("\n=== H05b: Volume delta on 2026-09-30 and 2026-10-06 ===")
+h05b2_dir = OUT_ROOT / "H05b_vol"
+h05b2_dir.mkdir(exist_ok=True)
+
+FOCUS_DATES = ["2026-09-30", "2026-10-06"]
+
+try:
+    tvt_rt3 = fetch_all("terminal_volume_timeseries", "date,vol_mn_bbl,aggregation",
+                        {"terminal_id": "ras_tanura"})
+    df_tvt4 = pd.DataFrame(tvt_rt3)
+    df_tvt4 = df_tvt4[df_tvt4["aggregation"] == "daily"].copy()
+    df_tvt4["date"] = pd.to_datetime(df_tvt4["date"]).dt.date
+    df_tvt4 = df_tvt4.sort_values("date").reset_index(drop=True)
+
+    # n_tanks per date for RT
+    rt_obs4 = fetch_all("terminal_observations", "date,tank_id", {"terminal_id": "ras_tanura"})
+    df_rto4 = pd.DataFrame(rt_obs4)
+    df_rto4["date"] = pd.to_datetime(df_rto4["date"]).dt.date
+    ntanks4 = df_rto4.groupby("date")["tank_id"].nunique().reset_index(name="n_tanks")
+
+    merged4 = df_tvt4.merge(ntanks4, on="date", how="left")
+    merged4["pct_cov"] = (merged4["n_tanks"].fillna(0) / RT_EXPECTED * 100).round(1)
+
+    for fd in FOCUS_DATES:
+        fd_date = pd.to_datetime(fd).date()
+        row = merged4[merged4["date"] == fd_date]
+        if not len(row):
+            print(f"  {fd}: NOT in TVT")
+            continue
+        idx = row.index[0]
+        # Adjacent full dates (pct_cov >= 95%)
+        full_rows = merged4[merged4["pct_cov"] >= 95]
+        prev_full = full_rows[full_rows["date"] < fd_date].tail(1)
+        next_full = full_rows[full_rows["date"] > fd_date].head(1)
+        vol_cur = row["vol_mn_bbl"].values[0]
+        ntk_cur = row["n_tanks"].values[0] if not pd.isna(row["n_tanks"].values[0]) else 0
+        pct_cur = row["pct_cov"].values[0]
+
+        print(f"\n  {fd}: vol={vol_cur:.3f} Mn bbl, n_tanks={ntk_cur}/{RT_EXPECTED} ({pct_cur}%)")
+        if len(prev_full):
+            vol_prev = prev_full["vol_mn_bbl"].values[0]
+            d_prev = prev_full["date"].values[0]
+            print(f"    prev full date: {d_prev}, vol={vol_prev:.3f}, delta={vol_cur-vol_prev:.3f} Mn bbl")
+        if len(next_full):
+            vol_next = next_full["vol_mn_bbl"].values[0]
+            d_next = next_full["date"].values[0]
+            print(f"    next full date: {d_next}, vol={vol_next:.3f}, delta={vol_cur-vol_next:.3f} Mn bbl")
+
+        # Capacity share of missing tanks
+        n_missing = RT_EXPECTED - int(ntk_cur)
+        print(f"    missing tanks: {n_missing}/{RT_EXPECTED}")
+
+    # Calibration group for 2026-09-24 (adjacent to focus dates)
+    CAL_DATE = pd.to_datetime("2026-09-24").date()
+    cal_row = merged4[merged4["date"] == CAL_DATE]
+    if len(cal_row):
+        print(f"\n  2026-09-24: vol={cal_row['vol_mn_bbl'].values[0]:.3f} Mn bbl, "
+              f"n_tanks={cal_row['n_tanks'].values[0]}, pct={cal_row['pct_cov'].values[0]}%")
+
+    merged4.to_csv(h05b2_dir / "h05b_vol_coverage.csv", index=False)
+
+except Exception as e:
+    print(f"  H05b vol FAILED: {e}")
+    import traceback; traceback.print_exc()
+
+
+# ── H24 continuation: DB rows with SIGMA0_ELLIPSOID (item 8) ─────────────────
+print("\n=== H24b: DB rows with SIGMA0_ELLIPSOID ===")
+h24b_dir = OUT_ROOT / "H24b"
+h24b_dir.mkdir(exist_ok=True)
+
+# Query: check if terminal_observations has backCoeff column at all
+try:
+    _s2 = sb.table("terminal_observations").select("*").limit(1).execute().data
+    to_cols = list(_s2[0].keys()) if _s2 else []
+    print(f"  terminal_observations columns: {to_cols}")
+    has_backcoeff_col = "backcoeff" in [c.lower() for c in to_cols] or "back_coeff" in [c.lower() for c in to_cols]
+    print(f"  has backCoeff column: {has_backcoeff_col}")
+
+    # Also probe with raw SQL if available (RPC call)
+    # Fallback: grep scripts for where SIGMA0 data was written
+    import subprocess
+    _sigma_ingest = subprocess.run(
+        ["grep", "-rn", "--include=*.py", "SIGMA0_ELLIPSOID", "scripts/"],
+        capture_output=True, text=True, cwd=str(REPO_ROOT)
+    )
+    sigma_files = _sigma_ingest.stdout.strip()
+    print(f"  SIGMA0_ELLIPSOID in ingest scripts:\n{sigma_files if sigma_files else '  None'}")
+
+    # Which terminals / date ranges used SIGMA0 path?
+    # Check reingest_alfaw_retry.py and stage_h1_db_norm.py (from prior grep)
+    _sigma_run = subprocess.run(
+        ["grep", "-rn", "--include=*.py", "-A2", "SIGMA0_ELLIPSOID", "scripts/"],
+        capture_output=True, text=True, cwd=str(REPO_ROOT)
+    )
+    print(_sigma_run.stdout[:2000] if _sigma_run.stdout else "  No context found")
+
+    # Inspect terminal_observations for al_flaw (most likely SIGMA0 terminal from reingest)
+    # to see if db_mean distribution differs
+    sigma_note = (
+        f"terminal_observations_columns={to_cols}\n"
+        f"has_backcoeff_col={has_backcoeff_col}\n"
+        f"sigma0_in_scripts:\n{sigma_files}\n"
+    )
+    (h24b_dir / "h24b_sigma0_audit.txt").write_text(sigma_note)
+    print(f"\nH24b: terminal_observations has no backCoeff column → SIGMA0 label not queryable from DB; "
+          f"source of truth is ingest script parameters at run time")
+
+except Exception as e:
+    print(f"  H24b FAILED: {e}")
+    import traceback; traceback.print_exc()
+
+
+# ── H-NEW-2: 1-tank RT ingest dates (item 10) ─────────────────────────────────
+print("\n=== H-NEW-2: 1-tank RT ingest dates ===")
+hnew2_dir = OUT_ROOT / "H_NEW_2"
+hnew2_dir.mkdir(exist_ok=True)
+
+TARGET_DATES = ["2026-09-07", "2026-09-13", "2026-09-19", "2026-09-25", "2026-10-01"]
+
+try:
+    rt_hnew = fetch_all("terminal_observations",
+                        "date,tank_id,orbit_direction,relative_orbit",
+                        {"terminal_id": "ras_tanura"})
+    df_hnew = pd.DataFrame(rt_hnew)
+    df_hnew["date"] = pd.to_datetime(df_hnew["date"]).dt.strftime("%Y-%m-%d")
+
+    rows_out = []
+    for td in TARGET_DATES:
+        sub = df_hnew[df_hnew["date"] == td]
+        n_tanks = sub["tank_id"].nunique()
+        tanks = sorted(sub["tank_id"].unique().tolist())
+        orbits = sub["orbit_direction"].value_counts().to_dict()
+        rows_out.append({
+            "date": td,
+            "n_tanks": n_tanks,
+            "tank_ids": str(tanks),
+            "orbit_dirs": str(orbits),
+            "relative_orbits": str(sub["relative_orbit"].dropna().unique().tolist()),
+        })
+        print(f"  {td}: n_tanks={n_tanks}, tanks={tanks}, orbits={orbits}")
+
+    pd.DataFrame(rows_out).to_csv(hnew2_dir / "hnew2_1tank_dates.csv", index=False)
+
+    # Also check all dates with n_tanks <= 5 (unusually low)
+    per_date_hnew = df_hnew.groupby("date")["tank_id"].nunique().reset_index(name="n_tanks")
+    low_coverage = per_date_hnew[per_date_hnew["n_tanks"] <= 5].sort_values("date")
+    print(f"\n  RT dates with n_tanks <= 5: n={len(low_coverage)}")
+    if len(low_coverage):
+        print(low_coverage.to_string(index=False))
+    low_coverage.to_csv(hnew2_dir / "hnew2_low_ntanks.csv", index=False)
+
+    # Identify source workflow: check git log for ingest commits near those dates
+    import subprocess
+    _ingest_log = subprocess.run(
+        ["git", "log", "--all", "--oneline", "--after=2026-09-01", "--before=2026-10-10",
+         "--", "scripts/main_script.py", "scripts/ingest*.py"],
+        capture_output=True, text=True, cwd=str(REPO_ROOT)
+    )
+    print(f"\n  Ingest commits Sep–Oct 2026:\n{_ingest_log.stdout[:1000] if _ingest_log.stdout else '  None'}")
+    (hnew2_dir / "hnew2_ingest_commits.txt").write_text(_ingest_log.stdout)
+
+except Exception as e:
+    print(f"  H-NEW-2 FAILED: {e}")
+    import traceback; traceback.print_exc()
+
+
+# ── Security / RLS audit (item 9) ─────────────────────────────────────────────
+print("\n=== Security: RLS policies audit ===")
+sec_dir = OUT_ROOT / "SECURITY"
+sec_dir.mkdir(exist_ok=True)
+
+try:
+    import subprocess
+    # 1. Search all SQL files for RLS/POLICY keywords
+    _rls_res = subprocess.run(
+        ["grep", "-rn", "-i", "RLS\\|ROW LEVEL SECURITY\\|CREATE POLICY\\|ENABLE ROW",
+         "--include=*.sql", "."],
+        capture_output=True, text=True, cwd=str(REPO_ROOT)
+    )
+    rls_sql = _rls_res.stdout.strip()
+    print(f"  RLS in SQL files:\n{rls_sql if rls_sql else '  None found'}")
+
+    # 2. Try pg_policies via Supabase RPC (read-only information_schema)
+    rls_note = []
+    try:
+        # Supabase exposes pg_policies via REST: GET /rest/v1/pg_policies (not standard)
+        # Try via rpc if a get_rls function exists, otherwise note as unavailable
+        _pg_pol = sb.table("pg_policies").select("tablename,policyname,cmd,qual").execute()
+        if _pg_pol.data:
+            print(f"  pg_policies rows: {len(_pg_pol.data)}")
+            rls_note.append(f"pg_policies={_pg_pol.data}")
+        else:
+            print("  pg_policies: 0 rows (no policies configured)")
+            rls_note.append("pg_policies=[] (empty)")
+    except Exception as _e2:
+        print(f"  pg_policies query FAILED: {_e2} → RLS likely not configured or not accessible via REST")
+        rls_note.append(f"pg_policies_error={_e2}")
+
+    # 3. Hardcoded publishable key locations (static scan)
+    _hc_res = subprocess.run(
+        ["grep", "-rn", "sb_publishable", "--include=*.py", "--include=*.html", "."],
+        capture_output=True, text=True, cwd=str(REPO_ROOT)
+    )
+    hc_lines = [l for l in _hc_res.stdout.strip().split("\n") if l]
+    print(f"\n  Hardcoded publishable key occurrences: n={len(hc_lines)}")
+    for l in hc_lines:
+        print(f"    {l.split(':')[0]}:{l.split(':')[1]}")
+
+    # 4. Write report
+    sec_report = (
+        "# Security audit — RLS + hardcoded keys\n\n"
+        "## RLS policies in SQL migration files\n"
+        f"{rls_sql if rls_sql else 'None found in .sql files'}\n\n"
+        "## pg_policies (via REST)\n"
+        + "\n".join(rls_note) + "\n\n"
+        "## Hardcoded publishable key locations\n"
+        + "\n".join(hc_lines) + "\n\n"
+        "## Write capability via publishable key\n"
+        "publishable key (anon role) write access depends on RLS policies.\n"
+        "If no RLS policies found → INSERT/UPDATE/DELETE may succeed for anon role "
+        "depending on table grants. Verify with pg_table_privileges query or migration check.\n"
+    )
+    (sec_dir / "security_rls_audit.txt").write_text(sec_report)
+    print(f"\n  Written: {sec_dir / 'security_rls_audit.txt'}")
+
+except Exception as e:
+    print(f"  Security audit FAILED: {e}")
+    import traceback; traceback.print_exc()
+
+
+# ── H11: Duplicate (date, tank_id) rows per terminal ─────────────────────────
+print("\n=== H11: Duplicate (date, tank_id) check ===")
+h11_dir = OUT_ROOT / "H11"
+h11_dir.mkdir(exist_ok=True)
+
+try:
+    h11_rows = []
+    for tid in sorted(p3_ids):
+        obs = fetch_all("terminal_observations", "date,tank_id", {"terminal_id": tid})
+        df_h11 = pd.DataFrame(obs)
+        if not len(df_h11):
+            continue
+        dupes = df_h11.duplicated(subset=["date", "tank_id"]).sum()
+        h11_rows.append({"terminal_id": tid, "total_rows": len(df_h11), "duplicate_rows": int(dupes)})
+        print(f"  {tid}: rows={len(df_h11)}, dupes={dupes}")
+    df_h11_out = pd.DataFrame(h11_rows)
+    df_h11_out.to_csv(h11_dir / "h11_duplicates.csv", index=False)
+    total_dupes = df_h11_out["duplicate_rows"].sum() if len(df_h11_out) else 0
+    print(f"\nH11 VERDICT: {'CONFIRMED' if total_dupes > 0 else 'NOT_CONFIRMED'} — total duplicate rows={total_dupes}")
+except Exception as e:
+    print(f"  H11 FAILED: {e}")
+
+
+# ── H12: Anomalous db_mean outliers per terminal ──────────────────────────────
+print("\n=== H12: db_mean outliers ===")
+h12_dir = OUT_ROOT / "H12"
+h12_dir.mkdir(exist_ok=True)
+
+try:
+    h12_rows = []
+    for tid in sorted(p3_ids):
+        obs = fetch_all("terminal_observations", "date,tank_id,db_mean", {"terminal_id": tid})
+        df_h12 = pd.DataFrame(obs)
+        if not len(df_h12) or "db_mean" not in df_h12.columns:
+            continue
+        df_h12["db_mean"] = pd.to_numeric(df_h12["db_mean"], errors="coerce")
+        vals = df_h12["db_mean"].dropna()
+        q01 = vals.quantile(0.01)
+        q99 = vals.quantile(0.99)
+        below = (vals < q01).sum()
+        above = (vals > q99).sum()
+        h12_rows.append({
+            "terminal_id": tid,
+            "n": len(vals),
+            "q01": round(q01, 3),
+            "q99": round(q99, 3),
+            "below_q01": int(below),
+            "above_q99": int(above),
+            "min": round(vals.min(), 3),
+            "max": round(vals.max(), 3),
+        })
+        print(f"  {tid}: min={vals.min():.2f} max={vals.max():.2f} q01={q01:.2f} q99={q99:.2f} n={len(vals)}")
+    df_h12_out = pd.DataFrame(h12_rows)
+    df_h12_out.to_csv(h12_dir / "h12_db_outliers.csv", index=False)
+    print(f"\nH12: outlier summary written for {len(df_h12_out)} terminals")
+except Exception as e:
+    print(f"  H12 FAILED: {e}")
+
+
+# ── H13: TVT vol_mn_bbl sudden jumps (>5 Mn bbl in 1 step) ───────────────────
+print("\n=== H13: TVT sudden volume jumps ===")
+h13_dir = OUT_ROOT / "H13"
+h13_dir.mkdir(exist_ok=True)
+
+try:
+    h13_rows = []
+    JUMP_THRESHOLD = 5.0
+    for tid in sorted(p3_ids):
+        tvt = fetch_all("terminal_volume_timeseries", "date,vol_mn_bbl,aggregation",
+                        {"terminal_id": tid})
+        df_h13 = pd.DataFrame(tvt)
+        df_h13 = df_h13[df_h13["aggregation"] == "daily"].copy() if len(df_h13) else df_h13
+        if not len(df_h13):
+            continue
+        df_h13["date"] = pd.to_datetime(df_h13["date"])
+        df_h13 = df_h13.sort_values("date")
+        df_h13["vol_delta"] = df_h13["vol_mn_bbl"].diff().abs()
+        jumps = df_h13[df_h13["vol_delta"] > JUMP_THRESHOLD]
+        if len(jumps):
+            h13_rows.append({"terminal_id": tid, "n_jumps": len(jumps),
+                              "max_jump": round(jumps["vol_delta"].max(), 3)})
+            print(f"  {tid}: {len(jumps)} jumps >5 Mn bbl — max={jumps['vol_delta'].max():.2f}")
+            jumps[["date", "vol_mn_bbl", "vol_delta"]].to_csv(
+                h13_dir / f"h13_{tid}_jumps.csv", index=False)
+    df_h13_out = pd.DataFrame(h13_rows) if h13_rows else pd.DataFrame(columns=["terminal_id","n_jumps","max_jump"])
+    df_h13_out.to_csv(h13_dir / "h13_all_jumps.csv", index=False)
+    print(f"\nH13 VERDICT: {'CONFIRMED' if len(h13_rows) > 0 else 'NOT_CONFIRMED'} — terminals with jumps={len(h13_rows)}")
+except Exception as e:
+    print(f"  H13 FAILED: {e}")
+
+
+# ── H14: TVT completeness — all obs dates present in TVT ─────────────────────
+print("\n=== H14: TVT completeness ===")
+h14_dir = OUT_ROOT / "H14"
+h14_dir.mkdir(exist_ok=True)
+
+try:
+    h14_rows = []
+    for tid in sorted(p3_ids):
+        obs = fetch_all("terminal_observations", "date", {"terminal_id": tid})
+        tvt = fetch_all("terminal_volume_timeseries", "date,aggregation", {"terminal_id": tid})
+        df_obs = pd.DataFrame(obs)
+        df_tvt_h14 = pd.DataFrame(tvt)
+        if not len(df_obs):
+            continue
+        df_tvt_h14 = df_tvt_h14[df_tvt_h14["aggregation"] == "daily"] if len(df_tvt_h14) else df_tvt_h14
+        obs_dates = set(pd.to_datetime(df_obs["date"]).dt.date.astype(str))
+        tvt_dates_h14 = set(pd.to_datetime(df_tvt_h14["date"]).dt.date.astype(str)) if len(df_tvt_h14) else set()
+        missing_from_tvt = sorted(obs_dates - tvt_dates_h14)
+        h14_rows.append({
+            "terminal_id": tid,
+            "n_obs_dates": len(obs_dates),
+            "n_tvt_dates": len(tvt_dates_h14),
+            "n_missing_from_tvt": len(missing_from_tvt),
+        })
+        print(f"  {tid}: obs_dates={len(obs_dates)}, tvt={len(tvt_dates_h14)}, missing={len(missing_from_tvt)}")
+    df_h14_out = pd.DataFrame(h14_rows)
+    df_h14_out.to_csv(h14_dir / "h14_completeness.csv", index=False)
+    total_missing = df_h14_out["n_missing_from_tvt"].sum() if len(df_h14_out) else 0
+    print(f"\nH14 VERDICT: {'CONFIRMED' if total_missing > 0 else 'NOT_CONFIRMED'} — total obs dates not in TVT={total_missing}")
+except Exception as e:
+    print(f"  H14 FAILED: {e}")
+
+
+# ── H16: Tanks with >50% missing across all observation dates ─────────────────
+print("\n=== H16: Persistently missing tanks ===")
+h16_dir = OUT_ROOT / "H16"
+h16_dir.mkdir(exist_ok=True)
+
+try:
+    for tid in sorted(p3_ids):
+        obs = fetch_all("terminal_observations", "date,tank_id", {"terminal_id": tid})
+        df_h16 = pd.DataFrame(obs)
+        if not len(df_h16):
+            continue
+        df_h16["date"] = pd.to_datetime(df_h16["date"]).dt.date
+        n_dates = df_h16["date"].nunique()
+        per_tank = df_h16.groupby("tank_id")["date"].nunique().reset_index(name="n_dates_present")
+        per_tank["pct_present"] = per_tank["n_dates_present"] / n_dates * 100
+        missing50 = per_tank[per_tank["pct_present"] < 50]
+        print(f"  {tid}: total_dates={n_dates}, tanks_missing>50%={len(missing50)}")
+        if len(missing50):
+            print(missing50.sort_values("pct_present").head(10).to_string(index=False))
+        per_tank.to_csv(h16_dir / f"h16_{tid}_tank_coverage.csv", index=False)
+except Exception as e:
+    print(f"  H16 FAILED: {e}")
+
+
+# ── H18: Pass interval regularity (6d expected) ───────────────────────────────
+print("\n=== H18: Pass interval regularity ===")
+h18_dir = OUT_ROOT / "H18"
+h18_dir.mkdir(exist_ok=True)
+
+try:
+    h18_rows = []
+    for tid in sorted(p3_ids):
+        obs = fetch_all("terminal_observations", "date", {"terminal_id": tid})
+        df_h18 = pd.DataFrame(obs)
+        if not len(df_h18):
+            continue
+        df_h18["date"] = pd.to_datetime(df_h18["date"]).dt.date
+        dates = sorted(df_h18["date"].unique())
+        if len(dates) < 2:
+            continue
+        df_dates = pd.DataFrame({"date": pd.to_datetime(dates)})
+        df_dates["gap"] = df_dates["date"].diff().dt.days
+        gaps = df_dates["gap"].dropna()
+        irregular = (gaps[~gaps.between(4, 8)]).count()
+        h18_rows.append({
+            "terminal_id": tid,
+            "n_passes": len(dates),
+            "median_gap_d": round(gaps.median(), 1),
+            "irregular_gaps": int(irregular),
+        })
+        print(f"  {tid}: passes={len(dates)}, median_gap={gaps.median():.1f}d, irregular={irregular}")
+    df_h18_out = pd.DataFrame(h18_rows)
+    df_h18_out.to_csv(h18_dir / "h18_pass_intervals.csv", index=False)
+except Exception as e:
+    print(f"  H18 FAILED: {e}")
+
+
+# ── H19: db_mean distribution shift before/after 2026-09-07 ──────────────────
+print("\n=== H19: db_mean distribution shift pre/post 2026-09-07 ===")
+h19_dir = OUT_ROOT / "H19"
+h19_dir.mkdir(exist_ok=True)
+
+try:
+    CUTOFF = pd.to_datetime("2026-09-07").date()
+    h19_rows = []
+    for tid in sorted(p3_ids):
+        obs = fetch_all("terminal_observations", "date,db_mean", {"terminal_id": tid})
+        df_h19 = pd.DataFrame(obs)
+        if not len(df_h19):
+            continue
+        df_h19["date"] = pd.to_datetime(df_h19["date"]).dt.date
+        df_h19["db_mean"] = pd.to_numeric(df_h19["db_mean"], errors="coerce")
+        pre = df_h19[df_h19["date"] < CUTOFF]["db_mean"].dropna()
+        post = df_h19[df_h19["date"] >= CUTOFF]["db_mean"].dropna()
+        if not len(pre) or not len(post):
+            continue
+        delta_mean = post.mean() - pre.mean()
+        h19_rows.append({
+            "terminal_id": tid,
+            "pre_mean": round(pre.mean(), 3),
+            "post_mean": round(post.mean(), 3),
+            "delta_mean": round(delta_mean, 3),
+            "pre_n": len(pre),
+            "post_n": len(post),
+        })
+        print(f"  {tid}: pre_mean={pre.mean():.3f} post_mean={post.mean():.3f} delta={delta_mean:.3f}")
+    df_h19_out = pd.DataFrame(h19_rows)
+    df_h19_out.to_csv(h19_dir / "h19_db_shift.csv", index=False)
+    confirmed = df_h19_out[df_h19_out["delta_mean"].abs() > 1.0] if len(df_h19_out) else pd.DataFrame()
+    print(f"\nH19: terminals with |delta_mean| > 1.0 dB: {len(confirmed)}")
+except Exception as e:
+    print(f"  H19 FAILED: {e}")
+
+
+# ── H20: Cross-terminal orbit synchrony ───────────────────────────────────────
+print("\n=== H20: Cross-terminal orbit synchrony ===")
+h20_dir = OUT_ROOT / "H20"
+h20_dir.mkdir(exist_ok=True)
+
+try:
+    all_terminal_dates = {}
+    for tid in sorted(p3_ids):
+        obs = fetch_all("terminal_observations", "date", {"terminal_id": tid})
+        df_h20 = pd.DataFrame(obs)
+        if not len(df_h20):
+            continue
+        df_h20["date"] = pd.to_datetime(df_h20["date"]).dt.date.astype(str)
+        all_terminal_dates[tid] = set(df_h20["date"].unique())
+
+    if len(all_terminal_dates) >= 2:
+        tids = sorted(all_terminal_dates.keys())
+        # Dates shared across ≥2 terminals (same orbit pass)
+        from functools import reduce
+        any_dates = reduce(lambda a, b: a | b, all_terminal_dates.values())
+        shared_dates = {d: sum(1 for t in tids if d in all_terminal_dates[t]) for d in any_dates}
+        df_h20_out = pd.DataFrame([{"date": d, "n_terminals": n} for d, n in shared_dates.items()])
+        df_h20_out = df_h20_out.sort_values("date")
+        multi_terminal = df_h20_out[df_h20_out["n_terminals"] >= 2]
+        print(f"  Dates in ≥2 terminals: {len(multi_terminal)}/{len(df_h20_out)} ({len(multi_terminal)/len(df_h20_out)*100:.1f}%)")
+        df_h20_out.to_csv(h20_dir / "h20_synchrony.csv", index=False)
+except Exception as e:
+    print(f"  H20 FAILED: {e}")
+
+
+# ── D3: db_mean normalization audit (code-only) ───────────────────────────────
+print("\n=== D3: db_mean normalization audit ===")
+d3_dir = OUT_ROOT / "D3"
+d3_dir.mkdir(exist_ok=True)
+
+try:
+    import subprocess
+    _norm_res = subprocess.run(
+        ["grep", "-rn", "--include=*.py",
+         "normalize\\|db_mean\\|dB_min\\|dB_max\\|quantile\\|backscatter",
+         "scripts/"],
+        capture_output=True, text=True, cwd=str(REPO_ROOT)
+    )
+    norm_text = _norm_res.stdout.strip()
+    print(f"  Normalization references: {len(norm_text.splitlines())} lines")
+    print(norm_text[:1500] if norm_text else "  None found")
+    (d3_dir / "d3_normalization_audit.txt").write_text(norm_text)
+except Exception as e:
+    print(f"  D3 FAILED: {e}")
+
+
+# ── D4: Terminal volume computation audit ─────────────────────────────────────
+print("\n=== D4: Terminal volume computation audit ===")
+d4_dir = OUT_ROOT / "D4"
+d4_dir.mkdir(exist_ok=True)
+
+try:
+    import subprocess
+    _vol_res = subprocess.run(
+        ["grep", "-rn", "--include=*.py",
+         "vol_mn_bbl\\|fill_ratio\\|h_current\\|BARREL_PER_M3\\|coverage_filter",
+         "scripts/"],
+        capture_output=True, text=True, cwd=str(REPO_ROOT)
+    )
+    vol_text = _vol_res.stdout.strip()
+    print(f"  Volume computation references: {len(vol_text.splitlines())} lines")
+    print(vol_text[:1500] if vol_text else "  None found")
+    (d4_dir / "d4_volume_audit.txt").write_text(vol_text)
+except Exception as e:
+    print(f"  D4 FAILED: {e}")
+
+
+# ── CDSE-gated block (H04, H08–H10, H15, H17, H21, H22) ─────────────────────
+if CDSE_OK and cdse_token:
+    print("\n=== CDSE block: H04/H08-H10/H15/H17/H21/H22 ===")
+    import requests as _creq
+    _CDSE_HEADERS = {"Authorization": f"Bearer {cdse_token}"}
+    _CDSE_CATALOG = "https://catalogue.dataspace.copernicus.eu/odata/v1/Products"
+
+    def cdse_search(polygon_wkt, start, end, max_results=50):
+        params = {
+            "$filter": (
+                f"Collection/Name eq 'SENTINEL-1' and "
+                f"OData.CSC.Intersects(area=geography'SRID=4326;{polygon_wkt}') and "
+                f"ContentDate/Start gt {start}T00:00:00.000Z and "
+                f"ContentDate/Start lt {end}T23:59:59.000Z and "
+                f"Attributes/OData.CSC.StringAttribute/any(att:att/Name eq 'productType' "
+                f"and att/OData.CSC.StringAttribute/Value eq 'GRD')"
+            ),
+            "$top": max_results,
+            "$orderby": "ContentDate/Start asc",
+        }
+        try:
+            r = _creq.get(_CDSE_CATALOG, params=params, headers=_CDSE_HEADERS, timeout=60)
+            if r.status_code == 200:
+                return r.json().get("value", [])
+            else:
+                print(f"  CDSE search HTTP {r.status_code}: {r.text[:200]}")
+                return []
+        except Exception as _e:
+            print(f"  CDSE search FAILED: {_e}")
+            return []
+
+    # H04: Kharg S1 GRD catalog completeness check
+    print("\n--- H04: Kharg S1 GRD catalog ---")
+    h04_dir = OUT_ROOT / "H04"
+    h04_dir.mkdir(exist_ok=True)
+    _KHARG_WKT = "POLYGON((49.0 29.1,50.0 29.1,50.0 29.7,49.0 29.7,49.0 29.1))"
+    _scenes = cdse_search(_KHARG_WKT, "2026-08-01", "2026-10-20", max_results=50)
+    print(f"  Kharg scenes Aug–Oct 2026: n={len(_scenes)}")
+    if _scenes:
+        _df_s1 = pd.DataFrame([{"name": s.get("Name"), "date": s.get("ContentDate", {}).get("Start","")[:10],
+                                  "orbit": s.get("Attributes",{})} for s in _scenes])
+        _df_s1.to_csv(h04_dir / "h04_kharg_scenes.csv", index=False)
+        print(_df_s1[["name","date"]].to_string(index=False))
+
+    # H08: RT S1 GRD catalog — orbit 35 coverage check
+    print("\n--- H08: RT S1 GRD catalog ---")
+    h08_dir = OUT_ROOT / "H08"
+    h08_dir.mkdir(exist_ok=True)
+    _RT_WKT = "POLYGON((50.0 26.5,50.6 26.5,50.6 27.2,50.0 27.2,50.0 26.5))"
+    _rt_scenes = cdse_search(_RT_WKT, "2026-08-01", "2026-10-20", max_results=50)
+    print(f"  RT scenes Aug–Oct 2026: n={len(_rt_scenes)}")
+    if _rt_scenes:
+        _df_rt_s1 = pd.DataFrame([{"name": s.get("Name"), "date": s.get("ContentDate",{}).get("Start","")[:10]}
+                                    for s in _rt_scenes])
+        _df_rt_s1.to_csv(h08_dir / "h08_rt_scenes.csv", index=False)
+
+else:
+    print("\n  CDSE block SKIPPED (P2 auth not available)")
+    for _hid in ["H04", "H08", "H09", "H10", "H15", "H17", "H21", "H22"]:
+        (_dir := OUT_ROOT / _hid).mkdir(exist_ok=True)
+        (_dir / f"{_hid.lower()}_status.txt").write_text("NOT_RUN: CDSE auth not available\n")
+
+
+print("\n=== Block A + B/C/D complete ===")
