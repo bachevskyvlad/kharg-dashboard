@@ -7,38 +7,38 @@ P1: SUPABASE_URL=env SUPABASE_KEY=fallback (publishable)
 
 === H01: Ingest regression systemic ===
   Kharg raw_observations orbit check FAILED: {'message': 'column raw_observations.orbit_direction does not exist', 'code': '42703', 'hint': None, 'details': None}
-  al_flaw: 261 post-cutoff rows, 261 DESCENDING/NULL → has_regression=True
-  das_island: 84 post-cutoff rows, 0 DESCENDING/NULL → has_regression=False
-  de_kastri: 12 post-cutoff rows, 12 DESCENDING/NULL → has_regression=True
-  fujairah: 154 post-cutoff rows, 0 DESCENDING/NULL → has_regression=False
-  halul: 28 post-cutoff rows, 0 DESCENDING/NULL → has_regression=False
-  jask: 80 post-cutoff rows, 0 DESCENDING/NULL → has_regression=False
-  juwaymah: 94 post-cutoff rows, 94 DESCENDING/NULL → has_regression=True
+  al_flaw: 232 post-cutoff rows, 232 DESCENDING/NULL → has_regression=True
+  das_island: 99 post-cutoff rows, 15 DESCENDING/NULL → has_regression=True
+  de_kastri: 16 post-cutoff rows, 16 DESCENDING/NULL → has_regression=True
+  fujairah: 242 post-cutoff rows, 88 DESCENDING/NULL → has_regression=True
+  halul: 78 post-cutoff rows, 50 DESCENDING/NULL → has_regression=True
+  jask: 120 post-cutoff rows, 40 DESCENDING/NULL → has_regression=True
+  juwaymah: 112 post-cutoff rows, 112 DESCENDING/NULL → has_regression=True
   kozmino: 0 rows post-2026-09-01
-  lavan: 144 post-cutoff rows, 144 DESCENDING/NULL → has_regression=True
-  mina_ahmadi: 84 post-cutoff rows, 0 DESCENDING/NULL → has_regression=False
-  novorossiysk: 180 post-cutoff rows, 180 DESCENDING/NULL → has_regression=True
-  primorsk: 216 post-cutoff rows, 216 DESCENDING/NULL → has_regression=True
-  ras_laffan: 238 post-cutoff rows, 0 DESCENDING/NULL → has_regression=False
-  ras_tanura: 689 post-cutoff rows, 161 DESCENDING/NULL → has_regression=True
-  ruwais: 280 post-cutoff rows, 0 DESCENDING/NULL → has_regression=False
-  siri: 6 post-cutoff rows, 0 DESCENDING/NULL → has_regression=False
-  sitra: 175 post-cutoff rows, 0 DESCENDING/NULL → has_regression=False
+  lavan: 192 post-cutoff rows, 192 DESCENDING/NULL → has_regression=True
+  mina_ahmadi: 112 post-cutoff rows, 28 DESCENDING/NULL → has_regression=True
+  novorossiysk: 240 post-cutoff rows, 240 DESCENDING/NULL → has_regression=True
+  primorsk: 288 post-cutoff rows, 288 DESCENDING/NULL → has_regression=True
+  ras_laffan: 272 post-cutoff rows, 34 DESCENDING/NULL → has_regression=True
+  ras_tanura: 781 post-cutoff rows, 253 DESCENDING/NULL → has_regression=True
+  ruwais: 320 post-cutoff rows, 40 DESCENDING/NULL → has_regression=True
+  siri: 48 post-cutoff rows, 42 DESCENDING/NULL → has_regression=True
+  sitra: 200 post-cutoff rows, 25 DESCENDING/NULL → has_regression=True
   yanbu: 24 post-cutoff rows, 24 DESCENDING/NULL → has_regression=True
-  zirku: 70 post-cutoff rows, 0 DESCENDING/NULL → has_regression=False
+  zirku: 80 post-cutoff rows, 10 DESCENDING/NULL → has_regression=True
 
-H01 RESULT: regression terminals = ['al_flaw', 'de_kastri', 'juwaymah', 'lavan', 'novorossiysk', 'primorsk', 'ras_tanura', 'yanbu']
+H01 RESULT: regression terminals = ['al_flaw', 'das_island', 'de_kastri', 'fujairah', 'halul', 'jask', 'juwaymah', 'lavan', 'mina_ahmadi', 'novorossiysk', 'primorsk', 'ras_laffan', 'ras_tanura', 'ruwais', 'siri', 'sitra', 'yanbu', 'zirku']
 H01 VERDICT: CONFIRMED — systemic if ≥2 terminals affected
 
 === H02: TVT RT ASC contamination ===
-  TVT RT daily rows: 561
-  TVT dates with ASC-only observations: 243 (43.3%)
-  TVT dates with DESCENDING observations: 318
+  TVT RT daily rows: 563
+  TVT dates with ASC-only observations: 243 (43.2%)
+  TVT dates with DESCENDING observations: 320
   TVT dates with NULL-only observations: 0
-  TVT total matched dates: 561
+  TVT total matched dates: 563
   TVT dates NOT in obs table: 0
 
-H02 VERDICT: CONFIRMED — ASC-only dates = 43.3% (threshold 30%)
+H02 VERDICT: CONFIRMED — ASC-only dates = 43.2% (threshold 30%)
 
 === H03: RT DESC historical single orbit ===
   Pre-regression orbit breakdown:
@@ -50,7 +50,7 @@ orbit_direction  relative_orbit     n  n_dates
 orbit_direction  relative_orbit   n  n_dates
             ASC           101.0 264        4
            DESC            35.0 132        2
-     DESCENDING             NaN 161        8
+     DESCENDING             NaN 253       12
 
   Pre-reg DESCENDING relative_orbits: [35.0]
   Pre-reg DESCENDING null relative_orbit rows: 0
@@ -59,16 +59,18 @@ H03 VERDICT: CONFIRMED — single orbit = True, orbits = [35.0]
 
 === H05: TVT coverage contamination ===
 
-  ras_tanura: TVT daily rows=561, obs dates=566
+  ras_tanura: TVT daily rows=563, obs dates=570
   ras_tanura: dates below 50% coverage: 0
 H05 ras_tanura: NOT_CONFIRMED — 0 sub-50% dates in TVT
 
 === H05b: Partial coverage (50-99%) in TVT ===
-  ras_tanura: full coverage dates=559, partial (50-99%)=2
+  ras_tanura: full coverage dates=559, partial (50-99%)=4
   Partial dates sample:
       date  n_tanks  db_mean_avg       pct
 2026-09-30       45     7.120778 68.181818
 2026-10-06       45     6.373319 68.181818
+2026-10-12       45     4.576397 68.181818
+2026-10-18       45     5.746785 68.181818
 
 === H05c: 8 new RT dates in TVT + calibration ===
   2026-09-07: in_tvt=False, n_tanks=1/66 (2%), orbits={'DESCENDING': 1}, relOrbit=[]
@@ -221,36 +223,33 @@ H07 SUMMARY:
 
 
 ## backCoeff
-  scripts/verify_orbit_fix.py:124:                "backCoeff": "GAMMA0_TERRAIN",
+  scripts/reingest_alfaw_v2.py:155:            }, "processing": {"backCoeff": "SIGMA0_ELLIPSOID", "orthorectify": True,
   scripts/hormuz_timeseries.py:92:                "backCoeff": "GAMMA0_TERRAIN",
-  scripts/diag_juwaymah_yanbu_5.py:274:                "processing": {"orthorectify": True, "backCoeff": "GAMMA0_TERRAIN",
-  scripts/verify_orbit_fix_3.py:123:                "backCoeff": "GAMMA0_TERRAIN",
-  scripts/diag_equiv_7_6.py:137:                    "processing": {"orthorectify": True, "backCoeff": "GAMMA0_TERRAIN",
-  scripts/gulf_fragility_pipeline.py:248:                other_args={"processing": {"orthorectify": True, "backCoeff": "GAMMA0_TERRAIN", "demInstance": "COPERNICUS_30"}}
-  scripts/reingest_alfaw_retry.py:196:            }, "processing": {"backCoeff": "SIGMA0_ELLIPSOID", "orthorectify": True,
-  scripts/diag_juwaymah_yanbu_6.py:295:                "processing": {"orthorectify": True, "backCoeff": "GAMMA0_TERRAIN",
-  scripts/recenter_saudi.py:117:                    "processing": {"orthorectify": True, "backCoeff": "GAMMA0_TERRAIN",
-  scripts/diagnose_ras_tanura_imagery.py:210:                "backCoeff":     PROD_BACK_COEFF,
-  scripts/diag_juwaymah_yanbu_2.py:188:                    "backCoeff": "GAMMA0_TERRAIN",
-  scripts/diag_welldepth_7_7.py:149:                    "processing": {"orthorectify": True, "backCoeff": "GAMMA0_TERRAIN",
-  scripts/stage6_accuracy_grid.py:418:                        "processing": {"orthorectify": True, "backCoeff": "GAMMA0_TERRAIN",
-  scripts/hormuz_ships.py:97:            "backCoeff": "GAMMA0_TERRAIN",
-  scripts/verify_orbit_fix_2.py:170:                "backCoeff": "GAMMA0_TERRAIN",
-  scripts/stage_h1_db_norm.py:145:            }, "processing": {"backCoeff": "SIGMA0_ELLIPSOID", "orthorectify": True,
+  scripts/research/auto_hypotheses.py:613:H24: backCoeff/orthorectify/speckleFilter/upsampling options in ingest + panels code.
+  scripts/research/auto_hypotheses.py:622:print("\n=== H24: backCoeff / processing options audit (code, no DB) ===")
+  scripts/research/auto_hypotheses.py:628:    # Find all backCoeff / orthorectify / speckleFilter / upsampling references in scripts
+  scripts/research/auto_hypotheses.py:630:    for pattern in ["backCoeff", "orthorectify", "speckleFilter", "upsampling", "GAMMA0", "BETA0", "SIGMA0", "LEE", "BILINEAR", "BICUBIC"]:
+  scripts/research/auto_hypotheses.py:1000:# Query: check if terminal_observations has backCoeff column at all
+  scripts/research/auto_hypotheses.py:1006:    print(f"  has backCoeff column: {has_backcoeff_col}")
+  scripts/research/auto_hypotheses.py:1034:    print(f"\nH24b: terminal_observations has no backCoeff column → SIGMA0 label not queryable from DB; "
   scripts/stage_gate_abc.py:137:                    "backCoeff":    "SIGMA0_ELLIPSOID",
-  scripts/stage5_asc_backfill.py:240:                        "processing": {"orthorectify": True, "backCoeff": "GAMMA0_TERRAIN", "demInstance": "COPERNICUS_30"},
-  scripts/diag_juwaymah_yanbu.py:329:                "backCoeff": "GAMMA0_TERRAIN",
-  scripts/sar_fetch.py:237:            "backCoeff": "GAMMA0_TERRAIN",
+  scripts/verify_orbit_fix_3.py:123:                "backCoeff": "GAMMA0_TERRAIN",
+  scripts/panels_v2.py:147:            }, "processing": {"backCoeff": "SIGMA0_ELLIPSOID", "orthorectify": True,
+  scripts/jask_panels.py:278:                      "processing": {"backCoeff": "SIGMA0_ELLIPSOID", "orthorectify": True}}],
+  scripts/diag_recalc_7_5.py:264:                    "processing": {"orthorectify": True, "backCoeff": "GAMMA0_TERRAIN",
+  scripts/stage6_accuracy_grid.py:418:                        "processing": {"orthorectify": True, "backCoeff": "GAMMA0_TERRAIN",
+  scripts/diagnose_ras_tanura_imagery.py:210:                "backCoeff":     PROD_BACK_COEFF,
+  scripts/diag_juwaymah_yanbu_4.py:230:                "processing": {"orthorectify": True, "backCoeff": "GAMMA0_TERRAIN",
+  scripts/diag_juwaymah_yanbu_6.py:295:                "processing": {"orthorectify": True, "backCoeff": "GAMMA0_TERRAIN",
+  scripts/diag_welldepth_7_7.py:149:                    "processing": {"orthorectify": True, "backCoeff": "GAMMA0_TERRAIN",
+  scripts/verify_orbit_fix_2.py:170:                "backCoeff": "GAMMA0_TERRAIN",
 
 ## orthorectify
-  scripts/verify_orbit_fix.py:123:                "orthorectify": True,
+  scripts/reingest_alfaw_v2.py:155:            }, "processing": {"backCoeff": "SIGMA0_ELLIPSOID", "orthorectify": True,
   scripts/hormuz_timeseries.py:91:                "orthorectify": True,
-  scripts/diag_juwaymah_yanbu_5.py:274:                "processing": {"orthorectify": True, "backCoeff": "GAMMA0_TERRAIN",
-  scripts/verify_orbit_fix_3.py:122:                "orthorectify": True,
-  scripts/diag_equiv_7_6.py:137:                    "processing": {"orthorectify": True, "backCoeff": "GAMMA0_TERRAIN",
-  scripts/gulf_fragility_pipeline.py:248:                other_args={"processing": {"orthorectify": True, "backCoeff": "GAMMA0_TERRAIN", "demInstance": "COPERNICUS_30"}}
-  scripts/reingest_alfaw_retry.py:196:            }, "processing": {"backCoeff": "SIGMA0_ELLIPSOID", "orthorectify": True,
-  scripts/diag_juwaymah_yanb
+  scripts/research/auto_hypotheses.py:613:H24: backCoeff/orthorectify/speckleFilter/upsampling options in ingest + panels code.
+  scripts/research/auto_hypotheses.py:628:    # Find all backCoeff / orthorectify / speckleFilter / upsampling references in scripts
+  scripts/research/auto_hypotheses.py:630:    for pattern in ["backCoeff", "orthorectify", "speckleFilter", "upsampling", "GAMMA0", "BETA0", "
 
 H24: found 10 distinct option keywords in codebase
 
@@ -298,18 +297,17 @@ D6: SLC bursts CDSE — availability estimate
 - ESA SNAP processing (Range Doppler TC + backscatter): ~3-5 min/scene on ubuntu-latest
 - Total per scene (download + process + crop): ~5-8 min in GHA
 - Alternative: SentinelHub ProcessingAPI (GRD only, no SLC) — much faster (<30s/scene)
-- SLC NOT needed for current pipeline (GRD sufficient for crescent radiometry)
-- SLC would be needed ONLY for: precise R-point shift (H25) or interferometric coherence
+- SLC would be needed for: precise R-point shift (H25) or interferometric coherence
 
 
 === D7: Cushing floating-roof tanks (registry check) ===
   Cushing in tank_registry: False
   Cushing references in codebase:
-scripts/diagnostics/research/2026-10/HYPOTHESES_REPORT.md:56:D7: Cushing floating-roof tank list + orbit catalog + EIA weekly CSV.
 scripts/research/auto_hypotheses.py:617:D7: Cushing floating-roof tank list + orbit catalog + EIA weekly CSV.
-scripts/research/auto_hypotheses.py:722:# ── D7: Cushing floating-roof tank list (code audit, no external calls) ───────
-scripts/research/auto_hypotheses.py:723:print("\n=== D7: Cushing floating-roof tanks (registry check) ===")
-scripts/research/auto_hypothes
+scripts/research/auto_hypotheses.py:721:# ── D7: Cushing floating-roof tank list (code audit, no external calls) ───────
+scripts/research/auto_hypotheses.py:722:print("\n=== D7: Cushing floating-roof tanks (registry check) ===")
+scripts/research/auto_hypotheses.py:727:    # Check if Cushing is in registry
+scripts/research/auto_hypotheses.py:728:    cushing_in_registry = any(loc["id"] == 
 D7: Cushing floating-roof tanks
 STATUS: NOT_RUN — no Cushing entry in tank_registry.py; no scripts reference Cushing.
 To execute:
@@ -320,4 +318,378 @@ To execute:
 This is a data collection task — no correlation calculations in code.
 
 
-=== Block A + H24-H26 + D6-D7 complete ===
+=== PREFLIGHT P2: CDSE auth ===
+  P2: CDSE_CLIENT_ID/CDSE_CLIENT_SECRET not set — CDSE hypotheses skipped
+
+=== Kharg raw_observations audit ===
+  raw_observations columns: ['id', 'date', 'tank_id', 'radius_m', 'diameter', 'h_max', 'db_mean', 'created_at']
+  Kharg: total dates=323, full(47)=323, over=0, under=0
+  Gaps >12d: n=12
+      date  gap_days  n_tanks
+2017-02-18     684.0       47
+2017-06-06      24.0       47
+2017-06-30      24.0       47
+2018-12-22      24.0       47
+2019-01-15      24.0       47
+2019-09-24      24.0       47
+2019-12-17      24.0       47
+2021-11-24      24.0       47
+2022-07-22      24.0       47
+2023-11-14      24.0       47
+  Anomaly dates (n_tanks≠47): n=0
+
+=== H02b: DESC-35 only RT series ===
+  DESC-35 rows: 20790
+  DESC-35 unique dates: 315
+      date  n_tanks  db_mean_avg  db_mean_std
+2026-07-26       66     4.699888     4.905009
+2026-08-01       66     5.040527     4.978589
+2026-08-07       66     5.240876     4.963264
+2026-08-13       66     4.667318     5.057878
+2026-08-19       66     6.159979     5.636479
+2026-08-25       66     5.758880     4.974542
+2026-08-31       66     6.283817     4.990723
+2026-09-06       66     5.284877     5.049583
+2026-09-12       66     5.239103     4.871078
+2026-09-18       66     6.279807     5.725988
+  E-events (db_delta_6d >= 1.0 dB): n=36
+      date  n_tanks  db_mean_avg  db_delta_6d
+2017-12-27       66     6.821515     1.028067
+2018-04-14       66     5.912807     1.034129
+2018-06-01       66     6.327207     1.933658
+2018-06-25       66     6.014454     1.505572
+2018-09-29       66     5.475631     1.153181
+2018-11-16       66     5.181863     1.099869
+2019-03-04       66     6.045172     1.703975
+2019-05-03       66     6.000140     1.251773
+2019-09-24       66     6.172422     2.206102
+2019-10-30       66     5.150599     1.131106
+2019-12-17       66     7.316562     1.348150
+2020-01-10       66     8.892079     2.808804
+2020-04-03       66     6.623336     1.011095
+2020-08-25       66     7.193616     1.456276
+2020-11-29       66     6.769583     1.175526
+2021-02-09       66     6.635566     2.113184
+2021-03-05       66     6.465457     1.491342
+2021-10-19       66     6.390049     1.034989
+2022-01-11       66     7.605870     1.508307
+2023-03-31       66     6.723073     1.842770
+2023-11-26       66     6.379903     1.363046
+2024-02-18       66     6.229633     1.014839
+2024-04-18       66     6.931280     1.880796
+2024-06-05       66     6.018564     1.357892
+2024-07-23       66     6.021662     1.041026
+2024-12-14       66     6.268113     1.124521
+2025-04-13       66     6.133201     1.634038
+2025-07-30       66     6.321455     1.068371
+2025-09-10       66     5.687463     1.062826
+2025-10-10       66     6.158696     1.140594
+2025-12-03       66     6.080275     1.660371
+2026-03-09       66     6.551640     1.221662
+2026-06-14       66     5.575271     1.282387
+2026-07-02       66     6.864771     1.848504
+2026-08-19       66     6.159979     1.492662
+2026-09-18       66     6.279807     1.040704
+  E-events all-orbit series: n=85
+  Dates in all-orbit but NOT in DESC-35: n=255
+    first 10: ['2020-01-02', '2020-01-14', '2020-01-26', '2020-02-07', '2020-02-19', '2020-03-02', '2020-03-08', '2020-03-14', '2020-03-26', '2020-04-07']
+
+=== H05b: Volume delta on 2026-09-30 and 2026-10-06 ===
+
+  2026-09-30: vol=10.974 Mn bbl, n_tanks=45/66 (68.2%)
+    prev full date: 2026-09-28, vol=11.668, delta=-0.694 Mn bbl
+    missing tanks: 21/66
+
+  2026-10-06: vol=11.518 Mn bbl, n_tanks=45/66 (68.2%)
+    prev full date: 2026-09-28, vol=11.668, delta=-0.150 Mn bbl
+    missing tanks: 21/66
+
+  2026-09-24: vol=11.487 Mn bbl, n_tanks=66, pct=100.0%
+
+=== H24b: DB rows with SIGMA0_ELLIPSOID ===
+  terminal_observations columns: ['id', 'terminal_id', 'date', 'tank_id', 'radius_m', 'diameter', 'h_max', 'db_mean', 'created_at', 'relative_orbit', 'orbit_direction', 'db_norm']
+  has backCoeff column: False
+  SIGMA0_ELLIPSOID in ingest scripts:
+scripts/reingest_alfaw_v2.py:155:            }, "processing": {"backCoeff": "SIGMA0_ELLIPSOID", "orthorectify": True,
+scripts/research/auto_hypotheses.py:995:# ── H24 continuation: DB rows with SIGMA0_ELLIPSOID (item 8) ─────────────────
+scripts/research/auto_hypotheses.py:996:print("\n=== H24b: DB rows with SIGMA0_ELLIPSOID ===")
+scripts/research/auto_hypotheses.py:1012:        ["grep", "-rn", "--include=*.py", "SIGMA0_ELLIPSOID", "scripts/"],
+scripts/research/auto_hypotheses.py:1016:    print(f"  SIGMA0_ELLIPSOID in ingest scripts:\n{sigma_files if sigma_files else '  None'}")
+scripts/research/auto_hypotheses.py:1021:        ["grep", "-rn", "--include=*.py", "-A2", "SIGMA0_ELLIPSOID", "scripts/"],
+scripts/stage_gate_abc.py:137:                    "backCoeff":    "SIGMA0_ELLIPSOID",
+scripts/panels_v2.py:147:            }, "processing": {"backCoeff": "SIGMA0_ELLIPSOID", "orthorectify": True,
+scripts/jask_panels.py:278:                      "processing": {"backCoeff": "SIGMA0_ELLIPSOID", "orthorectify": True}}],
+scripts/reingest_alfaw_retry.py:196:            }, "processing": {"backCoeff": "SIGMA0_ELLIPSOID", "orthorectify": True,
+scripts/stage_h1_db_norm.py:145:            }, "processing": {"backCoeff": "SIGMA0_ELLIPSOID", "orthorectify": True,
+scripts/jask_smoke.py:151:                      "processing": {"backCoeff": "SIGMA0_ELLIPSOID", "orthorectify": True}}],
+scripts/reingest_alfaw_v2.py:155:            }, "processing": {"backCoeff": "SIGMA0_ELLIPSOID", "orthorectify": True,
+scripts/reingest_alfaw_v2.py-156-                              "demInstance": "COPERNICUS_30"}}]
+scripts/reingest_alfaw_v2.py-157-        },
+--
+scripts/research/auto_hypotheses.py:995:# ── H24 continuation: DB rows with SIGMA0_ELLIPSOID (item 8) ─────────────────
+scripts/research/auto_hypotheses.py:996:print("\n=== H24b: DB rows with SIGMA0_ELLIPSOID ===")
+scripts/research/auto_hypotheses.py-997-h24b_dir = OUT_ROOT / "H24b"
+scripts/research/auto_hypotheses.py-998-h24b_dir.mkdir(exist_ok=True)
+--
+scripts/research/auto_hypotheses.py:1012:        ["grep", "-rn", "--include=*.py", "SIGMA0_ELLIPSOID", "scripts/"],
+scripts/research/auto_hypotheses.py-1013-        capture_output=True, text=True, cwd=str(REPO_ROOT)
+scripts/research/auto_hypotheses.py-1014-    )
+--
+scripts/research/auto_hypotheses.py:1016:    print(f"  SIGMA0_ELLIPSOID in ingest scripts:\n{sigma_files if sigma_files else '  None'}")
+scripts/research/auto_hypotheses.py-1017-
+scripts/research/auto_hypotheses.py-1018-    # Which terminals / date ranges used SIGMA0 path?
+--
+scripts/research/auto_hypotheses.py:1021:        ["grep", "-rn", "--include=*.py", "-A2", "SIGMA0_ELLIPSOID", "scripts/"],
+scripts/research/auto_hypotheses.py-1022-        capture_output=True, text=True, cwd=str(REPO_ROOT)
+scripts/research/auto_hypotheses.py-1023-    )
+--
+scripts/stage_gate_abc.py:137:                    "backCoeff":    "SIGMA0_ELLIPSOID",
+scripts/stage_gate_abc.py-138-                    "orthorectify": True,
+scripts/stage_gate_abc.py-139-                    "demInstance":  "COPERNICUS_30"
+--
+scripts/panels_v2.py:147:            }, "processing": {"backCoeff": "SIGMA0_ELLIPSOID", "orthorectify": True,
+scripts/panels_v2.py-148-                              "demInstance": "COPERNICUS_30"}}]
+scripts/panels_v2.py-149-        },
+--
+scripts/jask_panels.py:278:                      "processing": {"backCoeff": "SIGMA0
+
+H24b: terminal_observations has no backCoeff column → SIGMA0 label not queryable from DB; source of truth is ingest script parameters at run time
+
+=== H-NEW-2: 1-tank RT ingest dates ===
+  2026-09-07: n_tanks=1, tanks=['rt_65'], orbits={'DESCENDING': 1}
+  2026-09-13: n_tanks=1, tanks=['rt_65'], orbits={'DESCENDING': 1}
+  2026-09-19: n_tanks=1, tanks=['rt_65'], orbits={'DESCENDING': 1}
+  2026-09-25: n_tanks=1, tanks=['rt_65'], orbits={'DESCENDING': 1}
+  2026-10-01: n_tanks=1, tanks=['rt_65'], orbits={'DESCENDING': 1}
+
+  RT dates with n_tanks <= 5: n=7
+      date  n_tanks
+2026-09-07        1
+2026-09-13        1
+2026-09-19        1
+2026-09-25        1
+2026-10-01        1
+2026-10-07        1
+2026-10-13        1
+
+  Ingest commits Sep–Oct 2026:
+ae26524 stage4: whitelist rollout — registry enabled flags + ingest/compute filter + QA scripts
+3e75605 feat: Stage 1 prod fixes — v2 geometry, orbit dataFilter, DB_FLOOR, calibration freeze
+57ae808 Ras Tanura: ingest fix + full history rebuild + external validation
+f0d3c11 fix: ras_tanura partial-coverage filter + compute workflow + JSON export
+4ef88c9 Support ascending orbit for Yanbu + parameterise LOS azimuth; add db_mean fix script
+437d73d Fix terminal max_capacity and add db_mean floor clipping
+9d4eefe Unify pipeline: ingest.py handles all terminals, terminals.yml calls ingest.py
+f0c0331 feat: group Telegram SUCCESS message by country with flag emojis
+109bde4 feat: per-terminal new-dates breakdown in Telegram SUCCESS message
+
+
+=== Security: RLS policies audit ===
+  RLS in SQL files:
+  None found
+  pg_policies query FAILED: {'message': "Could not find the table 'public.pg_policies' in the schema cache", 'code': 'PGRST205', 'hint': "Perhaps you meant the table 'public.ais_positions'", 'details': None} → RLS likely not configured or not accessible via REST
+
+  Hardcoded publishable key occurrences: n=12
+    ./product/dashboard.html:1180
+    ./product/dashboard.html:1944
+    ./product/zh-dashboard.html:1796
+    ./scripts/diag_closure.py:27
+    ./scripts/research/auto_hypotheses.py:21
+    ./scripts/research/auto_hypotheses.py:1130
+    ./scripts/terminal_checks.py:30
+    ./scripts/diag_orbit_labels.py:23
+    ./marketing/zh-monitor.html:187
+    ./marketing/monitor.html:291
+    ./analysis/kharg_patterns/analyze_patterns.py:32
+    ./calibration/calibrate_kharg.py:36
+
+  Written: diagnostics/research/2026-10/SECURITY/security_rls_audit.txt
+
+=== H11: Duplicate (date, tank_id) check ===
+  al_flaw: rows=7656, dupes=0
+  das_island: rows=3615, dupes=0
+  de_kastri: rows=832, dupes=0
+  fujairah: rows=7150, dupes=0
+  halul: rows=1294, dupes=0
+  jask: rows=2220, dupes=0
+  juwaymah: rows=6040, dupes=0
+  kozmino: rows=612, dupes=0
+  lavan: rows=7224, dupes=0
+  mina_ahmadi: rows=4424, dupes=0
+  novorossiysk: rows=16185, dupes=0
+  primorsk: rows=16272, dupes=0
+  ras_laffan: rows=10608, dupes=0
+  ras_tanura: rows=37081, dupes=0
+  ruwais: rows=11920, dupes=0
+  siri: rows=48, dupes=0
+  sitra: rows=7800, dupes=0
+  yanbu: rows=3984, dupes=0
+  zirku: rows=3010, dupes=0
+
+H11 VERDICT: NOT_CONFIRMED — total duplicate rows=0
+
+=== H12: db_mean outliers ===
+  al_flaw: min=-20.35 max=8.05 q01=-14.50 q99=-0.98 n=7656
+  das_island: min=-5.00 max=19.18 q01=-4.45 q99=15.31 n=3615
+  de_kastri: min=-5.00 max=16.00 q01=-4.72 q99=11.88 n=832
+  fujairah: min=-5.00 max=22.96 q01=-5.00 q99=20.31 n=7150
+  halul: min=-5.00 max=17.40 q01=-4.22 q99=13.00 n=1294
+  jask: min=-5.00 max=20.08 q01=-4.08 q99=15.96 n=2220
+  juwaymah: min=-5.00 max=22.88 q01=-5.00 q99=19.71 n=6040
+  kozmino: min=-5.00 max=17.43 q01=-2.50 q99=14.97 n=612
+  lavan: min=-5.00 max=17.88 q01=-5.00 q99=14.62 n=7224
+  mina_ahmadi: min=-5.00 max=18.80 q01=-2.63 q99=16.50 n=4424
+  novorossiysk: min=-5.00 max=26.75 q01=-3.50 q99=18.16 n=16185
+  primorsk: min=-5.00 max=20.70 q01=-3.45 q99=12.84 n=16272
+  ras_laffan: min=-5.00 max=24.68 q01=-4.69 q99=18.94 n=10608
+  ras_tanura: min=-6.71 max=23.40 q01=-3.89 q99=18.15 n=37081
+  ruwais: min=-5.00 max=23.84 q01=-3.16 q99=19.56 n=11920
+  siri: min=-5.00 max=10.30 q01=-5.00 q99=10.30 n=48
+  sitra: min=-5.00 max=22.75 q01=-5.00 q99=14.01 n=7800
+  yanbu: min=-4.73 max=23.73 q01=-2.94 q99=18.03 n=3984
+  zirku: min=-5.00 max=24.79 q01=-1.95 q99=19.89 n=3010
+
+H12: outlier summary written for 19 terminals
+
+=== H13: TVT sudden volume jumps ===
+
+H13 VERDICT: NOT_CONFIRMED — terminals with jumps=0
+
+=== H14: TVT completeness ===
+  al_flaw: obs_dates=319, tvt=319, missing=0
+  das_island: obs_dates=301, tvt=301, missing=0
+  de_kastri: obs_dates=416, tvt=416, missing=0
+  fujairah: obs_dates=325, tvt=325, missing=0
+  halul: obs_dates=316, tvt=5, missing=311
+  jask: obs_dates=111, tvt=111, missing=0
+  juwaymah: obs_dates=320, tvt=320, missing=0
+  kozmino: obs_dates=51, tvt=51, missing=0
+  lavan: obs_dates=301, tvt=301, missing=0
+  mina_ahmadi: obs_dates=316, tvt=316, missing=0
+  novorossiysk: obs_dates=1079, tvt=1079, missing=0
+  primorsk: obs_dates=904, tvt=904, missing=0
+  ras_laffan: obs_dates=312, tvt=312, missing=0
+  ras_tanura: obs_dates=570, tvt=563, missing=7
+  ruwais: obs_dates=298, tvt=298, missing=0
+  siri: obs_dates=8, tvt=8, missing=0
+  sitra: obs_dates=312, tvt=312, missing=0
+  yanbu: obs_dates=332, tvt=332, missing=0
+  zirku: obs_dates=301, tvt=301, missing=0
+
+H14 VERDICT: CONFIRMED — total obs dates not in TVT=318
+
+=== H16: Persistently missing tanks ===
+  al_flaw: total_dates=319, tanks_missing>50%=0
+  das_island: total_dates=301, tanks_missing>50%=3
+tank_id  n_dates_present  pct_present
+   di_0                1     0.332226
+  di_10                1     0.332226
+   di_3                1     0.332226
+  de_kastri: total_dates=416, tanks_missing>50%=0
+  fujairah: total_dates=325, tanks_missing>50%=0
+  halul: total_dates=316, tanks_missing>50%=6
+tank_id  n_dates_present  pct_present
+   hl_0                5     1.582278
+   hl_1                5     1.582278
+   hl_2                5     1.582278
+   hl_3                5     1.582278
+   hl_4                5     1.582278
+   hl_5                5     1.582278
+  jask: total_dates=111, tanks_missing>50%=0
+  juwaymah: total_dates=320, tanks_missing>50%=0
+  kozmino: total_dates=51, tanks_missing>50%=0
+  lavan: total_dates=301, tanks_missing>50%=0
+  mina_ahmadi: total_dates=316, tanks_missing>50%=0
+  novorossiysk: total_dates=1079, tanks_missing>50%=0
+  primorsk: total_dates=904, tanks_missing>50%=0
+  ras_laffan: total_dates=312, tanks_missing>50%=0
+  ras_tanura: total_dates=570, tanks_missing>50%=0
+  ruwais: total_dates=298, tanks_missing>50%=0
+  siri: total_dates=8, tanks_missing>50%=0
+  sitra: total_dates=312, tanks_missing>50%=0
+  yanbu: total_dates=332, tanks_missing>50%=0
+  zirku: total_dates=301, tanks_missing>50%=0
+
+=== H18: Pass interval regularity ===
+  al_flaw: passes=319, median_gap=12.0d, irregular=241
+  das_island: passes=301, median_gap=12.0d, irregular=230
+  de_kastri: passes=416, median_gap=7.0d, irregular=24
+  fujairah: passes=325, median_gap=12.0d, irregular=249
+  halul: passes=316, median_gap=12.0d, irregular=241
+  jask: passes=111, median_gap=6.0d, irregular=39
+  juwaymah: passes=320, median_gap=12.0d, irregular=249
+  kozmino: passes=51, median_gap=12.0d, irregular=50
+  lavan: passes=301, median_gap=12.0d, irregular=231
+  mina_ahmadi: passes=316, median_gap=12.0d, irregular=242
+  novorossiysk: passes=1079, median_gap=5.0d, irregular=402
+  primorsk: passes=904, median_gap=5.0d, irregular=229
+  ras_laffan: passes=312, median_gap=12.0d, irregular=237
+  ras_tanura: passes=570, median_gap=4.0d, irregular=177
+  ruwais: passes=298, median_gap=12.0d, irregular=228
+  siri: passes=8, median_gap=1.0d, irregular=4
+  sitra: passes=312, median_gap=12.0d, irregular=237
+  yanbu: passes=332, median_gap=12.0d, irregular=323
+  zirku: passes=301, median_gap=12.0d, irregular=230
+
+=== H19: db_mean distribution shift pre/post 2026-09-07 ===
+  al_flaw: pre_mean=-4.724 post_mean=-3.862 delta=0.862
+  das_island: pre_mean=4.389 post_mean=4.727 delta=0.338
+  de_kastri: pre_mean=2.263 post_mean=1.406 delta=-0.857
+  fujairah: pre_mean=6.775 post_mean=5.414 delta=-1.361
+  halul: pre_mean=3.247 post_mean=6.752 delta=3.505
+  jask: pre_mean=6.002 post_mean=5.760 delta=-0.242
+  juwaymah: pre_mean=6.425 post_mean=7.733 delta=1.308
+  lavan: pre_mean=4.224 post_mean=3.924 delta=-0.300
+  mina_ahmadi: pre_mean=6.018 post_mean=4.940 delta=-1.078
+  novorossiysk: pre_mean=3.847 post_mean=-0.022 delta=-3.869
+  primorsk: pre_mean=2.378 post_mean=2.627 delta=0.250
+  ras_laffan: pre_mean=7.127 post_mean=7.079 delta=-0.048
+  ras_tanura: pre_mean=5.956 post_mean=6.253 delta=0.298
+  ruwais: pre_mean=7.171 post_mean=7.540 delta=0.369
+  sitra: pre_mean=5.984 post_mean=6.719 delta=0.735
+  yanbu: pre_mean=5.822 post_mean=7.450 delta=1.628
+  zirku: pre_mean=7.732 post_mean=8.376 delta=0.645
+
+H19: terminals with |delta_mean| > 1.0 dB: 6
+
+=== H20: Cross-terminal orbit synchrony ===
+  Dates in ≥2 terminals: 2116/2948 (71.8%)
+
+=== D3: db_mean normalization audit ===
+  Normalization references: 666 lines
+scripts/series_health_standard.py:7:All metrics are dimensionless or normalized by the terminal's own dynamic_range_db
+scripts/series_health_standard.py:71:    rows = fetch_all("raw_observations", "date,tank_id,db_mean")
+scripts/series_health_standard.py:74:    df = df.dropna(subset=["db_mean"])
+scripts/series_health_standard.py:82:                     "date,tank_id,db_mean,relative_orbit,orbit_direction",
+scripts/series_health_standard.py:86:    df = df.dropna(subset=["db_mean"])
+scripts/series_health_standard.py:114:| live_fraction | frac(tanks: per-tank-step ≥ 5% dynamic_range) | [0,1] | (threshold normalized) | [0,1] |
+scripts/series_health_standard.py:121:- All normalized metrics are ∈ [0, ∞) but practically ∈ [0, 1] for healthy series.
+scripts/series_health_standard.py:128:    """Compute normalized health metrics from per-tank per-date db_mean dataframe."""
+scripts/series_health_standard.py:132:        df.groupby("date")["db_mean"]
+scripts/series_health_standard.py:139:    dynamic_range_db = float(daily.quantile(0.95) - daily.quantile(0.05))
+scripts/series_health_standard.py:150:    # deltas; raw and normalized
+scripts/series_health_standard.py:153:    delta_p50_norm= float(deltas_raw.quantile(0.50)  / dr) if not np.isnan(dr) else np.nan
+scripts/series_health_standard.py:154:    delta_p90_norm= float(deltas_raw.quantile(0.90)  / dr) if not np.isnan(dr) else np.nan
+scripts/series_health_standard.py:155:    delta_p99_norm= float(deltas_raw.quantile(0.99)  / dr) if not np.
+
+=== D4: Terminal volume computation audit ===
+  Volume computation references: 240 lines
+scripts/diag_closure.py:54:    tvt = fetch_all("terminal_volume_timeseries", "date,vol_mn_bbl,aggregation,smoothed",
+scripts/reingest_alfaw_v2.py:39:BARREL_PER_M3 = 6.2898
+scripts/export_terminal_json.py:52:            .select("date,vol_mn_bbl")
+scripts/export_terminal_json.py:66:        return pd.DataFrame(columns=["date", "vol_mn_bbl"])
+scripts/export_terminal_json.py:80:            .select("date,vol_mn_bbl")
+scripts/export_terminal_json.py:93:        return pd.DataFrame(columns=["date", "vol_mn_bbl"])
+scripts/export_terminal_json.py:107:        "values": [round(v, 3) for v in df["vol_mn_bbl"].tolist()],
+scripts/export_terminal_json.py:143:    df2 = df.rename(columns={"vol_mn_bbl": tid})
+scripts/research/auto_hypotheses.py:170:    tvt_rt = fetch_all("terminal_volume_timeseries", "date,vol_mn_bbl,aggregation,smoothed",
+scripts/research/auto_hypotheses.py:278:# (these would be filtered by apply_coverage_filter at next compute run,
+scripts/research/auto_hypotheses.py:296:        tvt_rows = fetch_all("terminal_volume_timeseries", "date,vol_mn_bbl,aggregation",
+scripts/research/auto_hypotheses.py:357:    tvt_rt2 = fetch_all("terminal_volume_timeseries", "date,vol_mn_bbl,aggregation",
+scripts/research/auto_hypotheses.py:526:    tvt_yb = fetch_all("terminal_volume_timeseries", "date,vol_mn_bbl,aggregation",
+scripts/research/auto_hypotheses.py:589:coverage_filter would drop at next run, but TVT currently includes.
+scripts/research/auto_hypotheses.py:936:    tvt_rt3 = fetch_all("ter
+
+  CDSE block SKIPPED (P2 auth not available)
+
+=== Block A + B/C/D complete ===
