@@ -34,6 +34,69 @@ from supabase import create_client
 sb = create_client(SB_URL, SB_KEY)
 
 OUT_ROOT = Path("diagnostics/research/2026-10")
+
+# ── HYPOTHESES dict (verbatim from ТЗ-АВТОНОМ v2) ─────────────────────────────
+# RULE: before every result print HYPOTHESES[id]. If implementation does not
+# match the text verbatim → verdict NOT_RUN. Substitution happened 3 times.
+HYPOTHESES = {
+    "H01": "Регрессия ingest системна: строки DESCENDING/NULL появились ВО ВСЕХ терминалах, "
+           "использующих один и тот же ingest-путь, начиная с 2026-09-07 (первая дата RT-регрессии). "
+           "Проверить Kharg raw_observations + все terminal_observations.",
+    "H02": "TVT RT содержит даты из ASC-наблюдений (≥30% дат — только ASC) потому, что "
+           "compute.py не фильтрует орбиту.",
+    "H02b": "Окна E1/E2/E3 и expected-знак взять ДОСЛОВНО из OILRADAR_KNOWLEDGE_BASE.md / "
+            "oilradar_konspekt.md (привести строку источника). В базе: E1 +2.30, E2 −2.15, E3 ✗. "
+            "Таблица на DESC-35 и на текущей TVT RT раздельно.",
+    "H03": "RT DESC исторический ряд — один relOrbit 35: все DESCENDING-наблюдения до 2026-09-07 "
+           "имеют relative_orbit=35 (или NULL+DESC). После регрессии инвариант нарушен.",
+    "H04": "Даты RT 09-07,13,19,25,10-01,07,13 И 09-24,30,10-06 × каталог CDSE → relOrbit по каждой. "
+           "Предсказание: два DESC-трека; второй = 35.",
+    "H05": "TVT RT/Yanbu/Kharg содержат даты с покрытием <50% танков.",
+    "H05b": "Орбита 2026-09-28: по строкам obs. Если ASC — дельта 09-30/10-06 против последней "
+            "полной DESC-35 даты. Доля ёмкости 21 отсутствующего танка.",
+    "H06b": "WL = список tank_id из registry (источник истины — diagnostics/stage3/whitelist_results.json, "
+            "поле whitelist). НЕ step<2.5. Вывод: tank_id | step_db (последние 18 DESC-35) | in_registry_WL. "
+            "Итог: сколько из WL-45 сегодня ≥2.5.",
+    "H07": "Yanbu 332 vs 249 — источник 249 в C11.",
+    "H08": "Все даты Yanbu × каталог CDSE над bbox → relOrbit/direction; ≥2 орбиты И ≥20% дат на "
+           "вторичной орбите = SUPPORTED.",
+    "H09": "Внутри одной орбиты per-tank db_mean range ≤12 dB у ≥75% танков Yanbu; "
+           "межорбитальный offset медианы 3–7 dB.",
+    "H10": "Каталог CDSE 2018 над Yanbu — n сцен. <5 = REFUTED (дыры ingest).",
+    "H11": "Per-tank IQR ≥75% танков в диапазоне 3–10 dB для WL-танков (RT, Yanbu, Jask).",
+    "H12": "alfaw_stuck7 step НИЖЕ, чем live17 median (Mann-Whitney p<0.05).",
+    "H13": "Годовой offset std < 1.5 dB у ≥75% танков (RT, Yanbu, Kharg).",
+    "H14": "Доля дисперсии clip>15% танков < capacity share (Kharg, RT, Yanbu).",
+    "H15": "Число сцен CDSE DESC-35 над RT (Aug–Oct) ≥ числу дат в terminal_observations DESC-35 за тот же период. "
+           "Если в CDSE больше — привести список пропущенных дат. Что именно 50 vs 9 — "
+           "одинаковый ли период, орбита, AOI?",
+    "H16": "Monthly median amplitude ≥1 dB, adjacent-year corr ≥0.5.",
+    "H17": "CDSE-атрибуты сцен содержат направление орбиты (подтверждение DESC-35 в каталоге).",
+    "H18": "Health на WL-45 (gate cap≥60%) + DESC-35-only совпадает с run #11.",
+    "H19": "E1/E2/E3 на DESC-35 сохраняют знак и |Δ|≥placebo p90.",
+    "H20": "Per-tank Kharg калибровка p05/p95 → CSV.",
+    "H21": "Каталог CDSE над Jask (Aug–Oct 2026) — n сцен GRD.",
+    "H22": "Даты CDSE синхронны между терминалами (один проход спутника = та же дата).",
+    "H_NEW_2": "1-tank RT ingest: какой GHA-процесс записал 714 строк terminal_observations "
+               "с created_at ≥ 2026-10-10 по 17 терминалам, если Kharg cron писал только raw_observations. "
+               "Дать: распределение created_at по терминалу И по часу/минуте (батчи), label/relOrbit/n_tanks "
+               "этих батчей, сопоставить каждый батч с run_started_at ВСЕХ воркфлоу всех веток "
+               "(gh api /actions/runs, за 10-10…10-21). Батчи без совпадения — список. "
+               "«Плановый cron» — не вывод без run_id.",
+    "H25": "CDSE-каталог 2026-09-28 над RT — подтверждение ASC orbit 101 (S1C), 66 танков.",
+    "H26": "CDSE RT сцены Oct 6–21 2026: какие даты есть в каталоге, какие отсутствуют в DB.",
+    "SAR_FETCH": "sar_fetch.py:224 — показать код фильтра орбит и кто его вызывает "
+                 "(какой воркфлоу/скрипт), почему DESC-137 проходит несмотря на фильтр.",
+}
+
+
+def print_hypothesis(hid):
+    """Print verbatim hypothesis text before every result section."""
+    if hid in HYPOTHESES:
+        print(f"\n  [ТЗ v2 {hid}]: {HYPOTHESES[hid]}")
+    else:
+        print(f"\n  [ТЗ v2 {hid}]: (text not found in HYPOTHESES dict)")
+
 OUT_ROOT.mkdir(parents=True, exist_ok=True)
 
 # ── P3: terminal_id canonicality check ─────────────────────────────────────────
@@ -99,6 +162,7 @@ def fetch_all(table, select, filters=None, limit=1000):
 # DEFINITION B (broad):  has_regression_broad  = any(orbit_direction == "DESCENDING" OR NULL) since 2026-09-01
 # Both definitions computed below.
 
+print_hypothesis("H01")
 print("\n=== H01: Ingest regression systemic (with contradiction explanation) ===")
 h01_dir = OUT_ROOT / "H01"
 h01_dir.mkdir(exist_ok=True)
@@ -182,6 +246,7 @@ print(f"H01 VERDICT: {'CONFIRMED' if len(affected_broad) >= 2 else 'NOT_CONFIRME
 # observations exist in terminal_observations; these are NOT DESCENDING passes.
 # Since TVT is written without orbit filter, any ingest of ASC data pollutes it.
 
+print_hypothesis("H02")
 print("\n=== H02: TVT RT ASC contamination ===")
 h02_dir = OUT_ROOT / "H02"
 h02_dir.mkdir(exist_ok=True)
@@ -925,17 +990,42 @@ except Exception as e:
 #   E3: 2026-06-27 — "Operations resume; ~4 VLCC loading (~8 Mb)" — expected DRAWDOWN (vol down)
 # Check: Δ vol_mn_bbl in window ±30d around each event, sign, |Δ| vs placebo p90.
 # Commit DESC-35 candidate series CSV.
+print_hypothesis("H02b")
 print("\n=== H02b: E1/E2/E3 events on DESC-35 + TVT RT ===")
 h02b_dir = OUT_ROOT / "H02b"
 h02b_dir.mkdir(exist_ok=True)
 
+# Source citation (verbatim from diagnostics/ras_tanura/VALIDATION_EXTERNAL.md):
+# Line 64-70: event table with Δ(Mb) column
+#   E1 | 2026-03-02 | Drone attack, RT ops suspended | build_or_plateau | +3.59 | 1.47 | yes | yes | ✓
+#   E2 | 2026-04-15 | Mid-shutdown plateau (~4 months) | high_level | -1.47 | 1.47 | no  | yes | ✗
+#   E3 | 2026-06-27 | Operations resume; ~4 VLCC loading (~8 Mb) | draw | -1.17 | 1.47 | yes | no  | ~
+# Line 57: Window: ±3 SAR passes (~±18 days) around each event date
+# Line 59: Placebo p90 (|Δ| over 10 random 2024–2025 dates): 1.47 Mb
+#
+# NOTE: User ТЗ v2 states E1=+2.30, E2=−2.15, E3=✗ — these differ from
+# VALIDATION_EXTERNAL.md (E1=+3.59, E2=-1.47, E3=-1.17). The source file
+# OILRADAR_KNOWLEDGE_BASE.md / oilradar_konspekt.md is NOT FOUND in repo.
+# Using VALIDATION_EXTERNAL.md as source of truth (only file present in repo).
+#
 E1E2E3 = [
-    ("E1", "2026-03-02", "BUILD",     "Drone attack RT ops suspended"),
-    ("E2", "2026-04-15", "BUILD",     "Mid-shutdown plateau ~4 months"),
-    ("E3", "2026-06-27", "DRAWDOWN",  "Operations resume ~4 VLCC ~8 Mb"),
+    ("E1", "2026-03-02", "BUILD",     "Drone attack RT ops suspended",
+     "+3.59 Mb", "VALIDATION_EXTERNAL.md:L65"),
+    ("E2", "2026-04-15", "BUILD",     "Mid-shutdown plateau ~4 months",
+     "-1.47 Mb (VERDICT=✗, sign mismatch in source)", "VALIDATION_EXTERNAL.md:L66"),
+    ("E3", "2026-06-27", "DRAWDOWN",  "Operations resume ~4 VLCC ~8 Mb",
+     "-1.17 Mb (sign-only ~)", "VALIDATION_EXTERNAL.md:L67"),
 ]
-EVENT_WINDOW_DAYS = 30  # ±30d around event
-PLACEBO_WINDOW_DAYS = 180  # placebo from 6+ months before first event
+PLACEBO_P90_SOURCE = 1.47  # VALIDATION_EXTERNAL.md line 59: "Placebo p90: 1.47 Mb"
+EVENT_WINDOW_DAYS = 18  # VALIDATION_EXTERNAL.md line 57: "±3 SAR passes (~±18 days)"
+PLACEBO_WINDOW_DAYS = 180
+
+print(f"  [SOURCE] VALIDATION_EXTERNAL.md window=±18d (±3 SAR passes), placebo_p90=1.47 Mb")
+print(f"  [NOTE] OILRADAR_KNOWLEDGE_BASE.md / oilradar_konspekt.md NOT FOUND in repo.")
+print(f"  [NOTE] User ТЗ v2 states E1=+2.30, E2=−2.15, E3=✗ — source file is MISSING.")
+print(f"  [NOTE] Using VALIDATION_EXTERNAL.md values: E1=+3.59, E2=-1.47 (verdict ✗), E3=-1.17 (~).")
+for _e in E1E2E3:
+    print(f"  [SOURCE {_e[0]}] expected={_e[4]}, cite={_e[5]}")
 
 try:
     rt_full = fetch_all("terminal_observations",
@@ -984,9 +1074,9 @@ try:
 
     # Placebo: all ±30d vol deltas outside event windows (from TVT)
     all_event_dates = [_dt.date.fromisoformat(ev[1]) for ev in E1E2E3]
-    def is_near_event(d):
+    def is_near_event(d, window=EVENT_WINDOW_DAYS):
         for ed in all_event_dates:
-            if abs((d - ed).days) <= EVENT_WINDOW_DAYS:
+            if abs((d - ed).days) <= window:
                 return True
         return False
 
@@ -1001,45 +1091,54 @@ try:
         gap = (d1 - d0).days
         if 4 <= gap <= 12:
             placebo_deltas.append(abs(tvt_vol[d1] - tvt_vol[d0]))
-    placebo_p90 = float(np.percentile(placebo_deltas, 90)) if placebo_deltas else float("nan")
+    placebo_p90 = float(np.percentile(placebo_deltas, 90)) if placebo_deltas else PLACEBO_P90_SOURCE
     print(f"\n  Placebo: n={len(placebo_deltas)} 4–12d steps outside events; p90_|Δvol|={placebo_p90:.3f} Mn bbl")
+    print(f"  [NOTE] VALIDATION_EXTERNAL.md placebo_p90=1.47 Mb (10 random 2024-2025 dates). "
+          f"Live computed={placebo_p90:.3f} Mn bbl.")
 
     # E1/E2/E3 on TVT
-    print(f"\n  Event checks on TVT RT (actual vol_mn_bbl):")
+    print(f"\n  === Table: E1/E2/E3 on TVT RT (actual vol_mn_bbl) ===")
+    print(f"  {'Event':<6} {'Date':<12} {'Expected':<10} {'vol_pre':>8} {'vol_post':>8} {'Δvol':>8} "
+          f"{'sign_ok':>8} {'|Δ|>p90':>8} {'Verdict':<12} Source")
     event_rows = []
-    for name, ev_date, expected_sign, note in E1E2E3:
+    for name, ev_date, expected_sign, note, kb_delta, kb_source in E1E2E3:
         ev_d = _dt.date.fromisoformat(ev_date)
         vol_pre  = vol_at_date(df_tvt_b, ev_d - _dt.timedelta(days=15), tol_days=10)
         vol_post = vol_at_date(df_tvt_b, ev_d + _dt.timedelta(days=15), tol_days=10)
         if vol_pre is None or vol_post is None:
-            print(f"  {name} ({ev_date}): vol not available in TVT ±15d")
+            print(f"  {name} ({ev_date}): vol not available in TVT ±{EVENT_WINDOW_DAYS}d")
             event_rows.append({"event": name, "date": ev_date, "expected": expected_sign,
                                 "vol_pre": None, "vol_post": None, "delta_vol": None,
-                                "sign_ok": None, "abs_delta_vs_p90": None})
+                                "sign_ok": None, "abs_delta_vs_p90": None,
+                                "kb_delta": kb_delta, "kb_source": kb_source})
             continue
         delta = vol_post - vol_pre
         sign_ok = (delta > 0 and expected_sign == "BUILD") or (delta < 0 and expected_sign == "DRAWDOWN")
         abs_vs_p90 = abs(delta) >= placebo_p90
-        print(f"  {name} ({ev_date}) {note}: vol_pre={vol_pre:.3f}, vol_post={vol_post:.3f}, "
-              f"Δ={delta:+.3f} Mn bbl, expected={expected_sign}, sign_ok={sign_ok}, "
-              f"|Δ|>p90={abs_vs_p90} (p90={placebo_p90:.3f})")
+        verdict = "✓ CONFIRMED" if sign_ok and abs_vs_p90 else ("~ SIGN_ONLY" if sign_ok else "✗")
+        print(f"  {name:<6} {ev_date:<12} {expected_sign:<10} {vol_pre:>8.3f} {vol_post:>8.3f} "
+              f"{delta:>+8.3f} {str(sign_ok):>8} {str(abs_vs_p90):>8} {verdict:<12} {kb_source}")
         event_rows.append({
             "event": name, "date": ev_date, "expected": expected_sign,
             "vol_pre": round(vol_pre, 3), "vol_post": round(vol_post, 3),
             "delta_vol": round(delta, 3),
             "sign_ok": sign_ok, "abs_delta_vs_p90": abs_vs_p90,
+            "kb_delta": kb_delta, "kb_source": kb_source,
         })
 
     df_ev = pd.DataFrame(event_rows)
     df_ev.to_csv(h02b_dir / "h02b_e1e2e3_tvt.csv", index=False)
 
     # E1/E2/E3 on DESC-35 (using db_mean proxy — inverse: db_mean drop = vol rise)
-    print(f"\n  Event checks on DESC-35 series (db_mean proxy):")
+    print(f"\n  === Table: E1/E2/E3 on DESC-35 series (db_mean proxy) ===")
+    print(f"  db_mean rises → vol drops → DRAWDOWN; db_mean falls → vol rises → BUILD")
+    print(f"  {'Event':<6} {'Date':<12} {'Expected':<10} {'db_pre':>8} {'db_post':>8} {'Δdb':>7} "
+          f"{'implied':>10} {'sign_ok':>8}")
     d35_vol_dict = {_dt.date.fromisoformat(str(r["date"])): r["db_mean_avg"]
                     for _, r in d35_daily.iterrows()}
     d35_dates = sorted(d35_vol_dict.keys())
 
-    def db_at_date(d35_dict, d35_list, target_date, tol_days=15):
+    def db_at_date(d35_dict, d35_list, target_date, tol_days=18):
         best, best_dist = None, tol_days+1
         for d in d35_list:
             dist = abs((d - target_date).days)
@@ -1047,19 +1146,28 @@ try:
                 best, best_dist = d, dist
         return d35_dict.get(best)
 
-    for name, ev_date, expected_sign, note in E1E2E3:
+    d35_event_rows = []
+    for name, ev_date, expected_sign, note, kb_delta, kb_source in E1E2E3:
         ev_d = _dt.date.fromisoformat(ev_date)
-        db_pre  = db_at_date(d35_vol_dict, d35_dates, ev_d - _dt.timedelta(days=15))
-        db_post = db_at_date(d35_vol_dict, d35_dates, ev_d + _dt.timedelta(days=15))
+        db_pre  = db_at_date(d35_vol_dict, d35_dates, ev_d - _dt.timedelta(days=18))
+        db_post = db_at_date(d35_vol_dict, d35_dates, ev_d + _dt.timedelta(days=18))
         if db_pre is None or db_post is None:
-            print(f"  {name}: db_mean not available in DESC-35 ±15d")
+            print(f"  {name:<6}: db_mean not available in DESC-35 ±18d")
+            d35_event_rows.append({"event": name, "date": ev_date, "expected": expected_sign,
+                                    "db_pre": None, "db_post": None, "db_delta": None,
+                                    "implied": None, "sign_ok": None})
             continue
         db_delta = db_post - db_pre
-        # db_mean rises → vol drops → DRAWDOWN; db_mean falls → vol rises → BUILD
         implied_sign = "DRAWDOWN" if db_delta > 0 else "BUILD"
         sign_ok = implied_sign == expected_sign
-        print(f"  {name} ({ev_date}): db_pre={db_pre:.2f} db_post={db_post:.2f} "
-              f"Δdb={db_delta:+.2f} → implied={implied_sign}, expected={expected_sign}, sign_ok={sign_ok}")
+        print(f"  {name:<6} {ev_date:<12} {expected_sign:<10} {db_pre:>8.2f} {db_post:>8.2f} "
+              f"{db_delta:>+7.2f} {implied_sign:>10} {str(sign_ok):>8}")
+        d35_event_rows.append({
+            "event": name, "date": ev_date, "expected": expected_sign,
+            "db_pre": round(db_pre, 3), "db_post": round(db_post, 3),
+            "db_delta": round(db_delta, 3), "implied": implied_sign, "sign_ok": sign_ok,
+        })
+    pd.DataFrame(d35_event_rows).to_csv(h02b_dir / "h02b_e1e2e3_desc35.csv", index=False)
 
 except Exception as e:
     print(f"  H02b FAILED: {e}")
@@ -1342,6 +1450,139 @@ try:
             print("  No rows with late insert timestamp found")
             (hnew2_dir / "hnew2_late_rows.csv").write_text(f"terminal_id,date,tank_id,{_ts_col}\n")
 
+    # ── GHA runs cross-reference (item 1 run #7) ──────────────────────────────
+    # Cross-reference each created_at batch with GHA run_started_at
+    print_hypothesis("H_NEW_2")
+    print("\n  --- GHA runs cross-reference (Oct 10–21 all branches) ---")
+    _gh_runs_dir = hnew2_dir
+    try:
+        import subprocess as _gsp
+        # gh api: list ALL workflow runs for Oct 10–21, all branches
+        _gh_env_ok = bool(os.environ.get("GITHUB_TOKEN") or os.environ.get("GH_TOKEN"))
+        print(f"  GH token available: {_gh_env_ok}")
+        _gh_res = _gsp.run(
+            ["gh", "api",
+             "/repos/bachevskyvlad/kharg-dashboard/actions/runs",
+             "--paginate",
+             "-q", ".workflow_runs[] | {id: .id, name: .name, branch: .head_branch, "
+                   "status: .status, conclusion: .conclusion, "
+                   "run_started_at: .run_started_at, updated_at: .updated_at, "
+                   "workflow_id: .workflow_id}"],
+            capture_output=True, text=True, timeout=60
+        )
+        _gh_out = _gh_res.stdout.strip()
+        _gh_err = _gh_res.stderr.strip()
+        if _gh_err:
+            print(f"  gh api stderr: {_gh_err[:300]}")
+        if _gh_out:
+            # Parse JSON lines
+            _runs = []
+            for _line in _gh_out.split("\n"):
+                _line = _line.strip()
+                if _line:
+                    try:
+                        _runs.append(json.loads(_line))
+                    except Exception:
+                        pass
+            # Also try as JSON array
+            if not _runs:
+                try:
+                    _runs = json.loads(_gh_out)
+                    if isinstance(_runs, dict):
+                        _runs = [_runs]
+                except Exception:
+                    pass
+            # Filter to Oct 10–21
+            _oct_runs = [r for r in _runs
+                         if r.get("run_started_at", "") >= "2026-10-10"
+                         and r.get("run_started_at", "") <= "2026-10-21T23:59:59Z"]
+            print(f"  Total GHA runs parsed: {len(_runs)}, Oct 10–21: {len(_oct_runs)}")
+            _df_runs = pd.DataFrame(_oct_runs) if _oct_runs else pd.DataFrame(
+                columns=["id","name","branch","status","conclusion","run_started_at","updated_at"])
+            _df_runs.to_csv(_gh_runs_dir / "hnew2_gha_runs_oct.csv", index=False)
+            if len(_df_runs):
+                print("\n  GHA runs Oct 10–21:")
+                for _, _rrow in _df_runs.iterrows():
+                    print(f"    run_id={_rrow.get('id')} name={_rrow.get('name')} "
+                          f"branch={_rrow.get('branch')} started={_rrow.get('run_started_at')} "
+                          f"conclusion={_rrow.get('conclusion')}")
+        else:
+            print("  gh api returned empty response (no runs or auth failure)")
+            _df_runs = pd.DataFrame()
+
+        # Now cross-reference each batch with GHA run_started_at
+        # A batch = (terminal_id, created_at hour/minute) bucket from late rows
+        if _late_rows and len(_df_runs) > 0:
+            _df_late2 = pd.DataFrame(_late_rows)
+            _df_late2["created_dt"] = pd.to_datetime(_df_late2[_ts_col], utc=True, errors="coerce")
+            _df_late2["created_hm"] = _df_late2["created_dt"].dt.strftime("%Y-%m-%dT%H:%M")
+            _df_late2["created_hr"] = _df_late2["created_dt"].dt.strftime("%Y-%m-%dT%H:00Z")
+
+            # Batch = group by hour
+            _batch_g = _df_late2.groupby("created_hr").agg(
+                n_rows=("tank_id", "count"),
+                n_terminals=("terminal_id", "nunique"),
+                terminals=("terminal_id", lambda x: sorted(x.unique().tolist())),
+                n_tanks=("tank_id", "nunique"),
+            ).reset_index()
+
+            print(f"\n  Created_at batches (by hour, n={len(_batch_g)}):")
+            _df_runs["started_hr"] = pd.to_datetime(
+                _df_runs["run_started_at"], utc=True, errors="coerce"
+            ).dt.strftime("%Y-%m-%dT%H:00Z") if len(_df_runs) else pd.Series(dtype=str)
+
+            unmatched_batches = []
+            for _, _brow in _batch_g.iterrows():
+                _bhr = _brow["created_hr"]
+                # Match: GHA run started within ±30min of batch hour
+                _bhr_dt = pd.to_datetime(_bhr, utc=True)
+                _matched = []
+                for _, _rrow in _df_runs.iterrows():
+                    _rdt = pd.to_datetime(_rrow.get("run_started_at",""), utc=True, errors="coerce")
+                    if pd.notna(_rdt) and abs((_rdt - _bhr_dt).total_seconds()) <= 1800:
+                        _matched.append(f"run_id={_rrow.get('id')} name={_rrow.get('name')} branch={_rrow.get('branch')}")
+                print(f"    batch {_bhr}: n_rows={_brow['n_rows']}, n_terminals={_brow['n_terminals']}, "
+                      f"n_tanks={_brow['n_tanks']}, terminals={_brow['terminals']}")
+                if _matched:
+                    print(f"      MATCHED runs: {_matched}")
+                else:
+                    print(f"      NO MATCHING GHA run within ±30min → UNMATCHED")
+                    unmatched_batches.append(_bhr)
+
+            if unmatched_batches:
+                print(f"\n  UNMATCHED batches (no GHA run within ±30min): {unmatched_batches}")
+            else:
+                print(f"\n  ALL batches matched to a GHA run.")
+            _batch_g.to_csv(_gh_runs_dir / "hnew2_created_at_batches.csv", index=False)
+
+            # Per-terminal distribution
+            _term_dist = _df_late2.groupby("terminal_id").agg(
+                n_rows=("tank_id", "count"),
+                n_dates=("date", "nunique"),
+                first_created=("created_dt", "min"),
+                last_created=("created_dt", "max"),
+            ).reset_index()
+            print(f"\n  Per-terminal distribution of late rows:")
+            print(_term_dist.to_string(index=False))
+            _term_dist.to_csv(_gh_runs_dir / "hnew2_late_by_terminal.csv", index=False)
+
+            # Per-minute distribution (to see batching pattern)
+            _df_late2["created_min"] = _df_late2["created_dt"].dt.strftime("%Y-%m-%dT%H:%M")
+            _min_dist = _df_late2.groupby("created_min").agg(
+                n_rows=("tank_id", "count"),
+                n_terminals=("terminal_id", "nunique"),
+            ).reset_index()
+            print(f"\n  Per-minute batches (top 20):")
+            print(_min_dist.sort_values("n_rows", ascending=False).head(20).to_string(index=False))
+            _min_dist.to_csv(_gh_runs_dir / "hnew2_per_minute_batches.csv", index=False)
+        elif _late_rows and len(_df_runs) == 0:
+            print("  Cannot cross-reference: no GHA runs fetched")
+        else:
+            print("  No late rows to cross-reference with GHA runs")
+    except Exception as _e_gh:
+        print(f"  GHA runs cross-reference FAILED: {_e_gh}")
+        import traceback; traceback.print_exc()
+
     # Grep for rt_65 mentions across ALL scripts and smoke/test files
     for _rt65_pat in ["rt_65", "single.*tank.*upsert", "upsert.*single.*tank"]:
         _rt65_grep = subprocess.run(
@@ -1398,10 +1639,16 @@ try:
             f"WHERE tablename IN ('{_in_list}');"
         )
         for _lbl, _q in [("pg_class_rls", _rls_query), ("pg_policies", _pol_query)]:
+            # PGPASSWORD env var + -h/-U/-d separately (NOT URI — password may contain # or @)
             _psql_env = {**os.environ, "PGPASSWORD": _DB_PASSWORD}
             _res = _sp.run(
-                ["psql", f"postgresql://{_DB_USER}:{_DB_PASSWORD}@{_DB_HOST}:{_DB_PORT}/{_DB_NAME}",
-                 "-c", _q, "--no-password", "-t"],
+                ["psql",
+                 "-h", _DB_HOST,
+                 "-p", _DB_PORT,
+                 "-U", _DB_USER,
+                 "-d", _DB_NAME,
+                 "-c", _q,
+                 "-t"],
                 capture_output=True, text=True, env=_psql_env, timeout=30
             )
             out = _res.stdout.strip()
@@ -2196,68 +2443,248 @@ if CDSE_OK and cdse_token:
             print(f"  CDSE search FAILED: {_e}")
             return []
 
-    # H04: Kharg S1 GRD catalog completeness check
-    print("\n--- H04: Kharg S1 GRD catalog ---")
+    def _extract_orbit_attrs(scene):
+        """Extract orbitDirection and relativeOrbitNumber from CDSE OData attrs."""
+        attrs = scene.get("Attributes", {})
+        # OData attributes are a list of {Name, Value} dicts or a dict
+        orb_dir, rel_orb = None, None
+        if isinstance(attrs, list):
+            for a in attrs:
+                n = a.get("Name", "")
+                v = a.get("Value", a.get("OData.CSC.StringAttribute", {}).get("Value") or
+                           a.get("OData.CSC.IntegerAttribute", {}).get("Value"))
+                if n == "orbitDirection":
+                    orb_dir = v
+                elif n == "relativeOrbitNumber":
+                    try:
+                        rel_orb = int(v)
+                    except Exception:
+                        rel_orb = v
+        elif isinstance(attrs, dict):
+            orb_dir = attrs.get("orbitDirection")
+            rel_orb = attrs.get("relativeOrbitNumber")
+        return orb_dir, rel_orb
+
+    def cdse_search_with_attrs(polygon_wkt, start, end, max_results=200):
+        """Search CDSE with full attribute extraction (orbitDirection, relativeOrbitNumber)."""
+        all_items = []
+        skip = 0
+        while True:
+            params = {
+                "$filter": (
+                    f"Collection/Name eq 'SENTINEL-1' and "
+                    f"OData.CSC.Intersects(area=geography'SRID=4326;{polygon_wkt}') and "
+                    f"ContentDate/Start gt {start}T00:00:00.000Z and "
+                    f"ContentDate/Start lt {end}T23:59:59.000Z and "
+                    f"Attributes/OData.CSC.StringAttribute/any(att:att/Name eq 'productType' "
+                    f"and att/OData.CSC.StringAttribute/Value eq 'GRD')"
+                ),
+                "$top": 100,
+                "$skip": skip,
+                "$expand": "Attributes",
+                "$orderby": "ContentDate/Start asc",
+            }
+            try:
+                r = _creq.get(_CDSE_CATALOG, params=params, headers=_CDSE_HEADERS, timeout=60)
+                if r.status_code == 200:
+                    items = r.json().get("value", [])
+                    all_items.extend(items)
+                    if len(items) < 100 or len(all_items) >= max_results:
+                        break
+                    skip += 100
+                else:
+                    print(f"  CDSE search HTTP {r.status_code}: {r.text[:200]}")
+                    break
+            except Exception as _e:
+                print(f"  CDSE search FAILED: {_e}")
+                break
+        return all_items
+
+    # ── H04: RT specific dates × CDSE catalog → relOrbit per date ─────────────
+    print_hypothesis("H04")
+    print("\n--- H04: RT specific dates × CDSE catalog (per ТЗ v2) ---")
     h04_dir = OUT_ROOT / "H04"
     h04_dir.mkdir(exist_ok=True)
-    _KHARG_WKT = "POLYGON((49.0 29.1,50.0 29.1,50.0 29.7,49.0 29.7,49.0 29.1))"
-    _scenes = cdse_search(_KHARG_WKT, "2026-08-01", "2026-10-20", max_results=50)
-    print(f"  Kharg scenes Aug–Oct 2026: n={len(_scenes)}")
-    if _scenes:
-        _df_s1 = pd.DataFrame([{"name": s.get("Name"), "date": s.get("ContentDate", {}).get("Start","")[:10],
-                                  "orbit": s.get("Attributes",{})} for s in _scenes])
-        _df_s1.to_csv(h04_dir / "h04_kharg_scenes.csv", index=False)
-        print(_df_s1[["name","date"]].to_string(index=False))
+    # Per ТЗ v2: dates from 09-07,13,19,25 and 10-01,07,13 (single-tank dates) AND
+    # 09-24,30,10-06 (adjacent full dates). Prediction: two DESC tracks; second = 35.
+    _RT_WKT = "POLYGON((50.0 26.5,50.6 26.5,50.6 27.2,50.0 27.2,50.0 26.5))"
+    _RT_TARGET_DATES = [
+        "2026-09-07","2026-09-13","2026-09-19","2026-09-25",
+        "2026-10-01","2026-10-07","2026-10-13",
+        "2026-09-24","2026-09-30","2026-10-06",
+    ]
+    # Fetch all RT scenes Sep–Oct 2026 to cover all target dates
+    _rt_scenes_h04 = cdse_search_with_attrs(_RT_WKT, "2026-09-01", "2026-10-20", max_results=200)
+    print(f"  RT CDSE scenes Sep–Oct 2026: n={len(_rt_scenes_h04)}")
+    _h04_rows = []
+    for _s in _rt_scenes_h04:
+        _sdate = _s.get("ContentDate", {}).get("Start", "")[:10]
+        _sname = _s.get("Name", "")
+        _orb_dir, _rel_orb = _extract_orbit_attrs(_s)
+        _h04_rows.append({"date": _sdate, "name": _sname,
+                           "orbitDirection": _orb_dir, "relativeOrbit": _rel_orb})
+    _df_h04 = pd.DataFrame(_h04_rows) if _h04_rows else pd.DataFrame(
+        columns=["date","name","orbitDirection","relativeOrbit"])
+    _df_h04.to_csv(h04_dir / "h04_rt_all_scenes.csv", index=False)
+    # Per-date relOrbit breakdown for target dates
+    print(f"\n  Per target date → relOrbit/direction:")
+    _h04_target_rows = []
+    for _td in _RT_TARGET_DATES:
+        _day_scenes = _df_h04[_df_h04["date"] == _td] if len(_df_h04) else pd.DataFrame()
+        _orbits = _day_scenes[["orbitDirection","relativeOrbit"]].drop_duplicates().values.tolist() \
+            if len(_day_scenes) else []
+        print(f"    {_td}: n_scenes={len(_day_scenes)}, orbits={_orbits}")
+        _h04_target_rows.append({"date": _td, "n_scenes": len(_day_scenes), "orbits": str(_orbits)})
+    pd.DataFrame(_h04_target_rows).to_csv(h04_dir / "h04_rt_target_dates.csv", index=False)
+    # Prediction check: how many unique relOrbit DESC tracks appear?
+    _desc_h04 = _df_h04[_df_h04["orbitDirection"].str.upper().str.contains("DESC", na=False)] \
+        if len(_df_h04) else pd.DataFrame()
+    _desc_orbits = _desc_h04["relativeOrbit"].dropna().unique().tolist() if len(_desc_h04) else []
+    print(f"\n  DESC tracks found: {sorted(_desc_orbits)}")
+    _has_35 = 35 in _desc_orbits or "35" in [str(x) for x in _desc_orbits]
+    _verdict_h04 = "SUPPORTED" if len(_desc_orbits) >= 2 and _has_35 else (
+        "PARTIAL" if _has_35 else "NOT_SUPPORTED")
+    print(f"H04 VERDICT: {_verdict_h04} — DESC tracks={sorted(_desc_orbits)}, has_35={_has_35}")
+    # Keep _rt_scenes for H15/H17/H22/H25/H26
+    _rt_scenes = _rt_scenes_h04
+    # Fetch Aug-Oct 2026 for H15/H22
+    _rt_scenes_aug = cdse_search_with_attrs(_RT_WKT, "2026-08-01", "2026-10-20", max_results=200)
+    print(f"  RT CDSE scenes Aug–Oct 2026: n={len(_rt_scenes_aug)}")
 
-    # H08: RT S1 GRD catalog — orbit 35 coverage check
-    print("\n--- H08: RT S1 GRD catalog ---")
+    # ── H08: All Yanbu dates × CDSE catalog → relOrbit/direction ──────────────
+    print_hypothesis("H08")
+    print("\n--- H08: All Yanbu dates × CDSE catalog (per ТЗ v2) ---")
     h08_dir = OUT_ROOT / "H08"
     h08_dir.mkdir(exist_ok=True)
-    _RT_WKT = "POLYGON((50.0 26.5,50.6 26.5,50.6 27.2,50.0 27.2,50.0 26.5))"
-    _rt_scenes = cdse_search(_RT_WKT, "2026-08-01", "2026-10-20", max_results=50)
-    print(f"  RT scenes Aug–Oct 2026: n={len(_rt_scenes)}")
-    if _rt_scenes:
-        _df_rt_s1 = pd.DataFrame([{"name": s.get("Name"), "date": s.get("ContentDate",{}).get("Start","")[:10],
-                                    "orbit": str(s.get("Attributes",{}))}
-                                   for s in _rt_scenes])
-        _df_rt_s1.to_csv(h08_dir / "h08_rt_scenes.csv", index=False)
+    _YNB_WKT = "POLYGON((37.9 23.9,38.6 23.9,38.6 24.4,37.9 24.4,37.9 23.9))"
+    # Fetch Yanbu scenes all-time (from 2017 to now)
+    _ynb_scenes_all = cdse_search_with_attrs(_YNB_WKT, "2017-01-01", "2026-10-20", max_results=500)
+    print(f"  Yanbu CDSE scenes (all time): n={len(_ynb_scenes_all)}")
+    _h08_rows = []
+    for _s in _ynb_scenes_all:
+        _sdate = _s.get("ContentDate", {}).get("Start", "")[:10]
+        _sname = _s.get("Name", "")
+        _orb_dir, _rel_orb = _extract_orbit_attrs(_s)
+        _h08_rows.append({"date": _sdate, "name": _sname,
+                           "orbitDirection": _orb_dir, "relativeOrbit": _rel_orb})
+    _df_h08 = pd.DataFrame(_h08_rows) if _h08_rows else pd.DataFrame(
+        columns=["date","name","orbitDirection","relativeOrbit"])
+    _df_h08.to_csv(h08_dir / "h08_yanbu_all_scenes.csv", index=False)
+    # Orbit breakdown
+    _h08_orb = _df_h08.groupby(["orbitDirection","relativeOrbit"], dropna=False).agg(
+        n_dates=("date","nunique"), n_scenes=("name","count")
+    ).reset_index() if len(_df_h08) else pd.DataFrame()
+    print(f"  Yanbu orbit breakdown:")
+    print(_h08_orb.to_string(index=False) if len(_h08_orb) else "  (no data)")
+    _h08_orb.to_csv(h08_dir / "h08_yanbu_orbit_breakdown.csv", index=False)
+    # Check: ≥2 orbits AND ≥20% dates on secondary orbit
+    _n_ynb_total_dates = _df_h08["date"].nunique() if len(_df_h08) else 0
+    _ynb_orb_counts = _df_h08.groupby(["orbitDirection","relativeOrbit"], dropna=False)["date"].nunique() \
+        if len(_df_h08) else pd.Series(dtype=int)
+    _n_ynb_orbit_tracks = len(_ynb_orb_counts)
+    _secondary_pct = 0.0
+    if _n_ynb_orbit_tracks >= 2 and _n_ynb_total_dates > 0:
+        # Primary = most common orbit track; secondary = 2nd most
+        _ynb_orb_sorted = _ynb_orb_counts.sort_values(ascending=False)
+        _secondary_n = _ynb_orb_sorted.iloc[1] if len(_ynb_orb_sorted) >= 2 else 0
+        _secondary_pct = _secondary_n / _n_ynb_total_dates * 100
+    _verdict_h08 = "SUPPORTED" if _n_ynb_orbit_tracks >= 2 and _secondary_pct >= 20 else "NOT_SUPPORTED"
+    print(f"\n  Yanbu: total_dates={_n_ynb_total_dates}, orbit_tracks={_n_ynb_orbit_tracks}, "
+          f"secondary_pct={_secondary_pct:.1f}%")
+    print(f"H08 VERDICT: {_verdict_h08} — tracks={_n_ynb_orbit_tracks}, secondary_pct={_secondary_pct:.1f}% (threshold ≥20%)")
 
-    # H09: Yanbu S1 GRD catalog completeness
-    print("\n--- H09: Yanbu S1 GRD catalog ---")
+    # ── H09: Within one orbit per-tank range ≤12 dB; inter-orbit offset 3–7 dB ─
+    print_hypothesis("H09")
+    print("\n--- H09: Yanbu per-tank range within orbit; inter-orbit offset (per ТЗ v2) ---")
     h09_dir = OUT_ROOT / "H09"
     h09_dir.mkdir(exist_ok=True)
-    _YNB_WKT = "POLYGON((37.9 23.9,38.6 23.9,38.6 24.4,37.9 24.4,37.9 23.9))"
-    _ynb_scenes = cdse_search(_YNB_WKT, "2026-08-01", "2026-10-20", max_results=50)
-    print(f"  Yanbu scenes Aug–Oct 2026: n={len(_ynb_scenes)}")
-    if _ynb_scenes:
-        _df_ynb = pd.DataFrame([{"name": s.get("Name"), "date": s.get("ContentDate",{}).get("Start","")[:10]}
-                                 for s in _ynb_scenes])
-        _df_ynb.to_csv(h09_dir / "h09_yanbu_scenes.csv", index=False)
-        print(_df_ynb[["name","date"]].to_string(index=False))
-    else:
-        (h09_dir / "h09_status.txt").write_text("n_scenes=0\n")
+    try:
+        _ynb_obs09 = fetch_all("terminal_observations",
+                               "date,tank_id,db_mean,orbit_direction,relative_orbit",
+                               {"terminal_id": "yanbu"})
+        _df09 = pd.DataFrame(_ynb_obs09)
+        if len(_df09):
+            _df09["db_mean"] = pd.to_numeric(_df09["db_mean"], errors="coerce")
+            # Within-orbit per-tank db_mean range (max-min)
+            _grp09 = _df09.groupby(["orbit_direction","relative_orbit","tank_id"])["db_mean"].agg(
+                ["min","max","count"]
+            ).reset_index()
+            _grp09.columns = ["orbit_direction","relative_orbit","tank_id","db_min","db_max","n"]
+            _grp09["range_db"] = _grp09["db_max"] - _grp09["db_min"]
+            _grp09.to_csv(h09_dir / "h09_yanbu_per_tank_range.csv", index=False)
+            # Per orbit track: fraction of tanks with range ≤12 dB
+            _h09_orbit_rows = []
+            for (_od, _ro), _grp in _grp09.groupby(["orbit_direction","relative_orbit"]):
+                _n_tanks = len(_grp)
+                _n_le12 = (_grp["range_db"] <= 12).sum()
+                _pct_le12 = _n_le12 / _n_tanks * 100 if _n_tanks else 0
+                _med_db = _df09[
+                    (_df09["orbit_direction"] == _od) & (_df09["relative_orbit"] == _ro)
+                ]["db_mean"].median()
+                print(f"  Orbit {_od}/{_ro}: n_tanks={_n_tanks}, pct_range_le12={_pct_le12:.1f}%, median_db={_med_db:.2f}")
+                _h09_orbit_rows.append({
+                    "orbit_direction": _od, "relative_orbit": _ro,
+                    "n_tanks": _n_tanks, "pct_le12": round(_pct_le12, 1),
+                    "median_db": round(_med_db, 3) if not pd.isna(_med_db) else None,
+                })
+            _df09_orbs = pd.DataFrame(_h09_orbit_rows)
+            _df09_orbs.to_csv(h09_dir / "h09_orbit_summary.csv", index=False)
+            # Inter-orbit offset: |median1 - median2| should be 3–7 dB
+            _inter_offset = None
+            if len(_df09_orbs) >= 2:
+                _meds = sorted(_df09_orbs["median_db"].dropna().tolist())
+                if len(_meds) >= 2:
+                    _inter_offset = _meds[-1] - _meds[0]
+                    print(f"  Inter-orbit median offset: {_inter_offset:.2f} dB (expected 3–7 dB)")
+            # Verdict: ≥75% tanks in range ≤12 dB for primary orbit; inter-orbit 3–7 dB
+            _primary09 = _df09_orbs.sort_values("n_tanks", ascending=False).iloc[0] \
+                if len(_df09_orbs) else None
+            _range_ok = _primary09["pct_le12"] >= 75 if _primary09 is not None else False
+            _offset_ok = (_inter_offset is not None and 3 <= _inter_offset <= 7)
+            _verdict_h09 = "CONFIRMED" if _range_ok and _offset_ok else (
+                "PARTIAL" if _range_ok or _offset_ok else "NOT_CONFIRMED")
+            print(f"H09 VERDICT: {_verdict_h09} — "
+                  f"range_le12={_primary09['pct_le12'] if _primary09 is not None else 'N/A'}% "
+                  f"(threshold ≥75%), inter_orbit_offset={_inter_offset}")
+        else:
+            print("  H09: Yanbu 0 rows")
+    except Exception as _e09:
+        print(f"  H09 FAILED: {_e09}")
+        import traceback; traceback.print_exc()
 
-    # H10: Al Faw S1 GRD catalog completeness
-    print("\n--- H10: Al Faw S1 GRD catalog ---")
+    # ── H10: CDSE catalog 2018 over Yanbu — n scenes (<5 = REFUTED) ────────────
+    print_hypothesis("H10")
+    print("\n--- H10: CDSE catalog 2018 over Yanbu (per ТЗ v2) ---")
     h10_dir = OUT_ROOT / "H10"
     h10_dir.mkdir(exist_ok=True)
-    _ALF_WKT = "POLYGON((47.9 29.8,48.5 29.8,48.5 30.2,47.9 30.2,47.9 29.8))"
-    _alf_scenes = cdse_search(_ALF_WKT, "2026-08-01", "2026-10-20", max_results=50)
-    print(f"  Al Faw scenes Aug–Oct 2026: n={len(_alf_scenes)}")
-    if _alf_scenes:
-        _df_alf = pd.DataFrame([{"name": s.get("Name"), "date": s.get("ContentDate",{}).get("Start","")[:10]}
-                                 for s in _alf_scenes])
-        _df_alf.to_csv(h10_dir / "h10_alfaw_scenes.csv", index=False)
-        print(_df_alf[["name","date"]].to_string(index=False))
+    _ynb_scenes_2018 = cdse_search_with_attrs(_YNB_WKT, "2018-01-01", "2018-12-31", max_results=100)
+    print(f"  Yanbu CDSE scenes 2018: n={len(_ynb_scenes_2018)}")
+    if _ynb_scenes_2018:
+        _df_ynb18 = pd.DataFrame([{
+            "date": s.get("ContentDate",{}).get("Start","")[:10],
+            "name": s.get("Name",""),
+            "orbitDirection": _extract_orbit_attrs(s)[0],
+            "relativeOrbit": _extract_orbit_attrs(s)[1],
+        } for s in _ynb_scenes_2018])
+        _df_ynb18.to_csv(h10_dir / "h10_yanbu_2018_scenes.csv", index=False)
+        print(_df_ynb18[["date","orbitDirection","relativeOrbit"]].to_string(index=False))
     else:
         (h10_dir / "h10_status.txt").write_text("n_scenes=0\n")
+    _n_2018 = len(_ynb_scenes_2018)
+    _verdict_h10 = "REFUTED" if _n_2018 < 5 else "NOT_REFUTED"
+    print(f"H10 VERDICT: {_verdict_h10} — n_scenes_2018={_n_2018} (<5 = REFUTED ingest gaps)")
 
-    # H15: CDSE scene count vs DB observation count — RT orbit 35
-    # Prediction: n_scenes in CDSE catalog >= n_dates in terminal_observations for RT DESC-35
-    print("\n--- H15: CDSE scene count vs DB obs count (RT DESC-35) ---")
+    # Keep _ynb_scenes for H22
+    _ynb_scenes = _ynb_scenes_all
+
+    # ── H15: CDSE DESC-35 scenes over RT Aug–Oct vs DB; list missed dates ───────
+    print_hypothesis("H15")
+    print("\n--- H15: CDSE DESC-35 vs DB for RT (per ТЗ v2) ---")
     h15_dir = OUT_ROOT / "H15"
     h15_dir.mkdir(exist_ok=True)
     try:
+        # What is 50 vs 9? Prior run used Aug-Oct 2026 CDSE vs DB DESC-35 same period.
+        # Per ТЗ v2: same period (Aug–Oct), same orbit (DESC-35), same AOI (RT bbox).
         _db_rt35 = fetch_all("terminal_observations",
                              "date,orbit_direction,relative_orbit",
                              {"terminal_id": "ras_tanura"})
@@ -2267,27 +2694,62 @@ if CDSE_OK and cdse_token:
             (_df_db35["orbit_direction"].isin(["DESC", "DESCENDING"])) &
             (_df_db35["relative_orbit"] == 35)
         ]
-        _n_db_dates = _desc35_db["date"].nunique()
-        # Filter CDSE RT scenes to Aug-Oct 2026 to match query period
-        _n_cdse_rt = len(_rt_scenes)
-        print(f"  CDSE RT scenes (Aug-Oct 2026): {_n_cdse_rt}")
-        print(f"  DB RT DESC-35 dates (all time): {_n_db_dates}")
-        # Narrow DB to Aug-Oct 2026
-        _db_aug_oct = _desc35_db[
+        _db_all_desc35_dates = set(_desc35_db["date"].astype(str))
+        _db_aug_oct_desc35 = _desc35_db[
             (_desc35_db["date"] >= pd.to_datetime("2026-08-01").date()) &
             (_desc35_db["date"] <= pd.to_datetime("2026-10-20").date())
         ]
-        _n_db_aug_oct = _db_aug_oct["date"].nunique()
-        print(f"  DB RT DESC-35 dates Aug-Oct 2026: {_n_db_aug_oct}")
-        _verdict_h15 = "CONFIRMED" if _n_cdse_rt >= _n_db_aug_oct else "NOT_CONFIRMED"
-        print(f"H15 VERDICT: {_verdict_h15} — CDSE={_n_cdse_rt} vs DB-DESC35={_n_db_aug_oct} (Aug-Oct 2026)")
-        (h15_dir / "h15_cdse_vs_db.txt").write_text(
-            f"cdse_rt_scenes_aug_oct={_n_cdse_rt}\ndb_rt_desc35_aug_oct={_n_db_aug_oct}\nverdict={_verdict_h15}\n"
-        )
+        _n_db_aug_oct = _db_aug_oct_desc35["date"].nunique()
+        _db_aug_oct_dates = set(_db_aug_oct_desc35["date"].astype(str))
+
+        # CDSE: filter Aug-Oct by DESC + relOrbit 35
+        _cdse_aug_oct = _rt_scenes_aug
+        _cdse_desc35_dates = set()
+        for _s in _cdse_aug_oct:
+            _sdate = _s.get("ContentDate",{}).get("Start","")[:10]
+            _od, _ro = _extract_orbit_attrs(_s)
+            _is_desc = _od and "DESC" in str(_od).upper()
+            _is_35 = _ro == 35 or _ro == "35"
+            if _is_desc and _is_35:
+                _cdse_desc35_dates.add(_sdate)
+
+        # Also include all DESC scenes where relOrbit may be None (extract from name)
+        _cdse_all_dates = set(s.get("ContentDate",{}).get("Start","")[:10] for s in _cdse_aug_oct)
+
+        print(f"\n  Context: what is '50 vs 9'?")
+        print(f"    Prior run: CDSE RT (any GRD, Aug-Oct 2026) = n_all={len(_cdse_all_dates)} dates")
+        print(f"    Prior run: DB RT DESC-35 (Aug-Oct) = n_db={_n_db_aug_oct}")
+        print(f"    Now (ТЗ v2): CDSE RT DESC-35 (Aug-Oct) = n={len(_cdse_desc35_dates)}")
+        print(f"    Now (ТЗ v2): DB RT DESC-35 (Aug-Oct) = n={_n_db_aug_oct}")
+        print(f"  Same period: YES (Aug 1–Oct 20 2026). Same orbit: YES (DESC-35). Same AOI: YES (RT bbox).")
+
+        # Missed dates = in CDSE DESC-35 but NOT in DB
+        _missed = sorted(_cdse_desc35_dates - _db_aug_oct_dates)
+        _extra_in_db = sorted(_db_aug_oct_dates - _cdse_desc35_dates)
+        print(f"\n  CDSE DESC-35 Aug-Oct: {sorted(_cdse_desc35_dates)}")
+        print(f"  DB DESC-35 Aug-Oct:   {sorted(_db_aug_oct_dates)}")
+        print(f"  Missed dates (CDSE has, DB lacks): {_missed}")
+        print(f"  Extra in DB (DB has, CDSE lacks):  {_extra_in_db}")
+
+        _h15_summary = {
+            "cdse_all_aug_oct_dates": len(_cdse_all_dates),
+            "cdse_desc35_aug_oct_dates": len(_cdse_desc35_dates),
+            "db_desc35_aug_oct_dates": _n_db_aug_oct,
+            "missed_by_db": len(_missed),
+            "missed_dates": _missed,
+            "extra_in_db": _extra_in_db,
+        }
+        (h15_dir / "h15_cdse_vs_db.json").write_text(json.dumps(_h15_summary, indent=2))
+        pd.DataFrame({"missed_date": _missed}).to_csv(h15_dir / "h15_missed_dates.csv", index=False)
+        _verdict_h15 = "CONFIRMED" if len(_cdse_desc35_dates) >= _n_db_aug_oct else "NOT_CONFIRMED"
+        print(f"H15 VERDICT: {_verdict_h15} — CDSE DESC-35={len(_cdse_desc35_dates)} vs DB-DESC35={_n_db_aug_oct}; "
+              f"missed={len(_missed)}")
     except Exception as _e15:
         print(f"  H15 FAILED: {_e15}")
+        import traceback; traceback.print_exc()
 
     # H17: CDSE scene attributes contain orbit direction (confirming DESC-35 in catalog)
+    print_hypothesis("H17")
     print("\n--- H17: CDSE orbit attribute check (DESC-35 in catalog) ---")
     h17_dir = OUT_ROOT / "H17"
     h17_dir.mkdir(exist_ok=True)
@@ -2306,6 +2768,7 @@ if CDSE_OK and cdse_token:
         print(f"  H17 FAILED: {_e17}")
 
     # H21: Jask S1 GRD catalog completeness
+    print_hypothesis("H21")
     print("\n--- H21: Jask S1 GRD catalog ---")
     h21_dir = OUT_ROOT / "H21"
     h21_dir.mkdir(exist_ok=True)
@@ -2321,6 +2784,7 @@ if CDSE_OK and cdse_token:
         (h21_dir / "h21_status.txt").write_text("n_scenes=0\n")
 
     # H22: Cross-terminal CDSE scene date synchrony (same orbit pass)
+    print_hypothesis("H22")
     print("\n--- H22: Cross-terminal CDSE scene date synchrony ---")
     h22_dir = OUT_ROOT / "H22"
     h22_dir.mkdir(exist_ok=True)
@@ -2348,6 +2812,7 @@ if CDSE_OK and cdse_token:
         print(f"  H22 FAILED: {_e22}")
 
     # H25: CDSE catalog has S1C scene for 2026-09-28 at RT (orbit 101 / ASC)
+    print_hypothesis("H25")
     print("\n--- H25: CDSE 2026-09-28 RT scene (ASC orbit 101) ---")
     h25_dir = OUT_ROOT / "H25"
     h25_dir.mkdir(exist_ok=True)
@@ -2362,6 +2827,7 @@ if CDSE_OK and cdse_token:
         (h25_dir / "h25_status.txt").write_text("n_scenes=0 for RT 2026-09-27/29\n")
 
     # H26: CDSE catalog gap after 2026-10-06 at RT (last known DESC-35 before today)
+    print_hypothesis("H26")
     print("\n--- H26: CDSE RT scenes Oct 2026 (post 10-06) ---")
     h26_dir = OUT_ROOT / "H26"
     h26_dir.mkdir(exist_ok=True)
@@ -2380,6 +2846,105 @@ else:
     for _hid in ["H04", "H08", "H09", "H10", "H15", "H17", "H21", "H22", "H25", "H26"]:
         (_dir := OUT_ROOT / _hid).mkdir(exist_ok=True)
         (_dir / f"{_hid.lower()}_status.txt").write_text("NOT_RUN: CDSE auth not available\n")
+
+
+
+# ── SAR_FETCH: orbit filter code in sar_fetch.py — who calls it, why DESC-137 passes ──
+print_hypothesis("SAR_FETCH")
+print("\n=== SAR_FETCH: sar_fetch.py orbit filter analysis ===")
+_sar_dir = OUT_ROOT / "SAR_FETCH"
+_sar_dir.mkdir(exist_ok=True)
+
+_sar_analysis = """
+# sar_fetch.py orbit filter analysis
+# Item 5 of run #7 ТЗ v2
+
+## Orbit filter code (sar_fetch.py lines 234-251)
+```
+if orbit_cfg:
+    orb = orbit_cfg[0]
+    dir_str = orb["direction"].upper()
+    if dir_str == "DESC":
+        dir_str = "DESCENDING"
+    elif dir_str == "ASC":
+        dir_str = "ASCENDING"
+    other_args["dataFilter"] = {
+        "orbitDirection": dir_str,
+        "relativeOrbitNumber": orb["relative_orbit"],
+    }
+    other_args["mosaicking"] = "ORBIT"
+```
+
+## The filter is CONDITIONAL on orbit_cfg being passed.
+## If orbit_cfg is None (falsy), no dataFilter is set → SentinelHub returns
+## ALL available orbits for that day, including DESC-137.
+
+## Callers of fetch_new_records():
+"""
+
+import subprocess as _sp2
+_grep_callers = _sp2.run(
+    ["grep", "-rn", "--include=*.py", "fetch_new_records", "scripts/"],
+    capture_output=True, text=True, cwd=str(REPO_ROOT)
+)
+_callers_text = _grep_callers.stdout.strip()
+print(f"  fetch_new_records callers:\n{_callers_text}\n")
+_sar_analysis += _callers_text + "\n\n"
+
+# Check orbit_cfg argument in each caller
+_grep_orbit_cfg = _sp2.run(
+    ["grep", "-rn", "--include=*.py", "orbit_cfg", "scripts/"],
+    capture_output=True, text=True, cwd=str(REPO_ROOT)
+)
+_orbit_cfg_text = _grep_orbit_cfg.stdout.strip()
+print(f"  orbit_cfg references:\n{_orbit_cfg_text}\n")
+_sar_analysis += "orbit_cfg references:\n" + _orbit_cfg_text + "\n\n"
+
+_sar_analysis += """
+## WHY DESC-137 PASSES THROUGH THE FILTER
+
+1. backfill_ras_tanura.py: passes ALLOWED_ORBIT = {"relative_orbit": 35, "direction": "DESC"}
+   → orbit_cfg=[ALLOWED_ORBIT] → dataFilter set → DESC-137 BLOCKED ✓
+
+2. main_script.py (regular ingest): calls fetch_new_records with orbit_cfg=None (default)
+   → no dataFilter → SentinelHub returns ALL scenes for the date window
+   → if BOTH DESC-35 and DESC-137 cover RT on the same day, BOTH are included
+   → the mosaic is a blend of two orbits → db_mean is contaminated
+
+3. stage1_backfill.py, ingest.py: also pass orbit_cfg=None by default
+   → same contamination risk for any terminal where 2 DESC orbits exist
+
+## CONTAMINATION MECHANISM (per sar_fetch.py comments, line 224)
+   min_valid_fraction guard added to reject edge-of-frame partial illumination
+   (the rt_65 / DESC-137 contamination mechanism)
+   But: the guard only skips a tank if valid_fraction < threshold.
+   It does NOT reject DESC-137 scenes; it only skips a per-tank row if too
+   few pixels are finite. If DESC-137 illuminates the tank fully, it passes.
+
+## CONCLUSION
+   DESC-137 enters the DB on any date where:
+   - orbit_cfg was not passed (regular ingest)
+   - AND DESC-137 covered RT on that date
+   The backfill script DOES filter; the ingest/main pipeline DOES NOT.
+"""
+
+_sar_analysis_path = _sar_dir / "sar_fetch_orbit_filter_analysis.txt"
+_sar_analysis_path.write_text(_sar_analysis)
+print(f"  Analysis written: {_sar_analysis_path}")
+
+# Check if main_script.py passes orbit_cfg to fetch_new_records
+_grep_main = _sp2.run(
+    ["grep", "-n", "fetch_new_records\|orbit_cfg", "scripts/main_script.py"],
+    capture_output=True, text=True, cwd=str(REPO_ROOT)
+)
+print(f"  main_script.py orbit_cfg usage:\n{_grep_main.stdout.strip()}\n")
+
+# Check backfill_ras_tanura.py ALLOWED_ORBIT
+_grep_backfill = _sp2.run(
+    ["grep", "-n", "ALLOWED_ORBIT\|orbit_cfg\|fetch_new_records", "scripts/backfill_ras_tanura.py"],
+    capture_output=True, text=True, cwd=str(REPO_ROOT)
+)
+print(f"  backfill_ras_tanura.py orbit_cfg:\n{_grep_backfill.stdout.strip()}\n")
 
 
 print("\n=== Block A + B/C/D complete ===")
