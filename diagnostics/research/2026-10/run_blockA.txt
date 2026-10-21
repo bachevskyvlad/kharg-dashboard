@@ -379,8 +379,8 @@ This is a data collection task — no correlation calculations in code.
 
 
 === PREFLIGHT P2: CDSE auth ===
-  P2: CDSE auth OK token_length=1994
-P2 RESULT: OK token_length=1994
+  P2: CDSE auth OK token_length=2002
+P2 RESULT: OK token_length=2002
 
 === Kharg raw_observations audit ===
   raw_observations columns: ['id', 'date', 'tank_id', 'radius_m', 'diameter', 'h_max', 'db_mean', 'created_at']
@@ -619,10 +619,12 @@ scripts/research/auto_hypotheses.py:2957:1. backfill_ras_tanura.py: passes ALLOW
 
   --- GHA runs cross-reference (Oct 10–21 all branches) ---
   GH token available: True
-  Total GHA runs parsed: 72, Oct 10–21: 72
+  Total GHA runs parsed: 74, Oct 10–21: 74
 
   GHA runs Oct 10–21:
-    run_id=39656913283 name=Research — ТЗ-АВТОНОМ v2 Block A branch=research/2026-10-auto started=2026-10-21T18:54:24Z conclusion=nan
+    run_id=39662252732 name=Research — ТЗ-АВТОНОМ v2 Block A branch=research/2026-10-auto started=2026-10-21T19:30:34Z conclusion=nan
+    run_id=39658212571 name=Monitor — Kharg SAR branch=main started=2026-10-21T19:03:08Z conclusion=success
+    run_id=39656913283 name=Research — ТЗ-АВТОНОМ v2 Block A branch=research/2026-10-auto started=2026-10-21T18:54:24Z conclusion=success
     run_id=39652381238 name=Research — ТЗ-АВТОНОМ v2 Block A branch=research/2026-10-auto started=2026-10-21T18:24:08Z conclusion=success
     run_id=39639278632 name=Research — ТЗ-АВТОНОМ v2 Block A branch=research/2026-10-auto started=2026-10-21T16:56:26Z conclusion=success
     run_id=39630372698 name=Research — ТЗ-АВТОНОМ v2 Block A branch=research/2026-10-auto started=2026-10-21T15:57:23Z conclusion=success
@@ -1490,21 +1492,21 @@ scripts/ingest.py:242:                                            orbit_cfg=allo
 
 
 === 4.11: Rebuild Assessment (V0 scene counts per terminal) ===
-  kharg       : n_scenes=   0 | PU_total=     0 (0/mo) | GHA=0.0h | V0≈0.0GB (orbit=DESC relOrbit=None)
-  ras_tanura  : n_scenes=   0 | PU_total=     0 (0/mo) | GHA=0.0h | V0≈0.0GB (orbit=DESC relOrbit=35)
-  yanbu       : n_scenes=   0 | PU_total=     0 (0/mo) | GHA=0.0h | V0≈0.0GB (orbit=ASCE relOrbit=14)
-  al_flaw     : n_scenes=   0 | PU_total=     0 (0/mo) | GHA=0.0h | V0≈0.0GB (orbit=DESC relOrbit=None)
-  jask        : n_scenes=   0 | PU_total=     0 (0/mo) | GHA=0.0h | V0≈0.0GB (orbit=DESC relOrbit=93)
+  kharg       : n_scenes= 610 | PU_total=  1830 (17/mo) | GHA=0.8h | V0≈0.1GB (orbit=DESC relOrbit=None)
+  ras_tanura  : n_scenes= 364 | PU_total=  2184 (20/mo) | GHA=1.0h | V0≈0.3GB (orbit=DESC relOrbit=35)
+  yanbu       : n_scenes= 408 | PU_total=  1224 (11/mo) | GHA=0.6h | V0≈0.0GB (orbit=ASCE relOrbit=14)
+  al_flaw     : n_scenes= 323 | PU_total=   969 (9/mo) | GHA=0.4h | V0≈0.1GB (orbit=DESC relOrbit=None)
+  jask        : n_scenes= 429 | PU_total=  1287 (12/mo) | GHA=0.6h | V0≈0.0GB (orbit=DESC relOrbit=93)
 
-  4.11 TOTAL: PU=0 | GHA=0.0h | V0≈0.0GB
-  At free tier (30k PU/mo): 0.0 months to rebuild
+  4.11 TOTAL: PU=7,494 | GHA=3.4h | V0≈0.5GB
+  At free tier (30k PU/mo): 0.2 months to rebuild
 
   Full table:
   terminal  orbit_dir  rel_orbit  n_scenes_working_orbit  pu_per_scene  pu_total  pu_per_month_avg  gha_hours  v0_cache_gb  n_tanks
-     kharg DESCENDING        NaN                       0             3         0                 0        0.0          0.0       47
-ras_tanura DESCENDING       35.0                       0             6         0                 0        0.0          0.0       66
-     yanbu  ASCENDING       14.0                       0             3         0                 0        0.0          0.0       12
-   al_flaw DESCENDING        NaN                       0             3         0                 0        0.0          0.0       24
-      jask DESCENDING       93.0                       0             3         0                 0        0.0          0.0       20
+     kharg DESCENDING        NaN                     610             3      1830                17        0.8          0.1       47
+ras_tanura DESCENDING       35.0                     364             6      2184                20        1.0          0.3       66
+     yanbu  ASCENDING       14.0                     408             3      1224                11        0.6          0.0       12
+   al_flaw DESCENDING        NaN                     323             3       969                 9        0.4          0.1       24
+      jask DESCENDING       93.0                     429             3      1287                12        0.6          0.0       20
 
 === Block A + B/C/D complete ===
