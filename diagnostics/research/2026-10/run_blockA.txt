@@ -292,8 +292,8 @@ H07 SUMMARY:
   scripts/research/auto_hypotheses.py:1292:# Query: check if terminal_observations has backCoeff column at all
   scripts/research/auto_hypotheses.py:1298:    print(f"  has backCoeff column: {has_backcoeff_col}")
   scripts/research/auto_hypotheses.py:1326:    print(f"\nH24b: terminal_observations has no backCoeff column → SIGMA0 label not queryable from DB; "
-  scripts/research/auto_hypotheses.py:1904:#   If this is a level shift post-regression, backCoeff or ingest path change is the
-  scripts/research/auto_hypotheses.py:1940:        print("  For these terminals, ingest path (backCoeff/script version) after 2026-09-07 must be audited.")
+  scripts/research/auto_hypotheses.py:1905:#   If this is a level shift post-regression, backCoeff or ingest path change is the
+  scripts/research/auto_hypotheses.py:1941:        print("  For these terminals, ingest path (backCoeff/script version) after 2026-09-07 must be audited.")
   scripts/stage_gate_abc.py:137:                    "backCoeff":    "SIGMA0_ELLIPSOID",
   scripts/verify_orbit_fix_3.py:123:                "backCoeff": "GAMMA0_TERRAIN",
   scripts/panels_v2.py:147:            }, "processing": {"backCoeff": "SIGMA0_ELLIPSOID", "orthorectify": True,
@@ -379,8 +379,8 @@ This is a data collection task — no correlation calculations in code.
 
 
 === PREFLIGHT P2: CDSE auth ===
-  P2: CDSE auth OK token_length=2002
-P2 RESULT: OK token_length=2002
+  P2: CDSE auth OK token_length=1994
+P2 RESULT: OK token_length=1994
 
 === Kharg raw_observations audit ===
   raw_observations columns: ['id', 'date', 'tank_id', 'radius_m', 'diameter', 'h_max', 'db_mean', 'created_at']
@@ -553,7 +553,7 @@ scripts/research/auto_hypothese
 scripts/research/auto_hypotheses.py:1379:    # Key clue from verify_orbit_fix_3.py: "213 single-tank dates vs orbit 137 12-day cycle"
 scripts/research/auto_hypotheses.py:1392:    # Check which scripts reference DESC-137 or orbit 137
 scripts/research/auto_hypotheses.py:1393:    for _pat in ["DESC-137", "orbit.*137", "137.*orbit", "single.tank", "rt_65.*DESC", "backfill_ras_tanura"]:
-scripts/research/auto_hypotheses.py:2896:# ── SAR_FETCH: orbit filter code in sar_fetch.py — who calls it, why DESC
+scripts/research/auto_hypotheses.py:2903:# ── SAR_FETCH: orbit filter code in sar_fetch.py — who calls it, why DESC
 
   Pattern '137.*orbit':
 scripts/research/auto_hypotheses.py:1392:    # Check which scripts reference DESC-137 or orbit 137
@@ -572,14 +572,14 @@ scripts/research/auto_hypotheses.py:1393:    for _pat in ["DESC-137", "orbit.*13
 scripts/research/auto_hypotheses.py:1378:    # Key clue from sar_fetch.py:224: "rt_65 / DESC-137 contamination mechanism"
 scripts/research/auto_hypotheses.py:1381:    print("\n  Scanning for rt_65 / DESC-137 / single-tank ingest source...")
 scripts/research/auto_hypotheses.py:1393:    for _pat in ["DESC-137", "orbit.*137", "137.*orbit", "single.tank", "rt_65.*DESC", "backfill_ras_tanura"]:
-scripts/research/auto_hypotheses.py:2963:   (the rt_65 / DESC-137 contamination mechanism)
+scripts/research/auto_hypotheses.py:2970:   (the rt_65 / DESC-137 contamination mechanism)
 scripts/sar_fetc
 
   Pattern 'backfill_ras_tanura':
 scripts/research/auto_hypotheses.py:1380:    # Key clue from backfill_ras_tanura.py: tracks single_tank dates
 scripts/research/auto_hypotheses.py:1386:         "scripts/backfill_ras_tanura.py", "scripts/verify_orbit_fix_3.py"],
 scripts/research/auto_hypotheses.py:1393:    for _pat in ["DESC-137", "orbit.*137", "137.*orbit", "single.tank", "rt_65.*DESC", "backfill_ras_tanura"]:
-scripts/research/auto_hypotheses.py:2950:1. backfill_ras_tanura.py: passes ALLOWED_ORBIT = {"relative_orbit": 35, "direc
+scripts/research/auto_hypotheses.py:2957:1. backfill_ras_tanura.py: passes ALLOWED_ORBIT = {"relative_orbit": 35, "direc
 
   GHA workflows with ras_tanura/rt_65:
 .github/workflows/series_health_standard.yml:207:            --terminal ras_tanura --orbit 35 \
@@ -590,22 +590,7 @@ scripts/research/auto_hypotheses.py:2950:1. backfill_ras_tanura.py: passes ALLOW
 .github/workflows/diag_ras_tanura.yml:22:        run: python scripts/diagnose_ras_tanura_imagery.py
 .github/workflows/diag_ras_tanura.yml:32:          path: diagnostics/ras_tanura/
 .github/workflows/compute_export_yanbu.yml:57:          rt_path = f"{BASE}/terminals/ras_tanura_daily.json"
-.github/workflows/compute_export_yanbu.yml:62:              print("(b) RT: ras_tanura_daily.json not found (may use separate export)")Traceback (most recent call last):
-  File "/home/runner/work/kharg-dashboard/kharg-dashboard/scripts/research/auto_hypotheses.py", line 1463, in <module>
-    _gh_res = _gsp.run(
-              ^^^^^^^^^
-  File "/opt/hostedtoolcache/Python/3.11.17/x64/lib/python3.11/subprocess.py", line 550, in run
-    stdout, stderr = process.communicate(input, timeout=timeout)
-                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/opt/hostedtoolcache/Python/3.11.17/x64/lib/python3.11/subprocess.py", line 1209, in communicate
-    stdout, stderr = self._communicate(input, endtime, timeout)
-                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/opt/hostedtoolcache/Python/3.11.17/x64/lib/python3.11/subprocess.py", line 2116, in _communicate
-    self._check_timeout(endtime, orig_timeout, stdout, stderr)
-  File "/opt/hostedtoolcache/Python/3.11.17/x64/lib/python3.11/subprocess.py", line 1253, in _check_timeout
-    raise TimeoutExpired(
-subprocess.TimeoutExpired: Command '['gh', 'api', '/repos/bachevskyvlad/kharg-dashboard/actions/runs', '--paginate', '-q', '.workflow_runs[] | {id: .id, name: .name, branch: .head_branch, status: .status, conclusion: .conclusion, run_started_at: .run_started_at, updated_at: .updated_at, workflow_id: .workflow_id}']' timed out after 60 seconds
-
+.github/workflows/compute_export_yanbu.yml:62:              print("(b) RT: ras_tanura_daily.json not found (may use separate export)")
 
   URGENT rt_65 — checking terminal_observations for created_at/updated_at columns...
   terminal_observations columns: ['id', 'terminal_id', 'date', 'tank_id', 'radius_m', 'diameter', 'h_max', 'db_mean', 'created_at', 'relative_orbit', 'orbit_direction', 'db_norm']
@@ -634,7 +619,128 @@ subprocess.TimeoutExpired: Command '['gh', 'api', '/repos/bachevskyvlad/kharg-da
 
   --- GHA runs cross-reference (Oct 10–21 all branches) ---
   GH token available: True
-  GHA runs cross-reference FAILED: Command '['gh', 'api', '/repos/bachevskyvlad/kharg-dashboard/actions/runs', '--paginate', '-q', '.workflow_runs[] | {id: .id, name: .name, branch: .head_branch, status: .status, conclusion: .conclusion, run_started_at: .run_started_at, updated_at: .updated_at, workflow_id: .workflow_id}']' timed out after 60 seconds
+  Total GHA runs parsed: 72, Oct 10–21: 72
+
+  GHA runs Oct 10–21:
+    run_id=39656913283 name=Research — ТЗ-АВТОНОМ v2 Block A branch=research/2026-10-auto started=2026-10-21T18:54:24Z conclusion=nan
+    run_id=39652381238 name=Research — ТЗ-АВТОНОМ v2 Block A branch=research/2026-10-auto started=2026-10-21T18:24:08Z conclusion=success
+    run_id=39639278632 name=Research — ТЗ-АВТОНОМ v2 Block A branch=research/2026-10-auto started=2026-10-21T16:56:26Z conclusion=success
+    run_id=39630372698 name=Research — ТЗ-АВТОНОМ v2 Block A branch=research/2026-10-auto started=2026-10-21T15:57:23Z conclusion=success
+    run_id=39617111523 name=Research — ТЗ-АВТОНОМ v2 Block A branch=research/2026-10-auto started=2026-10-21T14:28:35Z conclusion=success
+    run_id=39601450876 name=Research — ТЗ-АВТОНОМ v2 Block A branch=main started=2026-10-21T12:40:15Z conclusion=success
+    run_id=39566201589 name=Monitor — Kharg SAR branch=main started=2026-10-21T08:01:46Z conclusion=success
+    run_id=39478305561 name=Monitor — Kharg SAR branch=main started=2026-10-20T18:50:51Z conclusion=success
+    run_id=39389961688 name=Monitor — Kharg SAR branch=main started=2026-10-20T07:57:13Z conclusion=success
+    run_id=39318181803 name=Monitor — Kharg SAR branch=main started=2026-10-19T20:18:16Z conclusion=success
+    run_id=39254082145 name=Update Tanker Queue (Anchorage) branch=main started=2026-10-19T12:41:56Z conclusion=success
+    run_id=39220593580 name=Monitor — Kharg SAR branch=main started=2026-10-19T08:08:01Z conclusion=success
+    run_id=39150804003 name=Monitor — Kharg SAR branch=main started=2026-10-18T17:42:15Z conclusion=success
+    run_id=39107710992 name=Monitor — Kharg SAR branch=main started=2026-10-18T07:27:14Z conclusion=success
+    run_id=39054811600 name=Monitor — Kharg SAR branch=main started=2026-10-17T17:40:46Z conclusion=success
+    run_id=39012849244 name=Monitor — Kharg SAR branch=main started=2026-10-17T07:13:44Z conclusion=success
+    run_id=38948180630 name=Monitor — Kharg SAR branch=main started=2026-10-16T18:32:54Z conclusion=success
+    run_id=38868015964 name=Monitor — Kharg SAR branch=main started=2026-10-16T07:33:51Z conclusion=success
+    run_id=38788653941 name=Monitor — Kharg SAR branch=main started=2026-10-15T18:48:21Z conclusion=success
+    run_id=38700914778 name=Monitor — Kharg SAR branch=main started=2026-10-15T07:45:32Z conclusion=success
+    run_id=38620792343 name=Monitor — Kharg SAR branch=main started=2026-10-14T19:06:01Z conclusion=success
+    run_id=38532552089 name=Monitor — Kharg SAR branch=main started=2026-10-14T08:04:17Z conclusion=success
+    run_id=38462947260 name=Monitor — Kharg SAR branch=main started=2026-10-13T20:27:23Z conclusion=success
+    run_id=38378811194 name=Monitor — Kharg SAR branch=main started=2026-10-13T09:47:17Z conclusion=success
+    run_id=38316056653 name=Monitor — Kharg SAR branch=main started=2026-10-12T22:20:10Z conclusion=success
+    run_id=38266709842 name=Update Tanker Queue (Anchorage) branch=main started=2026-10-12T14:57:40Z conclusion=success
+    run_id=38232505687 name=Monitor — Kharg SAR branch=main started=2026-10-12T09:50:44Z conclusion=success
+    run_id=38167340616 name=Monitor — Kharg SAR branch=main started=2026-10-11T19:16:51Z conclusion=success
+    run_id=38128062771 name=Monitor — Kharg SAR branch=main started=2026-10-11T09:21:10Z conclusion=success
+    run_id=38078342184 name=Monitor — Kharg SAR branch=main started=2026-10-10T19:04:30Z conclusion=success
+    run_id=38070901242 name=Research — ТЗ-АВТОНОМ v2 Block A branch=main started=2026-10-10T17:14:09Z conclusion=success
+    run_id=38070531485 name=Research — ТЗ-АВТОНОМ v2 Block A branch=main started=2026-10-10T17:08:41Z conclusion=success
+    run_id=38070294634 name=Research — ТЗ-АВТОНОМ v2 Block A branch=main started=2026-10-10T17:05:12Z conclusion=success
+    run_id=38068990458 name=Terminal health checks — Block B branch=claude/oilradar-dashboard-iran-zchdva started=2026-10-10T16:46:04Z conclusion=success
+    run_id=38068145374 name=Terminal health checks — Block B branch=claude/oilradar-dashboard-iran-zchdva started=2026-10-10T16:33:27Z conclusion=success
+    run_id=38068141250 name=Terminal health checks — Block B branch=claude/oilradar-dashboard-iran-zchdva started=2026-10-10T16:33:23Z conclusion=success
+    run_id=38067880393 name=Terminal health checks — Block B branch=claude/oilradar-dashboard-iran-zchdva started=2026-10-10T16:29:41Z conclusion=success
+    run_id=38067876303 name=Terminal health checks — Block B branch=claude/oilradar-dashboard-iran-zchdva started=2026-10-10T16:29:37Z conclusion=success
+    run_id=38060510788 name=Terminal health checks — Block B branch=claude/oilradar-dashboard-iran-zchdva started=2026-10-10T14:39:59Z conclusion=success
+    run_id=38060507069 name=Terminal health checks — Block B branch=claude/oilradar-dashboard-iran-zchdva started=2026-10-10T14:39:55Z conclusion=success
+    run_id=38059591692 name=Terminal health checks — Block B branch=claude/oilradar-dashboard-iran-zchdva started=2026-10-10T14:26:12Z conclusion=success
+    run_id=38059494339 name=Terminal health checks — Block B branch=claude/oilradar-dashboard-iran-zchdva started=2026-10-10T14:24:44Z conclusion=success
+    run_id=38059492979 name=Terminal health checks — Block B branch=claude/oilradar-dashboard-iran-zchdva started=2026-10-10T14:24:43Z conclusion=success
+    run_id=38059212658 name=Terminal health checks — Block B branch=claude/oilradar-dashboard-iran-zchdva started=2026-10-10T14:20:26Z conclusion=success
+    run_id=38059210405 name=Terminal health checks — Block B branch=claude/oilradar-dashboard-iran-zchdva started=2026-10-10T14:20:24Z conclusion=success
+    run_id=38058765551 name=Terminal health checks — Block B branch=claude/oilradar-dashboard-iran-zchdva started=2026-10-10T14:13:36Z conclusion=success
+    run_id=38058763738 name=Terminal health checks — Block B branch=claude/oilradar-dashboard-iran-zchdva started=2026-10-10T14:13:34Z conclusion=success
+    run_id=38058649787 name=Terminal health checks — Block B branch=claude/oilradar-dashboard-iran-zchdva started=2026-10-10T14:11:49Z conclusion=success
+    run_id=38058648226 name=Terminal health checks — Block B branch=claude/oilradar-dashboard-iran-zchdva started=2026-10-10T14:11:47Z conclusion=success
+    run_id=38058376186 name=Terminal health checks — Block B branch=claude/oilradar-dashboard-iran-zchdva started=2026-10-10T14:07:33Z conclusion=success
+    run_id=38058370988 name=Terminal health checks — Block B branch=claude/oilradar-dashboard-iran-zchdva started=2026-10-10T14:07:29Z conclusion=success
+    run_id=38057324383 name=Terminal health checks — Block B branch=claude/oilradar-dashboard-iran-zchdva started=2026-10-10T13:51:14Z conclusion=success
+    run_id=38057321144 name=Terminal health checks — Block B branch=claude/oilradar-dashboard-iran-zchdva started=2026-10-10T13:51:10Z conclusion=success
+    run_id=38056727016 name=Terminal health checks — Block B branch=claude/oilradar-dashboard-iran-zchdva started=2026-10-10T13:42:02Z conclusion=success
+    run_id=38056723340 name=Terminal health checks — Block B branch=claude/oilradar-dashboard-iran-zchdva started=2026-10-10T13:41:59Z conclusion=success
+    run_id=38056688930 name=Optical Kharg-30 Gate — step 4 branch=claude/oilradar-dashboard-iran-zchdva started=2026-10-10T13:41:27Z conclusion=success
+    run_id=38055867504 name=Optical Kharg-30 Gate — step 4 branch=claude/oilradar-dashboard-iran-zchdva started=2026-10-10T13:28:51Z conclusion=success
+    run_id=38055566225 name=Optical Kharg-30 Gate — step 4 branch=claude/oilradar-dashboard-iran-zchdva started=2026-10-10T13:24:03Z conclusion=success
+    run_id=38054474281 name=Series Health Standard — corridors + gate validation branch=claude/oilradar-dashboard-iran-zchdva started=2026-10-10T13:06:45Z conclusion=success
+    run_id=38053989023 name=Jask — per-tank SAR panels (20 tanks, human verdicts) branch=claude/oilradar-dashboard-iran-zchdva started=2026-10-10T12:59:23Z conclusion=success
+    run_id=38048348143 name=Jask — per-tank SAR panels (20 tanks, human verdicts) branch=main started=2026-10-10T11:25:19Z conclusion=success
+    run_id=38046284422 name=Jask — per-tank SAR panels (20 tanks, human verdicts) branch=main started=2026-10-10T10:50:06Z conclusion=success
+    run_id=38044694268 name=Jask — per-tank SAR panels (20 tanks, human verdicts) branch=main started=2026-10-10T10:22:53Z conclusion=success
+    run_id=38043640725 name=Optical Kharg-30 Gate branch=main started=2026-10-10T10:04:39Z conclusion=success
+    run_id=38043569286 name=Series Health Standard — corridors + gate validation branch=claude/oilradar-dashboard-iran-zchdva started=2026-10-10T10:03:24Z conclusion=cancelled
+    run_id=38043557875 name=Stage 1 baseline — Jask (rel=93 DESC, 2024-06-01+) branch=main started=2026-10-10T10:03:12Z conclusion=success
+    run_id=38041106043 name=Series Health Standard — corridors + gate validation branch=claude/oilradar-dashboard-iran-zchdva started=2026-10-10T09:21:34Z conclusion=success
+    run_id=38040301994 name=Monitor — Kharg SAR branch=main started=2026-10-10T09:07:53Z conclusion=success
+    run_id=38039527564 name=Jask — smoke test jk_11 (SAR + S2 PNG) branch=claude/oilradar-dashboard-iran-zchdva started=2026-10-10T08:54:50Z conclusion=success
+    run_id=38039511061 name=Jask — per-tank SAR panels (20 tanks, human verdicts) branch=claude/oilradar-dashboard-iran-zchdva started=2026-10-10T08:54:33Z conclusion=success
+    run_id=38039503508 name=Series Health Standard — corridors + gate validation branch=claude/oilradar-dashboard-iran-zchdva started=2026-10-10T08:54:25Z conclusion=failure
+    run_id=38037371560 name=Series Health Standard — corridors + gate validation branch=claude/oilradar-dashboard-iran-zchdva started=2026-10-10T08:17:36Z conclusion=success
+
+  Created_at batches (by hour, n=5):
+    batch 2026-10-11T09:00Z: n_rows=253, n_terminals=10, n_tanks=154, terminals=['al_flaw', 'fujairah', 'halul', 'jask', 'lavan', 'mina_ahmadi', 'novorossiysk', 'primorsk', 'ras_tanura', 'siri']
+      MATCHED runs: ['run_id=38128062771 name=Monitor — Kharg SAR branch=main']
+    batch 2026-10-12T09:00Z: n_rows=56, n_terminals=3, n_tanks=56, terminals=['de_kastri', 'juwaymah', 'ras_tanura']
+      NO MATCHING GHA run within ±30min → UNMATCHED
+    batch 2026-10-17T07:00Z: n_rows=336, n_terminals=16, n_tanks=280, terminals=['al_flaw', 'das_island', 'de_kastri', 'fujairah', 'halul', 'jask', 'lavan', 'mina_ahmadi', 'novorossiysk', 'primorsk', 'ras_laffan', 'ras_tanura', 'ruwais', 'siri', 'sitra', 'zirku']
+      MATCHED runs: ['run_id=39012849244 name=Monitor — Kharg SAR branch=main']
+    batch 2026-10-17T17:00Z: n_rows=15, n_terminals=1, n_tanks=15, terminals=['novorossiysk']
+      NO MATCHING GHA run within ±30min → UNMATCHED
+    batch 2026-10-18T07:00Z: n_rows=54, n_terminals=2, n_tanks=54, terminals=['juwaymah', 'ras_tanura']
+      MATCHED runs: ['run_id=39107710992 name=Monitor — Kharg SAR branch=main']
+
+  UNMATCHED batches (no GHA run within ±30min): ['2026-10-12T09:00Z', '2026-10-17T17:00Z']
+
+  Per-terminal distribution of late rows:
+ terminal_id  n_rows  n_dates                    first_created                     last_created
+     al_flaw      48        2 2026-10-11 09:23:09.004838+00:00 2026-10-17 07:15:51.994315+00:00
+  das_island      15        1 2026-10-17 07:17:30.043299+00:00 2026-10-17 07:17:30.043299+00:00
+   de_kastri       4        2 2026-10-12 09:52:54.399815+00:00 2026-10-17 07:16:07.761735+00:00
+    fujairah      88        4 2026-10-11 09:24:27.362118+00:00 2026-10-17 07:17:19.399141+00:00
+       halul      50        5 2026-10-11 09:23:14.589496+00:00 2026-10-17 07:15:56.922908+00:00
+        jask      40        2 2026-10-11 09:22:46.476573+00:00 2026-10-17 07:15:31.636709+00:00
+    juwaymah      18        2 2026-10-12 09:53:33.347864+00:00 2026-10-18 07:29:27.744771+00:00
+       lavan      48        2 2026-10-11 09:22:53.001800+00:00 2026-10-17 07:15:39.897703+00:00
+ mina_ahmadi      28        2 2026-10-11 09:24:44.088799+00:00 2026-10-17 07:17:45.979489+00:00
+novorossiysk      60        4 2026-10-11 09:23:45.847083+00:00 2026-10-17 17:42:50.321822+00:00
+    primorsk      72        4 2026-10-11 09:23:32.951415+00:00 2026-10-17 07:16:21.542625+00:00
+  ras_laffan      34        1 2026-10-17 07:16:44.751057+00:00 2026-10-17 07:16:44.751057+00:00
+  ras_tanura      92        4 2026-10-11 09:24:18.394287+00:00 2026-10-18 07:29:48.046070+00:00
+      ruwais      40        1 2026-10-17 07:17:40.705432+00:00 2026-10-17 07:17:40.705432+00:00
+        siri      42        7 2026-10-11 09:23:00.441869+00:00 2026-10-17 07:15:44.405235+00:00
+       sitra      25        1 2026-10-17 07:16:04.142193+00:00 2026-10-17 07:16:04.142193+00:00
+       zirku      10        1 2026-10-17 07:17:24.408315+00:00 2026-10-17 07:17:24.408315+00:00
+
+  Per-minute batches (top 20):
+     created_min  n_rows  n_terminals
+2026-10-11T09:23     150            5
+2026-10-17T07:17     124            6
+2026-10-17T07:16     112            5
+2026-10-17T07:15     100            5
+2026-10-11T09:24      59            3
+2026-10-18T07:29      54            2
+2026-10-12T09:53      54            2
+2026-10-11T09:22      44            2
+2026-10-17T17:42      15            1
+2026-10-12T09:52       2            1
 
   Pattern 'rt_65' found:
 scripts/stage0_full_optical.py:10:  RT-south  — rt_0..rt_4, rt_11..rt_65 (61 tanks)
@@ -648,10 +754,10 @@ scripts/research/auto_hypotheses.py:1381:    print("\n  Scanning for rt_65 / DES
 scripts/research/auto_hypotheses.py:1393:    for _pat in ["DESC-137", "orbit.*137", "137.*orbit", "single.tank", "rt_65.*DESC", "backfill_ras_tanu
 
   Pattern 'single.*tank.*upsert' found:
-scripts/research/auto_hypotheses.py:1587:    for _rt65_pat in ["rt_65", "single.*tank.*upsert", "upsert.*single.*tank"]:
+scripts/research/auto_hypotheses.py:1588:    for _rt65_pat in ["rt_65", "single.*tank.*upsert", "upsert.*single.*tank"]:
 
   Pattern 'upsert.*single.*tank' found:
-scripts/research/auto_hypotheses.py:1587:    for _rt65_pat in ["rt_65", "single.*tank.*upsert", "upsert.*single.*tank"]:
+scripts/research/auto_hypotheses.py:1588:    for _rt65_pat in ["rt_65", "single.*tank.*upsert", "upsert.*single.*tank"]:
 
 === Security: RLS policies audit ===
   RLS in SQL files:
@@ -689,7 +795,7 @@ scripts/research/auto_hypotheses.py:1587:    for _rt65_pat in ["rt_65", "single.
     ./product/zh-dashboard.html:1796
     ./scripts/diag_closure.py:27
     ./scripts/research/auto_hypotheses.py:21
-    ./scripts/research/auto_hypotheses.py:1678
+    ./scripts/research/auto_hypotheses.py:1679
     ./scripts/terminal_checks.py:30
     ./scripts/diag_orbit_labels.py:23
     ./marketing/zh-monitor.html:187
@@ -726,7 +832,7 @@ scripts/research/auto_hypotheses.py:1587:    for _rt65_pat in ["rt_65", "single.
 CC01 RESULT: total duplicate rows=0
 
 === CC06: db_mean outliers [was H12] ===
-  al_flaw: min=-20.35 max=8.05 q01=-15.10 q99=-0.98 n=7656
+  al_flaw: min=-20.35 max=8.05 q01=-14.50 q99=-0.98 n=7656
   das_island: min=-5.00 max=19.18 q01=-4.45 q99=15.31 n=3615
   de_kastri: min=-5.00 max=16.00 q01=-4.72 q99=11.88 n=832
   fujairah: min=-5.00 max=22.96 q01=-5.00 q99=20.31 n=7150
@@ -1203,28 +1309,38 @@ S1D_IW_GRDH_1SDV_20260926T140743_20260926T140808_004750_008E49_0738.SAFE 2026-09
 
 --- H22: Cross-terminal CDSE scene date synchrony ---
   Kharg CDSE scenes Aug–Oct 2026: n=34
-  CDSE dates in >=2 terminals: 26/467
-      date  n_terminals terminals
-2017-01-05            1   [yanbu]
-2017-01-10            1   [yanbu]
-2017-01-17            1   [yanbu]
-2017-01-22            1   [yanbu]
-2017-01-29            1   [yanbu]
-2017-02-03            1   [yanbu]
-2017-02-07            1   [yanbu]
-2017-02-10            1   [yanbu]
-2017-02-15            1   [yanbu]
-2017-02-22            1   [yanbu]
-2017-02-27            1   [yanbu]
-2017-03-03            1   [yanbu]
-2017-03-06            1   [yanbu]
-2017-03-11            1   [yanbu]
-2017-03-15            1   [yanbu]
-2017-03-18            1   [yanbu]
-2017-03-23            1   [yanbu]
-2017-03-27            1   [yanbu]
-2017-03-30            1   [yanbu]
-2017-04-04            1   [yanbu]
+  CDSE dates in >=2 terminals: 26/467 (5.6%)
+
+  Shared dates (n_terminals >= 2, showing all 26):
+      date  n_terminals         terminals
+2026-08-05            2     [kharg, jask]
+2026-08-11            2     [kharg, jask]
+2026-08-17            2     [kharg, jask]
+2026-08-23            2     [kharg, jask]
+2026-08-29            2     [kharg, jask]
+2026-09-01            2        [rt, jask]
+2026-09-04            2       [kharg, rt]
+2026-09-06            2       [kharg, rt]
+2026-09-07            2        [rt, jask]
+2026-09-10            3 [kharg, rt, jask]
+2026-09-12            2       [kharg, rt]
+2026-09-13            2        [rt, jask]
+2026-09-16            3 [kharg, rt, jask]
+2026-09-18            2       [kharg, rt]
+2026-09-19            2        [rt, jask]
+2026-09-22            3 [kharg, rt, jask]
+2026-09-24            2       [kharg, rt]
+2026-09-25            2        [rt, jask]
+2026-09-28            2       [kharg, rt]
+2026-09-30            2       [kharg, rt]
+2026-10-04            2       [kharg, rt]
+2026-10-06            2       [kharg, rt]
+2026-10-10            2       [kharg, rt]
+2026-10-12            2       [kharg, rt]
+2026-10-16            2       [kharg, rt]
+2026-10-18            2       [kharg, rt]
+
+H22 VERDICT: NOT_SUPPORTED — 26/467 dates (5.6%) in >=2 terminals
 
   [ТЗ v2 H25]: CDSE-каталог 2026-09-28 над RT — подтверждение ASC orbit 101 (S1C), 66 танков.
 
@@ -1260,13 +1376,13 @@ S1D_IW_GRDH_1SDV_20261021T144910_20261021T144935_005115_009AFD_5B81.SAFE 2026-10
 
 === SAR_FETCH: sar_fetch.py orbit filter analysis ===
   fetch_new_records callers:
-scripts/research/auto_hypotheses.py:2926:## Callers of fetch_new_records():
-scripts/research/auto_hypotheses.py:2931:    ["grep", "-rn", "--include=*.py", "fetch_new_records", "scripts/"],
-scripts/research/auto_hypotheses.py:2935:print(f"  fetch_new_records callers:\n{_callers_text}\n")
-scripts/research/auto_hypotheses.py:2953:2. main_script.py (regular ingest): calls fetch_new_records with orbit_cfg=None (default)
-scripts/research/auto_hypotheses.py:2979:# Check if main_script.py passes orbit_cfg to fetch_new_records
-scripts/research/auto_hypotheses.py:2981:    ["grep", "-n", "fetch_new_records\|orbit_cfg", "scripts/main_script.py"],
-scripts/research/auto_hypotheses.py:2988:    ["grep", "-n", "ALLOWED_ORBIT\|orbit_cfg\|fetch_new_records", "scripts/backfill_ras_tanura.py"],
+scripts/research/auto_hypotheses.py:2933:## Callers of fetch_new_records():
+scripts/research/auto_hypotheses.py:2938:    ["grep", "-rn", "--include=*.py", "fetch_new_records", "scripts/"],
+scripts/research/auto_hypotheses.py:2942:print(f"  fetch_new_records callers:\n{_callers_text}\n")
+scripts/research/auto_hypotheses.py:2960:2. main_script.py (regular ingest): calls fetch_new_records with orbit_cfg=None (default)
+scripts/research/auto_hypotheses.py:2986:# Check if main_script.py passes orbit_cfg to fetch_new_records
+scripts/research/auto_hypotheses.py:2988:    ["grep", "-n", "fetch_new_records\|orbit_cfg", "scripts/main_script.py"],
+scripts/research/auto_hypotheses.py:2995:    ["grep", "-n", "ALLOWED_ORBIT\|orbit_cfg\|fetch_new_records", "scripts/backfill_ras_tanura.py"],
 scripts/task7_rt_decomposition.py:542:        from sar_fetch import fetch_new_records, build_crescent_masks, get_all_scene_dates
 scripts/task7_rt_decomposition.py:641:            records = fetch_new_records(asc_dates, tdata, bbox, img_w, img_w, orbit_cfg=orbit_cfg_asc)
 scripts/stage2_gate.py:58:from sar_fetch import fetch_new_records, build_crescent_masks, get_all_scene_dates
@@ -1290,25 +1406,25 @@ scripts/ingest.py:99:        new_records = fetch_new_records(new_dates, tanks_da
 scripts/ingest.py:240:                raw     = fetch_new_records(orbit_dates, t_data, c_bbox, img_w, img_h,
 
   orbit_cfg references:
-scripts/research/auto_hypotheses.py:2908:if orbit_cfg:
-scripts/research/auto_hypotheses.py:2909:    orb = orbit_cfg[0]
-scripts/research/auto_hypotheses.py:2922:## The filter is CONDITIONAL on orbit_cfg being passed.
-scripts/research/auto_hypotheses.py:2923:## If orbit_cfg is None (falsy), no dataFilter is set → SentinelHub returns
-scripts/research/auto_hypotheses.py:2938:# Check orbit_cfg argument in each caller
-scripts/research/auto_hypotheses.py:2939:_grep_orbit_cfg = _sp2.run(
-scripts/research/auto_hypotheses.py:2940:    ["grep", "-rn", "--include=*.py", "orbit_cfg", "scripts/"],
-scripts/research/auto_hypotheses.py:2943:_orbit_cfg_text = _grep_orbit_cfg.stdout.strip()
-scripts/research/auto_hypotheses.py:2944:print(f"  orbit_cfg references:\n{_orbit_cfg_text}\n")
-scripts/research/auto_hypotheses.py:2945:_sar_analysis += "orbit_cfg references:\n" + _orbit_cfg_text + "\n\n"
-scripts/research/auto_hypotheses.py:2951:   → orbit_cfg=[ALLOWED_ORBIT] → dataFilter set → DESC-137 BLOCKED ✓
-scripts/research/auto_hypotheses.py:2953:2. main_script.py (regular ingest): calls fetch_new_records with orbit_cfg=None (default)
-scripts/research/auto_hypotheses.py:2958:3. stage1_backfill.py, ingest.py: also pass orbit_cfg=None by default
-scripts/research/auto_hypotheses.py:2970:   - orbit_cfg was not passed (regular ingest)
-scripts/research/auto_hypotheses.py:2979:# Check if main_script.py passes orbit_cfg to fetch_new_records
-scripts/research/auto_hypotheses.py:2981:    ["grep", "-n", "fetch_new_records\|orbit_cfg", "scripts/main_script.py"],
-scripts/research/auto_hypotheses.py:2984:print(f"  main_script.py orbit_cfg usage:\n{_grep_main.stdout.strip()}\n")
-scripts/research/auto_hypotheses.py:2988:    ["grep", "-n", "ALLOWED_ORBIT\|orbit_cfg\|fetch_new_records", "scripts/backfill_ras_tanura.py"],
-scripts/research/auto_hypotheses.py:2991:print(f"  backfill_ras_tanura.py orbit_cfg:\n{_grep_backfill.stdout.strip()}\n")
+scripts/research/auto_hypotheses.py:2915:if orbit_cfg:
+scripts/research/auto_hypotheses.py:2916:    orb = orbit_cfg[0]
+scripts/research/auto_hypotheses.py:2929:## The filter is CONDITIONAL on orbit_cfg being passed.
+scripts/research/auto_hypotheses.py:2930:## If orbit_cfg is None (falsy), no dataFilter is set → SentinelHub returns
+scripts/research/auto_hypotheses.py:2945:# Check orbit_cfg argument in each caller
+scripts/research/auto_hypotheses.py:2946:_grep_orbit_cfg = _sp2.run(
+scripts/research/auto_hypotheses.py:2947:    ["grep", "-rn", "--include=*.py", "orbit_cfg", "scripts/"],
+scripts/research/auto_hypotheses.py:2950:_orbit_cfg_text = _grep_orbit_cfg.stdout.strip()
+scripts/research/auto_hypotheses.py:2951:print(f"  orbit_cfg references:\n{_orbit_cfg_text}\n")
+scripts/research/auto_hypotheses.py:2952:_sar_analysis += "orbit_cfg references:\n" + _orbit_cfg_text + "\n\n"
+scripts/research/auto_hypotheses.py:2958:   → orbit_cfg=[ALLOWED_ORBIT] → dataFilter set → DESC-137 BLOCKED ✓
+scripts/research/auto_hypotheses.py:2960:2. main_script.py (regular ingest): calls fetch_new_records with orbit_cfg=None (default)
+scripts/research/auto_hypotheses.py:2965:3. stage1_backfill.py, ingest.py: also pass orbit_cfg=None by default
+scripts/research/auto_hypotheses.py:2977:   - orbit_cfg was not passed (regular ingest)
+scripts/research/auto_hypotheses.py:2986:# Check if main_script.py passes orbit_cfg to fetch_new_records
+scripts/research/auto_hypotheses.py:2988:    ["grep", "-n", "fetch_new_records\|orbit_cfg", "scripts/main_script.py"],
+scripts/research/auto_hypotheses.py:2991:print(f"  main_script.py orbit_cfg usage:\n{_grep_main.stdout.strip()}\n")
+scripts/research/auto_hypotheses.py:2995:    ["grep", "-n", "ALLOWED_ORBIT\|orbit_cfg\|fetch_new_records", "scripts/backfill_ras_tanura.py"],
+scripts/research/auto_hypotheses.py:2998:print(f"  backfill_ras_tanura.py orbit_cfg:\n{_grep_backfill.stdout.strip()}\n")
 scripts/task7_rt_decomposition.py:609:    orbit_cfg_asc = [{"relative_orbit": ASC_ORBIT, "direction": "ASC", "los_azimuth": ASC_LOS_AZ}]
 scripts/task7_rt_decomposition.py:641:            records = fetch_new_records(asc_dates, tdata, bbox, img_w, img_w, orbit_cfg=orbit_cfg_asc)
 scripts/stage2_gate.py:62:# Each entry: (tank_id, terminal_id, old_geometry, new_geometry, orbit_cfg, role)
@@ -1372,5 +1488,23 @@ scripts/ingest.py:242:                                            orbit_cfg=allo
 196:    direction = ALLOWED_ORBIT["direction"]
 215:                    raw = fetch_new_records(
 
+
+=== 4.11: Rebuild Assessment (V0 scene counts per terminal) ===
+  kharg       : n_scenes=   0 | PU_total=     0 (0/mo) | GHA=0.0h | V0≈0.0GB (orbit=DESC relOrbit=None)
+  ras_tanura  : n_scenes=   0 | PU_total=     0 (0/mo) | GHA=0.0h | V0≈0.0GB (orbit=DESC relOrbit=35)
+  yanbu       : n_scenes=   0 | PU_total=     0 (0/mo) | GHA=0.0h | V0≈0.0GB (orbit=ASCE relOrbit=14)
+  al_flaw     : n_scenes=   0 | PU_total=     0 (0/mo) | GHA=0.0h | V0≈0.0GB (orbit=DESC relOrbit=None)
+  jask        : n_scenes=   0 | PU_total=     0 (0/mo) | GHA=0.0h | V0≈0.0GB (orbit=DESC relOrbit=93)
+
+  4.11 TOTAL: PU=0 | GHA=0.0h | V0≈0.0GB
+  At free tier (30k PU/mo): 0.0 months to rebuild
+
+  Full table:
+  terminal  orbit_dir  rel_orbit  n_scenes_working_orbit  pu_per_scene  pu_total  pu_per_month_avg  gha_hours  v0_cache_gb  n_tanks
+     kharg DESCENDING        NaN                       0             3         0                 0        0.0          0.0       47
+ras_tanura DESCENDING       35.0                       0             6         0                 0        0.0          0.0       66
+     yanbu  ASCENDING       14.0                       0             3         0                 0        0.0          0.0       12
+   al_flaw DESCENDING        NaN                       0             3         0                 0        0.0          0.0       24
+      jask DESCENDING       93.0                       0             3         0                 0        0.0          0.0       20
 
 === Block A + B/C/D complete ===
