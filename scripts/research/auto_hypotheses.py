@@ -3036,11 +3036,20 @@ if CDSE_OK and cdse_token:
                 _t411["wkt"], _t411["start"], "2026-10-21", max_results=2000
             )
             # Filter to working orbit direction
-            _t411_filtered = [s for s in _t411_scenes
-                               if s.get("orbitDirection", "").upper() == _t411["orbit_dir"].upper()
-                               and (_t411["rel_orbit"] is None
-                                    or s.get("relativeOrbit") == _t411["rel_orbit"]
-                                    or str(s.get("relativeOrbit", "")) == str(_t411["rel_orbit"]))]
+            _t411_filtered = []
+            for _s411 in _t411_scenes:
+                _od411, _ro411 = _extract_orbit_attrs(_s411)
+                _od411_str = (_od411 or "").upper()
+                _dir_match = _od411_str == _t411["orbit_dir"].upper() or (
+                    _t411["orbit_dir"].upper() == "ASCENDING" and "ASC" in _od411_str
+                ) or (
+                    _t411["orbit_dir"].upper() == "DESCENDING" and "DESC" in _od411_str
+                )
+                _orb_match = (_t411["rel_orbit"] is None or
+                              _ro411 == _t411["rel_orbit"] or
+                              str(_ro411) == str(_t411["rel_orbit"]))
+                if _dir_match and _orb_match:
+                    _t411_filtered.append(_s411)
             _n_scenes = len(_t411_filtered)
             _pu_per_scene = 6 if _t411["tiles"] == 2 else 3
             _total_pu = _n_scenes * _pu_per_scene
