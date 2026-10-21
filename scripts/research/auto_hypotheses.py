@@ -443,47 +443,28 @@ except Exception as e:
 
 
 # ── H06b: WL composition vs frozen gate ────────────────────────────────────────
-# DEFINITIONS (to resolve contradiction in H06b item 3):
-#   WL = tanks with step_db < STEP_WL_THRESHOLD (2.5) → these ARE in whitelist (quiet)
-#   EXCLUDED = tanks with step_db >= 2.5 → NOT in WL (noisy)
-#   Source of truth: diagnostics/stage3/whitelist_results.json (run_date 2026-09-29)
-#     WL-45: 45 tanks with step<2.5, pct_cap=63.3%, verdict=TERMINAL_SERIES
-#     Excluded-21: 21 tanks with step>=2.5
-#
-# WL-60 note: "WL-60" in H18/ТЗ means the WL that satisfies cap>=60% gate.
-#   WL-45 satisfies this (63.3% >= 60%). So WL-45 IS the WL-60 in context.
-#
-# CONTRADICTION EXPLANATION (60/66 vs 45/66):
-#   The session summary from 10-10 reported "60/66" — this was a fabrication.
-#   The only computed WL in the repo is whitelist_results.json: n=45/66.
-#   There is NO run with WL=60. Use 45 as source of truth.
+# DEFINITIONS:
+#   WL = tanks listed as whitelist=True in registry (source of truth)
+#   EXCLUDED = tanks listed as whitelist=False in registry
+#   Source of truth: diagnostics/stage3/whitelist_results.json
+#     field: tanks[].whitelist (bool), tanks[].step (float), tanks[].vol_max_mb (float)
+#   WL-45: 45 tanks with whitelist=True (pct_cap=63.3%)
+#   Excluded-21: 21 tanks with whitelist=False
 print("\n=== H06b: WL composition vs frozen gate ===")
-print("  NOTE: WL = tanks with step_db < 2.5 (quiet); EXCLUDED = step_db >= 2.5")
-print("  Source of truth: diagnostics/stage3/whitelist_results.json, run_date=2026-09-29")
-print("  WL-45: n_whitelist=45/66, pct_cap=63.3% (satisfies WL-60 gate)")
-print("  Excluded-21: tanks with step>=2.5 (noisy, not in WL)")
+print("  Source of truth: diagnostics/stage3/whitelist_results.json field 'whitelist'")
 h06b_dir = OUT_ROOT / "H06b"
 h06b_dir.mkdir(exist_ok=True)
 
-# Known WL-45 from whitelist_results.json (step ascending):
-_WL45 = {
-    "rt_59":0.29,"rt_18":0.33,"rt_38":0.43,"rt_26":0.47,"rt_6":0.54,
-    "rt_29":0.57,"rt_2":0.68,"rt_22":0.73,"rt_19":0.76,"rt_60":0.79,
-    "rt_42":0.80,"rt_11":0.86,"rt_20":0.88,"rt_34":0.93,"rt_14":0.98,
-    "rt_13":1.01,"rt_65":1.07,"rt_16":1.07,"rt_32":1.09,"rt_35":1.12,
-    "rt_30":1.13,"rt_31":1.14,"rt_4":1.16,"rt_5":1.19,"rt_28":1.22,
-    "rt_21":1.22,"rt_25":1.24,"rt_63":1.27,"rt_27":1.34,"rt_8":1.43,
-    "rt_37":1.46,"rt_15":1.48,"rt_23":1.50,"rt_24":1.54,"rt_61":1.62,
-    "rt_36":1.74,"rt_12":1.80,"rt_41":1.80,"rt_64":1.81,"rt_62":1.91,
-    "rt_7":1.94,"rt_44":2.11,"rt_57":2.14,"rt_33":2.24,"rt_17":2.50,
-}
-_EXCL21 = {
-    "rt_0":2.64,"rt_1":2.84,"rt_3":3.84,"rt_9":3.70,"rt_10":3.32,
-    "rt_39":3.77,"rt_40":2.65,"rt_43":4.37,"rt_45":2.99,"rt_46":3.05,
-    "rt_47":6.33,"rt_48":5.29,"rt_49":4.07,"rt_50":9.20,"rt_51":2.91,
-    "rt_52":5.12,"rt_53":2.93,"rt_54":3.04,"rt_55":4.30,"rt_56":2.64,
-    "rt_58":2.98,
-}
+# Load WL from registry (source of truth — NOT step<2.5 logic)
+_wl_registry_path = REPO_ROOT / "diagnostics/stage3/whitelist_results.json"
+_wl_data = json.loads(_wl_registry_path.read_text())
+_wl_tanks_all = _wl_data.get("tanks", [])
+_rt_tanks_reg = [t for t in _wl_tanks_all if t.get("terminal") == "ras_tanura"]
+_WL45 = {t["tank_id"]: t["step"] for t in _rt_tanks_reg if t.get("whitelist") is True}
+_EXCL21 = {t["tank_id"]: t["step"] for t in _rt_tanks_reg if t.get("whitelist") is False}
+_VOL_MAX = {t["tank_id"]: t.get("vol_max_mb", 0.0) for t in _rt_tanks_reg}
+print(f"  Registry WL-45: n={len(_WL45)}/66, EXCL-21: n={len(_EXCL21)}/66")
+print(f"  WL tanks: {sorted(_WL45.keys())}")
 STEP_WL_THRESHOLD = 2.5
 
 try:
@@ -514,50 +495,47 @@ try:
         td = desc35_last[desc35_last["tank_id"] == tid].sort_values("date")
         db = td["db_mean"].dropna().values.astype(float)
         step = tank_step_db(db) if len(db) >= 2 else float("nan")
-        # CORRECT: in_wl = step < threshold (low step = quiet = in whitelist)
-        in_wl = (step < STEP_WL_THRESHOLD) if (step == step) else False
-        # Also show what whitelist_results.json says
-        wl_canonical = tid in _WL45
+        in_registry_wl = tid in _WL45
         wl_rows.append({
             "tank_id": tid,
             "n_obs": len(td),
             "step_db": round(step, 4) if step == step else None,
-            "in_wl_live": in_wl,
-            "in_wl_canonical": wl_canonical,
+            "in_registry_WL": in_registry_wl,
         })
 
     df_wl = pd.DataFrame(wl_rows).sort_values("step_db")
-    n_in_wl_live = df_wl["in_wl_live"].sum()
-    n_excluded_live = (~df_wl["in_wl_live"]).sum()
-    n_in_wl_canonical = df_wl["in_wl_canonical"].sum()
+    n_in_registry_wl = df_wl["in_registry_WL"].sum()
+    # Count: how many WL-45 tanks currently have live step_db >= 2.5
+    wl_live = df_wl[df_wl["in_registry_WL"] == True]
+    n_wl45_now_ge25 = (wl_live["step_db"].fillna(0) >= STEP_WL_THRESHOLD).sum()
 
     print(f"  Last {len(last_dates)} DESC dates, {len(df_wl)} tanks computed")
-    print(f"  LIVE (recomputed): in_wl (step<2.5)={n_in_wl_live}, excluded (step>=2.5)={n_excluded_live}")
-    print(f"  CANONICAL (whitelist_results.json): in_wl=45/66")
-    print(f"\n  tank_id | step_db | in_wl_live | in_wl_canonical")
-    print(df_wl.to_string(index=False))
+    print(f"  Registry WL-45: n={len(_WL45)}/66 (source: diagnostics/stage3/whitelist_results.json, field 'whitelist')")
+    print(f"\n  tank_id | step_db (last 18 DESC-35) | in_registry_WL")
+    print(df_wl[["tank_id","step_db","in_registry_WL"]].to_string(index=False))
 
-    # Build full table including all 66 RT tanks from canonical lists
-    all_tanks = {**_WL45, **_EXCL21}
+    # Build full table including all 66 RT tanks from registry
+    all_tanks_reg = {**_WL45, **_EXCL21}
     full_rows = []
-    for tank_id, step in sorted(all_tanks.items()):
+    for tank_id, step_reg in sorted(all_tanks_reg.items()):
         live_row = df_wl[df_wl["tank_id"] == tank_id]
         live_step = live_row["step_db"].values[0] if len(live_row) else None
         full_rows.append({
             "tank_id": tank_id,
-            "step_canonical": step,
-            "step_live": live_step,
-            "in_wl_canonical": tank_id in _WL45,
+            "step_registry": step_reg,
+            "step_db_live": live_step,
+            "in_registry_WL": tank_id in _WL45,
         })
-    df_full = pd.DataFrame(full_rows).sort_values("step_canonical")
+    df_full = pd.DataFrame(full_rows).sort_values("step_registry")
     df_full.to_csv(h06b_dir / "h06b_all66_wl_table.csv", index=False)
     df_wl.to_csv(h06b_dir / "h06b_wl_step_db.csv", index=False)
 
-    print(f"\nH06b VERDICT: WL-45 (canonical, step<2.5): 45/66 tanks. Live recompute: {n_in_wl_live}/66")
-    print(f"  The 21 EXCLUDED tanks (step>=2.5, all 66 RT tanks, NOT within WL):")
-    for t, s in sorted(_EXCL21.items(), key=lambda x: x[1]):
-        in_wl_str = "WL" if t in _WL45 else "EXCL"
-        print(f"    {t} | step={s} | {in_wl_str}")
+    print(f"\nH06b VERDICT: WL-45 (registry, whitelist=True): {len(_WL45)}/66 tanks")
+    print(f"  WL-45 currently step_db >= 2.5 (live, last 18 DESC-35): {n_wl45_now_ge25}")
+    if n_wl45_now_ge25 > 0:
+        drifted = wl_live[wl_live["step_db"].fillna(0) >= STEP_WL_THRESHOLD][["tank_id","step_db"]]
+        print(f"  Drifted WL-45 tanks (step_db >= 2.5 live):")
+        print(drifted.to_string(index=False))
 
 except Exception as e:
     print(f"  H06b FAILED: {e}")
@@ -1096,14 +1074,14 @@ print("\n=== H05b: Orbit check 2026-09-28 + volume delta ===")
 h05b2_dir = OUT_ROOT / "H05b_vol"
 h05b2_dir.mkdir(exist_ok=True)
 
-# Capacity share of excluded-21 (step>=2.5) vs WL-45
-# Using known steps from whitelist_results.json as proxy for capacity weight
-# (each tank contributes equally; no per-tank vol_max without registry lookup)
-# RT registry all tanks: 66. WL=45, excl=21. Excluded fraction = 21/66 = 31.8%
-# For accurate vol capacity share, would need per-tank radius/height from registry.
-print("  Excluded-21 capacity share (approximate):")
-print(f"  n_excl=21, n_total_rt=66, tank_count_fraction={21/66*100:.1f}%")
-print("  NOTE: exact vol_capacity share requires per-tank r_m and h_max from registry (read-only).")
+# Capacity share of excluded-21 from registry vol_max_mb
+_vol_wl45 = sum(_VOL_MAX.get(t, 0) for t in _WL45)
+_vol_excl21 = sum(_VOL_MAX.get(t, 0) for t in _EXCL21)
+_vol_total_rt = _vol_wl45 + _vol_excl21
+_excl21_vol_share = _vol_excl21 / _vol_total_rt * 100 if _vol_total_rt > 0 else 0
+print(f"  Excluded-21 capacity share (from registry vol_max_mb):")
+print(f"  n_excl={len(_EXCL21)}, vol_excl21={_vol_excl21:.2f} Mb, vol_total={_vol_total_rt:.2f} Mb, "
+      f"vol_share={_excl21_vol_share:.1f}%, tank_count_share={len(_EXCL21)/66*100:.1f}%")
 
 FOCUS_DATES = ["2026-09-28", "2026-09-30", "2026-10-06"]
 
@@ -1142,34 +1120,47 @@ try:
     merged4 = df_tvt4.merge(ntanks4, on="date", how="left")
     merged4["pct_cov"] = (merged4["n_tanks"].fillna(0) / RT_EXPECTED * 100).round(1)
 
-    for fd in FOCUS_DATES:
+    # Find last full DESC-35 date (pct_cov >= 95% AND orbit is DESCENDING AND relOrbit==35)
+    desc35_4 = df_rto4[
+        (df_rto4["orbit_direction"].isin(["DESC", "DESCENDING"])) &
+        (df_rto4["relative_orbit"] == 35)
+    ].copy()
+    desc35_ntanks = desc35_4.groupby("date")["tank_id"].nunique().reset_index(name="n_tanks_d35")
+    desc35_ntanks["pct_d35"] = (desc35_ntanks["n_tanks_d35"] / RT_EXPECTED * 100).round(1)
+    last_full_desc35_rows = desc35_ntanks[desc35_ntanks["pct_d35"] >= 95].sort_values("date")
+    last_full_desc35_date = last_full_desc35_rows["date"].values[-1] if len(last_full_desc35_rows) else None
+    print(f"\n  Last full DESC-35 date (pct_cov>=95%): {last_full_desc35_date}")
+    if last_full_desc35_date is not None:
+        _lfd_row = merged4[merged4["date"] == last_full_desc35_date]
+        if len(_lfd_row):
+            print(f"  vol at last full DESC-35: {_lfd_row['vol_mn_bbl'].values[0]:.3f} Mn bbl")
+
+    for fd in ["2026-09-30", "2026-10-06"]:
         fd_date = pd.to_datetime(fd).date()
         row = merged4[merged4["date"] == fd_date]
         if not len(row):
             print(f"  {fd}: NOT in TVT")
             continue
-        idx = row.index[0]
-        # Adjacent full dates (pct_cov >= 95%)
-        full_rows = merged4[merged4["pct_cov"] >= 95]
-        prev_full = full_rows[full_rows["date"] < fd_date].tail(1)
-        next_full = full_rows[full_rows["date"] > fd_date].head(1)
         vol_cur = row["vol_mn_bbl"].values[0]
         ntk_cur = row["n_tanks"].values[0] if not pd.isna(row["n_tanks"].values[0]) else 0
         pct_cur = row["pct_cov"].values[0]
 
         print(f"\n  {fd}: vol={vol_cur:.3f} Mn bbl, n_tanks={ntk_cur}/{RT_EXPECTED} ({pct_cur}%)")
-        if len(prev_full):
-            vol_prev = prev_full["vol_mn_bbl"].values[0]
-            d_prev = prev_full["date"].values[0]
-            print(f"    prev full date: {d_prev}, vol={vol_prev:.3f}, delta={vol_cur-vol_prev:.3f} Mn bbl")
-        if len(next_full):
-            vol_next = next_full["vol_mn_bbl"].values[0]
-            d_next = next_full["date"].values[0]
-            print(f"    next full date: {d_next}, vol={vol_next:.3f}, delta={vol_cur-vol_next:.3f} Mn bbl")
+        if last_full_desc35_date is not None:
+            _base_row = merged4[merged4["date"] == last_full_desc35_date]
+            if len(_base_row):
+                vol_base = _base_row["vol_mn_bbl"].values[0]
+                delta = vol_cur - vol_base
+                print(f"    delta vs last full DESC-35 ({last_full_desc35_date}): {delta:+.3f} Mn bbl")
 
-        # Capacity share of missing tanks
+        # Capacity share of missing tanks using registry vol_max_mb
         n_missing = RT_EXPECTED - int(ntk_cur)
         print(f"    missing tanks: {n_missing}/{RT_EXPECTED}")
+        if n_missing > 0 and _vol_total_rt > 0:
+            # Approximate: missing tank fraction of total vol capacity
+            _vol_per_tank_avg = _vol_total_rt / 66
+            _missing_vol_share = n_missing * _vol_per_tank_avg / _vol_total_rt * 100
+            print(f"    missing tank vol capacity share (avg per tank): ~{_missing_vol_share:.1f}%")
 
     # Calibration group for 2026-09-24 (adjacent to focus dates)
     CAL_DATE = pd.to_datetime("2026-09-24").date()
@@ -1237,7 +1228,8 @@ print("\n=== H-NEW-2: 1-tank RT ingest dates ===")
 hnew2_dir = OUT_ROOT / "H_NEW_2"
 hnew2_dir.mkdir(exist_ok=True)
 
-TARGET_DATES = ["2026-09-07", "2026-09-13", "2026-09-19", "2026-09-25", "2026-10-01"]
+TARGET_DATES = ["2026-09-07", "2026-09-13", "2026-09-19", "2026-09-25", "2026-10-01",
+                "2026-10-07", "2026-10-13"]
 
 try:
     rt_hnew = fetch_all("terminal_observations",
@@ -1308,6 +1300,59 @@ try:
     if _wf_refs.stdout.strip():
         print(f"\n  GHA workflows with ras_tanura/rt_65:\n{_wf_refs.stdout.strip()[:1000]}")
     (hnew2_dir / "hnew2_gha_workflows.txt").write_text(_wf_refs.stdout)
+
+    # URGENT rt_65: check created_at/updated_at columns, then query all terminals rows >= 2026-10-10
+    print("\n  URGENT rt_65 — checking terminal_observations for created_at/updated_at columns...")
+    _to_sample = sb.table("terminal_observations").select("*").limit(1).execute().data
+    _to_cols_all = list(_to_sample[0].keys()) if _to_sample else []
+    print(f"  terminal_observations columns: {_to_cols_all}")
+    _has_created_at = "created_at" in _to_cols_all
+    _has_updated_at = "updated_at" in _to_cols_all
+    print(f"  has created_at: {_has_created_at}, has updated_at: {_has_updated_at}")
+    if not _has_created_at and not _has_updated_at:
+        print("  RESULT: terminal_observations has NO created_at or updated_at columns — "
+              "cannot determine when rows were written from DB alone")
+        (hnew2_dir / "hnew2_rt65_created_at.txt").write_text(
+            f"terminal_observations_columns={_to_cols_all}\n"
+            "has_created_at=False\nhas_updated_at=False\n"
+            "Cannot determine insert time from DB — check GHA run logs and git history.\n"
+        )
+    else:
+        # Query rows for all terminals with created_at / updated_at >= 2026-10-10
+        _ts_col = "created_at" if _has_created_at else "updated_at"
+        print(f"  Querying all terminals: rows with {_ts_col} >= 2026-10-10 ...")
+        _late_rows = []
+        for _tid in sorted(p3_ids):
+            try:
+                _r = (sb.table("terminal_observations")
+                      .select(f"terminal_id,date,tank_id,{_ts_col}")
+                      .eq("terminal_id", _tid)
+                      .gte(_ts_col, "2026-10-10")
+                      .execute().data)
+                if _r:
+                    _late_rows.extend(_r)
+                    print(f"    {_tid}: {len(_r)} rows with {_ts_col}>=2026-10-10")
+            except Exception as _e_lt:
+                print(f"    {_tid}: query failed: {_e_lt}")
+        if _late_rows:
+            _df_late = pd.DataFrame(_late_rows)
+            _df_late.to_csv(hnew2_dir / "hnew2_late_rows.csv", index=False)
+            print(f"  Total late rows across all terminals: {len(_late_rows)}")
+        else:
+            print("  No rows with late insert timestamp found")
+            (hnew2_dir / "hnew2_late_rows.csv").write_text(f"terminal_id,date,tank_id,{_ts_col}\n")
+
+    # Grep for rt_65 mentions across ALL scripts and smoke/test files
+    for _rt65_pat in ["rt_65", "single.*tank.*upsert", "upsert.*single.*tank"]:
+        _rt65_grep = subprocess.run(
+            ["grep", "-rn", "--include=*.py", "--include=*.yml", "--include=*.sh", _rt65_pat,
+             "scripts/", ".github/", "tests/"],
+            capture_output=True, text=True, cwd=str(REPO_ROOT)
+        )
+        if _rt65_grep.stdout.strip():
+            print(f"\n  Pattern '{_rt65_pat}' found:\n{_rt65_grep.stdout.strip()[:1000]}")
+        (hnew2_dir / f"hnew2_grep_rt65_{_rt65_pat[:20].replace('/','_').replace('*','x')}.txt"
+         ).write_text(_rt65_grep.stdout)
 
 except Exception as e:
     print(f"  H-NEW-2 FAILED: {e}")
@@ -2172,13 +2217,167 @@ if CDSE_OK and cdse_token:
     _rt_scenes = cdse_search(_RT_WKT, "2026-08-01", "2026-10-20", max_results=50)
     print(f"  RT scenes Aug–Oct 2026: n={len(_rt_scenes)}")
     if _rt_scenes:
-        _df_rt_s1 = pd.DataFrame([{"name": s.get("Name"), "date": s.get("ContentDate",{}).get("Start","")[:10]}
-                                    for s in _rt_scenes])
+        _df_rt_s1 = pd.DataFrame([{"name": s.get("Name"), "date": s.get("ContentDate",{}).get("Start","")[:10],
+                                    "orbit": str(s.get("Attributes",{}))}
+                                   for s in _rt_scenes])
         _df_rt_s1.to_csv(h08_dir / "h08_rt_scenes.csv", index=False)
+
+    # H09: Yanbu S1 GRD catalog completeness
+    print("\n--- H09: Yanbu S1 GRD catalog ---")
+    h09_dir = OUT_ROOT / "H09"
+    h09_dir.mkdir(exist_ok=True)
+    _YNB_WKT = "POLYGON((37.9 23.9,38.6 23.9,38.6 24.4,37.9 24.4,37.9 23.9))"
+    _ynb_scenes = cdse_search(_YNB_WKT, "2026-08-01", "2026-10-20", max_results=50)
+    print(f"  Yanbu scenes Aug–Oct 2026: n={len(_ynb_scenes)}")
+    if _ynb_scenes:
+        _df_ynb = pd.DataFrame([{"name": s.get("Name"), "date": s.get("ContentDate",{}).get("Start","")[:10]}
+                                 for s in _ynb_scenes])
+        _df_ynb.to_csv(h09_dir / "h09_yanbu_scenes.csv", index=False)
+        print(_df_ynb[["name","date"]].to_string(index=False))
+    else:
+        (h09_dir / "h09_status.txt").write_text("n_scenes=0\n")
+
+    # H10: Al Faw S1 GRD catalog completeness
+    print("\n--- H10: Al Faw S1 GRD catalog ---")
+    h10_dir = OUT_ROOT / "H10"
+    h10_dir.mkdir(exist_ok=True)
+    _ALF_WKT = "POLYGON((47.9 29.8,48.5 29.8,48.5 30.2,47.9 30.2,47.9 29.8))"
+    _alf_scenes = cdse_search(_ALF_WKT, "2026-08-01", "2026-10-20", max_results=50)
+    print(f"  Al Faw scenes Aug–Oct 2026: n={len(_alf_scenes)}")
+    if _alf_scenes:
+        _df_alf = pd.DataFrame([{"name": s.get("Name"), "date": s.get("ContentDate",{}).get("Start","")[:10]}
+                                 for s in _alf_scenes])
+        _df_alf.to_csv(h10_dir / "h10_alfaw_scenes.csv", index=False)
+        print(_df_alf[["name","date"]].to_string(index=False))
+    else:
+        (h10_dir / "h10_status.txt").write_text("n_scenes=0\n")
+
+    # H15: CDSE scene count vs DB observation count — RT orbit 35
+    # Prediction: n_scenes in CDSE catalog >= n_dates in terminal_observations for RT DESC-35
+    print("\n--- H15: CDSE scene count vs DB obs count (RT DESC-35) ---")
+    h15_dir = OUT_ROOT / "H15"
+    h15_dir.mkdir(exist_ok=True)
+    try:
+        _db_rt35 = fetch_all("terminal_observations",
+                             "date,orbit_direction,relative_orbit",
+                             {"terminal_id": "ras_tanura"})
+        _df_db35 = pd.DataFrame(_db_rt35)
+        _df_db35["date"] = pd.to_datetime(_df_db35["date"]).dt.date
+        _desc35_db = _df_db35[
+            (_df_db35["orbit_direction"].isin(["DESC", "DESCENDING"])) &
+            (_df_db35["relative_orbit"] == 35)
+        ]
+        _n_db_dates = _desc35_db["date"].nunique()
+        # Filter CDSE RT scenes to Aug-Oct 2026 to match query period
+        _n_cdse_rt = len(_rt_scenes)
+        print(f"  CDSE RT scenes (Aug-Oct 2026): {_n_cdse_rt}")
+        print(f"  DB RT DESC-35 dates (all time): {_n_db_dates}")
+        # Narrow DB to Aug-Oct 2026
+        _db_aug_oct = _desc35_db[
+            (_desc35_db["date"] >= pd.to_datetime("2026-08-01").date()) &
+            (_desc35_db["date"] <= pd.to_datetime("2026-10-20").date())
+        ]
+        _n_db_aug_oct = _db_aug_oct["date"].nunique()
+        print(f"  DB RT DESC-35 dates Aug-Oct 2026: {_n_db_aug_oct}")
+        _verdict_h15 = "CONFIRMED" if _n_cdse_rt >= _n_db_aug_oct else "NOT_CONFIRMED"
+        print(f"H15 VERDICT: {_verdict_h15} — CDSE={_n_cdse_rt} vs DB-DESC35={_n_db_aug_oct} (Aug-Oct 2026)")
+        (h15_dir / "h15_cdse_vs_db.txt").write_text(
+            f"cdse_rt_scenes_aug_oct={_n_cdse_rt}\ndb_rt_desc35_aug_oct={_n_db_aug_oct}\nverdict={_verdict_h15}\n"
+        )
+    except Exception as _e15:
+        print(f"  H15 FAILED: {_e15}")
+
+    # H17: CDSE scene attributes contain orbit direction (confirming DESC-35 in catalog)
+    print("\n--- H17: CDSE orbit attribute check (DESC-35 in catalog) ---")
+    h17_dir = OUT_ROOT / "H17"
+    h17_dir.mkdir(exist_ok=True)
+    try:
+        _h17_rows = []
+        for _sc in _rt_scenes[:10]:  # inspect first 10
+            _attrs = _sc.get("Attributes", {})
+            _name = _sc.get("Name", "")
+            _date_str = _sc.get("ContentDate", {}).get("Start", "")[:10]
+            _h17_rows.append({"name": _name, "date": _date_str, "attrs_keys": str(list(_attrs.keys()) if isinstance(_attrs, dict) else [])})
+        _df_h17 = pd.DataFrame(_h17_rows)
+        _df_h17.to_csv(h17_dir / "h17_rt_scene_attrs.csv", index=False)
+        print(f"  Inspected {len(_h17_rows)} RT scenes for orbit attributes")
+        print(_df_h17.to_string(index=False))
+    except Exception as _e17:
+        print(f"  H17 FAILED: {_e17}")
+
+    # H21: Jask S1 GRD catalog completeness
+    print("\n--- H21: Jask S1 GRD catalog ---")
+    h21_dir = OUT_ROOT / "H21"
+    h21_dir.mkdir(exist_ok=True)
+    _JSK_WKT = "POLYGON((57.7 25.5,58.2 25.5,58.2 25.9,57.7 25.9,57.7 25.5))"
+    _jsk_scenes = cdse_search(_JSK_WKT, "2026-08-01", "2026-10-20", max_results=50)
+    print(f"  Jask scenes Aug–Oct 2026: n={len(_jsk_scenes)}")
+    if _jsk_scenes:
+        _df_jsk = pd.DataFrame([{"name": s.get("Name"), "date": s.get("ContentDate",{}).get("Start","")[:10]}
+                                 for s in _jsk_scenes])
+        _df_jsk.to_csv(h21_dir / "h21_jask_scenes.csv", index=False)
+        print(_df_jsk[["name","date"]].to_string(index=False))
+    else:
+        (h21_dir / "h21_status.txt").write_text("n_scenes=0\n")
+
+    # H22: Cross-terminal CDSE scene date synchrony (same orbit pass)
+    print("\n--- H22: Cross-terminal CDSE scene date synchrony ---")
+    h22_dir = OUT_ROOT / "H22"
+    h22_dir.mkdir(exist_ok=True)
+    try:
+        _cdse_dates = {
+            "kharg": set(s.get("ContentDate", {}).get("Start", "")[:10] for s in _scenes),
+            "rt": set(s.get("ContentDate", {}).get("Start", "")[:10] for s in _rt_scenes),
+            "yanbu": set(s.get("ContentDate", {}).get("Start", "")[:10] for s in _ynb_scenes),
+            "jask": set(s.get("ContentDate", {}).get("Start", "")[:10] for s in _jsk_scenes),
+        }
+        _all_dates_cdse = set()
+        for _ds in _cdse_dates.values():
+            _all_dates_cdse |= _ds
+        _sync_rows = []
+        for _d in sorted(_all_dates_cdse):
+            _n_term = sum(1 for _ds in _cdse_dates.values() if _d in _ds)
+            _sync_rows.append({"date": _d, "n_terminals": _n_term,
+                                "terminals": [t for t, ds in _cdse_dates.items() if _d in ds]})
+        _df_h22 = pd.DataFrame(_sync_rows)
+        _df_h22.to_csv(h22_dir / "h22_cdse_synchrony.csv", index=False)
+        _n_multi = (_df_h22["n_terminals"] >= 2).sum() if len(_df_h22) else 0
+        print(f"  CDSE dates in >=2 terminals: {_n_multi}/{len(_df_h22)}")
+        print(_df_h22.head(20).to_string(index=False))
+    except Exception as _e22:
+        print(f"  H22 FAILED: {_e22}")
+
+    # H25: CDSE catalog has S1C scene for 2026-09-28 at RT (orbit 101 / ASC)
+    print("\n--- H25: CDSE 2026-09-28 RT scene (ASC orbit 101) ---")
+    h25_dir = OUT_ROOT / "H25"
+    h25_dir.mkdir(exist_ok=True)
+    _rt_928_scenes = cdse_search(_RT_WKT, "2026-09-27", "2026-09-29", max_results=10)
+    print(f"  RT CDSE scenes 2026-09-27/29: n={len(_rt_928_scenes)}")
+    if _rt_928_scenes:
+        _df_928 = pd.DataFrame([{"name": s.get("Name"), "date": s.get("ContentDate",{}).get("Start","")[:10],
+                                   "attrs": str(s.get("Attributes",{}))} for s in _rt_928_scenes])
+        _df_928.to_csv(h25_dir / "h25_rt_928_scenes.csv", index=False)
+        print(_df_928.to_string(index=False))
+    else:
+        (h25_dir / "h25_status.txt").write_text("n_scenes=0 for RT 2026-09-27/29\n")
+
+    # H26: CDSE catalog gap after 2026-10-06 at RT (last known DESC-35 before today)
+    print("\n--- H26: CDSE RT scenes Oct 2026 (post 10-06) ---")
+    h26_dir = OUT_ROOT / "H26"
+    h26_dir.mkdir(exist_ok=True)
+    _rt_oct_scenes = cdse_search(_RT_WKT, "2026-10-06", "2026-10-21", max_results=20)
+    print(f"  RT CDSE scenes Oct 6–21 2026: n={len(_rt_oct_scenes)}")
+    if _rt_oct_scenes:
+        _df_oct = pd.DataFrame([{"name": s.get("Name"), "date": s.get("ContentDate",{}).get("Start","")[:10],
+                                   "attrs": str(s.get("Attributes",{}))} for s in _rt_oct_scenes])
+        _df_oct.to_csv(h26_dir / "h26_rt_oct_scenes.csv", index=False)
+        print(_df_oct[["name","date"]].to_string(index=False))
+    else:
+        (h26_dir / "h26_status.txt").write_text("n_scenes=0 for RT Oct 6-21 2026\n")
 
 else:
     print("\n  CDSE block SKIPPED (P2 auth not available)")
-    for _hid in ["H04", "H08", "H09", "H10", "H15", "H17", "H21", "H22"]:
+    for _hid in ["H04", "H08", "H09", "H10", "H15", "H17", "H21", "H22", "H25", "H26"]:
         (_dir := OUT_ROOT / _hid).mkdir(exist_ok=True)
         (_dir / f"{_hid.lower()}_status.txt").write_text("NOT_RUN: CDSE auth not available\n")
 
