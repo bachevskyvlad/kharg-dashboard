@@ -2,11 +2,11 @@ import { getUserByEmail, upsertUser } from '../lib/sheets.js';
 import { tgNotify, tgTime } from '../lib/telegram.js';
 
 const GOOGLE_CLIENT_ID = "377241273746-2qhpgcaa0a9nkhjuiihfqqs35rvp5asv.apps.googleusercontent.com";
-const GOOGLE_CLIENT_SECRET = "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";
 const APP_URL = "https://app.oilradar.io";
 
 export async function onRequest(context) {
   const { request, env } = context;
+  const GOOGLE_CLIENT_SECRET = env.GOOGLE_CLIENT_SECRET;
   const url = new URL(request.url);
   const code = url.searchParams.get('code');
   const error = url.searchParams.get('error');
