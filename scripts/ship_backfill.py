@@ -158,7 +158,7 @@ def fetch_pass(pass_date):
             data_collection=S1_CDSE,
             time_interval=(d, d),
             mosaicking_order=MosaickingOrder.MOST_RECENT,
-            other_args={"dataFilter": {"polarization": "DV"}},
+            other_args={"dataFilter": {"polarization": "SV"}},
         )],
         responses=[SentinelHubRequest.output_response("default", MimeType.TIFF)],
         bbox=bbox, size=size, config=config,
@@ -225,10 +225,10 @@ def main():
         date_key = str(pass_date)
         processed += 1
 
-        # With --resume, skip already-processed dates UNLESS within last 14 days
+        # With --resume, skip already-processed dates UNLESS within last 5 days
         if args.resume and date_key in records:
             days_ago = (today.date() - pass_date).days if hasattr(pass_date, 'year') else (today - datetime.strptime(date_key, '%Y-%m-%d')).days
-            if days_ago > 14:
+            if days_ago > 5:
                 continue
 
         print(f"[{processed}/{len(pass_dates)}] {date_key}", end=' ', flush=True)
@@ -245,7 +245,7 @@ def main():
 
         # Skip zero detections for recent passes — data may not be fully available
         days_ago = (today.date() - pass_date).days if hasattr(pass_date, 'year') else (today - datetime.strptime(date_key, '%Y-%m-%d')).days
-        if total_export == 0 and days_ago < 14:
+        if total_export == 0 and days_ago < 5:
             print(f"  → skipping {date_key}: zero detections, SAR data may not be available yet")
             continue
 
