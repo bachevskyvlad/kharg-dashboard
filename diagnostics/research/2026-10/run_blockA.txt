@@ -379,8 +379,8 @@ This is a data collection task — no correlation calculations in code.
 
 
 === PREFLIGHT P2: CDSE auth ===
-  P2: CDSE auth OK token_length=1999
-P2 RESULT: OK token_length=1999
+  P2: CDSE auth OK token_length=1997
+P2 RESULT: OK token_length=1997
 
 === Kharg raw_observations audit ===
   raw_observations columns: ['id', 'date', 'tank_id', 'radius_m', 'diameter', 'h_max', 'db_mean', 'created_at']
@@ -618,131 +618,12 @@ scripts/research/auto_hypotheses.py:2957:1. backfill_ras_tanura.py: passes ALLOW
   [ТЗ v2 H_NEW_2]: 1-tank RT ingest: какой GHA-процесс записал 714 строк terminal_observations с created_at ≥ 2026-10-10 по 17 терминалам, если Kharg cron писал только raw_observations. Дать: распределение created_at по терминалу И по часу/минуте (батчи), label/relOrbit/n_tanks этих батчей, сопоставить каждый батч с run_started_at ВСЕХ воркфлоу всех веток (gh api /actions/runs, за 10-10…10-21). Батчи без совпадения — список. «Плановый cron» — не вывод без run_id.
 
   --- GHA runs cross-reference (Oct 10–21 all branches) ---
-  GH token available: True
-  Total GHA runs parsed: 77, Oct 10–21: 74
-
-  GHA runs Oct 10–21:
-    run_id=39662252732 name=Research — ТЗ-АВТОНОМ v2 Block A branch=research/2026-10-auto started=2026-10-21T19:30:34Z conclusion=success
-    run_id=39658212571 name=Monitor — Kharg SAR branch=main started=2026-10-21T19:03:08Z conclusion=success
-    run_id=39656913283 name=Research — ТЗ-АВТОНОМ v2 Block A branch=research/2026-10-auto started=2026-10-21T18:54:24Z conclusion=success
-    run_id=39652381238 name=Research — ТЗ-АВТОНОМ v2 Block A branch=research/2026-10-auto started=2026-10-21T18:24:08Z conclusion=success
-    run_id=39639278632 name=Research — ТЗ-АВТОНОМ v2 Block A branch=research/2026-10-auto started=2026-10-21T16:56:26Z conclusion=success
-    run_id=39630372698 name=Research — ТЗ-АВТОНОМ v2 Block A branch=research/2026-10-auto started=2026-10-21T15:57:23Z conclusion=success
-    run_id=39617111523 name=Research — ТЗ-АВТОНОМ v2 Block A branch=research/2026-10-auto started=2026-10-21T14:28:35Z conclusion=success
-    run_id=39601450876 name=Research — ТЗ-АВТОНОМ v2 Block A branch=main started=2026-10-21T12:40:15Z conclusion=success
-    run_id=39566201589 name=Monitor — Kharg SAR branch=main started=2026-10-21T08:01:46Z conclusion=success
-    run_id=39478305561 name=Monitor — Kharg SAR branch=main started=2026-10-20T18:50:51Z conclusion=success
-    run_id=39389961688 name=Monitor — Kharg SAR branch=main started=2026-10-20T07:57:13Z conclusion=success
-    run_id=39318181803 name=Monitor — Kharg SAR branch=main started=2026-10-19T20:18:16Z conclusion=success
-    run_id=39254082145 name=Update Tanker Queue (Anchorage) branch=main started=2026-10-19T12:41:56Z conclusion=success
-    run_id=39220593580 name=Monitor — Kharg SAR branch=main started=2026-10-19T08:08:01Z conclusion=success
-    run_id=39150804003 name=Monitor — Kharg SAR branch=main started=2026-10-18T17:42:15Z conclusion=success
-    run_id=39107710992 name=Monitor — Kharg SAR branch=main started=2026-10-18T07:27:14Z conclusion=success
-    run_id=39054811600 name=Monitor — Kharg SAR branch=main started=2026-10-17T17:40:46Z conclusion=success
-    run_id=39012849244 name=Monitor — Kharg SAR branch=main started=2026-10-17T07:13:44Z conclusion=success
-    run_id=38948180630 name=Monitor — Kharg SAR branch=main started=2026-10-16T18:32:54Z conclusion=success
-    run_id=38868015964 name=Monitor — Kharg SAR branch=main started=2026-10-16T07:33:51Z conclusion=success
-    run_id=38788653941 name=Monitor — Kharg SAR branch=main started=2026-10-15T18:48:21Z conclusion=success
-    run_id=38700914778 name=Monitor — Kharg SAR branch=main started=2026-10-15T07:45:32Z conclusion=success
-    run_id=38620792343 name=Monitor — Kharg SAR branch=main started=2026-10-14T19:06:01Z conclusion=success
-    run_id=38532552089 name=Monitor — Kharg SAR branch=main started=2026-10-14T08:04:17Z conclusion=success
-    run_id=38462947260 name=Monitor — Kharg SAR branch=main started=2026-10-13T20:27:23Z conclusion=success
-    run_id=38378811194 name=Monitor — Kharg SAR branch=main started=2026-10-13T09:47:17Z conclusion=success
-    run_id=38316056653 name=Monitor — Kharg SAR branch=main started=2026-10-12T22:20:10Z conclusion=success
-    run_id=38266709842 name=Update Tanker Queue (Anchorage) branch=main started=2026-10-12T14:57:40Z conclusion=success
-    run_id=38232505687 name=Monitor — Kharg SAR branch=main started=2026-10-12T09:50:44Z conclusion=success
-    run_id=38167340616 name=Monitor — Kharg SAR branch=main started=2026-10-11T19:16:51Z conclusion=success
-    run_id=38128062771 name=Monitor — Kharg SAR branch=main started=2026-10-11T09:21:10Z conclusion=success
-    run_id=38078342184 name=Monitor — Kharg SAR branch=main started=2026-10-10T19:04:30Z conclusion=success
-    run_id=38070901242 name=Research — ТЗ-АВТОНОМ v2 Block A branch=main started=2026-10-10T17:14:09Z conclusion=success
-    run_id=38070531485 name=Research — ТЗ-АВТОНОМ v2 Block A branch=main started=2026-10-10T17:08:41Z conclusion=success
-    run_id=38070294634 name=Research — ТЗ-АВТОНОМ v2 Block A branch=main started=2026-10-10T17:05:12Z conclusion=success
-    run_id=38068990458 name=Terminal health checks — Block B branch=claude/oilradar-dashboard-iran-zchdva started=2026-10-10T16:46:04Z conclusion=success
-    run_id=38068145374 name=Terminal health checks — Block B branch=claude/oilradar-dashboard-iran-zchdva started=2026-10-10T16:33:27Z conclusion=success
-    run_id=38068141250 name=Terminal health checks — Block B branch=claude/oilradar-dashboard-iran-zchdva started=2026-10-10T16:33:23Z conclusion=success
-    run_id=38067880393 name=Terminal health checks — Block B branch=claude/oilradar-dashboard-iran-zchdva started=2026-10-10T16:29:41Z conclusion=success
-    run_id=38067876303 name=Terminal health checks — Block B branch=claude/oilradar-dashboard-iran-zchdva started=2026-10-10T16:29:37Z conclusion=success
-    run_id=38060510788 name=Terminal health checks — Block B branch=claude/oilradar-dashboard-iran-zchdva started=2026-10-10T14:39:59Z conclusion=success
-    run_id=38060507069 name=Terminal health checks — Block B branch=claude/oilradar-dashboard-iran-zchdva started=2026-10-10T14:39:55Z conclusion=success
-    run_id=38059591692 name=Terminal health checks — Block B branch=claude/oilradar-dashboard-iran-zchdva started=2026-10-10T14:26:12Z conclusion=success
-    run_id=38059494339 name=Terminal health checks — Block B branch=claude/oilradar-dashboard-iran-zchdva started=2026-10-10T14:24:44Z conclusion=success
-    run_id=38059492979 name=Terminal health checks — Block B branch=claude/oilradar-dashboard-iran-zchdva started=2026-10-10T14:24:43Z conclusion=success
-    run_id=38059212658 name=Terminal health checks — Block B branch=claude/oilradar-dashboard-iran-zchdva started=2026-10-10T14:20:26Z conclusion=success
-    run_id=38059210405 name=Terminal health checks — Block B branch=claude/oilradar-dashboard-iran-zchdva started=2026-10-10T14:20:24Z conclusion=success
-    run_id=38058765551 name=Terminal health checks — Block B branch=claude/oilradar-dashboard-iran-zchdva started=2026-10-10T14:13:36Z conclusion=success
-    run_id=38058763738 name=Terminal health checks — Block B branch=claude/oilradar-dashboard-iran-zchdva started=2026-10-10T14:13:34Z conclusion=success
-    run_id=38058649787 name=Terminal health checks — Block B branch=claude/oilradar-dashboard-iran-zchdva started=2026-10-10T14:11:49Z conclusion=success
-    run_id=38058648226 name=Terminal health checks — Block B branch=claude/oilradar-dashboard-iran-zchdva started=2026-10-10T14:11:47Z conclusion=success
-    run_id=38058376186 name=Terminal health checks — Block B branch=claude/oilradar-dashboard-iran-zchdva started=2026-10-10T14:07:33Z conclusion=success
-    run_id=38058370988 name=Terminal health checks — Block B branch=claude/oilradar-dashboard-iran-zchdva started=2026-10-10T14:07:29Z conclusion=success
-    run_id=38057324383 name=Terminal health checks — Block B branch=claude/oilradar-dashboard-iran-zchdva started=2026-10-10T13:51:14Z conclusion=success
-    run_id=38057321144 name=Terminal health checks — Block B branch=claude/oilradar-dashboard-iran-zchdva started=2026-10-10T13:51:10Z conclusion=success
-    run_id=38056727016 name=Terminal health checks — Block B branch=claude/oilradar-dashboard-iran-zchdva started=2026-10-10T13:42:02Z conclusion=success
-    run_id=38056723340 name=Terminal health checks — Block B branch=claude/oilradar-dashboard-iran-zchdva started=2026-10-10T13:41:59Z conclusion=success
-    run_id=38056688930 name=Optical Kharg-30 Gate — step 4 branch=claude/oilradar-dashboard-iran-zchdva started=2026-10-10T13:41:27Z conclusion=success
-    run_id=38055867504 name=Optical Kharg-30 Gate — step 4 branch=claude/oilradar-dashboard-iran-zchdva started=2026-10-10T13:28:51Z conclusion=success
-    run_id=38055566225 name=Optical Kharg-30 Gate — step 4 branch=claude/oilradar-dashboard-iran-zchdva started=2026-10-10T13:24:03Z conclusion=success
-    run_id=38054474281 name=Series Health Standard — corridors + gate validation branch=claude/oilradar-dashboard-iran-zchdva started=2026-10-10T13:06:45Z conclusion=success
-    run_id=38053989023 name=Jask — per-tank SAR panels (20 tanks, human verdicts) branch=claude/oilradar-dashboard-iran-zchdva started=2026-10-10T12:59:23Z conclusion=success
-    run_id=38048348143 name=Jask — per-tank SAR panels (20 tanks, human verdicts) branch=main started=2026-10-10T11:25:19Z conclusion=success
-    run_id=38046284422 name=Jask — per-tank SAR panels (20 tanks, human verdicts) branch=main started=2026-10-10T10:50:06Z conclusion=success
-    run_id=38044694268 name=Jask — per-tank SAR panels (20 tanks, human verdicts) branch=main started=2026-10-10T10:22:53Z conclusion=success
-    run_id=38043640725 name=Optical Kharg-30 Gate branch=main started=2026-10-10T10:04:39Z conclusion=success
-    run_id=38043569286 name=Series Health Standard — corridors + gate validation branch=claude/oilradar-dashboard-iran-zchdva started=2026-10-10T10:03:24Z conclusion=cancelled
-    run_id=38043557875 name=Stage 1 baseline — Jask (rel=93 DESC, 2024-06-01+) branch=main started=2026-10-10T10:03:12Z conclusion=success
-    run_id=38041106043 name=Series Health Standard — corridors + gate validation branch=claude/oilradar-dashboard-iran-zchdva started=2026-10-10T09:21:34Z conclusion=success
-    run_id=38040301994 name=Monitor — Kharg SAR branch=main started=2026-10-10T09:07:53Z conclusion=success
-    run_id=38039527564 name=Jask — smoke test jk_11 (SAR + S2 PNG) branch=claude/oilradar-dashboard-iran-zchdva started=2026-10-10T08:54:50Z conclusion=success
-    run_id=38039511061 name=Jask — per-tank SAR panels (20 tanks, human verdicts) branch=claude/oilradar-dashboard-iran-zchdva started=2026-10-10T08:54:33Z conclusion=success
-    run_id=38039503508 name=Series Health Standard — corridors + gate validation branch=claude/oilradar-dashboard-iran-zchdva started=2026-10-10T08:54:25Z conclusion=failure
-    run_id=38037371560 name=Series Health Standard — corridors + gate validation branch=claude/oilradar-dashboard-iran-zchdva started=2026-10-10T08:17:36Z conclusion=success
-
-  Created_at batches (by hour, n=5):
-    batch 2026-10-11T09:00Z: n_rows=253, n_terminals=10, n_tanks=154, terminals=['al_flaw', 'fujairah', 'halul', 'jask', 'lavan', 'mina_ahmadi', 'novorossiysk', 'primorsk', 'ras_tanura', 'siri']
-      MATCHED runs: ['run_id=38128062771 name=Monitor — Kharg SAR branch=main']
-    batch 2026-10-12T09:00Z: n_rows=56, n_terminals=3, n_tanks=56, terminals=['de_kastri', 'juwaymah', 'ras_tanura']
-      NO MATCHING GHA run within ±30min → UNMATCHED
-    batch 2026-10-17T07:00Z: n_rows=336, n_terminals=16, n_tanks=280, terminals=['al_flaw', 'das_island', 'de_kastri', 'fujairah', 'halul', 'jask', 'lavan', 'mina_ahmadi', 'novorossiysk', 'primorsk', 'ras_laffan', 'ras_tanura', 'ruwais', 'siri', 'sitra', 'zirku']
-      MATCHED runs: ['run_id=39012849244 name=Monitor — Kharg SAR branch=main']
-    batch 2026-10-17T17:00Z: n_rows=15, n_terminals=1, n_tanks=15, terminals=['novorossiysk']
-      NO MATCHING GHA run within ±30min → UNMATCHED
-    batch 2026-10-18T07:00Z: n_rows=54, n_terminals=2, n_tanks=54, terminals=['juwaymah', 'ras_tanura']
-      MATCHED runs: ['run_id=39107710992 name=Monitor — Kharg SAR branch=main']
-
-  UNMATCHED batches (no GHA run within ±30min): ['2026-10-12T09:00Z', '2026-10-17T17:00Z']
-
-  Per-terminal distribution of late rows:
- terminal_id  n_rows  n_dates                    first_created                     last_created
-     al_flaw      48        2 2026-10-11 09:23:09.004838+00:00 2026-10-17 07:15:51.994315+00:00
-  das_island      15        1 2026-10-17 07:17:30.043299+00:00 2026-10-17 07:17:30.043299+00:00
-   de_kastri       4        2 2026-10-12 09:52:54.399815+00:00 2026-10-17 07:16:07.761735+00:00
-    fujairah      88        4 2026-10-11 09:24:27.362118+00:00 2026-10-17 07:17:19.399141+00:00
-       halul      50        5 2026-10-11 09:23:14.589496+00:00 2026-10-17 07:15:56.922908+00:00
-        jask      40        2 2026-10-11 09:22:46.476573+00:00 2026-10-17 07:15:31.636709+00:00
-    juwaymah      18        2 2026-10-12 09:53:33.347864+00:00 2026-10-18 07:29:27.744771+00:00
-       lavan      48        2 2026-10-11 09:22:53.001800+00:00 2026-10-17 07:15:39.897703+00:00
- mina_ahmadi      28        2 2026-10-11 09:24:44.088799+00:00 2026-10-17 07:17:45.979489+00:00
-novorossiysk      60        4 2026-10-11 09:23:45.847083+00:00 2026-10-17 17:42:50.321822+00:00
-    primorsk      72        4 2026-10-11 09:23:32.951415+00:00 2026-10-17 07:16:21.542625+00:00
-  ras_laffan      34        1 2026-10-17 07:16:44.751057+00:00 2026-10-17 07:16:44.751057+00:00
-  ras_tanura      92        4 2026-10-11 09:24:18.394287+00:00 2026-10-18 07:29:48.046070+00:00
-      ruwais      40        1 2026-10-17 07:17:40.705432+00:00 2026-10-17 07:17:40.705432+00:00
-        siri      42        7 2026-10-11 09:23:00.441869+00:00 2026-10-17 07:15:44.405235+00:00
-       sitra      25        1 2026-10-17 07:16:04.142193+00:00 2026-10-17 07:16:04.142193+00:00
-       zirku      10        1 2026-10-17 07:17:24.408315+00:00 2026-10-17 07:17:24.408315+00:00
-
-  Per-minute batches (top 20):
-     created_min  n_rows  n_terminals
-2026-10-11T09:23     150            5
-2026-10-17T07:17     124            6
-2026-10-17T07:16     112            5
-2026-10-17T07:15     100            5
-2026-10-11T09:24      59            3
-2026-10-18T07:29      54            2
-2026-10-12T09:53      54            2
-2026-10-11T09:22      44            2
-2026-10-17T17:42      15            1
-2026-10-12T09:52       2            1
+  GH token available: False
+  gh api stderr: gh: To use GitHub CLI in a GitHub Actions workflow, set the GH_TOKEN environment variable. Example:
+  env:
+    GH_TOKEN: ${{ github.token }}
+  gh api returned empty response (no runs or auth failure)
+  Cannot cross-reference: no GHA runs fetched
 
   Pattern 'rt_65' found:
 scripts/stage0_full_optical.py:10:  RT-south  — rt_0..rt_4, rt_11..rt_65 (61 tanks)
@@ -1605,5 +1486,46 @@ ras_tanura_a101  ASCENDING      101.0                     709             6     
      kharg     356   323               33            0 2014-10-08 2015-04-06
 ras_tanura     333   570               13          250 2014-11-01 2017-03-14
      yanbu     364   332               72           40 2014-10-30 2014-10-09
+
+============================================================
+Section 6: Yanbu corrections + azimuth audit
+============================================================
+
+--- 6.1 Yanbu DB table counts ---
+  terminal_observations: n_rows=3984, n_unique_dates=249, first=2014-10-09, last=2026-09-22
+  terminal_volume_timeseries (daily, smoothed=false): n_rows=332, n_unique_dates=332, first=2014-10-09, last=2026-09-22
+  NOTE: п.5 used terminal_observations (n_dates=249), comparison with catalog is on terminal_observations
+
+--- 6.2 Yanbu DB dates × CDSE all-orbits (relOrbit/direction breakdown) ---
+  CDSE all-orbits cache: 806 scenes
+  DB dates: 332  |  matched in CDSE: 332  |  not in CDSE: 0
+
+  relOrbit-direction breakdown (DB dates matched to CDSE orbit):
+  dir    relOrbit   n_dates   (years)
+  ASCE   14              292  2017–2026
+  DESC   50               39  2014–2017
+  DESC   52                1  2014–2014
+
+--- 6.3 Azimuth audit: registry los_azimuth vs data orbit direction ---
+
+  terminal        data_dir   los_az   match   note
+  kharg           DESC       282      OK      DESC→LOS 282° correct (west-looking, Gulf)
+  ras_tanura      DESC       282      OK      DESC→LOS 282° correct; ASC secondary has los_az=98
+  yanbu           ASC        98       OK      ASC→LOS 98° correct (Red Sea, east-looking)
+  al_flaw         DESC       282      OK      no allowed_orbits; los_azimuth=282 default (DESC assumed)
+  jask            DESC       282      OK      DESC primary; ASC secondary los_az=98
+  juwaymah        DESC       282      OK      DESC-35 only; los_az=282 correct
+  lavan           DESC       282      OK      DESC primary los_az=282; ASC secondary los_az=98
+  siri            DESC       282      OK      DESC primaries los_az=282; ASC secondary los_az=98
+  halul           DESC       282      OK      DESC primaries los_az=282; ASC secondary los_az=98
+
+  SOURCE: tank_registry.py per-terminal los_azimuth fields
+  CODE:   sar_fetch.py:161 az = los_azimuth if los_azimuth is not None else LOS_AZIMUTH
+          config.py:67     LOS_AZIMUTH = 282  (default, DESC-only terminals)
+          stage1_backfill.py:138  los_az = primary['los_azimuth']
+  VERDICT: Yanbu has los_azimuth=98 in registry (ASC correct). No DESC-sector mask issue.
+
+--- 6.4 Kharg raw_observations × CDSE: relOrbit distribution ---
+  FAILED: {'message': 'column raw_observations.relative_orbit does not exist', 'code': '42703', 'hint': None, 'details': None}
 
 === Block A + B/C/D complete ===
