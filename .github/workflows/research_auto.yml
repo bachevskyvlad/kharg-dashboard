@@ -14,7 +14,6 @@ jobs:
     timeout-minutes: 60
     permissions:
       contents: write
-      actions: read
 
     steps:
       - uses: actions/checkout@v4
@@ -36,7 +35,6 @@ jobs:
           CLIENT_ID: ${{ secrets.CLIENT_ID }}
           CLIENT_SECRET: ${{ secrets.CLIENT_SECRET }}
           SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
-          GH_TOKEN: ${{ github.token }}
         run: |
           mkdir -p diagnostics/research/2026-10
           cd scripts
