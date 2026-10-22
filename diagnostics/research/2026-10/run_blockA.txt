@@ -379,8 +379,8 @@ This is a data collection task — no correlation calculations in code.
 
 
 === PREFLIGHT P2: CDSE auth ===
-  P2: CDSE auth OK token_length=2002
-P2 RESULT: OK token_length=2002
+  P2: CDSE auth OK token_length=1999
+P2 RESULT: OK token_length=1999
 
 === Kharg raw_observations audit ===
   raw_observations columns: ['id', 'date', 'tank_id', 'radius_m', 'diameter', 'h_max', 'db_mean', 'created_at']
@@ -619,7 +619,7 @@ scripts/research/auto_hypotheses.py:2957:1. backfill_ras_tanura.py: passes ALLOW
 
   --- GHA runs cross-reference (Oct 10–21 all branches) ---
   GH token available: True
-  Total GHA runs parsed: 75, Oct 10–21: 74
+  Total GHA runs parsed: 77, Oct 10–21: 74
 
   GHA runs Oct 10–21:
     run_id=39662252732 name=Research — ТЗ-АВТОНОМ v2 Block A branch=research/2026-10-auto started=2026-10-21T19:30:34Z conclusion=success
@@ -1471,3 +1471,139 @@ scripts/ingest.py:223:        rel_orbit  = orbit_cfg.get("relative_orbit")
 scripts/ingest.py:224:        direction  = orbit_cfg.get("direction", "descending").lower()
 scripts/ingest.py:225:        los_az     = orbit_cfg.get("los_azimuth")
 scripts/ingest.py:242:                                            orbit_cfg=allowed_orbits)
+
+  Analysis written: diagnostics/research/2026-10/SAR_FETCH/sar_fetch_orbit_filter_analysis.txt
+  main_script.py orbit_cfg usage:
+42:from sar_fetch import load_cache, get_all_scene_dates, build_crescent_masks, fetch_new_records
+73:    new_records = fetch_new_records(new_dates, tanks_data, super_bbox, img_width, img_height)
+204:            raw = fetch_new_records(new_t_dates, t_data, bbox, img_w, img_h,
+205:                                    orbit_cfg=allowed_orbits)
+
+  backfill_ras_tanura.py orbit_cfg:
+51:ALLOWED_ORBIT     = {"relative_orbit": 35, "direction": "DESC", "los_azimuth": 282}
+79:from sar_fetch import get_all_scene_dates, build_crescent_masks, fetch_new_records
+173:    print(f"\n[backfill] Querying catalog: DESC orbit {ALLOWED_ORBIT['relative_orbit']} "
+180:            orbit_state=ALLOWED_ORBIT["direction"],
+181:            relative_orbit=ALLOWED_ORBIT["relative_orbit"],
+194:    los_az    = ALLOWED_ORBIT["los_azimuth"]
+195:    rel_orbit = ALLOWED_ORBIT["relative_orbit"]
+196:    direction = ALLOWED_ORBIT["direction"]
+215:                    raw = fetch_new_records(
+
+
+=== 4.11: Rebuild Assessment (V0 scene counts per terminal) ===
+  kharg             : n_scenes= 641 | PU_total=  1923 (18/mo) | GHA=0.9h | V0≈0.1GB (orbit=DESC relOrbit=None src=registry (no allowed_orbits → all DESC))
+  ras_tanura_d35    : n_scenes= 377 | PU_total=  2262 (21/mo) | GHA=1.0h | V0≈0.3GB (orbit=DESC relOrbit=35 src=registry allowed_orbits[0])
+  ras_tanura_a101   : n_scenes= 709 | PU_total=  4254 (39/mo) | GHA=2.0h | V0≈0.6GB (orbit=ASCE relOrbit=101 src=registry allowed_orbits[1] — V3 comparison only)
+    Yanbu all-orbits breakdown: {'ASCE-14': 476, 'ASCE-16': 1, 'ASCE-87': 252, 'DESC-50': 76, 'DESC-52': 1}
+  yanbu_all         : n_scenes= 806 | PU_total=  2418 (22/mo) | GHA=1.1h | V0≈0.1GB (orbit=ALL relOrbit=None src=all orbits (Yanbu correction: show all relOrbits over bbox))
+  al_flaw           : n_scenes= 355 | PU_total=  1065 (10/mo) | GHA=0.5h | V0≈0.1GB (orbit=DESC relOrbit=None src=registry (legacy los_azimuth=282 → all DESC, no relOrbit filter))
+  jask              : n_scenes= 184 | PU_total=   552 (5/mo) | GHA=0.3h | V0≈0.0GB (orbit=DESC relOrbit=93 src=registry allowed_orbits[0] — 2024-06+ only per ТЗ)
+
+  4.11 TOTAL: PU=12,474 | GHA=5.8h | V0≈1.2GB
+  At free tier (30k PU/mo): 0.4 months to rebuild
+
+  Full table:
+       terminal  orbit_dir  rel_orbit  n_scenes_working_orbit  pu_per_scene  pu_total  pu_per_month_avg  gha_hours  v0_cache_gb  n_tanks
+          kharg DESCENDING        NaN                     641             3      1923                18        0.9          0.1       47
+ ras_tanura_d35 DESCENDING       35.0                     377             6      2262                21        1.0          0.3       66
+ras_tanura_a101  ASCENDING      101.0                     709             6      4254                39        2.0          0.6       66
+      yanbu_all        NaN        NaN                     806             3      2418                22        1.1          0.1       12
+        al_flaw DESCENDING        NaN                     355             3      1065                10        0.5          0.1       24
+           jask DESCENDING       93.0                     184             3       552                 5        0.3          0.0       20
+
+=== 5. Catalog vs DB gap (Kharg / RT DESC-35 / Yanbu ASC-14) ===
+
+--- kharg (orbit=DESC relOrbit=None) ---
+  CDSE: using 4.11 cache (kharg, 1011 scenes)
+  CDSE dates (working orbit): n=356, first=2014-10-08, last=2026-10-18
+  DB dates: n=323, first=2015-04-06, last=2026-10-18
+  Gap (catalog - DB): n=33 missing from DB
+  Extra DB (DB - catalog): n=0 DB dates not in CDSE working orbit
+
+  Year breakdown (year | cdse | db | missing_from_db):
+    2014: cdse=  3  db=  0  missing=  3  ← late start
+    2015: cdse= 13  db=  1  missing= 12  ← partial ingest
+    2016: cdse= 15  db=  0  missing= 15  ← late start
+    2017: cdse= 27  db= 25  missing=  2  ← partial ingest
+    2018: cdse= 29  db= 29  missing=  0  ← full
+    2019: cdse= 29  db= 28  missing=  1  ← partial ingest
+    2020: cdse= 30  db= 30  missing=  0  ← full
+    2021: cdse= 30  db= 30  missing=  0  ← full
+    2022: cdse= 29  db= 29  missing=  0  ← full
+    2023: cdse= 29  db= 29  missing=  0  ← full
+    2024: cdse= 29  db= 29  missing=  0  ← full
+    2025: cdse= 43  db= 43  missing=  0  ← full
+    2026: cdse= 50  db= 50  missing=  0  ← full
+
+  First CDSE: 2014-10-08 | First DB: 2015-04-06 | Late start: 180 days
+  CAUSE: late ingest start — DB begins 0y 6m after first CDSE scene
+  Thinning check: main_script.py:61 computes new_dates = all_dates - cached_dates
+    No stride/sample/skip — all CDSE dates are fetched if not in cache
+    START_DATE=2014-06-01 (config.py:51) matches CDSE launch — not a limiter
+
+--- ras_tanura (orbit=DESC relOrbit=35) ---
+  CDSE: using 4.11 cache (ras_tanura_d35, 1764 scenes)
+  CDSE dates (working orbit): n=333, first=2014-11-01, last=2026-10-18
+  DB dates: n=570, first=2017-03-14, last=2026-10-18
+  Gap (catalog - DB): n=13 missing from DB
+  Extra DB (DB - catalog): n=250 DB dates not in CDSE working orbit
+
+  Year breakdown (year | cdse | db | missing_from_db):
+    2014: cdse=  3  db=  0  missing=  3  ← late start
+    2015: cdse=  9  db=  0  missing=  9  ← late start
+    2016: cdse=  1  db=  0  missing=  1  ← late start
+    2017: cdse= 23  db= 23  missing=  0  ← full
+    2018: cdse= 29  db= 29  missing=  0  ← full
+    2019: cdse= 28  db= 28  missing=  0  ← full
+    2020: cdse= 30  db= 62  missing=  0  ← full
+    2021: cdse= 30  db= 59  missing=  0  ← full
+    2022: cdse= 29  db= 60  missing=  0  ← full
+    2023: cdse= 29  db= 59  missing=  0  ← full
+    2024: cdse= 29  db= 59  missing=  0  ← full
+    2025: cdse= 43  db= 87  missing=  0  ← full
+    2026: cdse= 50  db=104  missing=  0  ← full
+
+  First CDSE: 2014-11-01 | First DB: 2017-03-14 | Late start: 864 days
+  CAUSE: late ingest start — DB begins 2y 4m after first CDSE scene
+  Thinning check: main_script.py:61 computes new_dates = all_dates - cached_dates
+    No stride/sample/skip — all CDSE dates are fetched if not in cache
+    START_DATE=2014-06-01 (config.py:51) matches CDSE launch — not a limiter
+    → Gap is early-history: ingest/cache was NOT initialized at project start
+
+--- yanbu (orbit=ASCE relOrbit=14) ---
+  CDSE: using 4.11 cache (yanbu_all, 806 scenes)
+  CDSE dates (working orbit): n=364, first=2014-10-30, last=2026-10-16
+  DB dates: n=332, first=2014-10-09, last=2026-09-22
+  Gap (catalog - DB): n=72 missing from DB
+  Extra DB (DB - catalog): n=40 DB dates not in CDSE working orbit
+
+  Year breakdown (year | cdse | db | missing_from_db):
+    2014: cdse=  6  db=  5  missing=  6  ← partial ingest
+    2015: cdse= 28  db= 25  missing= 28  ← partial ingest
+    2016: cdse= 29  db=  6  missing= 29  ← partial ingest
+    2017: cdse= 31  db= 29  missing=  6  ← partial ingest
+    2018: cdse= 30  db= 30  missing=  0  ← full
+    2019: cdse= 30  db= 30  missing=  0  ← full
+    2020: cdse= 31  db= 31  missing=  0  ← full
+    2021: cdse= 30  db= 30  missing=  0  ← full
+    2022: cdse= 27  db= 27  missing=  0  ← full
+    2023: cdse= 30  db= 30  missing=  0  ← full
+    2024: cdse= 30  db= 30  missing=  0  ← full
+    2025: cdse= 33  db= 33  missing=  0  ← full
+    2026: cdse= 29  db= 26  missing=  3  ← partial ingest
+
+  First CDSE: 2014-10-30 | First DB: 2014-10-09 | Late start: -21 days
+  CAUSE: ingest started near CDSE start; gaps are post-start patchwork
+  Thinning check: main_script.py:61 computes new_dates = all_dates - cached_dates
+    No stride/sample/skip — all CDSE dates are fetched if not in cache
+    START_DATE=2014-06-01 (config.py:51) matches CDSE launch — not a limiter
+    → 40 DB dates not in CDSE working-orbit catalog → possibly ingested from different orbit (DESC-137 contamination?) or CDSE catalog gap
+
+  5. Gap summary:
+  terminal  cdse_n  db_n  missing_from_db  extra_in_db first_cdse   first_db
+     kharg     356   323               33            0 2014-10-08 2015-04-06
+ras_tanura     333   570               13          250 2014-11-01 2017-03-14
+     yanbu     364   332               72           40 2014-10-30 2014-10-09
+
+=== Block A + B/C/D complete ===
