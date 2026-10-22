@@ -22,7 +22,7 @@ import pandas as pd
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 # ── Supabase ──────────────────────────────────────────────────────────────────
-from config import sb
+from config import sb, S1_CDSE
 
 OUT_DIR = os.path.join(
     os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))),
@@ -76,9 +76,6 @@ def _make_config():
     cfg.sh_base_url      = "https://sh.dataspace.copernicus.eu"
     return cfg
 
-S1_CDSE = DataCollection.SENTINEL1_IW.define_from(
-    "s1iw_cdse_exp", service_url="https://sh.dataspace.copernicus.eu"
-)
 
 def cdse_date_orbit_map(bbox, start="2014-01-01", end=None):
     """
