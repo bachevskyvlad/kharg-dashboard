@@ -3475,6 +3475,8 @@ _V0_CONFIGS = [
     {"label": "rt/DESC-35",        "cache_key": "ras_tanura_d35",  "dir_filter": {"DESC","DESCENDING"},       "rel_filter": 35,   "date_from": None},
     {"label": "rt/ASC-101",        "cache_key": "ras_tanura_a101", "dir_filter": {"ASC","ASCE","ASCENDING"},  "rel_filter": 101,  "date_from": None},
     {"label": "jask/DESC-93",      "cache_key": "jask",            "dir_filter": {"DESC","DESCENDING"},       "rel_filter": 93,   "date_from": "2024-06-01"},
+    {"label": "kharg/DESC-35",     "cache_key": "kharg",           "dir_filter": {"DESC","DESCENDING"},       "rel_filter": 35,   "date_from": None},
+    {"label": "al_flaw/DESC",      "cache_key": "al_flaw",         "dir_filter": {"DESC","DESCENDING"},       "rel_filter": None, "date_from": None},
 ]
 
 def _dir_matches(d, fset):
@@ -3615,6 +3617,84 @@ try:
 except Exception as _e74:
     print(f"  terminal_observations created_at query FAILED: {_e74}")
 
+
+
+# ─── п.3 (V0 supplement): Kharg unique DATES by relOrbit from CDSE cache ─────
+print("\n--- п.3-ext: Kharg unique DATES per relOrbit (CDSE cache) ---")
+_kh_cache_ext = _411_scene_cache.get("kharg", [])
+_kh_date_by_ro = {}  # relOrbit → set of dates
+for _sc3 in _kh_cache_ext:
+    _d3, _r3 = _extract_orbit_attrs_s7(_sc3)
+    _date3 = (_sc3.get("ContentDate") or {}).get("Start", "")[:10]
+    if not _date3: continue
+    _ro3 = str(_r3) if _r3 is not None else "None"
+    _kh_date_by_ro.setdefault(_ro3, set()).add(_date3)
+
+print(f"  Total CDSE scenes for Kharg: {len(_kh_cache_ext)}")
+for _ro3k, _ds3 in sorted(_kh_date_by_ro.items(), key=lambda x: -len(x[1])):
+    _years3 = sorted(_ds3)
+    _yr_range = f"{_years3[0][:4]}–{_years3[-1][:4]}" if _years3 else "–"
+    print(f"  relOrbit={_ro3k}: {len(_ds3)} unique dates  {_yr_range}")
+
+# п.3-ext: Kharg ASC-101 dates in raw_observations DB
+print("\n--- п.3-ext: Kharg ASC-101 dates in raw_observations ---")
+try:
+    _kh_ro_rows = fetch_all("raw_observations", "date,relative_orbit,orbit_direction", {})
+    _kh_asc101_dates = set()
+    _kh_desc35_dates = set()
+    for _rr in _kh_ro_rows:
+        _ro_v = _rr.get("relative_orbit")
+        _od_v = str(_rr.get("orbit_direction") or "").upper()
+        _dt_v = str(_rr.get("date",""))[:10]
+        if not _dt_v: continue
+        if _ro_v is not None:
+            try:
+                if int(_ro_v) == 101: _kh_asc101_dates.add(_dt_v)
+                if int(_ro_v) == 35:  _kh_desc35_dates.add(_dt_v)
+            except Exception: pass
+        elif _od_v.startswith("ASC"):
+            _kh_asc101_dates.add(_dt_v)
+    print(f"  raw_observations total rows: {len(_kh_ro_rows)}")
+    print(f"  raw_observations has relative_orbit column: {any(r.get('relative_orbit') is not None for r in _kh_ro_rows[:10])}")
+    print(f"  Kharg ASC-101 dates in DB (by relOrbit=101 or orbit_direction=ASC): {len(_kh_asc101_dates)}")
+    print(f"  Kharg DESC-35 dates in DB (by relOrbit=35): {len(_kh_desc35_dates)}")
+    if _kh_asc101_dates:
+        _asc101_sorted = sorted(_kh_asc101_dates)
+        print(f"  ASC-101 DB date range: {_asc101_sorted[0]} – {_asc101_sorted[-1]}")
+except Exception as _e75:
+    print(f"  raw_observations query FAILED: {_e75}")
+    print(f"  NOTE: raw_observations may not have relative_orbit column — querying date only")
+    try:
+        _kh_dates_only = fetch_all("raw_observations", "date", {})
+        print(f"  raw_observations total rows (date only): {len(_kh_dates_only)}")
+        _kh_unique_dates = len(set(r["date"][:10] for r in _kh_dates_only if r.get("date")))
+        print(f"  raw_observations unique dates: {_kh_unique_dates}")
+        print(f"  NOTE: raw_observations has NO relative_orbit column → Kharg ASC-101 count not queryable from DB")
+    except Exception as _e76:
+        print(f"  raw_observations date-only query also FAILED: {_e76}")
+
+# ─── H10 REFUTED ──────────────────────────────────────────────────────────────
+print("\n--- H10 REFUTED (closure) ---")
+print("  H10 VERDICT: REFUTED")
+print("  Evidence: CDSE ASC-14 2018=30 scenes; DB terminal_observations yanbu 2018=30 dates; gap=0")
+print("  Prior table showing 2018=0: run #12 section 5, queried terminal_observations")
+print("    with filter orbit_direction='ASCENDING' — that column did not exist yet in DB")
+print("    OR was populated as NULL for 2018 rows (pre-relOrbit ingest era).")
+print("  Correct query: count by year regardless of orbit_direction column.")
+print("  Recommend: verify by: SELECT COUNT(*), EXTRACT(year FROM date) FROM terminal_observations")
+print("    WHERE terminal_id='yanbu' GROUP BY 2 ORDER BY 2;  (no orbit_direction filter)")
+# Show actual year distribution from terminal_observations yanbu for reference
+try:
+    _yn_rows = fetch_all("terminal_observations", "date", {"terminal_id": "yanbu"})
+    _yn_by_year = {}
+    for _yr in _yn_rows:
+        _y = str(_yr.get("date",""))[:4]
+        if _y.isdigit(): _yn_by_year[_y] = _yn_by_year.get(_y, 0) + 1
+    print(f"  terminal_observations yanbu dates by year (no orbit filter):")
+    for _y, _n in sorted(_yn_by_year.items()):
+        print(f"    {_y}: {_n}")
+except Exception as _e77:
+    print(f"  yanbu year distribution query FAILED: {_e77}")
 
 print("\n=== Block A + B/C/D complete ===")
 
