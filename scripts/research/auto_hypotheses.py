@@ -3395,7 +3395,7 @@ print(f"  VERDICT: Yanbu has los_azimuth=98 in registry (ASC correct). No DESC-s
 # ── 6.4: Kharg raw_observations × CDSE → relOrbit distribution ───────────────
 print("\n--- 6.4 Kharg raw_observations × CDSE: relOrbit distribution ---")
 try:
-    _kh_obs = fetch_all("raw_observations", "date,relative_orbit,orbit_direction", {})
+    _kh_obs = fetch_all("raw_observations", "date", {})
     _kh_dates = sorted({r["date"][:10] for r in _kh_obs if r.get("date")})
     print(f"  raw_observations: n_rows={len(_kh_obs)}, n_unique_dates={len(_kh_dates)}")
 
@@ -3439,4 +3439,162 @@ except Exception as _e64:
     print(f"  FAILED: {_e64}")
 
 
+
+# ─── Section 7: V0 scene manifests ──────────────────────────────────────────
+print("\n" + "=" * 60)
+print("Section 7: V0 scene manifests")
+print("=" * 60)
+
+_s7_dir = OUT_ROOT / "7_v0_manifest"
+_s7_dir.mkdir(parents=True, exist_ok=True)
+
+# V0 configs — all derived from 4.11 cache, no new CDSE queries
+_V0_CONFIGS = [
+    {"label": "yanbu/all_orbits",  "cache_key": "yanbu_all",       "dir_filter": None,                       "rel_filter": None, "date_from": None},
+    {"label": "yanbu/ASC-14",      "cache_key": "yanbu_all",       "dir_filter": {"ASC","ASCE","ASCENDING"},  "rel_filter": 14,   "date_from": None},
+    {"label": "rt/DESC-35",        "cache_key": "ras_tanura_d35",  "dir_filter": {"DESC","DESCENDING"},       "rel_filter": 35,   "date_from": None},
+    {"label": "rt/ASC-101",        "cache_key": "ras_tanura_a101", "dir_filter": {"ASC","ASCE","ASCENDING"},  "rel_filter": 101,  "date_from": None},
+    {"label": "jask/DESC-93",      "cache_key": "jask",            "dir_filter": {"DESC","DESCENDING"},       "rel_filter": 93,   "date_from": "2024-06-01"},
+]
+
+def _dir_matches(d, fset):
+    if fset is None: return True
+    return any(str(d or "").upper().startswith(f[:4].upper()) for f in fset)
+
+def _rel_matches(r, fval):
+    if fval is None: return True
+    try: return int(r) == int(fval)
+    except (TypeError, ValueError): return False
+
+_v0_all_rows = []
+print()
+for _cfg in _V0_CONFIGS:
+    _cache7 = _411_scene_cache.get(_cfg["cache_key"], [])
+    _rows7 = []
+    for _sc in _cache7:
+        _d7 = _sc.get("ContentDate", {}).get("Start", "")[:10]
+        if not _d7: continue
+        if _cfg["date_from"] and _d7 < _cfg["date_from"]: continue
+        _od7, _ro7 = _extract_orbit_attrs(_sc)
+        if not _dir_matches(_od7, _cfg["dir_filter"]): continue
+        if not _rel_matches(_ro7, _cfg["rel_filter"]): continue
+        _rows7.append({
+            "terminal":     _cfg["label"].split("/")[0],
+            "orbit_config": _cfg["label"],
+            "date":         _d7,
+            "scene_id":     _sc.get("Name", ""),
+            "cdse_id":      _sc.get("Id", ""),
+            "relOrbit":     _ro7,
+            "orbitDir":     str(_od7 or "").upper()[:4],
+        })
+    _df7 = pd.DataFrame(_rows7).sort_values("date").reset_index(drop=True) if _rows7 else pd.DataFrame()
+    _out7 = _cfg["label"].replace("/", "_") + "_manifest.csv"
+    if len(_df7): _df7.to_csv(_s7_dir / _out7, index=False)
+    _f7 = _df7["date"].min() if len(_df7) else "–"
+    _l7 = _df7["date"].max() if len(_df7) else "–"
+    print(f"  {_cfg['label']:22s}: {len(_df7):4d} scenes  {_f7} – {_l7}")
+    _v0_all_rows.extend(_rows7)
+
+_v0_all_df = pd.DataFrame(_v0_all_rows).sort_values(["terminal","date"]).reset_index(drop=True)
+_v0_all_df.to_csv(_s7_dir / "v0_manifest_all.csv", index=False)
+print(f"\n  v0_manifest_all.csv: {len(_v0_all_df)} total rows across {len(_V0_CONFIGS)} configs")
+
+# п.1: Kharg relOrbit breakdown from CDSE cache (raw_observations has no relative_orbit col)
+print("\n--- п.1 Kharg relOrbit breakdown (CDSE 4.11 cache) ---")
+_kh7 = _411_scene_cache.get("kharg", [])
+_kh7_rows = []
+for _sc in _kh7:
+    _d = _sc.get("ContentDate", {}).get("Start", "")[:10]
+    if not _d: continue
+    _od, _ro = _extract_orbit_attrs(_sc)
+    _kh7_rows.append({"date": _d, "relOrbit": _ro, "orbitDir": str(_od or "").upper()[:4], "year": _d[:4]})
+if _kh7_rows:
+    _kh7_df = pd.DataFrame(_kh7_rows)
+    _kh7_sum = (_kh7_df.groupby(["relOrbit", "orbitDir"])
+                .agg(n_dates=("date","count"), years=("year", lambda x: f"{x.min()}–{x.max()}"))
+                .reset_index().sort_values("n_dates", ascending=False))
+    print(_kh7_sum.to_string(index=False))
+    _kh7_df.to_csv(_s7_dir / "kharg_relOrbit_breakdown.csv", index=False)
+else:
+    print("  Kharg cache empty")
+
+# п.2: Yanbu DESC-50/52 flag
+print("\n--- п.2 Yanbu DESC scenes (non-ASC) — V4 calibration note ---")
+_yb_desc7 = [r for r in _v0_all_rows
+             if r["orbit_config"] == "yanbu/all_orbits" and r["orbitDir"] == "DESC"]
+if _yb_desc7:
+    _yb_desc_df = pd.DataFrame(_yb_desc7)
+    print(f"  DESC scenes (sector mismatch: los_az=98 but data from DESC orbit):")
+    print(f"  n={len(_yb_desc_df)}, period: {_yb_desc_df['date'].min()} – {_yb_desc_df['date'].max()}")
+    _by_ro7 = _yb_desc_df.groupby("relOrbit")["date"].count().reset_index().rename(columns={"date":"n_scenes"})
+    print(_by_ro7.to_string(index=False))
+    print(f"  MANIFEST FLAG: marked as 'pre_asc14_legacy' in yanbu/all_orbits manifest")
+    print(f"  V4 note: calibration variant 'ASC-14 only (2017+)' vs 'full history (inc DESC-50/52 2014–2017)'")
+else:
+    print("  No DESC scenes in yanbu cache")
+
+# п.3: Yanbu 2018 ASC-14 — CDSE cache vs DB
+print("\n--- п.3 Yanbu 2018 ASC-14: CDSE vs DB ---")
+_yb7_cache = _411_scene_cache.get("yanbu_all", [])
+_yb_2018_asc14 = []
+for _sc in _yb7_cache:
+    _d = _sc.get("ContentDate", {}).get("Start", "")[:10]
+    if not _d.startswith("2018"): continue
+    _od, _ro = _extract_orbit_attrs(_sc)
+    if _dir_matches(_od, {"ASC","ASCE","ASCENDING"}) and _rel_matches(_ro, 14):
+        _yb_2018_asc14.append(_d)
+print(f"  CDSE ASC-14 scenes in 2018: {len(_yb_2018_asc14)}")
+if _yb_2018_asc14:
+    print(f"  Period: {min(_yb_2018_asc14)} – {max(_yb_2018_asc14)}")
+try:
+    _yb7_to = fetch_all("terminal_observations", "date", {"terminal_id": "yanbu"})
+    _yb_2018_db = sorted({r["date"][:10] for r in _yb7_to if r.get("date","").startswith("2018")})
+    print(f"  DB terminal_observations yanbu 2018 dates: {len(_yb_2018_db)}")
+    _miss7 = sorted(set(_yb_2018_asc14) - set(_yb_2018_db))
+    print(f"  CDSE 2018 ASC-14 not in DB: {len(_miss7)}")
+    if _miss7:
+        for _m7 in _miss7[:5]: print(f"    {_m7}")
+        if len(_miss7) > 5: print(f"    ... (+{len(_miss7)-5} more)")
+except Exception as _e73:
+    print(f"  DB query FAILED: {_e73}")
+
+# п.4: Phase 0 status — единый ingest
+print("\n--- п.4 Phase 0 status: единый ingest ---")
+import subprocess as _subp
+_ms_result = _subp.run(
+    ["grep", "-n", "_upsert_terminal_obs\|terminal_observations.*upsert\|upsert.*terminal_obs",
+     "main_script.py"],
+    capture_output=True, text=True,
+    cwd=str(Path(__file__).parent.parent)
+)
+_ms_hits = [l.strip() for l in _ms_result.stdout.splitlines() if l.strip()]
+print(f"  main_script.py upsert-to-terminal_observations: {len(_ms_hits)} call sites")
+for _mh in _ms_hits[:5]: print(f"    {_mh}")
+if _ms_hits:
+    print(f"  STATUS: Phase 0 NOT complete — main_script.py still writes to terminal_observations")
+else:
+    print(f"  STATUS: main_script.py does NOT write to terminal_observations ✓")
+
+# Latest terminal_observations created_at across all terminals
+try:
+    _to_latest = fetch_all("terminal_observations", "terminal_id,created_at", {})
+    if _to_latest:
+        _max_ca = max(r.get("created_at","") for r in _to_latest if r.get("created_at"))
+        _by_term = {}
+        for r in _to_latest:
+            t = r.get("terminal_id","?")
+            ca = r.get("created_at","")
+            if ca > _by_term.get(t,""):
+                _by_term[t] = ca
+        print(f"  Latest terminal_observations created_at (global): {_max_ca}")
+        print(f"  Per-terminal latest created_at (sorted):")
+        for _t, _ca in sorted(_by_term.items(), key=lambda x: -len(x[1])):
+            print(f"    {_t:20s}: {_ca}")
+    else:
+        print(f"  terminal_observations: no rows returned")
+except Exception as _e74:
+    print(f"  terminal_observations created_at query FAILED: {_e74}")
+
+
 print("\n=== Block A + B/C/D complete ===")
+
