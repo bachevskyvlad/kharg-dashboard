@@ -283,33 +283,36 @@ H07 SUMMARY:
 
 
 ## backCoeff
-  scripts/reingest_alfaw_v2.py:155:            }, "processing": {"backCoeff": "SIGMA0_ELLIPSOID", "orthorectify": True,
+  scripts/verify_orbit_fix.py:124:                "backCoeff": "GAMMA0_TERRAIN",
   scripts/hormuz_timeseries.py:92:                "backCoeff": "GAMMA0_TERRAIN",
-  scripts/research/auto_hypotheses.py:737:H24: backCoeff/orthorectify/speckleFilter/upsampling options in ingest + panels code.
-  scripts/research/auto_hypotheses.py:746:print("\n=== H24: backCoeff / processing options audit (code, no DB) ===")
-  scripts/research/auto_hypotheses.py:752:    # Find all backCoeff / orthorectify / speckleFilter / upsampling references in scripts
-  scripts/research/auto_hypotheses.py:754:    for pattern in ["backCoeff", "orthorectify", "speckleFilter", "upsampling", "GAMMA0", "BETA0", "SIGMA0", "LEE", "BILINEAR", "BICUBIC"]:
-  scripts/research/auto_hypotheses.py:1292:# Query: check if terminal_observations has backCoeff column at all
-  scripts/research/auto_hypotheses.py:1298:    print(f"  has backCoeff column: {has_backcoeff_col}")
-  scripts/research/auto_hypotheses.py:1326:    print(f"\nH24b: terminal_observations has no backCoeff column → SIGMA0 label not queryable from DB; "
-  scripts/research/auto_hypotheses.py:1905:#   If this is a level shift post-regression, backCoeff or ingest path change is the
-  scripts/research/auto_hypotheses.py:1941:        print("  For these terminals, ingest path (backCoeff/script version) after 2026-09-07 must be audited.")
-  scripts/stage_gate_abc.py:137:                    "backCoeff":    "SIGMA0_ELLIPSOID",
+  scripts/diag_juwaymah_yanbu_5.py:274:                "processing": {"orthorectify": True, "backCoeff": "GAMMA0_TERRAIN",
   scripts/verify_orbit_fix_3.py:123:                "backCoeff": "GAMMA0_TERRAIN",
-  scripts/panels_v2.py:147:            }, "processing": {"backCoeff": "SIGMA0_ELLIPSOID", "orthorectify": True,
-  scripts/jask_panels.py:278:                      "processing": {"backCoeff": "SIGMA0_ELLIPSOID", "orthorectify": True}}],
-  scripts/diag_recalc_7_5.py:264:                    "processing": {"orthorectify": True, "backCoeff": "GAMMA0_TERRAIN",
-  scripts/stage6_accuracy_grid.py:418:                        "processing": {"orthorectify": True, "backCoeff": "GAMMA0_TERRAIN",
-  scripts/diagnose_ras_tanura_imagery.py:210:                "backCoeff":     PROD_BACK_COEFF,
-  scripts/diag_juwaymah_yanbu_4.py:230:                "processing": {"orthorectify": True, "backCoeff": "GAMMA0_TERRAIN",
+  scripts/diag_equiv_7_6.py:137:                    "processing": {"orthorectify": True, "backCoeff": "GAMMA0_TERRAIN",
+  scripts/gulf_fragility_pipeline.py:248:                other_args={"processing": {"orthorectify": True, "backCoeff": "GAMMA0_TERRAIN", "demInstance": "COPERNICUS_30"}}
+  scripts/reingest_alfaw_retry.py:196:            }, "processing": {"backCoeff": "SIGMA0_ELLIPSOID", "orthorectify": True,
   scripts/diag_juwaymah_yanbu_6.py:295:                "processing": {"orthorectify": True, "backCoeff": "GAMMA0_TERRAIN",
+  scripts/recenter_saudi.py:117:                    "processing": {"orthorectify": True, "backCoeff": "GAMMA0_TERRAIN",
+  scripts/diagnose_ras_tanura_imagery.py:210:                "backCoeff":     PROD_BACK_COEFF,
+  scripts/diag_juwaymah_yanbu_2.py:188:                    "backCoeff": "GAMMA0_TERRAIN",
+  scripts/diag_welldepth_7_7.py:149:                    "processing": {"orthorectify": True, "backCoeff": "GAMMA0_TERRAIN",
+  scripts/stage6_accuracy_grid.py:418:                        "processing": {"orthorectify": True, "backCoeff": "GAMMA0_TERRAIN",
+  scripts/hormuz_ships.py:97:            "backCoeff": "GAMMA0_TERRAIN",
+  scripts/verify_orbit_fix_2.py:170:                "backCoeff": "GAMMA0_TERRAIN",
+  scripts/stage_h1_db_norm.py:145:            }, "processing": {"backCoeff": "SIGMA0_ELLIPSOID", "orthorectify": True,
+  scripts/stage_gate_abc.py:137:                    "backCoeff":    "SIGMA0_ELLIPSOID",
+  scripts/stage5_asc_backfill.py:240:                        "processing": {"orthorectify": True, "backCoeff": "GAMMA0_TERRAIN", "demInstance": "COPERNICUS_30"},
+  scripts/diag_juwaymah_yanbu.py:329:                "backCoeff": "GAMMA0_TERRAIN",
+  scripts/sar_fetch.py:237:            "backCoeff": "GAMMA0_TERRAIN",
 
 ## orthorectify
-  scripts/reingest_alfaw_v2.py:155:            }, "processing": {"backCoeff": "SIGMA0_ELLIPSOID", "orthorectify": True,
+  scripts/verify_orbit_fix.py:123:                "orthorectify": True,
   scripts/hormuz_timeseries.py:91:                "orthorectify": True,
-  scripts/research/auto_hypotheses.py:737:H24: backCoeff/orthorectify/speckleFilter/upsampling options in ingest + panels code.
-  scripts/research/auto_hypotheses.py:752:    # Find all backCoeff / orthorectify / speckleFilter / upsampling references in scripts
-  scripts/research/auto_hypotheses.py:754:    for pattern in ["ba
+  scripts/diag_juwaymah_yanbu_5.py:274:                "processing": {"orthorectify": True, "backCoeff": "GAMMA0_TERRAIN",
+  scripts/verify_orbit_fix_3.py:122:                "orthorectify": True,
+  scripts/diag_equiv_7_6.py:137:                    "processing": {"orthorectify": True, "backCoeff": "GAMMA0_TERRAIN",
+  scripts/gulf_fragility_pipeline.py:248:                other_args={"processing": {"orthorectify": True, "backCoeff": "GAMMA0_TERRAIN", "demInstance": "COPERNICUS_30"}}
+  scripts/reingest_alfaw_retry.py:196:            }, "processing": {"backCoeff": "SIGMA0_ELLIPSOID", "orthorectify": True,
+  scripts/diag_juwaymah_yanb
 
 H24: found 10 distinct option keywords in codebase
 
@@ -363,11 +366,11 @@ D6: SLC bursts CDSE — availability estimate
 === D7: Cushing floating-roof tanks (registry check) ===
   Cushing in tank_registry: False
   Cushing references in codebase:
+scripts/diagnostics/research/2026-10/HYPOTHESES_REPORT.md:56:D7: Cushing floating-roof tank list + orbit catalog + EIA weekly CSV.
 scripts/research/auto_hypotheses.py:741:D7: Cushing floating-roof tank list + orbit catalog + EIA weekly CSV.
 scripts/research/auto_hypotheses.py:845:# ── D7: Cushing floating-roof tank list (code audit, no external calls) ───────
 scripts/research/auto_hypotheses.py:846:print("\n=== D7: Cushing floating-roof tanks (registry check) ===")
-scripts/research/auto_hypotheses.py:851:    # Check if Cushing is in registry
-scripts/research/auto_hypotheses.py:852:    cushing_in_registry = any(loc["id"] == 
+scripts/research/auto_hypothes
 D7: Cushing floating-roof tanks
 STATUS: NOT_RUN — no Cushing entry in tank_registry.py; no scripts reference Cushing.
 To execute:
@@ -379,8 +382,8 @@ This is a data collection task — no correlation calculations in code.
 
 
 === PREFLIGHT P2: CDSE auth ===
-  P2: CDSE auth OK token_length=1997
-P2 RESULT: OK token_length=1997
+  P2: CDSE auth OK token_length=1999
+P2 RESULT: OK token_length=1999
 
 === Kharg raw_observations audit ===
   raw_observations columns: ['id', 'date', 'tank_id', 'radius_m', 'diameter', 'h_max', 'db_mean', 'created_at']
@@ -455,48 +458,49 @@ P2 RESULT: OK token_length=1997
   terminal_observations columns: ['id', 'terminal_id', 'date', 'tank_id', 'radius_m', 'diameter', 'h_max', 'db_mean', 'created_at', 'relative_orbit', 'orbit_direction', 'db_norm']
   has backCoeff column: False
   SIGMA0_ELLIPSOID in ingest scripts:
-scripts/reingest_alfaw_v2.py:155:            }, "processing": {"backCoeff": "SIGMA0_ELLIPSOID", "orthorectify": True,
-scripts/research/auto_hypotheses.py:1287:# ── H24 continuation: DB rows with SIGMA0_ELLIPSOID (item 8) ─────────────────
-scripts/research/auto_hypotheses.py:1288:print("\n=== H24b: DB rows with SIGMA0_ELLIPSOID ===")
-scripts/research/auto_hypotheses.py:1304:        ["grep", "-rn", "--include=*.py", "SIGMA0_ELLIPSOID", "scripts/"],
-scripts/research/auto_hypotheses.py:1308:    print(f"  SIGMA0_ELLIPSOID in ingest scripts:\n{sigma_files if sigma_files else '  None'}")
-scripts/research/auto_hypotheses.py:1313:        ["grep", "-rn", "--include=*.py", "-A2", "SIGMA0_ELLIPSOID", "scripts/"],
-scripts/stage_gate_abc.py:137:                    "backCoeff":    "SIGMA0_ELLIPSOID",
-scripts/panels_v2.py:147:            }, "processing": {"backCoeff": "SIGMA0_ELLIPSOID", "orthorectify": True,
-scripts/jask_panels.py:278:                      "processing": {"backCoeff": "SIGMA0_ELLIPSOID", "orthorectify": True}}],
 scripts/reingest_alfaw_retry.py:196:            }, "processing": {"backCoeff": "SIGMA0_ELLIPSOID", "orthorectify": True,
 scripts/stage_h1_db_norm.py:145:            }, "processing": {"backCoeff": "SIGMA0_ELLIPSOID", "orthorectify": True,
-scripts/jask_smoke.py:151:                      "processing": {"backCoeff": "SIGMA0_ELLIPSOID", "orthorectify": True}}],
+scripts/stage_gate_abc.py:137:                    "backCoeff":    "SIGMA0_ELLIPSOID",
 scripts/reingest_alfaw_v2.py:155:            }, "processing": {"backCoeff": "SIGMA0_ELLIPSOID", "orthorectify": True,
-scripts/reingest_alfaw_v2.py-156-                              "demInstance": "COPERNICUS_30"}}]
-scripts/reingest_alfaw_v2.py-157-        },
---
+scripts/jask_panels.py:278:                      "processing": {"backCoeff": "SIGMA0_ELLIPSOID", "orthorectify": True}}],
+scripts/panels_v2.py:147:            }, "processing": {"backCoeff": "SIGMA0_ELLIPSOID", "orthorectify": True,
+scripts/jask_smoke.py:151:                      "processing": {"backCoeff": "SIGMA0_ELLIPSOID", "orthorectify": True}}],
 scripts/research/auto_hypotheses.py:1287:# ── H24 continuation: DB rows with SIGMA0_ELLIPSOID (item 8) ─────────────────
 scripts/research/auto_hypotheses.py:1288:print("\n=== H24b: DB rows with SIGMA0_ELLIPSOID ===")
-scripts/research/auto_hypotheses.py-1289-h24b_dir = OUT_ROOT / "H24b"
-scripts/research/auto_hypotheses.py-1290-h24b_dir.mkdir(exist_ok=True)
---
 scripts/research/auto_hypotheses.py:1304:        ["grep", "-rn", "--include=*.py", "SIGMA0_ELLIPSOID", "scripts/"],
-scripts/research/auto_hypotheses.py-1305-        capture_output=True, text=True, cwd=str(REPO_ROOT)
-scripts/research/auto_hypotheses.py-1306-    )
---
 scripts/research/auto_hypotheses.py:1308:    print(f"  SIGMA0_ELLIPSOID in ingest scripts:\n{sigma_files if sigma_files else '  None'}")
-scripts/research/auto_hypotheses.py-1309-
-scripts/research/auto_hypotheses.py-1310-    # Which terminals / date ranges used SIGMA0 path?
---
 scripts/research/auto_hypotheses.py:1313:        ["grep", "-rn", "--include=*.py", "-A2", "SIGMA0_ELLIPSOID", "scripts/"],
-scripts/research/auto_hypotheses.py-1314-        capture_output=True, text=True, cwd=str(REPO_ROOT)
-scripts/research/auto_hypotheses.py-1315-    )
+scripts/reingest_alfaw_retry.py:196:            }, "processing": {"backCoeff": "SIGMA0_ELLIPSOID", "orthorectify": True,
+scripts/reingest_alfaw_retry.py-197-                              "demInstance": "COPERNICUS_30"}}]
+scripts/reingest_alfaw_retry.py-198-        },
+--
+scripts/stage_h1_db_norm.py:145:            }, "processing": {"backCoeff": "SIGMA0_ELLIPSOID", "orthorectify": True,
+scripts/stage_h1_db_norm.py-146-                              "demInstance": "COPERNICUS_30"}}]
+scripts/stage_h1_db_norm.py-147-        },
 --
 scripts/stage_gate_abc.py:137:                    "backCoeff":    "SIGMA0_ELLIPSOID",
 scripts/stage_gate_abc.py-138-                    "orthorectify": True,
 scripts/stage_gate_abc.py-139-                    "demInstance":  "COPERNICUS_30"
 --
+scripts/reingest_alfaw_v2.py:155:            }, "processing": {"backCoeff": "SIGMA0_ELLIPSOID", "orthorectify": True,
+scripts/reingest_alfaw_v2.py-156-                              "demInstance": "COPERNICUS_30"}}]
+scripts/reingest_alfaw_v2.py-157-        },
+--
+scripts/jask_panels.py:278:                      "processing": {"backCoeff": "SIGMA0_ELLIPSOID", "orthorectify": True}}],
+scripts/jask_panels.py-279-        },
+scripts/jask_panels.py-280-        "output": {
+--
 scripts/panels_v2.py:147:            }, "processing": {"backCoeff": "SIGMA0_ELLIPSOID", "orthorectify": True,
 scripts/panels_v2.py-148-                              "demInstance": "COPERNICUS_30"}}]
 scripts/panels_v2.py-149-        },
 --
-scripts/jask_panels.py:278:                      "processing": {"backCoeff": "SI
+scripts/jask_smoke.py:151:                      "processing": {"backCoeff": "SIGMA0_ELLIPSOID", "orthorectify": True}}],
+scripts/jask_smoke.py-152-        },
+scripts/jask_smoke.py-153-        "output": {"width": _tile_px(bbox, 5), "height": _tile_px(bbox, 5), "responses": [
+--
+scripts/research/auto_hypotheses.py:1287:# ── H24 continuation: DB rows with SIGMA0_ELLIPSOID (item 8) ─────────────────
+scripts/research/auto_hypotheses.py:1288:print("\n=== H24b: DB rows with SIGMA0_ELLIPSOID ===")
+scripts/research/auto_
 
 H24b: terminal_observations has no backCoeff column → SIGMA0 label not queryable from DB; source of truth is ingest script parameters at run time
 
@@ -543,43 +547,47 @@ f621e4a fix: ship_backfill git pull --rebase before push; update Fujairah to 22 
 3cc42a1 feat: merge Iranian termina
 
   Pattern 'DESC-137':
-scripts/research/auto_hypotheses.py:89:                 "(какой воркфлоу/скрипт), почему DESC-137 проходит несмотря на фильтр.",
-scripts/research/auto_hypotheses.py:1378:    # Key clue from sar_fetch.py:224: "rt_65 / DESC-137 contamination mechanism"
-scripts/research/auto_hypotheses.py:1381:    print("\n  Scanning for rt_65 / DESC-137 / single-tank ingest source...")
-scripts/research/auto_hypotheses.py:1392:    # Check which scripts reference DESC-137 or orbit 137
-scripts/research/auto_hypothese
+scripts/verify_orbit_fix.py:720:                md.append(f"\n`raw_observations` contains **{count} rows** on the 10 DESC-137 dates "
+scripts/verify_orbit_fix.py:724:                md.append(f"\n`raw_observations` contains **0 rows** on DESC-137 dates — "
+scripts/sar_fetch.py:224:      illumination (the rt_65 / DESC-137 contamination mechanism).
+scripts/orbit_survey.py:453:        "  EDGE    < 20% (likely artefact — cf. ras_tanura DESC-137)  ",
+scripts/research/auto_hypotheses.py:89:           
 
   Pattern 'orbit.*137':
-scripts/research/auto_hypotheses.py:1379:    # Key clue from verify_orbit_fix_3.py: "213 single-tank dates vs orbit 137 12-day cycle"
-scripts/research/auto_hypotheses.py:1392:    # Check which scripts reference DESC-137 or orbit 137
-scripts/research/auto_hypotheses.py:1393:    for _pat in ["DESC-137", "orbit.*137", "137.*orbit", "single.tank", "rt_65.*DESC", "backfill_ras_tanura"]:
-scripts/research/auto_hypotheses.py:2903:# ── SAR_FETCH: orbit filter code in sar_fetch.py — who calls it, why DESC
+scripts/verify_orbit_fix.py:321:    desc_137 = [s for s in desc_scenes if s["relative_orbit"] == 137]
+scripts/verify_orbit_fix.py:451:        print(f"\n  {date_str} DESC orbit 137 ... ", end="", flush=True)
+scripts/verify_orbit_fix.py:515:        return "(a) orbit 137 does not cover south cluster — API returned nothing"
+scripts/verify_orbit_fix.py:517:        return "(a) most pixels are nodata — orbit 137 likely outside south cluster bbox"
+scripts/verify_orbit_fix.py:691:        md.append("both 
 
   Pattern '137.*orbit':
-scripts/research/auto_hypotheses.py:1392:    # Check which scripts reference DESC-137 or orbit 137
-scripts/research/auto_hypotheses.py:1393:    for _pat in ["DESC-137", "orbit.*137", "137.*orbit", "single.tank", "rt_65.*DESC", "backfill_ras_tanura"]:
+scripts/verify_orbit_fix.py:321:    desc_137 = [s for s in desc_scenes if s["relative_orbit"] == 137]
+scripts/verify_orbit_fix.py:692:        md.append("On dates cataloged as 'DESC 137' (07-21, 07-27, 08-02...), if orbit 137's swath does\n")
+scripts/verify_orbit_fix.py:782:            desc137_status = "EXCLUDE — orbit 137 does not cover south cluster"
 scripts/verify_orbit_fix_3.py:759:        # Orbit 137 is offset ~5-6 days from orbit 35
-scripts/verify_orbit_fix_3.py:778:        f"**Orbit 137 offset from orbit 35**: 4–7 days within 12-day cycle\n",
-scripts/diag_juwaymah_yanbu_3.py:592:           
+scripts/verify_orbit_fix_3.py:778:        f"**Orbit 137 of
 
   Pattern 'single.tank':
-scripts/research/auto_hypotheses.py:1379:    # Key clue from verify_orbit_fix_3.py: "213 single-tank dates vs orbit 137 12-day cycle"
-scripts/research/auto_hypotheses.py:1380:    # Key clue from backfill_ras_tanura.py: tracks single_tank dates
-scripts/research/auto_hypotheses.py:1381:    print("\n  Scanning for rt_65 / DESC-137 / single-tank ingest source...")
-scripts/research/auto_hypotheses.py:1393:    for _pat in ["DESC-137", "orbit.*137", "137.*orbit", "single.tank", "rt_65.*DESC", "backfill
+scripts/verify_orbit_fix_3.py:14:  3. 213 single-tank dates vs orbit 137 12-day cycle.
+scripts/verify_orbit_fix_3.py:686:# TASK 3 — 213 single-tank dates vs orbit 137 12-day cycle
+scripts/verify_orbit_fix_3.py:714:    # Find dates where only 1 tank reported (single-tank dates)
+scripts/verify_orbit_fix_3.py:717:    single_tank_dates = per_date[per_date["tank_count"] == 1]["date"].tolist()
+scripts/verify_orbit_fix_3.py:718:    single_tank_dates.sort()
+scripts/verify_orbit_fix_3.py:720:    n_single
 
   Pattern 'rt_65.*DESC':
+scripts/sar_fetch.py:224:      illumination (the rt_65 / DESC-137 contamination mechanism).
 scripts/research/auto_hypotheses.py:1378:    # Key clue from sar_fetch.py:224: "rt_65 / DESC-137 contamination mechanism"
 scripts/research/auto_hypotheses.py:1381:    print("\n  Scanning for rt_65 / DESC-137 / single-tank ingest source...")
 scripts/research/auto_hypotheses.py:1393:    for _pat in ["DESC-137", "orbit.*137", "137.*orbit", "single.tank", "rt_65.*DESC", "backfill_ras_tanura"]:
-scripts/research/auto_hypotheses.py:2970:   (the rt_65 / DESC-137 contamination mechanism)
-scripts/sar_fetc
+scripts/researc
 
   Pattern 'backfill_ras_tanura':
-scripts/research/auto_hypotheses.py:1380:    # Key clue from backfill_ras_tanura.py: tracks single_tank dates
-scripts/research/auto_hypotheses.py:1386:         "scripts/backfill_ras_tanura.py", "scripts/verify_orbit_fix_3.py"],
-scripts/research/auto_hypotheses.py:1393:    for _pat in ["DESC-137", "orbit.*137", "137.*orbit", "single.tank", "rt_65.*DESC", "backfill_ras_tanura"]:
-scripts/research/auto_hypotheses.py:2957:1. backfill_ras_tanura.py: passes ALLOWED_ORBIT = {"relative_orbit": 35, "direc
+scripts/backfill_ras_tanura.py:2:backfill_ras_tanura.py — Task 3: full history rebuild for Ras Tanura.
+scripts/backfill_ras_tanura.py:14:  python scripts/backfill_ras_tanura.py            # dry-run: print summary, stop
+scripts/backfill_ras_tanura.py:15:  python scripts/backfill_ras_tanura.py --commit   # delete + insert after dry-run
+scripts/backfill_ras_tanura.py:22:  python scripts/backfill_ras_tanura.py --reset    # wipe checkpoint and restart
+scripts/stage1_backfill.py:17:pixel extraction) e
 
   GHA workflows with ras_tanura/rt_65:
 .github/workflows/series_health_standard.yml:207:            --terminal ras_tanura --orbit 35 \
@@ -626,15 +634,17 @@ scripts/research/auto_hypotheses.py:2957:1. backfill_ras_tanura.py: passes ALLOW
   Cannot cross-reference: no GHA runs fetched
 
   Pattern 'rt_65' found:
+scripts/ingest.py:181:    # (guards against edge-of-frame partial illumination like the rt_65 artefact).
+scripts/stage0_qa.py:73:    ("rt_65", 26.637591408424406, 50.160445373274800, 20),
+scripts/stage0_qa.py:247:        # rt_65 special: tiny tank (20m), only 1 of its kind — keep measured
+scripts/stage5_decompose.py:59:    "rt_62","rt_63","rt_64","rt_65",
+scripts/sar_fetch.py:224:      illumination (the rt_65 / DESC-137 contamination mechanism).
 scripts/stage0_full_optical.py:10:  RT-south  — rt_0..rt_4, rt_11..rt_65 (61 tanks)
 scripts/stage0_full_optical.py:23:  RT: rt_65 (known edge artefact), rt_3, rt_4 (largest, densest cluster edge)
 scripts/stage0_full_optical.py:59:WORST_TANKS = {"jw_1", "jw_17", "yb_3", "yb_6", "rt_65", "rt_3", "rt_4"}
 scripts/stage0_full_optical.py:69:    [f"rt_{i}" for i in range(11, 66)]        # rt_11..rt_65
 scripts/stage0_full_optical.py:112:    ("rt_65", 26.637591408424406, 50.160445373274800, 20),
-scripts/research/auto_hypotheses.py:1377:    # Check git log for ANY script that might have written rt_65 on those dates
-scripts/research/auto_hypotheses.py:1378:    # Key clue from sar_fetch.py:224: "rt_65 / DESC-137 contamination mechanism"
-scripts/research/auto_hypotheses.py:1381:    print("\n  Scanning for rt_65 / DESC-137 / single-tank ingest source...")
-scripts/research/auto_hypotheses.py:1393:    for _pat in ["DESC-137", "orbit.*137", "137.*orbit", "single.tank", "rt_65.*DESC", "backfill_ras_tanu
+scripts/tank_registry.py:500:        # DESC 137 contaminat
 
   Pattern 'single.*tank.*upsert' found:
 scripts/research/auto_hypotheses.py:1588:    for _rt65_pat in ["rt_65", "single.*tank.*upsert", "upsert.*single.*tank"]:
@@ -673,18 +683,18 @@ scripts/research/auto_hypotheses.py:1588:    for _rt65_pat in ["rt_65", "single.
 	Is the server running on that host and accepting TCP/IP connections?
 
   Hardcoded publishable key occurrences: n=12
+    ./calibration/calibrate_kharg.py:36
+    ./product/zh-dashboard.html:1796
     ./product/dashboard.html:1180
     ./product/dashboard.html:1944
-    ./product/zh-dashboard.html:1796
     ./scripts/diag_closure.py:27
+    ./scripts/terminal_checks.py:30
     ./scripts/research/auto_hypotheses.py:21
     ./scripts/research/auto_hypotheses.py:1679
-    ./scripts/terminal_checks.py:30
     ./scripts/diag_orbit_labels.py:23
-    ./marketing/zh-monitor.html:187
-    ./marketing/monitor.html:291
     ./analysis/kharg_patterns/analyze_patterns.py:32
-    ./calibration/calibrate_kharg.py:36
+    ./marketing/monitor.html:291
+    ./marketing/zh-monitor.html:187
 
   SQL RLS policy draft: /home/runner/work/kharg-dashboard/kharg-dashboard/scripts/research/rls_policy_draft.sql (NOT applied — draft only)
   Draft exists: True
@@ -956,38 +966,44 @@ H18 VERDICT: PASS — WL-45 on DESC-35: cap=100.0%, tanks_missing_50pct=0
 
 === D3: db_mean normalization audit ===
   Normalization references: 719 lines
-scripts/series_health_standard.py:7:All metrics are dimensionless or normalized by the terminal's own dynamic_range_db
-scripts/series_health_standard.py:71:    rows = fetch_all("raw_observations", "date,tank_id,db_mean")
-scripts/series_health_standard.py:74:    df = df.dropna(subset=["db_mean"])
-scripts/series_health_standard.py:82:                     "date,tank_id,db_mean,relative_orbit,orbit_direction",
-scripts/series_health_standard.py:86:    df = df.dropna(subset=["db_mean"])
-scripts/series_health_standard.py:114:| live_fraction | frac(tanks: per-tank-step ≥ 5% dynamic_range) | [0,1] | (threshold normalized) | [0,1] |
-scripts/series_health_standard.py:121:- All normalized metrics are ∈ [0, ∞) but practically ∈ [0, 1] for healthy series.
-scripts/series_health_standard.py:128:    """Compute normalized health metrics from per-tank per-date db_mean dataframe."""
-scripts/series_health_standard.py:132:        df.groupby("date")["db_mean"]
-scripts/series_health_standard.py:139:    dynamic_range_db = float(daily.quantile(0.95) - daily.quantile(0.05))
-scripts/series_health_standard.py:150:    # deltas; raw and normalized
-scripts/series_health_standard.py:153:    delta_p50_norm= float(deltas_raw.quantile(0.50)  / dr) if not np.isnan(dr) else np.nan
-scripts/series_health_standard.py:154:    delta_p90_norm= float(deltas_raw.quantile(0.90)  / dr) if not np.isnan(dr) else np.nan
-scripts/series_health_standard.py:155:    delta_p99_norm= float(deltas_raw.quantile(0.99)  / dr) if not np.
+scripts/series_v2.py:5:  - vol_raw:  using db_mean directly
+scripts/series_v2.py:9:  dB_min = df['db_mean'].quantile(0.05)  [global, over all tanks+dates]
+scripts/series_v2.py:10:  dB_max = df['db_mean'].quantile(0.95)
+scripts/series_v2.py:11:  fill_ratio = clip((dB_max - db) / (dB_max - dB_min), 0, 1)
+scripts/series_v2.py:22:  diagnostics/al_faw/iraq_alfaw_pertank_v2.csv  — tank, date, db_mean, db_norm, vol_raw_bbl, vol_norm_bbl
+scripts/series_v2.py:71:                        "select": "date,tank_id,db_mean,db_norm",
+scripts/series_v2.py:98:    for col in ["db_mean", "db_norm"]:
+scripts/series_v2.py:113:    db_min_raw  = float(df["db_mean"].quantile(0.05))
+scripts/series_v2.py:114:    db_max_raw  = float(df["db_mean"].quantile(0.95))
+scripts/series_v2.py:117:        db_min_norm = float(df["db_norm"].quantile(0.05))
+scripts/series_v2.py:118:        db_max_norm = float(df["db_norm"].quantile(0.95))
+scripts/series_v2.py:122:    print(f"  Calibration — raw:  dB_min={db_min_raw:.3f}  dB_max={db_max_raw:.3f}")
+scripts/series_v2.py:124:        print(f"  Calibration — norm: dB_min={db_min_norm:.3f}  dB_max={db_max_norm:.3f}")
+scripts/series_v2.py:130:    df["vol_raw_bbl"]  = compute_vol(df["db_mean"], df["r_fit"], db_min_raw, db_max_raw)
+scripts/series_v2.py:179:        v = daily["vol_raw_mb"].quantile(pct/100)
+scripts/series_v2.py:189:    pertank_cols = ["tank_id", "date", "db_mean", "db_norm", "vol_raw_bbl", "vol_norm_bbl"]
+scripts/dedup_terminal_observations.py:6:3. Delete the no
 
 === D4: Terminal volume computation audit ===
   Volume computation references: 247 lines
+scripts/series_v2.py:11:  fill_ratio = clip((dB_max - db) / (dB_max - dB_min), 0, 1)
+scripts/series_v2.py:12:  h_current  = H_MIN + fill_ratio * (H_MAX - H_MIN)  [H_MIN=2m, H_MAX=14m per registry v2]
+scripts/series_v2.py:13:  vol_bbl    = π × r² × h × BARREL_PER_M3
+scripts/series_v2.py:42:BARREL_PER_M3 = 6.2898
+scripts/series_v2.py:84:    fill_ratio = (db_max - db_clipped) / (db_max - db_min)
+scripts/series_v2.py:85:    fill_ratio  = fill_ratio.clip(0, 1)
+scripts/series_v2.py:86:    h_current  = H_MIN + fill_ratio * (H_MAX - H_MIN)
+scripts/series_v2.py:87:    vol_bbl    = math.pi * r_series**2 * h_current * BARREL_PER_M3
 scripts/diag_closure.py:54:    tvt = fetch_all("terminal_volume_timeseries", "date,vol_mn_bbl,aggregation,smoothed",
-scripts/reingest_alfaw_v2.py:39:BARREL_PER_M3 = 6.2898
-scripts/export_terminal_json.py:52:            .select("date,vol_mn_bbl")
-scripts/export_terminal_json.py:66:        return pd.DataFrame(columns=["date", "vol_mn_bbl"])
-scripts/export_terminal_json.py:80:            .select("date,vol_mn_bbl")
-scripts/export_terminal_json.py:93:        return pd.DataFrame(columns=["date", "vol_mn_bbl"])
-scripts/export_terminal_json.py:107:        "values": [round(v, 3) for v in df["vol_mn_bbl"].tolist()],
-scripts/export_terminal_json.py:143:    df2 = df.rename(columns={"vol_mn_bbl": tid})
-scripts/research/auto_hypotheses.py:255:    tvt_rt = fetch_all("terminal_volume_timeseries", "date,vol_mn_bbl,aggregation,smoothed",
-scripts/research/auto_hypotheses.py:363:# (these would be filtered by apply_coverage_filter at next compute run,
-scripts/research/auto_hypotheses.py:381:        tvt_rows = fetch_all("terminal_volume_timeseries", "date,vol_mn_bbl,aggregation",
-scripts/research/auto_hypotheses.py:442:    tvt_rt2 = fetch_all("terminal_volume_timeseries", "date,vol_mn_bbl,aggregation",
-scripts/research/auto_hypotheses.py:650:    tvt_yb = fetch_all("terminal_volume_timeseries", "date,vol_mn_bbl,aggregation",
-scripts/research/auto_hypotheses.py:713:coverage_filter would drop at next run, but TVT currently includes.
-scripts/research/auto_hypotheses.py:991:# Check: Δ vol_mn_bbl in win
+scripts/checks/c06b.py:6:Then for each (tank, date) row compute fill_ratio = (dB_max - db_mean) / (dB_max - dB_min).
+scripts/checks/c06b.py:10:  frac_clip_floor: fraction where fill_ratio clips at 0 (db_mean >= dB_max → empty edge)
+scripts/checks/c06b.py:11:  frac_clip_ceil:  fraction where fill_ratio clips at 1 (db_mean <= dB_min → full edge)
+scripts/checks/c06b.py:39:    def fill_ratio(db, dB_min, dB_max):
+scripts/checks/c06b.py:66:            fr = fill_ratio(db, lo, hi)
+scripts/stage6_optical_pilot.py:1072:    BARREL_PER_M3 = 6.2898
+scripts/export_from_supabase.py:40:                            select="date,vol_mn_bbl",
+scripts/export_from_supabase.py:46:                           select="date,vol_mn_bbl",
+scripts/export_from_supabase.py:55:
 
 === CDSE block: H04/H08-H10/H15/H17/H21/H22 ===
 
@@ -1259,17 +1275,20 @@ S1D_IW_GRDH_1SDV_20261021T144910_20261021T144935_005115_009AFD_5B81.SAFE 2026-10
 
 === SAR_FETCH: sar_fetch.py orbit filter analysis ===
   fetch_new_records callers:
-scripts/research/auto_hypotheses.py:2933:## Callers of fetch_new_records():
-scripts/research/auto_hypotheses.py:2938:    ["grep", "-rn", "--include=*.py", "fetch_new_records", "scripts/"],
-scripts/research/auto_hypotheses.py:2942:print(f"  fetch_new_records callers:\n{_callers_text}\n")
-scripts/research/auto_hypotheses.py:2960:2. main_script.py (regular ingest): calls fetch_new_records with orbit_cfg=None (default)
-scripts/research/auto_hypotheses.py:2986:# Check if main_script.py passes orbit_cfg to fetch_new_records
-scripts/research/auto_hypotheses.py:2988:    ["grep", "-n", "fetch_new_records\|orbit_cfg", "scripts/main_script.py"],
-scripts/research/auto_hypotheses.py:2995:    ["grep", "-n", "ALLOWED_ORBIT\|orbit_cfg\|fetch_new_records", "scripts/backfill_ras_tanura.py"],
-scripts/task7_rt_decomposition.py:542:        from sar_fetch import fetch_new_records, build_crescent_masks, get_all_scene_dates
-scripts/task7_rt_decomposition.py:641:            records = fetch_new_records(asc_dates, tdata, bbox, img_w, img_w, orbit_cfg=orbit_cfg_asc)
+scripts/ingest.py:26:from sar_fetch import get_all_scene_dates, build_crescent_masks, fetch_new_records
+scripts/ingest.py:99:        new_records = fetch_new_records(new_dates, tanks_data, super_bbox, img_w, img_h)
+scripts/ingest.py:240:                raw     = fetch_new_records(orbit_dates, t_data, c_bbox, img_w, img_h,
 scripts/stage2_gate.py:58:from sar_fetch import fetch_new_records, build_crescent_masks, get_all_scene_dates
 scripts/stage2_gate.py:164:    records = fetch_new_records(dates, tanks_data, bbox, img_w, img_h,
+scripts/task7_rt_decomposition.py:542:        from sar_fetch import fetch_new_records, build_crescent_masks, get_all_scene_dates
+scripts/task7_rt_decomposition.py:641:            records = fetch_new_records(asc_dates, tdata, bbox, img_w, img_w, orbit_cfg=orbit_cfg_asc)
+scripts/sar_fetch.py:209:def fetch_new_records(new_dates, tanks_data, super_bbox, img_width, img_height,
+scripts/backfill_ras_tanura.py:79:from sar_fetch import get_all_scene_dates, build_crescent_masks, fetch_new_records
+scripts/backfill_ras_tanura.py:215:                    raw = fetch_new_records(
+scripts/stage1_backfill.py:52:from sar_fetch import get_all_scene_dates, build_crescent_masks, fetch_new_records
+scripts/stage1_backfill.py:197:                raw = fetch_new_records(
+scripts/stage3_whitelist.py:49:from sar_fetch import fetch_new_records, build_crescent_masks, get_all_scene_dates
+scripts/stage3_whitelist.py:109:    records    = fetch_new_records(dates, tanks_data, bbox, img_w, img_h,
 scripts/backfill_saudi.py:85:from sar_fetch import get_all_scene_dates, build_crescent_masks, fetch_new_records
 scripts/backfill_saudi.py:314:                    raw = fetch_new_records(
 scripts/main_script.py:42:from sar_fetch import load_cache, get_all_scene_dates, build_crescent_masks, fetch_new_records
@@ -1277,18 +1296,59 @@ scripts/main_script.py:73:    new_records = fetch_new_records(new_dates, tanks_d
 scripts/main_script.py:204:            raw = fetch_new_records(new_t_dates, t_data, bbox, img_w, img_h,
 scripts/stage3_jw_radius_rescreen.py:50:from sar_fetch import fetch_new_records, build_crescent_masks, get_all_scene_dates
 scripts/stage3_jw_radius_rescreen.py:148:    records    = fetch_new_records(dates, tanks_data, bbox, img_w, img_h,
-scripts/stage1_backfill.py:52:from sar_fetch import get_all_scene_dates, build_crescent_masks, fetch_new_records
-scripts/stage1_backfill.py:197:                raw = fetch_new_records(
-scripts/stage3_whitelist.py:49:from sar_fetch import fetch_new_records, build_crescent_masks, get_all_scene_dates
-scripts/stage3_whitelist.py:109:    records    = fetch_new_records(dates, tanks_data, bbox, img_w, img_h,
-scripts/sar_fetch.py:209:def fetch_new_records(new_dates, tanks_data, super_bbox, img_width, img_height,
-scripts/backfill_ras_tanura.py:79:from sar_fetch import get_all_scene_dates, build_crescent_masks, fetch_new_records
-scripts/backfill_ras_tanura.py:215:                    raw = fetch_new_records(
-scripts/ingest.py:26:from sar_fetch import get_all_scene_dates, build_crescent_masks, fetch_new_records
-scripts/ingest.py:99:        new_records = fetch_new_records(new_dates, tanks_data, super_bbox, img_w, img_h)
-scripts/ingest.py:240:                raw     = fetch_new_records(orbit_dates, t_data, c_bbox, img_w, img_h,
+scripts/research/auto_hypotheses.py:2933:## Callers of fetch_new_records():
+scripts/research/auto_hypotheses.py:2938:    ["grep", "-rn", "--include=*.py", "fetch_new_records", "scripts/"],
+scripts/research/auto_hypotheses.py:2942:print(f"  fetch_new_records callers:\n{_callers_text}\n")
+scripts/research/auto_hypotheses.py:2960:2. main_script.py (regular ingest): calls fetch_new_records with orbit_cfg=None (default)
+scripts/research/auto_hypotheses.py:2986:# Check if main_script.py passes orbit_cfg to fetch_new_records
+scripts/research/auto_hypotheses.py:2988:    ["grep", "-n", "fetch_new_records\|orbit_cfg", "scripts/main_script.py"],
+scripts/research/auto_hypotheses.py:2995:    ["grep", "-n", "ALLOWED_ORBIT\|orbit_cfg\|fetch_new_records", "scripts/backfill_ras_tanura.py"],
 
   orbit_cfg references:
+scripts/ingest.py:188:    for orbit_cfg in allowed_orbits:
+scripts/ingest.py:189:        rel_orbit  = orbit_cfg.get("relative_orbit")
+scripts/ingest.py:190:        direction  = orbit_cfg.get("direction", "descending").lower()
+scripts/ingest.py:191:        los_az     = orbit_cfg.get("los_azimuth")
+scripts/ingest.py:222:    for orbit_cfg in allowed_orbits:
+scripts/ingest.py:223:        rel_orbit  = orbit_cfg.get("relative_orbit")
+scripts/ingest.py:224:        direction  = orbit_cfg.get("direction", "descending").lower()
+scripts/ingest.py:225:        los_az     = orbit_cfg.get("los_azimuth")
+scripts/ingest.py:242:                                            orbit_cfg=allowed_orbits)
+scripts/stage2_gate.py:62:# Each entry: (tank_id, terminal_id, old_geometry, new_geometry, orbit_cfg, role)
+scripts/stage2_gate.py:144:def _fetch_db_series(tank_geom, orbit_cfg, dates):
+scripts/stage2_gate.py:165:                                orbit_cfg=orbit_cfg)
+scripts/stage2_gate.py:183:def _get_dates_for_orbit(orbit_cfg):
+scripts/stage2_gate.py:185:    orb = orbit_cfg[0]
+scripts/task7_rt_decomposition.py:609:    orbit_cfg_asc = [{"relative_orbit": ASC_ORBIT, "direction": "ASC", "los_azimuth": ASC_LOS_AZ}]
+scripts/task7_rt_decomposition.py:641:            records = fetch_new_records(asc_dates, tdata, bbox, img_w, img_w, orbit_cfg=orbit_cfg_asc)
+scripts/sar_fetch.py:210:                      min_valid_fraction=0.0, orbit_cfg=None):
+scripts/sar_fetch.py:240:        if orbit_cfg:
+scripts/sar_fetch.py:241:            orb = orbit_cfg[0]
+scripts/stage4_visual_qa.py:94:def _fetch_sar_image(date_str, bbox, img_w, img_h, orbit_cfg):
+scripts/stage4_visual_qa.py:96:    orb = orbit_cfg[0]
+scripts/stage4_visual_qa.py:210:        orbit_cfg = tank["orbit"]
+scripts/stage4_visual_qa.py:218:            orb = orbit_cfg[0]
+scripts/stage4_visual_qa.py:243:            arr_linear = _fetch_sar_image(date_str, bbox, img_w, img_h, orbit_cfg)
+scripts/stage4_visual_qa.py:257:        los = orbit_cfg[0].get("los_azimuth", 282)
+scripts/stage3_whitelist.py:74:def _catalog_dates(orbit_cfg, bbox, n):
+scripts/stage3_whitelist.py:76:    orb     = orbit_cfg[0]
+scripts/stage3_whitelist.py:86:def _fetch_tank_step(tank, orbit_cfg, dates):
+scripts/stage3_whitelist.py:92:    los = orbit_cfg[0].get("los_azimuth", 282)
+scripts/stage3_whitelist.py:110:                                   orbit_cfg=orbit_cfg)
+scripts/stage3_whitelist.py:136:        orbit_cfg = loc["allowed_orbits"]
+scripts/stage3_whitelist.py:137:        if not orbit_cfg:
+scripts/stage3_whitelist.py:149:        dates = _catalog_dates(orbit_cfg, ref_bbox, N_SCENES)
+scripts/stage3_whitelist.py:162:                step, n_obs = _fetch_tank_step(tank, orbit_cfg, dates)
+scripts/stage5c_verify_step.py:65:    ("orbit_cfg dataFilter",   "yes (ASCENDING+101)", "yes (ASCENDING+101)"),
+scripts/main_script.py:205:                                    orbit_cfg=allowed_orbits)
+scripts/stage3_jw_radius_rescreen.py:121:def _catalog_dates(orbit_cfg, bbox, n):
+scripts/stage3_jw_radius_rescreen.py:122:    orb      = orbit_cfg[0]
+scripts/stage3_jw_radius_rescreen.py:131:def _fetch_tank_step(tank_id, lat, lon, r_new, h_new, orbit_cfg, dates):
+scripts/stage3_jw_radius_rescreen.py:132:    los = orbit_cfg[0].get("los_azimuth", 282)
+scripts/stage3_jw_radius_rescreen.py:149:                                   orbit_cfg=orbit_cfg)
+scripts/stage3_jw_radius_rescreen.py:188:    orbit_cfg = jw_loc["allowed_orbits"]
+scripts/stage3_jw_radius_rescreen.py:195:    dates = _catalog_dates(orbit_cfg, ref_bbox, N_SCENES)
+scripts/stage3_jw_radius_rescreen.py:229:                                               orbit_cfg, dates)
 scripts/research/auto_hypotheses.py:2915:if orbit_cfg:
 scripts/research/auto_hypotheses.py:2916:    orb = orbit_cfg[0]
 scripts/research/auto_hypotheses.py:2929:## The filter is CONDITIONAL on orbit_cfg being passed.
@@ -1308,50 +1368,6 @@ scripts/research/auto_hypotheses.py:2988:    ["grep", "-n", "fetch_new_records\|
 scripts/research/auto_hypotheses.py:2991:print(f"  main_script.py orbit_cfg usage:\n{_grep_main.stdout.strip()}\n")
 scripts/research/auto_hypotheses.py:2995:    ["grep", "-n", "ALLOWED_ORBIT\|orbit_cfg\|fetch_new_records", "scripts/backfill_ras_tanura.py"],
 scripts/research/auto_hypotheses.py:2998:print(f"  backfill_ras_tanura.py orbit_cfg:\n{_grep_backfill.stdout.strip()}\n")
-scripts/task7_rt_decomposition.py:609:    orbit_cfg_asc = [{"relative_orbit": ASC_ORBIT, "direction": "ASC", "los_azimuth": ASC_LOS_AZ}]
-scripts/task7_rt_decomposition.py:641:            records = fetch_new_records(asc_dates, tdata, bbox, img_w, img_w, orbit_cfg=orbit_cfg_asc)
-scripts/stage2_gate.py:62:# Each entry: (tank_id, terminal_id, old_geometry, new_geometry, orbit_cfg, role)
-scripts/stage2_gate.py:144:def _fetch_db_series(tank_geom, orbit_cfg, dates):
-scripts/stage2_gate.py:165:                                orbit_cfg=orbit_cfg)
-scripts/stage2_gate.py:183:def _get_dates_for_orbit(orbit_cfg):
-scripts/stage2_gate.py:185:    orb = orbit_cfg[0]
-scripts/main_script.py:205:                                    orbit_cfg=allowed_orbits)
-scripts/stage4_visual_qa.py:94:def _fetch_sar_image(date_str, bbox, img_w, img_h, orbit_cfg):
-scripts/stage4_visual_qa.py:96:    orb = orbit_cfg[0]
-scripts/stage4_visual_qa.py:210:        orbit_cfg = tank["orbit"]
-scripts/stage4_visual_qa.py:218:            orb = orbit_cfg[0]
-scripts/stage4_visual_qa.py:243:            arr_linear = _fetch_sar_image(date_str, bbox, img_w, img_h, orbit_cfg)
-scripts/stage4_visual_qa.py:257:        los = orbit_cfg[0].get("los_azimuth", 282)
-scripts/stage3_jw_radius_rescreen.py:121:def _catalog_dates(orbit_cfg, bbox, n):
-scripts/stage3_jw_radius_rescreen.py:122:    orb      = orbit_cfg[0]
-scripts/stage3_jw_radius_rescreen.py:131:def _fetch_tank_step(tank_id, lat, lon, r_new, h_new, orbit_cfg, dates):
-scripts/stage3_jw_radius_rescreen.py:132:    los = orbit_cfg[0].get("los_azimuth", 282)
-scripts/stage3_jw_radius_rescreen.py:149:                                   orbit_cfg=orbit_cfg)
-scripts/stage3_jw_radius_rescreen.py:188:    orbit_cfg = jw_loc["allowed_orbits"]
-scripts/stage3_jw_radius_rescreen.py:195:    dates = _catalog_dates(orbit_cfg, ref_bbox, N_SCENES)
-scripts/stage3_jw_radius_rescreen.py:229:                                               orbit_cfg, dates)
-scripts/stage5c_verify_step.py:65:    ("orbit_cfg dataFilter",   "yes (ASCENDING+101)", "yes (ASCENDING+101)"),
-scripts/stage3_whitelist.py:74:def _catalog_dates(orbit_cfg, bbox, n):
-scripts/stage3_whitelist.py:76:    orb     = orbit_cfg[0]
-scripts/stage3_whitelist.py:86:def _fetch_tank_step(tank, orbit_cfg, dates):
-scripts/stage3_whitelist.py:92:    los = orbit_cfg[0].get("los_azimuth", 282)
-scripts/stage3_whitelist.py:110:                                   orbit_cfg=orbit_cfg)
-scripts/stage3_whitelist.py:136:        orbit_cfg = loc["allowed_orbits"]
-scripts/stage3_whitelist.py:137:        if not orbit_cfg:
-scripts/stage3_whitelist.py:149:        dates = _catalog_dates(orbit_cfg, ref_bbox, N_SCENES)
-scripts/stage3_whitelist.py:162:                step, n_obs = _fetch_tank_step(tank, orbit_cfg, dates)
-scripts/sar_fetch.py:210:                      min_valid_fraction=0.0, orbit_cfg=None):
-scripts/sar_fetch.py:240:        if orbit_cfg:
-scripts/sar_fetch.py:241:            orb = orbit_cfg[0]
-scripts/ingest.py:188:    for orbit_cfg in allowed_orbits:
-scripts/ingest.py:189:        rel_orbit  = orbit_cfg.get("relative_orbit")
-scripts/ingest.py:190:        direction  = orbit_cfg.get("direction", "descending").lower()
-scripts/ingest.py:191:        los_az     = orbit_cfg.get("los_azimuth")
-scripts/ingest.py:222:    for orbit_cfg in allowed_orbits:
-scripts/ingest.py:223:        rel_orbit  = orbit_cfg.get("relative_orbit")
-scripts/ingest.py:224:        direction  = orbit_cfg.get("direction", "descending").lower()
-scripts/ingest.py:225:        los_az     = orbit_cfg.get("los_azimuth")
-scripts/ingest.py:242:                                            orbit_cfg=allowed_orbits)
 
   Analysis written: diagnostics/research/2026-10/SAR_FETCH/sar_fetch_orbit_filter_analysis.txt
   main_script.py orbit_cfg usage:
@@ -1526,6 +1542,72 @@ Section 6: Yanbu corrections + azimuth audit
   VERDICT: Yanbu has los_azimuth=98 in registry (ASC correct). No DESC-sector mask issue.
 
 --- 6.4 Kharg raw_observations × CDSE: relOrbit distribution ---
-  FAILED: {'message': 'column raw_observations.relative_orbit does not exist', 'code': '42703', 'hint': None, 'details': None}
+  raw_observations: n_rows=15181, n_unique_dates=323
+  relative_orbit column: all NULL in raw_observations
+  → Cross-referencing with CDSE catalog (4.11 kharg cache)...
+  relOrbit breakdown (Kharg DB dates matched to CDSE):
+    dir=DESC relOrbit=35: 323 DB dates
+  VERDICT: single DESC track — relOrbit=35
+
+============================================================
+Section 7: V0 scene manifests
+============================================================
+
+  yanbu/all_orbits      :  806 scenes  2014-10-06 – 2026-10-21
+  yanbu/ASC-14          :  476 scenes  2014-10-30 – 2026-10-16
+  rt/DESC-35            :  377 scenes  2014-11-01 – 2026-10-18
+  rt/ASC-101            :  709 scenes  2015-05-04 – 2026-10-16
+  jask/DESC-93          :  184 scenes  2024-06-09 – 2026-10-16
+
+  v0_manifest_all.csv: 2552 total rows across 5 configs
+
+--- п.1 Kharg relOrbit breakdown (CDSE 4.11 cache) ---
+ relOrbit orbitDir  n_dates     years
+       35     DESC      640 2014–2026
+      101     ASCE      370 2014–2026
+       37     DESC        1 2014–2014
+
+--- п.2 Yanbu DESC scenes (non-ASC) — V4 calibration note ---
+  DESC scenes (sector mismatch: los_az=98 but data from DESC orbit):
+  n=77, period: 2014-10-09 – 2017-03-27
+ relOrbit  n_scenes
+       50        76
+       52         1
+  MANIFEST FLAG: marked as 'pre_asc14_legacy' in yanbu/all_orbits manifest
+  V4 note: calibration variant 'ASC-14 only (2017+)' vs 'full history (inc DESC-50/52 2014–2017)'
+
+--- п.3 Yanbu 2018 ASC-14: CDSE vs DB ---
+  CDSE ASC-14 scenes in 2018: 30
+  Period: 2018-01-12 – 2018-12-26
+  DB terminal_observations yanbu 2018 dates: 30
+  CDSE 2018 ASC-14 not in DB: 0
+
+--- п.4 Phase 0 status: единый ingest ---
+  main_script.py upsert-to-terminal_observations: 3 call sites
+    144:def _upsert_terminal_obs(records, tid):
+    146:    sb.table("terminal_observations").upsert(records, on_conflict="terminal_id,date,tank_id").execute()
+    210:            _upsert_terminal_obs(new_records, tid)
+  STATUS: Phase 0 NOT complete — main_script.py still writes to terminal_observations
+  Latest terminal_observations created_at (global): 2026-10-18T07:29:48.04607+00:00
+  Per-terminal latest created_at (sorted):
+    novorossiysk        : 2026-10-17T17:42:50.321822+00:00
+    fujairah            : 2026-10-17T07:17:19.399141+00:00
+    al_flaw             : 2026-10-17T07:15:51.994315+00:00
+    yanbu               : 2026-09-23T08:03:03.239772+00:00
+    ruwais              : 2026-10-17T07:17:40.705432+00:00
+    lavan               : 2026-10-17T07:15:39.897703+00:00
+    de_kastri           : 2026-10-17T07:16:07.761735+00:00
+    juwaymah            : 2026-10-18T07:29:27.744771+00:00
+    halul               : 2026-10-17T07:15:56.922908+00:00
+    primorsk            : 2026-10-17T07:16:21.542625+00:00
+    das_island          : 2026-10-17T07:17:30.043299+00:00
+    kozmino             : 2026-09-01T09:41:56.822235+00:00
+    sitra               : 2026-10-17T07:16:04.142193+00:00
+    mina_ahmadi         : 2026-10-17T07:17:45.979489+00:00
+    jask                : 2026-10-17T07:15:31.636709+00:00
+    siri                : 2026-10-17T07:15:44.405235+00:00
+    ras_laffan          : 2026-10-17T07:16:44.751057+00:00
+    zirku               : 2026-10-17T07:17:24.408315+00:00
+    ras_tanura          : 2026-10-18T07:29:48.04607+00:00
 
 === Block A + B/C/D complete ===
