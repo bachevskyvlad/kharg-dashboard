@@ -3696,5 +3696,83 @@ try:
 except Exception as _e77:
     print(f"  yanbu year distribution query FAILED: {_e77}")
 
+
+# ============================================================
+# Section 8 — п.3: Kharg orbit intersection (323 ∩ DESC-35 ∩ ASC-101)
+# ============================================================
+print("\n\n=== Section 8: п.3 Kharg orbit intersection ===")
+
+import csv as _csv
+
+_v0_manifest = Path(__file__).parent.parent.parent / "diagnostics/research/2026-10/event_csv/v0_manifest_all.csv"
+
+def _load_manifest_dates(path, terminal_id, orbit_num):
+    """Return set of date strings from v0_manifest_all.csv for given terminal+relOrbit."""
+    dates = set()
+    if not Path(path).exists():
+        return dates
+    with open(path) as _f:
+        for row in _csv.DictReader(_f):
+            if row.get("terminal_id") == terminal_id and str(row.get("relOrbit","")) == str(orbit_num):
+                d = row.get("date","")[:10]
+                if d:
+                    dates.add(d)
+    return dates
+
+try:
+    # raw_observations dates for kharg
+    _ro_rows = fetch_all("raw_observations", "date", {"terminal_id": "kharg"})
+    _ro_dates = set(str(r.get("date",""))[:10] for r in _ro_rows if r.get("date"))
+    print(f"  raw_observations kharg total dates: {len(_ro_dates)}")
+
+    # DESC-35 and ASC-101 dates from v0 manifest
+    _desc35 = _load_manifest_dates(_v0_manifest, "kharg", 35)
+    _asc101 = _load_manifest_dates(_v0_manifest, "kharg", 101)
+
+    if not _desc35 and not _asc101:
+        print("  WARNING: v0_manifest_all.csv not found or empty — cannot compute intersections.")
+        print("  Re-run after export_event_csv workflow populates diagnostics/research/2026-10/event_csv/")
+    else:
+        print(f"  DESC-35 (relOrbit=35) catalog dates: {len(_desc35)}")
+        print(f"  ASC-101 (relOrbit=101) catalog dates: {len(_asc101)}")
+
+        _ro_desc35 = _ro_dates & _desc35
+        _ro_asc101 = _ro_dates & _asc101
+        _ro_both   = _ro_dates & _desc35 & _asc101
+
+        print(f"\n  Intersection counts:")
+        print(f"    raw_observations ∩ DESC-35:             {len(_ro_desc35)}")
+        print(f"    raw_observations ∩ ASC-101:             {len(_ro_asc101)}")
+        print(f"    raw_observations ∩ DESC-35 ∩ ASC-101:  {len(_ro_both)}")
+
+        # Orphan dates — in raw_observations but in neither orbit track
+        _orphan = _ro_dates - _desc35 - _asc101
+        print(f"\n  Orphan dates (raw_observations, not in DESC-35 or ASC-101): {len(_orphan)}")
+        if _orphan:
+            for _d in sorted(_orphan)[:20]:
+                print(f"    {_d}")
+            if len(_orphan) > 20:
+                print(f"    ... ({len(_orphan)-20} more)")
+
+        # DESC-35 in catalog but NOT in raw_observations
+        _desc35_missing = _desc35 - _ro_dates
+        _asc101_missing = _asc101 - _ro_dates
+        print(f"\n  DESC-35 catalog dates NOT in raw_observations: {len(_desc35_missing)}")
+        print(f"  ASC-101 catalog dates NOT in raw_observations: {len(_asc101_missing)}")
+
+        # Save CSV
+        _p3_out = Path(__file__).parent.parent.parent / "diagnostics/research/2026-10/p3_orbit_intersection.csv"
+        _p3_out.parent.mkdir(parents=True, exist_ok=True)
+        with open(_p3_out, "w", newline="") as _f:
+            _w = _csv.writer(_f)
+            _w.writerow(["date","in_ro","in_desc35","in_asc101","orphan"])
+            for _d in sorted(_ro_dates | _desc35 | _asc101):
+                _w.writerow([_d, int(_d in _ro_dates), int(_d in _desc35), int(_d in _asc101),
+                              int(_d in _ro_dates and _d not in _desc35 and _d not in _asc101)])
+        print(f"\n  Saved: {_p3_out}")
+
+except Exception as _e_p3:
+    print(f"  Section 8 FAILED: {_e_p3}")
+
 print("\n=== Block A + B/C/D complete ===")
 
