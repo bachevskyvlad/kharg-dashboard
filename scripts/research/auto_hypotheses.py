@@ -3005,24 +3005,52 @@ print("\n=== 4.11: Rebuild Assessment (V0 scene counts per terminal) ===")
 _411_dir = OUT_ROOT / "4_11"
 _411_dir.mkdir(exist_ok=True)
 
-# Terminal configs: id, WKT bbox, working orbit direction, relOrbit (None=all), start date
-# Bbox WKTs: same as used above for CDSE queries + al_flaw added
+# Terminal configs for V0 (updated per ТЗ VARIABLE_AUDIT go-K corrections):
+#
+# Yanbu working orbit = ASC-14.
+#   Source: tank_registry.py allowed_orbits=[{"relOrbit":14,"direction":"ASC"}].
+#   Confirmed: H08 run #8 found 245/249 Yanbu DB dates matched ASC-14 in CDSE catalog.
+#   V0 correction: fetch ALL orbits over Yanbu bbox (separate by relOrbit), not just ASC-14.
+#   ASC-14 remains the stack used for volume calibration; other orbits → context only.
+#
+# RT correction: DESC-35 (primary) + ASC-101 as separate stack (ASC-101 for V3 comparison only).
+#   Source: registry allowed_orbits=[{relOrbit:35,DESC},{relOrbit:101,ASC}].
+#
+# Jask correction: start 2024-06-01 only (earlier scenes unusable per ТЗ).
+#   Source: registry allowed_orbits=[{relOrbit:93,DESC},{relOrbit:57,ASC}]; using DESC-93 (primary).
+#
+# Working relOrbit summary:
+#   kharg     : all DESCENDING, relOrbit=None (no filter) — source: registry (no allowed_orbits)
+#   ras_tanura: DESC-35 primary, ASC-101 comparison stack — source: registry allowed_orbits
+#   yanbu     : ASC-14 primary (all orbits also fetched) — source: registry + H08 empirical
+#   al_flaw   : all DESCENDING, relOrbit=None (legacy los_azimuth=282) — source: registry
+#   jask      : DESC-93 primary — source: registry allowed_orbits
+
 _411_TERMINALS = [
-    {"id": "kharg",     "wkt": "POLYGON((49.97 29.19,50.42 29.19,50.42 29.55,49.97 29.55,49.97 29.19))",
-     "orbit_dir": "DESCENDING", "rel_orbit": None,  "start": "2017-01-01",
-     "n_tanks": 47, "bbox_km2": 2.5,   "tiles": 1},
-    {"id": "ras_tanura","wkt": "POLYGON((50.0 26.5,50.6 26.5,50.6 27.2,50.0 27.2,50.0 26.5))",
-     "orbit_dir": "DESCENDING", "rel_orbit": 35,    "start": "2017-01-01",
-     "n_tanks": 66, "bbox_km2": 22.0,  "tiles": 2},
-    {"id": "yanbu",     "wkt": "POLYGON((37.9 23.9,38.6 23.9,38.6 24.4,37.9 24.4,37.9 23.9))",
-     "orbit_dir": "ASCENDING",  "rel_orbit": 14,    "start": "2017-01-01",
-     "n_tanks": 12, "bbox_km2": 3.0,   "tiles": 1},
-    {"id": "al_flaw",   "wkt": "POLYGON((48.3 29.85,48.6 29.85,48.6 30.1,48.3 30.1,48.3 29.85))",
-     "orbit_dir": "DESCENDING", "rel_orbit": None,  "start": "2017-01-01",
-     "n_tanks": 24, "bbox_km2": 4.0,   "tiles": 1},
-    {"id": "jask",      "wkt": "POLYGON((57.7 25.5,58.2 25.5,58.2 25.9,57.7 25.9,57.7 25.5))",
-     "orbit_dir": "DESCENDING", "rel_orbit": 93,    "start": "2017-01-01",
-     "n_tanks": 20, "bbox_km2": 2.5,   "tiles": 1},
+    {"id": "kharg",          "wkt": "POLYGON((49.97 29.19,50.42 29.19,50.42 29.55,49.97 29.55,49.97 29.19))",
+     "orbit_dir": "DESCENDING", "rel_orbit": None, "start": "2014-06-01",
+     "n_tanks": 47, "bbox_km2": 2.5,  "tiles": 1,
+     "orbit_source": "registry (no allowed_orbits → all DESC)"},
+    {"id": "ras_tanura_d35", "wkt": "POLYGON((50.0 26.5,50.6 26.5,50.6 27.2,50.0 27.2,50.0 26.5))",
+     "orbit_dir": "DESCENDING", "rel_orbit": 35,   "start": "2014-06-01",
+     "n_tanks": 66, "bbox_km2": 22.0, "tiles": 2,
+     "orbit_source": "registry allowed_orbits[0]"},
+    {"id": "ras_tanura_a101","wkt": "POLYGON((50.0 26.5,50.6 26.5,50.6 27.2,50.0 27.2,50.0 26.5))",
+     "orbit_dir": "ASCENDING",  "rel_orbit": 101,  "start": "2014-06-01",
+     "n_tanks": 66, "bbox_km2": 22.0, "tiles": 2,
+     "orbit_source": "registry allowed_orbits[1] — V3 comparison only"},
+    {"id": "yanbu_all",      "wkt": "POLYGON((37.9 23.9,38.6 23.9,38.6 24.4,37.9 24.4,37.9 23.9))",
+     "orbit_dir": None,          "rel_orbit": None, "start": "2014-06-01",
+     "n_tanks": 12, "bbox_km2": 3.0,  "tiles": 1,
+     "orbit_source": "all orbits (Yanbu correction: show all relOrbits over bbox)"},
+    {"id": "al_flaw",        "wkt": "POLYGON((48.3 29.85,48.6 29.85,48.6 30.1,48.3 30.1,48.3 29.85))",
+     "orbit_dir": "DESCENDING", "rel_orbit": None, "start": "2014-06-01",
+     "n_tanks": 24, "bbox_km2": 4.0,  "tiles": 1,
+     "orbit_source": "registry (legacy los_azimuth=282 → all DESC, no relOrbit filter)"},
+    {"id": "jask",           "wkt": "POLYGON((57.7 25.5,58.2 25.5,58.2 25.9,57.7 25.9,57.7 25.5))",
+     "orbit_dir": "DESCENDING", "rel_orbit": 93,   "start": "2024-06-01",
+     "n_tanks": 20, "bbox_km2": 2.5,  "tiles": 1,
+     "orbit_source": "registry allowed_orbits[0] — 2024-06+ only per ТЗ"},
 ]
 
 # PU estimate: ~3 PU/scene for 1-tile bbox, ~6 PU/scene for 2-tile bbox (RT)
@@ -3035,22 +3063,30 @@ if CDSE_OK and cdse_token:
             _t411_scenes = cdse_search_with_attrs(
                 _t411["wkt"], _t411["start"], "2026-10-21", max_results=2000
             )
-            # Filter to working orbit direction
+            # Filter to working orbit direction (orbit_dir=None = no filter = all orbits)
             _t411_filtered = []
+            _orbit_counts = {}  # relOrbit → count (for Yanbu all-orbits breakdown)
             for _s411 in _t411_scenes:
                 _od411, _ro411 = _extract_orbit_attrs(_s411)
                 _od411_str = (_od411 or "").upper()
-                _dir_match = _od411_str == _t411["orbit_dir"].upper() or (
-                    _t411["orbit_dir"].upper() == "ASCENDING" and "ASC" in _od411_str
-                ) or (
-                    _t411["orbit_dir"].upper() == "DESCENDING" and "DESC" in _od411_str
-                )
+                if _t411["orbit_dir"] is None:
+                    _dir_match = True
+                else:
+                    _dir_match = _od411_str == _t411["orbit_dir"].upper() or (
+                        _t411["orbit_dir"].upper() == "ASCENDING" and "ASC" in _od411_str
+                    ) or (
+                        _t411["orbit_dir"].upper() == "DESCENDING" and "DESC" in _od411_str
+                    )
                 _orb_match = (_t411["rel_orbit"] is None or
                               _ro411 == _t411["rel_orbit"] or
                               str(_ro411) == str(_t411["rel_orbit"]))
                 if _dir_match and _orb_match:
                     _t411_filtered.append(_s411)
+                    _key = f"{_od411_str[:4]}-{_ro411}"
+                    _orbit_counts[_key] = _orbit_counts.get(_key, 0) + 1
             _n_scenes = len(_t411_filtered)
+            if _t411["orbit_dir"] is None and _orbit_counts:
+                print(f"    Yanbu all-orbits breakdown: {dict(sorted(_orbit_counts.items()))}")
             _pu_per_scene = 6 if _t411["tiles"] == 2 else 3
             _total_pu = _n_scenes * _pu_per_scene
             _pu_per_month = _total_pu / max(1, (2026 - 2017) * 12)
@@ -3059,9 +3095,10 @@ if CDSE_OK and cdse_token:
             _px_side = int(_t411["bbox_km2"] ** 0.5 * 100)  # approx px per side at 10m
             _mb_per_scene = (_px_side ** 2 * 4) / 1e6
             _total_gb = _n_scenes * _mb_per_scene / 1000
-            print(f"  {_t411['id']:12s}: n_scenes={_n_scenes:4d} | PU_total={_total_pu:6d} "
+            _odir_str = (_t411['orbit_dir'] or 'ALL')[:4]
+            print(f"  {_t411['id']:18s}: n_scenes={_n_scenes:4d} | PU_total={_total_pu:6d} "
                   f"({_pu_per_month:.0f}/mo) | GHA={_gha_hrs:.1f}h | V0≈{_total_gb:.1f}GB "
-                  f"(orbit={_t411['orbit_dir'][:4]} relOrbit={_t411['rel_orbit']})")
+                  f"(orbit={_odir_str} relOrbit={_t411['rel_orbit']} src={_t411['orbit_source']})")
             _411_rows.append({
                 "terminal": _t411["id"],
                 "orbit_dir": _t411["orbit_dir"],
@@ -3086,6 +3123,154 @@ if CDSE_OK and cdse_token:
         print(_df_411.to_string(index=False))
 else:
     print("  4.11 SKIPPED — CDSE auth not available")
+
+
+# ── 5. Catalog vs DB gap analysis ─────────────────────────────────────────────
+# Per ТЗ VARIABLE_AUDIT: for Kharg/RT/Yanbu — list catalog dates missing from DB,
+# breakdown by year; first DB date vs first CDSE date; explain gap cause.
+# READ ONLY. Catalog source: CDSE OData. DB source: Supabase via REST.
+print("\n=== 5. Catalog vs DB gap (Kharg / RT DESC-35 / Yanbu ASC-14) ===")
+_gap_dir = OUT_ROOT / "5_gap"
+_gap_dir.mkdir(exist_ok=True)
+
+# Working orbit for gap analysis (canonical ingest orbits):
+#   Kharg:  all DESCENDING (raw_observations)
+#   RT:     DESC-35 (terminal_observations, terminal_id='ras_tanura')
+#   Yanbu:  ASC-14 (terminal_observations, terminal_id='yanbu')
+_GAP_TERMINALS = [
+    {"id": "kharg",      "wkt": "POLYGON((49.97 29.19,50.42 29.19,50.42 29.55,49.97 29.55,49.97 29.19))",
+     "orbit_dir": "DESCENDING", "rel_orbit": None, "cdse_start": "2014-06-01",
+     "db_table": "raw_observations",    "db_tid_col": None,  "db_tid": None},
+    {"id": "ras_tanura", "wkt": "POLYGON((50.0 26.5,50.6 26.5,50.6 27.2,50.0 27.2,50.0 26.5))",
+     "orbit_dir": "DESCENDING", "rel_orbit": 35,   "cdse_start": "2014-06-01",
+     "db_table": "terminal_observations","db_tid_col": "terminal_id","db_tid": "ras_tanura"},
+    {"id": "yanbu",      "wkt": "POLYGON((37.9 23.9,38.6 23.9,38.6 24.4,37.9 24.4,37.9 23.9))",
+     "orbit_dir": "ASCENDING",  "rel_orbit": 14,   "cdse_start": "2014-06-01",
+     "db_table": "terminal_observations","db_tid_col": "terminal_id","db_tid": "yanbu"},
+]
+
+_gap_rows_all = []
+for _tg in _GAP_TERMINALS:
+    print(f"\n--- {_tg['id']} (orbit={_tg['orbit_dir'][:4]} relOrbit={_tg['rel_orbit']}) ---")
+    try:
+        # 1. CDSE catalog dates (working orbit)
+        if CDSE_OK and cdse_token:
+            _tg_scenes_all = cdse_search_with_attrs(
+                _tg["wkt"], _tg["cdse_start"], "2026-10-21", max_results=2000
+            )
+            _tg_cdse_filtered = []
+            for _sg in _tg_scenes_all:
+                _odg, _rog = _extract_orbit_attrs(_sg)
+                _odg_str = (_odg or "").upper()
+                _dir_ok = (_tg["orbit_dir"].upper() == "ASCENDING" and "ASC" in _odg_str) or \
+                          (_tg["orbit_dir"].upper() == "DESCENDING" and "DESC" in _odg_str)
+                _orb_ok = (_tg["rel_orbit"] is None or
+                           _rog == _tg["rel_orbit"] or
+                           str(_rog) == str(_tg["rel_orbit"]))
+                if _dir_ok and _orb_ok:
+                    _tg_cdse_filtered.append(_sg)
+            _cdse_dates_tg = sorted({
+                s.get("ContentDate", {}).get("Start", "")[:10]
+                for s in _tg_cdse_filtered
+                if s.get("ContentDate", {}).get("Start", "")
+            })
+            print(f"  CDSE dates (working orbit): n={len(_cdse_dates_tg)}, "
+                  f"first={_cdse_dates_tg[0] if _cdse_dates_tg else 'N/A'}, "
+                  f"last={_cdse_dates_tg[-1] if _cdse_dates_tg else 'N/A'}")
+        else:
+            _cdse_dates_tg = []
+            print(f"  CDSE: SKIPPED (no auth)")
+
+        # 2. DB dates
+        _db_rows_tg = fetch_all(_tg["db_table"], "date",
+                                {_tg["db_tid_col"]: _tg["db_tid"]} if _tg["db_tid_col"] else {})
+        _db_dates_tg = sorted({r["date"][:10] for r in _db_rows_tg if r.get("date")})
+        print(f"  DB dates: n={len(_db_dates_tg)}, "
+              f"first={_db_dates_tg[0] if _db_dates_tg else 'N/A'}, "
+              f"last={_db_dates_tg[-1] if _db_dates_tg else 'N/A'}")
+
+        if not _cdse_dates_tg:
+            print(f"  Gap analysis: skipped (CDSE unavailable)")
+            continue
+
+        # 3. Gap = catalog dates not in DB
+        _db_set_tg = set(_db_dates_tg)
+        _cdse_set_tg = set(_cdse_dates_tg)
+        _gap_tg = sorted(_cdse_set_tg - _db_set_tg)
+        _extra_db_tg = sorted(_db_set_tg - _cdse_set_tg)  # DB dates not in catalog (wrong orbit?)
+        print(f"  Gap (catalog - DB): n={len(_gap_tg)} missing from DB")
+        print(f"  Extra DB (DB - catalog): n={len(_extra_db_tg)} DB dates not in CDSE working orbit")
+
+        # 4. Breakdown by year
+        _gap_by_year = {}
+        for _gd in _gap_tg:
+            _yr = _gd[:4]
+            _gap_by_year[_yr] = _gap_by_year.get(_yr, 0) + 1
+        _cdse_by_year = {}
+        for _gd in _cdse_dates_tg:
+            _yr = _gd[:4]
+            _cdse_by_year[_yr] = _cdse_by_year.get(_yr, 0) + 1
+        _db_by_year = {}
+        for _gd in _db_dates_tg:
+            _yr = _gd[:4]
+            _db_by_year[_yr] = _db_by_year.get(_yr, 0) + 1
+        print(f"\n  Year breakdown (year | cdse | db | missing_from_db):")
+        _all_years = sorted(set(list(_cdse_by_year.keys()) + list(_db_by_year.keys())))
+        for _yr in _all_years:
+            _nc = _cdse_by_year.get(_yr, 0)
+            _nd = _db_by_year.get(_yr, 0)
+            _nm = _gap_by_year.get(_yr, 0)
+            print(f"    {_yr}: cdse={_nc:3d}  db={_nd:3d}  missing={_nm:3d}"
+                  f"{'  ← late start' if _nd == 0 and _nc > 0 else ''}"
+                  f"{'  ← partial ingest' if 0 < _nd < _nc else ''}"
+                  f"{'  ← full' if _nd >= _nc and _nc > 0 else ''}")
+
+        # 5. Cause analysis: compare first DB date to first CDSE date
+        if _db_dates_tg and _cdse_dates_tg:
+            _first_cdse = _cdse_dates_tg[0]
+            _first_db = _db_dates_tg[0]
+            _late_days = (pd.to_datetime(_first_db) - pd.to_datetime(_first_cdse)).days
+            print(f"\n  First CDSE: {_first_cdse} | First DB: {_first_db} | Late start: {_late_days} days")
+            if _late_days > 30:
+                print(f"  CAUSE: late ingest start — DB begins {_late_days//365}y {(_late_days%365)//30}m after first CDSE scene")
+            else:
+                print(f"  CAUSE: ingest started near CDSE start; gaps are post-start patchwork")
+            # Code thinning check: main_script.py uses load_cache + new_dates (no thinning)
+            # Only mechanism for gaps: (a) cache was initialized late, (b) ingest cron missed passes,
+            # (c) START_DATE in config.py (2014-06-01 → same as CDSE, not a limiter)
+            print(f"  Thinning check: main_script.py:61 computes new_dates = all_dates - cached_dates")
+            print(f"    No stride/sample/skip — all CDSE dates are fetched if not in cache")
+            print(f"    START_DATE=2014-06-01 (config.py:51) matches CDSE launch — not a limiter")
+            if _late_days > 365:
+                print(f"    → Gap is early-history: ingest/cache was NOT initialized at project start")
+            elif len(_extra_db_tg) > 0:
+                print(f"    → {len(_extra_db_tg)} DB dates not in CDSE working-orbit catalog → "
+                      f"possibly ingested from different orbit (DESC-137 contamination?) or CDSE catalog gap")
+
+        # 6. Save gap CSV
+        _df_gap_tg = pd.DataFrame({
+            "date": _gap_tg,
+            "year": [d[:4] for d in _gap_tg],
+            "in_cdse": True,
+            "in_db": False,
+        })
+        _df_gap_tg.to_csv(_gap_dir / f"5_gap_{_tg['id']}.csv", index=False)
+        _gap_rows_all.append({
+            "terminal": _tg["id"],
+            "cdse_n": len(_cdse_dates_tg),
+            "db_n": len(_db_dates_tg),
+            "missing_from_db": len(_gap_tg),
+            "extra_in_db": len(_extra_db_tg),
+            "first_cdse": _cdse_dates_tg[0] if _cdse_dates_tg else "",
+            "first_db": _db_dates_tg[0] if _db_dates_tg else "",
+        })
+    except Exception as _eg:
+        print(f"  FAILED: {_eg}")
+
+if _gap_rows_all:
+    pd.DataFrame(_gap_rows_all).to_csv(_gap_dir / "5_gap_summary.csv", index=False)
+    print(f"\n  5. Gap summary:")
+    print(pd.DataFrame(_gap_rows_all).to_string(index=False))
 
 
 print("\n=== Block A + B/C/D complete ===")
