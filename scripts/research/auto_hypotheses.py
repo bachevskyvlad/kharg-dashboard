@@ -3281,5 +3281,162 @@ if _gap_rows_all:
     print(f"\n  5. Gap summary:")
     print(pd.DataFrame(_gap_rows_all).to_string(index=False))
 
+# ═══════════════════════════════════════════════════════════════════════════════
+# Section 6: Yanbu п.5 corrections + azimuth audit (run #13)
+# п.6.1: Yanbu DB counts — terminal_observations vs TVT (terminal_volume_timeseries)
+# п.6.2: Yanbu terminal_observations dates × CDSE all-orbits → relOrbit/dir breakdown
+# п.6.3: Azimuth audit: all terminals — data_orbits direction vs los_azimuth registry
+# п.6.4: Kharg raw_observations × CDSE catalog → relOrbit distribution (one DESC or several)
+# ═══════════════════════════════════════════════════════════════════════════════
+print("\n" + "="*60)
+print("Section 6: Yanbu corrections + azimuth audit")
+print("="*60)
+
+_s6_dir = OUT_ROOT / "6_yanbu_azimuth"
+_s6_dir.mkdir(parents=True, exist_ok=True)
+
+# ── 6.1: Yanbu table counts ──────────────────────────────────────────────────
+print("\n--- 6.1 Yanbu DB table counts ---")
+try:
+    _yb_to = fetch_all("terminal_observations", "date,relative_orbit,orbit_direction",
+                       {"terminal_id": "yanbu"})
+    _yb_to_dates = sorted({r["date"][:10] for r in _yb_to if r.get("date")})
+    print(f"  terminal_observations: n_rows={len(_yb_to)}, n_unique_dates={len(_yb_to_dates)}, "
+          f"first={_yb_to_dates[0] if _yb_to_dates else 'N/A'}, last={_yb_to_dates[-1] if _yb_to_dates else 'N/A'}")
+
+    _yb_tvt = fetch_all("terminal_volume_timeseries", "date",
+                        {"terminal_id": "yanbu", "aggregation": "daily", "smoothed": "false"})
+    _yb_tvt_dates = sorted({r["date"][:10] for r in _yb_tvt if r.get("date")})
+    print(f"  terminal_volume_timeseries (daily, smoothed=false): n_rows={len(_yb_tvt)}, "
+          f"n_unique_dates={len(_yb_tvt_dates)}, "
+          f"first={_yb_tvt_dates[0] if _yb_tvt_dates else 'N/A'}, last={_yb_tvt_dates[-1] if _yb_tvt_dates else 'N/A'}")
+    print(f"  NOTE: п.5 used terminal_observations (n_dates={len(_yb_to_dates)}), "
+          f"comparison with catalog is on terminal_observations")
+except Exception as _e61:
+    print(f"  FAILED: {_e61}")
+
+# ── 6.2: Yanbu terminal_observations dates × CDSE all-orbits ─────────────────
+print("\n--- 6.2 Yanbu DB dates × CDSE all-orbits (relOrbit/direction breakdown) ---")
+try:
+    # Get Yanbu DB dates
+    _yb_to_rows = fetch_all("terminal_observations", "date,relative_orbit,orbit_direction",
+                            {"terminal_id": "yanbu"})
+    _yb_db_dates = sorted({r["date"][:10] for r in _yb_to_rows if r.get("date")})
+
+    # Use 4.11 yanbu_all cache (all orbits)
+    _yb_cache = _411_scene_cache.get("yanbu_all", [])
+    print(f"  CDSE all-orbits cache: {len(_yb_cache)} scenes")
+
+    # Build per-date orbit map from CDSE
+    _yb_cdse_date_orbits = {}  # date → list of (dir, relOrbit)
+    for _sc in _yb_cache:
+        _d = _sc.get("ContentDate", {}).get("Start", "")[:10]
+        if not _d: continue
+        _od, _ro = _extract_orbit_attrs(_sc)
+        _yb_cdse_date_orbits.setdefault(_d, set()).add(
+            ((_od or "?").upper()[:4], str(_ro) if _ro is not None else "?")
+        )
+
+    # For each DB date, what orbit(s) are in CDSE catalog?
+    _orbit_tally = {}  # (dir, relOrbit) → count of DB dates matched
+    _unmatched = 0
+    for _db_d in _yb_db_dates:
+        if _db_d in _yb_cdse_date_orbits:
+            for _orb in _yb_cdse_date_orbits[_db_d]:
+                _orbit_tally[_orb] = _orbit_tally.get(_orb, 0) + 1
+        else:
+            _unmatched += 1
+
+    print(f"  DB dates: {len(_yb_db_dates)}  |  matched in CDSE: {len(_yb_db_dates)-_unmatched}  |  not in CDSE: {_unmatched}")
+    print(f"\n  relOrbit-direction breakdown (DB dates matched to CDSE orbit):")
+    print(f"  {'dir':6s} {'relOrbit':10s} {'n_dates':8s}  (years)")
+    for (_d4, _ro4), _n4 in sorted(_orbit_tally.items(), key=lambda x: -x[1]):
+        # years where this orbit appears
+        _yrs4 = sorted({_db_d[:4] for _db_d in _yb_db_dates
+                        if _db_d in _yb_cdse_date_orbits
+                        and (_d4, _ro4) in _yb_cdse_date_orbits[_db_d]})
+        print(f"  {_d4:6s} {_ro4:10s} {_n4:8d}  {_yrs4[0] if _yrs4 else '?'}–{_yrs4[-1] if _yrs4 else '?'}")
+
+    # Save CSV
+    _df62 = pd.DataFrame([
+        {"dir": d4, "rel_orbit": ro4, "n_db_dates_matched": n4}
+        for (d4, ro4), n4 in sorted(_orbit_tally.items(), key=lambda x: -x[1])
+    ])
+    _df62.to_csv(_s6_dir / "6_2_yanbu_db_dates_orbit_breakdown.csv", index=False)
+except Exception as _e62:
+    print(f"  FAILED: {_e62}")
+
+# ── 6.3: Azimuth audit — all terminals ───────────────────────────────────────
+print("\n--- 6.3 Azimuth audit: registry los_azimuth vs data orbit direction ---")
+_AZ_TABLE = [
+    # terminal | data direction (registry primary) | los_azimuth registry | match?
+    ("kharg",       "DESC",   282, "DESC→LOS 282° correct (west-looking, Gulf)"),
+    ("ras_tanura",  "DESC",   282, "DESC→LOS 282° correct; ASC secondary has los_az=98"),
+    ("yanbu",       "ASC",    98,  "ASC→LOS 98° correct (Red Sea, east-looking)"),
+    ("al_flaw",     "DESC",   282, "no allowed_orbits; los_azimuth=282 default (DESC assumed)"),
+    ("jask",        "DESC",   282, "DESC primary; ASC secondary los_az=98"),
+    ("juwaymah",    "DESC",   282, "DESC-35 only; los_az=282 correct"),
+    ("lavan",       "DESC",   282, "DESC primary los_az=282; ASC secondary los_az=98"),
+    ("siri",        "DESC",   282, "DESC primaries los_az=282; ASC secondary los_az=98"),
+    ("halul",       "DESC",   282, "DESC primaries los_az=282; ASC secondary los_az=98"),
+]
+print(f"\n  {'terminal':15s} {'data_dir':10s} {'los_az':8s} {'match':6s}  note")
+for _tid3, _ddir3, _az3, _note3 in _AZ_TABLE:
+    _match3 = ("OK" if (_ddir3 == "DESC" and _az3 == 282) or
+                       (_ddir3 == "ASC"  and _az3 == 98) else "MISMATCH")
+    print(f"  {_tid3:15s} {_ddir3:10s} {_az3:<8d} {_match3:6s}  {_note3}")
+
+print(f"\n  SOURCE: tank_registry.py per-terminal los_azimuth fields")
+print(f"  CODE:   sar_fetch.py:161 az = los_azimuth if los_azimuth is not None else LOS_AZIMUTH")
+print(f"          config.py:67     LOS_AZIMUTH = 282  (default, DESC-only terminals)")
+print(f"          stage1_backfill.py:138  los_az = primary['los_azimuth']")
+print(f"  VERDICT: Yanbu has los_azimuth=98 in registry (ASC correct). No DESC-sector mask issue.")
+
+# ── 6.4: Kharg raw_observations × CDSE → relOrbit distribution ───────────────
+print("\n--- 6.4 Kharg raw_observations × CDSE: relOrbit distribution ---")
+try:
+    _kh_obs = fetch_all("raw_observations", "date,relative_orbit,orbit_direction", {})
+    _kh_dates = sorted({r["date"][:10] for r in _kh_obs if r.get("date")})
+    print(f"  raw_observations: n_rows={len(_kh_obs)}, n_unique_dates={len(_kh_dates)}")
+
+    # Check if relative_orbit is populated in DB
+    _kh_with_ro = [r for r in _kh_obs if r.get("relative_orbit") is not None]
+    if _kh_with_ro:
+        _kh_ro_counts = {}
+        for r in _kh_with_ro:
+            _k = (str(r.get("orbit_direction","?")), str(r.get("relative_orbit","?")))
+            _kh_ro_counts[_k] = _kh_ro_counts.get(_k, 0) + 1
+        print(f"  Rows with relative_orbit populated: {len(_kh_with_ro)}")
+        print(f"  relOrbit/direction breakdown in raw_observations:")
+        for (_kd, _kr), _kn in sorted(_kh_ro_counts.items(), key=lambda x: -x[1]):
+            print(f"    dir={_kd} relOrbit={_kr}: {_kn} rows")
+    else:
+        print(f"  relative_orbit column: all NULL in raw_observations")
+        print(f"  → Cross-referencing with CDSE catalog (4.11 kharg cache)...")
+        _kh_cache = _411_scene_cache.get("kharg", [])
+        _kh_cdse_date_orbits = {}
+        for _sc in _kh_cache:
+            _d = _sc.get("ContentDate", {}).get("Start", "")[:10]
+            if not _d: continue
+            _od, _ro = _extract_orbit_attrs(_sc)
+            _kh_cdse_date_orbits.setdefault(_d, set()).add(
+                ((_od or "?").upper()[:4], str(_ro) if _ro is not None else "?")
+            )
+        _kh_orbit_tally = {}
+        for _kd2 in _kh_dates:
+            if _kd2 in _kh_cdse_date_orbits:
+                for _orb in _kh_cdse_date_orbits[_kd2]:
+                    _kh_orbit_tally[_orb] = _kh_orbit_tally.get(_orb, 0) + 1
+        print(f"  relOrbit breakdown (Kharg DB dates matched to CDSE):")
+        for (_kd4, _kr4), _kn4 in sorted(_kh_orbit_tally.items(), key=lambda x: -x[1]):
+            print(f"    dir={_kd4} relOrbit={_kr4}: {_kn4} DB dates")
+        if len(_kh_orbit_tally) == 1:
+            _sole = list(_kh_orbit_tally.keys())[0]
+            print(f"  VERDICT: single DESC track — relOrbit={_sole[1]}")
+        else:
+            print(f"  VERDICT: {len(_kh_orbit_tally)} orbit tracks found")
+except Exception as _e64:
+    print(f"  FAILED: {_e64}")
+
 
 print("\n=== Block A + B/C/D complete ===")
