@@ -1,0 +1,38 @@
+name: Export Event CSV (Read-Only)
+
+on:
+  workflow_dispatch:
+
+jobs:
+  export:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: research/2026-10-auto
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: pip install sentinelhub supabase scipy numpy pandas -q
+
+      - name: Run read-only export
+        env:
+          CLIENT_ID:     ${{ secrets.CLIENT_ID }}
+          CLIENT_SECRET: ${{ secrets.CLIENT_SECRET }}
+          SUPABASE_URL:  ${{ secrets.SUPABASE_URL }}
+          SUPABASE_KEY:  ${{ secrets.SUPABASE_KEY }}
+        run: python scripts/research/export_event_csv.py
+
+      - name: Commit CSVs to branch
+        run: |
+          git config user.email "actions@github.com"
+          git config user.name "GitHub Actions"
+          git add diagnostics/research/2026-10/event_csv/
+          git diff --cached --quiet && echo "No changes" || \
+            git commit -m "data: export event_csv for retrospective analysis [run ${{ github.run_id }}] [skip ci]"
+          git push origin research/2026-10-auto || true
