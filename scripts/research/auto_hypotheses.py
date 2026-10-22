@@ -3445,6 +3445,26 @@ print("\n" + "=" * 60)
 print("Section 7: V0 scene manifests")
 print("=" * 60)
 
+# _extract_orbit_attrs is defined inside CDSE-gated block; re-define here for safety
+def _extract_orbit_attrs_s7(scene):
+    attrs = scene.get("Attributes", {})
+    orb_dir, rel_orb = None, None
+    if isinstance(attrs, list):
+        for a in attrs:
+            n = a.get("Name", "")
+            v = (a.get("Value") or
+                 a.get("OData.CSC.StringAttribute", {}).get("Value") or
+                 a.get("OData.CSC.IntegerAttribute", {}).get("Value"))
+            if n == "orbitDirection":
+                orb_dir = v
+            elif n == "relativeOrbitNumber":
+                try: rel_orb = int(v)
+                except Exception: rel_orb = v
+    elif isinstance(attrs, dict):
+        orb_dir = attrs.get("orbitDirection")
+        rel_orb = attrs.get("relativeOrbitNumber")
+    return orb_dir, rel_orb
+
 _s7_dir = OUT_ROOT / "7_v0_manifest"
 _s7_dir.mkdir(parents=True, exist_ok=True)
 
@@ -3475,7 +3495,7 @@ for _cfg in _V0_CONFIGS:
         _d7 = _sc.get("ContentDate", {}).get("Start", "")[:10]
         if not _d7: continue
         if _cfg["date_from"] and _d7 < _cfg["date_from"]: continue
-        _od7, _ro7 = _extract_orbit_attrs(_sc)
+        _od7, _ro7 = _extract_orbit_attrs_s7(_sc)
         if not _dir_matches(_od7, _cfg["dir_filter"]): continue
         if not _rel_matches(_ro7, _cfg["rel_filter"]): continue
         _rows7.append({
@@ -3506,7 +3526,7 @@ _kh7_rows = []
 for _sc in _kh7:
     _d = _sc.get("ContentDate", {}).get("Start", "")[:10]
     if not _d: continue
-    _od, _ro = _extract_orbit_attrs(_sc)
+    _od, _ro = _extract_orbit_attrs_s7(_sc)
     _kh7_rows.append({"date": _d, "relOrbit": _ro, "orbitDir": str(_od or "").upper()[:4], "year": _d[:4]})
 if _kh7_rows:
     _kh7_df = pd.DataFrame(_kh7_rows)
@@ -3540,7 +3560,7 @@ _yb_2018_asc14 = []
 for _sc in _yb7_cache:
     _d = _sc.get("ContentDate", {}).get("Start", "")[:10]
     if not _d.startswith("2018"): continue
-    _od, _ro = _extract_orbit_attrs(_sc)
+    _od, _ro = _extract_orbit_attrs_s7(_sc)
     if _dir_matches(_od, {"ASC","ASCE","ASCENDING"}) and _rel_matches(_ro, 14):
         _yb_2018_asc14.append(_d)
 print(f"  CDSE ASC-14 scenes in 2018: {len(_yb_2018_asc14)}")
