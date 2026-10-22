@@ -619,10 +619,10 @@ scripts/research/auto_hypotheses.py:2957:1. backfill_ras_tanura.py: passes ALLOW
 
   --- GHA runs cross-reference (Oct 10–21 all branches) ---
   GH token available: True
-  Total GHA runs parsed: 74, Oct 10–21: 74
+  Total GHA runs parsed: 75, Oct 10–21: 74
 
   GHA runs Oct 10–21:
-    run_id=39662252732 name=Research — ТЗ-АВТОНОМ v2 Block A branch=research/2026-10-auto started=2026-10-21T19:30:34Z conclusion=nan
+    run_id=39662252732 name=Research — ТЗ-АВТОНОМ v2 Block A branch=research/2026-10-auto started=2026-10-21T19:30:34Z conclusion=success
     run_id=39658212571 name=Monitor — Kharg SAR branch=main started=2026-10-21T19:03:08Z conclusion=success
     run_id=39656913283 name=Research — ТЗ-АВТОНОМ v2 Block A branch=research/2026-10-auto started=2026-10-21T18:54:24Z conclusion=success
     run_id=39652381238 name=Research — ТЗ-АВТОНОМ v2 Block A branch=research/2026-10-auto started=2026-10-21T18:24:08Z conclusion=success
@@ -1471,42 +1471,3 @@ scripts/ingest.py:223:        rel_orbit  = orbit_cfg.get("relative_orbit")
 scripts/ingest.py:224:        direction  = orbit_cfg.get("direction", "descending").lower()
 scripts/ingest.py:225:        los_az     = orbit_cfg.get("los_azimuth")
 scripts/ingest.py:242:                                            orbit_cfg=allowed_orbits)
-
-  Analysis written: diagnostics/research/2026-10/SAR_FETCH/sar_fetch_orbit_filter_analysis.txt
-  main_script.py orbit_cfg usage:
-42:from sar_fetch import load_cache, get_all_scene_dates, build_crescent_masks, fetch_new_records
-73:    new_records = fetch_new_records(new_dates, tanks_data, super_bbox, img_width, img_height)
-204:            raw = fetch_new_records(new_t_dates, t_data, bbox, img_w, img_h,
-205:                                    orbit_cfg=allowed_orbits)
-
-  backfill_ras_tanura.py orbit_cfg:
-51:ALLOWED_ORBIT     = {"relative_orbit": 35, "direction": "DESC", "los_azimuth": 282}
-79:from sar_fetch import get_all_scene_dates, build_crescent_masks, fetch_new_records
-173:    print(f"\n[backfill] Querying catalog: DESC orbit {ALLOWED_ORBIT['relative_orbit']} "
-180:            orbit_state=ALLOWED_ORBIT["direction"],
-181:            relative_orbit=ALLOWED_ORBIT["relative_orbit"],
-194:    los_az    = ALLOWED_ORBIT["los_azimuth"]
-195:    rel_orbit = ALLOWED_ORBIT["relative_orbit"]
-196:    direction = ALLOWED_ORBIT["direction"]
-215:                    raw = fetch_new_records(
-
-
-=== 4.11: Rebuild Assessment (V0 scene counts per terminal) ===
-  kharg       : n_scenes= 610 | PU_total=  1830 (17/mo) | GHA=0.8h | V0≈0.1GB (orbit=DESC relOrbit=None)
-  ras_tanura  : n_scenes= 364 | PU_total=  2184 (20/mo) | GHA=1.0h | V0≈0.3GB (orbit=DESC relOrbit=35)
-  yanbu       : n_scenes= 408 | PU_total=  1224 (11/mo) | GHA=0.6h | V0≈0.0GB (orbit=ASCE relOrbit=14)
-  al_flaw     : n_scenes= 323 | PU_total=   969 (9/mo) | GHA=0.4h | V0≈0.1GB (orbit=DESC relOrbit=None)
-  jask        : n_scenes= 429 | PU_total=  1287 (12/mo) | GHA=0.6h | V0≈0.0GB (orbit=DESC relOrbit=93)
-
-  4.11 TOTAL: PU=7,494 | GHA=3.4h | V0≈0.5GB
-  At free tier (30k PU/mo): 0.2 months to rebuild
-
-  Full table:
-  terminal  orbit_dir  rel_orbit  n_scenes_working_orbit  pu_per_scene  pu_total  pu_per_month_avg  gha_hours  v0_cache_gb  n_tanks
-     kharg DESCENDING        NaN                     610             3      1830                17        0.8          0.1       47
-ras_tanura DESCENDING       35.0                     364             6      2184                20        1.0          0.3       66
-     yanbu  ASCENDING       14.0                     408             3      1224                11        0.6          0.0       12
-   al_flaw DESCENDING        NaN                     323             3       969                 9        0.4          0.1       24
-      jask DESCENDING       93.0                     429             3      1287                12        0.6          0.0       20
-
-=== Block A + B/C/D complete ===
