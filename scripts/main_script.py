@@ -141,11 +141,6 @@ def _load_terminal_dates(tid):
         offset += 1000
     return {pd.to_datetime(r["date"]).normalize() for r in rows}
 
-def _upsert_terminal_obs(records, tid):
-    if not records: return
-    sb.table("terminal_observations").upsert(records, on_conflict="terminal_id,date,tank_id").execute()
-    print(f"  Supabase terminal_observations: {len(records)} rows ({tid})")
-
 def _upsert_terminal_vol(daily_df, tid):
     if daily_df.empty: return
     rows = [{"terminal_id": tid, "date": r["day"].strftime("%Y-%m-%d"),
@@ -207,7 +202,6 @@ for terminal in TERMINALS:
                 r["terminal_id"] = tid
             new_records = raw
             print(f"  Extracted: {len(new_records)} records")
-            _upsert_terminal_obs(new_records, tid)
         except Exception as e:
             print(f"  [!] Fetch failed: {e}")
 
