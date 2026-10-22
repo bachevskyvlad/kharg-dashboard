@@ -1,0 +1,6 @@
+terminal_id,source_table,orbit_group,n_obs,db_p05_live,db_p95_live,db_mean_all,db_std_all,override_db_min,override_db_max,model,tank_height_min_m,barrel_per_m3,file_line
+kharg,raw_observations,global,15181,-0.213,14.1326,6.6224,4.4374,,,inverse_crescent_radiometry,2,6.2898,"scripts/volume.py:41 (compute_volumes), scripts/config.py:TANK_HEIGHT_MIN,BARREL_PER_M3"
+ras_tanura,terminal_observations,ASC,16038,-1.702,16.3613,6.2992,5.3935,,,inverse_crescent_radiometry,2,6.2898,"scripts/volume.py:41 (compute_volumes), scripts/config.py:TANK_HEIGHT_MIN,BARREL_PER_M3"
+ras_tanura,terminal_observations,DESC,20790,-1.6841,15.058,5.6984,5.1282,,,inverse_crescent_radiometry,2,6.2898,"scripts/volume.py:41 (compute_volumes), scripts/config.py:TANK_HEIGHT_MIN,BARREL_PER_M3"
+ras_tanura,terminal_observations,DESCENDING,253,-1.0949,15.9192,6.0687,5.1972,,,inverse_crescent_radiometry,2,6.2898,"scripts/volume.py:41 (compute_volumes), scripts/config.py:TANK_HEIGHT_MIN,BARREL_PER_M3"
+yanbu,terminal_observations,global,3984,-1.5107,14.7098,5.8319,5.1459,,,inverse_crescent_radiometry,2,6.2898,"scripts/volume.py:41 (compute_volumes), scripts/config.py:TANK_HEIGHT_MIN,BARREL_PER_M3"
