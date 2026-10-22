@@ -3057,6 +3057,7 @@ _411_TERMINALS = [
 # S1 CDSE: 30,000 PU/month free tier; 1 request = 1 scene fetch
 # GHA: ~5s/scene at 10m/px 1-tile; ~10s/scene for RT 2-tile
 _411_rows = []
+_411_scene_cache = {}  # id → list of raw CDSE scene dicts; reused in section 5
 if CDSE_OK and cdse_token:
     for _t411 in _411_TERMINALS:
         try:
@@ -3111,6 +3112,8 @@ if CDSE_OK and cdse_token:
                 "v0_cache_gb": round(_total_gb, 1),
                 "n_tanks": _t411["n_tanks"],
             })
+            # Cache scenes for section 5 (avoid re-fetching)
+            _411_scene_cache[_t411["id"]] = _t411_scenes
         except Exception as _e411:
             print(f"  {_t411['id']}: FAILED — {_e411}")
     if _411_rows:
@@ -3153,11 +3156,17 @@ _gap_rows_all = []
 for _tg in _GAP_TERMINALS:
     print(f"\n--- {_tg['id']} (orbit={_tg['orbit_dir'][:4]} relOrbit={_tg['rel_orbit']}) ---")
     try:
-        # 1. CDSE catalog dates (working orbit)
+        # 1. CDSE catalog dates (working orbit) — reuse 4.11 cache to avoid re-fetching
+        _cache_key_map = {"kharg": "kharg", "ras_tanura": "ras_tanura_d35", "yanbu": "yanbu_all"}
+        _tg_cache_key = _cache_key_map.get(_tg["id"])
         if CDSE_OK and cdse_token:
-            _tg_scenes_all = cdse_search_with_attrs(
-                _tg["wkt"], _tg["cdse_start"], "2026-10-21", max_results=2000
-            )
+            if _tg_cache_key and _tg_cache_key in _411_scene_cache:
+                _tg_scenes_all = _411_scene_cache[_tg_cache_key]
+                print(f"  CDSE: using 4.11 cache ({_tg_cache_key}, {len(_tg_scenes_all)} scenes)")
+            else:
+                _tg_scenes_all = cdse_search_with_attrs(
+                    _tg["wkt"], _tg["cdse_start"], "2026-10-21", max_results=2000
+                )
             _tg_cdse_filtered = []
             for _sg in _tg_scenes_all:
                 _odg, _rog = _extract_orbit_attrs(_sg)
