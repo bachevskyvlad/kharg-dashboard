@@ -7,10 +7,6 @@ on:
         description: "Sections to run (e.g. 1,2,3.3,5,6 or 4 or 3.1,3.2)"
         required: false
         default: "1,2,3.3,5,6"
-      terminals:
-        description: "Comma-separated terminal IDs"
-        required: false
-        default: "kharg,ras_tanura,yanbu"
 
 jobs:
   mega_export:
@@ -44,7 +40,6 @@ jobs:
           cd scripts
           python research/mega_export.py \
             --sections "${{ github.event.inputs.sections }}" \
-            --terminals "${{ github.event.inputs.terminals }}" \
             2>&1 | tee ../diagnostics/mega/run_mega_$(date -u +%Y%m%dT%H%M).txt
 
       - name: Save results
