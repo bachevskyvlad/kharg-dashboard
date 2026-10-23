@@ -1,0 +1,52 @@
+mega_export.py  SHA=bd6b363cc5a7  Run=39928487859  TS=2026-10-23T08:59:37Z
+Sections: ['1', '2', '3.3', '5', '6']  Output: /home/runner/work/kharg-dashboard/kharg-dashboard/diagnostics/mega
+
+=== Section 1: Registry & geometry ===
+  1.1 registry_full.csv: 125 rows → /home/runner/work/kharg-dashboard/kharg-dashboard/diagnostics/mega/registry_full.csv
+  1.2 registry_history.csv: scanning git log…
+  1.2 registry_history.csv: 1636 diff lines → /home/runner/work/kharg-dashboard/kharg-dashboard/diagnostics/mega/registry_history.csv
+  1.3 esri_crops/: generating per-tank PNGs via ESRI tile API…
+    kharg: 47 tanks…
+    ras_tanura: 66 tanks…
+    yanbu: 12 tanks…
+  1.4 source_points: searching repo…
+  1.4 source_points.txt → /home/runner/work/kharg-dashboard/kharg-dashboard/diagnostics/mega/source_points.txt
+  Section 1 done.
+
+=== Section 2: Scene metadata ===
+  WARNING: v0_manifest_all.csv not found — scene metadata will be partial
+  WARNING kharg DB fetch: {'message': 'column raw_observations.terminal_id does not exist', 'code': '42703', 'hint': None, 'details': None}
+  kharg: 0 dates in DB
+  ras_tanura: 571 dates in DB
+  yanbu: 332 dates in DB
+  WARNING: v0_manifest_all.csv missing — scene metadata will lack catalog info
+  2.1 scenes.csv: 903 rows → /home/runner/work/kharg-dashboard/kharg-dashboard/diagnostics/mega/scenes.csv
+  Section 2 done.
+
+=== Section 3.3: Evalscript & params ===
+  3.3 evalscript_and_params.txt → /home/runner/work/kharg-dashboard/kharg-dashboard/diagnostics/mega/evalscript_and_params.txt
+  Section 3.3 done.
+
+=== Section 5: Calibration & volume ===
+  5.1 prod_tank_series.csv…
+  WARNING kharg: {'message': 'column raw_observations.terminal_id does not exist', 'code': '42703', 'hint': None, 'details': None}
+  5.1 prod_tank_series.csv: 41066 rows → /home/runner/work/kharg-dashboard/kharg-dashboard/diagnostics/mega/prod_tank_series.csv
+  5.2 calibration_code/…
+  5.2 calibration_code/: 7 files → /home/runner/work/kharg-dashboard/kharg-dashboard/diagnostics/mega/calibration_code
+  5.3 tvt_all.csv…
+  5.3 tvt_all.csv: 1529 rows → /home/runner/work/kharg-dashboard/kharg-dashboard/diagnostics/mega/tvt_all.csv
+  Section 5 done.
+
+=== Section 6: Anchors ===
+  copied data/hormuz_timeseries.csv → anchors_all/hormuz_timeseries.csv
+  copied data/external/jodi_saudi_crude.csv → anchors_all/jodi_saudi_crude.csv
+  copied data/anchorage.json → anchors_all/anchorage.json
+  copied data/bab_anchorage.json → anchors_all/bab_anchorage.json
+  copied anchors.csv + missing_anchors.txt from event_csv/
+  6.2 anchor_mapping.txt: 803 lines → /home/runner/work/kharg-dashboard/kharg-dashboard/diagnostics/mega/anchor_mapping.txt
+  6.3 past_results/: 12 files → /home/runner/work/kharg-dashboard/kharg-dashboard/diagnostics/mega/past_results
+  Section 6 done.
+
+  README.md → /home/runner/work/kharg-dashboard/kharg-dashboard/diagnostics/mega/README.md
+
+=== mega_export complete. Output: /home/runner/work/kharg-dashboard/kharg-dashboard/diagnostics/mega ===

@@ -1,0 +1,54 @@
+
+    # evalscript_and_params.txt
+    # Generated: 2026-10-23T08:59:37Z
+    # SHA: bd6b363cc5a7  Run: 39928487859
+    # Source: scripts/sar_fetch.py
+
+    ## Evalscript (lines 194):
+    _EVALSCRIPT = """
+//VERSION=3
+function setup() { return { input: [{ bands: ["VV"] }], output: { bands: 1, sampleType: "FLOAT32" } }; }
+function evaluatePixel(sample) { return [sample.VV]; }
+"""
+
+    ## Request parameters:
+    - data_collection: S1_CDSE (DataCollection.SENTINEL1_IW, service_url=https://sh.dataspace.copernicus.eu)
+    - CRS: WGS84 (bbox in lon/lat)
+    - resx / resy: 5 m/px (RESOLUTION from config.py)
+    - upsampling: default (BILINEAR in SentinelHub SDK)
+    - mosaicking: ORBIT (when orbit_cfg set), else default
+    - backCoeff: GAMMA0_TERRAIN
+    - orthorectify: True
+    - demInstance: COPERNICUS_30
+    - timeRange: [date, date+1day] per pass
+    - polarization: SV (single VV — ship_backfill.py fix applied 2026-10)
+
+    ## Per-terminal BBox (WGS84, BUFFER_METERS=300m):
+  kharg: N/A
+  ras_tanura: N/A
+  yanbu: N/A
+
+    ## Processing block (sar_fetch.py):
+    "processing": {
+            "orthorectify": True,
+            "backCoeff": "GAMMA0_TERRAIN",
+            "demInstance": "COPERNICUS_30",
+        }
+
+    ## DataFilter block (orbit-specific fetches):
+    (not found)
+
+    ## Key file:line references:
+    - evalscript:         scripts/sar_fetch.py:194
+    - orthorectify:       scripts/sar_fetch.py:23
+    - backCoeff:          scripts/sar_fetch.py:237
+    - demInstance:        scripts/sar_fetch.py:238
+    - RESOLUTION:         scripts/config.py (RESOLUTION=5)
+    - BUFFER_METERS:      scripts/config.py (BUFFER_METERS=300)
+    - LOS_AZIMUTH:        scripts/config.py (LOS_AZIMUTH=282 for DESC)
+    - WIDTH_WIDE:         scripts/config.py (WIDTH_WIDE=15m)
+    - fill_ratio formula: scripts/volume.py:compute_volumes
+    - dB_min/dB_max clip: scripts/volume.py (quantile 0.05/0.95, global)
+    - TANK_HEIGHT_MIN:    scripts/config.py (TANK_HEIGHT_MIN=2m)
+    - BARREL_PER_M3:      scripts/config.py (BARREL_PER_M3=6.2898)
+    

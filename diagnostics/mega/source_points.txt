@@ -1,0 +1,12 @@
+=== git log commits mentioning source points/centers ===
+c111b70 research: V1 centers workflow, validate_pass, п.3 orbit intersection
+16c8db0 chore: workflow hygiene — delete 48 zombie workflows, remove push trigger from deploy
+5c40418 registry v2: ras_laffan/zirku/fujairah ESRI coords; lavan/halul flags; min-radius r<20
+6d41ee9 feat(TAS): registry v2 esri_z18 for lavan/siri/das_island/halul/mina_ahmadi
+9bcf83b feat(jask): registry v2.1 — center gate A/B verdict applied
+ccec95f feat(jask): registry v2 — ESRI z18 r_fit + center shifts for all 20 tanks
+6041448 feat: gate PASS + registry v2 (radii-only, r_fit) + reingest scaffold
+cac7188 registry: rollback JW/RT/YB geometry to pre-Stage-1 (v2 rejected by gate)
+
+=== tracked files matching source/center/point/coord patterns ===
+.backfill_checkpoint.json

@@ -1,0 +1,1636 @@
+P1: SUPABASE_URL=env SUPABASE_KEY=fallback (publishable)
+=== PREFLIGHT P3: terminal_id canonicality ===
+  Registry terminal IDs: ['al_flaw', 'das_island', 'de_kastri', 'fujairah', 'halul', 'jask', 'juwaymah', 'kharg', 'kozmino', 'lavan', 'mina_ahmadi', 'novorossiysk', 'primorsk', 'ras_laffan', 'ras_tanura', 'ruwais', 'siri', 'sitra', 'yanbu', 'zirku']
+  DB terminal_ids (probed): ['al_flaw', 'das_island', 'de_kastri', 'fujairah', 'halul', 'jask', 'juwaymah', 'kozmino', 'lavan', 'mina_ahmadi', 'novorossiysk', 'primorsk', 'ras_laffan', 'ras_tanura', 'ruwais', 'siri', 'sitra', 'yanbu', 'zirku']
+  In DB but NOT in registry: set()
+  In registry but NOT in DB: {'kharg'}
+
+  [ТЗ v2 H01]: Регрессия ingest системна: строки DESCENDING/NULL появились ВО ВСЕХ терминалах, использующих один и тот же ingest-путь, начиная с 2026-09-07 (первая дата RT-регрессии). Проверить Kharg raw_observations + все terminal_observations.
+
+=== H01: Ingest regression systemic (with contradiction explanation) ===
+  Kharg raw_observations orbit check FAILED: {'message': 'column raw_observations.orbit_direction does not exist', 'code': '42703', 'hint': None, 'details': None}
+  al_flaw: post=232, DESC_strict=232, DESC_or_NULL=232
+  das_island: post=99, DESC_strict=15, DESC_or_NULL=15
+  de_kastri: post=16, DESC_strict=8, DESC_or_NULL=16
+  fujairah: post=242, DESC_strict=88, DESC_or_NULL=88
+  halul: post=78, DESC_strict=50, DESC_or_NULL=50
+  jask: post=120, DESC_strict=40, DESC_or_NULL=40
+  juwaymah: post=112, DESC_strict=55, DESC_or_NULL=112
+  kozmino: 0 rows post-2026-09-01
+  lavan: post=192, DESC_strict=96, DESC_or_NULL=192
+  mina_ahmadi: post=112, DESC_strict=28, DESC_or_NULL=28
+  novorossiysk: post=240, DESC_strict=120, DESC_or_NULL=240
+  primorsk: post=288, DESC_strict=144, DESC_or_NULL=288
+  ras_laffan: post=272, DESC_strict=34, DESC_or_NULL=34
+  ras_tanura: post=781, DESC_strict=253, DESC_or_NULL=253
+  ruwais: post=320, DESC_strict=40, DESC_or_NULL=40
+  siri: post=48, DESC_strict=42, DESC_or_NULL=42
+  sitra: post=200, DESC_strict=25, DESC_or_NULL=25
+  yanbu: post=24, DESC_strict=0, DESC_or_NULL=24
+  zirku: post=80, DESC_strict=10, DESC_or_NULL=10
+
+H01 RESULT strict (DESCENDING only, run 38070901242 criterion): 17 terminals: ['al_flaw', 'das_island', 'de_kastri', 'fujairah', 'halul', 'jask', 'juwaymah', 'lavan', 'mina_ahmadi', 'novorossiysk', 'primorsk', 'ras_laffan', 'ras_tanura', 'ruwais', 'siri', 'sitra', 'zirku']
+H01 RESULT broad  (DESCENDING OR NULL, run #4 criterion):      18 terminals: ['al_flaw', 'das_island', 'de_kastri', 'fujairah', 'halul', 'jask', 'juwaymah', 'lavan', 'mina_ahmadi', 'novorossiysk', 'primorsk', 'ras_laffan', 'ras_tanura', 'ruwais', 'siri', 'sitra', 'yanbu', 'zirku']
+H01 VERDICT: CONFIRMED — systemic if ≥2 terminals (broad)
+
+  [ТЗ v2 H02]: TVT RT содержит даты из ASC-наблюдений (≥30% дат — только ASC) потому, что compute.py не фильтрует орбиту.
+
+=== H02: TVT RT ASC contamination ===
+  TVT RT daily rows: 563
+  TVT dates with ASC-only observations: 243 (43.2%)
+  TVT dates with DESCENDING observations: 320
+  TVT dates with NULL-only observations: 0
+  TVT total matched dates: 563
+  TVT dates NOT in obs table: 0
+
+H02 VERDICT: CONFIRMED — ASC-only dates = 43.2% (threshold 30%)
+
+=== H03: RT DESC historical single orbit ===
+  Pre-regression orbit breakdown:
+orbit_direction  relative_orbit     n  n_dates
+            ASC           101.0 15774      239
+           DESC            35.0 20658      313
+
+  Post-regression orbit breakdown:
+orbit_direction  relative_orbit   n  n_dates
+            ASC           101.0 264        4
+           DESC            35.0 132        2
+     DESCENDING             NaN 253       12
+
+  Pre-reg DESCENDING relative_orbits: [35.0]
+  Pre-reg DESCENDING null relative_orbit rows: 0
+
+H03 VERDICT: CONFIRMED — single orbit = True, orbits = [35.0]
+
+=== H05: TVT coverage contamination ===
+
+  ras_tanura: TVT daily rows=563, obs dates=570
+  ras_tanura: dates below 50% coverage: 0
+H05 ras_tanura: NOT_CONFIRMED — 0 sub-50% dates in TVT
+
+=== H05b: Partial coverage (50-99%) in TVT ===
+  ras_tanura: full coverage dates=559, partial (50-99%)=4
+  Partial dates sample:
+      date  n_tanks  db_mean_avg       pct
+2026-09-30       45     7.120778 68.181818
+2026-10-06       45     6.373319 68.181818
+2026-10-12       45     4.576397 68.181818
+2026-10-18       45     5.746785 68.181818
+
+=== H05c: 8 new RT dates in TVT + calibration ===
+  2026-09-07: in_tvt=False, n_tanks=1/66 (2%), orbits={'DESCENDING': 1}, relOrbit=[]
+  2026-09-13: in_tvt=False, n_tanks=1/66 (2%), orbits={'DESCENDING': 1}, relOrbit=[]
+  2026-09-19: in_tvt=False, n_tanks=1/66 (2%), orbits={'DESCENDING': 1}, relOrbit=[]
+  2026-09-24: in_tvt=True, n_tanks=66/66 (100%), orbits={'DESCENDING': 66}, relOrbit=[]
+  2026-09-25: in_tvt=False, n_tanks=1/66 (2%), orbits={'DESCENDING': 1}, relOrbit=[]
+  2026-09-30: in_tvt=True, n_tanks=45/66 (68%), orbits={'DESCENDING': 45}, relOrbit=[]
+  2026-10-01: in_tvt=False, n_tanks=1/66 (2%), orbits={'DESCENDING': 1}, relOrbit=[]
+  2026-10-06: in_tvt=True, n_tanks=45/66 (68%), orbits={'DESCENDING': 45}, relOrbit=[]
+
+=== H06: WL RT git history ===
+  No git log output
+commit 818247d4be30b6b8afa13e11f286e48ba90ac869
+Author: Claude <noreply@anthropic.com>
+Date:   Sat Oct 10 13:39:51 2026 +0000
+
+    feat(checks): Block B — checks module C04/C05/C06/C07/C11/C12/C14/C15/C16 + runner
+    
+    - scripts/checks/__init__.py: common constants (DB_FLOOR, thresholds, SHA, run_date)
+    - C04: per-tank liveness (Al-Faw stuck criterion: frac_at_floor >= 0.50)
+    - C05: level range p95-p05 vs Kharg 8-10 dB reference
+    - C06: tank median vs terminal median offset
+    - C07: mask contamination — NOT_RUN (needs pixel crops, not available from db_mean)
+    - C11: orbit/cadence histogram per year, gap detection, mono/mix
+    - C12: polarity anchor episodes (delta >= 3 dB within 14 days)
+    - C14: S2 shadow resolvability (h_max × tan(zenith) / 10m using approximate solar noon)
+    - C15: optical label independence (text; EMPTY/FULL derived from SAR dB, not independent)
+    - C16: scene validity (valid_fraction = non-null db_mean rows)
+    - terminal_checks.py: runner --terminal X --checks C11,C04,... --orbit N
+    - terminal_checks.yml: CI workflow (workflow_dispatch, yanbu/ras_tanura/...)
+    - Output: diagnostics/checks/<terminal>/<check>.csv + CHECK_MATRIX.md
+    
+    Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>
+    Claude-Session: https://claude.ai/code/session_01VBJUxpJfFNw5i6YD1SXibt
+
+diff --git a/scripts/checks/__init__.py b/scripts/checks/__init__.py
+new file mode 100644
+index 0000000..901a21e
+--- /dev/null
++++ b/scripts/checks/__init__.py
+@@ -0,0 +1,36 @@
++"""
++checks/ — Terminal health check module for OilRadar.
++
++Each submodule implements one check (C04, C05, …) and exports:
++  run(terminal_id, df, registry_tanks) -> pd.DataFrame
++
++  df columns required: date, tank_id, db_mean, relative_orbit, orbit_direction
++  registry_tanks: list of tank dicts from tank_registry.LOCATIONS
++
++Common CSV columns in every output:
++  terminal_id, tank_id, check_id, run_date, git_sha, <metric cols>, verdict
++
++NOT_RUN / NOT_DETECTABLE / N_A are string sentinels in the verdict column.
++"""
++
++import subprocess
++from datetime import date as _date
++
++
++def git_sha() -> str:
++    try:
++        return subprocess.check_output(
++            ["git", "rev-parse", "--short", "HEAD"],
++            stderr=subprocess.DEVNULL,
++        ).decode().strip()
++    except Exception:
++        return "unknown"
++
++
++RUN_DATE = str(_date.today())
++SHA = git_sha()
++
++DB_FLOOR = -5.0  # canonical clip floor from config.py
++STUCK_FLOOR_THRESH = 0.50  # Al-Faw onset criterion: frac_at_floor >= 50%
++FLAT_DELTA_THRESH = 0.3   # |Δdb| < 0.3 dB → "flat" pass
++STEP_WL_THRESHOLD = 2.5   # frozen whitelist step threshold (dB)
+
+
+=== H06b: WL composition vs frozen gate ===
+  Source of truth: diagnostics/stage3/whitelist_results.json field 'whitelist'
+  Registry WL-45: n=45/66, EXCL-21: n=21/66
+  WL tanks: ['rt_11', 'rt_12', 'rt_13', 'rt_14', 'rt_15', 'rt_16', 'rt_17', 'rt_18', 'rt_19', 'rt_2', 'rt_20', 'rt_21', 'rt_22', 'rt_23', 'rt_24', 'rt_25', 'rt_26', 'rt_27', 'rt_28', 'rt_29', 'rt_30', 'rt_31', 'rt_32', 'rt_33', 'rt_34', 'rt_35', 'rt_36', 'rt_37', 'rt_38', 'rt_4', 'rt_41', 'rt_42', 'rt_44', 'rt_5', 'rt_57', 'rt_59', 'rt_6', 'rt_60', 'rt_61', 'rt_62', 'rt_63', 'rt_64', 'rt_65', 'rt_7', 'rt_8']
+  Last 18 DESC dates, 66 tanks computed
+  Registry WL-45: n=45/66 (source: diagnostics/stage3/whitelist_results.json, field 'whitelist')
+
+  tank_id | step_db (last 18 DESC-35) | in_registry_WL
+tank_id  step_db  in_registry_WL
+  rt_38   0.3437            True
+  rt_29   0.3532            True
+   rt_2   0.3679            True
+  rt_59   0.3905            True
+   rt_6   0.3999            True
+  rt_42   0.4087            True
+  rt_18   0.5400            True
+  rt_20   0.7168            True
+  rt_19   0.8117            True
+  rt_22   0.8276            True
+  rt_26   0.8901            True
+  rt_16   0.8913            True
+  rt_23   0.9584            True
+  rt_60   1.0100            True
+  rt_13   1.0149            True
+  rt_34   1.0394            True
+  rt_25   1.0679            True
+  rt_35   1.1231            True
+   rt_4   1.1435            True
+  rt_30   1.1658            True
+  rt_31   1.1685            True
+  rt_27   1.2238            True
+  rt_36   1.2299            True
+  rt_63   1.2392            True
+  rt_32   1.2625            True
+  rt_14   1.2867            True
+   rt_5   1.2942            True
+  rt_11   1.3165            True
+  rt_28   1.3312            True
+  rt_15   1.3943            True
+  rt_37   1.4021            True
+   rt_8   1.4567            True
+  rt_24   1.5653            True
+  rt_65   1.7123            True
+  rt_17   1.7188            True
+  rt_33   1.7205            True
+  rt_61   1.7231            True
+  rt_41   1.8035            True
+  rt_46   1.8893           False
+  rt_21   1.9505            True
+  rt_12   1.9741            True
+  rt_64   1.9934            True
+   rt_7   2.0772            True
+  rt_44   2.2973            True
+  rt_62   2.3980            True
+   rt_9   2.6604           False
+  rt_56   2.6671           False
+   rt_1   2.6945           False
+   rt_0   2.8434           False
+  rt_40   2.8828           False
+  rt_51   2.9393           False
+  rt_57   3.1088            True
+  rt_45   3.2827           False
+  rt_10   3.5136           False
+   rt_3   3.5277           False
+  rt_53   3.6345           False
+  rt_39   3.6975           False
+  rt_54   4.2014           False
+  rt_49   4.3203           False
+  rt_58   4.4964           False
+  rt_55   5.0102           False
+  rt_52   5.4377           False
+  rt_47   5.5272           False
+  rt_43   5.6636           False
+  rt_48   8.5439           False
+  rt_50   9.2392           False
+
+H06b VERDICT: WL-45 (registry, whitelist=True): 45/66 tanks
+  WL-45 currently step_db >= 2.5 (live, last 18 DESC-35): 1
+  Drifted WL-45 tanks (step_db >= 2.5 live):
+tank_id  step_db
+  rt_57   3.1088
+
+=== H07: Yanbu 332 vs 249 pass count ===
+  Total rows: 3984
+  Unique calendar dates: 249
+  Unique datetime strings: 249
+
+  Yanbu orbit breakdown:
+ orbit_direction  relative_orbit  n_rows  n_dates
+             NaN             NaN    3984      249
+
+  Yanbu passes per year:
+ year  n_dates
+ 2014        5
+ 2015       25
+ 2016        6
+ 2017        4
+ 2019        2
+ 2020       31
+ 2021       30
+ 2022       27
+ 2023       30
+ 2024       30
+ 2025       33
+ 2026       26
+
+  TVT Yanbu daily rows: 332
+  TVT-only dates (in TVT but not in obs): n=83
+    first 10: ['2017-03-18', '2017-03-30', '2017-04-11', '2017-04-23', '2017-05-05', '2017-05-17', '2017-05-29', '2017-06-10', '2017-06-22', '2017-07-04']
+    last 10: ['2019-08-11', '2019-08-23', '2019-09-04', '2019-09-16', '2019-09-28', '2019-10-10', '2019-10-22', '2019-11-03', '2019-11-15', '2019-11-27']
+  Obs-only dates (in obs but not in TVT): n=0
+
+H07 SUMMARY:
+  terminal_observations yanbu: 249 calendar dates
+  terminal_volume_timeseries yanbu daily: 332 rows
+  TVT-only dates (extra in TVT): 83
+  Obs-only dates (in obs but absent from TVT): 0
+  Orbit diversity: 0 directions, 0 relative orbits
+
+=== Writing HYPOTHESES_REPORT.md ===
+  Written: diagnostics/research/2026-10/HYPOTHESES_REPORT.md
+
+=== H24: backCoeff / processing options audit (code, no DB) ===
+# H24: Processing options in ingest + panels
+
+
+## backCoeff
+  scripts/reingest_alfaw_v2.py:155:            }, "processing": {"backCoeff": "SIGMA0_ELLIPSOID", "orthorectify": True,
+  scripts/hormuz_timeseries.py:92:                "backCoeff": "GAMMA0_TERRAIN",
+  scripts/research/auto_hypotheses.py:737:H24: backCoeff/orthorectify/speckleFilter/upsampling options in ingest + panels code.
+  scripts/research/auto_hypotheses.py:746:print("\n=== H24: backCoeff / processing options audit (code, no DB) ===")
+  scripts/research/auto_hypotheses.py:752:    # Find all backCoeff / orthorectify / speckleFilter / upsampling references in scripts
+  scripts/research/auto_hypotheses.py:754:    for pattern in ["backCoeff", "orthorectify", "speckleFilter", "upsampling", "GAMMA0", "BETA0", "SIGMA0", "LEE", "BILINEAR", "BICUBIC"]:
+  scripts/research/auto_hypotheses.py:1292:# Query: check if terminal_observations has backCoeff column at all
+  scripts/research/auto_hypotheses.py:1298:    print(f"  has backCoeff column: {has_backcoeff_col}")
+  scripts/research/auto_hypotheses.py:1326:    print(f"\nH24b: terminal_observations has no backCoeff column → SIGMA0 label not queryable from DB; "
+  scripts/research/auto_hypotheses.py:1905:#   If this is a level shift post-regression, backCoeff or ingest path change is the
+  scripts/research/auto_hypotheses.py:1941:        print("  For these terminals, ingest path (backCoeff/script version) after 2026-09-07 must be audited.")
+  scripts/stage_gate_abc.py:137:                    "backCoeff":    "SIGMA0_ELLIPSOID",
+  scripts/verify_orbit_fix_3.py:123:                "backCoeff": "GAMMA0_TERRAIN",
+  scripts/panels_v2.py:147:            }, "processing": {"backCoeff": "SIGMA0_ELLIPSOID", "orthorectify": True,
+  scripts/jask_panels.py:278:                      "processing": {"backCoeff": "SIGMA0_ELLIPSOID", "orthorectify": True}}],
+  scripts/diag_recalc_7_5.py:264:                    "processing": {"orthorectify": True, "backCoeff": "GAMMA0_TERRAIN",
+  scripts/stage6_accuracy_grid.py:418:                        "processing": {"orthorectify": True, "backCoeff": "GAMMA0_TERRAIN",
+  scripts/diagnose_ras_tanura_imagery.py:210:                "backCoeff":     PROD_BACK_COEFF,
+  scripts/diag_juwaymah_yanbu_4.py:230:                "processing": {"orthorectify": True, "backCoeff": "GAMMA0_TERRAIN",
+  scripts/diag_juwaymah_yanbu_6.py:295:                "processing": {"orthorectify": True, "backCoeff": "GAMMA0_TERRAIN",
+
+## orthorectify
+  scripts/reingest_alfaw_v2.py:155:            }, "processing": {"backCoeff": "SIGMA0_ELLIPSOID", "orthorectify": True,
+  scripts/hormuz_timeseries.py:91:                "orthorectify": True,
+  scripts/research/auto_hypotheses.py:737:H24: backCoeff/orthorectify/speckleFilter/upsampling options in ingest + panels code.
+  scripts/research/auto_hypotheses.py:752:    # Find all backCoeff / orthorectify / speckleFilter / upsampling references in scripts
+  scripts/research/auto_hypotheses.py:754:    for pattern in ["ba
+
+H24: found 10 distinct option keywords in codebase
+
+=== H25: R-point shift prediction ===
+H25 prediction (written before run):
+On GRD data, the specular return from the oil surface within a floating-roof tank
+shifts in the range direction as fill level changes. For Kharg repere tanks
+(known empty/full episodes), the peak brightness location within the tank footprint
+should shift ≥1 px (10 m GRD pixel) in range between an empty episode and a full one.
+REFUTED if shift < 0.5 px on all repere tanks.
+STATUS: NOT_RUN — requires GRD imagery download from CDSE/SH (optical validation
+framework not yet wired). This hypothesis requires stage0_optical_measure.py extension
+or dedicated GRD crop pipeline. Record here for when CDSE auth is resolved.
+Repere tanks expected: t60_1 (chronically full, db<1), t55_5 / t55_10 (chronically empty, db>14).
+
+
+=== H26: Averaged-stack geometry vs current ===
+H26 prediction (written before run):
+An averaged GRD stack (N≥30 Kharg DESC scenes) will produce a stable brightness
+map per tank. Fitting center/r/h to the maximum-brightness ring on the tank base+rim
+should yield geometry parameters at least as good (step_db ≥ current) as the current
+tank_registry values, potentially better for tanks with uncertain=True.
+STATUS: NOT_RUN — requires GRD stack download and 2D fitting code.
+Frozen geometry values from registry (r_m, h_max_m per tank) are the baseline.
+
+
+=== D6: SLC bursts CDSE availability estimate ===
+  SLC references in codebase:
+scripts/research/auto_hypotheses.py:740:D6: SLC bursts CDSE availability + cost estimate.
+scripts/research/auto_hypotheses.py:812:# ── D6: SLC bursts availability estimate (code audit only, no CDSE call) ──────
+scripts/research/auto_hypotheses.py:813:print("\n=== D6: SLC bursts CDSE availability estimate ===")
+scripts/research/auto_hypotheses.py:819:    # Find SLC references in codebase
+scripts/research/auto_hypotheses.py:820:    slc_res = subprocess.run(
+scripts/research/auto_hypotheses.py:821:        ["grep", "-rn", "--include=*.py", "-i", "SLC\\|burst\\|IW_SLC\\|S1_SLC", "scripts/"],
+scripts/research/auto_hypotheses.py:824:    slc_refs = slc_res.stdout.strip()
+scripts/research/auto_hypotheses.py:825:    print(f"  SLC references in codebase:\n{slc_refs[:1000] if slc_refs else '  None found'}")
+scripts/research/auto_hypotheses.py:827:    d6_note = """D6: SLC bursts CDSE — availability estimate
+scripts/research/auto_hypotheses.py:828:- Sentinel-1 IW SLC available from 2014-04 over Midd
+D6: SLC bursts CDSE — availability estimate
+- Sentinel-1 IW SLC available from 2014-04 over Middle East (launch: 2014-04-03)
+- Kharg Island: ~6-day revisit (descending orbit 35), IW mode, VV+VH
+- Single IW burst over Kharg: ~2.5GB (full subswath ~7GB, one burst ~250MB compressed)
+- CDSE Copernicus Data Space Ecosystem: free access, OData API + S3 direct download
+- GHA download: ~1-2 min per burst (250MB @ ~2Mbps GHA network)
+- ESA SNAP processing (Range Doppler TC + backscatter): ~3-5 min/scene on ubuntu-latest
+- Total per scene (download + process + crop): ~5-8 min in GHA
+- Alternative: SentinelHub ProcessingAPI (GRD only, no SLC) — much faster (<30s/scene)
+- SLC would be needed for: precise R-point shift (H25) or interferometric coherence
+
+
+=== D7: Cushing floating-roof tanks (registry check) ===
+  Cushing in tank_registry: False
+  Cushing references in codebase:
+scripts/research/auto_hypotheses.py:741:D7: Cushing floating-roof tank list + orbit catalog + EIA weekly CSV.
+scripts/research/auto_hypotheses.py:845:# ── D7: Cushing floating-roof tank list (code audit, no external calls) ───────
+scripts/research/auto_hypotheses.py:846:print("\n=== D7: Cushing floating-roof tanks (registry check) ===")
+scripts/research/auto_hypotheses.py:851:    # Check if Cushing is in registry
+scripts/research/auto_hypotheses.py:852:    cushing_in_registry = any(loc["id"] == 
+D7: Cushing floating-roof tanks
+STATUS: NOT_RUN — no Cushing entry in tank_registry.py; no scripts reference Cushing.
+To execute:
+1. Identify FRT tanks at Cushing, OK via Esri World Imagery (coordinate scrape)
+2. Query S1 CDSE catalog for orbit coverage over ~36.9°N 96.2°W
+3. Download EIA Cushing weekly stocks (EIA API series: PET.W_EPC0_SAX_YCUOK_MBBL.W)
+4. Save all as CSV to d7/ dir
+This is a data collection task — no correlation calculations in code.
+
+
+=== PREFLIGHT P2: CDSE auth ===
+  P2: CDSE auth OK token_length=2002
+P2 RESULT: OK token_length=2002
+
+=== Kharg raw_observations audit ===
+  raw_observations columns: ['id', 'date', 'tank_id', 'radius_m', 'diameter', 'h_max', 'db_mean', 'created_at']
+  Kharg: total dates=323, full(47)=323, over=0, under=0
+  Gaps >12d: n=12
+      date  gap_days  n_tanks
+2017-02-18     684.0       47
+2017-06-06      24.0       47
+2017-06-30      24.0       47
+2018-12-22      24.0       47
+2019-01-15      24.0       47
+2019-09-24      24.0       47
+2019-12-17      24.0       47
+2021-11-24      24.0       47
+2022-07-22      24.0       47
+2023-11-14      24.0       47
+  Anomaly dates (n_tanks≠47): n=0
+
+  [ТЗ v2 H02b]: Окна E1/E2/E3 и expected-знак взять ДОСЛОВНО из OILRADAR_KNOWLEDGE_BASE.md / oilradar_konspekt.md (привести строку источника). В базе: E1 +2.30, E2 −2.15, E3 ✗. Таблица на DESC-35 и на текущей TVT RT раздельно.
+
+=== H02b: E1/E2/E3 events on DESC-35 + TVT RT ===
+  [SOURCE] VALIDATION_EXTERNAL.md window=±18d (±3 SAR passes), placebo_p90=1.47 Mb
+  [NOTE] OILRADAR_KNOWLEDGE_BASE.md / oilradar_konspekt.md NOT FOUND in repo.
+  [NOTE] User ТЗ v2 states E1=+2.30, E2=−2.15, E3=✗ — source file is MISSING.
+  [NOTE] Using VALIDATION_EXTERNAL.md values: E1=+3.59, E2=-1.47 (verdict ✗), E3=-1.17 (~).
+  [SOURCE E1] expected=+3.59 Mb, cite=VALIDATION_EXTERNAL.md:L65
+  [SOURCE E2] expected=-1.47 Mb (VERDICT=✗, sign mismatch in source), cite=VALIDATION_EXTERNAL.md:L66
+  [SOURCE E3] expected=-1.17 Mb (sign-only ~), cite=VALIDATION_EXTERNAL.md:L67
+  DESC-35 rows: 20790, unique dates: 315
+  DESC-35 candidate: 315 dates; written h02b_desc35_rt_candidate.csv
+  TVT RT daily: 563 rows, 2017-03-14 – 2026-10-18
+
+  Placebo: n=455 4–12d steps outside events; p90_|Δvol|=2.053 Mn bbl
+  [NOTE] VALIDATION_EXTERNAL.md placebo_p90=1.47 Mb (10 random 2024-2025 dates). Live computed=2.053 Mn bbl.
+
+  === Table: E1/E2/E3 on TVT RT (actual vol_mn_bbl) ===
+  Event  Date         Expected    vol_pre vol_post     Δvol  sign_ok  |Δ|>p90 Verdict      Source
+  E1     2026-03-02   BUILD        12.111   14.352   +2.241     True     True ✓ CONFIRMED  VALIDATION_EXTERNAL.md:L65
+  E2     2026-04-15   BUILD        11.835   12.648   +0.813     True    False ~ SIGN_ONLY  VALIDATION_EXTERNAL.md:L66
+  E3     2026-06-27   DRAWDOWN     12.187   10.921   -1.266     True    False ~ SIGN_ONLY  VALIDATION_EXTERNAL.md:L67
+
+  === Table: E1/E2/E3 on DESC-35 series (db_mean proxy) ===
+  db_mean rises → vol drops → DRAWDOWN; db_mean falls → vol rises → BUILD
+  Event  Date         Expected     db_pre  db_post     Δdb    implied  sign_ok
+  E1     2026-03-02   BUILD          6.30     4.93   -1.37      BUILD     True
+  E2     2026-04-15   BUILD          5.32     6.12   +0.81   DRAWDOWN    False
+  E3     2026-06-27   DRAWDOWN       5.58     5.58   +0.00   DRAWDOWN     True
+
+=== H05b: Orbit check 2026-09-28 + volume delta ===
+  Excluded-21 capacity share (from registry vol_max_mb):
+  n_excl=21, vol_excl21=11.44 Mb, vol_total=31.15 Mb, vol_share=36.7%, tank_count_share=31.8%
+
+  H05b orbit check 2026-09-28: n_tanks=66, orbit_dirs={'ASC': 66}, relative_orbits=[101.0]
+  WARNING: 2026-09-28 has ASC observations — deltas for 09-30/10-06 should be computed against last full-coverage DESC date, not 09-28
+
+  Last full DESC-35 date (pct_cov>=95%): 2026-09-18
+  vol at last full DESC-35: 12.386 Mn bbl
+
+  2026-09-30: vol=10.974 Mn bbl, n_tanks=45/66 (68.2%)
+    delta vs last full DESC-35 (2026-09-18): -1.412 Mn bbl
+    missing tanks: 21/66
+    missing tank vol capacity share (avg per tank): ~31.8%
+
+  2026-10-06: vol=11.518 Mn bbl, n_tanks=45/66 (68.2%)
+    delta vs last full DESC-35 (2026-09-18): -0.868 Mn bbl
+    missing tanks: 21/66
+    missing tank vol capacity share (avg per tank): ~31.8%
+
+  2026-09-24: vol=11.487 Mn bbl, n_tanks=66, pct=100.0%
+
+=== H24b: DB rows with SIGMA0_ELLIPSOID ===
+  terminal_observations columns: ['id', 'terminal_id', 'date', 'tank_id', 'radius_m', 'diameter', 'h_max', 'db_mean', 'created_at', 'relative_orbit', 'orbit_direction', 'db_norm']
+  has backCoeff column: False
+  SIGMA0_ELLIPSOID in ingest scripts:
+scripts/reingest_alfaw_v2.py:155:            }, "processing": {"backCoeff": "SIGMA0_ELLIPSOID", "orthorectify": True,
+scripts/research/auto_hypotheses.py:1287:# ── H24 continuation: DB rows with SIGMA0_ELLIPSOID (item 8) ─────────────────
+scripts/research/auto_hypotheses.py:1288:print("\n=== H24b: DB rows with SIGMA0_ELLIPSOID ===")
+scripts/research/auto_hypotheses.py:1304:        ["grep", "-rn", "--include=*.py", "SIGMA0_ELLIPSOID", "scripts/"],
+scripts/research/auto_hypotheses.py:1308:    print(f"  SIGMA0_ELLIPSOID in ingest scripts:\n{sigma_files if sigma_files else '  None'}")
+scripts/research/auto_hypotheses.py:1313:        ["grep", "-rn", "--include=*.py", "-A2", "SIGMA0_ELLIPSOID", "scripts/"],
+scripts/stage_gate_abc.py:137:                    "backCoeff":    "SIGMA0_ELLIPSOID",
+scripts/panels_v2.py:147:            }, "processing": {"backCoeff": "SIGMA0_ELLIPSOID", "orthorectify": True,
+scripts/jask_panels.py:278:                      "processing": {"backCoeff": "SIGMA0_ELLIPSOID", "orthorectify": True}}],
+scripts/reingest_alfaw_retry.py:196:            }, "processing": {"backCoeff": "SIGMA0_ELLIPSOID", "orthorectify": True,
+scripts/stage_h1_db_norm.py:145:            }, "processing": {"backCoeff": "SIGMA0_ELLIPSOID", "orthorectify": True,
+scripts/jask_smoke.py:151:                      "processing": {"backCoeff": "SIGMA0_ELLIPSOID", "orthorectify": True}}],
+scripts/reingest_alfaw_v2.py:155:            }, "processing": {"backCoeff": "SIGMA0_ELLIPSOID", "orthorectify": True,
+scripts/reingest_alfaw_v2.py-156-                              "demInstance": "COPERNICUS_30"}}]
+scripts/reingest_alfaw_v2.py-157-        },
+--
+scripts/research/auto_hypotheses.py:1287:# ── H24 continuation: DB rows with SIGMA0_ELLIPSOID (item 8) ─────────────────
+scripts/research/auto_hypotheses.py:1288:print("\n=== H24b: DB rows with SIGMA0_ELLIPSOID ===")
+scripts/research/auto_hypotheses.py-1289-h24b_dir = OUT_ROOT / "H24b"
+scripts/research/auto_hypotheses.py-1290-h24b_dir.mkdir(exist_ok=True)
+--
+scripts/research/auto_hypotheses.py:1304:        ["grep", "-rn", "--include=*.py", "SIGMA0_ELLIPSOID", "scripts/"],
+scripts/research/auto_hypotheses.py-1305-        capture_output=True, text=True, cwd=str(REPO_ROOT)
+scripts/research/auto_hypotheses.py-1306-    )
+--
+scripts/research/auto_hypotheses.py:1308:    print(f"  SIGMA0_ELLIPSOID in ingest scripts:\n{sigma_files if sigma_files else '  None'}")
+scripts/research/auto_hypotheses.py-1309-
+scripts/research/auto_hypotheses.py-1310-    # Which terminals / date ranges used SIGMA0 path?
+--
+scripts/research/auto_hypotheses.py:1313:        ["grep", "-rn", "--include=*.py", "-A2", "SIGMA0_ELLIPSOID", "scripts/"],
+scripts/research/auto_hypotheses.py-1314-        capture_output=True, text=True, cwd=str(REPO_ROOT)
+scripts/research/auto_hypotheses.py-1315-    )
+--
+scripts/stage_gate_abc.py:137:                    "backCoeff":    "SIGMA0_ELLIPSOID",
+scripts/stage_gate_abc.py-138-                    "orthorectify": True,
+scripts/stage_gate_abc.py-139-                    "demInstance":  "COPERNICUS_30"
+--
+scripts/panels_v2.py:147:            }, "processing": {"backCoeff": "SIGMA0_ELLIPSOID", "orthorectify": True,
+scripts/panels_v2.py-148-                              "demInstance": "COPERNICUS_30"}}]
+scripts/panels_v2.py-149-        },
+--
+scripts/jask_panels.py:278:                      "processing": {"backCoeff": "SI
+
+H24b: terminal_observations has no backCoeff column → SIGMA0 label not queryable from DB; source of truth is ingest script parameters at run time
+
+=== H-NEW-2: 1-tank RT ingest dates ===
+  2026-09-07: n_tanks=1, tanks=['rt_65'], orbits={'DESCENDING': 1}
+  2026-09-13: n_tanks=1, tanks=['rt_65'], orbits={'DESCENDING': 1}
+  2026-09-19: n_tanks=1, tanks=['rt_65'], orbits={'DESCENDING': 1}
+  2026-09-25: n_tanks=1, tanks=['rt_65'], orbits={'DESCENDING': 1}
+  2026-10-01: n_tanks=1, tanks=['rt_65'], orbits={'DESCENDING': 1}
+  2026-10-07: n_tanks=1, tanks=['rt_65'], orbits={'DESCENDING': 1}
+  2026-10-13: n_tanks=1, tanks=['rt_65'], orbits={'DESCENDING': 1}
+
+  RT dates with n_tanks <= 5: n=7
+      date  n_tanks
+2026-09-07        1
+2026-09-13        1
+2026-09-19        1
+2026-09-25        1
+2026-10-01        1
+2026-10-07        1
+2026-10-13        1
+
+  Scanning for rt_65 / DESC-137 / single-tank ingest source...
+
+  Relevant ingest commits Aug–Oct 2026:
+5e01edf fix(checks+secrets): C04/C05/C11/C12/C14 rework + C06b new + remove hardcoded credentials
+3e10f3d security: remove all hardcoded credentials from codebase
+3e75605 feat: Stage 1 prod fixes — v2 geometry, orbit dataFilter, DB_FLOOR, calibration freeze
+fb870aa patch shadow→dihedral comments in sar_fetch.py and config.py
+57ae808 Ras Tanura: ingest fix + full history rebuild + external validation
+4ef88c9 Support ascending orbit for Yanbu + parameterise LOS azimuth; add db_mean fix script
+437d73d Fix terminal max_capacity and add db_mean floor clipping
+7f5b0bf fix: limit terminal catalog lookback to 1yr (or since last known date)
+082e932 Add Zirku Island terminal (UAE): 10 tanks (10×r50); 364 tanks total
+a162d88 Add Das Island terminal (UAE): 15 tanks (1×r50, 14×r35); 354 tanks total
+3231ebe Add Ruwais terminal (UAE): 40 tanks (29×r35, 11×r30); 339 tanks total
+f621e4a fix: ship_backfill git pull --rebase before push; update Fujairah to 22 tanks (8×r55, 4×r35, 10×r30)
+576649b feat: add Ras Tanura (SA), Fujairah (UAE), Mina Al Ahmadi (KW) — 54 tanks
+6a6ab97 feat: add Ras Laffan terminal (QA) — 34 tanks (6×r45, 10×r40, 3×r35, 15×r30)
+9f0cf00 Fix SAR scene dedup: use relative_orbit_number instead of 12h window
+0282d75 Process all terminals in SAR pipeline, not only Iranian
+5ffa78a Consolidate tank/terminal data into locations.py reading from data/locations.json
+17bb6d5 merge: add Iran terminal dropdown + integrate terminals into main pipeline
+3cc42a1 feat: merge Iranian termina
+
+  Pattern 'DESC-137':
+scripts/research/auto_hypotheses.py:89:                 "(какой воркфлоу/скрипт), почему DESC-137 проходит несмотря на фильтр.",
+scripts/research/auto_hypotheses.py:1378:    # Key clue from sar_fetch.py:224: "rt_65 / DESC-137 contamination mechanism"
+scripts/research/auto_hypotheses.py:1381:    print("\n  Scanning for rt_65 / DESC-137 / single-tank ingest source...")
+scripts/research/auto_hypotheses.py:1392:    # Check which scripts reference DESC-137 or orbit 137
+scripts/research/auto_hypothese
+
+  Pattern 'orbit.*137':
+scripts/research/auto_hypotheses.py:1379:    # Key clue from verify_orbit_fix_3.py: "213 single-tank dates vs orbit 137 12-day cycle"
+scripts/research/auto_hypotheses.py:1392:    # Check which scripts reference DESC-137 or orbit 137
+scripts/research/auto_hypotheses.py:1393:    for _pat in ["DESC-137", "orbit.*137", "137.*orbit", "single.tank", "rt_65.*DESC", "backfill_ras_tanura"]:
+scripts/research/auto_hypotheses.py:2903:# ── SAR_FETCH: orbit filter code in sar_fetch.py — who calls it, why DESC
+
+  Pattern '137.*orbit':
+scripts/research/auto_hypotheses.py:1392:    # Check which scripts reference DESC-137 or orbit 137
+scripts/research/auto_hypotheses.py:1393:    for _pat in ["DESC-137", "orbit.*137", "137.*orbit", "single.tank", "rt_65.*DESC", "backfill_ras_tanura"]:
+scripts/verify_orbit_fix_3.py:759:        # Orbit 137 is offset ~5-6 days from orbit 35
+scripts/verify_orbit_fix_3.py:778:        f"**Orbit 137 offset from orbit 35**: 4–7 days within 12-day cycle\n",
+scripts/diag_juwaymah_yanbu_3.py:592:           
+
+  Pattern 'single.tank':
+scripts/research/auto_hypotheses.py:1379:    # Key clue from verify_orbit_fix_3.py: "213 single-tank dates vs orbit 137 12-day cycle"
+scripts/research/auto_hypotheses.py:1380:    # Key clue from backfill_ras_tanura.py: tracks single_tank dates
+scripts/research/auto_hypotheses.py:1381:    print("\n  Scanning for rt_65 / DESC-137 / single-tank ingest source...")
+scripts/research/auto_hypotheses.py:1393:    for _pat in ["DESC-137", "orbit.*137", "137.*orbit", "single.tank", "rt_65.*DESC", "backfill
+
+  Pattern 'rt_65.*DESC':
+scripts/research/auto_hypotheses.py:1378:    # Key clue from sar_fetch.py:224: "rt_65 / DESC-137 contamination mechanism"
+scripts/research/auto_hypotheses.py:1381:    print("\n  Scanning for rt_65 / DESC-137 / single-tank ingest source...")
+scripts/research/auto_hypotheses.py:1393:    for _pat in ["DESC-137", "orbit.*137", "137.*orbit", "single.tank", "rt_65.*DESC", "backfill_ras_tanura"]:
+scripts/research/auto_hypotheses.py:2970:   (the rt_65 / DESC-137 contamination mechanism)
+scripts/sar_fetc
+
+  Pattern 'backfill_ras_tanura':
+scripts/research/auto_hypotheses.py:1380:    # Key clue from backfill_ras_tanura.py: tracks single_tank dates
+scripts/research/auto_hypotheses.py:1386:         "scripts/backfill_ras_tanura.py", "scripts/verify_orbit_fix_3.py"],
+scripts/research/auto_hypotheses.py:1393:    for _pat in ["DESC-137", "orbit.*137", "137.*orbit", "single.tank", "rt_65.*DESC", "backfill_ras_tanura"]:
+scripts/research/auto_hypotheses.py:2957:1. backfill_ras_tanura.py: passes ALLOWED_ORBIT = {"relative_orbit": 35, "direc
+
+  GHA workflows with ras_tanura/rt_65:
+.github/workflows/series_health_standard.yml:207:            --terminal ras_tanura --orbit 35 \
+.github/workflows/stage5_asc_backfill.yml:92:        run: ls -lh diagnostics/rt_decomp/backup_ras_tanura_*.csv 2>/dev/null || echo "No backup file found"
+.github/workflows/terminal_checks.yml:7:        description: "Terminal ID (yanbu / ras_tanura / jask / …)"
+.github/workflows/terminal_checks.yml:58:        if: contains('ras_tanura yanbu', github.event.inputs.terminal)
+.github/workflows/terminal_checks.yml:70:        if: github.event.inputs.terminal == 'ras_tanura'
+.github/workflows/diag_ras_tanura.yml:22:        run: python scripts/diagnose_ras_tanura_imagery.py
+.github/workflows/diag_ras_tanura.yml:32:          path: diagnostics/ras_tanura/
+.github/workflows/compute_export_yanbu.yml:57:          rt_path = f"{BASE}/terminals/ras_tanura_daily.json"
+.github/workflows/compute_export_yanbu.yml:62:              print("(b) RT: ras_tanura_daily.json not found (may use separate export)")
+
+  URGENT rt_65 — checking terminal_observations for created_at/updated_at columns...
+  terminal_observations columns: ['id', 'terminal_id', 'date', 'tank_id', 'radius_m', 'diameter', 'h_max', 'db_mean', 'created_at', 'relative_orbit', 'orbit_direction', 'db_norm']
+  has created_at: True, has updated_at: False
+  Querying all terminals: rows with created_at >= 2026-10-10 ...
+    al_flaw: 48 rows with created_at>=2026-10-10
+    das_island: 15 rows with created_at>=2026-10-10
+    de_kastri: 4 rows with created_at>=2026-10-10
+    fujairah: 88 rows with created_at>=2026-10-10
+    halul: 50 rows with created_at>=2026-10-10
+    jask: 40 rows with created_at>=2026-10-10
+    juwaymah: 18 rows with created_at>=2026-10-10
+    lavan: 48 rows with created_at>=2026-10-10
+    mina_ahmadi: 28 rows with created_at>=2026-10-10
+    novorossiysk: 60 rows with created_at>=2026-10-10
+    primorsk: 72 rows with created_at>=2026-10-10
+    ras_laffan: 34 rows with created_at>=2026-10-10
+    ras_tanura: 92 rows with created_at>=2026-10-10
+    ruwais: 40 rows with created_at>=2026-10-10
+    siri: 42 rows with created_at>=2026-10-10
+    sitra: 25 rows with created_at>=2026-10-10
+    zirku: 10 rows with created_at>=2026-10-10
+  Total late rows across all terminals: 714
+
+  [ТЗ v2 H_NEW_2]: 1-tank RT ingest: какой GHA-процесс записал 714 строк terminal_observations с created_at ≥ 2026-10-10 по 17 терминалам, если Kharg cron писал только raw_observations. Дать: распределение created_at по терминалу И по часу/минуте (батчи), label/relOrbit/n_tanks этих батчей, сопоставить каждый батч с run_started_at ВСЕХ воркфлоу всех веток (gh api /actions/runs, за 10-10…10-21). Батчи без совпадения — список. «Плановый cron» — не вывод без run_id.
+
+  --- GHA runs cross-reference (Oct 10–21 all branches) ---
+  GH token available: False
+  gh api stderr: gh: To use GitHub CLI in a GitHub Actions workflow, set the GH_TOKEN environment variable. Example:
+  env:
+    GH_TOKEN: ${{ github.token }}
+  gh api returned empty response (no runs or auth failure)
+  Cannot cross-reference: no GHA runs fetched
+
+  Pattern 'rt_65' found:
+scripts/stage0_full_optical.py:10:  RT-south  — rt_0..rt_4, rt_11..rt_65 (61 tanks)
+scripts/stage0_full_optical.py:23:  RT: rt_65 (known edge artefact), rt_3, rt_4 (largest, densest cluster edge)
+scripts/stage0_full_optical.py:59:WORST_TANKS = {"jw_1", "jw_17", "yb_3", "yb_6", "rt_65", "rt_3", "rt_4"}
+scripts/stage0_full_optical.py:69:    [f"rt_{i}" for i in range(11, 66)]        # rt_11..rt_65
+scripts/stage0_full_optical.py:112:    ("rt_65", 26.637591408424406, 50.160445373274800, 20),
+scripts/research/auto_hypotheses.py:1377:    # Check git log for ANY script that might have written rt_65 on those dates
+scripts/research/auto_hypotheses.py:1378:    # Key clue from sar_fetch.py:224: "rt_65 / DESC-137 contamination mechanism"
+scripts/research/auto_hypotheses.py:1381:    print("\n  Scanning for rt_65 / DESC-137 / single-tank ingest source...")
+scripts/research/auto_hypotheses.py:1393:    for _pat in ["DESC-137", "orbit.*137", "137.*orbit", "single.tank", "rt_65.*DESC", "backfill_ras_tanu
+
+  Pattern 'single.*tank.*upsert' found:
+scripts/research/auto_hypotheses.py:1588:    for _rt65_pat in ["rt_65", "single.*tank.*upsert", "upsert.*single.*tank"]:
+
+  Pattern 'upsert.*single.*tank' found:
+scripts/research/auto_hypotheses.py:1588:    for _rt65_pat in ["rt_65", "single.*tank.*upsert", "upsert.*single.*tank"]:
+
+=== Security: RLS policies audit ===
+  RLS in SQL files:
+./scripts/research/rls_policy_draft.sql:1:-- RLS policy draft for OilRadar Supabase tables
+./scripts/research/rls_policy_draft.sql:9:-- Apply order: (1) enable RLS, (2) add policies, (3) verify with pg_policies
+./scripts/research/rls_policy_draft.sql:12:ALTER TABLE terminal_observations ENABLE ROW LEVEL SECURITY;
+./scripts/research/rls_policy_draft.sql:15:CREATE POLICY "anon_select_terminal_observations"
+./scripts/research/rls_policy_draft.sql:22:-- service_role bypasses RLS by default in Supabase; no explicit policy needed.
+./scripts/research/rls_policy_draft.sql:23:-- To restrict even service_role: ALTER TABLE terminal_observations FORCE ROW LEVEL SECURITY;
+./scripts/research/rls_policy_draft.sql:24:-- then add: CREATE POLICY "service_role_all" ON terminal_observations FOR ALL TO service_role USING (true);
+./scripts/research/rls_policy_draft.sql:27:ALTER TABLE terminal_volume_timeseries ENABLE ROW LEVEL SECURITY;
+./scripts/research/rls_policy_draft.sql:29:CREATE POLICY "anon_select_terminal_volume_timeseries"
+./scripts/research/rls_policy_draft.sql:36:ALTER TABLE raw_observations ENABLE ROW LEVEL SECURITY;
+./scripts/research/rls_policy_draft.sql:38:CREATE POLICY "anon_select_raw_observations"
+./scripts/research/rls_policy_draft.sql:45:ALTER TABLE volume_timeseries ENABLE ROW LEVEL SECURITY;
+./scripts/research/rls_policy_draft.sql:47:CREATE POLICY "anon_select_volume_timeseries"
+./scripts/research/rls_policy_draft.sql:54:ALTER TABLE kharg_daily ENABLE ROW LEVEL SECURITY;
+./scripts/research/rls_policy_draft.sql:56:CREATE POLICY "anon_select_kharg_daily"
+./scripts/research/rls_policy_draft.sql:63:ALTER TABLE kharg_signals ENABLE ROW LEVEL SECURITY;
+./scripts/research/rls_policy_draft.sql:65:CREATE POLICY "anon_select_kharg_signals"
+
+  psql pg_class_rls:
+  (empty)
+  psql stderr: psql: error: connection to server at "db.yoekhkczwdeyauwarsyy.supabase.co" (2406:da1a:b00:1302:5931:6512:7e5e:1d2), port 5432 failed: Network is unreachable
+	Is the server running on that host and accepting TCP/IP connections?
+
+  psql pg_policies:
+  (empty)
+  psql stderr: psql: error: connection to server at "db.yoekhkczwdeyauwarsyy.supabase.co" (2406:da1a:b00:1302:5931:6512:7e5e:1d2), port 5432 failed: Network is unreachable
+	Is the server running on that host and accepting TCP/IP connections?
+
+  Hardcoded publishable key occurrences: n=12
+    ./product/dashboard.html:1180
+    ./product/dashboard.html:1944
+    ./product/zh-dashboard.html:1796
+    ./scripts/diag_closure.py:27
+    ./scripts/research/auto_hypotheses.py:21
+    ./scripts/research/auto_hypotheses.py:1679
+    ./scripts/terminal_checks.py:30
+    ./scripts/diag_orbit_labels.py:23
+    ./marketing/zh-monitor.html:187
+    ./marketing/monitor.html:291
+    ./analysis/kharg_patterns/analyze_patterns.py:32
+    ./calibration/calibrate_kharg.py:36
+
+  SQL RLS policy draft: /home/runner/work/kharg-dashboard/kharg-dashboard/scripts/research/rls_policy_draft.sql (NOT applied — draft only)
+  Draft exists: True
+
+  Written: diagnostics/research/2026-10/SECURITY/security_rls_audit.txt
+
+=== CC01: Duplicate (date, tank_id) check [was H11] ===
+  al_flaw: rows=7656, dupes=0
+  das_island: rows=3615, dupes=0
+  de_kastri: rows=832, dupes=0
+  fujairah: rows=7150, dupes=0
+  halul: rows=1294, dupes=0
+  jask: rows=2220, dupes=0
+  juwaymah: rows=6040, dupes=0
+  kozmino: rows=612, dupes=0
+  lavan: rows=7224, dupes=0
+  mina_ahmadi: rows=4424, dupes=0
+  novorossiysk: rows=16185, dupes=0
+  primorsk: rows=16272, dupes=0
+  ras_laffan: rows=10608, dupes=0
+  ras_tanura: rows=37081, dupes=0
+  ruwais: rows=11920, dupes=0
+  siri: rows=48, dupes=0
+  sitra: rows=7800, dupes=0
+  yanbu: rows=3984, dupes=0
+  zirku: rows=3010, dupes=0
+
+CC01 RESULT: total duplicate rows=0
+
+=== CC06: db_mean outliers [was H12] ===
+  al_flaw: min=-20.35 max=8.05 q01=-14.50 q99=-0.98 n=7656
+  das_island: min=-5.00 max=19.18 q01=-4.45 q99=15.31 n=3615
+  de_kastri: min=-5.00 max=16.00 q01=-4.72 q99=11.88 n=832
+  fujairah: min=-5.00 max=22.96 q01=-5.00 q99=20.31 n=7150
+  halul: min=-5.00 max=17.40 q01=-4.22 q99=13.00 n=1294
+  jask: min=-5.00 max=20.08 q01=-4.08 q99=15.96 n=2220
+  juwaymah: min=-5.00 max=22.88 q01=-5.00 q99=19.71 n=6040
+  kozmino: min=-5.00 max=17.43 q01=-2.50 q99=14.97 n=612
+  lavan: min=-5.00 max=17.88 q01=-5.00 q99=14.62 n=7224
+  mina_ahmadi: min=-5.00 max=18.80 q01=-2.63 q99=16.50 n=4424
+  novorossiysk: min=-5.00 max=26.75 q01=-3.50 q99=18.16 n=16185
+  primorsk: min=-5.00 max=20.70 q01=-3.45 q99=12.84 n=16272
+  ras_laffan: min=-5.00 max=24.68 q01=-4.69 q99=18.94 n=10608
+  ras_tanura: min=-6.71 max=23.40 q01=-3.89 q99=18.15 n=37081
+  ruwais: min=-5.00 max=23.84 q01=-3.16 q99=19.56 n=11920
+  siri: min=-5.00 max=10.30 q01=-5.00 q99=10.30 n=48
+  sitra: min=-5.00 max=22.75 q01=-5.00 q99=14.01 n=7800
+  yanbu: min=-4.73 max=23.73 q01=-2.94 q99=18.03 n=3984
+  zirku: min=-5.00 max=24.79 q01=-1.95 q99=19.89 n=3010
+
+CC06: outlier summary written for 19 terminals
+
+=== CC02: TVT sudden volume jumps [was H13] ===
+
+CC02 RESULT: terminals with jumps=0
+
+=== CC03: TVT completeness [was H14] ===
+  al_flaw: obs_dates=319, tvt=319, missing=0
+  das_island: obs_dates=301, tvt=301, missing=0
+  de_kastri: obs_dates=416, tvt=416, missing=0
+  fujairah: obs_dates=325, tvt=325, missing=0
+  halul: obs_dates=316, tvt=5, missing=311
+  jask: obs_dates=111, tvt=111, missing=0
+  juwaymah: obs_dates=320, tvt=320, missing=0
+  kozmino: obs_dates=51, tvt=51, missing=0
+  lavan: obs_dates=301, tvt=301, missing=0
+  mina_ahmadi: obs_dates=316, tvt=316, missing=0
+  novorossiysk: obs_dates=1079, tvt=1079, missing=0
+  primorsk: obs_dates=904, tvt=904, missing=0
+  ras_laffan: obs_dates=312, tvt=312, missing=0
+  ras_tanura: obs_dates=570, tvt=563, missing=7
+  ruwais: obs_dates=298, tvt=298, missing=0
+  siri: obs_dates=8, tvt=8, missing=0
+  sitra: obs_dates=312, tvt=312, missing=0
+  yanbu: obs_dates=332, tvt=332, missing=0
+  zirku: obs_dates=301, tvt=301, missing=0
+
+CC03 RESULT: total obs dates not in TVT=318
+
+=== CC04: Persistently missing tanks [was H16] ===
+  al_flaw: total_dates=319, tanks_missing>50%=0
+  das_island: total_dates=301, tanks_missing>50%=3
+tank_id  n_dates_present  pct_present
+   di_0                1     0.332226
+  di_10                1     0.332226
+   di_3                1     0.332226
+  de_kastri: total_dates=416, tanks_missing>50%=0
+  fujairah: total_dates=325, tanks_missing>50%=0
+  halul: total_dates=316, tanks_missing>50%=6
+tank_id  n_dates_present  pct_present
+   hl_0                5     1.582278
+   hl_1                5     1.582278
+   hl_2                5     1.582278
+   hl_3                5     1.582278
+   hl_4                5     1.582278
+   hl_5                5     1.582278
+  jask: total_dates=111, tanks_missing>50%=0
+  juwaymah: total_dates=320, tanks_missing>50%=0
+  kozmino: total_dates=51, tanks_missing>50%=0
+  lavan: total_dates=301, tanks_missing>50%=0
+  mina_ahmadi: total_dates=316, tanks_missing>50%=0
+  novorossiysk: total_dates=1079, tanks_missing>50%=0
+  primorsk: total_dates=904, tanks_missing>50%=0
+  ras_laffan: total_dates=312, tanks_missing>50%=0
+  ras_tanura: total_dates=570, tanks_missing>50%=0
+  ruwais: total_dates=298, tanks_missing>50%=0
+  siri: total_dates=8, tanks_missing>50%=0
+  sitra: total_dates=312, tanks_missing>50%=0
+  yanbu: total_dates=332, tanks_missing>50%=0
+  zirku: total_dates=301, tanks_missing>50%=0
+
+=== CC07: Pass interval regularity [was H18] ===
+  al_flaw: passes=319, median_gap=12.0d, irregular=241
+  das_island: passes=301, median_gap=12.0d, irregular=230
+  de_kastri: passes=416, median_gap=7.0d, irregular=24
+  fujairah: passes=325, median_gap=12.0d, irregular=249
+  halul: passes=316, median_gap=12.0d, irregular=241
+  jask: passes=111, median_gap=6.0d, irregular=39
+  juwaymah: passes=320, median_gap=12.0d, irregular=249
+  kozmino: passes=51, median_gap=12.0d, irregular=50
+  lavan: passes=301, median_gap=12.0d, irregular=231
+  mina_ahmadi: passes=316, median_gap=12.0d, irregular=242
+  novorossiysk: passes=1079, median_gap=5.0d, irregular=402
+  primorsk: passes=904, median_gap=5.0d, irregular=229
+  ras_laffan: passes=312, median_gap=12.0d, irregular=237
+  ras_tanura: passes=570, median_gap=4.0d, irregular=177
+  ruwais: passes=298, median_gap=12.0d, irregular=228
+  siri: passes=8, median_gap=1.0d, irregular=4
+  sitra: passes=312, median_gap=12.0d, irregular=237
+  yanbu: passes=332, median_gap=12.0d, irregular=323
+  zirku: passes=301, median_gap=12.0d, irregular=230
+
+=== CC05: db_mean distribution shift pre/post 2026-09-07 [was H19] ===
+  DEFINITION: pre=date<2026-09-07, post=date>=2026-09-07; delta_mean=post_mean-pre_mean per terminal
+  al_flaw: pre_mean=-4.724 (n=7448) post_mean=-3.862 (n=208) delta=0.862
+  das_island: pre_mean=4.389 (n=3528) post_mean=4.727 (n=87) delta=0.338
+  de_kastri: pre_mean=2.263 (n=818) post_mean=1.406 (n=14) delta=-0.857
+  fujairah: pre_mean=6.775 (n=6930) post_mean=5.414 (n=220) delta=-1.361
+  halul: pre_mean=3.247 (n=1220) post_mean=6.752 (n=74) delta=3.505
+  jask: pre_mean=6.002 (n=2100) post_mean=5.760 (n=120) delta=-0.242
+  juwaymah: pre_mean=6.425 (n=5947) post_mean=7.733 (n=93) delta=1.308
+  lavan: pre_mean=4.224 (n=7056) post_mean=3.924 (n=168) delta=-0.300
+  mina_ahmadi: pre_mean=6.018 (n=4326) post_mean=4.940 (n=98) delta=-1.078
+  novorossiysk: pre_mean=3.847 (n=15975) post_mean=-0.022 (n=210) delta=-3.869
+  primorsk: pre_mean=2.378 (n=16020) post_mean=2.627 (n=252) delta=0.250
+  ras_laffan: pre_mean=7.127 (n=10370) post_mean=7.079 (n=238) delta=-0.048
+  ras_tanura: pre_mean=5.956 (n=36432) post_mean=6.253 (n=649) delta=0.298
+  ruwais: pre_mean=7.171 (n=11640) post_mean=7.540 (n=280) delta=0.369
+  sitra: pre_mean=5.984 (n=7625) post_mean=6.719 (n=175) delta=0.735
+  yanbu: pre_mean=5.822 (n=3960) post_mean=7.450 (n=24) delta=1.628
+  zirku: pre_mean=7.732 (n=2940) post_mean=8.376 (n=70) delta=0.645
+
+CC05 RESULT: terminals with |delta_mean| > 1.0 dB: 6
+  For these terminals, ingest path (backCoeff/script version) after 2026-09-07 must be audited.
+ terminal_id  pre_mean  post_mean  delta_mean  pre_n  post_n
+    fujairah     6.775      5.414      -1.361   6930     220
+       halul     3.247      6.752       3.505   1220      74
+    juwaymah     6.425      7.733       1.308   5947      93
+ mina_ahmadi     6.018      4.940      -1.078   4326      98
+novorossiysk     3.847     -0.022      -3.869  15975     210
+       yanbu     5.822      7.450       1.628   3960      24
+
+=== CC08: Cross-terminal orbit synchrony [was H20] ===
+  Dates in ≥2 terminals: 2116/2948 (71.8%)
+
+=== H11 (REAL): Per-tank IQR for WL tanks in 3–10 dB range ===
+  jask: n_tanks=20, pct_iqr_in_3_10=55.0%, median_iqr=3.97
+  ras_tanura: n_tanks=66, pct_iqr_in_3_10=77.3%, median_iqr=6.27
+  H11 yanbu: no DESCENDING rows; using all orbits
+  yanbu: n_tanks=12, pct_iqr_in_3_10=91.7%, median_iqr=6.97
+H11 jask: NOT_CONFIRMED — 55.0% tanks in 3–10 dB IQR, median_IQR=3.973
+H11 ras_tanura: CONFIRMED — 77.3% tanks in 3–10 dB IQR, median_IQR=6.266
+H11 yanbu: CONFIRMED — 91.7% tanks in 3–10 dB IQR, median_IQR=6.97
+
+=== H12 (REAL): alfaw_stuck7 vs live17 step_db (Mann-Whitney) ===
+  stuck7: n=7, median_step=0.010
+  live17: n=17,  median_step=0.005
+  Mann-Whitney U=91.5, p=0.9805 (alternative='stuck<live')
+H12 VERDICT: NOT_CONFIRMED — stuck7 median=0.010 vs live17=0.005, p=0.9805
+
+=== H13 (REAL): Annual dB offset stability std<1.5 dB per tank ===
+  ras_tanura: 66 tanks, pct_stable(std<1.5)=45.5%
+H13 ras_tanura VERDICT: NOT_CONFIRMED
+  yanbu: 12 tanks, pct_stable(std<1.5)=25.0%
+H13 yanbu VERDICT: NOT_CONFIRMED
+  kharg: 47 tanks, pct_stable=36.2%
+H13 kharg VERDICT: NOT_CONFIRMED
+
+=== H14 (REAL): Clip>15% tank variance share vs capacity share ===
+  ras_tanura: n_tanks=66, clip_heavy(>15%)=15, var_share=0.370, cap_share=0.227
+H14 ras_tanura VERDICT: NOT_CONFIRMED — var_share < cap_share = False
+  yanbu: n_tanks=12, clip_heavy(>15%)=3, var_share=0.295, cap_share=0.250
+H14 yanbu VERDICT: NOT_CONFIRMED — var_share < cap_share = False
+  kharg: n_tanks=47, clip_heavy=11, var_share=0.312, cap_share=0.234
+H14 kharg VERDICT: NOT_CONFIRMED
+
+=== H16 (REAL): Monthly median amplitude ≥1 dB, adjacent-year corr ≥0.5 ===
+  al_flaw: years=10, median_amplitude=0.87, n_years_amp>=1dB=4
+  al_flaw: adjacent-year pairs=9, median_r=-0.099, n_r>=0.5=0
+H16 al_flaw VERDICT: NOT_CONFIRMED
+  das_island: years=10, median_amplitude=3.18, n_years_amp>=1dB=10
+  das_island: adjacent-year pairs=9, median_r=-0.021, n_r>=0.5=0
+H16 das_island VERDICT: NOT_CONFIRMED
+  de_kastri: years=7, median_amplitude=4.16, n_years_amp>=1dB=7
+  de_kastri: adjacent-year pairs=6, median_r=0.369, n_r>=0.5=3
+H16 de_kastri VERDICT: NOT_CONFIRMED
+  fujairah: years=10, median_amplitude=3.92, n_years_amp>=1dB=10
+  fujairah: adjacent-year pairs=9, median_r=-0.234, n_r>=0.5=0
+H16 fujairah VERDICT: NOT_CONFIRMED
+  halul: years=10, median_amplitude=4.70, n_years_amp>=1dB=10
+  halul: adjacent-year pairs=9, median_r=-0.005, n_r>=0.5=1
+H16 halul VERDICT: NOT_CONFIRMED
+  jask: years=3, median_amplitude=2.05, n_years_amp>=1dB=3
+  jask: adjacent-year pairs=2, median_r=0.165, n_r>=0.5=0
+H16 jask VERDICT: NOT_CONFIRMED
+  juwaymah: years=10, median_amplitude=3.84, n_years_amp>=1dB=10
+  juwaymah: adjacent-year pairs=9, median_r=0.119, n_r>=0.5=0
+H16 juwaymah VERDICT: NOT_CONFIRMED
+  kozmino: years=2, median_amplitude=2.36, n_years_amp>=1dB=2
+  kozmino: adjacent-year pairs=1, median_r=-0.887, n_r>=0.5=0
+H16 kozmino VERDICT: NOT_CONFIRMED
+  lavan: years=10, median_amplitude=2.54, n_years_amp>=1dB=10
+  lavan: adjacent-year pairs=9, median_r=-0.047, n_r>=0.5=1
+H16 lavan VERDICT: NOT_CONFIRMED
+  mina_ahmadi: years=10, median_amplitude=2.76, n_years_amp>=1dB=10
+  mina_ahmadi: adjacent-year pairs=9, median_r=0.079, n_r>=0.5=0
+H16 mina_ahmadi VERDICT: NOT_CONFIRMED
+  novorossiysk: years=12, median_amplitude=2.77, n_years_amp>=1dB=12
+  novorossiysk: adjacent-year pairs=11, median_r=0.458, n_r>=0.5=5
+H16 novorossiysk VERDICT: NOT_CONFIRMED
+  primorsk: years=12, median_amplitude=1.85, n_years_amp>=1dB=11
+  primorsk: adjacent-year pairs=11, median_r=-0.032, n_r>=0.5=2
+H16 primorsk VERDICT: NOT_CONFIRMED
+  ras_laffan: years=10, median_amplitude=2.82, n_years_amp>=1dB=10
+  ras_laffan: adjacent-year pairs=9, median_r=0.240, n_r>=0.5=1
+H16 ras_laffan VERDICT: NOT_CONFIRMED
+  ras_tanura: years=10, median_amplitude=1.63, n_years_amp>=1dB=9
+  ras_tanura: adjacent-year pairs=9, median_r=-0.278, n_r>=0.5=0
+H16 ras_tanura VERDICT: NOT_CONFIRMED
+  ruwais: years=10, median_amplitude=2.52, n_years_amp>=1dB=10
+  ruwais: adjacent-year pairs=9, median_r=-0.224, n_r>=0.5=1
+H16 ruwais VERDICT: NOT_CONFIRMED
+  sitra: years=10, median_amplitude=1.94, n_years_amp>=1dB=10
+  sitra: adjacent-year pairs=9, median_r=-0.028, n_r>=0.5=1
+H16 sitra VERDICT: NOT_CONFIRMED
+  yanbu: years=11, median_amplitude=4.12, n_years_amp>=1dB=11
+  yanbu: adjacent-year pairs=9, median_r=0.190, n_r>=0.5=1
+H16 yanbu VERDICT: NOT_CONFIRMED
+  zirku: years=10, median_amplitude=3.96, n_years_amp>=1dB=10
+  zirku: adjacent-year pairs=9, median_r=0.015, n_r>=0.5=0
+H16 zirku VERDICT: NOT_CONFIRMED
+
+=== H18 (REAL): WL-45 health check on DESC-35-only series ===
+  WL-45 tanks present in DESC-35: 45/45 (100.0%)
+  WL-45 DESC-35 dates: 315
+  WL-45 cap_fraction=100.0% (gate>=60%), missing>50%=0
+H18 VERDICT: PASS — WL-45 on DESC-35: cap=100.0%, tanks_missing_50pct=0
+
+=== H19 (REAL): E1/E2/E3 on DESC-35 — sign and magnitude ===
+  NOTE: E1/E2/E3 results computed in H02b block above.
+  See: diagnostics/research/2026-10/H02b/h02b_e1e2e3_tvt.csv
+  DESC-35 db_mean proxy checks printed above in H02b section.
+
+=== H20 (REAL): Per-tank Kharg calibration p05/p95 → CSV ===
+  Kharg per-tank calibration: 47 tanks
+  Fill range proxy (p95-p05): min=7.30, median=12.45, max=18.27
+  Written: h20_kharg_per_tank_calibration.csv
+  NOTE: No UANI correlations per ТЗ rules.
+
+=== D3: db_mean normalization audit ===
+  Normalization references: 719 lines
+scripts/series_health_standard.py:7:All metrics are dimensionless or normalized by the terminal's own dynamic_range_db
+scripts/series_health_standard.py:71:    rows = fetch_all("raw_observations", "date,tank_id,db_mean")
+scripts/series_health_standard.py:74:    df = df.dropna(subset=["db_mean"])
+scripts/series_health_standard.py:82:                     "date,tank_id,db_mean,relative_orbit,orbit_direction",
+scripts/series_health_standard.py:86:    df = df.dropna(subset=["db_mean"])
+scripts/series_health_standard.py:114:| live_fraction | frac(tanks: per-tank-step ≥ 5% dynamic_range) | [0,1] | (threshold normalized) | [0,1] |
+scripts/series_health_standard.py:121:- All normalized metrics are ∈ [0, ∞) but practically ∈ [0, 1] for healthy series.
+scripts/series_health_standard.py:128:    """Compute normalized health metrics from per-tank per-date db_mean dataframe."""
+scripts/series_health_standard.py:132:        df.groupby("date")["db_mean"]
+scripts/series_health_standard.py:139:    dynamic_range_db = float(daily.quantile(0.95) - daily.quantile(0.05))
+scripts/series_health_standard.py:150:    # deltas; raw and normalized
+scripts/series_health_standard.py:153:    delta_p50_norm= float(deltas_raw.quantile(0.50)  / dr) if not np.isnan(dr) else np.nan
+scripts/series_health_standard.py:154:    delta_p90_norm= float(deltas_raw.quantile(0.90)  / dr) if not np.isnan(dr) else np.nan
+scripts/series_health_standard.py:155:    delta_p99_norm= float(deltas_raw.quantile(0.99)  / dr) if not np.
+
+=== D4: Terminal volume computation audit ===
+  Volume computation references: 247 lines
+scripts/diag_closure.py:54:    tvt = fetch_all("terminal_volume_timeseries", "date,vol_mn_bbl,aggregation,smoothed",
+scripts/reingest_alfaw_v2.py:39:BARREL_PER_M3 = 6.2898
+scripts/export_terminal_json.py:52:            .select("date,vol_mn_bbl")
+scripts/export_terminal_json.py:66:        return pd.DataFrame(columns=["date", "vol_mn_bbl"])
+scripts/export_terminal_json.py:80:            .select("date,vol_mn_bbl")
+scripts/export_terminal_json.py:93:        return pd.DataFrame(columns=["date", "vol_mn_bbl"])
+scripts/export_terminal_json.py:107:        "values": [round(v, 3) for v in df["vol_mn_bbl"].tolist()],
+scripts/export_terminal_json.py:143:    df2 = df.rename(columns={"vol_mn_bbl": tid})
+scripts/research/auto_hypotheses.py:255:    tvt_rt = fetch_all("terminal_volume_timeseries", "date,vol_mn_bbl,aggregation,smoothed",
+scripts/research/auto_hypotheses.py:363:# (these would be filtered by apply_coverage_filter at next compute run,
+scripts/research/auto_hypotheses.py:381:        tvt_rows = fetch_all("terminal_volume_timeseries", "date,vol_mn_bbl,aggregation",
+scripts/research/auto_hypotheses.py:442:    tvt_rt2 = fetch_all("terminal_volume_timeseries", "date,vol_mn_bbl,aggregation",
+scripts/research/auto_hypotheses.py:650:    tvt_yb = fetch_all("terminal_volume_timeseries", "date,vol_mn_bbl,aggregation",
+scripts/research/auto_hypotheses.py:713:coverage_filter would drop at next run, but TVT currently includes.
+scripts/research/auto_hypotheses.py:991:# Check: Δ vol_mn_bbl in win
+
+=== CDSE block: H04/H08-H10/H15/H17/H21/H22 ===
+
+  [ТЗ v2 H04]: Даты RT 09-07,13,19,25,10-01,07,13 И 09-24,30,10-06 × каталог CDSE → relOrbit по каждой. Предсказание: два DESC-трека; второй = 35.
+
+--- H04: RT specific dates × CDSE catalog (per ТЗ v2) ---
+  RT CDSE scenes Sep–Oct 2026: n=45
+
+  Per target date → relOrbit/direction:
+    2026-09-07: n_scenes=2, orbits=[['DESCENDING', 137]]
+    2026-09-13: n_scenes=1, orbits=[['DESCENDING', 137]]
+    2026-09-19: n_scenes=2, orbits=[['DESCENDING', 137]]
+    2026-09-25: n_scenes=1, orbits=[['DESCENDING', 137]]
+    2026-10-01: n_scenes=2, orbits=[['DESCENDING', 137]]
+    2026-10-07: n_scenes=1, orbits=[['DESCENDING', 137]]
+    2026-10-13: n_scenes=2, orbits=[['DESCENDING', 137]]
+    2026-09-24: n_scenes=2, orbits=[['DESCENDING', 35]]
+    2026-09-30: n_scenes=1, orbits=[['DESCENDING', 35]]
+    2026-10-06: n_scenes=2, orbits=[['DESCENDING', 35]]
+
+  DESC tracks found: [35, 137]
+H04 VERDICT: SUPPORTED — DESC tracks=[35, 137], has_35=True
+  RT CDSE scenes Aug–Oct 2026: n=74
+
+  [ТЗ v2 H08]: Все даты Yanbu × каталог CDSE над bbox → relOrbit/direction; ≥2 орбиты И ≥20% дат на вторичной орбите = SUPPORTED.
+
+--- H08: Yanbu DB dates × CDSE catalog (per ТЗ v2) ---
+  Yanbu DB observation dates: n=332
+  Yanbu CDSE scenes (all time): n=500
+
+  Yanbu DB dates per orbit (from CDSE match):
+orbitDirection  relativeOrbit  n_dates_yanbu                                        years
+     ASCENDING           14.0            245 2017,2018,2019,2020,2021,2022,2023,2024,2025
+    DESCENDING           50.0              4                                         2017
+
+  Yanbu: db_dates=332, matched=249, orbit_tracks=2, secondary_pct=1.2% (threshold ≥20%)
+H08 VERDICT: NOT_SUPPORTED — tracks=2, secondary_pct=1.2% (YANBU DB dates)
+
+  [ТЗ v2 H09]: Внутри одной орбиты per-tank db_mean range ≤12 dB у ≥75% танков Yanbu; межорбитальный offset медианы 3–7 dB.
+
+--- H09: Yanbu per-tank range within orbit; inter-orbit offset (per ТЗ v2) ---
+H09 VERDICT: NOT_CONFIRMED — range_le12=N/A% (threshold ≥75%), inter_orbit_offset=None
+
+  [ТЗ v2 H10]: Каталог CDSE 2018 над Yanbu — n сцен. <5 = REFUTED (дыры ingest).
+
+--- H10: CDSE catalog 2018 over Yanbu (per ТЗ v2) ---
+  Yanbu CDSE scenes 2018: n=60
+      date orbitDirection  relativeOrbit
+2018-01-05      ASCENDING             87
+2018-01-12      ASCENDING             14
+2018-01-17      ASCENDING             87
+2018-01-24      ASCENDING             14
+2018-01-29      ASCENDING             87
+2018-02-05      ASCENDING             14
+2018-02-10      ASCENDING             87
+2018-02-17      ASCENDING             14
+2018-02-22      ASCENDING             87
+2018-03-01      ASCENDING             14
+2018-03-06      ASCENDING             87
+2018-03-13      ASCENDING             14
+2018-03-18      ASCENDING             87
+2018-03-25      ASCENDING             14
+2018-03-30      ASCENDING             87
+2018-04-06      ASCENDING             14
+2018-04-11      ASCENDING             87
+2018-04-18      ASCENDING             14
+2018-04-23      ASCENDING             87
+2018-04-30      ASCENDING             14
+2018-05-05      ASCENDING             87
+2018-05-12      ASCENDING             14
+2018-05-17      ASCENDING             87
+2018-05-24      ASCENDING             14
+2018-05-29      ASCENDING             87
+2018-06-05      ASCENDING             14
+2018-06-10      ASCENDING             87
+2018-06-17      ASCENDING             14
+2018-06-22      ASCENDING             87
+2018-06-29      ASCENDING             14
+2018-07-04      ASCENDING             87
+2018-07-11      ASCENDING             14
+2018-07-16      ASCENDING             87
+2018-07-23      ASCENDING             14
+2018-07-28      ASCENDING             87
+2018-08-04      ASCENDING             14
+2018-08-09      ASCENDING             87
+2018-08-16      ASCENDING             14
+2018-08-21      ASCENDING             87
+2018-08-28      ASCENDING             14
+2018-09-02      ASCENDING             87
+2018-09-09      ASCENDING             14
+2018-09-14      ASCENDING             87
+2018-09-21      ASCENDING             14
+2018-09-26      ASCENDING             87
+2018-10-03      ASCENDING             14
+2018-10-08      ASCENDING             87
+2018-10-15      ASCENDING             14
+2018-10-20      ASCENDING             87
+2018-10-27      ASCENDING             14
+2018-11-01      ASCENDING             87
+2018-11-08      ASCENDING             14
+2018-11-13      ASCENDING             87
+2018-11-20      ASCENDING             14
+2018-12-02      ASCENDING             14
+2018-12-07      ASCENDING             87
+2018-12-14      ASCENDING             14
+2018-12-19      ASCENDING             87
+2018-12-26      ASCENDING             14
+2018-12-31      ASCENDING             87
+  Yanbu DB dates in 2018: n=30
+H10 VERDICT: PARTIAL — CDSE=60 2018 scenes; DB has 30 Yanbu 2018 dates → partial ingest
+
+  [ТЗ v2 H15]: Число сцен CDSE DESC-35 над RT (Aug–Oct) ≥ числу дат в terminal_observations DESC-35 за тот же период. Если в CDSE больше — привести список пропущенных дат. Что именно 50 vs 9 — одинаковый ли период, орбита, AOI?
+
+--- H15: CDSE DESC-35 vs DB for RT (per ТЗ v2) ---
+
+  Context: what is '50 vs 9'?
+    Prior run: CDSE RT (any GRD, Aug-Oct 2026) = n_all=47 dates
+    Prior run: DB RT DESC-35 (Aug-Oct) = n_db=9
+    Now (ТЗ v2): CDSE RT DESC-35 (Aug-Oct) = n=14
+    Now (ТЗ v2): DB RT DESC-35 (Aug-Oct) = n=9
+  Same period: YES (Aug 1–Oct 20 2026). Same orbit: YES (DESC-35). Same AOI: YES (RT bbox).
+
+  CDSE DESC-35 Aug-Oct: ['2026-08-01', '2026-08-07', '2026-08-13', '2026-08-19', '2026-08-25', '2026-08-31', '2026-09-06', '2026-09-12', '2026-09-18', '2026-09-24', '2026-09-30', '2026-10-06', '2026-10-12', '2026-10-18']
+  DB DESC-35 Aug-Oct:   ['2026-08-01', '2026-08-07', '2026-08-13', '2026-08-19', '2026-08-25', '2026-08-31', '2026-09-06', '2026-09-12', '2026-09-18']
+  Missed dates (CDSE has, DB lacks): ['2026-09-24', '2026-09-30', '2026-10-06', '2026-10-12', '2026-10-18']
+  Extra in DB (DB has, CDSE lacks):  []
+H15 VERDICT: CONFIRMED — CDSE DESC-35=14 vs DB-DESC35=9; missed=5
+
+  [ТЗ v2 H17]: CDSE-атрибуты сцен содержат направление орбиты (подтверждение DESC-35 в каталоге).
+
+--- H17: CDSE orbit attribute check (DESC-35 in catalog) ---
+  Inspected 10 RT scenes for orbit attributes
+                                                                    name       date attrs_keys
+S1D_IW_GRDH_1SDV_20260901T023056_20260901T023121_004378_00816A_234D.SAFE 2026-09-01         []
+S1D_IW_GRDH_1SDV_20260903T144909_20260903T144934_004415_0082C0_D183.SAFE 2026-09-03         []
+S1C_IW_GRDH_1SDV_20260904T144040_20260904T144105_009299_0127C0_B3B5.SAFE 2026-09-04         []
+S1C_IW_GRDH_1SDV_20260904T144105_20260904T144130_009299_0127C0_B09B.SAFE 2026-09-04         []
+S1D_IW_GRDH_1SDV_20260906T023858_20260906T023923_004451_0083FC_2312.SAFE 2026-09-06         []
+S1C_IW_GRDH_1SDV_20260907T023034_20260907T023059_009335_01290B_7881.SAFE 2026-09-07         []
+S1C_IW_GRDH_1SDV_20260907T023059_20260907T023124_009335_01290B_41C7.SAFE 2026-09-07         []
+S1D_IW_GRDH_1SDV_20260910T144057_20260910T144122_004517_00864C_2C3B.SAFE 2026-09-10         []
+S1D_IW_GRDH_1SDV_20260910T144122_20260910T144147_004517_00864C_5C3D.SAFE 2026-09-10         []
+S1C_IW_GRDH_1SDV_20260912T023833_20260912T023858_009408_012B66_A8B1.SAFE 2026-09-12         []
+
+  [ТЗ v2 H21]: Каталог CDSE над Jask (Aug–Oct 2026) — n сцен GRD.
+
+--- H21: Jask S1 GRD catalog ---
+  Jask scenes Aug–Oct 2026: n=50
+                                                                    name       date
+S1D_IW_GRDH_1SDV_20260802T141602_20260802T141627_003948_00727D_FE22.SAFE 2026-08-02
+S1C_IW_GRDH_1SDV_20260803T140725_20260803T140758_008832_01184D_F753.SAFE 2026-08-03
+S1D_IW_GRDH_1SDV_20260805T020614_20260805T020639_003984_0073C1_55A6.SAFE 2026-08-05
+S1D_IW_GRDH_1SDV_20260805T020639_20260805T020704_003984_0073C1_F96A.SAFE 2026-08-05
+S1C_IW_GRDH_1SDV_20260806T015810_20260806T015839_008868_011975_038C.SAFE 2026-08-06
+S1C_IW_GRDH_1SDV_20260808T141549_20260808T141614_008905_011A9E_768F.SAFE 2026-08-08
+S1D_IW_GRDH_1SDV_20260809T140741_20260809T140806_004050_0075FC_6499.SAFE 2026-08-09
+S1D_IW_GRDH_1SDV_20260809T140806_20260809T140831_004050_0075FC_3E08.SAFE 2026-08-09
+S1C_IW_GRDH_1SDV_20260811T020600_20260811T020629_008941_011BCA_9E35.SAFE 2026-08-11
+S1D_IW_GRDH_1SDV_20260812T015805_20260812T015830_004086_007740_76E0.SAFE 2026-08-12
+S1D_IW_GRDH_1SDV_20260812T015830_20260812T015855_004086_007740_F58C.SAFE 2026-08-12
+S1D_IW_GRDH_1SDV_20260814T141603_20260814T141628_004123_007888_95A9.SAFE 2026-08-14
+S1C_IW_GRDH_1SDV_20260815T140726_20260815T140759_009007_011E10_065B.SAFE 2026-08-15
+S1D_IW_GRDH_1SDV_20260817T020614_20260817T020639_004159_0079C5_656B.SAFE 2026-08-17
+S1D_IW_GRDH_1SDV_20260817T020639_20260817T020704_004159_0079C5_D2A7.SAFE 2026-08-17
+S1C_IW_GRDH_1SDV_20260818T015811_20260818T015840_009043_011F38_2E54.SAFE 2026-08-18
+S1C_IW_GRDH_1SDV_20260820T141550_20260820T141615_009080_012060_D33C.SAFE 2026-08-20
+S1D_IW_GRDH_1SDV_20260821T140742_20260821T140807_004225_007C15_60A9.SAFE 2026-08-21
+S1D_IW_GRDH_1SDV_20260821T140807_20260821T140832_004225_007C15_793F.SAFE 2026-08-21
+S1C_IW_GRDH_1SDV_20260823T020601_20260823T020630_009116_012191_F063.SAFE 2026-08-23
+S1D_IW_GRDH_1SDV_20260824T015806_20260824T015831_004261_007D65_4190.SAFE 2026-08-24
+S1D_IW_GRDH_1SDV_20260824T015831_20260824T015856_004261_007D65_F17E.SAFE 2026-08-24
+S1D_IW_GRDH_1SDV_20260826T141603_20260826T141628_004298_007EA7_88CE.SAFE 2026-08-26
+S1C_IW_GRDH_1SDV_20260827T140726_20260827T140800_009182_0123DE_A509.SAFE 2026-08-27
+S1D_IW_GRDH_1SDV_20260829T020615_20260829T020640_004334_007FF0_CF5A.SAFE 2026-08-29
+S1D_IW_GRDH_1SDV_20260829T020640_20260829T020705_004334_007FF0_EB0C.SAFE 2026-08-29
+S1C_IW_GRDH_1SDV_20260830T015811_20260830T015841_009218_01250F_5BAC.SAFE 2026-08-30
+S1C_IW_GRDH_1SDV_20260901T141550_20260901T141615_009255_012641_E28B.SAFE 2026-09-01
+S1D_IW_GRDH_1SDV_20260902T140742_20260902T140807_004400_008235_67A1.SAFE 2026-09-02
+S1D_IW_GRDH_1SDV_20260902T140807_20260902T140832_004400_008235_445B.SAFE 2026-09-02
+S1D_IW_GRDH_1SDV_20260905T015806_20260905T015831_004436_008383_FCC2.SAFE 2026-09-05
+S1D_IW_GRDH_1SDV_20260905T015831_20260905T015856_004436_008383_0FCB.SAFE 2026-09-05
+S1D_IW_GRDH_1SDV_20260907T141604_20260907T141629_004473_0084C4_94C6.SAFE 2026-09-07
+S1C_IW_GRDH_1SDV_20260908T140727_20260908T140800_009357_0129C6_D3B1.SAFE 2026-09-08
+S1D_IW_GRDH_1SDV_20260910T020615_20260910T020640_004509_00860C_4361.SAFE 2026-09-10
+S1D_IW_GRDH_1SDV_20260910T020640_20260910T020705_004509_00860C_A56E.SAFE 2026-09-10
+S1C_IW_GRDH_1SDV_20260911T015812_20260911T015841_009393_012AEB_CBE0.SAFE 2026-09-11
+S1C_IW_GRDH_1SDV_20260913T141550_20260913T141615_009430_012C18_14FD.SAFE 2026-09-13
+S1D_IW_GRDH_1SDV_20260914T140743_20260914T140808_004575_00884E_2558.SAFE 2026-09-14
+S1D_IW_GRDH_1SDV_20260914T140808_20260914T140833_004575_00884E_318A.SAFE 2026-09-14
+S1C_IW_GRDH_1SDV_20260916T020601_20260916T020631_009466_012D3D_108A.SAFE 2026-09-16
+S1D_IW_GRDH_1SDV_20260917T015807_20260917T015832_004611_00898D_4B97.SAFE 2026-09-17
+S1D_IW_GRDH_1SDV_20260917T015832_20260917T015857_004611_00898D_F4EC.SAFE 2026-09-17
+S1D_IW_GRDH_1SDV_20260919T141604_20260919T141629_004648_008ACF_5C18.SAFE 2026-09-19
+S1C_IW_GRDH_1SDV_20260920T140727_20260920T140800_009532_012F7E_73F1.SAFE 2026-09-20
+S1D_IW_GRDH_1SDV_20260922T020616_20260922T020641_004684_008C0C_A94D.SAFE 2026-09-22
+S1D_IW_GRDH_1SDV_20260922T020641_20260922T020706_004684_008C0C_3BAD.SAFE 2026-09-22
+S1C_IW_GRDH_1SDV_20260923T015812_20260923T015841_009568_0130A8_AF63.SAFE 2026-09-23
+S1C_IW_GRDH_1SDV_20260925T141551_20260925T141616_009605_0131D9_F82A.SAFE 2026-09-25
+S1D_IW_GRDH_1SDV_20260926T140743_20260926T140808_004750_008E49_0738.SAFE 2026-09-26
+
+  [ТЗ v2 H22]: Даты CDSE синхронны между терминалами (один проход спутника = та же дата).
+
+--- H22: Cross-terminal CDSE scene date synchrony ---
+  Kharg CDSE scenes Aug–Oct 2026: n=34
+  CDSE dates in >=2 terminals: 26/467 (5.6%)
+
+  Shared dates (n_terminals >= 2, showing all 26):
+      date  n_terminals         terminals
+2026-08-05            2     [kharg, jask]
+2026-08-11            2     [kharg, jask]
+2026-08-17            2     [kharg, jask]
+2026-08-23            2     [kharg, jask]
+2026-08-29            2     [kharg, jask]
+2026-09-01            2        [rt, jask]
+2026-09-04            2       [kharg, rt]
+2026-09-06            2       [kharg, rt]
+2026-09-07            2        [rt, jask]
+2026-09-10            3 [kharg, rt, jask]
+2026-09-12            2       [kharg, rt]
+2026-09-13            2        [rt, jask]
+2026-09-16            3 [kharg, rt, jask]
+2026-09-18            2       [kharg, rt]
+2026-09-19            2        [rt, jask]
+2026-09-22            3 [kharg, rt, jask]
+2026-09-24            2       [kharg, rt]
+2026-09-25            2        [rt, jask]
+2026-09-28            2       [kharg, rt]
+2026-09-30            2       [kharg, rt]
+2026-10-04            2       [kharg, rt]
+2026-10-06            2       [kharg, rt]
+2026-10-10            2       [kharg, rt]
+2026-10-12            2       [kharg, rt]
+2026-10-16            2       [kharg, rt]
+2026-10-18            2       [kharg, rt]
+
+H22 VERDICT: NOT_SUPPORTED — 26/467 dates (5.6%) in >=2 terminals
+
+  [ТЗ v2 H25]: CDSE-каталог 2026-09-28 над RT — подтверждение ASC orbit 101 (S1C), 66 танков.
+
+--- H25: CDSE 2026-09-28 RT scene (ASC orbit 101) ---
+  RT CDSE scenes 2026-09-27/29: n=3
+                                                                    name       date attrs
+S1D_IW_GRDH_1SDV_20260927T144910_20260927T144935_004765_008ED3_4A35.SAFE 2026-09-27    {}
+S1C_IW_GRDH_1SDV_20260928T144041_20260928T144106_009649_01334E_20F8.SAFE 2026-09-28    {}
+S1C_IW_GRDH_1SDV_20260928T144106_20260928T144131_009649_01334E_DC0D.SAFE 2026-09-28    {}
+
+  [ТЗ v2 H26]: CDSE RT сцены Oct 6–21 2026: какие даты есть в каталоге, какие отсутствуют в DB.
+
+--- H26: CDSE RT scenes Oct 2026 (post 10-06) ---
+  RT CDSE scenes Oct 6–21 2026: n=15
+                                                                    name       date
+S1C_IW_GRDH_1SDV_20261006T023833_20261006T023858_009758_0136F9_FCA2.SAFE 2026-10-06
+S1C_IW_GRDH_1SDV_20261006T023858_20261006T023934_009758_0136F9_DD2A.SAFE 2026-10-06
+S1D_IW_GRDH_1SDV_20261007T023057_20261007T023122_004903_0093A5_7A7B.SAFE 2026-10-07
+S1D_IW_GRDH_1SDV_20261009T144910_20261009T144935_004940_0094F6_74CC.SAFE 2026-10-09
+S1C_IW_GRDH_1SDV_20261010T144041_20261010T144106_009824_013926_CB03.SAFE 2026-10-10
+S1C_IW_GRDH_1SDV_20261010T144106_20261010T144131_009824_013926_2AC1.SAFE 2026-10-10
+S1D_IW_GRDH_1SDV_20261012T023859_20261012T023924_004976_009642_0DB6.SAFE 2026-10-12
+S1C_IW_GRDH_1SDV_20261013T023034_20261013T023059_009860_013A7F_9598.SAFE 2026-10-13
+S1C_IW_GRDH_1SDV_20261013T023059_20261013T023124_009860_013A7F_D0DB.SAFE 2026-10-13
+S1D_IW_GRDH_1SDV_20261016T144058_20261016T144123_005042_00987C_9105.SAFE 2026-10-16
+S1D_IW_GRDH_1SDV_20261016T144123_20261016T144148_005042_00987C_5D60.SAFE 2026-10-16
+S1C_IW_GRDH_1SDV_20261018T023833_20261018T023858_009933_013CD9_F17D.SAFE 2026-10-18
+S1C_IW_GRDH_1SDV_20261018T023858_20261018T023934_009933_013CD9_4B0D.SAFE 2026-10-18
+S1D_IW_GRDH_1SDV_20261019T023057_20261019T023122_005078_0099B8_96EE.SAFE 2026-10-19
+S1D_IW_GRDH_1SDV_20261021T144910_20261021T144935_005115_009AFD_5B81.SAFE 2026-10-21
+
+  [ТЗ v2 SAR_FETCH]: sar_fetch.py:224 — показать код фильтра орбит и кто его вызывает (какой воркфлоу/скрипт), почему DESC-137 проходит несмотря на фильтр.
+
+=== SAR_FETCH: sar_fetch.py orbit filter analysis ===
+  fetch_new_records callers:
+scripts/research/auto_hypotheses.py:2933:## Callers of fetch_new_records():
+scripts/research/auto_hypotheses.py:2938:    ["grep", "-rn", "--include=*.py", "fetch_new_records", "scripts/"],
+scripts/research/auto_hypotheses.py:2942:print(f"  fetch_new_records callers:\n{_callers_text}\n")
+scripts/research/auto_hypotheses.py:2960:2. main_script.py (regular ingest): calls fetch_new_records with orbit_cfg=None (default)
+scripts/research/auto_hypotheses.py:2986:# Check if main_script.py passes orbit_cfg to fetch_new_records
+scripts/research/auto_hypotheses.py:2988:    ["grep", "-n", "fetch_new_records\|orbit_cfg", "scripts/main_script.py"],
+scripts/research/auto_hypotheses.py:2995:    ["grep", "-n", "ALLOWED_ORBIT\|orbit_cfg\|fetch_new_records", "scripts/backfill_ras_tanura.py"],
+scripts/task7_rt_decomposition.py:542:        from sar_fetch import fetch_new_records, build_crescent_masks, get_all_scene_dates
+scripts/task7_rt_decomposition.py:641:            records = fetch_new_records(asc_dates, tdata, bbox, img_w, img_w, orbit_cfg=orbit_cfg_asc)
+scripts/stage2_gate.py:58:from sar_fetch import fetch_new_records, build_crescent_masks, get_all_scene_dates
+scripts/stage2_gate.py:164:    records = fetch_new_records(dates, tanks_data, bbox, img_w, img_h,
+scripts/backfill_saudi.py:85:from sar_fetch import get_all_scene_dates, build_crescent_masks, fetch_new_records
+scripts/backfill_saudi.py:314:                    raw = fetch_new_records(
+scripts/main_script.py:42:from sar_fetch import load_cache, get_all_scene_dates, build_crescent_masks, fetch_new_records
+scripts/main_script.py:73:    new_records = fetch_new_records(new_dates, tanks_data, super_bbox, img_width, img_height)
+scripts/main_script.py:204:            raw = fetch_new_records(new_t_dates, t_data, bbox, img_w, img_h,
+scripts/stage3_jw_radius_rescreen.py:50:from sar_fetch import fetch_new_records, build_crescent_masks, get_all_scene_dates
+scripts/stage3_jw_radius_rescreen.py:148:    records    = fetch_new_records(dates, tanks_data, bbox, img_w, img_h,
+scripts/stage1_backfill.py:52:from sar_fetch import get_all_scene_dates, build_crescent_masks, fetch_new_records
+scripts/stage1_backfill.py:197:                raw = fetch_new_records(
+scripts/stage3_whitelist.py:49:from sar_fetch import fetch_new_records, build_crescent_masks, get_all_scene_dates
+scripts/stage3_whitelist.py:109:    records    = fetch_new_records(dates, tanks_data, bbox, img_w, img_h,
+scripts/sar_fetch.py:209:def fetch_new_records(new_dates, tanks_data, super_bbox, img_width, img_height,
+scripts/backfill_ras_tanura.py:79:from sar_fetch import get_all_scene_dates, build_crescent_masks, fetch_new_records
+scripts/backfill_ras_tanura.py:215:                    raw = fetch_new_records(
+scripts/ingest.py:26:from sar_fetch import get_all_scene_dates, build_crescent_masks, fetch_new_records
+scripts/ingest.py:99:        new_records = fetch_new_records(new_dates, tanks_data, super_bbox, img_w, img_h)
+scripts/ingest.py:240:                raw     = fetch_new_records(orbit_dates, t_data, c_bbox, img_w, img_h,
+
+  orbit_cfg references:
+scripts/research/auto_hypotheses.py:2915:if orbit_cfg:
+scripts/research/auto_hypotheses.py:2916:    orb = orbit_cfg[0]
+scripts/research/auto_hypotheses.py:2929:## The filter is CONDITIONAL on orbit_cfg being passed.
+scripts/research/auto_hypotheses.py:2930:## If orbit_cfg is None (falsy), no dataFilter is set → SentinelHub returns
+scripts/research/auto_hypotheses.py:2945:# Check orbit_cfg argument in each caller
+scripts/research/auto_hypotheses.py:2946:_grep_orbit_cfg = _sp2.run(
+scripts/research/auto_hypotheses.py:2947:    ["grep", "-rn", "--include=*.py", "orbit_cfg", "scripts/"],
+scripts/research/auto_hypotheses.py:2950:_orbit_cfg_text = _grep_orbit_cfg.stdout.strip()
+scripts/research/auto_hypotheses.py:2951:print(f"  orbit_cfg references:\n{_orbit_cfg_text}\n")
+scripts/research/auto_hypotheses.py:2952:_sar_analysis += "orbit_cfg references:\n" + _orbit_cfg_text + "\n\n"
+scripts/research/auto_hypotheses.py:2958:   → orbit_cfg=[ALLOWED_ORBIT] → dataFilter set → DESC-137 BLOCKED ✓
+scripts/research/auto_hypotheses.py:2960:2. main_script.py (regular ingest): calls fetch_new_records with orbit_cfg=None (default)
+scripts/research/auto_hypotheses.py:2965:3. stage1_backfill.py, ingest.py: also pass orbit_cfg=None by default
+scripts/research/auto_hypotheses.py:2977:   - orbit_cfg was not passed (regular ingest)
+scripts/research/auto_hypotheses.py:2986:# Check if main_script.py passes orbit_cfg to fetch_new_records
+scripts/research/auto_hypotheses.py:2988:    ["grep", "-n", "fetch_new_records\|orbit_cfg", "scripts/main_script.py"],
+scripts/research/auto_hypotheses.py:2991:print(f"  main_script.py orbit_cfg usage:\n{_grep_main.stdout.strip()}\n")
+scripts/research/auto_hypotheses.py:2995:    ["grep", "-n", "ALLOWED_ORBIT\|orbit_cfg\|fetch_new_records", "scripts/backfill_ras_tanura.py"],
+scripts/research/auto_hypotheses.py:2998:print(f"  backfill_ras_tanura.py orbit_cfg:\n{_grep_backfill.stdout.strip()}\n")
+scripts/task7_rt_decomposition.py:609:    orbit_cfg_asc = [{"relative_orbit": ASC_ORBIT, "direction": "ASC", "los_azimuth": ASC_LOS_AZ}]
+scripts/task7_rt_decomposition.py:641:            records = fetch_new_records(asc_dates, tdata, bbox, img_w, img_w, orbit_cfg=orbit_cfg_asc)
+scripts/stage2_gate.py:62:# Each entry: (tank_id, terminal_id, old_geometry, new_geometry, orbit_cfg, role)
+scripts/stage2_gate.py:144:def _fetch_db_series(tank_geom, orbit_cfg, dates):
+scripts/stage2_gate.py:165:                                orbit_cfg=orbit_cfg)
+scripts/stage2_gate.py:183:def _get_dates_for_orbit(orbit_cfg):
+scripts/stage2_gate.py:185:    orb = orbit_cfg[0]
+scripts/main_script.py:205:                                    orbit_cfg=allowed_orbits)
+scripts/stage4_visual_qa.py:94:def _fetch_sar_image(date_str, bbox, img_w, img_h, orbit_cfg):
+scripts/stage4_visual_qa.py:96:    orb = orbit_cfg[0]
+scripts/stage4_visual_qa.py:210:        orbit_cfg = tank["orbit"]
+scripts/stage4_visual_qa.py:218:            orb = orbit_cfg[0]
+scripts/stage4_visual_qa.py:243:            arr_linear = _fetch_sar_image(date_str, bbox, img_w, img_h, orbit_cfg)
+scripts/stage4_visual_qa.py:257:        los = orbit_cfg[0].get("los_azimuth", 282)
+scripts/stage3_jw_radius_rescreen.py:121:def _catalog_dates(orbit_cfg, bbox, n):
+scripts/stage3_jw_radius_rescreen.py:122:    orb      = orbit_cfg[0]
+scripts/stage3_jw_radius_rescreen.py:131:def _fetch_tank_step(tank_id, lat, lon, r_new, h_new, orbit_cfg, dates):
+scripts/stage3_jw_radius_rescreen.py:132:    los = orbit_cfg[0].get("los_azimuth", 282)
+scripts/stage3_jw_radius_rescreen.py:149:                                   orbit_cfg=orbit_cfg)
+scripts/stage3_jw_radius_rescreen.py:188:    orbit_cfg = jw_loc["allowed_orbits"]
+scripts/stage3_jw_radius_rescreen.py:195:    dates = _catalog_dates(orbit_cfg, ref_bbox, N_SCENES)
+scripts/stage3_jw_radius_rescreen.py:229:                                               orbit_cfg, dates)
+scripts/stage5c_verify_step.py:65:    ("orbit_cfg dataFilter",   "yes (ASCENDING+101)", "yes (ASCENDING+101)"),
+scripts/stage3_whitelist.py:74:def _catalog_dates(orbit_cfg, bbox, n):
+scripts/stage3_whitelist.py:76:    orb     = orbit_cfg[0]
+scripts/stage3_whitelist.py:86:def _fetch_tank_step(tank, orbit_cfg, dates):
+scripts/stage3_whitelist.py:92:    los = orbit_cfg[0].get("los_azimuth", 282)
+scripts/stage3_whitelist.py:110:                                   orbit_cfg=orbit_cfg)
+scripts/stage3_whitelist.py:136:        orbit_cfg = loc["allowed_orbits"]
+scripts/stage3_whitelist.py:137:        if not orbit_cfg:
+scripts/stage3_whitelist.py:149:        dates = _catalog_dates(orbit_cfg, ref_bbox, N_SCENES)
+scripts/stage3_whitelist.py:162:                step, n_obs = _fetch_tank_step(tank, orbit_cfg, dates)
+scripts/sar_fetch.py:210:                      min_valid_fraction=0.0, orbit_cfg=None):
+scripts/sar_fetch.py:240:        if orbit_cfg:
+scripts/sar_fetch.py:241:            orb = orbit_cfg[0]
+scripts/ingest.py:188:    for orbit_cfg in allowed_orbits:
+scripts/ingest.py:189:        rel_orbit  = orbit_cfg.get("relative_orbit")
+scripts/ingest.py:190:        direction  = orbit_cfg.get("direction", "descending").lower()
+scripts/ingest.py:191:        los_az     = orbit_cfg.get("los_azimuth")
+scripts/ingest.py:222:    for orbit_cfg in allowed_orbits:
+scripts/ingest.py:223:        rel_orbit  = orbit_cfg.get("relative_orbit")
+scripts/ingest.py:224:        direction  = orbit_cfg.get("direction", "descending").lower()
+scripts/ingest.py:225:        los_az     = orbit_cfg.get("los_azimuth")
+scripts/ingest.py:242:                                            orbit_cfg=allowed_orbits)
+
+  Analysis written: diagnostics/research/2026-10/SAR_FETCH/sar_fetch_orbit_filter_analysis.txt
+  main_script.py orbit_cfg usage:
+42:from sar_fetch import load_cache, get_all_scene_dates, build_crescent_masks, fetch_new_records
+73:    new_records = fetch_new_records(new_dates, tanks_data, super_bbox, img_width, img_height)
+204:            raw = fetch_new_records(new_t_dates, t_data, bbox, img_w, img_h,
+205:                                    orbit_cfg=allowed_orbits)
+
+  backfill_ras_tanura.py orbit_cfg:
+51:ALLOWED_ORBIT     = {"relative_orbit": 35, "direction": "DESC", "los_azimuth": 282}
+79:from sar_fetch import get_all_scene_dates, build_crescent_masks, fetch_new_records
+173:    print(f"\n[backfill] Querying catalog: DESC orbit {ALLOWED_ORBIT['relative_orbit']} "
+180:            orbit_state=ALLOWED_ORBIT["direction"],
+181:            relative_orbit=ALLOWED_ORBIT["relative_orbit"],
+194:    los_az    = ALLOWED_ORBIT["los_azimuth"]
+195:    rel_orbit = ALLOWED_ORBIT["relative_orbit"]
+196:    direction = ALLOWED_ORBIT["direction"]
+215:                    raw = fetch_new_records(
+
+
+=== 4.11: Rebuild Assessment (V0 scene counts per terminal) ===
+  kharg             : n_scenes= 641 | PU_total=  1923 (18/mo) | GHA=0.9h | V0≈0.1GB (orbit=DESC relOrbit=None src=registry (no allowed_orbits → all DESC))
+  ras_tanura_d35    : n_scenes= 377 | PU_total=  2262 (21/mo) | GHA=1.0h | V0≈0.3GB (orbit=DESC relOrbit=35 src=registry allowed_orbits[0])
+  ras_tanura_a101   : n_scenes= 709 | PU_total=  4254 (39/mo) | GHA=2.0h | V0≈0.6GB (orbit=ASCE relOrbit=101 src=registry allowed_orbits[1] — V3 comparison only)
+    Yanbu all-orbits breakdown: {'ASCE-14': 476, 'ASCE-16': 1, 'ASCE-87': 252, 'DESC-50': 76, 'DESC-52': 1}
+  yanbu_all         : n_scenes= 806 | PU_total=  2418 (22/mo) | GHA=1.1h | V0≈0.1GB (orbit=ALL relOrbit=None src=all orbits (Yanbu correction: show all relOrbits over bbox))
+  al_flaw           : n_scenes= 355 | PU_total=  1065 (10/mo) | GHA=0.5h | V0≈0.1GB (orbit=DESC relOrbit=None src=registry (legacy los_azimuth=282 → all DESC, no relOrbit filter))
+  jask              : n_scenes= 184 | PU_total=   552 (5/mo) | GHA=0.3h | V0≈0.0GB (orbit=DESC relOrbit=93 src=registry allowed_orbits[0] — 2024-06+ only per ТЗ)
+
+  4.11 TOTAL: PU=12,474 | GHA=5.8h | V0≈1.2GB
+  At free tier (30k PU/mo): 0.4 months to rebuild
+
+  Full table:
+       terminal  orbit_dir  rel_orbit  n_scenes_working_orbit  pu_per_scene  pu_total  pu_per_month_avg  gha_hours  v0_cache_gb  n_tanks
+          kharg DESCENDING        NaN                     641             3      1923                18        0.9          0.1       47
+ ras_tanura_d35 DESCENDING       35.0                     377             6      2262                21        1.0          0.3       66
+ras_tanura_a101  ASCENDING      101.0                     709             6      4254                39        2.0          0.6       66
+      yanbu_all        NaN        NaN                     806             3      2418                22        1.1          0.1       12
+        al_flaw DESCENDING        NaN                     355             3      1065                10        0.5          0.1       24
+           jask DESCENDING       93.0                     184             3       552                 5        0.3          0.0       20
+
+=== 5. Catalog vs DB gap (Kharg / RT DESC-35 / Yanbu ASC-14) ===
+
+--- kharg (orbit=DESC relOrbit=None) ---
+  CDSE: using 4.11 cache (kharg, 1011 scenes)
+  CDSE dates (working orbit): n=356, first=2014-10-08, last=2026-10-18
+  DB dates: n=323, first=2015-04-06, last=2026-10-18
+  Gap (catalog - DB): n=33 missing from DB
+  Extra DB (DB - catalog): n=0 DB dates not in CDSE working orbit
+
+  Year breakdown (year | cdse | db | missing_from_db):
+    2014: cdse=  3  db=  0  missing=  3  ← late start
+    2015: cdse= 13  db=  1  missing= 12  ← partial ingest
+    2016: cdse= 15  db=  0  missing= 15  ← late start
+    2017: cdse= 27  db= 25  missing=  2  ← partial ingest
+    2018: cdse= 29  db= 29  missing=  0  ← full
+    2019: cdse= 29  db= 28  missing=  1  ← partial ingest
+    2020: cdse= 30  db= 30  missing=  0  ← full
+    2021: cdse= 30  db= 30  missing=  0  ← full
+    2022: cdse= 29  db= 29  missing=  0  ← full
+    2023: cdse= 29  db= 29  missing=  0  ← full
+    2024: cdse= 29  db= 29  missing=  0  ← full
+    2025: cdse= 43  db= 43  missing=  0  ← full
+    2026: cdse= 50  db= 50  missing=  0  ← full
+
+  First CDSE: 2014-10-08 | First DB: 2015-04-06 | Late start: 180 days
+  CAUSE: late ingest start — DB begins 0y 6m after first CDSE scene
+  Thinning check: main_script.py:61 computes new_dates = all_dates - cached_dates
+    No stride/sample/skip — all CDSE dates are fetched if not in cache
+    START_DATE=2014-06-01 (config.py:51) matches CDSE launch — not a limiter
+
+--- ras_tanura (orbit=DESC relOrbit=35) ---
+  CDSE: using 4.11 cache (ras_tanura_d35, 1764 scenes)
+  CDSE dates (working orbit): n=333, first=2014-11-01, last=2026-10-18
+  DB dates: n=570, first=2017-03-14, last=2026-10-18
+  Gap (catalog - DB): n=13 missing from DB
+  Extra DB (DB - catalog): n=250 DB dates not in CDSE working orbit
+
+  Year breakdown (year | cdse | db | missing_from_db):
+    2014: cdse=  3  db=  0  missing=  3  ← late start
+    2015: cdse=  9  db=  0  missing=  9  ← late start
+    2016: cdse=  1  db=  0  missing=  1  ← late start
+    2017: cdse= 23  db= 23  missing=  0  ← full
+    2018: cdse= 29  db= 29  missing=  0  ← full
+    2019: cdse= 28  db= 28  missing=  0  ← full
+    2020: cdse= 30  db= 62  missing=  0  ← full
+    2021: cdse= 30  db= 59  missing=  0  ← full
+    2022: cdse= 29  db= 60  missing=  0  ← full
+    2023: cdse= 29  db= 59  missing=  0  ← full
+    2024: cdse= 29  db= 59  missing=  0  ← full
+    2025: cdse= 43  db= 87  missing=  0  ← full
+    2026: cdse= 50  db=104  missing=  0  ← full
+
+  First CDSE: 2014-11-01 | First DB: 2017-03-14 | Late start: 864 days
+  CAUSE: late ingest start — DB begins 2y 4m after first CDSE scene
+  Thinning check: main_script.py:61 computes new_dates = all_dates - cached_dates
+    No stride/sample/skip — all CDSE dates are fetched if not in cache
+    START_DATE=2014-06-01 (config.py:51) matches CDSE launch — not a limiter
+    → Gap is early-history: ingest/cache was NOT initialized at project start
+
+--- yanbu (orbit=ASCE relOrbit=14) ---
+  CDSE: using 4.11 cache (yanbu_all, 806 scenes)
+  CDSE dates (working orbit): n=364, first=2014-10-30, last=2026-10-16
+  DB dates: n=332, first=2014-10-09, last=2026-09-22
+  Gap (catalog - DB): n=72 missing from DB
+  Extra DB (DB - catalog): n=40 DB dates not in CDSE working orbit
+
+  Year breakdown (year | cdse | db | missing_from_db):
+    2014: cdse=  6  db=  5  missing=  6  ← partial ingest
+    2015: cdse= 28  db= 25  missing= 28  ← partial ingest
+    2016: cdse= 29  db=  6  missing= 29  ← partial ingest
+    2017: cdse= 31  db= 29  missing=  6  ← partial ingest
+    2018: cdse= 30  db= 30  missing=  0  ← full
+    2019: cdse= 30  db= 30  missing=  0  ← full
+    2020: cdse= 31  db= 31  missing=  0  ← full
+    2021: cdse= 30  db= 30  missing=  0  ← full
+    2022: cdse= 27  db= 27  missing=  0  ← full
+    2023: cdse= 30  db= 30  missing=  0  ← full
+    2024: cdse= 30  db= 30  missing=  0  ← full
+    2025: cdse= 33  db= 33  missing=  0  ← full
+    2026: cdse= 29  db= 26  missing=  3  ← partial ingest
+
+  First CDSE: 2014-10-30 | First DB: 2014-10-09 | Late start: -21 days
+  CAUSE: ingest started near CDSE start; gaps are post-start patchwork
+  Thinning check: main_script.py:61 computes new_dates = all_dates - cached_dates
+    No stride/sample/skip — all CDSE dates are fetched if not in cache
+    START_DATE=2014-06-01 (config.py:51) matches CDSE launch — not a limiter
+    → 40 DB dates not in CDSE working-orbit catalog → possibly ingested from different orbit (DESC-137 contamination?) or CDSE catalog gap
+
+  5. Gap summary:
+  terminal  cdse_n  db_n  missing_from_db  extra_in_db first_cdse   first_db
+     kharg     356   323               33            0 2014-10-08 2015-04-06
+ras_tanura     333   570               13          250 2014-11-01 2017-03-14
+     yanbu     364   332               72           40 2014-10-30 2014-10-09
+
+============================================================
+Section 6: Yanbu corrections + azimuth audit
+============================================================
+
+--- 6.1 Yanbu DB table counts ---
+  terminal_observations: n_rows=3984, n_unique_dates=249, first=2014-10-09, last=2026-09-22
+  terminal_volume_timeseries (daily, smoothed=false): n_rows=332, n_unique_dates=332, first=2014-10-09, last=2026-09-22
+  NOTE: п.5 used terminal_observations (n_dates=249), comparison with catalog is on terminal_observations
+
+--- 6.2 Yanbu DB dates × CDSE all-orbits (relOrbit/direction breakdown) ---
+  CDSE all-orbits cache: 806 scenes
+  DB dates: 332  |  matched in CDSE: 332  |  not in CDSE: 0
+
+  relOrbit-direction breakdown (DB dates matched to CDSE orbit):
+  dir    relOrbit   n_dates   (years)
+  ASCE   14              292  2017–2026
+  DESC   50               39  2014–2017
+  DESC   52                1  2014–2014
+
+--- 6.3 Azimuth audit: registry los_azimuth vs data orbit direction ---
+
+  terminal        data_dir   los_az   match   note
+  kharg           DESC       282      OK      DESC→LOS 282° correct (west-looking, Gulf)
+  ras_tanura      DESC       282      OK      DESC→LOS 282° correct; ASC secondary has los_az=98
+  yanbu           ASC        98       OK      ASC→LOS 98° correct (Red Sea, east-looking)
+  al_flaw         DESC       282      OK      no allowed_orbits; los_azimuth=282 default (DESC assumed)
+  jask            DESC       282      OK      DESC primary; ASC secondary los_az=98
+  juwaymah        DESC       282      OK      DESC-35 only; los_az=282 correct
+  lavan           DESC       282      OK      DESC primary los_az=282; ASC secondary los_az=98
+  siri            DESC       282      OK      DESC primaries los_az=282; ASC secondary los_az=98
+  halul           DESC       282      OK      DESC primaries los_az=282; ASC secondary los_az=98
+
+  SOURCE: tank_registry.py per-terminal los_azimuth fields
+  CODE:   sar_fetch.py:161 az = los_azimuth if los_azimuth is not None else LOS_AZIMUTH
+          config.py:67     LOS_AZIMUTH = 282  (default, DESC-only terminals)
+          stage1_backfill.py:138  los_az = primary['los_azimuth']
+  VERDICT: Yanbu has los_azimuth=98 in registry (ASC correct). No DESC-sector mask issue.
+
+--- 6.4 Kharg raw_observations × CDSE: relOrbit distribution ---
+  raw_observations: n_rows=15181, n_unique_dates=323
+  relative_orbit column: all NULL in raw_observations
+  → Cross-referencing with CDSE catalog (4.11 kharg cache)...
+  relOrbit breakdown (Kharg DB dates matched to CDSE):
+    dir=DESC relOrbit=35: 323 DB dates
+  VERDICT: single DESC track — relOrbit=35
+
+============================================================
+Section 7: V0 scene manifests
+============================================================
+
+  yanbu/all_orbits      :  806 scenes  2014-10-06 – 2026-10-21
+  yanbu/ASC-14          :  476 scenes  2014-10-30 – 2026-10-16
+  rt/DESC-35            :  377 scenes  2014-11-01 – 2026-10-18
+  rt/ASC-101            :  709 scenes  2015-05-04 – 2026-10-16
+  jask/DESC-93          :  184 scenes  2024-06-09 – 2026-10-16
+  kharg/DESC-35         :  640 scenes  2014-11-01 – 2026-10-18
+  al_flaw/DESC          :  355 scenes  2014-10-25 – 2026-10-17
+
+  v0_manifest_all.csv: 3547 total rows across 7 configs
+
+--- п.1 Kharg relOrbit breakdown (CDSE 4.11 cache) ---
+ relOrbit orbitDir  n_dates     years
+       35     DESC      640 2014–2026
+      101     ASCE      370 2014–2026
+       37     DESC        1 2014–2014
+
+--- п.2 Yanbu DESC scenes (non-ASC) — V4 calibration note ---
+  DESC scenes (sector mismatch: los_az=98 but data from DESC orbit):
+  n=77, period: 2014-10-09 – 2017-03-27
+ relOrbit  n_scenes
+       50        76
+       52         1
+  MANIFEST FLAG: marked as 'pre_asc14_legacy' in yanbu/all_orbits manifest
+  V4 note: calibration variant 'ASC-14 only (2017+)' vs 'full history (inc DESC-50/52 2014–2017)'
+
+--- п.3 Yanbu 2018 ASC-14: CDSE vs DB ---
+  CDSE ASC-14 scenes in 2018: 30
+  Period: 2018-01-12 – 2018-12-26
+  DB terminal_observations yanbu 2018 dates: 30
+  CDSE 2018 ASC-14 not in DB: 0
+
+--- п.4 Phase 0 status: единый ingest ---
+  main_script.py upsert-to-terminal_observations: 3 call sites
+    144:def _upsert_terminal_obs(records, tid):
+    146:    sb.table("terminal_observations").upsert(records, on_conflict="terminal_id,date,tank_id").execute()
+    210:            _upsert_terminal_obs(new_records, tid)
+  STATUS: Phase 0 NOT complete — main_script.py still writes to terminal_observations
+  Latest terminal_observations created_at (global): 2026-10-18T07:29:48.04607+00:00
+  Per-terminal latest created_at (sorted):
+    novorossiysk        : 2026-10-17T17:42:50.321822+00:00
+    fujairah            : 2026-10-17T07:17:19.399141+00:00
+    al_flaw             : 2026-10-17T07:15:51.994315+00:00
+    yanbu               : 2026-09-23T08:03:03.239772+00:00
+    ruwais              : 2026-10-17T07:17:40.705432+00:00
+    lavan               : 2026-10-17T07:15:39.897703+00:00
+    de_kastri           : 2026-10-17T07:16:07.761735+00:00
+    juwaymah            : 2026-10-18T07:29:27.744771+00:00
+    halul               : 2026-10-17T07:15:56.922908+00:00
+    primorsk            : 2026-10-17T07:16:21.542625+00:00
+    das_island          : 2026-10-17T07:17:30.043299+00:00
+    kozmino             : 2026-09-01T09:41:56.822235+00:00
+    sitra               : 2026-10-17T07:16:04.142193+00:00
+    mina_ahmadi         : 2026-10-17T07:17:45.979489+00:00
+    jask                : 2026-10-17T07:15:31.636709+00:00
+    siri                : 2026-10-17T07:15:44.405235+00:00
+    ras_laffan          : 2026-10-17T07:16:44.751057+00:00
+    zirku               : 2026-10-17T07:17:24.408315+00:00
+    ras_tanura          : 2026-10-18T07:29:48.04607+00:00
+
+--- п.3-ext: Kharg unique DATES per relOrbit (CDSE cache) ---
+  Total CDSE scenes for Kharg: 1011
+  relOrbit=101: 367 unique dates  2014–2026
+  relOrbit=35: 355 unique dates  2014–2026
+  relOrbit=37: 1 unique dates  2014–2014
+
+--- п.3-ext: Kharg ASC-101 dates in raw_observations ---
+  raw_observations query FAILED: {'message': 'column raw_observations.relative_orbit does not exist', 'code': '42703', 'hint': None, 'details': None}
+  NOTE: raw_observations may not have relative_orbit column — querying date only
+  raw_observations total rows (date only): 15181
+  raw_observations unique dates: 323
+  NOTE: raw_observations has NO relative_orbit column → Kharg ASC-101 count not queryable from DB
+
+--- H10 REFUTED (closure) ---
+  H10 VERDICT: REFUTED
+  Evidence: CDSE ASC-14 2018=30 scenes; DB terminal_observations yanbu 2018=30 dates; gap=0
+  Prior table showing 2018=0: run #12 section 5, queried terminal_observations
+    with filter orbit_direction='ASCENDING' — that column did not exist yet in DB
+    OR was populated as NULL for 2018 rows (pre-relOrbit ingest era).
+  Correct query: count by year regardless of orbit_direction column.
+  Recommend: verify by: SELECT COUNT(*), EXTRACT(year FROM date) FROM terminal_observations
+    WHERE terminal_id='yanbu' GROUP BY 2 ORDER BY 2;  (no orbit_direction filter)
+  terminal_observations yanbu dates by year (no orbit filter):
+    2014: 60
+    2015: 300
+    2016: 72
+    2017: 348
+    2018: 360
+    2019: 360
+    2020: 372
+    2021: 360
+    2022: 324
+    2023: 360
+    2024: 360
+    2025: 396
+    2026: 312
+
+=== Block A + B/C/D complete ===

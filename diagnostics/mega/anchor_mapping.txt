@@ -1,0 +1,803 @@
+# anchor_mapping.txt — anchor-to-terminal wiring in codebase
+
+scripts/bab_snapshot.py:4: Annotates detected ships with colored bounding boxes by class.
+scripts/bab_snapshot.py:97: def classify_ship(length_m):
+scripts/bab_snapshot.py:105: def detect_ships(arr):
+scripts/bab_snapshot.py:120:     ships = []
+scripts/bab_snapshot.py:129:         cls = classify_ship(length_m)
+scripts/bab_snapshot.py:132:         ships.append({
+scripts/bab_snapshot.py:138:     return ships, threshold, land_mask
+scripts/bab_snapshot.py:155: def annotate_image(img, ships, date_str, threshold):
+scripts/bab_snapshot.py:164:     for s in ships:
+scripts/bab_snapshot.py:175:         counts = sum(1 for s in ships if s['class'] == cls)
+scripts/bab_snapshot.py:180:     total = len(ships)
+scripts/bab_snapshot.py:226:     ships, threshold, land_mask = detect_ships(arr)
+scripts/bab_snapshot.py:227:     print(f"Detected {len(ships)} ships: " +
+scripts/bab_snapshot.py:228:           ", ".join(f"{s['class']}({s['length_m']}m)" for s in ships))
+scripts/bab_snapshot.py:231:     img = annotate_image(img, ships, date_str, threshold)
+scripts/backfill_ras_tanura.py:19:   Re-running with the same flags skips already-processed dates without
+scripts/build_package.py:5:   Task 0: Fetch PortWatch + Supabase storage + events table
+scripts/build_package.py:7:   Task 2: Kharg benchmark vs JODI Iran crude exports
+scripts/build_package.py:8:   Task 3: 3-phase correlation (Saudi storage ↔ PortWatch exports)
+scripts/build_package.py:34: from client_pkg import task0_anchors
+scripts/build_package.py:72:         _run_task("Task 0 — External anchors", task0_anchors.run, results, "task0")
+scripts/build_package.py:80:         _run_task("Task 2 — Kharg benchmark vs JODI", task2_kharg_benchmark.run, results, "task2")
+scripts/build_somo_iraq_table.py:10:   2. JODI-Oil: https://www.jodidata.org/_resources/files/downloads/oil-data/jodi-oil-world-database_beta.csv
+scripts/build_somo_iraq_table.py:17:   - Export anchors NOT opened (JODI, PortWatch)
+scripts/build_somo_iraq_table.py:20:   - "вероятно" prohibited — if value uncertain, mark estimate_flag=1
+scripts/build_somo_iraq_table.py:67:                             "estimate_flag": 0})
+scripts/build_somo_iraq_table.py:107:             "estimate_flag":   eia["estimate_flag"] if eia else 1,
+scripts/build_somo_iraq_table.py:115:                   "source","url","estimate_flag","notes"]
+scripts/build_somo_iraq_table.py:129:     print("\n  period     total_kbd  basra  source  estimate_flag")
+scripts/build_somo_iraq_table.py:132:               f"{r['source']:<6}  {r['estimate_flag']}")
+scripts/check_terminals.py:54:     # flag suspicious values
+scripts/checks/c07.py:12:   - flag_candidate: True if mask_p99_frac > 0.10 (sidelobe contamination indicator)
+scripts/checks/c11.py:83:     # Flag raw labels that differ from normalized
+scripts/checks/c12.py:2: C12 — Polarity anchor: inventory of documented loading/export events.
+scripts/checks/c12.py:128:             "note": "Iraq post-OPEC+ ramp-up; all 3 series WRONG (Δ=+0.67 Mb = BUILD when DRAW expected). Score raw24: 4/5 SIGNAL on confirmed events; overall 5/10 including WRONG anchors.",
+scripts/checks/c12.py:133:             "event_label": "anchor_1 — inconclusive by construction",
+scripts/checks/c12.py:139:             "note": "All 3 Jask anchors inconclusive by construction; polarity assumed_direct per regional default (see JASK_POLARITY.md)",
+scripts/checks/c12.py:150:             "note": "No documented anchor events found. Sources searched: diagnostics/STAGE2_GATE.md, SERIES_HEALTH_STANDARD.md, DIAGNOSTIC_JUAYMAH_YANBU.md, INSTRUMENT_AUDIT_7.md. OILRADAR_KNOWLEDGE_BASE.md and oilradar_konspekt.md not present in repo.",
+scripts/checks/c12.py:168:             "note": "No confirmed anchor events in known record for this terminal.",
+scripts/client_pkg/fetch_jodi.py:2: fetch_jodi.py — JODI-Oil bulk data downloader.
+scripts/client_pkg/fetch_jodi.py:4: JODI (Joint Organisations Data Initiative) oil database:
+scripts/client_pkg/fetch_jodi.py:5:   Bulk CSV: https://www.jodidata.org/_resources/files/downloads/oil-data/world-oil-data.zip
+scripts/client_pkg/fetch_jodi.py:12: Columns in JODI CSV (JODI-World format):
+scripts/client_pkg/fetch_jodi.py:15: Cache: client_package/data/jodi_world.csv (refresh if > 30 days old)
+scripts/client_pkg/fetch_jodi.py:16: Output: client_package/data/jodi_iran_exports.csv
+scripts/client_pkg/fetch_jodi.py:17:         client_package/data/jodi_saudi_exports.csv
+scripts/client_pkg/fetch_jodi.py:23: JODI_URL  = "https://www.jodidata.org/_resources/files/downloads/oil-data/world-oil-data.zip"
+scripts/client_pkg/fetch_jodi.py:26: # JODI country codes
+scripts/client_pkg/fetch_jodi.py:35: def _download_jodi() -> pd.DataFrame:
+scripts/client_pkg/fetch_jodi.py:36:     """Download and parse JODI bulk CSV. Returns raw DataFrame."""
+scripts/client_pkg/fetch_jodi.py:37:     cache_zip  = os.path.join(CACHE_DIR, "jodi_world.zip")
+scripts/client_pkg/fetch_jodi.py:38:     cache_csv  = os.path.join(CACHE_DIR, "jodi_world.csv")
+scripts/client_pkg/fetch_jodi.py:43:             print(f"  [JODI] Using cache ({age_days:.1f}d old)")
+scripts/client_pkg/fetch_jodi.py:46:     print("  [JODI] Downloading bulk CSV...")
+scripts/client_pkg/fetch_jodi.py:48:         r = requests.get(JODI_URL, timeout=120)
+scripts/client_pkg/fetch_jodi.py:51:         print(f"  [JODI] Download failed: {e}")
+scripts/client_pkg/fetch_jodi.py:53:             print("  [JODI] Using stale cache")
+scripts/client_pkg/fetch_jodi.py:60:             print(f"  [JODI] No CSV in ZIP; contents: {z.namelist()}")
+scripts/client_pkg/fetch_jodi.py:62:         print(f"  [JODI] Found in ZIP: {csv_names}")
+scripts/client_pkg/fetch_jodi.py:67:     print(f"  [JODI] {len(df)} rows, saved to {cache_csv}")
+scripts/client_pkg/fetch_jodi.py:76:     """Filter JODI df for crude exports of given country codes."""
+scripts/client_pkg/fetch_jodi.py:80:     # Detect column names (JODI has changed its schema over versions)
+scripts/client_pkg/fetch_jodi.py:89:         print(f"  [JODI] Cannot identify columns; available: {list(df.columns[:10])}")
+scripts/client_pkg/fetch_jodi.py:99:         print(f"  [JODI] No {label} crude export rows found")
+scripts/client_pkg/fetch_jodi.py:107:     # JODI values are in thousand barrels/day or thousand tonnes/month — detect
+scripts/client_pkg/fetch_jodi.py:108:     # JODI-World typically reports in kb/d. If unit col present, check.
+scripts/client_pkg/fetch_jodi.py:112:         print(f"  [JODI] {label} units: {units}")
+scripts/client_pkg/fetch_jodi.py:116:     print(f"  [JODI] {label}: {len(out)} monthly obs, {out['date'].min().date()} → {out['date'].max().date()}")
+scripts/client_pkg/fetch_jodi.py:120: def fetch_jodi() -> tuple:
+scripts/client_pkg/fetch_jodi.py:123:     df = _download_jodi()
+scripts/client_pkg/fetch_jodi.py:125:     iran_path  = os.path.join(CACHE_DIR, "jodi_iran_exports.csv")
+scripts/client_pkg/fetch_jodi.py:126:     saudi_path = os.path.join(CACHE_DIR, "jodi_saudi_exports.csv")
+scripts/client_pkg/fetch_portwatch.py:2: fetch_portwatch.py — PortWatch (IMF AIS) port-call data fetcher.
+scripts/client_pkg/fetch_portwatch.py:4: PortWatch REST API: ArcGIS FeatureServer served by IMF.
+scripts/client_pkg/fetch_portwatch.py:5: Port IDs (PortWatch internal):
+scripts/client_pkg/fetch_portwatch.py:15:   mbpd = (sum_dwt_mt × LOAD_FACTOR × BBL_PER_MT) / days_in_month / 1_000_000
+scripts/client_pkg/fetch_portwatch.py:19: Cache: client_package/data/portwatch_{portid}.csv (refresh if > 7 days old)
+scripts/client_pkg/fetch_portwatch.py:25: BASE_URL = "https://portwatch.imf.org/arcgis/rest/services/PortWatch/PortWatch_portcalls/FeatureServer/0/query"
+scripts/client_pkg/fetch_portwatch.py:26: YANBU_PORTS_URL = "https://portwatch.imf.org/arcgis/rest/services/PortWatch/PortWatch_ports_database/FeatureServer/0/query"
+scripts/client_pkg/fetch_portwatch.py:47:     """Query PortWatch ports DB for Yanbu candidates; print and return."""
+scripts/client_pkg/fetch_portwatch.py:74:     cache_path = os.path.join(CACHE_DIR, f"portwatch_{portid}.csv")
+scripts/client_pkg/fetch_portwatch.py:82:     print(f"  [{portid}] Fetching from PortWatch API...")
+scripts/client_pkg/fetch_portwatch.py:97:             print(f"  [WARN] PortWatch fetch failed for {portid} at offset {offset}: {e}")
+scripts/client_pkg/fetch_portwatch.py:131: def monthly_export_mbpd(df: pd.DataFrame, tanker_types=None) -> pd.DataFrame:
+scripts/client_pkg/fetch_portwatch.py:133:     Aggregate portcalls to monthly export estimate in mbpd.
+scripts/client_pkg/fetch_portwatch.py:135:     Returns DataFrame: month (period), n_calls, dwt_mt, mbpd.
+scripts/client_pkg/fetch_portwatch.py:160:     monthly["mbpd"] = (monthly["dwt_mt"] * LOAD_FACTOR * BBL_PER_MT) / monthly["days"] / 1_000_000
+scripts/client_pkg/task0_anchors.py:2: Task 0 — External anchors.
+scripts/client_pkg/task0_anchors.py:4: 1. PortWatch: fetch monthly port-call / export estimates for RT, JU, YB.
+scripts/client_pkg/task0_anchors.py:9:   client_package/data/portwatch_rt_monthly.csv
+scripts/client_pkg/task0_anchors.py:10:   client_package/data/portwatch_ju_monthly.csv
+scripts/client_pkg/task0_anchors.py:11:   client_package/data/portwatch_yb_monthly.csv
+scripts/client_pkg/task0_anchors.py:23: from client_pkg.fetch_portwatch import (
+scripts/client_pkg/task0_anchors.py:24:     discover_yanbu_ports, fetch_portcalls, monthly_export_mbpd
+scripts/client_pkg/task0_anchors.py:67:         "description": "Ship-to-ship transfer at Sohar anchorage confirms routing change",
+scripts/client_pkg/task0_anchors.py:103:     print("\n[Task 0] External anchors")
+scripts/client_pkg/task0_anchors.py:105:     # ── PortWatch ─────────────────────────────────────────────────────────────
+scripts/client_pkg/task0_anchors.py:106:     print("\n  PortWatch: discovering Yanbu port candidates...")
+scripts/client_pkg/task0_anchors.py:130:         print(f"\n  Fetching PortWatch {key.upper()} ({portid})...")
+scripts/client_pkg/task0_anchors.py:133:             monthly = monthly_export_mbpd(raw)
+scripts/client_pkg/task0_anchors.py:134:             out = os.path.join(CACHE_DIR, f"portwatch_{key}_monthly.csv")
+scripts/client_pkg/task0_anchors.py:138:             print(f"  [WARN] PortWatch {key}: {e}")
+scripts/client_pkg/task0_anchors.py:162:         "portwatch": port_map,
+scripts/client_pkg/task1_event_study.py:137:                       else f"{abs(lead) if lead else '?'}d lag")
+scripts/client_pkg/task1_event_study.py:184:     col_labels = ["Event", "Expected", "Δ RT (Mb)", "> Placebo p90", "Lead / Lag", "✓/✗"]
+scripts/client_pkg/task2_kharg_benchmark.py:2: Task 2 — Kharg benchmark: SAR storage vs JODI Iran crude exports.
+scripts/client_pkg/task2_kharg_benchmark.py:6:   - Align to JODI Iran crude exports (kbd) on same calendar month.
+scripts/client_pkg/task2_kharg_benchmark.py:18:   client_package/data/kharg_jodi_aligned.csv
+scripts/client_pkg/task2_kharg_benchmark.py:19:   client_package/figures/fig2_kharg_jodi_scatter.png
+scripts/client_pkg/task2_kharg_benchmark.py:20:   client_package/figures/fig3_kharg_jodi_timeline.png
+scripts/client_pkg/task2_kharg_benchmark.py:32: from client_pkg.fetch_jodi import fetch_jodi
+scripts/client_pkg/task2_kharg_benchmark.py:41:     print("\n[Task 2] Kharg benchmark vs JODI")
+scripts/client_pkg/task2_kharg_benchmark.py:54:     # ── Load JODI ─────────────────────────────────────────────────────────────
+scripts/client_pkg/task2_kharg_benchmark.py:55:     iran_path = os.path.join(CACHE_DIR, "jodi_iran_exports.csv")
+scripts/client_pkg/task2_kharg_benchmark.py:58:         print(f"  JODI Iran: using cache ({len(iran)} rows)")
+scripts/client_pkg/task2_kharg_benchmark.py:60:         print("  Fetching JODI...")
+scripts/client_pkg/task2_kharg_benchmark.py:61:         iran, _ = fetch_jodi()
+scripts/client_pkg/task2_kharg_benchmark.py:64:         print("  [WARN] JODI Iran unavailable — skipping Kharg benchmark figures")
+scripts/client_pkg/task2_kharg_benchmark.py:65:         return {"r": None, "n": 0, "note": "JODI unavailable"}
+scripts/client_pkg/task2_kharg_benchmark.py:94:     merged_sorted.to_csv(os.path.join(CACHE_DIR, "kharg_jodi_aligned.csv"), index=False)
+scripts/client_pkg/task2_kharg_benchmark.py:105:     ax.set_ylabel("JODI Iran Crude Exports (kb/d)", fontsize=10)
+scripts/client_pkg/task2_kharg_benchmark.py:106:     ax.set_title("Kharg Island SAR vs Iran Crude Exports (JODI)\nMethod: monthly mean storage aligned to JODI export month",
+scripts/client_pkg/task2_kharg_benchmark.py:111:     fig_path = os.path.join(FIG_DIR, "fig2_kharg_jodi_scatter.png")
+scripts/client_pkg/task2_kharg_benchmark.py:123:              color="#e07b2a", lw=1.2, ls="--", label="JODI Iran exports (kb/d)")
+scripts/client_pkg/task2_kharg_benchmark.py:127:     ax1.set_title(f"Kharg SAR Storage vs JODI Iran Crude Exports  [r={r:.2f}, n={n}mo]", fontsize=11)
+scripts/client_pkg/task2_kharg_benchmark.py:137:     fig_path2 = os.path.join(FIG_DIR, "fig3_kharg_jodi_timeline.png")
+scripts/client_pkg/task3_correlation.py:2: Task 3 — Correlation analysis: Saudi storage vs PortWatch exports (3-phase).
+scripts/client_pkg/task3_correlation.py:5:   Grid: anchor × aggregation × metric × lag
+scripts/client_pkg/task3_correlation.py:6:   anchor      : RT-port, JU-port, RT+JU combined, YB-port
+scripts/client_pkg/task3_correlation.py:8:   metric      : (a) Δstorage vs export_mbpd
+scripts/client_pkg/task3_correlation.py:10:   lag         : -1, 0, +1 periods (negative = storage leads)
+scripts/client_pkg/task3_correlation.py:42: ANCHORS = ["rt", "ju", "rt_ju", "yb"]
+scripts/client_pkg/task3_correlation.py:45: LAGS = [-1, 0, 1]
+scripts/client_pkg/task3_correlation.py:50: def _load_portwatch(key):
+scripts/client_pkg/task3_correlation.py:51:     path = os.path.join(CACHE_DIR, f"portwatch_{key}_monthly.csv")
+scripts/client_pkg/task3_correlation.py:55:     df = df.set_index("month_start")["mbpd"].rename(key)
+scripts/client_pkg/task3_correlation.py:82: def _lag_series(s: pd.Series, lag: int) -> pd.Series:
+scripts/client_pkg/task3_correlation.py:83:     return s.shift(lag)
+scripts/client_pkg/task3_correlation.py:99:     port_rt = _load_portwatch("rt")
+scripts/client_pkg/task3_correlation.py:100:     port_ju = _load_portwatch("ju")
+scripts/client_pkg/task3_correlation.py:101:     port_yb = _load_portwatch("yb")
+scripts/client_pkg/task3_correlation.py:121:     for anchor, agg, metric, lag in itertools.product(ANCHORS, AGGREGATIONS, METRICS, LAGS):
+scripts/client_pkg/task3_correlation.py:122:         stor = storage_map.get(anchor, pd.Series(dtype=float))
+scripts/client_pkg/task3_correlation.py:123:         expo = export_map.get(anchor, pd.Series(dtype=float))
+scripts/client_pkg/task3_correlation.py:132:         expo_agg = _aggregate(expo_a, "M")    # PortWatch already monthly
+scripts/client_pkg/task3_correlation.py:143:         x_stor_lagged = _lag_series(x_stor, lag)
+scripts/client_pkg/task3_correlation.py:144:         r, p, n = _compute_r(x_stor_lagged, x_expo)
+scripts/client_pkg/task3_correlation.py:148:             "anchor": anchor, "agg": agg, "metric": metric, "lag": lag,
+scripts/client_pkg/task3_correlation.py:172:         print(f"    {row['anchor']:6s} {row['agg']:3s} {row['metric']:7s} lag={row['lag']:+d}  "
+scripts/client_pkg/task3_correlation.py:179:         anchor, agg, metric, lag = (
+scripts/client_pkg/task3_correlation.py:180:             top_row["anchor"], top_row["agg"], top_row["metric"], int(top_row["lag"])
+scripts/client_pkg/task3_correlation.py:182:         stor = storage_map.get(anchor, pd.Series(dtype=float))
+scripts/client_pkg/task3_correlation.py:183:         expo = export_map.get(anchor, pd.Series(dtype=float))
+scripts/client_pkg/task3_correlation.py:200:         x_stor_lagged = _lag_series(x_stor, lag)
+scripts/client_pkg/task3_correlation.py:201:         r_c, p_c, n_c = _compute_r(x_stor_lagged, x_expo)
+scripts/client_pkg/task3_correlation.py:207:             "anchor": anchor, "agg": agg, "metric": metric, "lag": lag,
+scripts/client_pkg/task3_correlation.py:215:         print(f"    {anchor} {agg} {metric} lag={lag:+d}: "
+scripts/client_pkg/task3_correlation.py:244:         "top3": top3[["anchor", "agg", "metric", "lag", "r", "p", "n"]].to_dict("records"),
+scripts/client_pkg/task4_ais_blind.py:4: Shows that PortWatch (AIS-based) export data collapses after March 2026
+scripts/client_pkg/task4_ais_blind.py:5: (dark ships / transponder spoofing during conflict) while our SAR storage
+scripts/client_pkg/task4_ais_blind.py:9:   - Kpler Sept 2026 export estimate: ~1.5–4 mbpd (publicly reported)
+scripts/client_pkg/task4_ais_blind.py:10:   - PortWatch will show near-zero or gap for RT after 2026-03
+scripts/client_pkg/task4_ais_blind.py:13:   1. PortWatch RT+JU mbpd (AIS) — collapses
+scripts/client_pkg/task4_ais_blind.py:36:     {"date": "2026-04-01", "mbpd": 0.2, "source": "Kpler (near-zero liftings)"},
+scripts/client_pkg/task4_ais_blind.py:37:     {"date": "2026-07-01", "mbpd": 2.5, "source": "Bloomberg/Kpler partial resume"},
+scripts/client_pkg/task4_ais_blind.py:38:     {"date": "2026-09-01", "mbpd": 3.2, "source": "Kpler Sept estimate"},
+scripts/client_pkg/task4_ais_blind.py:49:     # Load PortWatch RT (best proxy for liftings)
+scripts/client_pkg/task4_ais_blind.py:50:     rt_path = os.path.join(CACHE_DIR, "portwatch_rt_monthly.csv")
+scripts/client_pkg/task4_ais_blind.py:51:     ju_path = os.path.join(CACHE_DIR, "portwatch_ju_monthly.csv")
+scripts/client_pkg/task4_ais_blind.py:55:     # ── Panel 1: PortWatch (AIS) ───────────────────────────────────────────────
+scripts/client_pkg/task4_ais_blind.py:59:         rt_pw = pd.read_csv(rt_path, parse_dates=["month_start"]).set_index("month_start")["mbpd"]
+scripts/client_pkg/task4_ais_blind.py:60:         ju_pw = pd.read_csv(ju_path, parse_dates=["month_start"]).set_index("month_start")["mbpd"]
+scripts/client_pkg/task4_ais_blind.py:64:                  label="PortWatch RT+JU (AIS-based, mbpd)")
+scripts/client_pkg/task4_ais_blind.py:67:         ax1.text(0.5, 0.5, "PortWatch data unavailable\n(AIS collapse visible in full run)",
+scripts/client_pkg/task4_ais_blind.py:73:         ax1.scatter([d], [ke["mbpd"]], s=60, zorder=5, marker="^",
+scripts/client_pkg/task4_ais_blind.py:75:         ax1.annotate(f"{ke['mbpd']} mbpd\n({ke['source'].split('/')[0]})",
+scripts/client_pkg/task4_ais_blind.py:76:                      xy=(d, ke["mbpd"]), xytext=(10, 10),
+scripts/client_pkg/task4_ais_blind.py:80:                 label="AIS data collapse (dark ships / spoofing)")
+scripts/client_pkg/task4_ais_blind.py:107:         "Dark ships & AIS spoofing blind port-call data from 2026-03-02.\n"
+scripts/client_pkg/task5_report.py:7:   Iran Benchmark (Kharg vs JODI)
+scripts/client_pkg/task5_report.py:69:     # ── Load Kharg/JODI ───────────────────────────────────────────────────────
+scripts/client_pkg/task5_report.py:109:         f"Kharg storage correlates with JODI-reported Iranian crude exports at "
+scripts/client_pkg/task5_report.py:113:         "When AIS and PortWatch data collapsed in March 2026, SAR storage remained the only "
+scripts/client_pkg/task5_report.py:161:         "## Iran Benchmark: Kharg Island vs JODI",
+scripts/client_pkg/task5_report.py:163:         "**Method:** monthly mean of daily SAR storage at Kharg aligned to JODI-reported "
+scripts/client_pkg/task5_report.py:180:             "_JODI data unavailable — correlation not computed._",
+scripts/client_pkg/task5_report.py:185:         "![Kharg vs JODI scatter](figures/fig2_kharg_jodi_scatter.png)",
+scripts/client_pkg/task5_report.py:187:         "![Kharg vs JODI timeline](figures/fig3_kharg_jodi_timeline.png)",
+scripts/client_pkg/task5_report.py:207:         lines.append("| Event | Date | Expected | Δ RT (Mb) | > Placebo p90 | Lead/Lag | Verdict |")
+scripts/client_pkg/task5_report.py:223:         "## Correlation Analysis: Saudi Storage ↔ PortWatch Exports",
+scripts/client_pkg/task5_report.py:227:         f"  - Grid: {n_combos} combinations of anchor × aggregation × metric × lag",
+scripts/client_pkg/task5_report.py:245:         lines.append("| Anchor | Aggregation | Metric | Lag | r (Phase A) | r (Phase C) | Bonferroni |")
+scripts/client_pkg/task5_report.py:251:                 if (h.get("anchor") == row.get("anchor") and
+scripts/client_pkg/task5_report.py:254:                         int(h.get("lag", 99)) == int(row.get("lag", 99))):
+scripts/client_pkg/task5_report.py:260:                 f"| {row.get('anchor')} | {row.get('agg')} | {row.get('metric')} "
+scripts/client_pkg/task5_report.py:261:                 f"| {row.get('lag'):+d} | {_fmt_r(row.get('r'))} | {r_c} | {bonf_pass} |"
+scripts/client_pkg/task5_report.py:272:         "Port-call databases (PortWatch, Kpler) rely on vessel AIS transponders. "
+scripts/client_pkg/task5_report.py:273:         "During the 2026 conflict, dark ships and AIS spoofing collapsed port-call "
+scripts/client_pkg/task5_report.py:315:         "| `data/kharg_jodi_aligned.csv` | Monthly Kharg storage aligned to JODI |",
+scripts/client_pkg/task5_report.py:318:         "| `data/portwatch_rt_monthly.csv` | PortWatch RT monthly mb/d |",
+scripts/client_pkg/task5_report.py:319:         "| `data/portwatch_ju_monthly.csv` | PortWatch JU monthly mb/d |",
+scripts/client_pkg/task5_report.py:320:         "| `data/portwatch_yb_monthly.csv` | PortWatch YB monthly mb/d |",
+scripts/config.py:75: # which smooths out single-pass noise without lagging trend reversals badly.
+scripts/correlations.py:60: # Resample everything to weekly means (Monday anchor)
+scripts/correlations.py:103: # ── Lag analysis: Kharg vs each terminal (±8 weeks) ────────────────────────
+scripts/correlations.py:105: print("LAG ANALYSIS (±8 weeks): who leads whom?")
+scripts/correlations.py:106: print("  Positive lag = terminal LEADS Kharg")
+scripts/correlations.py:112:     best_r, best_lag = 0, 0
+scripts/correlations.py:113:     for lag in range(-8, 9):
+scripts/correlations.py:114:         if lag == 0:
+scripts/correlations.py:116:         elif lag > 0:
+scripts/correlations.py:117:             r = sub["kharg"].iloc[lag:].corr(sub[tid].iloc[:-lag])
+scripts/correlations.py:119:             r = sub["kharg"].iloc[:lag].corr(sub[tid].iloc[-lag:])
+scripts/correlations.py:121:             best_r, best_lag = r, lag
+scripts/correlations.py:122:     direction = "terminal LEADS" if best_lag > 0 else ("Kharg LEADS" if best_lag < 0 else "simultaneous")
+scripts/correlations.py:123:     print(f"  {tid:20s}  best r={best_r:+.4f} at lag={best_lag:+2d}w  ({direction})")
+scripts/diag_instrument_audit_7.py:492:         flag = " *** EXCEEDS SH_MAX_PX ***" if clipped else ""
+scripts/diag_instrument_audit_7.py:494:               f"req {w_prod}×{h_prod}px (prod formula){flag} | "
+scripts/diag_juwaymah_yanbu_3.py:630:     # Orbit anchor dates for cycle matching (from catalog, round 2)
+scripts/diag_juwaymah_yanbu_3.py:631:     # Juwaymah DESC 35: anchor 2024-01-13, 6-day cycle
+scripts/diag_juwaymah_yanbu_3.py:632:     # Yanbu ASC 14: anchor 2024-01-11, 6-day cycle (approx; S1 repeat = 12d per satellite, 6d with A+B+C)
+scripts/diag_juwaymah_yanbu_3.py:693: -- CLEAN: all dates within ±1 day of 6d cycle from anchor 2024-01-13
+scripts/diag_juwaymah_yanbu_3.py:698:     -- days since anchor 2024-01-13
+scripts/diag_juwaymah_yanbu_3.py:699:     (date::date - '2024-01-13'::date)               AS days_since_anchor,
+scripts/diag_juwaymah_yanbu_3.py:714:     (date::date - '2024-01-11'::date)               AS days_since_anchor,
+scripts/diag_juwaymah_yanbu_4.py:935:     # Check for coordinate overlap (would flag double-counting)
+scripts/eda_terminals.py:85:     flag = ""
+scripts/eda_terminals.py:87:         flag += f" ⚠ {gaps_big} gap(s)>{10}d (max {max_gap}d)"
+scripts/eda_terminals.py:89:         flag += f" ⚠ {null_db} null db_mean"
+scripts/eda_terminals.py:91:         flag += f" ⚠ db_min={db_min}"
+scripts/eda_terminals.py:93:         flag += f" ⚠ db_max={db_max}"
+scripts/eda_terminals.py:101:     tank_flag = ""
+scripts/eda_terminals.py:103:         tank_flag = f" ⚠ {t_sparse} dates<50%tanks (tanks/date: min={t_min} mean={t_mean} max={t_max})"
+scripts/eda_terminals.py:105:     print(f"  {tid:<20} passes={n:>4}  {first} → {last}  max_gap={max_gap:>3}d  db=[{db_min:>6},{db_max:>6}]{flag}{tank_flag}")
+scripts/eda_terminals.py:109:     if flag:
+scripts/eda_terminals.py:110:         issues.append(f"[obs] {tid}: {flag.strip()}")
+scripts/eda_terminals.py:142:     print(f"  {'terminal':<20} {'n':>4}  {'min%':>5} {'p25%':>5} {'med%':>5} {'p75%':>5} {'p90%':>5} {'max%':>5}  {'mean%':>6} {'std%':>5}  {'cv':>5}  flags")
+scripts/eda_terminals.py:167:         flag = ""
+scripts/eda_terminals.py:168:         if over_cap:      flag += f" ⚠ {over_cap} over-cap"
+scripts/eda_terminals.py:169:         if neg:           flag += f" ⚠ {neg} negative"
+scripts/eda_terminals.py:170:         if zeros:         flag += f" ⚠ {zeros} zero"
+scripts/eda_terminals.py:171:         if nulls:         flag += f" ⚠ {nulls} null"
+scripts/eda_terminals.py:172:         if p90 > 85:      flag += f" ⚠ p90={p90}% CRITICAL"
+scripts/eda_terminals.py:173:         elif p50 > 85:    flag += f" ⚠ median={p50}% CRITICAL"
+scripts/eda_terminals.py:174:         elif p_max > 85:  flag += f" ℹ max>{85}%"
+scripts/eda_terminals.py:176:         print(f"  {tid:<20} {len(v):>4}  {p_min:>5} {p25:>5} {p50:>5} {p75:>5} {p90:>5} {p_max:>5}  {mean_:>6} {std_:>5}  {cv:>5}  {flag}")
+scripts/eda_terminals.py:178:         if flag:
+scripts/eda_terminals.py:179:             issues.append(f"[vol] {tid}: {flag.strip()}")
+scripts/events_v3.py:4: Events: geopolitical + anchor episodes from polarity verdict.
+scripts/events_v3.py:24:     # ── Polarity-anchor episodes (canonical from verdict) ──
+scripts/hormuz_ships.py:2: hormuz_ships.py — SAR ship detection in the Strait of Hormuz.
+scripts/hormuz_ships.py:37: # ── Strait of Hormuz — channel between Qeshm south coast and Musandam (Oman)
+scripts/hormuz_ships.py:122: MIN_SHIP_PX = 3
+scripts/hormuz_ships.py:123: MAX_SHIP_PX = 150
+scripts/hormuz_ships.py:132: # Anchorage exclusion: Khasab bay (SW corner) — lon<56.35°E && lat<26.45°N
+scripts/hormuz_ships.py:137: anchorage_mask = np.ones(img_db.shape, dtype=bool)
+scripts/hormuz_ships.py:138: anchorage_mask[excl_row:, :excl_col] = False  # exclude bottom-left bay
+scripts/hormuz_ships.py:141: detections = (img_db > threshold) & valid_mask & water_mask & anchorage_mask
+scripts/hormuz_ships.py:148: ship_boxes  = []
+scripts/hormuz_ships.py:149: ship_pixels = []
+scripts/hormuz_ships.py:153:     if MIN_SHIP_PX <= sz <= MAX_SHIP_PX:
+scripts/hormuz_ships.py:155:         ship_boxes.append((cols.min(), rows.min(), cols.max(), rows.max()))
+scripts/hormuz_ships.py:156:         ship_pixels.append(int(sz))
+scripts/hormuz_ships.py:158: n_ships = len(ship_boxes)
+scripts/hormuz_ships.py:159: print(f"Detections: {n_clusters} clusters → {n_ships} ships")
+scripts/hormuz_ships.py:160: print(f"Ship sizes (px): {sorted(ship_pixels, reverse=True)}")
+scripts/hormuz_ships.py:169: for (x0, y0, x1, y1) in ship_boxes:
+scripts/hormuz_ships.py:195:     f"Strait of Hormuz — Sentinel-1 VV  {scene_date}\n"
+scripts/hormuz_ships.py:196:     f"Ships in channel: {n_ships}  (σ={SIGMA}, {RESOLUTION}m/px, water-masked CFAR)",
+scripts/hormuz_ships.py:202: OUT = "/tmp/hormuz_ships.jpg"
+scripts/hormuz_ships.py:216: print(f"STRAIT OF HORMUZ SHIP COUNT SUMMARY")
+scripts/hormuz_ships.py:221: print(f"  Size filter  : {MIN_SHIP_PX}–{MAX_SHIP_PX} px")
+scripts/hormuz_ships.py:222: print(f"  Ships found  : {n_ships}")
+scripts/hormuz_ships.py:223: if ship_pixels:
+scripts/hormuz_ships.py:224:     sizes_m = [round(np.sqrt(s) * RESOLUTION) for s in ship_pixels]
+scripts/hormuz_timeseries.py:2: hormuz_timeseries.py - weekly ship counts in the Strait of Hormuz.
+scripts/hormuz_timeseries.py:44: MIN_SHIP_PX = 3
+scripts/hormuz_timeseries.py:45: MAX_SHIP_PX = 150
+scripts/hormuz_timeseries.py:83: def detect_ships(scene_date):
+scripts/hormuz_timeseries.py:118:     anchorage_mask = np.ones(img_db.shape, dtype=bool)
+scripts/hormuz_timeseries.py:119:     anchorage_mask[excl_row:, :excl_col] = False
+scripts/hormuz_timeseries.py:122:     detections = (img_db > threshold) & valid_mask & water_mask & anchorage_mask
+scripts/hormuz_timeseries.py:129:         if MIN_SHIP_PX <= (labeled == i).sum() <= MAX_SHIP_PX
+scripts/hormuz_timeseries.py:136:         n = detect_ships(date)
+scripts/hormuz_timeseries.py:138:         results.append({"date": date, "ships": n, "status": "ok" if n is not None else "partial"})
+scripts/hormuz_timeseries.py:141:         results.append({"date": date, "ships": None, "status": "error"})
+scripts/hormuz_timeseries.py:143: CSV_OUT = "/tmp/hormuz_timeseries.csv"
+scripts/hormuz_timeseries.py:145:     w = csv.DictWriter(f, fieldnames=["date", "ships", "status"])
+scripts/hormuz_timeseries.py:151: print(f"{'Date':<12}  {'Ships':>6}  {'Note'}")
+scripts/hormuz_timeseries.py:155:     ships_str = str(r["ships"]) if r["ships"] is not None else "-"
+scripts/hormuz_timeseries.py:156:     print(f"{r['date']:<12}  {ships_str:>6}  {note}")
+scripts/hormuz_timeseries.py:159: valid = [r["ships"] for r in results if r["ships"] is not None]
+scripts/hormuz_timeseries.py:163: dates_ok = [r["date"] for r in results if r["ships"] is not None]
+scripts/hormuz_timeseries.py:164: ships_ok = [r["ships"] for r in results if r["ships"] is not None]
+scripts/hormuz_timeseries.py:169:     ax.plot(range(len(dates_ok)), ships_ok, color="#00e5ff", linewidth=1.5, marker="o", markersize=4)
+scripts/hormuz_timeseries.py:170:     ax.fill_between(range(len(dates_ok)), ships_ok, alpha=0.15, color="#00e5ff")
+scripts/hormuz_timeseries.py:175:     ax.set_ylabel("Ships detected", color="#aaa", fontsize=9)
+scripts/hormuz_timeseries.py:179:         f"Strait of Hormuz - Weekly Ship Count  ({START_DATE} -> {dates_ok[-1]})\n"
+scripts/hormuz_timeseries.py:184:     CHART_OUT = "/tmp/hormuz_timeseries.jpg"
+scripts/jask_events.py:193:     """Evaluate war_2026 and resume_2025 as events (not polarity anchors)."""
+scripts/jask_events.py:308:         "- war_2026 and resume_2025 evaluated as events, not polarity anchors",
+scripts/locations.py:25:     # Propagate enabled flag; absent means True (Kharg tanks have no field → always enabled)
+scripts/measure_alfaw_geometry.py:164:     median_residual_px, edge_energies, quality_flag.
+scripts/measure_alfaw_geometry.py:410:         flag = "" if quality == "good" else f"  [{quality}]"
+scripts/measure_alfaw_geometry.py:413:             f"({dx_m:+.1f},{dy_m:+.1f})  q={quality}{flag}")
+scripts/orbit_survey.py:448:         "  - Sanctions-specific anchor constraints  ",
+scripts/patch_registry_enabled.py:54:                   flags=re.MULTILINE) if '#' in line else re.sub(r'\}(\s*,?\s*)$', r'{}}\1'.format(wl.replace('\\', '\\\\')), line)
+scripts/recenter_saudi.py:17:   NCC 0.20–0.34 → low-confidence (flagged, human review)
+scripts/research/auto_hypotheses.py:1902: #   |delta_mean| > 1.0 dB flagged as potential ingest-path level shift.
+scripts/research/auto_hypotheses.py:2275: # Method: count WL-45 dates in TVT; check vol range; flag if any WL-45 tank is missing
+scripts/research/auto_hypotheses.py:2340: # Output: CSV only. NO UANI correlations per ТЗ rules.
+scripts/research/auto_hypotheses.py:2368:         print(f"  NOTE: No UANI correlations per ТЗ rules.")
+scripts/research/auto_hypotheses.py:3543: # п.2: Yanbu DESC-50/52 flag
+scripts/research/auto_hypotheses.py:3553:     print(f"  MANIFEST FLAG: marked as 'pre_asc14_legacy' in yanbu/all_orbits manifest")
+scripts/research/export_event_csv.py:14:   7. anchors.csv  (+ missing_anchors.txt)
+scripts/research/export_event_csv.py:383: for terminal_id, rows, per_orbit_flag, src_table, override_min, override_max in [
+scripts/research/export_event_csv.py:392:     groups = _compute_calib(rows, per_orbit=per_orbit_flag)
+scripts/research/export_event_csv.py:415: # ── 7. anchors.csv ────────────────────────────────────────────────────────────
+scripts/research/export_event_csv.py:416: print("\n[7/8] anchors.csv")
+scripts/research/export_event_csv.py:418: anchor_rows = []
+scripts/research/export_event_csv.py:419: missing_anchors = []
+scripts/research/export_event_csv.py:421: # JODI Saudi crude production
+scripts/research/export_event_csv.py:422: jodi_path = os.path.join(
+scripts/research/export_event_csv.py:424:     "data", "external", "jodi_saudi_crude.csv"
+scripts/research/export_event_csv.py:426: if os.path.exists(jodi_path):
+scripts/research/export_event_csv.py:427:     df_jodi = pd.read_csv(jodi_path)
+scripts/research/export_event_csv.py:428:     print(f"  JODI Saudi: {len(df_jodi)} rows, cols: {list(df_jodi.columns)}")
+scripts/research/export_event_csv.py:429:     for _, row in df_jodi.iterrows():
+scripts/research/export_event_csv.py:431:         r["source"] = "jodi_saudi_crude"
+scripts/research/export_event_csv.py:433:         anchor_rows.append(r)
+scripts/research/export_event_csv.py:435:     missing_anchors.append("jodi_saudi_crude — expected at data/external/jodi_saudi_crude.csv")
+scripts/research/export_event_csv.py:437: # PortWatch ports: 1091 (RT), 526 (Juaymah), 570 (Yanbu), Kharg
+scripts/research/export_event_csv.py:438: portwatch_files = [
+scripts/research/export_event_csv.py:444: for fname, hint in portwatch_files:
+scripts/research/export_event_csv.py:453:             r["source"] = f"portwatch_{fname}"
+scripts/research/export_event_csv.py:455:             anchor_rows.append(r)
+scripts/research/export_event_csv.py:456:         print(f"  PortWatch {fname}: {len(df_pw)} rows")
+scripts/research/export_event_csv.py:458:         missing_anchors.append(f"portwatch_{fname} — not found at data/external/{fname}.csv")
+scripts/research/export_event_csv.py:460: # UANI
+scripts/research/export_event_csv.py:461: uani_path = os.path.join(
+scripts/research/export_event_csv.py:463:     "data", "external", "uani.csv"
+scripts/research/export_event_csv.py:465: if os.path.exists(uani_path):
+scripts/research/export_event_csv.py:466:     df_uani = pd.read_csv(uani_path)
+scripts/research/export_event_csv.py:467:     for _, row in df_uani.iterrows():
+scripts/research/export_event_csv.py:469:         r["source"] = "uani"
+scripts/research/export_event_csv.py:470:         anchor_rows.append(r)
+scripts/research/export_event_csv.py:471:     print(f"  UANI: {len(df_uani)} rows")
+scripts/research/export_event_csv.py:473:     missing_anchors.append("uani — not found at data/external/uani.csv")
+scripts/research/export_event_csv.py:475: # rtju_mbpd
+scripts/research/export_event_csv.py:478:     "data", "external", "rtju_mbpd.csv"
+scripts/research/export_event_csv.py:484:         r["source"] = "rtju_mbpd"
+scripts/research/export_event_csv.py:485:         anchor_rows.append(r)
+scripts/research/export_event_csv.py:486:     print(f"  rtju_mbpd: {len(df_rtju)} rows")
+scripts/research/export_event_csv.py:488:     missing_anchors.append("rtju_mbpd — not found at data/external/rtju_mbpd.csv")
+scripts/research/export_event_csv.py:490: # JODI Iran
+scripts/research/export_event_csv.py:491: jodi_iran_path = os.path.join(
+scripts/research/export_event_csv.py:493:     "data", "external", "jodi_iran_crude.csv"
+scripts/research/export_event_csv.py:495: if os.path.exists(jodi_iran_path):
+scripts/research/export_event_csv.py:496:     df_ji = pd.read_csv(jodi_iran_path)
+scripts/research/export_event_csv.py:499:         r["source"] = "jodi_iran_crude"
+scripts/research/export_event_csv.py:501:         anchor_rows.append(r)
+scripts/research/export_event_csv.py:502:     print(f"  JODI Iran: {len(df_ji)} rows")
+scripts/research/export_event_csv.py:504:     missing_anchors.append("jodi_iran_crude — not found at data/external/jodi_iran_crude.csv")
+scripts/research/export_event_csv.py:506: # Hormuz timeseries (already in data/)
+scripts/research/export_event_csv.py:507: hormuz_path = os.path.join(
+scripts/research/export_event_csv.py:509:     "data", "hormuz_timeseries.csv"
+scripts/research/export_event_csv.py:511: if os.path.exists(hormuz_path):
+scripts/research/export_event_csv.py:512:     df_horm = pd.read_csv(hormuz_path)
+scripts/research/export_event_csv.py:515:         r["source"] = "hormuz_timeseries_repo"
+scripts/research/export_event_csv.py:517:         anchor_rows.append(r)
+scripts/research/export_event_csv.py:518:     print(f"  Hormuz timeseries: {len(df_horm)} rows")
+scripts/research/export_event_csv.py:520:     missing_anchors.append("hormuz_timeseries — not found at data/hormuz_timeseries.csv")
+scripts/research/export_event_csv.py:522: path7a = os.path.join(OUT_DIR, "anchors.csv")
+scripts/research/export_event_csv.py:523: path7b = os.path.join(OUT_DIR, "missing_anchors.txt")
+scripts/research/export_event_csv.py:526: if anchor_rows:
+scripts/research/export_event_csv.py:527:     all_anchor_cols = set()
+scripts/research/export_event_csv.py:528:     for r in anchor_rows:
+scripts/research/export_event_csv.py:529:         all_anchor_cols.update(r.keys())
+scripts/research/export_event_csv.py:530:     std_anchor = ["source", "terminal_hint"]
+scripts/research/export_event_csv.py:531:     extra_anchor = sorted(all_anchor_cols - set(std_anchor))
+scripts/research/export_event_csv.py:532:     n7 = write_csv(path7a, anchor_rows, std_anchor + extra_anchor)
+scripts/research/export_event_csv.py:533:     print(f"  anchors.csv → {n7} rows from {len(set(r['source'] for r in anchor_rows))} sources")
+scripts/research/export_event_csv.py:537:     print("  anchors.csv → empty (no anchor files found)")
+scripts/research/export_event_csv.py:540:     f.write(f"# Missing anchor files — export run {RUN_ID} SHA {SCRIPT_SHA}\n")
+scripts/research/export_event_csv.py:541:     for m in missing_anchors:
+scripts/research/export_event_csv.py:543: print(f"  missing_anchors.txt → {len(missing_anchors)} missing")
+scripts/research/export_event_csv.py:574:     f"| anchors.csv | {n7} | — | {_fsize(path7a)} | Available: {', '.join(sorted(set(r['source'] for r in anchor_rows))) if anchor_rows else 'none'} |",
+scripts/research/export_event_csv.py:575:     f"| missing_anchors.txt | — | — | {_fsize(path7b)} | Anchor files not found in repo |",
+scripts/research/export_event_csv.py:584:     f"   Flag: `orbit_direction_cdse=DESCENDING AND relative_orbit_cdse IN (50,52)`.",
+scripts/research/export_event_csv.py:628:     ("anchors.csv",                     n7, "—"),
+scripts/research/export_event_csv.py:631: print(f"\nMissing anchors ({len(missing_anchors)}):")
+scripts/research/export_event_csv.py:632: for m in missing_anchors:
+scripts/research/mega_export.py:9:   6  Anchors (no quota — Supabase + repo)
+scripts/research/mega_export.py:493:     - polarization: SV (single VV — ship_backfill.py fix applied 2026-10)
+scripts/research/mega_export.py:655: # SECTION 6 — Anchors
+scripts/research/mega_export.py:658:     print("\n=== Section 6: Anchors ===")
+scripts/research/mega_export.py:659:     anc_dir = OUT / "anchors_all"
+scripts/research/mega_export.py:662:     # ── 6.1 dump everything from repo anchors/ ───────────────────────────────
+scripts/research/mega_export.py:663:     anchor_dirs = ["data/anchors", "anchors", "scripts/anchors", "data"]
+scripts/research/mega_export.py:665:     for adir in anchor_dirs:
+scripts/research/mega_export.py:670:                        ["anchor", "portwatch", "jodi", "uani", "ship", "hormuz", "export", "mbpd"]):
+scripts/research/mega_export.py:673:                 if any(k in f.name.lower() for k in ["anchor", "portwatch"]):
+scripts/research/mega_export.py:679:         print(f"  copied {f.relative_to(REPO_ROOT)} → anchors_all/{f.name}")
+scripts/research/mega_export.py:681:     # event_csv anchors
+scripts/research/mega_export.py:683:     if (ec_dir / "anchors.csv").exists():
+scripts/research/mega_export.py:685:         shutil.copy(ec_dir / "anchors.csv", anc_dir / "anchors_event_csv.csv")
+scripts/research/mega_export.py:686:         if (ec_dir / "missing_anchors.txt").exists():
+scripts/research/mega_export.py:687:             shutil.copy(ec_dir / "missing_anchors.txt", anc_dir / "missing_anchors.txt")
+scripts/research/mega_export.py:688:         print("  copied anchors.csv + missing_anchors.txt from event_csv/")
+scripts/research/mega_export.py:690:     # Supabase: any anchor/reference tables
+scripts/research/mega_export.py:691:     for tbl_name in ["anchors", "export_anchors", "portwatch_anchors", "jodi_data"]:
+scripts/research/mega_export.py:701:     # ── 6.2 anchor_mapping.txt ───────────────────────────────────────────────
+scripts/research/mega_export.py:702:     mapping_lines = ["# anchor_mapping.txt — anchor-to-terminal wiring in codebase", ""]
+scripts/research/mega_export.py:703:     anchor_keywords = ["portwatch", "anchor", "jodi", "uani", "ship", "mbpd", "lag", "hormuz"]
+scripts/research/mega_export.py:710:             if any(k in line.lower() for k in anchor_keywords):
+scripts/research/mega_export.py:713:     p62 = OUT / "anchor_mapping.txt"
+scripts/research/mega_export.py:715:     print(f"  6.2 anchor_mapping.txt: {len(mapping_lines)} lines → {p62}")
+scripts/research/mega_export.py:1250:         ("scenes.csv",                "All scenes: V0 manifest + DB dates, in_db flag"),
+scripts/research/mega_export.py:1255:         ("anchors_all/",              "All anchor files from repo + Supabase + event_csv"),
+scripts/research/mega_export.py:1256:         ("anchor_mapping.txt",        "Anchor-to-terminal wiring (file:line)"),
+scripts/research/v1_tank_centers.py:14:   6. Flags: >10m, >25m, >50m based on offset_m.
+scripts/research/v1_tank_centers.py:373:             "flag_10m":    offset_m > 10,
+scripts/research/v1_tank_centers.py:374:             "flag_25m":    offset_m > 25,
+scripts/research/v1_tank_centers.py:375:             "flag_50m":    offset_m > 50,
+scripts/research/v1_tank_centers.py:393:         flag_str = (">" + "+".join(
+scripts/research/v1_tank_centers.py:397:               f"r_reg={r_reg}m→r_fit={r_fit}m  ncc={ncc:.3f}  {quality}  {flag_str}")
+scripts/research/v1_tank_centers.py:415:               f">10m={sum(r['flag_10m'] for r in ok_rows)}  "
+scripts/research/v1_tank_centers.py:416:               f">25m={sum(r['flag_25m'] for r in ok_rows)}  "
+scripts/research/v1_tank_centers.py:417:               f">50m={sum(r['flag_50m'] for r in ok_rows)}")
+scripts/research/v1_tank_centers.py:453:         print(f"\n{'terminal':12s} {'tank':12s} {'offset_m':>8s} {'az':>6s} {'r_reg':>6s} {'r_fit':>6s} {'ncc':>6s} {'quality':8s} flags")
+scripts/research/v1_tank_centers.py:455:             flags = "+".join([s for s, f in [("10m", r["flag_10m"]), ("25m", r["flag_25m"]), ("50m", r["flag_50m"])] if f]) or "ok"
+scripts/research/v1_tank_centers.py:458:                   f"{r['ncc']:6.3f} {r['quality']:8s} {flags}")
+scripts/s2_preview.py:2: Fetch Sentinel-2 true-color image over Kharg anchorage zone.
+scripts/s2_preview.py:3: Same AOI and credentials as ship_detect.py.
+scripts/sar_fetch.py:47:     membership check causes every date to appear as 'new' (Python treats
+scripts/series_health.py:10:   FLAG  — one or more metrics outside corridor, with diagnosis DEAD or WILD or REVIEW
+scripts/series_health.py:17: Exit codes: 0 = PASS, 1 = FLAG
+scripts/series_health.py:67: # Metrics where "above hi" is healthy (active cycling) — only flag below lo
+scripts/series_health.py:229:     flags = {}
+scripts/series_health.py:230:     dead_flags, wild_flags = [], []
+scripts/series_health.py:233:     # DR does NOT participate in dead_flags count — aggregate DR inflates on
+scripts/series_health.py:238:         flags["dynamic_range_db"] = {
+scripts/series_health.py:240:             "flag": "BELOW_ABS_MIN",
+scripts/series_health.py:248:         flag = None
+scripts/series_health.py:250:             flag = "BELOW_LO"
+scripts/series_health.py:252:                 dead_flags.append((key, val, lo, hi))
+scripts/series_health.py:254:             flag = "ABOVE_HI"
+scripts/series_health.py:256:                 wild_flags.append((key, val, lo, hi))
+scripts/series_health.py:257:         if flag:
+scripts/series_health.py:258:             flags[key] = {"value": val, "lo": lo, "hi": hi, "flag": flag,
+scripts/series_health.py:261:     is_dead = (not np.isnan(dr) and dr < DEAD_DR_ABS) or len(dead_flags) >= 2
+scripts/series_health.py:262:     is_wild = len(wild_flags) >= 1
+scripts/series_health.py:264:     if not flags:
+scripts/series_health.py:267:         verdict, diagnosis = "FLAG", "DEAD"
+scripts/series_health.py:269:         verdict, diagnosis = "FLAG", "WILD"
+scripts/series_health.py:271:         verdict, diagnosis = "FLAG", "REVIEW"
+scripts/series_health.py:275:         "flags": flags,
+scripts/series_health.py:276:         "dead_count": len(dead_flags), "wild_count": len(wild_flags),
+scripts/series_health.py:297:         flagged = key in gate["flags"]
+scripts/series_health.py:298:         marker = " ◄ FLAG" if flagged else ""
+scripts/series_health.py:417:         "flags":          gate["flags"],
+scripts/series_health_standard.py:320:     lines.append("- **alfaw_stuck7** (`--terminal al_flaw --tanks af_0,af_2,af_3,af_6,af_7,af_9,af_11`): expect FLAG/DEAD")
+scripts/series_health_standard.py:337:     lines.append("- FLAG always reported with metric value and corridor numbers.")
+scripts/series_v3.py:190:     # ── Write pertank with stuck_flag ─────────────────────────────────────────
+scripts/series_v3.py:192:     pertank["stuck_flag"] = df["stuck"].astype(int)
+scripts/ship_backfill.py:3: Historical Sentinel-1 ship detection backfill for Kharg anchorage.
+scripts/ship_backfill.py:4: Iterates weekly from START_DATE to today, detects ships (no Small),
+scripts/ship_backfill.py:5: appends results to data/anchorage.json.
+scripts/ship_backfill.py:8:   python ship_backfill.py               # full backfill from 2017
+scripts/ship_backfill.py:9:   python ship_backfill.py --year 2021   # single year only
+scripts/ship_backfill.py:10:   python ship_backfill.py --resume      # skip already-processed dates
+scripts/ship_backfill.py:55:                         '..', 'data', 'anchorage.json')
+scripts/ship_backfill.py:88: def detect_ships(arr):
+scripts/ship_backfill.py:241:         counts, thr = detect_ships(arr)
+scripts/ship_backfill_bab.py:3: Historical Sentinel-1 ship detection backfill for Bab-el-Mandeb anchorage zone.
+scripts/ship_backfill_bab.py:5: Ships queue here waiting to transit into the Red Sea.
+scripts/ship_backfill_bab.py:8:   python ship_backfill_bab.py               # full backfill from 2017
+scripts/ship_backfill_bab.py:9:   python ship_backfill_bab.py --year 2024   # single year only
+scripts/ship_backfill_bab.py:10:   python ship_backfill_bab.py --resume      # skip already-processed dates
+scripts/ship_backfill_bab.py:31: # Bab-el-Mandeb anchorage: Gulf of Aden approaches + strait entrance
+scripts/ship_backfill_bab.py:32: # Gulf of Aden anchorage — ships queue here before transiting north into Red Sea
+scripts/ship_backfill_bab.py:62:                         '..', 'data', 'bab_anchorage.json')
+scripts/ship_backfill_bab.py:95: def detect_ships(arr):
+scripts/ship_backfill_bab.py:213:         counts, threshold = detect_ships(arr)
+scripts/ship_detect.py:2: Fetch last 2 Sentinel-1 passes over Kharg anchorage zone (~20km radius),
+scripts/ship_detect.py:3: detect ships, exclude known offshore platforms, classify by size.
+scripts/ship_detect.py:27: # Anchorage queue sits N/E of the island; less water to the S is needed.
+scripts/ship_detect.py:79:   // Normalise to 0-255: ships are very bright (>0dB), sea is dark (<-20dB)
+scripts/ship_detect.py:132:     Water pixels = below 70th percentile (avoids ships/land skewing the estimate).
+scripts/ship_detect.py:146: def detect_ships(arr, bbox, size):
+scripts/ship_detect.py:148:     Detect ships via per-pass adaptive threshold + land/platform masking.
+scripts/ship_detect.py:185:     ships = []
+scripts/ship_detect.py:197:         ships.append({'cx': cx, 'cy': cy, 'length_m': length_m, 'area': area})
+scripts/ship_detect.py:199:     return ships
+scripts/ship_detect.py:208: def render_image(arr, ships, label, outpath):
+scripts/ship_detect.py:215:     for s in ships:
+scripts/ship_detect.py:239:     print(f"  Ships detected: {len(ships)}")
+scripts/ship_detect.py:264:     (arr1, f"Pass 1 — {(today-timedelta(days=7)).strftime('%Y-%m-%d')} to {today.strftime('%Y-%m-%d')}", 'kharg_ships_pass1.png'),
+scripts/ship_detect.py:265:     (arr2, f"Pass 2 — {(today-timedelta(days=14)).strftime('%Y-%m-%d')} to {(today-timedelta(days=7)).strftime('%Y-%m-%d')}", 'kharg_ships_pass2.png'),
+scripts/ship_detect.py:268:         ships = detect_ships(arr, bbox, size)  # threshold computed per-pass
+scripts/ship_detect.py:269:         render_image(arr, ships, label, os.path.join(out_dir, fname))
+scripts/stage0_full_optical.py:20: "Worst step" tanks are flagged in the report:
+scripts/stage0_full_optical.py:58: # ── Worst-step flags ──────────────────────────────────────────────────────────
+scripts/stage0_full_optical.py:291:         flag = " ★WORST" if tank_id in WORST_TANKS else ""
+scripts/stage0_full_optical.py:292:         ax.set_title(f"{tank_id}{flag}  Δr={result['r_meas']-r_reg_m:+.1f}m  Δc={result['shift_m']:.1f}m",
+scripts/stage0_full_optical.py:391:         f"{'shift_m':>9} {'rays':>5}  flag",
+scripts/stage0_qa.py:11:      Flag tank as outlier if |r_measured - row_median| > 2*MAD.
+scripts/stage0_qa.py:18:      If outlier vs block → flag qa_status="suspect-bund".
+scripts/stage0_qa.py:19:   5. Tanks with rays<16: flag qa_status="low-rays".
+scripts/stage0_qa.py:402:         flag    = ""
+scripts/stage0_qa.py:405:             flag = " ★REPLACED"
+scripts/stage0_qa.py:408:             flag = " ★BUND?"
+scripts/stage0_qa.py:412:             f"{source:<16} {status[:40]}{flag}"
+scripts/stage0_qa.py:418:         f"Suspect-bund flags:              {n_bund}",
+scripts/stage0_qa.py:435:     print(f"  {n_bund} suspect-bund flags")
+scripts/stage2_gate_questionnaire.py:11:   2. Autocorrelation lag-1 of weekly volume changes
+scripts/stage2_gate_questionnaire.py:56:     # Autocorrelation lag-1: PIPELINE-BUFFER has near-zero (noisy), ACCUMULATOR high
+scripts/stage2_gate_questionnaire.py:179:     # 2. Autocorrelation lag-1 of weekly changes
+scripts/stage2_gate_questionnaire.py:180:     autocorr = pd.Series(changes).autocorr(lag=1) if len(changes) > 2 else np.nan
+scripts/stage2_gate_questionnaire.py:208:         "autocorr_lag1": round(float(autocorr), 3) if not np.isnan(autocorr) else None,
+scripts/stage2_gate_questionnaire.py:220:     ac  = metrics.get("autocorr_lag1")
+scripts/stage2_gate_questionnaire_v2.py:7:   terminals show negative lag-1 autocorr, so the sign carries no class signal.
+scripts/stage2_gate_questionnaire_v2.py:15:   cycle_days     secondary → BUF +2  if cycle ≤ 14d     (frequent small shipments)
+scripts/stage2_gate_questionnaire_v2.py:29:   IMF PortWatch:       https://portwatch.imf.org/
+scripts/stage2_gate_questionnaire_v2.py:30:   JODI Oil:            https://www.jodidata.org/oil/
+scripts/stage2_gate_questionnaire_v2.py:61: #         IMF PortWatch https://portwatch.imf.org/
+scripts/stage2_gate_questionnaire_v2.py:76:     "IMF PortWatch https://portwatch.imf.org/"
+scripts/stage2_gate_questionnaire_v2.py:191:     autocorr = pd.Series(changes).autocorr(lag=1) if len(changes) > 2 else np.nan
+scripts/stage2_gate_questionnaire_v2.py:222:         "autocorr_lag1":      round(float(autocorr), 3)    if not np.isnan(autocorr)    else None,
+scripts/stage3_jw_radius_rescreen.py:66: # Tanks with QA flags (★) noted but radius still applied — flag surfaced in report.
+scripts/stage3_jw_radius_rescreen.py:68:     "jw_0":  {"r_meas": 53.8, "flag": None},
+scripts/stage3_jw_radius_rescreen.py:69:     "jw_1":  {"r_meas": 55.0, "flag": "★ optical_flag"},
+scripts/stage3_jw_radius_rescreen.py:70:     "jw_2":  {"r_meas": 56.2, "flag": None},
+scripts/stage3_jw_radius_rescreen.py:71:     "jw_3":  {"r_meas": 50.0, "flag": None},    # placebo — no radius change
+scripts/stage3_jw_radius_rescreen.py:72:     "jw_4":  {"r_meas": 45.0, "flag": None},    # smaller than registry
+scripts/stage3_jw_radius_rescreen.py:73:     "jw_5":  {"r_meas": 53.8, "flag": None},
+scripts/stage3_jw_radius_rescreen.py:74:     "jw_6":  {"r_meas": 53.8, "flag": None},
+scripts/stage3_jw_radius_rescreen.py:75:     "jw_7":  {"r_meas": 50.0, "flag": None},    # placebo — no radius change
+scripts/stage3_jw_radius_rescreen.py:76:     "jw_8":  {"r_meas": 52.5, "flag": None},
+scripts/stage3_jw_radius_rescreen.py:77:     "jw_9":  {"r_meas": 57.5, "flag": None},    # ★ CONTROL: step_new must not worsen >20%
+scripts/stage3_jw_radius_rescreen.py:78:     "jw_10": {"r_meas": 56.2, "flag": None},
+scripts/stage3_jw_radius_rescreen.py:79:     "jw_11": {"r_meas": 57.5, "flag": None},
+scripts/stage3_jw_radius_rescreen.py:80:     "jw_12": {"r_meas": 53.8, "flag": None},
+scripts/stage3_jw_radius_rescreen.py:81:     "jw_13": {"r_meas": 53.8, "flag": None},
+scripts/stage3_jw_radius_rescreen.py:82:     "jw_14": {"r_meas": 63.8, "flag": None},    # hypothesis target +27.5%
+scripts/stage3_jw_radius_rescreen.py:83:     "jw_15": {"r_meas": 62.5, "flag": None},    # hypothesis target +25%
+scripts/stage3_jw_radius_rescreen.py:84:     "jw_16": {"r_meas": 62.5, "flag": "wl_note:review_flag_optical"},
+scripts/stage3_jw_radius_rescreen.py:85:     "jw_17": {"r_meas": 65.0, "flag": "★ 11.2m_center_offset"},  # hypothesis target +30%
+scripts/stage3_jw_radius_rescreen.py:86:     "jw_18": {"r_meas": 63.8, "flag": None},    # hypothesis target +27.5% (already passes at r=50)
+scripts/stage3_jw_radius_rescreen.py:218:         flag  = s0["flag"] or ""
+scripts/stage3_jw_radius_rescreen.py:269:         if flag:
+scripts/stage3_jw_radius_rescreen.py:270:             note_parts.append(flag)
+scripts/stage3_jw_radius_rescreen.py:315:             "flag":       flag or None,
+scripts/stage3_jw_radius_rescreen.py:385:             fl  = r["flag"] or ""
+scripts/stage3_whitelist.py:172:             flag   = "✓" if whitelist else "✗"
+scripts/stage3_whitelist.py:174:             print(f"step={step_s:6s}  n={n_obs:2d}  {flag} {status}")
+scripts/stage4_rt_curve_compare.py:297:         print("\n[!] STOP verdict — review before deploying enabled flags")
+scripts/stage5b_asc_pipeline.py:7:   Task 4  Re-screen all 66 tanks: step_full, step_2026, gap_inflated flag
+scripts/stage5b_asc_pipeline.py:98:     flagged = at_floor[at_floor > GUARD_REJECT_WARN]
+scripts/stage5b_asc_pipeline.py:99:     if not flagged.empty:
+scripts/stage5b_asc_pipeline.py:100:         print(f"  [Guard] {len(flagged)} ASC tanks with >{GUARD_REJECT_WARN*100:.0f}% rows at DB_FLOOR ({DB_FLOOR}):")
+scripts/stage5b_asc_pipeline.py:101:         for tid, frac in flagged.items():
+scripts/stage5b_asc_pipeline.py:105:     return flagged
+scripts/stage5c_verify_step.py:70:     flag = " ⚠" if pilot.split("(")[0].strip() != prod.split("(")[0].strip() else ""
+scripts/stage5c_verify_step.py:71:     print(f"{name:<30} {pilot:>20} {prod:>20}{flag}")
+scripts/stage6_accuracy_grid.py:19: Stage 4 (one locked run): winning config → 8 anchor combos, Bonferroni α=0.05/8.
+scripts/stage6_accuracy_grid.py:76: parser.add_argument("--skip-stage4",  action="store_true", help="Skip Stage 4 anchor correlation")
+scripts/stage6_accuracy_grid.py:580: # ── Stage 4 — Locked anchor correlation ──────────────────────────────────────
+scripts/stage6_accuracy_grid.py:583:     print("\n[Stage 4] Locked anchor correlation (one run, 8 combos, Bonferroni α=0.05/8)…")
+scripts/stage6_accuracy_grid.py:586:     # Load anchors
+scripts/stage6_accuracy_grid.py:587:     def _load_jodi():
+scripts/stage6_accuracy_grid.py:588:         path = os.path.join(os.path.dirname(__file__), "..", "data", "external", "jodi_saudi_crude.csv")
+scripts/stage6_accuracy_grid.py:590:         s = df.set_index("month")["exports_mbpd"].rename("jodi_saudi")
+scripts/stage6_accuracy_grid.py:595:         path = os.path.join(os.path.dirname(__file__), "..", "client_package", "data", "portwatch_monthly.csv")
+scripts/stage6_accuracy_grid.py:597:             return pd.Series(dtype=float, name="rtju_mbpd")
+scripts/stage6_accuracy_grid.py:599:         if "month" not in df.columns or "rtju_mbpd" not in df.columns:
+scripts/stage6_accuracy_grid.py:600:             return pd.Series(dtype=float, name="rtju_mbpd")
+scripts/stage6_accuracy_grid.py:603:         s = df.set_index("month")["rtju_mbpd"].rename("rtju_mbpd")
+scripts/stage6_accuracy_grid.py:607:     jodi = _load_jodi()
+scripts/stage6_accuracy_grid.py:609:     print(f"  JODI: {len(jodi)} months  rtju: {len(rtju)} months")
+scripts/stage6_accuracy_grid.py:617:     def _run_combo(stor, anchor, metric, lag, start, end):
+scripts/stage6_accuracy_grid.py:619:         e_w = anchor.loc[start:end]
+scripts/stage6_accuracy_grid.py:626:         x = x.shift(lag)
+scripts/stage6_accuracy_grid.py:638:     anchors = {"jodi_saudi": jodi}
+scripts/stage6_accuracy_grid.py:640:         anchors["rtju_mbpd"] = rtju
+scripts/stage6_accuracy_grid.py:642:         print("  [!] rtju_mbpd not available — running 4 JODI combos only")
+scripts/stage6_accuracy_grid.py:644:     for anchor_name, anchor_s in anchors.items():
+scripts/stage6_accuracy_grid.py:646:             for lag in [0, 1]:
+scripts/stage6_accuracy_grid.py:647:                 tr = _run_combo(stor_monthly, anchor_s, metric, lag, TRAIN_START, TRAIN_END)
+scripts/stage6_accuracy_grid.py:648:                 ho = _run_combo(stor_monthly, anchor_s, metric, lag, "2024-01-01", "2026-02-28") if tr["r"] is not None else {"r": None, "p": None, "n": 0}
+scripts/stage6_accuracy_grid.py:652:                     "anchor": anchor_name, "metric": metric, "lag": lag,
+scripts/stage6_accuracy_grid.py:658:                 print(f"  {anchor_name}|{metric}|lag={lag:+d}: r_train={tr['r']}  r_holdout={ho['r']}  p_holdout={ho['p']}  {'PASS' if passes else 'FAIL'}")
+scripts/stage6_accuracy_grid.py:695:         flag = "**★**" if is_win else ""
+scripts/stage6_accuracy_grid.py:696:         baseline_flag = " *(baseline)*" if baseline_row and row["label"] == baseline_row["label"] else ""
+scripts/stage6_accuracy_grid.py:697:         lines.append(f"| {i+1} | {row['label']}{baseline_flag} | {m1s} | {row['M1_n']} | "
+scripts/stage6_accuracy_grid.py:698:                      f"{m2s} | {row['M2_n']} | {m3s} | {row['M3_n']} | {flag} |")
+scripts/stage6_accuracy_grid.py:717:             "## Stage 4 — Locked Anchor Correlation",
+scripts/stage6_accuracy_grid.py:721:             "| Anchor | Metric | Lag | r_train | n_train | r_holdout | p_holdout | n_holdout | Bonf |",
+scripts/stage6_accuracy_grid.py:729:             lines.append(f"| {r['anchor']} | {r['metric']} | {r['lag']:+d} | {rt} | {r['n_train']} | "
+scripts/stage6_optical_pilot.py:13:   - Export data (PortWatch / JODI) not touched until Stage 4
+scripts/stage6_optical_pilot.py:48: LOW_SHADOW_ELV  = 65          # flag scene as low-shadow-geometry if sun_elev > this
+scripts/stage6_optical_pilot.py:1234:     Load rt_mbpd / yb_mbpd / ju_mbpd from Supabase.
+scripts/stage6_optical_pilot.py:1236:     Returns DataFrame: date, terminal, mbpd
+scripts/stage6_optical_pilot.py:1241:     for tid, col in [("ras_tanura", "rt_mbpd"), ("yanbu", "yb_mbpd"), ("juwaymah", "ju_mbpd")]:
+scripts/stage6_optical_pilot.py:1244:                f"&select=date,mbpd"
+scripts/stage6_optical_pilot.py:1254:                                  "mbpd": row["mbpd"]})
+scripts/stage6_optical_pilot.py:1261:     return pd.DataFrame(columns=["date", "terminal", "mbpd"])
+scripts/stage6_optical_pilot.py:1269:         - Export:   corresponding mbpd series per terminal
+scripts/stage6_optical_pilot.py:1271:         - Lag:       0 days, +7 days (storage leads export by 1 week)
+scripts/stage6_optical_pilot.py:1297:     lags       = [0, 7]   # days
+scripts/stage6_optical_pilot.py:1326:         exp = export_df[export_df["terminal"] == terminal_id].set_index("date")["mbpd"] if not export_df.empty else pd.Series(dtype=float)
+scripts/stage6_optical_pilot.py:1344:                 for lag in lags:
+scripts/stage6_optical_pilot.py:1345:                     # Align with lag (storage leads)
+scripts/stage6_optical_pilot.py:1346:                     if lag > 0:
+scripts/stage6_optical_pilot.py:1347:                         s_shifted = s_tr.shift(lag, freq="D") if freq == "weekly" else s_tr.shift(lag // 30 + 1 if lag > 0 else 0)
+scripts/stage6_optical_pilot.py:1356:                                 "transform": transform, "lag_days": lag,
+scripts/stage6_optical_pilot.py:1375:                                 "transform": transform, "lag_days": lag,
+scripts/stage6_optical_pilot.py:1390:                             "lag_days":    lag,
+scripts/stage6_optical_pilot.py:1559:         A("| terminal | freq | transform | lag_days | split | n | corr | p_value | bonf_sig |")
+scripts/stage6_optical_pilot.py:1563:               f"{int(row['lag_days'])} | {row['split']} | {int(row['n'])} | "
+scripts/stage7_alfaw_baseline.py:7:   - Export data quarantined: PortWatch/JODI/SOMO not opened
+scripts/stage7_alfaw_baseline.py:67: LOW_SUN_ELV    = 65   # degrees — low_shadow_geometry flag
+scripts/stage7_alfaw_baseline.py:348:     - low_shadow_geometry flag (sun_elv > 65°)
+scripts/stage7_alfaw_baseline.py:621:     Iraq events from public record (no PortWatch/JODI/SOMO — quarantined).
+scripts/stage7_alfaw_baseline.py:1001:         f"**Correlation: user-side only. PortWatch/JODI/SOMO quarantined.**",
+scripts/stuck_passport.py:99: print("  stuck_flag=1 in pertank_v3.csv; excluded from calibration.")
+scripts/tank_registry.py:113:     # Iranian terminal near Strait of Hormuz mouth. Strategic bypass route.
+scripts/task7_rt_decomposition.py:71: BONFERRONI_N       = 40     # 5 sub-series × 2 anchors × 2 metrics × 2 lags
+scripts/task7_rt_decomposition.py:326: def _load_jodi() -> pd.Series:
+scripts/task7_rt_decomposition.py:327:     path = os.path.join(os.path.dirname(__file__), "..", "data", "external", "jodi_saudi_crude.csv")
+scripts/task7_rt_decomposition.py:329:     s = df.set_index("month")["exports_mbpd"].rename("jodi_saudi")
+scripts/task7_rt_decomposition.py:335: def _load_portwatch_rtju() -> pd.Series:
+scripts/task7_rt_decomposition.py:337:     path = os.path.join(base, "portwatch_monthly.csv")
+scripts/task7_rt_decomposition.py:339:         print(f"  [rtju] portwatch_monthly.csv not found in {base} — rtju_mbpd will be NO DATA")
+scripts/task7_rt_decomposition.py:340:         return pd.Series(dtype=float, name="rtju_mbpd")
+scripts/task7_rt_decomposition.py:343:         # Canonical columns per ТЗ: date col = 'month' (YYYY-MM), value col = 'rtju_mbpd'
+scripts/task7_rt_decomposition.py:346:         if "rtju_mbpd" not in df.columns:
+scripts/task7_rt_decomposition.py:347:             raise ValueError(f"'rtju_mbpd' column not found; got: {list(df.columns)}")
+scripts/task7_rt_decomposition.py:350:         s = df.set_index("month")["rtju_mbpd"].rename("rtju_mbpd")
+scripts/task7_rt_decomposition.py:351:         # Normalize to month-end (same as JODI)
+scripts/task7_rt_decomposition.py:354:         print(f"  [rtju] loaded portwatch_monthly.csv: {len(s)} months, "
+scripts/task7_rt_decomposition.py:358:         print(f"  [rtju] portwatch_monthly.csv load failed: {exc}")
+scripts/task7_rt_decomposition.py:359:         return pd.Series(dtype=float, name="rtju_mbpd")
+scripts/task7_rt_decomposition.py:394:                metric: str, lag: int, start: str, end: str) -> dict:
+scripts/task7_rt_decomposition.py:403:     x_lag = x.shift(lag)
+scripts/task7_rt_decomposition.py:404:     r, p, n = _compute_r(x_lag, y)
+scripts/task7_rt_decomposition.py:412:     jodi  = _load_jodi()
+scripts/task7_rt_decomposition.py:413:     rtju  = _load_portwatch_rtju()
+scripts/task7_rt_decomposition.py:414:     print(f"  JODI: {len(jodi)} months   PortWatch RT+JU: {len(rtju)} months")
+scripts/task7_rt_decomposition.py:416:     # Diagnostic: show 5 first keys from each anchor
+scripts/task7_rt_decomposition.py:417:     jodi_keys = [str(k.date()) for k in jodi.index[:5]]
+scripts/task7_rt_decomposition.py:418:     print(f"  JODI keys sample (month-end): {jodi_keys}")
+scripts/task7_rt_decomposition.py:423:         print("  rtju_mbpd: empty — skipping PortWatch half; fallback CSVs will be written")
+scripts/task7_rt_decomposition.py:425:     # Intersection size check for jodi anchor (stop if <30 months in train)
+scripts/task7_rt_decomposition.py:426:     _train_mask = (jodi.index >= pd.Timestamp(TRAIN_START)) & (jodi.index <= pd.Timestamp(TRAIN_END))
+scripts/task7_rt_decomposition.py:427:     jodi_train  = jodi[_train_mask]
+scripts/task7_rt_decomposition.py:428:     print(f"  JODI train months: {len(jodi_train)}  keys: {[str(k.date()) for k in jodi_train.index[:5]]}")
+scripts/task7_rt_decomposition.py:429:     if len(jodi_train) < 30:
+scripts/task7_rt_decomposition.py:430:         print(f"  STOP: JODI train intersection < 30 months ({len(jodi_train)}). Keys: {[str(k.date()) for k in jodi_train.index]}")
+scripts/task7_rt_decomposition.py:431:         raise RuntimeError(f"JODI train intersection too small: {len(jodi_train)} < 30 months")
+scripts/task7_rt_decomposition.py:438:             rtju = pd.Series(dtype=float, name="rtju_mbpd")
+scripts/task7_rt_decomposition.py:440:     anchors = {"jodi_saudi": jodi}
+scripts/task7_rt_decomposition.py:442:         anchors["rtju_mbpd"] = rtju
+scripts/task7_rt_decomposition.py:445:         anchors["rtju_mbpd"] = pd.Series(dtype=float, name="rtju_mbpd")
+scripts/task7_rt_decomposition.py:459:             # Log 5 keys from storage series and intersection sizes with each anchor
+scripts/task7_rt_decomposition.py:462:             for an, ex in anchors.items():
+scripts/task7_rt_decomposition.py:469:         for anchor_name, export_s in anchors.items():
+scripts/task7_rt_decomposition.py:471:                 for lag in [0, 1]:
+scripts/task7_rt_decomposition.py:472:                     res = _run_combo(s_monthly, export_s, metric, lag,
+scripts/task7_rt_decomposition.py:476:                         "anchor":   anchor_name,
+scripts/task7_rt_decomposition.py:478:                         "lag":      lag,
+scripts/task7_rt_decomposition.py:486:                         h = _run_combo(s_monthly, export_s, metric, lag,
+scripts/task7_rt_decomposition.py:494:                             "anchor":       anchor_name,
+scripts/task7_rt_decomposition.py:496:                             "lag":          lag,
+scripts/task7_rt_decomposition.py:525:     if rtju.empty or len(anchors.get("rtju_mbpd", pd.Series())) == 0:
+scripts/task7_rt_decomposition.py:766:         "| Sub-series | Anchor | Metric | Lag | r_train | p | n | Verdict |",
+scripts/task7_rt_decomposition.py:781:         lines.append(f"| {row['subgroup']} | {row['anchor']} | {row['metric']} | "
+scripts/task7_rt_decomposition.py:782:                      f"{row['lag']:+d} | {rs} | {ps} | {row.get('n', 0)} | {verdict} |")
+scripts/task7_rt_decomposition.py:790:         "| Sub-series | Anchor | Metric | Lag | r_train | r_holdout | p_holdout | Bonf | Sign |",
+scripts/task7_rt_decomposition.py:804:         lines.append(f"| {row['subgroup']} | {row['anchor']} | {row['metric']} | "
+scripts/task7_rt_decomposition.py:805:                      f"{row['lag']:+d} | {rt:.4f} | {rhs} | {phs} | {bonf} | {sign} |{note}")
+scripts/task7_rt_decomposition.py:829:             "All 5 sub-series × 2 anchors × 2 metrics × 2 lags = 40 combinations exhaustively tested.",
+scripts/terminal_checks.py:144:                 # Summarise: count rows or count flagged
+scripts/terminal_checks.py:145:                 n_flagged = int((df["verdict"].isin(["STUCK_CANDIDATE", "FLAG", "DEAD", "WILD"])).sum())
+scripts/terminal_checks.py:146:                 val = f"n={len(df)}" + (f" flag={n_flagged}" if n_flagged else "")
+scripts/validate_external_ras_tanura.py:5:   1. Ingest JODI-Oil bulk CSV (Saudi Arabia, Crude Oil)
+scripts/validate_external_ras_tanura.py:6:   2. Correlate monthly RT storage vs JODI exports / closing stocks
+scripts/validate_external_ras_tanura.py:13: JODI download (one-time, cached):
+scripts/validate_external_ras_tanura.py:14:   The script auto-downloads from jodidata.org on first run.
+scripts/validate_external_ras_tanura.py:16:     data/external/jodi/jodi_oil_latest.csv
+scripts/validate_external_ras_tanura.py:17:   Source: https://www.jodidata.org/_resources/files/downloads/oil-data/jodi_oil_csv_beta.zip
+scripts/validate_external_ras_tanura.py:18:   Unzip and rename the CSV to jodi_oil_latest.csv.
+scripts/validate_external_ras_tanura.py:43: JODI_DIR     = os.path.join(os.path.dirname(__file__), "..", "data", "external", "jodi")
+scripts/validate_external_ras_tanura.py:44: JODI_CACHE   = os.path.join(JODI_DIR, "jodi_oil_latest.csv")
+scripts/validate_external_ras_tanura.py:45: JODI_URLS = [
+scripts/validate_external_ras_tanura.py:46:     "https://www.jodidata.org/_resources/files/downloads/oil-data/jodi_oil_world_primary_csv.zip",
+scripts/validate_external_ras_tanura.py:47:     "https://www.jodidata.org/_resources/files/downloads/oil-data/world_primary_csv.zip",
+scripts/validate_external_ras_tanura.py:48:     "https://www.jodidata.org/_resources/files/downloads/oil-data/jodi_oil_csv_beta.zip",
+scripts/validate_external_ras_tanura.py:49:     "https://www.jodidb.org/_resources/files/downloads/oil-data/jodi_oil_csv_beta.zip",
+scripts/validate_external_ras_tanura.py:51: JODI_URL     = JODI_URLS[0]
+scripts/validate_external_ras_tanura.py:52: JODI_SAUDI_OUT = os.path.join(os.path.dirname(__file__), "..", "data", "external", "jodi_saudi_crude.csv")
+scripts/validate_external_ras_tanura.py:75:      "Trade sources: Saudi exports recovering to ~5.5 mbpd (2026-07 first decade)"),
+scripts/validate_external_ras_tanura.py:160: # ── JODI ingest ───────────────────────────────────────────────────────────────
+scripts/validate_external_ras_tanura.py:162: def download_jodi():
+scripts/validate_external_ras_tanura.py:163:     os.makedirs(JODI_DIR, exist_ok=True)
+scripts/validate_external_ras_tanura.py:164:     if os.path.exists(JODI_CACHE):
+scripts/validate_external_ras_tanura.py:165:         age_days = (datetime.datetime.now().timestamp() - os.path.getmtime(JODI_CACHE)) / 86400
+scripts/validate_external_ras_tanura.py:166:         print(f"[validate] JODI cache found ({age_days:.0f} days old) — using cached file")
+scripts/validate_external_ras_tanura.py:168:     print(f"[validate] Downloading JODI bulk CSV ...")
+scripts/validate_external_ras_tanura.py:172:         for url in JODI_URLS:
+scripts/validate_external_ras_tanura.py:185:         zip_path = os.path.join(JODI_DIR, "jodi_oil.zip")
+scripts/validate_external_ras_tanura.py:193:             with z.open(csvs[0]) as src, open(JODI_CACHE, "wb") as dst:
+scripts/validate_external_ras_tanura.py:196:         print(f"  Downloaded and extracted → {JODI_CACHE}")
+scripts/validate_external_ras_tanura.py:199:         print(f"  [!] JODI download failed: {e}")
+scripts/validate_external_ras_tanura.py:201:         print(f"    1. Open https://www.jodidata.org/oil/database/data-downloads.aspx")
+scripts/validate_external_ras_tanura.py:202:         print(f"    2. Download 'JODI Oil World - Primary' CSV/zip")
+scripts/validate_external_ras_tanura.py:203:         print(f"    3. Unzip and place the CSV at: {JODI_CACHE}")
+scripts/validate_external_ras_tanura.py:207: def load_jodi_saudi():
+scripts/validate_external_ras_tanura.py:208:     """Parse JODI bulk CSV → Saudi Arabia crude oil monthly series."""
+scripts/validate_external_ras_tanura.py:209:     if not os.path.exists(JODI_CACHE):
+scripts/validate_external_ras_tanura.py:210:         raise FileNotFoundError(f"JODI cache not found: {JODI_CACHE}\nRun with internet access or place file manually.")
+scripts/validate_external_ras_tanura.py:212:     print("[validate] Parsing JODI bulk CSV...")
+scripts/validate_external_ras_tanura.py:213:     df = pd.read_csv(JODI_CACHE, low_memory=False)
+scripts/validate_external_ras_tanura.py:217:     # Normalise column names (JODI schema varies slightly between releases)
+scripts/validate_external_ras_tanura.py:244:     # JODI uses ISO2 country codes (SA) or full names — try both
+scripts/validate_external_ras_tanura.py:248:     # JODI product codes: CRUDEOIL=crude oil, TOTCRUDE=total crude+condensate
+scripts/validate_external_ras_tanura.py:260:         raise ValueError("No Saudi Arabia / crude oil data in JODI file")
+scripts/validate_external_ras_tanura.py:262:     # Unit conversion: JODI kb → Mb (divide by 1000); kbd → Mbpd (divide by 1000)
+scripts/validate_external_ras_tanura.py:267:         # JODI standard: kb = thousand barrels, kbd = thousand barrels/day
+scripts/validate_external_ras_tanura.py:279:     # JODI flow codes (short form): TOTEXPSB=exports, CLOSTLV=closing stocks level,
+scripts/validate_external_ras_tanura.py:282:         "exports_mbpd":           ["TOTEXPSB", "EXPORTS", "EXPORT"],
+scripts/validate_external_ras_tanura.py:284:         "production_mbpd":        ["INDPROD", "PRODUCTION", "PRODUC"],
+scripts/validate_external_ras_tanura.py:285:         "refinery_intake_mbpd":   ["REFINOBS", "REFINERY INTAKE", "REFINERYINTAKE", "REF_INTAKE"],
+scripts/validate_external_ras_tanura.py:301:         s = s[(s[value_col] > 0)]  # JODI uses 0 for missing in some releases
+scripts/validate_external_ras_tanura.py:303:         # Convert kb → Mb (stocks) or kbd → Mbpd (flows)
+scripts/validate_external_ras_tanura.py:308:     jodi = pd.DataFrame(records)
+scripts/validate_external_ras_tanura.py:309:     jodi.index.name = "month"
+scripts/validate_external_ras_tanura.py:310:     jodi = jodi[jodi.index >= WINDOW_START].copy()
+scripts/validate_external_ras_tanura.py:311:     jodi["exports_delta_mbpd"] = jodi.get("exports_mbpd", pd.Series(dtype=float)).diff()
+scripts/validate_external_ras_tanura.py:312:     jodi["closing_stocks_delta_mb"] = jodi.get("closing_stocks_mb", pd.Series(dtype=float)).diff()
+scripts/validate_external_ras_tanura.py:315:     jodi.to_csv(JODI_SAUDI_OUT)
+scripts/validate_external_ras_tanura.py:316:     print(f"  Saved → {JODI_SAUDI_OUT}")
+scripts/validate_external_ras_tanura.py:319:     if "exports_mbpd" in jodi.columns:
+scripts/validate_external_ras_tanura.py:320:         exp_2025 = jodi.loc["2025", "exports_mbpd"].mean() if "2025" in jodi.index.year.astype(str).values else np.nan
+scripts/validate_external_ras_tanura.py:321:         exp_2026 = jodi.loc["2026", "exports_mbpd"].mean() if "2026" in jodi.index.year.astype(str).values else np.nan
+scripts/validate_external_ras_tanura.py:322:         print(f"  SANITY exports_mbpd: 2025 mean={exp_2025:.2f}, 2026 mean={exp_2026:.2f}")
+scripts/validate_external_ras_tanura.py:328:     return jodi
+scripts/validate_external_ras_tanura.py:333: def compute_correlations(rt_m, jodi):
+scripts/validate_external_ras_tanura.py:334:     """Pearson + Spearman with cross-lags, multiple windows."""
+scripts/validate_external_ras_tanura.py:337:     def _pair(x, y, label, window_label, lag=0):
+scripts/validate_external_ras_tanura.py:338:         if lag != 0:
+scripts/validate_external_ras_tanura.py:339:             x = x.shift(lag)
+scripts/validate_external_ras_tanura.py:349:             "lag_months": lag,
+scripts/validate_external_ras_tanura.py:357:     merged = rt_m.join(jodi, how="inner")
+scripts/validate_external_ras_tanura.py:366:         ("rt_delta_mb", "exports_mbpd",         "Δstorage_RT vs JODI_exports"),
+scripts/validate_external_ras_tanura.py:367:         ("rt_delta_mb", "closing_stocks_delta_mb","Δstorage_RT vs ΔJODI_stocks"),
+scripts/validate_external_ras_tanura.py:368:         ("rt_level_mb", "closing_stocks_mb",     "RT_level vs JODI_stocks_level"),
+scripts/validate_external_ras_tanura.py:375:             for lag in range(-2, 3):
+scripts/validate_external_ras_tanura.py:376:                 _pair(wdf[xcol], wdf[ycol], plabel, wlabel, lag)
+scripts/validate_external_ras_tanura.py:450: def plot_monthly_panel(rt_m, jodi, events, out_path):
+scripts/validate_external_ras_tanura.py:472:     # Panel 2: JODI exports
+scripts/validate_external_ras_tanura.py:474:     if "exports_mbpd" in jodi.columns:
+scripts/validate_external_ras_tanura.py:475:         ax.bar(jodi.index, jodi["exports_mbpd"], width=20, color="#3fb950", alpha=0.8, label="Exports (Mbpd)")
+scripts/validate_external_ras_tanura.py:476:         ax.set_ylabel("Saudi Exports (Mbpd)", color="#e6edf3")
+scripts/validate_external_ras_tanura.py:477:         ax.set_title("JODI Saudi Arabia Crude Exports", color="#e6edf3", fontsize=10)
+scripts/validate_external_ras_tanura.py:481:     # Panel 3: JODI closing stocks
+scripts/validate_external_ras_tanura.py:483:     if "closing_stocks_mb" in jodi.columns:
+scripts/validate_external_ras_tanura.py:484:         ax.plot(jodi.index, jodi["closing_stocks_mb"], color="#d2a8ff", linewidth=1.5, label="Closing stocks (Mb)")
+scripts/validate_external_ras_tanura.py:486:         ax.set_title("JODI Saudi Arabia Closing Stocks", color="#e6edf3", fontsize=10)
+scripts/validate_external_ras_tanura.py:529: def write_report(corr_df, rt_events, kharg_events, placebo_p90, rt_m, jodi):
+scripts/validate_external_ras_tanura.py:533:     # Determine best lags per pair
+scripts/validate_external_ras_tanura.py:534:     def best_lag(pair_label, window="full"):
+scripts/validate_external_ras_tanura.py:539:         return int(best["lag_months"]), round(best["pearson_r"], 3)
+scripts/validate_external_ras_tanura.py:546:         f"**External reference**: JODI-Oil World Database (Saudi Arabia, Crude Oil)  ",
+scripts/validate_external_ras_tanura.py:550:         f"## 1. Correlation: RT Storage vs JODI Saudi Crude",
+scripts/validate_external_ras_tanura.py:553:         f"JODI units: exports/production/refinery intake in Mbpd; closing stocks in Mb.",
+scripts/validate_external_ras_tanura.py:560:     full_corr = corr_df[(corr_df["window"] == "full") & (corr_df["lag_months"] == 0)]
+scripts/validate_external_ras_tanura.py:573:         f"### 1b. Cross-lag analysis (best lag per pair, full history)",
+scripts/validate_external_ras_tanura.py:575:         f"| Pair | Best lag (months) | Pearson r at best lag |",
+scripts/validate_external_ras_tanura.py:579:         lag, r = best_lag(pair_label, "full")
+scripts/validate_external_ras_tanura.py:580:         lines.append(f"| {pair_label} | {lag} | {r} |")
+scripts/validate_external_ras_tanura.py:589:     rec_corr = corr_df[(corr_df["window"] == f"{CORR_WINDOW}+") & (corr_df["lag_months"] == 0)]
+scripts/validate_external_ras_tanura.py:603:     conf_corr = corr_df[(corr_df["window"] == "2026") & (corr_df["lag_months"] == 0)]
+scripts/validate_external_ras_tanura.py:612:         f"> **Interpretation note**: Δstorage_RT vs JODI_exports is expected negative",
+scripts/validate_external_ras_tanura.py:614:         f"> RT_level vs JODI_stocks_level is shown for illustration only — both series",
+scripts/validate_external_ras_tanura.py:721:         (corr_df["pair"] == "Δstorage_RT vs JODI_exports") &
+scripts/validate_external_ras_tanura.py:723:         (corr_df["lag_months"] == 0)
+scripts/validate_external_ras_tanura.py:733:             f"**Correlation (Δstorage_RT vs JODI exports)**: r = {exp_r:.3f} (p = {exp_p:.4f}) — {corr_verdict}.",
+scripts/validate_external_ras_tanura.py:738:         f"**Overall assessment**: The SAR series {'reflects real terminal operations' if confirmed >= 3 else 'shows partial alignment with' if confirmed >= 2 else 'does not yet conclusively validate against'} external JODI/event data.",
+scripts/validate_external_ras_tanura.py:744:         f"*JODI data: jodidata.org (cached {today})*",
+scripts/validate_external_ras_tanura.py:758:     # 1. JODI
+scripts/validate_external_ras_tanura.py:759:     if not download_jodi():
+scripts/validate_external_ras_tanura.py:761:     jodi = load_jodi_saudi()
+scripts/validate_external_ras_tanura.py:769:     corr_df = compute_correlations(rt_m, jodi)
+scripts/validate_external_ras_tanura.py:782:     plot_monthly_panel(rt_m, jodi, EVENTS, os.path.join(PLOT_DIR, "monthly_panel.png"))
+scripts/validate_external_ras_tanura.py:790:     write_report(corr_df, rt_events, kharg_events, placebo_p90, rt_m, jodi)
+scripts/verify_orbit_fix_2.py:572:             ], loc="lower center", ncol=2, fontsize=9, bbox_to_anchor=(0.5, -0.02))
+scripts/verify_orbit_fix_3.py:733:     # Use a known DESC 35 anchor from the catalog
+scripts/verify_orbit_fix_3.py:736:     print("  Fetching DESC 35 catalog anchor (all time)...")
+scripts/verify_orbit_fix_3.py:756:         # Actual offset from nearest DESC 35 anchor
+scripts/verify_orbit_fix_3.py:777:         f"**DESC 35 anchor dates available**: {len(desc35_dates)}",
