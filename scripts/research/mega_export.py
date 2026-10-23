@@ -790,10 +790,12 @@ def section_6():
 # ===========================================================================
 # SECTION 4 — Tank-scene metrics (SentinelHub quota)
 # ===========================================================================
-def section_4(only_terminal=None):
-    """only_terminal: one of 'kharg', 'ras_tanura', 'yanbu', or None for all."""
+def section_4(only_terminal=None, only_orbit=None):
+    """only_terminal: one of 'kharg', 'ras_tanura', 'yanbu', or None for all.
+    only_orbit: e.g. 'DESC-35' or 'ASC-101' to run a single orbit; None for all."""
     label = only_terminal or "all"
-    print(f"\n=== Section 4: Tank-scene metrics (quota-heavy) — terminal={label} ===")
+    orb_label = only_orbit or "all"
+    print(f"\n=== Section 4: Tank-scene metrics (quota-heavy) — terminal={label} orbit={orb_label} ===")
     from sentinelhub import BBox, CRS, SentinelHubRequest, MimeType
     from datetime import timedelta as td
     from locations import LOCATIONS, TERMINALS
@@ -883,9 +885,22 @@ function evaluatePixel(sample) { return [sample.VV]; }
         profile_data[tid] = {}
 
         orbits = TARGET_ORBITS[tid]
+        if only_orbit:
+            # Filter to specified orbit e.g. "DESC-35" or "ASC-101"
+            parts = only_orbit.upper().split("-")
+            o_dir, o_rel = parts[0], int(parts[1])
+            orbits = [o for o in orbits
+                      if o["direction"].upper() == o_dir and o["relOrbit"] == o_rel]
+            if not orbits:
+                print(f"  {tid}: orbit {only_orbit} not defined for this terminal, skipping")
+                continue
+
         for orb in orbits:
             dir_str = orb["direction"]
             rel_orb = orb["relOrbit"]
+            part_num = 0
+            part_start_idx = 0  # record_rows index at start of current part
+            scene_count = 0
 
             # Get scene list from manifest
             if not manifest.empty:
@@ -1072,6 +1087,26 @@ function evaluatePixel(sample) { return [sample.VV]; }
                         "pixel_valid_frac":         valid_frac,
                     }
                     record_rows.append(row)
+
+                scene_count += 1
+                # Partial flush every 50 scenes
+                if scene_count % 50 == 0:
+                    new_rows = record_rows[part_start_idx:]
+                    if new_rows:
+                        part_suffix = f"_{tid}_{dir_str}{rel_orb}_part{part_num:02d}"
+                        pp = OUT / f"tank_scene_variants{part_suffix}.csv.gz"
+                        pd.DataFrame(new_rows).to_csv(pp, index=False, compression="gzip")
+                        print(f"    partial save: {len(new_rows)} rows → {pp.name} (scene {scene_count})")
+                        part_start_idx = len(record_rows)
+                        part_num += 1
+
+            # Final partial flush for remaining rows in this orbit
+            remaining = record_rows[part_start_idx:]
+            if remaining:
+                part_suffix = f"_{tid}_{dir_str}{rel_orb}_part{part_num:02d}"
+                pp = OUT / f"tank_scene_variants{part_suffix}.csv.gz"
+                pd.DataFrame(remaining).to_csv(pp, index=False, compression="gzip")
+                print(f"    partial save (final): {len(remaining)} rows → {pp.name}")
 
             print(f"    {tid}/{dir_str}-{rel_orb}: {len(record_rows)} rows so far")
 
@@ -1433,13 +1468,15 @@ def main():
                         help="Comma-separated sections to run: 1,2,3.3,5,6,4,3.1,3.2")
     parser.add_argument("--terminal", default=None,
                         help="For section 4: run only this terminal (kharg|ras_tanura|yanbu)")
+    parser.add_argument("--orbit", default=None,
+                        help="For section 4: run only this orbit, e.g. DESC-35 or ASC-101")
     parser.add_argument("--pack-zip", action="store_true",
                         help="After sections, pack output into mega_part1.zip + esri_crops.zip")
     args = parser.parse_args()
     sections = [s.strip() for s in args.sections.split(",")]
 
     print(f"mega_export.py  SHA={SCRIPT_SHA}  Run={RUN_ID}  TS={TS}")
-    print(f"Sections: {sections}  Terminal: {args.terminal or 'all'}  Output: {OUT}")
+    print(f"Sections: {sections}  Terminal: {args.terminal or 'all'}  Orbit: {args.orbit or 'all'}  Output: {OUT}")
 
     if "1" in sections:
         section_1()
@@ -1452,7 +1489,7 @@ def main():
     if "6" in sections:
         section_6()
     if "4" in sections:
-        section_4(only_terminal=args.terminal)
+        section_4(only_terminal=args.terminal, only_orbit=args.orbit)
     if "3.1" in sections or "3.2" in sections:
         section_3_crops()
 
