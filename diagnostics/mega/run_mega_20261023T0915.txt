@@ -1,0 +1,19 @@
+mega_export.py  SHA=45fd779394cb  Run=39930433425  TS=2026-10-23T09:15:37Z
+Sections: ['4']  Terminal: kharg  Output: /home/runner/work/kharg-dashboard/kharg-dashboard/diagnostics/mega
+
+=== Section 4: Tank-scene metrics (quota-heavy) — terminal=kharg ===
+  WARNING: v0_manifest_all.csv not found — scene metadata will be partial
+Traceback (most recent call last):
+  File "/home/runner/work/kharg-dashboard/kharg-dashboard/scripts/research/mega_export.py", line 1444, in <module>
+    main()
+  File "/home/runner/work/kharg-dashboard/kharg-dashboard/scripts/research/mega_export.py", line 1430, in main
+    section_4(only_terminal=args.terminal)
+  File "/home/runner/work/kharg-dashboard/kharg-dashboard/scripts/research/mega_export.py", line 897, in section_4
+    rows = sb_fetch_all(tbl, "date", filters={"terminal_id": tid})
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/work/kharg-dashboard/kharg-dashboard/scripts/research/mega_export.py", line 84, in sb_fetch_all
+    batch = q.range(offset, offset + 999).execute().data
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/hostedtoolcache/Python/3.11.17/x64/lib/python3.11/site-packages/postgrest/_sync/request_builder.py", line 96, in execute
+    raise APIError(dict(json_obj))
+postgrest.exceptions.APIError: {'message': 'column raw_observations.terminal_id does not exist', 'code': '42703', 'hint': None, 'details': None}
