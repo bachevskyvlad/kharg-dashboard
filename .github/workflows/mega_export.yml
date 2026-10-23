@@ -1,0 +1,65 @@
+name: Research — Mega Export
+
+on:
+  workflow_dispatch:
+    inputs:
+      sections:
+        description: "Sections to run (e.g. 1,2,3.3,5,6 or 4 or 3.1,3.2)"
+        required: false
+        default: "1,2,3.3,5,6"
+      terminals:
+        description: "Comma-separated terminal IDs"
+        required: false
+        default: "kharg,ras_tanura,yanbu"
+
+jobs:
+  mega_export:
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: research/2026-10-auto
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          pip install numpy pandas scipy matplotlib sentinelhub supabase Pillow requests -q
+
+      - name: Run mega export
+        env:
+          CLIENT_ID: ${{ secrets.CLIENT_ID }}
+          CLIENT_SECRET: ${{ secrets.CLIENT_SECRET }}
+          SUPABASE_URL: https://yoekhkczwdeyauwarsyy.supabase.co
+          SUPABASE_KEY: sb_publishable_7j07_zzdqTGM1LXf7-o9Tg_JJRbJQSM
+        run: |
+          mkdir -p diagnostics/mega
+          cd scripts
+          python research/mega_export.py \
+            --sections "${{ github.event.inputs.sections }}" \
+            --terminals "${{ github.event.inputs.terminals }}" \
+            2>&1 | tee ../diagnostics/mega/run_mega_$(date -u +%Y%m%dT%H%M).txt
+
+      - name: Save results
+        if: always()
+        run: |
+          git config user.email "actions@github.com"
+          git config user.name "GitHub Actions"
+          git add -A diagnostics/mega/ || true
+          git diff --cached --quiet && echo "No changes" || \
+            git commit -m "research: mega_export sections=${{ github.event.inputs.sections }} terminals=${{ github.event.inputs.terminals }} [run ${{ github.run_id }}] [skip ci]"
+          for attempt in 1 2 3 4; do
+            git fetch origin research/2026-10-auto && \
+            git rebase -X theirs origin/research/2026-10-auto && \
+            git push origin HEAD:research/2026-10-auto && break
+            git rebase --abort 2>/dev/null || true
+            echo "push attempt $attempt failed, retrying in ${attempt}s"
+            sleep $attempt
+          done || true
