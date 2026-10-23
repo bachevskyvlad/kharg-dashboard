@@ -674,7 +674,8 @@ def section_5():
     for tid in TARGET_TERMINALS:
         tbl = "raw_observations" if tid == "kharg" else "terminal_observations"
         try:
-            rows = sb_fetch_all(tbl, "date,tank_id", filters={"terminal_id": tid})
+            filt = None if tid == "kharg" else {"terminal_id": tid}
+            rows = sb_fetch_all(tbl, "date,tank_id", filters=filt)
             for r in rows:
                 key = (tid, r["date"][:10])
                 tank_counts[key] = tank_counts.get(key, set())
@@ -894,7 +895,8 @@ function evaluatePixel(sample) { return [sample.VV]; }
             else:
                 # Fall back to DB dates
                 tbl = "raw_observations" if tid == "kharg" else "terminal_observations"
-                rows = sb_fetch_all(tbl, "date", filters={"terminal_id": tid})
+                filt = None if tid == "kharg" else {"terminal_id": tid}
+                rows = sb_fetch_all(tbl, "date", filters=filt)
                 dates = sorted(set(r["date"][:10] for r in rows))
 
             if not dates:
@@ -1089,8 +1091,8 @@ function evaluatePixel(sample) { return [sample.VV]; }
             match_rows = []
             for tid in df4["terminal"].unique():
                 tbl = "raw_observations" if tid == "kharg" else "terminal_observations"
-                db_rows = sb_fetch_all(tbl, "date,tank_id,db_mean",
-                                       filters={"terminal_id": tid} if tid != "kharg" else None)
+                db_filt = None if tid == "kharg" else {"terminal_id": tid}
+                db_rows = sb_fetch_all(tbl, "date,tank_id,db_mean", filters=db_filt)
                 db_map = {(r["tank_id"], str(r["date"])[:10]): r["db_mean"] for r in db_rows}
                 sub = df4[df4["terminal"] == tid][["tank_id", "date", "ring15_far"]].copy()
                 sub["db_mean_prod"] = sub.apply(
@@ -1385,18 +1387,41 @@ def pack_zips():
     sz1 = p1.stat().st_size / 1024 / 1024
     print(f"  mega_part1.zip: {sz1:.1f} MB → {p1}")
 
-    # esri_crops.zip
+    # esri_crops — split into <90 MB parts to stay under GitHub 100 MB limit
     crops_dir = root / "esri_crops"
-    p2 = root.parent / "esri_crops.zip"
+    MAX_PART_BYTES = 90 * 1024 * 1024  # 90 MB safety margin
     if crops_dir.exists():
-        with zipfile.ZipFile(p2, "w", zipfile.ZIP_DEFLATED, compresslevel=6) as zf:
-            for fp in sorted(crops_dir.rglob("*")):
-                if fp.is_file():
-                    zf.write(fp, fp.relative_to(root.parent))
-        sz2 = p2.stat().st_size / 1024 / 1024
-        print(f"  esri_crops.zip: {sz2:.1f} MB → {p2}")
+        all_crop_files = sorted(f for f in crops_dir.rglob("*") if f.is_file())
+        part_idx = 1
+        current_zf = None
+        current_path = None
+        current_size = 0
+        written_parts = []
+
+        def _open_part(idx):
+            p = root.parent / f"esri_crops_part{idx}.zip"
+            zf = zipfile.ZipFile(p, "w", zipfile.ZIP_DEFLATED, compresslevel=6)
+            return zf, p
+
+        current_zf, current_path = _open_part(part_idx)
+        for fp in all_crop_files:
+            fsize = fp.stat().st_size
+            if current_size + fsize > MAX_PART_BYTES and current_size > 0:
+                current_zf.close()
+                written_parts.append(current_path)
+                part_idx += 1
+                current_zf, current_path = _open_part(part_idx)
+                current_size = 0
+            current_zf.write(fp, fp.relative_to(root.parent))
+            current_size += fsize
+        current_zf.close()
+        written_parts.append(current_path)
+
+        for pp in written_parts:
+            sz = pp.stat().st_size / 1024 / 1024
+            print(f"  {pp.name}: {sz:.1f} MB → {pp}")
     else:
-        print("  esri_crops/ not found — skipping esri_crops.zip")
+        print("  esri_crops/ not found — skipping esri_crops parts")
 
 
 # ===========================================================================

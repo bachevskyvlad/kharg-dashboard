@@ -61,7 +61,7 @@ jobs:
         run: |
           git config user.email "actions@github.com"
           git config user.name "GitHub Actions"
-          git add -A diagnostics/mega/ diagnostics/mega_part1.zip diagnostics/esri_crops.zip 2>/dev/null || git add -A diagnostics/mega/ || true
+          git add -A diagnostics/mega/ diagnostics/mega_part1.zip diagnostics/esri_crops_part*.zip 2>/dev/null || git add -A diagnostics/mega/ || true
           git diff --cached --quiet && echo "No changes" || \
             git commit -m "research: mega_export s=${{ github.event.inputs.sections }} t=${{ github.event.inputs.terminal }} [run ${{ github.run_id }}] [skip ci]"
           for attempt in 1 2 3 4; do
