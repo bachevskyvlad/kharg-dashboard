@@ -1,0 +1,2 @@
+usage: mega_export.py [-h] [--sections SECTIONS]
+mega_export.py: error: unrecognized arguments: --terminals kharg,ras_tanura,yanbu
