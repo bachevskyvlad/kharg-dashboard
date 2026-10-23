@@ -1,7 +1,7 @@
 # diagnostics/mega — Full diagnostic export
 
-Generated: 2026-10-23T08:59:37Z  SHA: bd6b363cc5a7  Run: 39928487859
-Sections run: ['1', '2', '3.3', '5', '6']
+Generated: 2026-10-23T09:24:28Z  SHA: 45fd779394cb  Run: 39931508819
+Sections run: ['4']
 
 ## Files
 

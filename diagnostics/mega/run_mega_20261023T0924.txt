@@ -1,0 +1,16 @@
+mega_export.py  SHA=45fd779394cb  Run=39931508819  TS=2026-10-23T09:24:28Z
+Sections: ['4']  Terminal: kharg  Output: /home/runner/work/kharg-dashboard/kharg-dashboard/diagnostics/mega
+
+=== Section 4: Tank-scene metrics (quota-heavy) — terminal=kharg ===
+  WARNING: v0_manifest_all.csv not found — scene metadata will be partial
+  kharg/DESC-35: 323 dates to process…
+    kharg/DESC-35: 15181 rows so far
+  4.1 tank_scene_variants_kharg.csv.gz: 15181 rows, 0 duplicates → /home/runner/work/kharg-dashboard/kharg-dashboard/diagnostics/mega/tank_scene_variants_kharg.csv.gz
+  4.1 prod-vs-DB match check…
+  prod-vs-DB: 117/15181 rows match ±0.01 dB (0.8%) → /home/runner/work/kharg-dashboard/kharg-dashboard/diagnostics/mega/prod_db_match_kharg.csv
+  4.2 range_profiles_kharg.npz: (47, 323, 72) → /home/runner/work/kharg-dashboard/kharg-dashboard/diagnostics/mega/range_profiles_kharg.npz
+  Section 4 done.
+
+  README.md → /home/runner/work/kharg-dashboard/kharg-dashboard/diagnostics/mega/README.md
+
+=== mega_export complete. Output: /home/runner/work/kharg-dashboard/kharg-dashboard/diagnostics/mega ===
