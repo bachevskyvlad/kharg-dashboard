@@ -336,29 +336,72 @@ def _gen_esri_crops(registry_rows):
 
 
 def _dump_source_points():
-    """Search repo for any source-points files or commits."""
+    """Document the origin of tank coordinates in the registry."""
     out_p = OUT / "source_points.txt"
     lines = []
+
+    # A: geom_source field values from registry
     try:
-        r = subprocess.check_output(
-            ["git", "log", "--oneline", "--all", "--grep=source.*point\|tank.*center\|initial.*map\|esri_z18"],
-            cwd=str(REPO_ROOT), text=True, stderr=subprocess.DEVNULL
-        )
-        lines.append("=== git log commits mentioning source points/centers ===")
-        lines.extend(r.strip().splitlines() or ["(none found)"])
-    except Exception:
-        lines.append("(git log failed)")
+        from locations import LOCATIONS
+        lines.append("=== geom_source per tank (from locations.py / tank_registry.py) ===")
+        seen = {}
+        for loc in LOCATIONS:
+            tid = loc.get("id", "")
+            if tid not in TARGET_TERMINALS:
+                continue
+            for t in loc.get("tanks", []):
+                gs = t.get("geom_source", "") or t.get("source", "")
+                key = (tid, gs or "(none)")
+                seen[key] = seen.get(key, 0) + 1
+        if seen:
+            for (tid, gs), cnt in sorted(seen.items()):
+                lines.append(f"  {tid}: {cnt} tanks with geom_source='{gs}'")
+        else:
+            lines.append("  (geom_source field not present in registry)")
+    except Exception as e:
+        lines.append(f"  WARNING: {e}")
+
+    # B: esri_measure* workflow files → these encode initial ESRI-measured centroids
+    lines.append("\n=== esri_measure workflows (initial centroid measurement runs) ===")
     try:
-        r2 = subprocess.check_output(
-            ["git", "ls-files", "--", "*.csv", "*.json", "*.txt"],
-            cwd=str(REPO_ROOT), text=True
-        )
-        source_files = [f for f in r2.strip().splitlines()
-                        if any(k in f.lower() for k in ["source", "center", "point", "coord", "tank_loc"])]
-        lines.append("\n=== tracked files matching source/center/point/coord patterns ===")
-        lines.extend(source_files or ["(none found)"])
+        wf_dir = REPO_ROOT / ".github" / "workflows"
+        esri_wfs = sorted(wf_dir.glob("esri_measure*.yml"))
+        if esri_wfs:
+            for wf in esri_wfs:
+                lines.append(f"  {wf.name}")
+        else:
+            lines.append("  (none found)")
+    except Exception as e:
+        lines.append(f"  WARNING: {e}")
+
+    # C: git log — commits that introduced tank coordinates
+    lines.append("\n=== git log: commits touching tank_registry.py / locations.py ===")
+    try:
+        for fname in ("scripts/tank_registry.py", "scripts/locations.py"):
+            r = subprocess.check_output(
+                ["git", "log", "--oneline", "--follow", fname],
+                cwd=str(REPO_ROOT), text=True, stderr=subprocess.DEVNULL
+            ).strip()
+            lines.append(f"  {fname}:")
+            lines.extend(f"    {l}" for l in (r.splitlines() or ["(none)"]))
     except Exception:
-        pass
+        lines.append("  (git log failed)")
+
+    # D: diagnostics/research esri_measure result files
+    lines.append("\n=== esri_measure result files in diagnostics/ ===")
+    try:
+        diag = REPO_ROOT / "diagnostics"
+        measure_files = sorted(diag.rglob("esri_measure*.csv")) + \
+                        sorted(diag.rglob("*centroids*.csv")) + \
+                        sorted(diag.rglob("*centers*.csv"))
+        if measure_files:
+            for mf in measure_files[:30]:
+                lines.append(f"  {mf.relative_to(REPO_ROOT)}")
+        else:
+            lines.append("  (none found)")
+    except Exception as e:
+        lines.append(f"  WARNING: {e}")
+
     out_p.write_text("\n".join(lines))
     print(f"  1.4 source_points.txt → {out_p}")
 
@@ -746,14 +789,18 @@ def section_6():
 # ===========================================================================
 # SECTION 4 — Tank-scene metrics (SentinelHub quota)
 # ===========================================================================
-def section_4():
-    print("\n=== Section 4: Tank-scene metrics (quota-heavy) ===")
+def section_4(only_terminal=None):
+    """only_terminal: one of 'kharg', 'ras_tanura', 'yanbu', or None for all."""
+    label = only_terminal or "all"
+    print(f"\n=== Section 4: Tank-scene metrics (quota-heavy) — terminal={label} ===")
     from sentinelhub import BBox, CRS, SentinelHubRequest, MimeType
     from datetime import timedelta as td
-    from locations import LOCATIONS, TERMINALS, get_super_bbox
+    from locations import LOCATIONS, TERMINALS
 
     # Load V0 manifest for scene selection
     manifest = load_v0_manifest()
+
+    run_terminals = [only_terminal] if only_terminal else TARGET_TERMINALS
 
     TARGET_ORBITS = {
         "kharg":      [{"direction": "DESC", "relOrbit": 35}],
@@ -816,7 +863,7 @@ function evaluatePixel(sample) { return [sample.VV]; }
     record_rows = []
     profile_data = {}  # {terminal: {tank_id: {scene_id: array}}}
 
-    for tid in TARGET_TERMINALS:
+    for tid in run_terminals:
         loc = next((l for l in LOCATIONS if l["id"] == tid), None)
         if not loc:
             continue
@@ -1026,13 +1073,41 @@ function evaluatePixel(sample) { return [sample.VV]; }
 
             print(f"    {tid}/{dir_str}-{rel_orb}: {len(record_rows)} rows so far")
 
-    # Write 4.1
+    # Write 4.1 — per-terminal file if only one terminal, else combined
     if record_rows:
         df4 = pd.DataFrame(record_rows)
-        p41 = OUT / "tank_scene_variants.csv.gz"
+        suffix = f"_{only_terminal}" if only_terminal else ""
+        p41 = OUT / f"tank_scene_variants{suffix}.csv.gz"
         df4.to_csv(p41, index=False, compression="gzip")
         n_dup = df4.duplicated(subset=["terminal", "tank_id", "scene_id"]).sum()
-        print(f"  4.1 tank_scene_variants.csv.gz: {len(df4)} rows, {n_dup} duplicates → {p41}")
+        print(f"  4.1 tank_scene_variants{suffix}.csv.gz: {len(df4)} rows, {n_dup} duplicates → {p41}")
+
+        # ── prod vs DB verification ──────────────────────────────────────────
+        # Compare ring15_far in section-4 output vs db_mean from raw_observations/terminal_observations
+        print("  4.1 prod-vs-DB match check…")
+        try:
+            match_rows = []
+            for tid in df4["terminal"].unique():
+                tbl = "raw_observations" if tid == "kharg" else "terminal_observations"
+                db_rows = sb_fetch_all(tbl, "date,tank_id,db_mean",
+                                       filters={"terminal_id": tid} if tid != "kharg" else None)
+                db_map = {(r["tank_id"], str(r["date"])[:10]): r["db_mean"] for r in db_rows}
+                sub = df4[df4["terminal"] == tid][["tank_id", "date", "ring15_far"]].copy()
+                sub["db_mean_prod"] = sub.apply(
+                    lambda row: db_map.get((row["tank_id"], str(row["date"])[:10])), axis=1)
+                sub["delta"] = (sub["ring15_far"] - sub["db_mean_prod"]).abs()
+                sub["match_01"] = sub["delta"] <= 0.01
+                match_rows.append(sub)
+            if match_rows:
+                mdf = pd.concat(match_rows)
+                n_total = len(mdf.dropna(subset=["db_mean_prod"]))
+                n_match = int(mdf["match_01"].sum())
+                frac = n_match / n_total if n_total else 0
+                pv = OUT / f"prod_db_match{suffix}.csv"
+                mdf.to_csv(pv, index=False)
+                print(f"  prod-vs-DB: {n_match}/{n_total} rows match ±0.01 dB ({frac:.1%}) → {pv}")
+        except Exception as e:
+            print(f"  WARNING prod-vs-DB: {e}")
     else:
         print("  4.1 EMPTY")
 
@@ -1294,17 +1369,52 @@ def write_readme(sections_run):
 
 
 # ===========================================================================
+# Pack zip
+# ===========================================================================
+def pack_zips():
+    """Pack diagnostics/mega into two archives beside it."""
+    import zipfile
+    root = OUT
+
+    # mega_part1.zip — everything except esri_crops/
+    p1 = root.parent / "mega_part1.zip"
+    with zipfile.ZipFile(p1, "w", zipfile.ZIP_DEFLATED, compresslevel=6) as zf:
+        for fp in sorted(root.rglob("*")):
+            if fp.is_file() and "esri_crops" not in fp.parts:
+                zf.write(fp, fp.relative_to(root.parent))
+    sz1 = p1.stat().st_size / 1024 / 1024
+    print(f"  mega_part1.zip: {sz1:.1f} MB → {p1}")
+
+    # esri_crops.zip
+    crops_dir = root / "esri_crops"
+    p2 = root.parent / "esri_crops.zip"
+    if crops_dir.exists():
+        with zipfile.ZipFile(p2, "w", zipfile.ZIP_DEFLATED, compresslevel=6) as zf:
+            for fp in sorted(crops_dir.rglob("*")):
+                if fp.is_file():
+                    zf.write(fp, fp.relative_to(root.parent))
+        sz2 = p2.stat().st_size / 1024 / 1024
+        print(f"  esri_crops.zip: {sz2:.1f} MB → {p2}")
+    else:
+        print("  esri_crops/ not found — skipping esri_crops.zip")
+
+
+# ===========================================================================
 # Main
 # ===========================================================================
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--sections", default="1,2,3.3,5,6",
                         help="Comma-separated sections to run: 1,2,3.3,5,6,4,3.1,3.2")
+    parser.add_argument("--terminal", default=None,
+                        help="For section 4: run only this terminal (kharg|ras_tanura|yanbu)")
+    parser.add_argument("--pack-zip", action="store_true",
+                        help="After sections, pack output into mega_part1.zip + esri_crops.zip")
     args = parser.parse_args()
     sections = [s.strip() for s in args.sections.split(",")]
 
     print(f"mega_export.py  SHA={SCRIPT_SHA}  Run={RUN_ID}  TS={TS}")
-    print(f"Sections: {sections}  Output: {OUT}")
+    print(f"Sections: {sections}  Terminal: {args.terminal or 'all'}  Output: {OUT}")
 
     if "1" in sections:
         section_1()
@@ -1317,11 +1427,16 @@ def main():
     if "6" in sections:
         section_6()
     if "4" in sections:
-        section_4()
+        section_4(only_terminal=args.terminal)
     if "3.1" in sections or "3.2" in sections:
         section_3_crops()
 
     write_readme(sections)
+
+    if args.pack_zip:
+        print("\n=== Packing zips ===")
+        pack_zips()
+
     print(f"\n=== mega_export complete. Output: {OUT} ===")
 
 
