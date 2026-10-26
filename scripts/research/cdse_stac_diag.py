@@ -23,7 +23,7 @@ from pathlib import Path
 # ---------------------------------------------------------------------------
 # Config
 # ---------------------------------------------------------------------------
-STAC_URL    = "https://catalogue.dataspace.copernicus.eu/stac/collections/SENTINEL-1/items"
+STAC_URL    = "https://catalogue.dataspace.copernicus.eu/stac/search"
 BBOX        = "50.0,26.5,50.8,27.0"   # RT bounding box
 MAX_ITEMS   = 20                        # per query
 
@@ -58,9 +58,10 @@ def stac_query(date_str, bbox=BBOX, max_items=MAX_ITEMS):
     d = datetime.date.fromisoformat(date_str)
     d1 = (d + datetime.timedelta(days=1)).isoformat()
     params = {
-        "bbox":     bbox,
-        "datetime": f"{date_str}T00:00:00Z/{d1}T00:00:00Z",
-        "limit":    max_items,
+        "collections": "SENTINEL-1",
+        "bbox":        bbox,
+        "datetime":    f"{date_str}T00:00:00Z/{d1}T00:00:00Z",
+        "limit":       max_items,
     }
     try:
         r = requests.get(STAC_URL, params=params, timeout=30)
