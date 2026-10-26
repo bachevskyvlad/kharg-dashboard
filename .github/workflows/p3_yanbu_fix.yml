@@ -1,0 +1,55 @@
+name: Research — P3.1 Yanbu ASC-14 fix
+
+on:
+  workflow_dispatch: {}
+
+jobs:
+  yanbu_fix:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: research/2026-10-auto
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: pip install requests sentinelhub supabase -q
+
+      - name: Run Yanbu ASC-14 fix
+        run: |
+          mkdir -p diagnostics/mega
+          mkdir -p diagnostics/research/2026-10/event_csv
+          python scripts/research/p3_yanbu_fix.py \
+            2>&1 | tee diagnostics/mega/run_p3_yanbu_$(date -u +%Y%m%dT%H%M).txt
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+          SH_CLIENT_ID: ${{ secrets.SH_CLIENT_ID }}
+          SH_CLIENT_SECRET: ${{ secrets.SH_CLIENT_SECRET }}
+
+      - name: Commit and push results
+        if: always()
+        run: |
+          git config user.email "actions@github.com"
+          git config user.name "GitHub Actions"
+          git add diagnostics/mega/tank_scene_variants_yanbu*.csv.gz \
+                  diagnostics/mega/yanbu_cdse_passes.csv \
+                  diagnostics/mega/run_p3_yanbu_*.txt 2>/dev/null || true
+          git diff --cached --quiet && echo "No changes" && exit 0
+          git commit -m "research: p3_yanbu_fix [run ${{ github.run_id }}] [skip ci]"
+          for attempt in 1 2 3 4; do
+            git fetch origin research/2026-10-auto && \
+            git rebase -X theirs origin/research/2026-10-auto && \
+            git push origin HEAD:research/2026-10-auto && break
+            git rebase --abort 2>/dev/null || true
+            echo "push attempt $attempt failed"
+            sleep $attempt
+          done || true
