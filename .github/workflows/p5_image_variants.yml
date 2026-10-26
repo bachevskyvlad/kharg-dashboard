@@ -29,8 +29,8 @@ jobs:
           python scripts/research/p5_image_variants.py \
             2>&1 | tee diagnostics/mega/run_p5_image_variants_$(date -u +%Y%m%dT%H%M).txt
         env:
-          SH_CLIENT_ID: ${{ secrets.SH_CLIENT_ID }}
-          SH_CLIENT_SECRET: ${{ secrets.SH_CLIENT_SECRET }}
+          SH_CLIENT_ID: ${{ secrets.CLIENT_ID }}
+          SH_CLIENT_SECRET: ${{ secrets.CLIENT_SECRET }}
 
       - name: Commit and push results
         if: always()
