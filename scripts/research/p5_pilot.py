@@ -584,6 +584,85 @@ def main():
         w.writerows(csv_rows)
     print(f"  {csv_path}: {len(csv_rows)} rows", flush=True)
 
+    # 4b. Acceptance metric: lag-1 autocorrelation of volume increments (quiet dates)
+    # White noise first-differences -> autocorr ≈ -0.5; closer to 0 = less noisy signal.
+    print("\n=== 4b. Autocorrelation metric (acceptance criterion) ===", flush=True)
+    print("  Formula: lag-1 autocorr of Δvol[i] = vol[i+1]-vol[i], quiet dates only "
+          "(|Δvol| <= 1σ). White noise baseline: -0.5. Closer to 0 = better.", flush=True)
+
+    def autocorr_lag1(series):
+        """Lag-1 Pearson autocorrelation of a 1-D array."""
+        s = np.asarray(series, dtype=float)
+        if len(s) < 4:
+            return float("nan")
+        s0, s1 = s[:-1] - s[:-1].mean(), s[1:] - s[1:].mean()
+        denom = np.sqrt((s0**2).sum() * (s1**2).sum())
+        return float(np.dot(s0, s1) / denom) if denom > 0 else float("nan")
+
+    # Build per-(terminal, variant, date) volume = sum of ring15_far across tanks
+    from collections import defaultdict as _dd
+    vol_by_tv = _dd(lambda: _dd(list))  # [terminal][variant] -> [(date, vol)]
+    tv_dates  = _dd(lambda: _dd(set))   # collect dates per (terminal, variant)
+    tv_sum    = _dd(lambda: _dd(float)) # (terminal, variant, date) -> sum
+    tv_cnt    = _dd(lambda: _dd(int))
+    for r in csv_rows:
+        ring = r.get("ring15_far","")
+        if ring == "" or ring is None:
+            continue
+        try:
+            v = float(ring)
+        except (ValueError, TypeError):
+            continue
+        k = (r["terminal"], r["variant"], r["date"])
+        tv_sum[k][...] = tv_sum[k].get(k, 0.0) + v  # noqa; simpler below
+
+    # Rebuild cleanly
+    term_var_date_sum  = defaultdict(float)
+    term_var_date_cnt  = defaultdict(int)
+    for r in csv_rows:
+        ring = r.get("ring15_far","")
+        if ring == "":
+            continue
+        try:
+            v = float(ring)
+        except (ValueError, TypeError):
+            continue
+        k = (r["terminal"], r["variant"], r["date"])
+        term_var_date_sum[k] += v
+        term_var_date_cnt[k] += 1
+
+    # Aggregate to (terminal, variant) -> sorted list of (date, vol)
+    tv_vols = defaultdict(list)
+    dates_seen = defaultdict(set)
+    for (term, var, date), total in term_var_date_sum.items():
+        cnt = term_var_date_cnt[(term, var, date)]
+        if cnt > 0:
+            tv_vols[(term, var)].append((date, total / cnt))
+
+    print(f"\n  {'terminal':<14} {'variant':<28} {'n_dates':>7} {'autocorr':>10} {'n_quiet':>8}", flush=True)
+    print(f"  {'-'*14} {'-'*28} {'-'*7} {'-'*10} {'-'*8}", flush=True)
+    ac_rows = []
+    for (term, var) in sorted(tv_vols.keys()):
+        series = sorted(tv_vols[(term, var)])  # [(date, vol)]
+        if len(series) < 4:
+            continue
+        vols = np.array([v for _, v in series])
+        dvol = np.diff(vols)
+        sigma = dvol.std()
+        quiet = dvol[np.abs(dvol) <= sigma] if sigma > 0 else dvol
+        ac = autocorr_lag1(quiet)
+        n_quiet = len(quiet)
+        print(f"  {term:<14} {var:<28} {len(series):>7} {ac:>10.4f} {n_quiet:>8}", flush=True)
+        ac_rows.append({"terminal": term, "variant": var,
+                        "n_dates": len(series), "autocorr_lag1": ac, "n_quiet": n_quiet})
+
+    ac_csv = OUT_DIR / "autocorr_acceptance.csv"
+    with open(ac_csv, "w", newline="") as f:
+        w2 = csv.DictWriter(f, fieldnames=["terminal","variant","n_dates","autocorr_lag1","n_quiet"])
+        w2.writeheader()
+        w2.writerows(ac_rows)
+    print(f"\n  Saved: {ac_csv}", flush=True)
+
     # 5. QC PNGs
     print("\n=== 5. QC PNG grids ===", flush=True)
     if not HAS_MPL:
