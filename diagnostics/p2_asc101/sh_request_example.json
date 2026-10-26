@@ -1,0 +1,27 @@
+{
+  "endpoint": "https://sh.dataspace.copernicus.eu/api/v1/process",
+  "date": "2019-09-24",
+  "dataFilter": {
+    "orbitDirection": "ASCENDING",
+    "relativeOrbitNumber": 101,
+    "timeRange": {
+      "from": "2019-09-24T00:00:00Z",
+      "to": "2019-09-25T00:00:00Z"
+    }
+  },
+  "bbox": [
+    50.1074,
+    26.6372,
+    50.1574,
+    26.6873
+  ],
+  "crs": "EPSG:4326",
+  "size": [
+    100,
+    100
+  ],
+  "backCoeff": "GAMMA0_TERRAIN",
+  "orthorectify": true,
+  "mosaicking": "ORBIT",
+  "evalscript": "//VERSION=3\nfunction setup() { return { input: [{ bands: [\"VV\"] }], output: { bands: 1, sampleType: \"FLOAT32\" } }; }\nfun..."
+}

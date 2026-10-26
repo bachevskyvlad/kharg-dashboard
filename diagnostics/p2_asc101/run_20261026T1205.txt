@@ -1,0 +1,54 @@
+=== Part A: CDSE catalog for 5 ТЗ dates ===
+
+  2019-09-24   S1A    orb=35     DESCENDING   S1A_IW_GRDH_1SDV_20190924T023936_20190924T024001_029157_034F
+  2024-10-03   S1A    orb=35     DESCENDING   S1A_IW_GRDH_1SDV_20241003T023956_20241003T024021_055932_06D6
+  2025-11-15   S1A    orb=35     DESCENDING   S1A_IW_GRDH_1SDV_20251115T023945_20251115T024010_061882_07BC
+  2025-11-15   S1C    orb=137    DESCENDING   S1C_IW_GRDH_1SDV_20251116T023031_20251116T023056_005033_009F
+  2025-10-25   S1C    orb=174    ASCENDING    S1C_IW_GRDH_1SDV_20251025T144851_20251025T144920_004720_0095
+  2025-10-25   S1A    orb=101    ASCENDING    S1A_IW_GRDH_1SDV_20251026T144148_20251026T144213_061598_07B1
+  2025-11-06   S1C    orb=174    ASCENDING    S1C_IW_GRDH_1SDV_20251106T144851_20251106T144920_004895_009A
+  2025-11-06   S1A    orb=101    ASCENDING    S1A_IW_GRDH_1SDV_20251107T144147_20251107T144212_061773_07B8
+
+=== Part B: SH request for 2019-09-24 ASC-101 ===
+
+
+Diagnosis → diagnostics/p2_asc101/diag.txt
+Run: 2026-10-26T12:05 UTC
+Script: scripts/research/p2_asc101_diag.py
+
+=== Part A: CDSE GRDH catalog — 5 specific dates, RT wide bbox (49.5–51°E) ===
+date         serial relOrbit   direction    scene_id_prefix
+--------------------------------------------------------------------------------
+  2019-09-24   S1A    orb=35     DESCENDING   S1A_IW_GRDH_1SDV_20190924T023936_20190924T024001_029157_034F
+  2024-10-03   S1A    orb=35     DESCENDING   S1A_IW_GRDH_1SDV_20241003T023956_20241003T024021_055932_06D6
+  2025-11-15   S1A    orb=35     DESCENDING   S1A_IW_GRDH_1SDV_20251115T023945_20251115T024010_061882_07BC
+  2025-11-15   S1C    orb=137    DESCENDING   S1C_IW_GRDH_1SDV_20251116T023031_20251116T023056_005033_009F
+  2025-10-25   S1C    orb=174    ASCENDING    S1C_IW_GRDH_1SDV_20251025T144851_20251025T144920_004720_0095
+  2025-10-25   S1A    orb=101    ASCENDING    S1A_IW_GRDH_1SDV_20251026T144148_20251026T144213_061598_07B1
+  2025-11-06   S1C    orb=174    ASCENDING    S1C_IW_GRDH_1SDV_20251106T144851_20251106T144920_004895_009A
+  2025-11-06   S1A    orb=101    ASCENDING    S1A_IW_GRDH_1SDV_20251107T144147_20251107T144212_061773_07B8
+
+=== Part B: SH request — 2019-09-24, ASC-101 filter ===
+  SH response status:       401
+  Content-type:             application/json
+  Content-length:           222 bytes
+  Body preview:             {"error":{"status":401,"reason":"Unauthorized","message":"You are not authorized! Please provide a valid access token within the header [Authorization: Bearer <accessToken>] of your request.","code":"COMMON_UNAUTHORIZED"}}
+
+  Prod DB value (DESC-35 export):  date=2019-09-24, rt_0, ring15_far=9.035 dB, pixel_valid_frac=1.0
+  ASC-101 export value:            date=2019-09-24, rt_0, ring15_far='', pixel_valid_frac=0.0
+
+=== Part C: Root cause — date list mismatch ===
+  mega_export section 4, ASC-101 dates source:
+    v0_manifest_all.csv NOT FOUND (WARNING in log)
+    → fallback: sb_fetch_all('terminal_observations', filters={'terminal_id':'ras_tanura'})
+    → returns DESC-35 pass dates (only DESC in terminal_observations)
+    → queries SH with ASC-101 filter on DESC-35 dates → no scenes → pixel_valid_frac=0
+
+  FIX: supply v0_manifest_all.csv with correct ASC-101 dates,
+       OR: pre-populate dates via CDSE OData before calling SH
+       (ЗАПРЕЩЕНО: повтор без relativeOrbitNumber)
+
+=== Part A conclusion ===
+  orbs found over RT: ['101', '137', '174', '35']
+  directions found:   ['ASCENDING', 'DESCENDING']
+  platforms:          ['S1A', 'S1C']
