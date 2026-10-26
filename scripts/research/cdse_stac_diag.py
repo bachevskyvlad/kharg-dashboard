@@ -8,16 +8,18 @@ from SentinelHub Processing API.
 CDSE STAC /search is blocked by GHA proxy (400). Using OData instead:
   https://catalogue.dataspace.copernicus.eu/odata/v1/Products?$filter=...
 
+Uses wide bbox (48.5–52°E, 25.5–28.5°N) to ensure DESC-35 swath is captured.
+Also runs a dedicated DESC-35 orbit search to confirm presence/absence.
+
 Outputs (to diagnostics/cdse_stac/):
-  stac_before.csv  — 5 valid dates before 2025-11 (known good)
-  stac_after.csv   — 5 empty dates after 2025-11 (known missing)
+  stac_before.csv  — scenes for 5 valid dates before 2025-11
+  stac_after.csv   — scenes for 5 empty dates after 2025-11
   stac_diag.txt    — full diff table + conclusion
 
 Columns per row:
   date, scene_id, platform, platformSerialIdentifier,
   relativeOrbitNumber, orbitDirection, mode, productType,
-  polarisation, processingLevel, constellation, swath,
-  startDateTime, stopDateTime
+  polarisation, processingLevel, startDateTime, stopDateTime
 """
 
 import os, sys, json, datetime, requests
@@ -29,9 +31,9 @@ from pathlib import Path
 # ---------------------------------------------------------------------------
 # CDSE OData endpoint (public, no auth for S1 GRD search)
 ODATA_URL = "https://catalogue.dataspace.copernicus.eu/odata/v1/Products"
-# RT bbox: lon 50.0-50.3, lat 26.5-27.0
-BBOX_WKT  = "POLYGON((50.0 26.5,50.3 26.5,50.3 27.0,50.0 27.0,50.0 26.5))"
-MAX_ITEMS = 20
+# Wide bbox to catch DESC-35 swath (~250km wide, passes ~1deg west of RT)
+BBOX_WKT  = "POLYGON((48.5 25.5,52.0 25.5,52.0 28.5,48.5 28.5,48.5 25.5))"
+MAX_ITEMS = 50
 
 OUT_DIR = Path("diagnostics/cdse_stac")
 
@@ -54,22 +56,24 @@ EMPTY_DATES_AFTER = [
 ]
 
 
-def odata_query(date_str, bbox_wkt=BBOX_WKT, max_items=MAX_ITEMS):
+def odata_query(date_str, bbox_wkt=BBOX_WKT, max_items=MAX_ITEMS, extra_filter=""):
     """
-    Query CDSE OData for Sentinel-1 GRD scenes over bbox on given date ±1d.
+    Query CDSE OData for Sentinel-1 scenes over bbox on given date ±1d.
     Returns list of row dicts with standardised fields.
     """
     d = datetime.date.fromisoformat(date_str)
     d0 = (d - datetime.timedelta(days=1)).isoformat()
     d1 = (d + datetime.timedelta(days=1)).isoformat()
 
-    # OData filter: S1, GRD, intersects bbox, within date window
     filt = (
         f"Collection/Name eq 'SENTINEL-1' "
         f"and ContentDate/Start gt {d0}T00:00:00.000Z "
         f"and ContentDate/Start lt {d1}T23:59:59.000Z "
         f"and OData.CSC.Intersects(area=geography'SRID=4326;{bbox_wkt}')"
     )
+    if extra_filter:
+        filt += f" and {extra_filter}"
+
     params = {
         "$filter":  filt,
         "$top":     max_items,
@@ -95,8 +99,6 @@ def odata_query(date_str, bbox_wkt=BBOX_WKT, max_items=MAX_ITEMS):
                 "productType":              attrs.get("productType", ""),
                 "polarisation":             attrs.get("polarisationChannels", ""),
                 "processingLevel":          attrs.get("processingLevel", ""),
-                "constellation":            attrs.get("constellation", ""),
-                "swath":                    attrs.get("swathIdentifier", ""),
                 "startDateTime":            item.get("ContentDate", {}).get("Start", ""),
                 "stopDateTime":             item.get("ContentDate", {}).get("End", ""),
             }
@@ -111,80 +113,89 @@ def main():
     OUT_DIR.mkdir(parents=True, exist_ok=True)
     run_ts = datetime.datetime.utcnow().strftime("%Y-%m-%dT%H:%M UTC")
     lines = [f"Run: {run_ts}", "Script: scripts/research/cdse_stac_diag.py",
-             f"API: {ODATA_URL} (OData, not STAC — STAC blocked by GHA proxy)",
+             f"API: {ODATA_URL} (OData — STAC blocked by GHA proxy)",
              f"BBOX: {BBOX_WKT}", ""]
 
     print("=== CDSE OData Diagnosis for RT DESC-35 ===\n")
+    print(f"Wide BBOX: {BBOX_WKT}\n")
 
     # ---- query before dates ----
-    print("--- Before 2025-11 (should be S1A DESC-35) ---")
+    print("--- Before 2025-11 (should have S1A DESC-35) ---")
     before_rows = []
     for d in VALID_DATES_BEFORE:
         rows = odata_query(d)
-        desc_rows = [r for r in rows if "desc" in str(r.get("orbitDirection","")).lower()]
-        print(f"  {d}: {len(rows)} total, {len(desc_rows)} DESC — "
-              f"{[r['platform']+'_orb'+str(r['relativeOrbitNumber']) for r in desc_rows]}")
+        desc35 = [r for r in rows if str(r.get("relativeOrbitNumber","")) == "35"
+                  and "desc" in str(r.get("orbitDirection","")).lower()]
+        all_orbs = sorted(set(f"{r['platformSerialIdentifier']}_orb{r['relativeOrbitNumber']}_{r['orbitDirection'][:3]}"
+                              for r in rows))
+        print(f"  {d}: {len(rows)} total, DESC-35={len(desc35)} — all_orbs: {all_orbs}")
         before_rows.extend(rows)
 
     before_df = pd.DataFrame(before_rows) if before_rows else pd.DataFrame()
     before_df.to_csv(OUT_DIR / "stac_before.csv", index=False)
 
     # ---- query after dates ----
-    print("\n--- After 2025-11 (empty in SH, may be S1C) ---")
+    print("\n--- After 2025-11 (empty in SH, checking for S1C) ---")
     after_rows = []
     for d in EMPTY_DATES_AFTER:
         rows = odata_query(d)
-        desc_rows = [r for r in rows if "desc" in str(r.get("orbitDirection","")).lower()]
-        print(f"  {d}: {len(rows)} total, {len(desc_rows)} DESC — "
-              f"{[r['platform']+'_orb'+str(r['relativeOrbitNumber']) for r in desc_rows]}")
+        desc35 = [r for r in rows if str(r.get("relativeOrbitNumber","")) == "35"
+                  and "desc" in str(r.get("orbitDirection","")).lower()]
+        all_orbs = sorted(set(f"{r['platformSerialIdentifier']}_orb{r['relativeOrbitNumber']}_{r['orbitDirection'][:3]}"
+                              for r in rows))
+        print(f"  {d}: {len(rows)} total, DESC-35={len(desc35)} — all_orbs: {all_orbs}")
         after_rows.extend(rows)
 
     after_df = pd.DataFrame(after_rows) if after_rows else pd.DataFrame()
     after_df.to_csv(OUT_DIR / "stac_after.csv", index=False)
 
     # ---- compare ----
-    lines.append("=== Before 2025-11 (DESC only) ===")
-    if not before_df.empty:
-        bd = before_df[before_df["orbitDirection"].str.lower().str.contains("desc", na=False)]
-        for _, r in bd.iterrows():
-            lines.append(
-                f"  {r['date']} | {r['platform']} | {r.get('platformSerialIdentifier','')} | "
-                f"orb={r['relativeOrbitNumber']} | dir={r['orbitDirection']} | mode={r['mode']} | "
-                f"type={r['productType']} | pol={r['polarisation']}"
-            )
-    else:
-        lines.append("  no data returned")
-    lines.append("")
+    def fmt_section(df, label):
+        lines_out = [f"=== {label} ==="]
+        if not df.empty:
+            desc35 = df[
+                (df["relativeOrbitNumber"].astype(str) == "35") &
+                (df["orbitDirection"].str.lower().str.contains("desc", na=False))
+            ]
+            if desc35.empty:
+                lines_out.append("  no DESC-35 scenes found")
+                # show what orbits ARE present
+                orb_summary = df.groupby(["platformSerialIdentifier","relativeOrbitNumber","orbitDirection"]).size()
+                for (s, orb, d2), cnt in orb_summary.items():
+                    lines_out.append(f"  found: S1{s} orb={orb} {d2} x{cnt}")
+            else:
+                for _, r in desc35.drop_duplicates(
+                    subset=["date","platformSerialIdentifier","productType"]
+                ).iterrows():
+                    lines_out.append(
+                        f"  {r['date']} | S1{r['platformSerialIdentifier']} | orb={r['relativeOrbitNumber']} | "
+                        f"dir={r['orbitDirection']} | type={r['productType']} | pol={r['polarisation']}"
+                    )
+        else:
+            lines_out.append("  no data returned")
+        return lines_out
 
-    lines.append("=== After 2025-11 (DESC only) ===")
-    if not after_df.empty:
-        ad = after_df[after_df["orbitDirection"].str.lower().str.contains("desc", na=False)]
-        for _, r in ad.iterrows():
-            lines.append(
-                f"  {r['date']} | {r['platform']} | {r.get('platformSerialIdentifier','')} | "
-                f"orb={r['relativeOrbitNumber']} | dir={r['orbitDirection']} | mode={r['mode']} | "
-                f"type={r['productType']} | pol={r['polarisation']}"
-            )
-    else:
-        lines.append("  no data returned")
+    lines += fmt_section(before_df, "Before 2025-11 DESC-35 scenes")
+    lines.append("")
+    lines += fmt_section(after_df, "After 2025-11 DESC-35 scenes")
     lines.append("")
 
     # ---- platform diff ----
-    lines.append("=== Platform diff: Before vs After (DESC) ===")
+    lines.append("=== Platform diff Before vs After (all DESC) ===")
     if not before_df.empty and not after_df.empty:
-        bd_desc = before_df[before_df["orbitDirection"].str.lower().str.contains("desc", na=False)]
-        ad_desc = after_df[after_df["orbitDirection"].str.lower().str.contains("desc", na=False)]
-        platforms_before = set(bd_desc["platform"].dropna().unique())
-        platforms_after  = set(ad_desc["platform"].dropna().unique())
-        serial_before = set(bd_desc["platformSerialIdentifier"].dropna().unique())
-        serial_after  = set(ad_desc["platformSerialIdentifier"].dropna().unique())
-        lines.append(f"  platform before: {platforms_before}  after: {platforms_after}")
-        lines.append(f"  serial before:   {serial_before}  after: {serial_after}")
-        new_platforms = platforms_after - platforms_before
-        if new_platforms:
-            lines.append(f"  NEW in after: {new_platforms} → use platformSerialIdentifier filter")
-    elif before_df.empty and after_df.empty:
-        lines.append("  OData endpoint also unreachable from GHA proxy — try with auth or different network")
+        bd = before_df[before_df["orbitDirection"].str.lower().str.contains("desc", na=False)]
+        ad = after_df[after_df["orbitDirection"].str.lower().str.contains("desc", na=False)]
+        serial_before = set(bd["platformSerialIdentifier"].dropna().unique())
+        serial_after  = set(ad["platformSerialIdentifier"].dropna().unique())
+        orb_before    = set(bd["relativeOrbitNumber"].dropna().astype(str).unique())
+        orb_after     = set(ad["relativeOrbitNumber"].dropna().astype(str).unique())
+        lines.append(f"  serial before: {serial_before}  after: {serial_after}")
+        lines.append(f"  orbs   before: {orb_before}     after: {orb_after}")
+        new_serial = serial_after - serial_before
+        if new_serial:
+            lines.append(f"  NEW serial in after: {new_serial}")
+    else:
+        lines.append("  OData also unreachable — try with CDSE auth token")
     lines.append("")
 
     diag_path = OUT_DIR / "stac_diag.txt"
