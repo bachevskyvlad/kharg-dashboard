@@ -1,12 +1,18 @@
-Run: 2026-10-26T11:28 UTC
+Run: 2026-10-26T11:35 UTC
 Script: scripts/research/cdse_stac_diag.py
-STAC: https://catalogue.dataspace.copernicus.eu/stac/search
-BBOX: 50.0,26.5,50.3,27.0
+API: https://catalogue.dataspace.copernicus.eu/odata/v1/Products (OData, not STAC — STAC blocked by GHA proxy)
+BBOX: POLYGON((50.0 26.5,50.3 26.5,50.3 27.0,50.0 27.0,50.0 26.5))
 
 === Before 2025-11 (DESC only) ===
-  no data returned
 
 === After 2025-11 (DESC only) ===
-  no data returned
+  2026-02-03 | SENTINEL-1 | A | orb=137 | dir=DESCENDING | mode=IW | type=IW_ETA__AX | pol=VV&VH
+  2026-02-03 | SENTINEL-1 | A | orb=137 | dir=DESCENDING | mode=IW | type=IW_SLC__1S | pol=VV&VH
+  2026-02-03 | SENTINEL-1 | A | orb=137 | dir=DESCENDING | mode=IW | type=IW_GRDH_1S-COG | pol=VV&VH
+  2026-02-03 | SENTINEL-1 | A | orb=137 | dir=DESCENDING | mode=IW | type=IW_OCN__2S | pol=VV&VH
+  2026-02-03 | SENTINEL-1 | A | orb=137 | dir=DESCENDING | mode=IW | type=IW_GRDH_1S | pol=VV&VH
 
 === Platform diff: Before vs After (DESC) ===
+  platform before: set()  after: {'SENTINEL-1'}
+  serial before:   set()  after: {'A'}
+  NEW in after: {'SENTINEL-1'} → use platformSerialIdentifier filter
