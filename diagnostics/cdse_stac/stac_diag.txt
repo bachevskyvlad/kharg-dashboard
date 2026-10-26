@@ -1,0 +1,12 @@
+Run: 2026-10-26T11:04 UTC
+Script: scripts/research/cdse_stac_diag.py
+STAC: https://catalogue.dataspace.copernicus.eu/stac/collections/SENTINEL-1/items
+BBOX: 50.0,26.5,50.8,27.0
+
+=== Before 2025-11 (DESC only) ===
+  no data returned
+
+=== After 2025-11 (DESC only) ===
+  no data returned
+
+=== Platform diff: Before vs After (DESC) ===
