@@ -1,6 +1,6 @@
 # diagnostics/mega — Full diagnostic export
 
-Generated: 2026-10-26T10:00:57Z  SHA: 1204191cfc52  Run: 40302410883
+Generated: 2026-10-26T11:04:48Z  SHA: c397dbd32c8d  Run: 40312196615
 Sections run: ['4']
 
 ## Files
@@ -16,7 +16,7 @@ Sections run: ['4']
 | `evalscript_and_params.txt` | Exact evalscript and SentinelHub request params | ✓ 2 KB |
 | `prod_tank_series.csv` | Per-tank fill/vol series from prod code + DB | ✓ 5316 KB |
 | `calibration_code/` | Copies of sar_fetch, volume, compute, config, etc. | ✓ 7 files |
-| `tvt_all.csv` | volume_timeseries + terminal_volume_timeseries + n_tanks | ✓ 120 KB |
+| `tvt_all.csv` | volume_timeseries + terminal_volume_timeseries + n_tanks | ✓ 119 KB |
 | `anchors_all/` | All anchor files from repo + Supabase + event_csv | ✓ 6 files |
 | `anchor_mapping.txt` | Anchor-to-terminal wiring (file:line) | ✓ 80 KB |
 | `past_results/` | Correlation result CSVs and run logs | ✓ 12 files |
