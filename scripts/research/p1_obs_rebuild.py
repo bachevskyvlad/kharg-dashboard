@@ -190,10 +190,13 @@ def load_ring15_index():
             print(f"  [SKIP] {fname}", flush=True)
             continue
         n = 0
+        _DIR_NORM = {"ASC": "ASCENDING", "DESC": "DESCENDING"}
         for row in rows:
+            d = row.get("direction","")
+            d = _DIR_NORM.get(d, d)
             key = (row.get("terminal",""), row.get("tank_id",""),
                    row.get("date",""), str(row.get("relOrbit","")),
-                   row.get("direction",""))
+                   d)
             if key not in idx:
                 idx[key] = row
                 n += 1
