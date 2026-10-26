@@ -1,6 +1,6 @@
 # diagnostics/mega — Full diagnostic export
 
-Generated: 2026-10-26T11:04:48Z  SHA: c397dbd32c8d  Run: 40312196615
+Generated: 2026-10-26T11:13:45Z  SHA: c397dbd32c8d  Run: 40313346640
 Sections run: ['4']
 
 ## Files
