@@ -1,0 +1,55 @@
+Run: 2026-10-26T19:45 UTC
+
+=== 1. Registry ===
+  125 tank entries
+
+=== 2. Section-4 ring15 index ===
+  s4: tank_scene_variants_kharg.csv.gz → 15181 new keys
+  s4: tank_scene_variants_ras_tanura.csv.gz → 20526 new keys
+  s4: tank_scene_variants_ras_tanura_ASC101_part00.csv.gz → 0 new keys
+  s4: tank_scene_variants_ras_tanura_ASC101_part01.csv.gz → 0 new keys
+  s4: tank_scene_variants_ras_tanura_ASC101_part02.csv.gz → 0 new keys
+  s4: tank_scene_variants_ras_tanura_ASC101_part03.csv.gz → 0 new keys
+  s4: tank_scene_variants_ras_tanura_ASC101_part04.csv.gz → 0 new keys
+  s4: tank_scene_variants_ras_tanura_ASC101_part05.csv.gz → 0 new keys
+  s4: tank_scene_variants_ras_tanura_ASC101_part06.csv.gz → 0 new keys
+  s4: tank_scene_variants_ras_tanura_DESC35.csv.gz → 33000 new keys
+  s4: tank_scene_variants_ras_tanura_DESC35_part00.csv.gz → 0 new keys
+  s4: tank_scene_variants_ras_tanura_DESC35_part01.csv.gz → 0 new keys
+  s4: tank_scene_variants_ras_tanura_DESC35_part02.csv.gz → 0 new keys
+  s4: tank_scene_variants_ras_tanura_DESC35_part03.csv.gz → 0 new keys
+  s4: tank_scene_variants_ras_tanura_DESC35_part04.csv.gz → 0 new keys
+  s4: tank_scene_variants_ras_tanura_DESC35_part05.csv.gz → 0 new keys
+  s4: tank_scene_variants_ras_tanura_DESC35_part06.csv.gz → 0 new keys
+  s4: tank_scene_variants_ras_tanura_DESC35_part07.csv.gz → 0 new keys
+  s4: tank_scene_variants_ras_tanura_DESC35_part08.csv.gz → 0 new keys
+  s4: tank_scene_variants_ras_tanura_DESC35_part09.csv.gz → 0 new keys
+  s4: tank_scene_variants_yanbu.csv.gz → 12 new keys
+  s4: tank_scene_variants_yanbu_ASC14_part00.csv.gz → 0 new keys
+  s4 index: 68719 exact keys, 52285 fallback keys
+
+=== 3. Fetch DB rows ===
+  kharg (raw_observations)…
+    15228 rows
+  ras_tanura (terminal_observations)…
+    37127 rows
+  yanbu (terminal_observations)…
+    3984 rows
+
+=== 4. CDSE catalog ===
+  CDSE kharg: querying 2015-04-05→2026-10-25 (324 dates)…
+    2015: 42 scenes
+    2016: 60 scenes
+    2017: 160 scenes
+    2018: 174 scenes
+    2019: 176 scenes
+    2020: 190 scenes
+    2021: 184 scenes
+    2022: 186 scenes
+    2023: 176 scenes
+    2024: 180 scenes
+    2025: 234 scenes
+    2026: 252 scenes
+  CDSE kharg: 712 unique dates covered
+  CDSE ras_tanura: querying 2017-03-13→2026-10-25 (572 dates)…
+    2017: 330 scenes
