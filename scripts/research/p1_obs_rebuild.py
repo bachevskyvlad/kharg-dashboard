@@ -17,9 +17,13 @@ Output columns:
 
 RULE: print ring15_far non-null fraction PER terminal PER orbit before committing.
 File with zero fraction for any terminal+orbit must NOT be committed.
+
+DEBT: SUPABASE_KEY is hardcoded as plaintext in the workflow. The cron pipeline
+uses the same key to write to raw_observations — i.e. a write-capable key is
+in the repo. After P1 ships: move to GHA secret SUPABASE_KEY and rotate. — K to decide when.
 """
 
-import csv, gzip, io, json, os, sys, datetime, requests, subprocess
+import csv, gzip, io, os, sys, datetime, requests, subprocess
 from pathlib import Path
 from collections import defaultdict
 
@@ -42,10 +46,9 @@ OUTCOLS = [
     "ingest_version","source_table",
 ]
 
-# ---- Supabase REST helper (no supabase-py needed) --------------------------
+# ---- Supabase REST helper --------------------------------------------------
 
 def sb_fetch_all(table, select="*", filters=None):
-    """Paginate Supabase REST. Returns list of dicts."""
     headers = {
         "apikey": SUPABASE_KEY,
         "Authorization": f"Bearer {SUPABASE_KEY}",
@@ -59,9 +62,8 @@ def sb_fetch_all(table, select="*", filters=None):
         if filters:
             for k, v in filters.items():
                 params[f"{k}"] = f"eq.{v}"
-        url = f"{SUPABASE_URL}/rest/v1/{table}"
-        r = requests.get(url, headers=headers, params=params,
-                         verify=CA, timeout=60)
+        r = requests.get(f"{SUPABASE_URL}/rest/v1/{table}",
+                         headers=headers, params=params, verify=CA, timeout=60)
         r.raise_for_status()
         batch = r.json()
         rows.extend(batch)
@@ -71,7 +73,7 @@ def sb_fetch_all(table, select="*", filters=None):
     return rows
 
 
-# ---- CDSE catalog per terminal (bbox, date range) --------------------------
+# ---- CDSE catalog -----------------------------------------------------------
 
 TERMINAL_BBOX = {
     "kharg":      "POLYGON((49.8 29.0,50.3 29.0,50.3 29.5,49.8 29.5,49.8 29.0))",
@@ -80,7 +82,6 @@ TERMINAL_BBOX = {
 }
 
 def cdse_query(bbox_wkt, d0, d1):
-    """Query CDSE OData for GRDH scenes in bbox and date range. Returns list of dicts."""
     filt = (
         f"Collection/Name eq 'SENTINEL-1' "
         f"and ContentDate/Start gt {d0}T00:00:00.000Z "
@@ -100,58 +101,58 @@ def cdse_query(bbox_wkt, d0, d1):
             items = r.json().get("value", [])
             for item in items:
                 attrs = {a["Name"]: a.get("Value") for a in item.get("Attributes", [])}
-                pt = attrs.get("productType", "")
-                if "GRDH" not in pt:
+                if "GRDH" not in attrs.get("productType", ""):
                     continue
                 start = item.get("ContentDate", {}).get("Start", "")
                 rows.append({
-                    "scene_id":    item.get("Name", ""),
+                    "scene_id":     item.get("Name", ""),
                     "datetime_utc": start,
-                    "date":        start[:10] if start else "",
-                    "platform":    attrs.get("platformShortName", "") +
-                                   attrs.get("platformSerialIdentifier", ""),
-                    "relOrbit":    str(attrs.get("relativeOrbitNumber", "")),
-                    "direction":   attrs.get("orbitDirection", ""),
-                    "incidence":   str(attrs.get("incidenceAngleCenter",
-                                   attrs.get("incidenceAngleMidSwath", ""))),
+                    "date":         start[:10] if start else "",
+                    "platform":     attrs.get("platformShortName", "") +
+                                    attrs.get("platformSerialIdentifier", ""),
+                    "relOrbit":     str(attrs.get("relativeOrbitNumber", "")),
+                    "direction":    attrs.get("orbitDirection", ""),
+                    "incidence":    str(attrs.get("incidenceAngleCenter",
+                                    attrs.get("incidenceAngleMidSwath", ""))),
                 })
             if len(items) < 100:
                 break
             skip += 100
         except Exception as e:
-            print(f"  [WARN] CDSE query {d0}→{d1}: {e}")
+            print(f"  [WARN] CDSE query {d0}→{d1}: {e}", flush=True)
             break
     return rows
 
 
 def build_cdse_index(terminal, dates):
-    """Fetch CDSE catalog for all dates of a terminal. Returns dict keyed by date."""
+    """Fetch CDSE catalog. Returns dict keyed by (date, relOrbit, direction).
+
+    Multiple scenes per date are preserved — RT has two tracks (DESC-35 and ASC-101)
+    that can both fall on the same calendar date.
+    """
     if not dates:
         return {}
     dates = sorted(dates)
-    d_min = dates[0]
-    d_max = dates[-1]
-    d0 = (datetime.date.fromisoformat(d_min) - datetime.timedelta(days=1)).isoformat()
-    d1 = (datetime.date.fromisoformat(d_max) + datetime.timedelta(days=1)).isoformat()
+    d0 = (datetime.date.fromisoformat(dates[0]) - datetime.timedelta(days=1)).isoformat()
+    d1 = (datetime.date.fromisoformat(dates[-1]) + datetime.timedelta(days=1)).isoformat()
     bbox = TERMINAL_BBOX[terminal]
     print(f"  CDSE {terminal}: querying {d0}→{d1} ({len(dates)} dates)…", flush=True)
 
-    start_y = int(d0[:4])
-    end_y   = int(d1[:4])
     all_scenes = []
-    for y in range(start_y, end_y + 1):
+    for y in range(int(d0[:4]), int(d1[:4]) + 1):
         y0 = max(d0, f"{y}-01-01")
         y1 = min(d1, f"{y}-12-31")
         scenes = cdse_query(bbox, y0, y1)
         all_scenes.extend(scenes)
         print(f"    {y}: {len(scenes)} scenes", flush=True)
 
+    # Key: (date, relOrbit, direction) — keeps all distinct orbit tracks per date
     idx = {}
     for s in all_scenes:
-        d = s["date"]
-        if d and d not in idx:
-            idx[d] = s
-    print(f"  CDSE {terminal}: {len(idx)} unique dates covered", flush=True)
+        k = (s["date"], s["relOrbit"], s["direction"])
+        if k not in idx:
+            idx[k] = s
+    print(f"  CDSE {terminal}: {len(idx)} (date,orbit,dir) keys", flush=True)
     return idx
 
 
@@ -172,20 +173,17 @@ def git_show_text(path):
 
 
 def load_ring15_index():
-    """Load section-4 part files (tank_scene_variants_*.csv.gz only).
+    """Load tank_scene_variants_*.csv.gz only (not observations_all.csv.gz).
 
-    Returns two dicts:
-      idx_exact:    (terminal, tank_id, date, relOrbit, direction) -> row
-      idx_fallback: (terminal, tank_id, date) -> row  (first non-empty ring15_far wins)
+    Returns dict keyed by (terminal, tank_id, date, relOrbit, direction) — exact join only.
+    No fallback: wrong orbit is worse than empty.
     """
     r = subprocess.run(["git", "show", f"{BRANCH}:{MEGA}/"], capture_output=True)
     lines = r.stdout.decode().splitlines()
-    # Only load section-4 variant files — skip observations_all.csv.gz and other aggregates
     part_files = [l for l in lines
                   if l.endswith(".csv.gz") and l.startswith("tank_scene_variants_")]
 
-    idx_exact    = {}
-    idx_fallback = {}
+    idx = {}
     for fname in sorted(part_files):
         rows = git_show_gz(f"{MEGA}/{fname}")
         if not rows:
@@ -193,26 +191,15 @@ def load_ring15_index():
             continue
         n = 0
         for row in rows:
-            terminal  = row.get("terminal", "")
-            tank_id   = row.get("tank_id", "")
-            date      = row.get("date", "")
-            rel_orb   = str(row.get("relOrbit", ""))
-            direction = row.get("direction", "")
-            r15 = row.get("ring15_far", "")
-
-            key_exact = (terminal, tank_id, date, rel_orb, direction)
-            if key_exact not in idx_exact:
-                idx_exact[key_exact] = row
+            key = (row.get("terminal",""), row.get("tank_id",""),
+                   row.get("date",""), str(row.get("relOrbit","")),
+                   row.get("direction",""))
+            if key not in idx:
+                idx[key] = row
                 n += 1
-
-            key_fb = (terminal, tank_id, date)
-            if key_fb not in idx_fallback or r15 not in ("", "0.0", "0"):
-                idx_fallback[key_fb] = row
-
         print(f"  s4: {fname} → {n} new keys", flush=True)
-    print(f"  s4 index: {len(idx_exact)} exact keys, {len(idx_fallback)} fallback keys",
-          flush=True)
-    return idx_exact, idx_fallback
+    print(f"  s4 index: {len(idx)} exact keys", flush=True)
+    return idx
 
 
 def load_registry():
@@ -229,15 +216,14 @@ def load_registry():
 
 def main():
     OUT_DIR.mkdir(parents=True, exist_ok=True)
-    ts = datetime.datetime.utcnow().strftime("%Y-%m-%dT%H:%M UTC")
-    print(f"Run: {ts}", flush=True)
+    print(f"Run: {datetime.datetime.utcnow().strftime('%Y-%m-%dT%H:%M UTC')}", flush=True)
 
     print("\n=== 1. Registry ===", flush=True)
     registry = load_registry()
     print(f"  {len(registry)} tank entries", flush=True)
 
     print("\n=== 2. Section-4 ring15 index ===", flush=True)
-    ring15_idx, ring15_fallback = load_ring15_index()
+    ring15_idx = load_ring15_index()
 
     print("\n=== 3. Fetch DB rows ===", flush=True)
     db_rows_by_terminal = {}
@@ -248,7 +234,6 @@ def main():
     ]:
         print(f"  {terminal} ({table})…", flush=True)
         try:
-            # raw_observations is kharg-only (no terminal_id column)
             filt = None if table == "raw_observations" else {"terminal_id": terminal}
             rows = sb_fetch_all(table, select="*", filters=filt)
             db_rows_by_terminal[terminal] = rows
@@ -268,80 +253,98 @@ def main():
     seen = set()
 
     for terminal, db_rows in db_rows_by_terminal.items():
-        cdse_idx  = cdse_by_terminal[terminal]
+        cdse_idx = cdse_by_terminal[terminal]
 
+        # Group DB rows by (tank_id, date) — one row per tank per date from DB
         for db_row in db_rows:
             date    = str(db_row.get("date", ""))[:10]
             tank_id = db_row.get("tank_id", "")
             if not date or not tank_id:
                 continue
 
-            sc = cdse_idx.get(date, {})
-            rel_orb      = sc.get("relOrbit", "")
-            direction    = sc.get("direction", "")
-            platform     = sc.get("platform", "")
-            incidence    = sc.get("incidence", "")
-            scene_id     = sc.get("scene_id", "")
-            datetime_utc = sc.get("datetime_utc", date + "T00:00:00Z")
+            # Find all orbits that covered this terminal on this date
+            orbits_on_date = [(rel_orb, direction, sc)
+                              for (d, rel_orb, direction), sc in cdse_idx.items()
+                              if d == date]
 
-            key = (terminal, tank_id, date, rel_orb, direction)
-            if key in seen:
-                continue
-            seen.add(key)
+            if not orbits_on_date:
+                # No CDSE scene for this date — still emit the row with empty scene fields
+                orbits_on_date = [("", "", {})]
 
-            r15 = ring15_idx.get(key) or ring15_fallback.get((terminal, tank_id, date), {})
-            ring15_far       = r15.get("ring15_far", "")
-            ring15_near      = r15.get("ring15_near", "")
-            pixel_valid_frac = r15.get("pixel_valid_frac", "")
+            for rel_orb, direction, sc in orbits_on_date:
+                key = (terminal, tank_id, date, rel_orb, direction)
+                if key in seen:
+                    continue
+                seen.add(key)
 
-            reg = registry.get((terminal, tank_id), {})
-            db_mean = (db_row.get("db_mean") or db_row.get("ring15_far") or "")
+                platform     = sc.get("platform", "")
+                incidence    = sc.get("incidence", "")
+                scene_id     = sc.get("scene_id", "")
+                datetime_utc = sc.get("datetime_utc", date + "T00:00:00Z")
 
-            out_rows.append({
-                "terminal_id":            terminal,
-                "tank_id":                tank_id,
-                "date":                   date,
-                "datetime_utc":           datetime_utc,
-                "scene_id":               scene_id,
-                "platform":               platform,
-                "relative_orbit":         rel_orb,
-                "orbit_direction":        direction,
-                "incidence_angle_center": incidence,
-                "los_azimuth_used":       reg.get("los_azimuth", ""),
-                "db_mean_prod":           str(db_mean),
-                "ring15_far":             str(ring15_far),
-                "ring15_near":            str(ring15_near),
-                "pixel_valid_frac":       str(pixel_valid_frac),
-                "lat":                    reg.get("lat", ""),
-                "lon":                    reg.get("lon", ""),
-                "radius_m":               reg.get("radius_m", ""),
-                "h_max_m":                reg.get("h_max_m", ""),
-                "enabled":                reg.get("enabled", ""),
-                "in_whitelist":           "",
-                "ingest_version":         "v5",
-                "source_table":           "raw_observations" if terminal == "kharg"
-                                          else "terminal_observations",
-            })
+                r15 = ring15_idx.get(key, {})
+                reg = registry.get((terminal, tank_id), {})
+                db_mean = (db_row.get("db_mean") or db_row.get("ring15_far") or "")
 
-    print("\n=== 6. ring15_far quality report ===", flush=True)
-    stats = defaultdict(lambda: [0, 0])
+                out_rows.append({
+                    "terminal_id":            terminal,
+                    "tank_id":                tank_id,
+                    "date":                   date,
+                    "datetime_utc":           datetime_utc,
+                    "scene_id":               scene_id,
+                    "platform":               platform,
+                    "relative_orbit":         rel_orb,
+                    "orbit_direction":        direction,
+                    "incidence_angle_center": incidence,
+                    "los_azimuth_used":       reg.get("los_azimuth", ""),
+                    "db_mean_prod":           str(db_mean),
+                    "ring15_far":             str(r15.get("ring15_far", "")),
+                    "ring15_near":            str(r15.get("ring15_near", "")),
+                    "pixel_valid_frac":       str(r15.get("pixel_valid_frac", "")),
+                    "lat":                    reg.get("lat", ""),
+                    "lon":                    reg.get("lon", ""),
+                    "radius_m":               reg.get("radius_m", ""),
+                    "h_max_m":                reg.get("h_max_m", ""),
+                    "enabled":                reg.get("enabled", ""),
+                    "in_whitelist":           "",
+                    "ingest_version":         "v5",
+                    "source_table":           "raw_observations" if terminal == "kharg"
+                                              else "terminal_observations",
+                })
+
+    print("\n=== 6. Quality report per (terminal, relOrbit) ===", flush=True)
+    stats = defaultdict(lambda: {"total":0, "r15_nn":0, "plat_nn":0, "inc_nn":0})
     for row in out_rows:
         k = (row["terminal_id"], row["relative_orbit"], row["orbit_direction"])
-        stats[k][0] += 1
+        s = stats[k]
+        s["total"] += 1
         if row["ring15_far"] not in ("", "0.0", "0"):
-            stats[k][1] += 1
+            s["r15_nn"] += 1
+        if row["platform"] not in ("", "None"):
+            s["plat_nn"] += 1
+        if row["incidence_angle_center"] not in ("", "None"):
+            s["inc_nn"] += 1
 
-    any_zero = False
-    for (tid, orb, direction), (total, nn) in sorted(stats.items()):
-        frac = nn / total if total else 0
-        flag = " ← ZERO" if frac == 0 else ""
-        print(f"  {tid} orb={orb} {direction}: {nn}/{total} ring15_far non-null "
-              f"({frac:.3f}){flag}", flush=True)
-        if frac == 0 and total > 0:
-            any_zero = True
+    any_zero_r15 = False
+    for (tid, orb, direction), s in sorted(stats.items()):
+        t = s["total"]
+        r15_f  = s["r15_nn"]  / t if t else 0
+        plat_f = s["plat_nn"] / t if t else 0
+        inc_f  = s["inc_nn"]  / t if t else 0
+        zero_flag = " ← ZERO" if r15_f == 0 and t > 0 else ""
+        print(
+            f"  {tid} orb={orb} {direction}: "
+            f"ring15_far {s['r15_nn']}/{t} ({r15_f:.3f}){zero_flag}  "
+            f"platform {s['plat_nn']}/{t} ({plat_f:.3f})  "
+            f"incidence {s['inc_nn']}/{t} ({inc_f:.3f})",
+            flush=True,
+        )
+        if r15_f == 0 and t > 0:
+            any_zero_r15 = True
 
-    if any_zero:
-        print("\n[WARN] Some terminal+orbit has zero ring15_far — s4 not yet run for those orbits.", flush=True)
+    if any_zero_r15:
+        print("\n[WARN] Some terminal+orbit has zero ring15_far — s4 not yet run for those orbits.",
+              flush=True)
 
     print(f"\n=== 7. Writing {OUT_PATH} ({len(out_rows)} rows) ===", flush=True)
     with gzip.open(OUT_PATH, "wt", newline="") as f:
@@ -350,11 +353,10 @@ def main():
         for row in out_rows:
             w.writerow(row)
 
-    total = len(out_rows)
-    r15_nn = sum(1 for x in out_rows if x.get("ring15_far") not in ("", "0.0", "0"))
+    total  = len(out_rows)
+    r15_nn = sum(1 for x in out_rows if x["ring15_far"] not in ("", "0.0", "0"))
     print(f"\nDONE: {total} rows, ring15_far non-null overall = {r15_nn}/{total} "
           f"({r15_nn/max(total,1):.3f})", flush=True)
-
     by_term = defaultdict(int)
     for r in out_rows:
         by_term[r["terminal_id"]] += 1
