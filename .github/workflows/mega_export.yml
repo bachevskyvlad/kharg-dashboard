@@ -15,6 +15,10 @@ on:
         description: "Section 4 only: orbit to process (DESC-35|ASC-101|ASC-14 or blank=all)"
         required: false
         default: ""
+      resume:
+        description: "Section 4 only: skip dates already in part*.csv.gz files (true/false)"
+        required: false
+        default: "false"
       pack_zip:
         description: "Pack output into mega_part1.zip + esri_crops.zip (true/false)"
         required: false
@@ -54,12 +58,15 @@ jobs:
           [ -n "${{ github.event.inputs.terminal }}" ] && TERMINAL_ARG="--terminal ${{ github.event.inputs.terminal }}"
           ORBIT_ARG=""
           [ -n "${{ github.event.inputs.orbit }}" ] && ORBIT_ARG="--orbit ${{ github.event.inputs.orbit }}"
+          RESUME_ARG=""
+          [ "${{ github.event.inputs.resume }}" = "true" ] && RESUME_ARG="--resume"
           PACK_ARG=""
           [ "${{ github.event.inputs.pack_zip }}" = "true" ] && PACK_ARG="--pack-zip"
           python research/mega_export.py \
             --sections "${{ github.event.inputs.sections }}" \
             $TERMINAL_ARG \
             $ORBIT_ARG \
+            $RESUME_ARG \
             $PACK_ARG \
             2>&1 | tee ../diagnostics/mega/run_mega_$(date -u +%Y%m%dT%H%M).txt
 
@@ -70,7 +77,7 @@ jobs:
           git config user.name "GitHub Actions"
           git add -A diagnostics/mega/ diagnostics/mega_part1.zip diagnostics/esri_crops.zip 2>/dev/null || git add -A diagnostics/mega/ || true
           git diff --cached --quiet && echo "No changes" || \
-            git commit -m "research: mega_export s=${{ github.event.inputs.sections }} t=${{ github.event.inputs.terminal }} o=${{ github.event.inputs.orbit }} [run ${{ github.run_id }}] [skip ci]"
+            git commit -m "research: mega_export s=${{ github.event.inputs.sections }} t=${{ github.event.inputs.terminal }} o=${{ github.event.inputs.orbit }} r=${{ github.event.inputs.resume }} [run ${{ github.run_id }}] [skip ci]"
           for attempt in 1 2 3 4; do
             git fetch origin research/2026-10-auto && \
             git rebase -X theirs origin/research/2026-10-auto && \
