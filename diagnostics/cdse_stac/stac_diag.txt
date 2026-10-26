@@ -1,6 +1,6 @@
-Run: 2026-10-26T11:04 UTC
+Run: 2026-10-26T11:17 UTC
 Script: scripts/research/cdse_stac_diag.py
-STAC: https://catalogue.dataspace.copernicus.eu/stac/collections/SENTINEL-1/items
+STAC: https://catalogue.dataspace.copernicus.eu/stac/search
 BBOX: 50.0,26.5,50.8,27.0
 
 === Before 2025-11 (DESC only) ===
