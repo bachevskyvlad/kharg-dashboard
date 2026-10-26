@@ -102,3 +102,4 @@ data/*.png
 
 # JODI bulk CSV — 271MB, cached in GHA actions/cache, not committed to git
 data/external/jodi/
+diagnostics/esri_crops.zip
