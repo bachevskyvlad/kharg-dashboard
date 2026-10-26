@@ -1,0 +1,85 @@
+=== P5 Pilot — 2026-10-26T21:38 UTC ===
+
+BM3D available: True
+skimage available: True
+matplotlib available: True
+
+Total pilot scenes: 20
+
+=== 1. Fetch raw crops ===
+  kharg 2019-04-21 …
+    [WARN] fetch failed: (invalid_client) Invalid client or Invalid client credentials
+  kharg 2019-05-03 …
+    [WARN] fetch failed: (invalid_client) Invalid client or Invalid client credentials
+  kharg 2019-06-08 …
+    [WARN] fetch failed: (invalid_client) Invalid client or Invalid client credentials
+  kharg 2024-09-21 …
+    [WARN] fetch failed: (invalid_client) Invalid client or Invalid client credentials
+  kharg 2024-10-03 …
+    [WARN] fetch failed: (invalid_client) Invalid client or Invalid client credentials
+  kharg 2024-10-15 …
+    [WARN] fetch failed: (invalid_client) Invalid client or Invalid client credentials
+  kharg 2026-04-14 …
+    [WARN] fetch failed: (invalid_client) Invalid client or Invalid client credentials
+  kharg 2026-05-02 …
+    [WARN] fetch failed: (invalid_client) Invalid client or Invalid client credentials
+  kharg 2026-05-14 …
+    [WARN] fetch failed: (invalid_client) Invalid client or Invalid client credentials
+  kharg 2026-06-19 …
+    [WARN] fetch failed: (invalid_client) Invalid client or Invalid client credentials
+  kharg 2026-06-26 …
+    [WARN] fetch failed: (invalid_client) Invalid client or Invalid client credentials
+  kharg 2026-07-08 …
+    [WARN] fetch failed: (invalid_client) Invalid client or Invalid client credentials
+  ras_tanura 2019-08-31 …
+    [WARN] fetch failed: (invalid_client) Invalid client or Invalid client credentials
+  ras_tanura 2019-09-24 …
+    [WARN] fetch failed: (invalid_client) Invalid client or Invalid client credentials
+  ras_tanura 2019-10-06 …
+    [WARN] fetch failed: (invalid_client) Invalid client or Invalid client credentials
+  ras_tanura 2018-06-12 …
+    [WARN] fetch failed: (invalid_client) Invalid client or Invalid client credentials
+  ras_tanura 2018-07-06 …
+    [WARN] fetch failed: (invalid_client) Invalid client or Invalid client credentials
+  ras_tanura 2022-11-14 …
+    [WARN] fetch failed: (invalid_client) Invalid client or Invalid client credentials
+  ras_tanura 2023-03-19 …
+    [WARN] fetch failed: (invalid_client) Invalid client or Invalid client credentials
+  ras_tanura 2023-04-12 …
+    [WARN] fetch failed: (invalid_client) Invalid client or Invalid client credentials
+
+Saved: diagnostics/mega/p5_pilot/crops_pilot.npz (0 KB)
+
+=== 2. Build orbit stacks ===
+
+=== 3. Process variants ===
+
+=== 4. Write image_variants_pilot.csv ===
+  diagnostics/mega/p5_pilot/image_variants_pilot.csv: 0 rows
+
+=== 4b. Autocorrelation metric (acceptance criterion) ===
+  Formula: lag-1 autocorr of Δvol[i] = vol[i+1]-vol[i], quiet dates only (|Δvol| <= 1σ). White noise baseline: -0.5. Closer to 0 = better.
+
+  terminal       variant                      n_dates   autocorr  n_quiet
+  -------------- ---------------------------- ------- ---------- --------
+
+  Saved: diagnostics/mega/p5_pilot/autocorr_acceptance.csv
+
+=== 5. QC PNG grids ===
+  [SKIP] kharg 2024-10-03 not fetched
+  [SKIP] kharg 2026-05-14 not fetched
+  [SKIP] kharg 2019-06-08 not fetched
+
+=== Summary ===
+  Scenes fetched: 0/20
+  Variants per scene: 15
+  CSV rows: 0
+  Estimated SH PU used: ~0 (2 per scene × 0 scenes fetched)
+  BM3D: available
+
+Outputs:
+  diagnostics/mega/p5_pilot/autocorr_acceptance.csv  (0 KB)
+  diagnostics/mega/p5_pilot/crops_pilot.npz  (0 KB)
+  diagnostics/mega/p5_pilot/image_variants_pilot.csv  (0 KB)
+  diagnostics/mega/p5_pilot/run_p5_pilot_20261026T2059.txt  (0 KB)
+  diagnostics/mega/p5_pilot/run_p5_pilot_20261026T2138.txt  (3 KB)
