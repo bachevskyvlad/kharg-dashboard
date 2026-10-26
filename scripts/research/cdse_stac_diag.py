@@ -24,7 +24,7 @@ from pathlib import Path
 # Config
 # ---------------------------------------------------------------------------
 STAC_URL    = "https://catalogue.dataspace.copernicus.eu/stac/search"
-BBOX        = "50.0,26.5,50.8,27.0"   # RT bounding box
+BBOX        = "50.0,26.5,50.3,27.0"   # RT bounding box (lon 50.11-50.16, lat 26.64-26.69)
 MAX_ITEMS   = 20                        # per query
 
 OUT_DIR = Path("diagnostics/cdse_stac")
@@ -54,17 +54,23 @@ def stac_query(date_str, bbox=BBOX, max_items=MAX_ITEMS):
     Query CDSE STAC for Sentinel-1 scenes over bbox on given date.
     Returns list of item property dicts.
     """
-    # date window: same day + 1 day
+    # date window: day-1 to day+1 (covers UTC offset, 12-day orbit window)
     d = datetime.date.fromisoformat(date_str)
+    d0 = (d - datetime.timedelta(days=1)).isoformat()
     d1 = (d + datetime.timedelta(days=1)).isoformat()
     params = {
         "collections": "SENTINEL-1",
         "bbox":        bbox,
-        "datetime":    f"{date_str}T00:00:00Z/{d1}T00:00:00Z",
+        "datetime":    f"{d0}T00:00:00.000Z/{d1}T23:59:59.999Z",
         "limit":       max_items,
     }
     try:
         r = requests.get(STAC_URL, params=params, timeout=30)
+        if r.status_code == 400:
+            # Try without timezone Z suffix (some CDSE STAC versions reject it)
+            params2 = dict(params)
+            params2["datetime"] = f"{d0}T00:00:00/{d1}T23:59:59"
+            r = requests.get(STAC_URL, params=params2, timeout=30)
         r.raise_for_status()
         data = r.json()
         items = data.get("features", [])
