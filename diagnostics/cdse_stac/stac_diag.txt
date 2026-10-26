@@ -1,4 +1,4 @@
-Run: 2026-10-26T11:22 UTC
+Run: 2026-10-26T11:28 UTC
 Script: scripts/research/cdse_stac_diag.py
 STAC: https://catalogue.dataspace.copernicus.eu/stac/search
 BBOX: 50.0,26.5,50.3,27.0
