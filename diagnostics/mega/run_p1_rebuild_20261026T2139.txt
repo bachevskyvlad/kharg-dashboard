@@ -1,0 +1,4 @@
+  File "/home/runner/work/kharg-dashboard/kharg-dashboard/scripts/research/p1_obs_rebuild.py", line 1
+    term = defaultdict(int)\n    for r in out_rows:\n        by_term[r["terminal_id"]] += 1\n    print(f"Rows per terminal: {dict(by_term)}", flush=True)\n    print(f"Output: {OUT_PATH}", flush=True)\n\n\nif __name__ == "__main__":\n    main()\n
+                                                                                                                                                                                                                                                     ^
+SyntaxError: unexpected character after line continuation character
