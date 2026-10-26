@@ -27,6 +27,7 @@ import os
 import subprocess
 import sys
 import textwrap
+import threading
 import warnings
 from datetime import datetime, timezone
 from pathlib import Path
@@ -790,7 +791,7 @@ def section_6():
 # ===========================================================================
 # SECTION 4 — Tank-scene metrics (SentinelHub quota)
 # ===========================================================================
-def section_4(only_terminal=None, only_orbit=None):
+def section_4(only_terminal=None, only_orbit=None, resume=False):
     """only_terminal: one of 'kharg', 'ras_tanura', 'yanbu', or None for all.
     only_orbit: e.g. 'DESC-35' or 'ASC-101' to run a single orbit; None for all."""
     label = only_terminal or "all"
@@ -917,18 +918,100 @@ function evaluatePixel(sample) { return [sample.VV]; }
             if not dates:
                 print(f"  {tid}/{dir_str}-{rel_orb}: 0 dates, skipping")
                 continue
-            print(f"  {tid}/{dir_str}-{rel_orb}: {len(dates)} dates to process…")
+
+            # ── Resume: skip dates already saved in part files ──────────────
+            if resume:
+                import glob as _glob
+                done_dates: set = set()
+                part_pattern = str(OUT / f"tank_scene_variants_{tid}_{dir_str}{rel_orb}_part*.csv.gz")
+                for pf in sorted(_glob.glob(part_pattern)):
+                    try:
+                        pf_df = pd.read_csv(pf, usecols=["date"], compression="gzip")
+                        done_dates.update(pf_df["date"].str[:10].unique())
+                    except Exception as _e:
+                        print(f"    resume: could not read {pf}: {_e}")
+                remaining_dates = [d for d in dates if d not in done_dates]
+                print(f"  {tid}/{dir_str}-{rel_orb}: {len(dates)} total, {len(done_dates)} already done, "
+                      f"{len(remaining_dates)} to process (--resume)")
+                dates = remaining_dates
+                # Start part_num after existing files
+                part_num = len(sorted(_glob.glob(part_pattern)))
+            else:
+                print(f"  {tid}/{dir_str}-{rel_orb}: {len(dates)} dates to process…")
+
+            if not dates:
+                print(f"  {tid}/{dir_str}-{rel_orb}: nothing remaining, skipping")
+                continue
 
             api_dir = "DESCENDING" if dir_str.upper() in ("DESC", "DESCENDING") else "ASCENDING"
 
-            for d_str in dates:
-                d = datetime.strptime(d_str, "%Y-%m-%d")
+            # ── Precompute mask pixel indices once per tank ──────────────────
+            # All masks depend only on cx, cy, r, H_px, W_px — constant per orbit/bbox.
+            # Store as (rows_arr, cols_arr) = np.where(mask) to allow img[rows, cols].
+            print(f"    precomputing masks for {len(tanks)} tanks…")
+            tank_precomp: dict = {}  # tank_id → dict of named index arrays
+            for tank in tanks:
+                tkid = tank["id"]
+                cx = int((tank["lon"] - bbox.min_x) / (bbox.max_x - bbox.min_x) * W_px)
+                cy = int((bbox.max_y - tank["lat"]) / (bbox.max_y - bbox.min_y) * H_px)
+                r  = tank["radius_m"] / RES
+                H, W = H_px, W_px
+
+                if cx < 0 or cy < 0 or cx >= W or cy >= H:
+                    tank_precomp[tkid] = None  # out of frame, skip
+                    continue
+
+                w15 = 15 / RES
+                w10 = 10 / RES
+                w25 = 25 / RES
+
+                def _idx(mask):
+                    mh, mw = mask.shape
+                    mh2, mw2 = min(mh, H), min(mw, W)
+                    clipped = mask[:mh2, :mw2]
+                    rr, cc = np.where(clipped)
+                    return rr, cc
+
+                pc: dict = {
+                    "cx": cx, "cy": cy, "r": r,
+                    "disc_full":    _idx(_ring_mask(cx, cy, 0, r, H, W)),
+                    "disc_inner":   _idx(_ring_mask(cx, cy, 0, r - w15, H, W)),
+                    "ring15_all":   _idx(_ring_mask(cx, cy, r - w15, r, H, W)),
+                    "ring15_far":   _idx(_crescent_mask(cx, cy, r, los_az, 15, RES, 90)),
+                    "ring15_near":  _idx(_crescent_mask(cx, cy, r, (los_az + 180) % 360, 15, RES, 90)),
+                    "ring10_far":   _idx(_crescent_mask(cx, cy, r, los_az, 10, RES, 90)),
+                    "ring25_far":   _idx(_crescent_mask(cx, cy, r, los_az, 25, RES, 90)),
+                    "ring15_far_r08": _idx(_crescent_mask(cx, cy, r * 0.8, los_az, 15, RES, 90)),
+                    "ring15_far_r12": _idx(_crescent_mask(cx, cy, r * 1.2, los_az, 15, RES, 90)),
+                    "bg_ring":      _idx(_ring_mask(cx, cy, r + 10/RES, r + 30/RES, H, W)),
+                }
+                # 8 sector masks
+                for si in range(8):
+                    pc[f"sect_{si}"] = _idx(_sector_mask(cx, cy, r, si * 45, 22.5, RES, H, W))
+                # 25 offset crescent masks
+                for dx_m in (-40, -20, 0, 20, 40):
+                    for dy_m in (-40, -20, 0, 20, 40):
+                        cx2 = cx + int(dx_m / RES)
+                        cy2 = cy + int(dy_m / RES)
+                        pc[f"off_{dx_m:+d}_{dy_m:+d}"] = _idx(_crescent_mask(cx2, cy2, r, los_az, 15, RES, 90))
+                # valid_frac pixel count for ring15_far
+                rf_mask = _crescent_mask(cx, cy, r, los_az, 15, RES, 90)
+                mh2, mw2 = min(rf_mask.shape[0], H), min(rf_mask.shape[1], W)
+                pc["ring15_far_n"] = int(rf_mask[:mh2, :mw2].sum())
+                tank_precomp[tkid] = pc
+
+            # ── Fetch helper (runs in a thread for parallel prefetch) ─────────
+            _fetch_cache: dict = {}
+            _fetch_lock = threading.Lock()
+
+            def _fetch_scene(d_str_f: str):
+                d_f = datetime.strptime(d_str_f, "%Y-%m-%d")
                 try:
                     req = SentinelHubRequest(
                         evalscript=EVALSCRIPT,
                         input_data=[SentinelHubRequest.input_data(
                             data_collection=S1_CDSE,
-                            time_interval=(d_str, (d + td(days=1)).strftime("%Y-%m-%d")),
+                            time_interval=(d_str_f, (d_f + td(days=1)).strftime("%Y-%m-%d")),
                             other_args={
                                 "processing": {
                                     "orthorectify": True,
@@ -948,76 +1031,88 @@ function evaluatePixel(sample) { return [sample.VV]; }
                         config=sh_config,
                     )
                     data = req.get_data()
-                    if not data:
-                        continue
-                    img = data[0].squeeze().astype(np.float32)
+                    img = data[0].squeeze().astype(np.float32) if data else None
                 except Exception as e:
-                    print(f"    {d_str}: SKIP ({e})")
+                    img = e
+                with _fetch_lock:
+                    _fetch_cache[d_str_f] = img
+
+            # Kick off fetch for first scene before the loop starts
+            if dates:
+                _t = threading.Thread(target=_fetch_scene, args=(dates[0],), daemon=True)
+                _t.start()
+                _t.join()  # wait for first scene — no prior work to overlap
+
+            for i_scene, d_str in enumerate(dates):
+                # Ensure current scene is fetched (already done for first; thread joined)
+                with _fetch_lock:
+                    img_or_err = _fetch_cache.get(d_str)
+                if img_or_err is None:
+                    # Shouldn't happen, but wait a moment
+                    import time as _time; _time.sleep(1)
+                    with _fetch_lock:
+                        img_or_err = _fetch_cache.get(d_str)
+                if isinstance(img_or_err, Exception) or img_or_err is None:
+                    print(f"    {d_str}: SKIP ({img_or_err})")
+                    # Prefetch next
+                    if i_scene + 1 < len(dates):
+                        _nt = threading.Thread(target=_fetch_scene, args=(dates[i_scene + 1],), daemon=True)
+                        _nt.start()
                     continue
+                img = img_or_err
+
+                # Prefetch next scene while we process current
+                if i_scene + 1 < len(dates):
+                    _nt = threading.Thread(target=_fetch_scene, args=(dates[i_scene + 1],), daemon=True)
+                    _nt.start()
 
                 scene_id = f"{tid}_{dir_str}{rel_orb}_{d_str}"
+                H_img, W_img = img.shape
 
                 for tank in tanks:
-                    # pixel coords
-                    cx = int((tank["lon"] - bbox.min_x) / (bbox.max_x - bbox.min_x) * W_px)
-                    cy = int((bbox.max_y - tank["lat"]) / (bbox.max_y - bbox.min_y) * H_px)
-                    r  = tank["radius_m"] / RES
-                    H, W = img.shape
-
-                    if cx < 0 or cy < 0 or cx >= W or cy >= H:
+                    tkid = tank["id"]
+                    pc = tank_precomp.get(tkid)
+                    if pc is None:
                         continue
 
-                    def _safe_crop(mask):
-                        try:
-                            mh, mw = mask.shape
-                            mh2, mw2 = min(mh, H), min(mw, W)
-                            return img[:mh2, :mw2][mask[:mh2, :mw2]]
-                        except Exception:
-                            return np.array([])
+                    cx, cy = pc["cx"], pc["cy"]
+                    r      = pc["r"]
 
-                    w15 = 15 / RES
-                    w10 = 10 / RES
-                    w25 = 25 / RES
+                    def _safe_crop_idx(rr, cc):
+                        # Use precomputed (rows, cols) — clip to actual image size
+                        mask_r = rr[rr < H_img]
+                        valid  = rr < H_img
+                        rr2 = rr[valid]
+                        cc2 = cc[valid]
+                        valid2 = cc2 < W_img
+                        rr3, cc3 = rr2[valid2], cc2[valid2]
+                        if len(rr3) == 0:
+                            return np.array([], dtype=np.float32)
+                        return img[rr3, cc3]
 
-                    # masks
-                    disc_full_mask   = _ring_mask(cx, cy, 0, r, H, W)
-                    disc_inner_mask  = _ring_mask(cx, cy, 0, r - w15, H, W)
-                    ring15_all_mask  = _ring_mask(cx, cy, r - w15, r, H, W)
-                    ring15_far_mask  = _crescent_mask(cx, cy, r, los_az, 15, RES, 90)
-                    ring15_near_mask = _crescent_mask(cx, cy, r, (los_az + 180) % 360, 15, RES, 90)
-                    ring10_far_mask  = _crescent_mask(cx, cy, r, los_az, 10, RES, 90)
-                    ring25_far_mask  = _crescent_mask(cx, cy, r, los_az, 25, RES, 90)
-
+                    # valid_frac for ring15_far
+                    rr_f, cc_f = pc["ring15_far"]
+                    far_pixels = _safe_crop_idx(rr_f, cc_f)
+                    n_total = pc["ring15_far_n"]
                     try:
-                        mh, mw = ring15_far_mask.shape
-                        mh2, mw2 = min(mh, H), min(mw, W)
-                        valid_frac = (float(np.isfinite(img[:mh2, :mw2][ring15_far_mask[:mh2, :mw2]]).sum()) /
-                                      max(1, int(ring15_far_mask[:mh2, :mw2].sum())))
+                        valid_frac = float(np.isfinite(far_pixels).sum()) / max(1, n_total)
                     except Exception:
                         valid_frac = np.nan
 
-                    # 8 sector masks (45° each from N clockwise)
+                    # 8 sector values
                     sector_vals = {}
                     for si in range(8):
-                        az_c = si * 45
-                        sm = _sector_mask(cx, cy, r, az_c, 22.5, RES, H, W)
-                        sector_vals[f"ring15_s{si}"] = _safe_db(_safe_crop(sm))
+                        sector_vals[f"ring15_s{si}"] = _safe_db(_safe_crop_idx(*pc[f"sect_{si}"]))
 
-                    # offset grid for ring15_far (dx,dy ∈ {-40,-20,0,+20,+40} m)
+                    # 25 offset values
                     offset_vals = {}
                     for dx_m in (-40, -20, 0, 20, 40):
                         for dy_m in (-40, -20, 0, 20, 40):
-                            cx2 = cx + int(dx_m / RES)
-                            cy2 = cy + int(dy_m / RES)
-                            om = _crescent_mask(cx2, cy2, r, los_az, 15, RES, 90)
-                            offset_vals[f"off_{dx_m:+d}_{dy_m:+d}"] = _safe_db(_safe_crop(om))
+                            offset_vals[f"off_{dx_m:+d}_{dy_m:+d}"] = _safe_db(
+                                _safe_crop_idx(*pc[f"off_{dx_m:+d}_{dy_m:+d}"]))
 
-                    # r×0.8 and r×1.2
-                    ring15_far_r08_mask = _crescent_mask(cx, cy, r * 0.8, los_az, 15, RES, 90)
-                    ring15_far_r12_mask = _crescent_mask(cx, cy, r * 1.2, los_az, 15, RES, 90)
-
-                    # bg ring
-                    bg_mask = _ring_mask(cx, cy, r + 10/RES, r + 30/RES, H, W)
+                    # NOTE: ring15_far_r08/r12 and bg_ring now use precomputed indices too
+                    # (see row dict below)
 
                     # range profile along LOS through center
                     profile_len = int(1.5 * r)
@@ -1028,7 +1123,7 @@ function evaluatePixel(sample) { return [sample.VV]; }
                         px_f = cx + pp * math.cos(az_rad)
                         py_f = cy - pp * math.sin(az_rad)
                         px_i, py_i = int(round(px_f)), int(round(py_f))
-                        if 0 <= px_i < W and 0 <= py_i < H:
+                        if 0 <= px_i < W_img and 0 <= py_i < H_img:
                             v = img[py_i, px_i]
                             prof_vals.append(v if np.isfinite(v) and v > 0 else np.nan)
                         else:
@@ -1050,8 +1145,8 @@ function evaluatePixel(sample) { return [sample.VV]; }
                     if tid in ("kharg", "ras_tanura"):
                         profile_data[tid].setdefault(tank["id"], {})[scene_id] = prof_db
 
-                    # ring15_far aggregates
-                    far_raw = _safe_crop(ring15_far_mask)
+                    # ring15_far aggregates (using precomputed indices)
+                    far_raw = _safe_crop_idx(*pc["ring15_far"])
                     far_lin = far_raw[np.isfinite(far_raw) & (far_raw > 0)]
                     ring15_far_mean_db_of_px  = float(np.mean(10 * np.log10(far_lin))) if len(far_lin) else np.nan
                     ring15_far_mean_lin_to_db = float(10 * np.log10(np.mean(far_lin)))  if len(far_lin) else np.nan
@@ -1065,22 +1160,22 @@ function evaluatePixel(sample) { return [sample.VV]; }
                         "date":              d_str,
                         "relOrbit":          rel_orb,
                         "direction":         dir_str,
-                        "disc_full":                _safe_db(_safe_crop(disc_full_mask)),
-                        "disc_inner":               _safe_db(_safe_crop(disc_inner_mask)),
-                        "ring15_all":               _safe_db(_safe_crop(ring15_all_mask)),
+                        "disc_full":                _safe_db(_safe_crop_idx(*pc["disc_full"])),
+                        "disc_inner":               _safe_db(_safe_crop_idx(*pc["disc_inner"])),
+                        "ring15_all":               _safe_db(_safe_crop_idx(*pc["ring15_all"])),
                         "ring15_far":               ring15_far_mean_lin_to_db,
-                        "ring15_near":              _safe_db(_safe_crop(ring15_near_mask)),
+                        "ring15_near":              _safe_db(_safe_crop_idx(*pc["ring15_near"])),
                         **sector_vals,
-                        "ring10_far":               _safe_db(_safe_crop(ring10_far_mask)),
-                        "ring25_far":               _safe_db(_safe_crop(ring25_far_mask)),
+                        "ring10_far":               _safe_db(_safe_crop_idx(*pc["ring10_far"])),
+                        "ring25_far":               _safe_db(_safe_crop_idx(*pc["ring25_far"])),
                         "ring15_far_mean_dB_of_px": ring15_far_mean_db_of_px,
                         "ring15_far_mean_lin_dB":   ring15_far_mean_lin_to_db,
                         "ring15_far_median":        ring15_far_median,
                         "ring15_far_p90":           ring15_far_p90,
                         **offset_vals,
-                        "ring15_far_r08":           _safe_db(_safe_crop(ring15_far_r08_mask)),
-                        "ring15_far_r12":           _safe_db(_safe_crop(ring15_far_r12_mask)),
-                        "bg_ring":                  _safe_db(_safe_crop(bg_mask)),
+                        "ring15_far_r08":           _safe_db(_safe_crop_idx(*pc["ring15_far_r08"])),
+                        "ring15_far_r12":           _safe_db(_safe_crop_idx(*pc["ring15_far_r12"])),
+                        "bg_ring":                  _safe_db(_safe_crop_idx(*pc["bg_ring"])),
                         "R_pos_m":                  R_pos_m,
                         "R_max_dB":                 R_max_dB,
                         "peak_width_m":             peak_width,
@@ -1472,11 +1567,13 @@ def main():
                         help="For section 4: run only this orbit, e.g. DESC-35 or ASC-101")
     parser.add_argument("--pack-zip", action="store_true",
                         help="After sections, pack output into mega_part1.zip + esri_crops.zip")
+    parser.add_argument("--resume", action="store_true",
+                        help="For section 4: skip scene dates already present in part*.csv.gz files")
     args = parser.parse_args()
     sections = [s.strip() for s in args.sections.split(",")]
 
     print(f"mega_export.py  SHA={SCRIPT_SHA}  Run={RUN_ID}  TS={TS}")
-    print(f"Sections: {sections}  Terminal: {args.terminal or 'all'}  Orbit: {args.orbit or 'all'}  Output: {OUT}")
+    print(f"Sections: {sections}  Terminal: {args.terminal or 'all'}  Orbit: {args.orbit or 'all'}  Resume: {args.resume}  Output: {OUT}")
 
     if "1" in sections:
         section_1()
@@ -1489,7 +1586,7 @@ def main():
     if "6" in sections:
         section_6()
     if "4" in sections:
-        section_4(only_terminal=args.terminal, only_orbit=args.orbit)
+        section_4(only_terminal=args.terminal, only_orbit=args.orbit, resume=args.resume)
     if "3.1" in sections or "3.2" in sections:
         section_3_crops()
 
