@@ -22,3 +22,34 @@ BBOX: POLYGON((48.5 25.5,52.0 25.5,52.0 28.5,48.5 28.5,48.5 25.5))
 === Platform diff Before vs After (all DESC) ===
   serial before: {'A', 'C'}  after: {'A', 'C'}
   orbs   before: {'64'}     after: {'64', '137'}
+
+=== CONCLUSION ===
+
+RT DESC orbit over wide bbox (48.5–52°E, 25.5–28.5°N):
+  BEFORE 2025-11: orb=64 DESCENDING (S1A only)
+  AFTER  2025-11: orb=64 DESCENDING (S1C) + orb=137 DESCENDING (S1A)
+  orb=35 DESCENDING: NEVER present — zero scenes across all 10 dates
+
+ROOT CAUSE:
+  mega_export.py has "ras_tanura": [{"direction": "DESC", "relOrbit": 35}]
+  But orb=35 DESC is Kharg's orbit — it does NOT cross Ras Tanura.
+  The actual descending orbit over RT is orb=64 (S1A pre-2025-11, S1C post).
+
+  All "DESC-35 gap 2025-11→2026-09" dates returned 0 scenes because DESC-35
+  never exists over RT. The pre-2025-11 SH results that appeared to work were
+  likely returning ASC-101 data (no strict orbit filter applied).
+
+FIX REQUIRED:
+  Change mega_export.py RT DESC config from relOrbit=35 to relOrbit=64:
+    "ras_tanura": [
+        {"direction": "DESC", "relOrbit": 64, "primary": False},
+        {"direction": "ASC",  "relOrbit": 101, "primary": True},
+    ]
+  Then re-run section 4 for RT DESC-64 (full history 2017→2026).
+
+S1A→S1C TRANSITION ON ASC-101 (confirmed separately):
+  2025-11-12: S1A orb=101 ASC → S1C orb=101 ASC (S1A moved to orb=174 ASC)
+  This is a separate issue from the DESC orbit error — ASC-101 data is valid
+  but S1C-specific productType/platformSerialIdentifier filter may be needed.
+
+Run: 2026-10-26T11:49 UTC | run_id=40317777274
