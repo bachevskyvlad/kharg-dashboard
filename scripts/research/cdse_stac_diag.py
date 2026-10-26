@@ -58,19 +58,16 @@ def stac_query(date_str, bbox=BBOX, max_items=MAX_ITEMS):
     d = datetime.date.fromisoformat(date_str)
     d0 = (d - datetime.timedelta(days=1)).isoformat()
     d1 = (d + datetime.timedelta(days=1)).isoformat()
-    params = {
-        "collections": "SENTINEL-1",
-        "bbox":        bbox,
-        "datetime":    f"{d0}T00:00:00.000Z/{d1}T23:59:59.999Z",
+    # CDSE STAC /search requires POST with JSON body (GET returns 400)
+    bbox_list = [float(x) for x in bbox.split(",")]
+    body = {
+        "collections": ["SENTINEL-1"],
+        "bbox":        bbox_list,
+        "datetime":    f"{d0}T00:00:00Z/{d1}T23:59:59Z",
         "limit":       max_items,
     }
     try:
-        r = requests.get(STAC_URL, params=params, timeout=30)
-        if r.status_code == 400:
-            # Try without timezone Z suffix (some CDSE STAC versions reject it)
-            params2 = dict(params)
-            params2["datetime"] = f"{d0}T00:00:00/{d1}T23:59:59"
-            r = requests.get(STAC_URL, params=params2, timeout=30)
+        r = requests.post(STAC_URL, json=body, timeout=30)
         r.raise_for_status()
         data = r.json()
         items = data.get("features", [])
