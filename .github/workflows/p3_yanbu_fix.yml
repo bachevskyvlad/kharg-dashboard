@@ -45,6 +45,7 @@ jobs:
                   diagnostics/mega/run_p3_yanbu_*.txt 2>/dev/null || true
           git diff --cached --quiet && echo "No changes" && exit 0
           git commit -m "research: p3_yanbu_fix [run ${{ github.run_id }}] [skip ci]"
+          git stash -u 2>/dev/null || true
           for attempt in 1 2 3 4; do
             git fetch origin research/2026-10-auto && \
             git rebase -X theirs origin/research/2026-10-auto && \
@@ -53,3 +54,4 @@ jobs:
             echo "push attempt $attempt failed"
             sleep $attempt
           done || true
+          git stash pop 2>/dev/null || true
