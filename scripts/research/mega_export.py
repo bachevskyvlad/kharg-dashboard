@@ -1031,17 +1031,13 @@ function evaluatePixel(sample) { return [sample.VV]; }
                     return data[0].squeeze().astype(np.float32) if data else None
                 try:
                     img = _try_fetch({
-                        "orbitDirection":    api_dir,
+                        "orbitDirection":      api_dir,
                         "relativeOrbitNumber": rel_orb,
                     })
-                    # S1C (from ~2025-11) uses same orbit number in STAC catalog but
-                    # CDSE Processing API returns [] with relativeOrbitNumber filter.
-                    # Retry without it — mosaicking=ORBIT + orbitDirection still constrains
-                    # to the correct overpass (only one DESCENDING/ASCENDING pass per day).
-                    if img is None:
-                        img = _try_fetch({"orbitDirection": api_dir})
-                        if img is not None:
-                            print(f"    {d_str_f}: S1C fallback OK (no relOrbit filter)")
+                    # NOTE: S1C fallback (retry without relativeOrbitNumber) intentionally
+                    # removed — it would mix ASC scenes into DESC series (P3 ТЗ 2026-10-26).
+                    # Empty result for post-2025-11 dates must be diagnosed via CDSE STAC
+                    # and fixed with a correct platformSerialIdentifier filter.
                 except Exception as e:
                     img = e
                 with _fetch_lock:
