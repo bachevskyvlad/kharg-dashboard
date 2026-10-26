@@ -1,8 +1,12 @@
 """
 cdse_stac_diag.py — P3 of ТЗ 2026-10-26 v3.
 
-Queries CDSE STAC catalog for RT DESC-35 dates to diagnose why
-post-2025-11 scenes return empty from SentinelHub Processing API.
+Queries CDSE OData catalog (no auth required for public S1 products)
+for RT DESC-35 dates to diagnose why post-2025-11 scenes return empty
+from SentinelHub Processing API.
+
+CDSE STAC /search is blocked by GHA proxy (400). Using OData instead:
+  https://catalogue.dataspace.copernicus.eu/odata/v1/Products?$filter=...
 
 Outputs (to diagnostics/cdse_stac/):
   stac_before.csv  — 5 valid dates before 2025-11 (known good)
@@ -23,9 +27,11 @@ from pathlib import Path
 # ---------------------------------------------------------------------------
 # Config
 # ---------------------------------------------------------------------------
-STAC_URL    = "https://catalogue.dataspace.copernicus.eu/stac/search"
-BBOX        = "50.0,26.5,50.3,27.0"   # RT bounding box (lon 50.11-50.16, lat 26.64-26.69)
-MAX_ITEMS   = 20                        # per query
+# CDSE OData endpoint (public, no auth for S1 GRD search)
+ODATA_URL = "https://catalogue.dataspace.copernicus.eu/odata/v1/Products"
+# RT bbox: lon 50.0-50.3, lat 26.5-27.0
+BBOX_WKT  = "POLYGON((50.0 26.5,50.3 26.5,50.3 27.0,50.0 27.0,50.0 26.5))"
+MAX_ITEMS = 20
 
 OUT_DIR = Path("diagnostics/cdse_stac")
 
@@ -39,7 +45,6 @@ VALID_DATES_BEFORE = [
 ]
 
 # 5 dates where SH returned [] (DESC-35, after S1C era)
-# From tvt_all.csv / mega_export logs where pixel_valid_frac=0
 EMPTY_DATES_AFTER = [
     "2025-11-24",
     "2025-12-06",
@@ -49,52 +54,56 @@ EMPTY_DATES_AFTER = [
 ]
 
 
-def stac_query(date_str, bbox=BBOX, max_items=MAX_ITEMS):
+def odata_query(date_str, bbox_wkt=BBOX_WKT, max_items=MAX_ITEMS):
     """
-    Query CDSE STAC for Sentinel-1 scenes over bbox on given date.
-    Returns list of item property dicts.
+    Query CDSE OData for Sentinel-1 GRD scenes over bbox on given date ±1d.
+    Returns list of row dicts with standardised fields.
     """
-    # date window: day-1 to day+1 (covers UTC offset, 12-day orbit window)
     d = datetime.date.fromisoformat(date_str)
     d0 = (d - datetime.timedelta(days=1)).isoformat()
     d1 = (d + datetime.timedelta(days=1)).isoformat()
-    # CDSE STAC /search requires POST with JSON body (GET returns 400)
-    bbox_list = [float(x) for x in bbox.split(",")]
-    body = {
-        "collections": ["SENTINEL-1"],
-        "bbox":        bbox_list,
-        "datetime":    f"{d0}T00:00:00Z/{d1}T23:59:59Z",
-        "limit":       max_items,
+
+    # OData filter: S1, GRD, intersects bbox, within date window
+    filt = (
+        f"Collection/Name eq 'SENTINEL-1' "
+        f"and ContentDate/Start gt {d0}T00:00:00.000Z "
+        f"and ContentDate/Start lt {d1}T23:59:59.000Z "
+        f"and OData.CSC.Intersects(area=geography'SRID=4326;{bbox_wkt}')"
+    )
+    params = {
+        "$filter":  filt,
+        "$top":     max_items,
+        "$expand":  "Attributes",
+        "$orderby": "ContentDate/Start asc",
     }
     try:
-        r = requests.post(STAC_URL, json=body, timeout=30)
+        r = requests.get(ODATA_URL, params=params, timeout=30)
         r.raise_for_status()
         data = r.json()
-        items = data.get("features", [])
+        items = data.get("value", [])
         rows = []
         for item in items:
-            props = item.get("properties", {})
+            attrs = {a["Name"]: a.get("Value") for a in item.get("Attributes", [])}
             row = {
                 "date":                     date_str,
-                "scene_id":                 item.get("id", ""),
-                "platform":                 props.get("platform", ""),
-                "platformSerialIdentifier": props.get("platformSerialIdentifier", ""),
-                "relativeOrbitNumber":      props.get("relativeOrbitNumber", ""),
-                "orbitDirection":           props.get("orbitDirection", props.get("sat:orbit_state", "")),
-                "mode":                     props.get("operationalMode", props.get("sar:instrument_mode", "")),
-                "productType":              props.get("productType", ""),
-                "polarisation":             props.get("polarisation", props.get("sar:polarizations", "")),
-                "processingLevel":          props.get("processingLevel", ""),
-                "constellation":            props.get("constellation", ""),
-                "swath":                    props.get("swath", ""),
-                "startDateTime":            props.get("startDatetime", props.get("datetime", "")),
-                "stopDateTime":             props.get("stopDatetime", ""),
-                "s3Path":                   props.get("s3Path", ""),
+                "scene_id":                 item.get("Name", ""),
+                "platform":                 attrs.get("platformShortName", ""),
+                "platformSerialIdentifier": attrs.get("platformSerialIdentifier", ""),
+                "relativeOrbitNumber":      attrs.get("relativeOrbitNumber", ""),
+                "orbitDirection":           attrs.get("orbitDirection", ""),
+                "mode":                     attrs.get("operationalMode", ""),
+                "productType":              attrs.get("productType", ""),
+                "polarisation":             attrs.get("polarisationChannels", ""),
+                "processingLevel":          attrs.get("processingLevel", ""),
+                "constellation":            attrs.get("constellation", ""),
+                "swath":                    attrs.get("swathIdentifier", ""),
+                "startDateTime":            item.get("ContentDate", {}).get("Start", ""),
+                "stopDateTime":             item.get("ContentDate", {}).get("End", ""),
             }
             rows.append(row)
         return rows
     except Exception as e:
-        print(f"  [WARN] STAC query failed for {date_str}: {e}")
+        print(f"  [WARN] OData query failed for {date_str}: {e}")
         return []
 
 
@@ -102,18 +111,19 @@ def main():
     OUT_DIR.mkdir(parents=True, exist_ok=True)
     run_ts = datetime.datetime.utcnow().strftime("%Y-%m-%dT%H:%M UTC")
     lines = [f"Run: {run_ts}", "Script: scripts/research/cdse_stac_diag.py",
-             f"STAC: {STAC_URL}", f"BBOX: {BBOX}", ""]
+             f"API: {ODATA_URL} (OData, not STAC — STAC blocked by GHA proxy)",
+             f"BBOX: {BBOX_WKT}", ""]
 
-    print("=== CDSE STAC Diagnosis for RT DESC-35 ===\n")
+    print("=== CDSE OData Diagnosis for RT DESC-35 ===\n")
 
     # ---- query before dates ----
     print("--- Before 2025-11 (should be S1A DESC-35) ---")
     before_rows = []
     for d in VALID_DATES_BEFORE:
-        rows = stac_query(d)
-        # filter to DESC direction
+        rows = odata_query(d)
         desc_rows = [r for r in rows if "desc" in str(r.get("orbitDirection","")).lower()]
-        print(f"  {d}: {len(rows)} total, {len(desc_rows)} DESC — {[r['platform']+'_orb'+str(r['relativeOrbitNumber']) for r in desc_rows]}")
+        print(f"  {d}: {len(rows)} total, {len(desc_rows)} DESC — "
+              f"{[r['platform']+'_orb'+str(r['relativeOrbitNumber']) for r in desc_rows]}")
         before_rows.extend(rows)
 
     before_df = pd.DataFrame(before_rows) if before_rows else pd.DataFrame()
@@ -123,9 +133,10 @@ def main():
     print("\n--- After 2025-11 (empty in SH, may be S1C) ---")
     after_rows = []
     for d in EMPTY_DATES_AFTER:
-        rows = stac_query(d)
+        rows = odata_query(d)
         desc_rows = [r for r in rows if "desc" in str(r.get("orbitDirection","")).lower()]
-        print(f"  {d}: {len(rows)} total, {len(desc_rows)} DESC — {[r['platform']+'_orb'+str(r['relativeOrbitNumber']) for r in desc_rows]}")
+        print(f"  {d}: {len(rows)} total, {len(desc_rows)} DESC — "
+              f"{[r['platform']+'_orb'+str(r['relativeOrbitNumber']) for r in desc_rows]}")
         after_rows.extend(rows)
 
     after_df = pd.DataFrame(after_rows) if after_rows else pd.DataFrame()
@@ -172,6 +183,8 @@ def main():
         new_platforms = platforms_after - platforms_before
         if new_platforms:
             lines.append(f"  NEW in after: {new_platforms} → use platformSerialIdentifier filter")
+    elif before_df.empty and after_df.empty:
+        lines.append("  OData endpoint also unreachable from GHA proxy — try with auth or different network")
     lines.append("")
 
     diag_path = OUT_DIR / "stac_diag.txt"
