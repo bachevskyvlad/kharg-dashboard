@@ -1,0 +1,13 @@
+tank_id,lat,lon,radius_measured_m,radius_registry_m,diff_m,diff_pct,roof_type_optical_wv2,roof_type_sar_round4,measurement_source,measurement_confidence,in_coords_list,in_whitelist_stage4,enabled_tank_registry
+yb_0,23.959074,38.244398,60.3,60,0.3,0.5,floating,fixed,esri_z18_16ray_p6,MEDIUM,yes,yes,yes
+yb_1,23.96259,38.247925,55.5,60,-4.5,-7.5,floating,floating,esri_z18_16ray_p6,HIGH,yes,no,no
+yb_2,23.964053,38.245977,54.1,60,-5.9,-9.8,floating,floating,esri_z18_16ray_p6,HIGH,yes,yes,yes
+yb_3,23.965544,38.244086,55.2,60,-4.8,-8.0,floating,fixed,esri_z18_16ray_p6,HIGH,yes,yes,yes
+yb_4,23.964986,38.250081,51.9,60,-8.1,-13.5,floating,floating,esri_z18_16ray_p6,MEDIUM,yes,no,no
+yb_5,23.96646,38.248119,54.4,60,-5.6,-9.3,floating,fixed,esri_z18_16ray_p6,HIGH,yes,yes,yes
+yb_6,23.96796,38.246187,52.6,60,-7.4,-12.3,floating,floating,esri_z18_16ray_p6,MEDIUM,yes,no,no
+yb_7,23.967392,38.252229,54.5,60,-5.5,-9.2,floating,fixed,esri_z18_16ray_p6,HIGH,yes,yes,yes
+yb_8,23.968866,38.250263,54.4,60,-5.6,-9.3,floating,fixed,esri_z18_16ray_p6,HIGH,yes,yes,yes
+yb_9,23.970331,38.248336,56.6,60,-3.4,-5.7,floating,floating,esri_z18_16ray_p6,LOW,yes,yes,yes
+yb_10,23.969788,38.254362,55.1,60,-4.9,-8.2,floating,fixed,esri_z18_16ray_p6,HIGH,yes,no,no
+yb_11,23.971259,38.252416,50.4,60,-9.6,-16.0,floating,fixed,esri_z18_16ray_p6,MEDIUM,yes,yes,yes
