@@ -21,7 +21,7 @@ jobs:
           python-version: "3.11"
 
       - name: Install dependencies
-        run: pip install requests sentinelhub supabase -q
+        run: pip install requests numpy scipy tifffile sentinelhub supabase pandas -q
 
       - name: Run Yanbu ASC-14 fix
         run: |
