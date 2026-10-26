@@ -1,17 +1,19 @@
 """
-validate_pass.py — Telegram validation dry-run (M1–M5).
+validate_pass.py — Validation pass (M1–M5) with optional Telegram send.
 
 Reads data from the last 3 Monitor runs (Supabase + local JSON files),
-computes 5 validation metrics, formats Telegram HTML, and prints to stdout.
-Does NOT send anything.
+computes 5 validation metrics, formats Telegram HTML.
 
 Usage:
-  python scripts/validate_pass.py
+  python scripts/validate_pass.py           # dry-run, print only
+  python scripts/validate_pass.py --send    # send to Telegram (requires TG_BOT + TG_CHAT)
 """
 
 import json
 import os
 import sys
+import urllib.request
+import urllib.parse
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
@@ -166,9 +168,26 @@ def m5_spi(rows, last_3_dates):
 # ---------------------------------------------------------------------------
 # Format Telegram HTML
 # ---------------------------------------------------------------------------
+def _send_telegram(text: str):
+    tg_bot = os.environ.get("TG_BOT") or ""
+    tg_chat = os.environ.get("TG_CHAT") or ""
+    if not tg_bot or not tg_chat:
+        print("WARN: TG_BOT/TG_CHAT not set — skipping send")
+        return
+    payload = urllib.parse.urlencode({
+        "chat_id": tg_chat,
+        "parse_mode": "HTML",
+        "text": text,
+        "disable_web_page_preview": "true",
+    }).encode()
+    req = urllib.request.Request(tg_bot, data=payload, method="POST")
+    with urllib.request.urlopen(req, timeout=10) as resp:
+        print(f"Telegram: {resp.status}")
+
+
 def format_telegram(m1, m2, m3, m4, m5):
     lines = []
-    lines.append("&#128270; <b>OilRadar — Validation Pass (dry-run)</b>")
+    lines.append("&#128270; <b>OilRadar — Validation Pass</b>")
     lines.append(f"&#128197; <code>{datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M UTC')}</code>")
     lines.append("")
 
@@ -234,12 +253,12 @@ def format_telegram(m1, m2, m3, m4, m5):
 # Main
 # ---------------------------------------------------------------------------
 def main():
-    print("=== validate_pass.py dry-run ===\n")
+    send = "--send" in sys.argv
 
     rows = _fetch_daily(limit=60)
     if not rows:
         print("ERROR: no rows from kharg_daily")
-        return
+        sys.exit(1)
 
     last3 = _last_3_run_dates(rows)
     print(f"Last 3 dates in kharg_daily: {last3}\n")
@@ -255,10 +274,12 @@ def main():
             print(f"WARNING {label}: {err}")
 
     text = format_telegram(m1, m2, m3, m4, m5)
-
-    print("=== Telegram message (NOT sent) ===\n")
     print(text)
-    print("\n=== end ===")
+
+    if send:
+        _send_telegram(text)
+    else:
+        print("\n(dry-run — pass --send to deliver)")
 
 
 if __name__ == "__main__":

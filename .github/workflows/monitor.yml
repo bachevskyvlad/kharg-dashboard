@@ -210,3 +210,27 @@ jobs:
             --data-urlencode text="&#10060; <b>Commit FAILED</b>
           &#128197; <code>$(date -u +'%Y-%m-%d %H:%M UTC')</code>
           &#128279; <a href='https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}'>Open logs</a>"
+
+  validate:
+    needs: [gate, commit_data]
+    if: always() && needs.gate.outputs.run == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install dependencies
+        run: pip install supabase
+      - name: Run validation pass and send to Telegram
+        run: python scripts/validate_pass.py --send
+        env:
+          SUPABASE_URL: https://yoekhkczwdeyauwarsyy.supabase.co
+          SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+      - name: Telegram — Validate FAILED
+        if: failure()
+        run: |
+          curl -s -X POST "$TG_BOT" -d chat_id="$TG_CHAT" -d parse_mode="HTML" \
+            --data-urlencode text="&#10060; <b>Validate FAILED</b>
+          &#128197; <code>$(date -u +'%Y-%m-%d %H:%M UTC')</code>
+          &#128279; <a href='https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}'>Open logs</a>"
