@@ -1,0 +1,59 @@
+=== P3.1 Yanbu ASC-14 fix — 2026-10-26T16:59 UTC ===
+
+Step 1: CDSE catalog for Yanbu ASC passes…
+  [WARN] CDSE 2014: Could not find a suitable TLS CA certificate bundle, invalid path: /root/.ccr/ca-bundle.crt
+  CDSE Yanbu ASC 2014: 0 scenes
+  [WARN] CDSE 2015: Could not find a suitable TLS CA certificate bundle, invalid path: /root/.ccr/ca-bundle.crt
+  CDSE Yanbu ASC 2015: 0 scenes
+  [WARN] CDSE 2016: Could not find a suitable TLS CA certificate bundle, invalid path: /root/.ccr/ca-bundle.crt
+  CDSE Yanbu ASC 2016: 0 scenes
+  [WARN] CDSE 2017: Could not find a suitable TLS CA certificate bundle, invalid path: /root/.ccr/ca-bundle.crt
+  CDSE Yanbu ASC 2017: 0 scenes
+  [WARN] CDSE 2018: Could not find a suitable TLS CA certificate bundle, invalid path: /root/.ccr/ca-bundle.crt
+  CDSE Yanbu ASC 2018: 0 scenes
+  [WARN] CDSE 2019: Could not find a suitable TLS CA certificate bundle, invalid path: /root/.ccr/ca-bundle.crt
+  CDSE Yanbu ASC 2019: 0 scenes
+  [WARN] CDSE 2020: Could not find a suitable TLS CA certificate bundle, invalid path: /root/.ccr/ca-bundle.crt
+  CDSE Yanbu ASC 2020: 0 scenes
+  [WARN] CDSE 2021: Could not find a suitable TLS CA certificate bundle, invalid path: /root/.ccr/ca-bundle.crt
+  CDSE Yanbu ASC 2021: 0 scenes
+  [WARN] CDSE 2022: Could not find a suitable TLS CA certificate bundle, invalid path: /root/.ccr/ca-bundle.crt
+  CDSE Yanbu ASC 2022: 0 scenes
+  [WARN] CDSE 2023: Could not find a suitable TLS CA certificate bundle, invalid path: /root/.ccr/ca-bundle.crt
+  CDSE Yanbu ASC 2023: 0 scenes
+  [WARN] CDSE 2024: Could not find a suitable TLS CA certificate bundle, invalid path: /root/.ccr/ca-bundle.crt
+  CDSE Yanbu ASC 2024: 0 scenes
+  [WARN] CDSE 2025: Could not find a suitable TLS CA certificate bundle, invalid path: /root/.ccr/ca-bundle.crt
+  CDSE Yanbu ASC 2025: 0 scenes
+  [WARN] CDSE 2026: Could not find a suitable TLS CA certificate bundle, invalid path: /root/.ccr/ca-bundle.crt
+  CDSE Yanbu ASC 2026: 0 scenes
+  Total ASC GRDH scenes: 0
+  Saved: diagnostics/mega/yanbu_cdse_passes.csv
+
+Step 2: Fetch prod-DB Yanbu dates…
+Traceback (most recent call last):
+  File "/home/runner/work/kharg-dashboard/kharg-dashboard/scripts/research/p3_yanbu_fix.py", line 243, in <module>
+    main()
+  File "/home/runner/work/kharg-dashboard/kharg-dashboard/scripts/research/p3_yanbu_fix.py", line 183, in main
+    db_rows = sb_fetch_all("terminal_observations", select="date,tank_id",
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/work/kharg-dashboard/kharg-dashboard/scripts/research/p3_yanbu_fix.py", line 112, in sb_fetch_all
+    r = requests.get(
+        ^^^^^^^^^^^^^
+  File "/opt/hostedtoolcache/Python/3.11.17/x64/lib/python3.11/site-packages/requests/api.py", line 87, in get
+    return request("get", url, params=params, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/hostedtoolcache/Python/3.11.17/x64/lib/python3.11/site-packages/requests/api.py", line 71, in request
+    return session.request(method=method, url=url, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/hostedtoolcache/Python/3.11.17/x64/lib/python3.11/site-packages/requests/sessions.py", line 651, in request
+    resp = self.send(prep, **send_kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/hostedtoolcache/Python/3.11.17/x64/lib/python3.11/site-packages/requests/sessions.py", line 784, in send
+    r = adapter.send(request, **kwargs)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/hostedtoolcache/Python/3.11.17/x64/lib/python3.11/site-packages/requests/adapters.py", line 668, in send
+    self.cert_verify(conn, request.url, verify, cert)
+  File "/opt/hostedtoolcache/Python/3.11.17/x64/lib/python3.11/site-packages/requests/adapters.py", line 332, in cert_verify
+    raise OSError(
+OSError: Could not find a suitable TLS CA certificate bundle, invalid path: /root/.ccr/ca-bundle.crt
