@@ -1,0 +1,43 @@
+=== P3.1 Yanbu ASC-14 fix — 2026-10-26T17:44 UTC ===
+
+Step 1: CDSE catalog for Yanbu ASC passes…
+  CDSE Yanbu ASC 2014: 43 scenes
+  CDSE Yanbu ASC 2015: 166 scenes
+  CDSE Yanbu ASC 2016: 148 scenes
+  CDSE Yanbu ASC 2017: 158 scenes
+  CDSE Yanbu ASC 2018: 180 scenes
+  CDSE Yanbu ASC 2019: 178 scenes
+  CDSE Yanbu ASC 2020: 182 scenes
+  CDSE Yanbu ASC 2021: 182 scenes
+  CDSE Yanbu ASC 2022: 108 scenes
+  CDSE Yanbu ASC 2023: 120 scenes
+  CDSE Yanbu ASC 2024: 122 scenes
+  CDSE Yanbu ASC 2025: 132 scenes
+  CDSE Yanbu ASC 2026: 130 scenes
+  Total ASC GRDH scenes: 1849
+  relOrbit=14: 365 dates, first=2014-10-18, last=2026-10-16
+  relOrbit=16: 1 dates, first=2014-10-06, last=2014-10-06
+  relOrbit=87: 249 dates, first=2014-10-11, last=2026-10-21
+  Saved: diagnostics/mega/yanbu_cdse_passes.csv
+
+Step 2: Fetch prod-DB Yanbu dates…
+  terminal_observations yanbu: 3984 rows, 332 unique dates
+  first=2014-10-09, last=2026-09-22
+
+Step 3: CDSE scenes matching DB dates: 292
+  relOrbit=14: 292 matched dates
+
+Step 4: Writing manifest…
+  Manifest written: /home/runner/work/kharg-dashboard/kharg-dashboard/diagnostics/research/2026-10/event_csv/v0_manifest_all.csv (292 scenes)
+
+Step 5: Running mega_export section 4 for yanbu…
+Traceback (most recent call last):
+  File "/home/runner/work/kharg-dashboard/kharg-dashboard/scripts/research/mega_export.py", line 59, in <module>
+    import pandas as pd
+ModuleNotFoundError: No module named 'pandas'
+  [WARN] mega_export exited 1
+
+=== Ring15 quality report ===
+  yanbu orb=14 ASC: 96/1032 non-null (0.093)
+
+[OK] All terminal+orbit groups have ring15_far > 0
