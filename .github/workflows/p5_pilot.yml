@@ -1,0 +1,54 @@
+name: Research — P5 pilot (20 scenes, image variants)
+
+on:
+  workflow_dispatch: {}
+
+jobs:
+  p5_pilot:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: research/2026-10-auto
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          pip install requests numpy scipy scikit-image sentinelhub matplotlib tifffile -q
+          pip install bm3d -q 2>/dev/null && echo "bm3d=ok" || echo "bm3d=unavailable"
+
+      - name: Run P5 pilot
+        run: |
+          mkdir -p diagnostics/mega/p5_pilot
+          python scripts/research/p5_pilot.py \
+            2>&1 | tee diagnostics/mega/p5_pilot/run_p5_pilot_$(date -u +%Y%m%dT%H%M).txt
+        env:
+          SH_CLIENT_ID: ${{ secrets.CLIENT_ID }}
+          SH_CLIENT_SECRET: ${{ secrets.CLIENT_SECRET }}
+
+      - name: Commit and push results
+        if: always()
+        run: |
+          git config user.email "actions@github.com"
+          git config user.name "GitHub Actions"
+          git add diagnostics/mega/p5_pilot/ 2>/dev/null || true
+          git diff --cached --quiet && echo "No changes" && exit 0
+          git commit -m "research: p5_pilot [run ${{ github.run_id }}] [skip ci]"
+          git stash -u 2>/dev/null || true
+          for attempt in 1 2 3 4; do
+            git fetch origin research/2026-10-auto && \
+            git rebase -X theirs origin/research/2026-10-auto && \
+            git push origin HEAD:research/2026-10-auto && break
+            git rebase --abort 2>/dev/null || true
+            echo "push attempt $attempt failed"
+            sleep $attempt
+          done || true
+          git stash pop 2>/dev/null || true
