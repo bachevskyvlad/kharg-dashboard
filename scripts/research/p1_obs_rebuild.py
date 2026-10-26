@@ -31,7 +31,7 @@ OUT_PATH = OUT_DIR / "observations_all.csv.gz"
 SUPABASE_URL = os.environ["SUPABASE_URL"]   # FATAL if missing
 SUPABASE_KEY = os.environ["SUPABASE_KEY"]
 ODATA = "https://catalogue.dataspace.copernicus.eu/odata/v1/Products"
-CA    = os.environ.get("REQUESTS_CA_BUNDLE", "/root/.ccr/ca-bundle.crt")
+CA    = os.environ.get("REQUESTS_CA_BUNDLE") or True
 
 OUTCOLS = [
     "terminal_id","tank_id","date","datetime_utc","scene_id",

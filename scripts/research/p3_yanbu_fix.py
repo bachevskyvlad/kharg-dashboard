@@ -22,7 +22,7 @@ from pathlib import Path
 from collections import defaultdict
 
 ODATA        = "https://catalogue.dataspace.copernicus.eu/odata/v1/Products"
-CA           = os.environ.get("REQUESTS_CA_BUNDLE", "/root/.ccr/ca-bundle.crt")
+CA           = os.environ.get("REQUESTS_CA_BUNDLE") or True
 SUPABASE_URL = os.environ["SUPABASE_URL"]
 SUPABASE_KEY = os.environ["SUPABASE_KEY"]
 
