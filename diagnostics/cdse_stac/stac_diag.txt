@@ -1,18 +1,24 @@
-Run: 2026-10-26T11:47 UTC
+Run: 2026-10-26T11:49 UTC
 Script: scripts/research/cdse_stac_diag.py
-API: https://catalogue.dataspace.copernicus.eu/odata/v1/Products (OData, not STAC — STAC blocked by GHA proxy)
-BBOX: POLYGON((50.0 26.5,50.3 26.5,50.3 27.0,50.0 27.0,50.0 26.5))
+API: https://catalogue.dataspace.copernicus.eu/odata/v1/Products (OData — STAC blocked by GHA proxy)
+BBOX: POLYGON((48.5 25.5,52.0 25.5,52.0 28.5,48.5 28.5,48.5 25.5))
 
-=== Before 2025-11 (DESC only) ===
+=== Before 2025-11 DESC-35 scenes ===
+  no DESC-35 scenes found
+  found: S1A orb=64 DESCENDING x20
+  found: S1A orb=101 ASCENDING x96
+  found: S1A orb=174 ASCENDING x17
+  found: S1C orb=64 DESCENDING x5
+  found: S1C orb=101 ASCENDING x20
+  found: S1C orb=174 ASCENDING x56
 
-=== After 2025-11 (DESC only) ===
-  2026-02-03 | SENTINEL-1 | A | orb=137 | dir=DESCENDING | mode=IW | type=IW_ETA__AX | pol=VV&VH
-  2026-02-03 | SENTINEL-1 | A | orb=137 | dir=DESCENDING | mode=IW | type=IW_SLC__1S | pol=VV&VH
-  2026-02-03 | SENTINEL-1 | A | orb=137 | dir=DESCENDING | mode=IW | type=IW_GRDH_1S-COG | pol=VV&VH
-  2026-02-03 | SENTINEL-1 | A | orb=137 | dir=DESCENDING | mode=IW | type=IW_OCN__2S | pol=VV&VH
-  2026-02-03 | SENTINEL-1 | A | orb=137 | dir=DESCENDING | mode=IW | type=IW_GRDH_1S | pol=VV&VH
+=== After 2025-11 DESC-35 scenes ===
+  no DESC-35 scenes found
+  found: S1A orb=137 DESCENDING x19
+  found: S1A orb=174 ASCENDING x85
+  found: S1C orb=64 DESCENDING x25
+  found: S1C orb=101 ASCENDING x80
 
-=== Platform diff: Before vs After (DESC) ===
-  platform before: set()  after: {'SENTINEL-1'}
-  serial before:   set()  after: {'A'}
-  NEW in after: {'SENTINEL-1'} → use platformSerialIdentifier filter
+=== Platform diff Before vs After (all DESC) ===
+  serial before: {'A', 'C'}  after: {'A', 'C'}
+  orbs   before: {'64'}     after: {'64', '137'}

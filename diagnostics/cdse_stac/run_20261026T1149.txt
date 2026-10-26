@@ -1,0 +1,44 @@
+=== CDSE OData Diagnosis for RT DESC-35 ===
+
+Wide BBOX: POLYGON((48.5 25.5,52.0 25.5,52.0 28.5,48.5 28.5,48.5 25.5))
+
+--- Before 2025-11 (should have S1A DESC-35) ---
+  2025-10-01: 43 total, DESC-35=0 — all_orbs: ['A_orb101_ASC', 'A_orb64_DES', 'C_orb174_ASC']
+  2025-10-13: 43 total, DESC-35=0 — all_orbs: ['A_orb101_ASC', 'A_orb64_DES', 'C_orb174_ASC']
+  2025-10-25: 43 total, DESC-35=0 — all_orbs: ['A_orb101_ASC', 'A_orb64_DES', 'C_orb174_ASC']
+  2025-11-06: 43 total, DESC-35=0 — all_orbs: ['A_orb101_ASC', 'A_orb64_DES', 'C_orb174_ASC']
+  2025-11-12: 42 total, DESC-35=0 — all_orbs: ['A_orb174_ASC', 'C_orb101_ASC', 'C_orb64_DES']
+
+--- After 2025-11 (empty in SH, checking for S1C) ---
+  2025-11-24: 42 total, DESC-35=0 — all_orbs: ['A_orb174_ASC', 'C_orb101_ASC', 'C_orb64_DES']
+  2025-12-06: 42 total, DESC-35=0 — all_orbs: ['A_orb174_ASC', 'C_orb101_ASC', 'C_orb64_DES']
+  2025-12-18: 42 total, DESC-35=0 — all_orbs: ['A_orb174_ASC', 'C_orb101_ASC', 'C_orb64_DES']
+  2026-01-11: 42 total, DESC-35=0 — all_orbs: ['A_orb174_ASC', 'C_orb101_ASC', 'C_orb64_DES']
+  2026-02-03: 41 total, DESC-35=0 — all_orbs: ['A_orb137_DES', 'A_orb174_ASC', 'C_orb64_DES']
+
+Diagnosis written → diagnostics/cdse_stac/stac_diag.txt
+Run: 2026-10-26T11:49 UTC
+Script: scripts/research/cdse_stac_diag.py
+API: https://catalogue.dataspace.copernicus.eu/odata/v1/Products (OData — STAC blocked by GHA proxy)
+BBOX: POLYGON((48.5 25.5,52.0 25.5,52.0 28.5,48.5 28.5,48.5 25.5))
+
+=== Before 2025-11 DESC-35 scenes ===
+  no DESC-35 scenes found
+  found: S1A orb=64 DESCENDING x20
+  found: S1A orb=101 ASCENDING x96
+  found: S1A orb=174 ASCENDING x17
+  found: S1C orb=64 DESCENDING x5
+  found: S1C orb=101 ASCENDING x20
+  found: S1C orb=174 ASCENDING x56
+
+=== After 2025-11 DESC-35 scenes ===
+  no DESC-35 scenes found
+  found: S1A orb=137 DESCENDING x19
+  found: S1A orb=174 ASCENDING x85
+  found: S1C orb=64 DESCENDING x25
+  found: S1C orb=101 ASCENDING x80
+
+=== Platform diff Before vs After (all DESC) ===
+  serial before: {'A', 'C'}  after: {'A', 'C'}
+  orbs   before: {'64'}     after: {'64', '137'}
+
