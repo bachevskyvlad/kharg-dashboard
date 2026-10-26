@@ -31,7 +31,7 @@ OUT_PATH = OUT_DIR / "observations_all.csv.gz"
 SUPABASE_URL = os.environ["SUPABASE_URL"]   # FATAL if missing
 SUPABASE_KEY = os.environ["SUPABASE_KEY"]
 ODATA = "https://catalogue.dataspace.copernicus.eu/odata/v1/Products"
-CA    = os.environ.get("REQUESTS_CA_BUNDLE", "/root/.ccr/ca-bundle.crt")
+CA    = os.environ.get("REQUESTS_CA_BUNDLE") or True
 
 OUTCOLS = [
     "terminal_id","tank_id","date","datetime_utc","scene_id",
@@ -172,12 +172,20 @@ def git_show_text(path):
 
 
 def load_ring15_index():
-    """Load all section-4 part files. Returns dict (terminal,tank_id,date,relOrbit,direction)->row."""
+    """Load section-4 part files (tank_scene_variants_*.csv.gz only).
+
+    Returns two dicts:
+      idx_exact:    (terminal, tank_id, date, relOrbit, direction) -> row
+      idx_fallback: (terminal, tank_id, date) -> row  (first non-empty ring15_far wins)
+    """
     r = subprocess.run(["git", "show", f"{BRANCH}:{MEGA}/"], capture_output=True)
     lines = r.stdout.decode().splitlines()
-    part_files = [l for l in lines if l.endswith(".csv.gz")]
+    # Only load section-4 variant files — skip observations_all.csv.gz and other aggregates
+    part_files = [l for l in lines
+                  if l.endswith(".csv.gz") and l.startswith("tank_scene_variants_")]
 
-    idx = {}
+    idx_exact    = {}
+    idx_fallback = {}
     for fname in sorted(part_files):
         rows = git_show_gz(f"{MEGA}/{fname}")
         if not rows:
@@ -190,13 +198,21 @@ def load_ring15_index():
             date      = row.get("date", "")
             rel_orb   = str(row.get("relOrbit", ""))
             direction = row.get("direction", "")
-            key = (terminal, tank_id, date, rel_orb, direction)
-            if key not in idx:
-                idx[key] = row
+            r15 = row.get("ring15_far", "")
+
+            key_exact = (terminal, tank_id, date, rel_orb, direction)
+            if key_exact not in idx_exact:
+                idx_exact[key_exact] = row
                 n += 1
+
+            key_fb = (terminal, tank_id, date)
+            if key_fb not in idx_fallback or r15 not in ("", "0.0", "0"):
+                idx_fallback[key_fb] = row
+
         print(f"  s4: {fname} → {n} new keys", flush=True)
-    print(f"  s4 index: {len(idx)} total unique keys", flush=True)
-    return idx
+    print(f"  s4 index: {len(idx_exact)} exact keys, {len(idx_fallback)} fallback keys",
+          flush=True)
+    return idx_exact, idx_fallback
 
 
 def load_registry():
@@ -221,7 +237,7 @@ def main():
     print(f"  {len(registry)} tank entries", flush=True)
 
     print("\n=== 2. Section-4 ring15 index ===", flush=True)
-    ring15_idx = load_ring15_index()
+    ring15_idx, ring15_fallback = load_ring15_index()
 
     print("\n=== 3. Fetch DB rows ===", flush=True)
     db_rows_by_terminal = {}
@@ -232,7 +248,9 @@ def main():
     ]:
         print(f"  {terminal} ({table})…", flush=True)
         try:
-            rows = sb_fetch_all(table, select="*", filters={"terminal_id": terminal})
+            # raw_observations is kharg-only (no terminal_id column)
+            filt = None if table == "raw_observations" else {"terminal_id": terminal}
+            rows = sb_fetch_all(table, select="*", filters=filt)
             db_rows_by_terminal[terminal] = rows
             print(f"    {len(rows)} rows", flush=True)
         except Exception as e:
@@ -271,7 +289,7 @@ def main():
                 continue
             seen.add(key)
 
-            r15 = ring15_idx.get(key, {})
+            r15 = ring15_idx.get(key) or ring15_fallback.get((terminal, tank_id, date), {})
             ring15_far       = r15.get("ring15_far", "")
             ring15_near      = r15.get("ring15_near", "")
             pixel_valid_frac = r15.get("pixel_valid_frac", "")
