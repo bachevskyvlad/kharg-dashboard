@@ -1,0 +1,107 @@
+Run: 2026-10-26T18:40 UTC
+
+=== 1. Registry ===
+  125 tank entries
+
+=== 2. Section-4 ring15 index ===
+  s4: observations_all.csv.gz → 52789 new keys
+  s4: tank_scene_variants_kharg.csv.gz → 15181 new keys
+  s4: tank_scene_variants_ras_tanura.csv.gz → 20526 new keys
+  s4: tank_scene_variants_ras_tanura_ASC101_part00.csv.gz → 0 new keys
+  s4: tank_scene_variants_ras_tanura_ASC101_part01.csv.gz → 0 new keys
+  s4: tank_scene_variants_ras_tanura_ASC101_part02.csv.gz → 0 new keys
+  s4: tank_scene_variants_ras_tanura_ASC101_part03.csv.gz → 0 new keys
+  s4: tank_scene_variants_ras_tanura_ASC101_part04.csv.gz → 0 new keys
+  s4: tank_scene_variants_ras_tanura_ASC101_part05.csv.gz → 0 new keys
+  s4: tank_scene_variants_ras_tanura_ASC101_part06.csv.gz → 0 new keys
+  s4: tank_scene_variants_ras_tanura_DESC35.csv.gz → 33000 new keys
+  s4: tank_scene_variants_ras_tanura_DESC35_part00.csv.gz → 0 new keys
+  s4: tank_scene_variants_ras_tanura_DESC35_part01.csv.gz → 0 new keys
+  s4: tank_scene_variants_ras_tanura_DESC35_part02.csv.gz → 0 new keys
+  s4: tank_scene_variants_ras_tanura_DESC35_part03.csv.gz → 0 new keys
+  s4: tank_scene_variants_ras_tanura_DESC35_part04.csv.gz → 0 new keys
+  s4: tank_scene_variants_ras_tanura_DESC35_part05.csv.gz → 0 new keys
+  s4: tank_scene_variants_ras_tanura_DESC35_part06.csv.gz → 0 new keys
+  s4: tank_scene_variants_ras_tanura_DESC35_part07.csv.gz → 0 new keys
+  s4: tank_scene_variants_ras_tanura_DESC35_part08.csv.gz → 0 new keys
+  s4: tank_scene_variants_ras_tanura_DESC35_part09.csv.gz → 0 new keys
+  s4: tank_scene_variants_yanbu.csv.gz → 516 new keys
+  s4: tank_scene_variants_yanbu_ASC14_part00.csv.gz → 0 new keys
+  s4 index: 122012 total unique keys
+
+=== 3. Fetch DB rows ===
+  kharg (raw_observations)…
+    15228 rows
+  ras_tanura (terminal_observations)…
+    37127 rows
+  yanbu (terminal_observations)…
+    3984 rows
+
+=== 4. CDSE catalog ===
+  CDSE kharg: querying 2015-04-05→2026-10-25 (324 dates)…
+    2015: 42 scenes
+    2016: 60 scenes
+    2017: 160 scenes
+    2018: 174 scenes
+    2019: 176 scenes
+    2020: 190 scenes
+  [WARN] CDSE query 2021-01-01→2021-12-31: HTTPSConnectionPool(host='catalogue.dataspace.copernicus.eu', port=443): Read timed out. (read timeout=30)
+    2021: 150 scenes
+    2022: 186 scenes
+    2023: 176 scenes
+    2024: 180 scenes
+    2025: 234 scenes
+    2026: 252 scenes
+  CDSE kharg: 701 unique dates covered
+  CDSE ras_tanura: querying 2017-03-13→2026-10-25 (572 dates)…
+    2017: 330 scenes
+    2018: 418 scenes
+    2019: 460 scenes
+    2020: 490 scenes
+  [WARN] CDSE query 2021-01-01→2021-12-31: HTTPSConnectionPool(host='catalogue.dataspace.copernicus.eu', port=443): Read timed out. (read timeout=30)
+    2021: 310 scenes
+    2022: 480 scenes
+    2023: 480 scenes
+    2024: 484 scenes
+    2025: 700 scenes
+    2026: 832 scenes
+  CDSE ras_tanura: 1253 unique dates covered
+  CDSE yanbu: querying 2014-10-08→2026-09-23 (332 dates)…
+    2014: 22 scenes
+    2015: 124 scenes
+    2016: 141 scenes
+    2017: 128 scenes
+    2018: 120 scenes
+  [WARN] CDSE query 2019-01-01→2019-12-31: HTTPSConnectionPool(host='catalogue.dataspace.copernicus.eu', port=443): Read timed out. (read timeout=30)
+    2019: 0 scenes
+  [WARN] CDSE query 2020-01-01→2020-12-31: HTTPSConnectionPool(host='catalogue.dataspace.copernicus.eu', port=443): Read timed out. (read timeout=30)
+    2020: 0 scenes
+    2021: 120 scenes
+    2022: 108 scenes
+    2023: 120 scenes
+    2024: 122 scenes
+    2025: 132 scenes
+    2026: 106 scenes
+  CDSE yanbu: 489 unique dates covered
+
+=== 5. Assembling output ===
+
+=== 6. ring15_far quality report ===
+  kharg orb= : 0/282 ring15_far non-null (0.000) ← ZERO
+  kharg orb=35 DESCENDING: 0/14946 ring15_far non-null (0.000) ← ZERO
+  ras_tanura orb= : 0/1386 ring15_far non-null (0.000) ← ZERO
+  ras_tanura orb=101 ASCENDING: 0/15378 ring15_far non-null (0.000) ← ZERO
+  ras_tanura orb=137 DESCENDING: 0/338 ring15_far non-null (0.000) ← ZERO
+  ras_tanura orb=35 DESCENDING: 0/20025 ring15_far non-null (0.000) ← ZERO
+  yanbu orb= : 0/732 ring15_far non-null (0.000) ← ZERO
+  yanbu orb=14 ASCENDING: 0/2772 ring15_far non-null (0.000) ← ZERO
+  yanbu orb=50 DESCENDING: 0/468 ring15_far non-null (0.000) ← ZERO
+  yanbu orb=52 DESCENDING: 0/12 ring15_far non-null (0.000) ← ZERO
+
+[WARN] Some terminal+orbit has zero ring15_far — s4 not yet run for those orbits.
+
+=== 7. Writing diagnostics/mega/observations_all.csv.gz (56339 rows) ===
+
+DONE: 56339 rows, ring15_far non-null overall = 0/56339 (0.000)
+Rows per terminal: {'kharg': 15228, 'ras_tanura': 37127, 'yanbu': 3984}
+Output: diagnostics/mega/observations_all.csv.gz
