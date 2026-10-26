@@ -232,7 +232,9 @@ def main():
     ]:
         print(f"  {terminal} ({table})…", flush=True)
         try:
-            rows = sb_fetch_all(table, select="*", filters={"terminal_id": terminal})
+            # raw_observations is kharg-only (no terminal_id column)
+            filt = None if table == "raw_observations" else {"terminal_id": terminal}
+            rows = sb_fetch_all(table, select="*", filters=filt)
             db_rows_by_terminal[terminal] = rows
             print(f"    {len(rows)} rows", flush=True)
         except Exception as e:
