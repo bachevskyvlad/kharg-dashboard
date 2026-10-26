@@ -1,0 +1,19 @@
+=== Discovering ports ===
+  [WARN] name search 'YANBU' failed: 404 Client Error: Not Found for url: https://portwatch.imf.org/arcgis/rest/services/PortWatch/PortWatch_ports_database/FeatureServer/0/query?where=portname+LIKE+%27%25YANBU%25%27&outFields=%2A&f=json&resultRecordCount=50
+  [WARN] name search 'KHARG' failed: 404 Client Error: Not Found for url: https://portwatch.imf.org/arcgis/rest/services/PortWatch/PortWatch_ports_database/FeatureServer/0/query?where=portname+LIKE+%27%25KHARG%25%27&outFields=%2A&f=json&resultRecordCount=50
+  [WARN] name search 'KHARK' failed: 404 Client Error: Not Found for url: https://portwatch.imf.org/arcgis/rest/services/PortWatch/PortWatch_ports_database/FeatureServer/0/query?where=portname+LIKE+%27%25KHARK%25%27&outFields=%2A&f=json&resultRecordCount=50
+  [WARN] name search 'KHARK ISLAND' failed: 404 Client Error: Not Found for url: https://portwatch.imf.org/arcgis/rest/services/PortWatch/PortWatch_ports_database/FeatureServer/0/query?where=portname+LIKE+%27%25KHARK+ISLAND%25%27&outFields=%2A&f=json&resultRecordCount=50
+  [WARN] name search 'LAVAN' failed: 404 Client Error: Not Found for url: https://portwatch.imf.org/arcgis/rest/services/PortWatch/PortWatch_ports_database/FeatureServer/0/query?where=portname+LIKE+%27%25LAVAN%25%27&outFields=%2A&f=json&resultRecordCount=50
+  [WARN] name search 'BANDAR IMAM' failed: 404 Client Error: Not Found for url: https://portwatch.imf.org/arcgis/rest/services/PortWatch/PortWatch_ports_database/FeatureServer/0/query?where=portname+LIKE+%27%25BANDAR+IMAM%25%27&outFields=%2A&f=json&resultRecordCount=50
+
+Total ports to fetch: 2
+  port1091 | Ras Tanura | SA
+  port526 | Juaymah | SA
+
+=== Probing endpoints ===
+  NO https://portwatch.imf.org/arcgis/rest/services/PortWatch/PortWatch_portcalls/FeatureServer/0/query
+  NO https://portwatch.imf.org/arcgis/rest/services/PortWatch/PortWatch_daily_trade/FeatureServer/0/query
+  NO https://portwatch.imf.org/arcgis/rest/services/PortWatch/PortWatch_port_stats/FeatureServer/0/query
+  NO https://portwatch.imf.org/arcgis/rest/services/PortWatch/PortWatch_Daily_Port_Stats/FeatureServer/0/query
+  NO https://portwatch.imf.org/arcgis/rest/services/PortWatch/PortWatch_trade_daily/FeatureServer/0/query
+ERROR: no PortWatch endpoints reachable
