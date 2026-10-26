@@ -1006,7 +1006,7 @@ function evaluatePixel(sample) { return [sample.VV]; }
 
             def _fetch_scene(d_str_f: str):
                 d_f = datetime.strptime(d_str_f, "%Y-%m-%d")
-                try:
+                def _try_fetch(data_filter):
                     req = SentinelHubRequest(
                         evalscript=EVALSCRIPT,
                         input_data=[SentinelHubRequest.input_data(
@@ -1018,10 +1018,7 @@ function evaluatePixel(sample) { return [sample.VV]; }
                                     "backCoeff":    "GAMMA0_TERRAIN",
                                     "demInstance":  "COPERNICUS_30",
                                 },
-                                "dataFilter": {
-                                    "orbitDirection":    api_dir,
-                                    "relativeOrbitNumber": rel_orb,
-                                },
+                                "dataFilter": data_filter,
                                 "mosaicking": "ORBIT",
                             },
                         )],
@@ -1031,7 +1028,20 @@ function evaluatePixel(sample) { return [sample.VV]; }
                         config=sh_config,
                     )
                     data = req.get_data()
-                    img = data[0].squeeze().astype(np.float32) if data else None
+                    return data[0].squeeze().astype(np.float32) if data else None
+                try:
+                    img = _try_fetch({
+                        "orbitDirection":    api_dir,
+                        "relativeOrbitNumber": rel_orb,
+                    })
+                    # S1C (from ~2025-11) uses same orbit number in STAC catalog but
+                    # CDSE Processing API returns [] with relativeOrbitNumber filter.
+                    # Retry without it — mosaicking=ORBIT + orbitDirection still constrains
+                    # to the correct overpass (only one DESCENDING/ASCENDING pass per day).
+                    if img is None:
+                        img = _try_fetch({"orbitDirection": api_dir})
+                        if img is not None:
+                            print(f"    {d_str_f}: S1C fallback OK (no relOrbit filter)")
                 except Exception as e:
                     img = e
                 with _fetch_lock:
