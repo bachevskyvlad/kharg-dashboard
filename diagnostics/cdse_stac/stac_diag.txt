@@ -1,4 +1,4 @@
-Run: 2026-10-26T11:35 UTC
+Run: 2026-10-26T11:47 UTC
 Script: scripts/research/cdse_stac_diag.py
 API: https://catalogue.dataspace.copernicus.eu/odata/v1/Products (OData, not STAC — STAC blocked by GHA proxy)
 BBOX: POLYGON((50.0 26.5,50.3 26.5,50.3 27.0,50.0 27.0,50.0 26.5))
