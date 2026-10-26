@@ -1,0 +1,50 @@
+name: Research — P2 ASC-101 Diagnosis
+
+on:
+  workflow_dispatch: {}
+
+jobs:
+  p2_diag:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: research/2026-10-auto
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: pip install requests -q
+
+      - name: Run P2 ASC-101 diagnosis
+        run: |
+          mkdir -p diagnostics/p2_asc101
+          python scripts/research/p2_asc101_diag.py \
+            2>&1 | tee diagnostics/p2_asc101/run_$(date -u +%Y%m%dT%H%M).txt
+        env:
+          SH_CLIENT_ID: ${{ secrets.SH_CLIENT_ID }}
+          SH_CLIENT_SECRET: ${{ secrets.SH_CLIENT_SECRET }}
+
+      - name: Commit and push results
+        if: always()
+        run: |
+          git config user.email "actions@github.com"
+          git config user.name "GitHub Actions"
+          git add -A diagnostics/p2_asc101/
+          git diff --cached --quiet && echo "No changes" && exit 0
+          git commit -m "research: p2_asc101_diag [run ${{ github.run_id }}] [skip ci]"
+          for attempt in 1 2 3 4; do
+            git fetch origin research/2026-10-auto && \
+            git rebase -X theirs origin/research/2026-10-auto && \
+            git push origin HEAD:research/2026-10-auto && break
+            git rebase --abort 2>/dev/null || true
+            echo "push attempt $attempt failed"
+            sleep $attempt
+          done || true
