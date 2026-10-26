@@ -1,0 +1,40 @@
+=== CDSE STAC Diagnosis for RT DESC-35 ===
+
+--- Before 2025-11 (should be S1A DESC-35) ---
+  [WARN] STAC query failed for 2025-10-01: 400 Client Error: Bad Request for url: https://catalogue.dataspace.copernicus.eu/stac/search?collections=SENTINEL-1&bbox=50.0%2C26.5%2C50.3%2C27.0&datetime=2025-09-30T00%3A00%3A00%2F2025-10-02T23%3A59%3A59&limit=20
+  2025-10-01: 0 total, 0 DESC — []
+  [WARN] STAC query failed for 2025-10-13: 400 Client Error: Bad Request for url: https://catalogue.dataspace.copernicus.eu/stac/search?collections=SENTINEL-1&bbox=50.0%2C26.5%2C50.3%2C27.0&datetime=2025-10-12T00%3A00%3A00%2F2025-10-14T23%3A59%3A59&limit=20
+  2025-10-13: 0 total, 0 DESC — []
+  [WARN] STAC query failed for 2025-10-25: 400 Client Error: Bad Request for url: https://catalogue.dataspace.copernicus.eu/stac/search?collections=SENTINEL-1&bbox=50.0%2C26.5%2C50.3%2C27.0&datetime=2025-10-24T00%3A00%3A00%2F2025-10-26T23%3A59%3A59&limit=20
+  2025-10-25: 0 total, 0 DESC — []
+  [WARN] STAC query failed for 2025-11-06: 400 Client Error: Bad Request for url: https://catalogue.dataspace.copernicus.eu/stac/search?collections=SENTINEL-1&bbox=50.0%2C26.5%2C50.3%2C27.0&datetime=2025-11-05T00%3A00%3A00%2F2025-11-07T23%3A59%3A59&limit=20
+  2025-11-06: 0 total, 0 DESC — []
+  [WARN] STAC query failed for 2025-11-12: 400 Client Error: Bad Request for url: https://catalogue.dataspace.copernicus.eu/stac/search?collections=SENTINEL-1&bbox=50.0%2C26.5%2C50.3%2C27.0&datetime=2025-11-11T00%3A00%3A00%2F2025-11-13T23%3A59%3A59&limit=20
+  2025-11-12: 0 total, 0 DESC — []
+
+--- After 2025-11 (empty in SH, may be S1C) ---
+  [WARN] STAC query failed for 2025-11-24: 400 Client Error: Bad Request for url: https://catalogue.dataspace.copernicus.eu/stac/search?collections=SENTINEL-1&bbox=50.0%2C26.5%2C50.3%2C27.0&datetime=2025-11-23T00%3A00%3A00%2F2025-11-25T23%3A59%3A59&limit=20
+  2025-11-24: 0 total, 0 DESC — []
+  [WARN] STAC query failed for 2025-12-06: 400 Client Error: Bad Request for url: https://catalogue.dataspace.copernicus.eu/stac/search?collections=SENTINEL-1&bbox=50.0%2C26.5%2C50.3%2C27.0&datetime=2025-12-05T00%3A00%3A00%2F2025-12-07T23%3A59%3A59&limit=20
+  2025-12-06: 0 total, 0 DESC — []
+  [WARN] STAC query failed for 2025-12-18: 400 Client Error: Bad Request for url: https://catalogue.dataspace.copernicus.eu/stac/search?collections=SENTINEL-1&bbox=50.0%2C26.5%2C50.3%2C27.0&datetime=2025-12-17T00%3A00%3A00%2F2025-12-19T23%3A59%3A59&limit=20
+  2025-12-18: 0 total, 0 DESC — []
+  [WARN] STAC query failed for 2026-01-11: 400 Client Error: Bad Request for url: https://catalogue.dataspace.copernicus.eu/stac/search?collections=SENTINEL-1&bbox=50.0%2C26.5%2C50.3%2C27.0&datetime=2026-01-10T00%3A00%3A00%2F2026-01-12T23%3A59%3A59&limit=20
+  2026-01-11: 0 total, 0 DESC — []
+  [WARN] STAC query failed for 2026-02-03: 400 Client Error: Bad Request for url: https://catalogue.dataspace.copernicus.eu/stac/search?collections=SENTINEL-1&bbox=50.0%2C26.5%2C50.3%2C27.0&datetime=2026-02-02T00%3A00%3A00%2F2026-02-04T23%3A59%3A59&limit=20
+  2026-02-03: 0 total, 0 DESC — []
+
+Diagnosis written → diagnostics/cdse_stac/stac_diag.txt
+Run: 2026-10-26T11:22 UTC
+Script: scripts/research/cdse_stac_diag.py
+STAC: https://catalogue.dataspace.copernicus.eu/stac/search
+BBOX: 50.0,26.5,50.3,27.0
+
+=== Before 2025-11 (DESC only) ===
+  no data returned
+
+=== After 2025-11 (DESC only) ===
+  no data returned
+
+=== Platform diff: Before vs After (DESC) ===
+
