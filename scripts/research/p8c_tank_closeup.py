@@ -3,10 +3,11 @@ p8c_tank_closeup.py — P8 Step 3: per-tank close-up + range profiles
 
 For 4 tanks on two dates (2024-09-21 before, 2024-10-03 after):
   1. Download SLC IW2/VV burst for each date
-  2. Close-up PNG ±120m, aspect-corrected (azimuth stretched to match range scale)
-  3. Range profile at 1m step, ±1.5×radius → CSV + overlaid plot
+  2. Close-up PNG ±120m, aspect-corrected, for multilook ×1 and ×2
+  3. Range profile at 1m step, ±1.5×radius — raw + background-normalised (×2 only)
+  Background: median sigma0 in annulus r+40…r+80 m subtracted in dB.
 
-Also retries the GRD comparison PNG (SH error 500 on first attempt).
+Also retries the GRD comparison PNG.
 """
 
 import csv, io, math, os, re, struct, sys
@@ -139,7 +140,6 @@ def _list_nodes(token, url):
 
 def find_iw2_vv_annotation_node(token, product_id, safe_name):
     """Return (node_id, safe_node) for the IW2/VV annotation XML."""
-    # safe_name from catalog already ends with .SAFE
     safe_node = safe_name if safe_name.endswith(".SAFE") else safe_name + ".SAFE"
     url = (f"{CDSE_DL_BASE}/Products({product_id})"
            f"/Nodes({safe_node})/Nodes(annotation)/Nodes")
@@ -149,7 +149,6 @@ def find_iw2_vv_annotation_node(token, product_id, safe_name):
         nid = n.get("Id", "")
         if re.search(r"iw2.*vv", nid, re.I) and nid.lower().endswith(".xml"):
             return nid, safe_node
-    # fallback: any iw2 xml
     for n in nodes:
         nid = n.get("Id", "")
         if re.search(r"iw2", nid, re.I) and nid.lower().endswith(".xml"):
@@ -168,18 +167,17 @@ def download_annotation_xml(token, product_id, safe_node, xml_node):
 
 def find_calibration_node(token, product_id, safe_node, xml_node):
     """Return node_id of the calibration XML matching xml_node (iw2/vv).
-    Node names: calibration-s1a-iw2-... and noise-s1a-iw2-... — must pick calibration-, not noise-."""
+    Must pick calibration-... not noise-..."""
     url = (f"{CDSE_DL_BASE}/Products({product_id})"
            f"/Nodes({safe_node})/Nodes(annotation)/Nodes(calibration)/Nodes")
     nodes = _list_nodes(token, url)
     log(f"    calibration nodes ({len(nodes)}): {[n.get('Id', '?') for n in nodes[:5]]}")
-    stem = xml_node.replace(".xml", "")  # e.g. s1a-iw2-slc-vv-...
+    stem = xml_node.replace(".xml", "")
     for n in nodes:
         nid = n.get("Id", "")
         nid_l = nid.lower()
         if nid_l.startswith("calibration-") and stem in nid and nid_l.endswith(".xml"):
             return nid
-    # fallback: any calibration- node for iw2/vv
     for n in nodes:
         nid = n.get("Id", "")
         nid_l = nid.lower()
@@ -221,7 +219,7 @@ def apply_sigma0(z_complex, burst_idx, lpb, cal_interp):
     n_lines, n_samples = z_complex.shape
     global_lines = (burst_idx * lpb + np.arange(n_lines, dtype=np.float64))
     samples      = np.arange(n_samples, dtype=np.float64)
-    gg, ss = np.meshgrid(global_lines, samples, indexing="ij")  # (n_lines, n_samples)
+    gg, ss = np.meshgrid(global_lines, samples, indexing="ij")
     coords  = np.stack([gg.ravel(), ss.ravel()], axis=-1)
     A = cal_interp(coords).reshape(n_lines, n_samples)
     A = np.where(A > 0, A, 1.0)
@@ -229,8 +227,10 @@ def apply_sigma0(z_complex, burst_idx, lpb, cal_interp):
     return sigma0.astype(np.float32)
 
 
-def azimuth_multilook(arr, n=6):
-    """Average n azimuth lines; drops trailing partial block."""
+def azimuth_multilook(arr, n):
+    """Average n azimuth lines; n=1 returns unchanged array."""
+    if n == 1:
+        return arr.copy()
     cut = (arr.shape[0] // n) * n
     return arr[:cut, :].reshape(-1, n, arr.shape[1]).mean(axis=1)
 
@@ -347,12 +347,9 @@ def sh_grd(token, date_str, resolution=10):
 
 # ── close-up PNG ──────────────────────────────────────────────────────────────
 
-def tank_closeup_png(amp_by_date, info_by_date, burst_idx_by_date, tank, out_path):
+def tank_closeup_png(amp_by_date, info_by_date, burst_idx_by_date, tank, multilook_n, out_path):
     """Two-panel PNG: left=2024-09-21, right=2024-10-03.
-    amp_by_date contains sigma0 (linear) after calibration + azimuth multilook.
-    Axes in metres (range horizontal, azimuth vertical), aspect=equal.
-    Far wall / shadow arc direction annotated (S-1 descending look azimuth ~282°,
-    near range = W/WNW, far range = E/ESE → shadow on right half of circle)."""
+    amp_by_date contains sigma0 (linear) after calibration + azimuth multilook ×multilook_n."""
     import matplotlib
     matplotlib.use("Agg")
     import matplotlib.pyplot as plt
@@ -362,22 +359,20 @@ def tank_closeup_png(amp_by_date, info_by_date, burst_idx_by_date, tank, out_pat
 
     fig, axes = plt.subplots(1, 2, figsize=(12, 7))
 
-    MULTILOOK_N = 6
-
     for ax, date in zip(axes, DATES):
-        amp       = amp_by_date[date]   # sigma0, after multilook
+        amp       = amp_by_date[date]
         info      = info_by_date[date]
         rps       = info["rps"]
-        aps       = info["aps"] * MULTILOOK_N   # effective az pixel size after multilook
+        aps       = info["aps"] * multilook_n   # effective az pixel size after multilook
         lpb       = info["lpb"]
         burst_idx = burst_idx_by_date[date]
         interp    = info["interp"]
 
         li_g, sa_c = interp(tank["lat"], tank["lon"])
-        li_b = (li_g - burst_idx * lpb) / MULTILOOK_N   # multilook-space row
+        li_b = (li_g - burst_idx * lpb) / multilook_n   # row in multilook array
 
         half_rg_px = WIN_M / rps
-        half_az_px = WIN_M / aps   # aps already = info["aps"]*MULTILOOK_N
+        half_az_px = WIN_M / aps
 
         l0 = max(0, int(li_b - half_az_px))
         l1 = min(amp.shape[0], int(li_b + half_az_px) + 1)
@@ -388,33 +383,26 @@ def tank_closeup_png(amp_by_date, info_by_date, burst_idx_by_date, tank, out_pat
         db   = 10 * np.log10(np.clip(crop, 1e-10, None))
         vmin, vmax = np.percentile(db, [1, 99])
 
-        # extent in metres (range × azimuth) → aspect="equal" gives correct geometry
         ext = [(s0 - sa_c) * rps, (s1 - sa_c) * rps,
                (l1 - li_b) * aps, (l0 - li_b) * aps]
 
         ax.imshow(db, extent=ext, cmap="gray", vmin=vmin, vmax=vmax,
                   aspect="equal", origin="upper", interpolation="nearest")
 
-        # tank circle
         circ = mpatches.Circle((0, 0), tank["radius_m"],
                                 edgecolor="cyan", facecolor="none", lw=1.2)
         ax.add_patch(circ)
         ax.plot(0, 0, "+", color="cyan", ms=6, lw=0.8)
 
-        # ±radius markers
         for sgn in (-1, 1):
             ax.axvline(sgn * tank["radius_m"], color="cyan", lw=0.5, ls="--", alpha=0.6)
 
-        # Satellite direction: S-1 descending, look azimuth ~282° → satellite W/WNW of target
-        # Near range = left (W), far range = right (E/ESE)
         ax.annotate("", xy=(-WIN_M * 0.85, -WIN_M * 0.85),
                     xytext=(-WIN_M * 0.55, -WIN_M * 0.85),
                     arrowprops=dict(arrowstyle="->", color="yellow", lw=1.2))
         ax.text(-WIN_M * 0.85, -WIN_M * 0.77, "← satellite (near rng)", color="yellow",
                 fontsize=7, ha="left")
 
-        # Far wall / shadow arc: on the FAR range side (right half of circle)
-        # floating roof crescent shadow appears here as dark arc
         r = tank["radius_m"]
         ax.annotate("far wall\n(shadow arc)", xy=(r * 0.9, 0),
                     xytext=(r * 1.35, WIN_M * 0.35),
@@ -425,7 +413,7 @@ def tank_closeup_png(amp_by_date, info_by_date, burst_idx_by_date, tank, out_pat
         ax.set_ylim(WIN_M, -WIN_M)
         ax.set_xlabel("Range offset (m, slant)   ← near    far →")
         ax.set_ylabel("Azimuth offset (m)")
-        ax.set_title(f"{date}\nrps={rps:.3f}m  aps_eff={aps:.1f}m (×6 multilook)")
+        ax.set_title(f"{date}\nrps={rps:.3f}m  aps_eff={aps:.1f}m (×{multilook_n} multilook)")
 
     fig.suptitle(f"{tank['id']}  r={tank['radius_m']}m  [cyan circle = registry radius]", fontsize=12)
     fig.tight_layout()
@@ -434,25 +422,62 @@ def tank_closeup_png(amp_by_date, info_by_date, burst_idx_by_date, tank, out_pat
     log(f"  saved {out_path.name}")
 
 
-# ── range profile ─────────────────────────────────────────────────────────────
+# ── annulus background ────────────────────────────────────────────────────────
 
-MULTILOOK_N = 6   # azimuth multilook factor applied in main()
-
-
-def range_profile(amp, info, burst_idx, tank, date_str):
-    """Extract sigma0 profile along range through tank centre.
-    amp is already multilook-averaged (MULTILOOK_N lines per output row).
-    Returns (dist_m array, sigma0_db array) at 1m steps, ±1.5×radius."""
-    rps   = info["rps"]
-    lpb   = info["lpb"] // MULTILOOK_N   # rows in multilook array per burst
+def annulus_background(amp_ml, info, burst_idx, tank, multilook_n, r_inner_extra=40, r_outer_extra=80):
+    """Return median linear sigma0 in 2D annulus (r+r_inner_extra … r+r_outer_extra) m.
+    Returns scalar median or NaN if too few valid pixels."""
+    rps  = info["rps"]
+    aps  = info["aps"] * multilook_n
+    lpb  = info["lpb"]
     interp = info["interp"]
 
     li_g, sa_c = interp(tank["lat"], tank["lon"])
-    li_b = (li_g - burst_idx * info["lpb"]) / MULTILOOK_N
+    li_b = (li_g - burst_idx * lpb) / multilook_n
+
+    r_inner = tank["radius_m"] + r_inner_extra
+    r_outer = tank["radius_m"] + r_outer_extra
+
+    # Window large enough for the outer annulus
+    win_px_rg = int(np.ceil(r_outer / rps)) + 2
+    win_px_az = int(np.ceil(r_outer / aps)) + 2
+
+    l0 = max(0, int(li_b) - win_px_az)
+    l1 = min(amp_ml.shape[0], int(li_b) + win_px_az + 1)
+    s0 = max(0, int(sa_c) - win_px_rg)
+    s1 = min(amp_ml.shape[1], int(sa_c) + win_px_rg + 1)
+
+    patch = amp_ml[l0:l1, s0:s1]  # linear sigma0
+    n_rows, n_cols = patch.shape
+
+    # Build distance grid (metres) for each pixel in the patch
+    rows = (np.arange(n_rows) + l0 - li_b) * aps      # azimuth metres from centre
+    cols = (np.arange(n_cols) + s0 - sa_c) * rps      # range metres from centre
+    RR, CC = np.meshgrid(rows, cols, indexing="ij")
+    dist = np.sqrt(RR**2 + CC**2)
+
+    mask = (dist >= r_inner) & (dist <= r_outer) & (patch > 0)
+    vals = patch[mask]
+    if vals.size < 10:
+        return np.nan
+    return float(np.median(vals))
+
+
+# ── range profile ─────────────────────────────────────────────────────────────
+
+def range_profile(amp, info, burst_idx, tank, multilook_n):
+    """Extract sigma0 profile along range through tank centre.
+    amp is after multilook ×multilook_n.
+    Returns (dist_m array, sigma0_linear array) at 1m steps, ±1.5×radius."""
+    rps  = info["rps"]
+    lpb  = info["lpb"]
+    interp = info["interp"]
+
+    li_g, sa_c = interp(tank["lat"], tank["lon"])
+    li_b = (li_g - burst_idx * lpb) / multilook_n
     row  = int(round(li_b))
     row  = max(0, min(amp.shape[0] - 1, row))
 
-    # Single multilook row (already 6-line average); no further averaging needed
     amp_row = amp[row, :]
 
     win_m  = 1.5 * tank["radius_m"]
@@ -467,23 +492,31 @@ def range_profile(amp, info, burst_idx, tank, date_str):
         frac = xi - lo
         amp_interp[in_bounds] = (amp_row[lo] * (1 - frac) + amp_row[lo + 1] * frac)
 
-    db_interp = 10 * np.log10(np.clip(amp_interp, 1e-10, None))
-    db_interp[~np.isfinite(db_interp)] = np.nan
-    return dists, db_interp
+    return dists, amp_interp   # linear sigma0
 
 
-def save_profile_csv(dists, db_arr, tank_id, date_str, out_path):
+def save_profile_csv(dists, amp_lin, bg_lin, tank_id, date_str, multilook_n, out_path):
+    """Save profile CSV with sigma0_db and sigma0_db_norm columns.
+    bg_lin: scalar background median (linear); NaN if unavailable."""
+    db = 10 * np.log10(np.clip(amp_lin, 1e-10, None))
+    if np.isfinite(bg_lin) and bg_lin > 0:
+        db_norm = db - 10 * np.log10(bg_lin)
+    else:
+        db_norm = np.full_like(db, np.nan)
+
     with open(out_path, "w", newline="") as f:
         w = csv.writer(f)
-        w.writerow(["tank_id", "date", "distance_m", "sigma0_db"])
-        for d, v in zip(dists, db_arr):
-            w.writerow([tank_id, date_str, f"{d:.1f}",
-                        f"{v:.4f}" if np.isfinite(v) else ""])
+        w.writerow(["tank_id", "date", "multilook_n", "distance_m", "sigma0_db", "sigma0_db_norm"])
+        for d, v, vn in zip(dists, db, db_norm):
+            row = [tank_id, date_str, multilook_n, f"{d:.1f}",
+                   f"{v:.4f}" if np.isfinite(v) else "",
+                   f"{vn:.4f}" if np.isfinite(vn) else ""]
+            w.writerow(row)
     log(f"  CSV: {out_path.name}  ({len(dists)} rows)")
 
 
-def plot_profiles(profiles_by_date, tank, out_path):
-    """Overlay profiles from both dates on one figure."""
+def plot_profiles(profiles_by_date, tank, multilook_n, out_path, normalized=False):
+    """Overlay profiles from both dates. profiles_by_date[date] = (dists, amp_lin, bg_lin)."""
     import matplotlib
     matplotlib.use("Agg")
     import matplotlib.pyplot as plt
@@ -492,9 +525,12 @@ def plot_profiles(profiles_by_date, tank, out_path):
     labels = {"2024-09-21": "2024-09-21 (before)", "2024-10-03": "2024-10-03 (after)"}
 
     fig, ax = plt.subplots(figsize=(10, 4))
-    for date, (dists, dbs) in profiles_by_date.items():
-        mask = np.isfinite(dbs)
-        ax.plot(dists[mask], dbs[mask], color=colors[date], lw=1.2, label=labels[date])
+    for date, (dists, amp_lin, bg_lin) in profiles_by_date.items():
+        db = 10 * np.log10(np.clip(amp_lin, 1e-10, None))
+        if normalized and np.isfinite(bg_lin) and bg_lin > 0:
+            db = db - 10 * np.log10(bg_lin)
+        mask = np.isfinite(db)
+        ax.plot(dists[mask], db[mask], color=colors[date], lw=1.2, label=labels[date])
 
     r = tank["radius_m"]
     for sgn in (-1, 1):
@@ -502,8 +538,10 @@ def plot_profiles(profiles_by_date, tank, out_path):
     ax.axvline(0, color="white", lw=0.5, ls=":")
 
     ax.set_xlabel("Distance from tank centre (m, range)")
-    ax.set_ylabel("Amplitude (dB)")
-    ax.set_title(f"{tank['id']}  r={r}m — sigma0 range profile  (×{MULTILOOK_N} az multilook)")
+    ylabel = "sigma0 - BG (dB)  [annulus r+40…r+80 m]" if normalized else "sigma0 (dB)"
+    ax.set_ylabel(ylabel)
+    norm_tag = " — NORMALISED (BG subtracted)" if normalized else ""
+    ax.set_title(f"{tank['id']}  r={r}m — sigma0 range profile  (×{multilook_n} az multilook){norm_tag}")
     ax.legend(fontsize=9)
     ax.grid(True, alpha=0.3)
     fig.tight_layout()
@@ -548,13 +586,17 @@ def plot_grd(arr_grd, bbox_deg, tanks, out_path, date_str):
 
 # ── main ──────────────────────────────────────────────────────────────────────
 
+MULTILOOK_VALUES = [1, 2]  # produce outputs for each
+
+
 def main():
     log(f"p8c_tank_closeup.py  {datetime.now(timezone.utc).isoformat()}")
 
     token = get_token()
     log("token OK")
 
-    amp_by_date       = {}
+    # calibrated sigma0 (linear) — one per date, before any multilook
+    sigma0_by_date    = {}
     info_by_date      = {}
     burst_idx_by_date = {}
 
@@ -614,35 +656,59 @@ def main():
             f"mean_dB={10*np.log10(sigma0[sigma0>0].mean()):.2f}  "
             f"std_dB_approx={sigma0[sigma0>0].std()/sigma0[sigma0>0].mean()/np.log(10)*10:.2f}")
 
-        log(f"  azimuth multilook ×{MULTILOOK_N} ...")
-        ml = azimuth_multilook(sigma0, n=MULTILOOK_N)
-        log(f"  multilook shape={ml.shape}  "
-            f"mean_dB={10*np.log10(ml[ml>0].mean()):.2f}  "
-            f"std_dB_approx={ml[ml>0].std()/ml[ml>0].mean()/np.log(10)*10:.2f}")
-
-        amp_by_date[date]       = ml
+        sigma0_by_date[date]    = sigma0
         info_by_date[date]      = info
         burst_idx_by_date[date] = burst_idx
 
-    # ── close-ups + profiles ──────────────────────────────────────────────────
-    for tid in TARGET_TANK_IDS:
-        tank = TANK_BY_ID[tid]
-        log(f"\n--- {tid}  r={tank['radius_m']}m ---")
+    # ── per multilook value ───────────────────────────────────────────────────
+    for ml_n in MULTILOOK_VALUES:
+        log(f"\n{'='*60}")
+        log(f"=== MULTILOOK ×{ml_n}  (aps_eff ≈ {info_by_date[DATES[0]]['aps']*ml_n:.1f} m) ===")
+        ml_suffix = f"_ml{ml_n}"
 
-        closeup_path = OUT_DIR / f"p8c_closeup_{tid}_{TS}.png"
-        tank_closeup_png(amp_by_date, info_by_date, burst_idx_by_date, tank, closeup_path)
-
-        profiles_by_date = {}
+        # apply multilook for this factor
+        amp_by_date = {}
         for date in DATES:
-            dists, dbs = range_profile(
-                amp_by_date[date], info_by_date[date],
-                burst_idx_by_date[date], tank, date)
-            profiles_by_date[date] = (dists, dbs)
-            csv_path = OUT_DIR / f"p8c_profile_{tid}_{date}_{TS}.csv"
-            save_profile_csv(dists, dbs, tid, date, csv_path)
+            log(f"  multilook ×{ml_n} for {date} ...")
+            ml = azimuth_multilook(sigma0_by_date[date], n=ml_n)
+            log(f"    shape={ml.shape}  "
+                f"mean_dB={10*np.log10(ml[ml>0].mean()):.2f}")
+            amp_by_date[date] = ml
 
-        prof_png = OUT_DIR / f"p8c_profile_{tid}_{TS}.png"
-        plot_profiles(profiles_by_date, tank, prof_png)
+        for tid in TARGET_TANK_IDS:
+            tank = TANK_BY_ID[tid]
+            log(f"\n--- {tid}  r={tank['radius_m']}m  ×{ml_n} ---")
+
+            # close-up PNG
+            closeup_path = OUT_DIR / f"p8c_closeup_{tid}{ml_suffix}_{TS}.png"
+            tank_closeup_png(amp_by_date, info_by_date, burst_idx_by_date,
+                             tank, ml_n, closeup_path)
+
+            # profiles + background normalization
+            profiles_by_date = {}
+            for date in DATES:
+                dists, amp_lin = range_profile(
+                    amp_by_date[date], info_by_date[date],
+                    burst_idx_by_date[date], tank, ml_n)
+
+                bg_lin = annulus_background(
+                    amp_by_date[date], info_by_date[date],
+                    burst_idx_by_date[date], tank, ml_n)
+                bg_db = 10 * np.log10(bg_lin) if (np.isfinite(bg_lin) and bg_lin > 0) else np.nan
+                log(f"    {date} bg_median={bg_db:.2f} dB  (annulus r+40…r+80 m)")
+
+                profiles_by_date[date] = (dists, amp_lin, bg_lin)
+
+                csv_path = OUT_DIR / f"p8c_profile_{tid}{ml_suffix}_{date}_{TS}.csv"
+                save_profile_csv(dists, amp_lin, bg_lin, tid, date, ml_n, csv_path)
+
+            # raw profile PNG
+            prof_raw_png = OUT_DIR / f"p8c_profile_{tid}{ml_suffix}_{TS}.png"
+            plot_profiles(profiles_by_date, tank, ml_n, prof_raw_png, normalized=False)
+
+            # normalised profile PNG (only useful for ×2 and above, but produce for all)
+            prof_norm_png = OUT_DIR / f"p8c_profile_{tid}{ml_suffix}_norm_{TS}.png"
+            plot_profiles(profiles_by_date, tank, ml_n, prof_norm_png, normalized=True)
 
     # ── GRD retry ─────────────────────────────────────────────────────────────
     log(f"\n=== GRD retry (2024-10-03) ===")
