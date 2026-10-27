@@ -85,14 +85,6 @@ def _bbox(tanks, buffer_m=300):
     return BBox([min(lons)-dlon, min(lats)-dlat, max(lons)+dlon, max(lats)+dlat], crs=CRS.WGS84)
 
 # ── Orbit/satellite cross-calibration helper ──────────────────────────────────
-def _infer_platform(dates: pd.Series) -> pd.Series:
-    """Infer Sentinel-1 platform from acquisition date.
-    S-1B failed 2021-11; S-1C became operational ~2025-05."""
-    plat = pd.Series("S1A", index=dates.index, dtype=str)
-    plat[dates < pd.Timestamp("2022-01-01")] = "S1B"
-    plat[dates >= pd.Timestamp("2025-05-01")] = "S1C"
-    return plat
-
 
 def _cross_calibrate(df_t: pd.DataFrame, group_cols: list) -> tuple:
     """
@@ -153,7 +145,7 @@ def _cross_calibrate(df_t: pd.DataFrame, group_cols: list) -> tuple:
     return df_t, offsets
 
 
-_CAL_GROUP_COLS = ["relative_orbit", "orbit_direction", "platform"]
+_CAL_GROUP_COLS = ["relative_orbit", "orbit_direction"]
 
 terminal_daily = {}
 
@@ -209,7 +201,6 @@ for terminal in TERMINALS:
             print(f"  dropping {n_dropped} partial-coverage dates (capacity threshold)")
 
         # Orbit/satellite calibration
-        df_t["platform"] = _infer_platform(df_t["date"]).values
         has_orbit_cols = all(c in df_t.columns and df_t[c].notna().any()
                              for c in ["relative_orbit", "orbit_direction"])
         n_groups = df_t.groupby(_CAL_GROUP_COLS).ngroups if has_orbit_cols else 1
