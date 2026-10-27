@@ -122,17 +122,17 @@ def get_node_tree(token, product_id, safe_name):
         data = r.json()
         return data.get("result", data.get("value", []))
 
-    # top level
+    # top level: /Products(<id>)/Nodes
     root = list_nodes()
     log(f"  root nodes: {[n['Id'] for n in root]}")
 
-    # SAFE dir
+    # SAFE dir contents: /Products(<id>)/Nodes(<SAFE>.SAFE)/Nodes
     safe_node = safe_name + ".SAFE"
-    nodes_l1 = list_nodes(f"Nodes({safe_node})")
+    nodes_l1 = list_nodes(f"Nodes({safe_node})/Nodes")
     log(f"  {safe_node}/ nodes: {[n['Id'] for n in nodes_l1]}")
 
-    # measurement dir
-    nodes_meas = list_nodes(f"Nodes({safe_node})/Nodes(measurement)")
+    # measurement dir contents: /Products(<id>)/Nodes(<SAFE>.SAFE)/Nodes(measurement)/Nodes
+    nodes_meas = list_nodes(f"Nodes({safe_node})/Nodes(measurement)/Nodes")
     log(f"  measurement/ nodes ({len(nodes_meas)}):")
     tiff_files = []
     for n in nodes_meas:
