@@ -84,7 +84,7 @@ function evaluatePixel(s){return[s.VV];}
 def sh_token():
     import requests
     r = requests.post(
-        "https://services.sentinel-hub.com/auth/realms/main/protocol/openid-connect/token",
+        "https://identity.dataspace.copernicus.eu/auth/realms/CDSE/protocol/openid-connect/token",
         data={"grant_type":"client_credentials","client_id":SH_CLIENT_ID,"client_secret":SH_CLIENT_SECRET},
         timeout=30,
     )
@@ -94,7 +94,7 @@ def sh_token():
 
 def sh_request(token, bbox, date_str, rel_orbit, direction, resolution=10, resampling="BILINEAR"):
     import requests, tifffile
-    url = "https://services.sentinel-hub.com/api/v1/process"
+    url = "https://sh.dataspace.copernicus.eu/api/v1/process"
     payload = {
         "input": {
             "bounds": {"bbox": bbox, "properties": {"crs": "http://www.opengis.net/def/crs/EPSG/0/4326"}},

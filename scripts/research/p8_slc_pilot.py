@@ -68,7 +68,7 @@ function evaluatePixel(s){
 def sh_token():
     import requests
     r = requests.post(
-        "https://services.sentinel-hub.com/auth/realms/main/protocol/openid-connect/token",
+        "https://identity.dataspace.copernicus.eu/auth/realms/CDSE/protocol/openid-connect/token",
         data={"grant_type":"client_credentials","client_id":SH_CLIENT_ID,"client_secret":SH_CLIENT_SECRET},
         timeout=30,
     )
@@ -85,7 +85,7 @@ def find_slc_scene(date_str, bbox_deg):
     Uses SH Catalog API: /catalog/1.0.0/search with type=sentinel-1-slc
     """
     import requests
-    url = "https://services.sentinel-hub.com/api/v1/catalog/1.0.0/search"
+    url = "https://sh.dataspace.copernicus.eu/api/v1/catalog/1.0.0/search"
     # Token via client_credentials already obtained in caller — pass via header
     payload = {
         "bbox": bbox_deg,
@@ -105,7 +105,7 @@ def find_slc_scene(date_str, bbox_deg):
 
 def sh_catalog_search(token, date_str, bbox_deg):
     import requests
-    url = "https://services.sentinel-hub.com/api/v1/catalog/1.0.0/search"
+    url = "https://sh.dataspace.copernicus.eu/api/v1/catalog/1.0.0/search"
     payload = {
         "bbox": bbox_deg,
         "datetime": f"{date_str}T00:00:00Z/{date_str}T23:59:59Z",
@@ -136,7 +136,7 @@ def sh_slc_request(token, bbox, date_str, resolution=5):
     SH resamples from SLC complex to intensity before delivering tiff.
     """
     import requests, tifffile
-    url = "https://services.sentinel-hub.com/api/v1/process"
+    url = "https://sh.dataspace.copernicus.eu/api/v1/process"
     payload = {
         "input": {
             "bounds": {"bbox": bbox, "properties": {"crs": "http://www.opengis.net/def/crs/EPSG/0/4326"}},
