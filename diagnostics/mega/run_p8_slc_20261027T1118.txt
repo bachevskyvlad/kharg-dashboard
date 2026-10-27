@@ -1,0 +1,84 @@
+=== P8 SLC pilot — Kharg DESC-35 — 2026-10-27T11:18 UTC ===
+
+
+[notice] A new release of pip is available: 26.2.1 -> 26.2.2
+[notice] To update, run: pip install --upgrade pip
+Auth SentinelHub...
+  OK
+
+Tanks: 47
+BBox: [50.304119085706624, 29.2189438866853, 50.319243133023754, 29.24176392038386]
+
+Disk free: 89.6 GB  (20 scenes × ~80MB SLC each = ~1.6 GB)
+CDSE STAC catalog probe (one date)...
+    catalog 400: {"code":400,"description":"Cannot parse parameter `filter`."}
+  No SLC items found for 2019-06-08 — SLC collection may not be available on this SH account
+  Falling back to SH Process API (sentinel-1-slc) direct request for assessment
+[1/20] 2019-04-21
+    SLC SH 400: {"error":{"status":400,"reason":"Bad Request","message":"Invalid collection type. If using your own data collection, make sure to use the appropriate prefix.","code":"COMMON_BAD_PAYLOAD","errors":{"parameter":"input->data[0]->type","invalidValue":"sentinel-1-slc"}}}
+  no SLC data
+[2/20] 2019-05-03
+    SLC SH 400: {"error":{"status":400,"reason":"Bad Request","message":"Invalid collection type. If using your own data collection, make sure to use the appropriate prefix.","code":"COMMON_BAD_PAYLOAD","errors":{"parameter":"input->data[0]->type","invalidValue":"sentinel-1-slc"}}}
+  no SLC data
+[3/20] 2019-06-08
+    SLC SH 400: {"error":{"status":400,"reason":"Bad Request","message":"Invalid collection type. If using your own data collection, make sure to use the appropriate prefix.","code":"COMMON_BAD_PAYLOAD","errors":{"parameter":"input->data[0]->type","invalidValue":"sentinel-1-slc"}}}
+  no SLC data
+[4/20] 2019-07-12
+    SLC SH 400: {"error":{"status":400,"reason":"Bad Request","message":"Invalid collection type. If using your own data collection, make sure to use the appropriate prefix.","code":"COMMON_BAD_PAYLOAD","errors":{"parameter":"input->data[0]->type","invalidValue":"sentinel-1-slc"}}}
+  no SLC data
+[5/20] 2019-09-06
+    SLC SH 400: {"error":{"status":400,"reason":"Bad Request","message":"Invalid collection type. If using your own data collection, make sure to use the appropriate prefix.","code":"COMMON_BAD_PAYLOAD","errors":{"parameter":"input->data[0]->type","invalidValue":"sentinel-1-slc"}}}
+  no SLC data
+[6/20] 2024-09-21
+    SLC SH 400: {"error":{"status":400,"reason":"Bad Request","message":"Invalid collection type. If using your own data collection, make sure to use the appropriate prefix.","code":"COMMON_BAD_PAYLOAD","errors":{"parameter":"input->data[0]->type","invalidValue":"sentinel-1-slc"}}}
+  no SLC data
+[7/20] 2024-10-03
+    SLC SH 400: {"error":{"status":400,"reason":"Bad Request","message":"Invalid collection type. If using your own data collection, make sure to use the appropriate prefix.","code":"COMMON_BAD_PAYLOAD","errors":{"parameter":"input->data[0]->type","invalidValue":"sentinel-1-slc"}}}
+  no SLC data
+[8/20] 2024-10-15
+    SLC SH 400: {"error":{"status":400,"reason":"Bad Request","message":"Invalid collection type. If using your own data collection, make sure to use the appropriate prefix.","code":"COMMON_BAD_PAYLOAD","errors":{"parameter":"input->data[0]->type","invalidValue":"sentinel-1-slc"}}}
+  no SLC data
+[9/20] 2024-11-08
+    SLC SH 400: {"error":{"status":400,"reason":"Bad Request","message":"Invalid collection type. If using your own data collection, make sure to use the appropriate prefix.","code":"COMMON_BAD_PAYLOAD","errors":{"parameter":"input->data[0]->type","invalidValue":"sentinel-1-slc"}}}
+  no SLC data
+[10/20] 2025-01-01
+    SLC SH 400: {"error":{"status":400,"reason":"Bad Request","message":"Invalid collection type. If using your own data collection, make sure to use the appropriate prefix.","code":"COMMON_BAD_PAYLOAD","errors":{"parameter":"input->data[0]->type","invalidValue":"sentinel-1-slc"}}}
+  no SLC data
+[11/20] 2026-04-14
+    SLC SH 400: {"error":{"status":400,"reason":"Bad Request","message":"Invalid collection type. If using your own data collection, make sure to use the appropriate prefix.","code":"COMMON_BAD_PAYLOAD","errors":{"parameter":"input->data[0]->type","invalidValue":"sentinel-1-slc"}}}
+  no SLC data
+[12/20] 2026-05-02
+    SLC SH 400: {"error":{"status":400,"reason":"Bad Request","message":"Invalid collection type. If using your own data collection, make sure to use the appropriate prefix.","code":"COMMON_BAD_PAYLOAD","errors":{"parameter":"input->data[0]->type","invalidValue":"sentinel-1-slc"}}}
+  no SLC data
+[13/20] 2026-05-14
+    SLC SH 400: {"error":{"status":400,"reason":"Bad Request","message":"Invalid collection type. If using your own data collection, make sure to use the appropriate prefix.","code":"COMMON_BAD_PAYLOAD","errors":{"parameter":"input->data[0]->type","invalidValue":"sentinel-1-slc"}}}
+  no SLC data
+[14/20] 2026-06-07
+    SLC SH 400: {"error":{"status":400,"reason":"Bad Request","message":"Invalid collection type. If using your own data collection, make sure to use the appropriate prefix.","code":"COMMON_BAD_PAYLOAD","errors":{"parameter":"input->data[0]->type","invalidValue":"sentinel-1-slc"}}}
+  no SLC data
+[15/20] 2026-06-19
+    SLC SH 400: {"error":{"status":400,"reason":"Bad Request","message":"Invalid collection type. If using your own data collection, make sure to use the appropriate prefix.","code":"COMMON_BAD_PAYLOAD","errors":{"parameter":"input->data[0]->type","invalidValue":"sentinel-1-slc"}}}
+  no SLC data
+[16/20] 2026-06-26
+    SLC SH 400: {"error":{"status":400,"reason":"Bad Request","message":"Invalid collection type. If using your own data collection, make sure to use the appropriate prefix.","code":"COMMON_BAD_PAYLOAD","errors":{"parameter":"input->data[0]->type","invalidValue":"sentinel-1-slc"}}}
+  no SLC data
+[17/20] 2026-07-08
+    SLC SH 400: {"error":{"status":400,"reason":"Bad Request","message":"Invalid collection type. If using your own data collection, make sure to use the appropriate prefix.","code":"COMMON_BAD_PAYLOAD","errors":{"parameter":"input->data[0]->type","invalidValue":"sentinel-1-slc"}}}
+  no SLC data
+[18/20] 2026-07-20
+    SLC SH 400: {"error":{"status":400,"reason":"Bad Request","message":"Invalid collection type. If using your own data collection, make sure to use the appropriate prefix.","code":"COMMON_BAD_PAYLOAD","errors":{"parameter":"input->data[0]->type","invalidValue":"sentinel-1-slc"}}}
+  no SLC data
+[19/20] 2026-08-01
+    SLC SH 400: {"error":{"status":400,"reason":"Bad Request","message":"Invalid collection type. If using your own data collection, make sure to use the appropriate prefix.","code":"COMMON_BAD_PAYLOAD","errors":{"parameter":"input->data[0]->type","invalidValue":"sentinel-1-slc"}}}
+  no SLC data
+[20/20] 2026-08-13
+    SLC SH 400: {"error":{"status":400,"reason":"Bad Request","message":"Invalid collection type. If using your own data collection, make sure to use the appropriate prefix.","code":"COMMON_BAD_PAYLOAD","errors":{"parameter":"input->data[0]->type","invalidValue":"sentinel-1-slc"}}}
+  no SLC data
+
+Saving slc_kharg.csv.gz (0 rows)...
+Saving slc_profiles.npz (0 arrays)...
+
+=== Quality report ===
+  no rows
+
+DONE
