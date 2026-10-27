@@ -20,9 +20,9 @@ import numpy as np
 from pathlib import Path
 from datetime import datetime, timezone, timedelta
 
-CDSE_TOKEN_URL = "https://identity.dataspace.copernicus.eu/auth/realms/CDSE/protocol/openid-connect/token"
-CDSE_ODATA_URL = "https://catalogue.dataspace.copernicus.eu/odata/v1"
-CDSE_DL_BASE   = "https://download.dataspace.copernicus.eu/odata/v1"
+CDSE_TOKEN_URL    = "https://identity.dataspace.copernicus.eu/auth/realms/CDSE/protocol/openid-connect/token"
+CDSE_CATALOG_URL  = "https://catalogue.dataspace.copernicus.eu/odata/v1"
+CDSE_DL_BASE      = "https://download.dataspace.copernicus.eu/odata/v1"
 
 CLIENT_ID     = os.environ["CLIENT_ID"]
 CLIENT_SECRET = os.environ["CLIENT_SECRET"]
@@ -83,7 +83,7 @@ def search_slc(token, date_str):
         f"and ContentDate/Start lt {d1}"
     )
 
-    url = f"{CDSE_ODATA_URL}/Products?$filter={filt}&$orderby=ContentDate/Start desc&$top=5"
+    url = f"{CDSE_CATALOG_URL}/Products?$filter={filt}&$orderby=ContentDate/Start desc&$top=5"
     log(f"  URL: {url}")
 
     r = requests.get(url, headers={"Authorization": f"Bearer {token}"}, timeout=60)
@@ -109,31 +109,30 @@ def get_node_tree(token, product_id, safe_name):
     import requests
     log(f"\n=== Step 3: node tree ===")
 
-    def list_nodes(path):
-        url = f"{CDSE_ODATA_URL}/Products({product_id})/Nodes({path})$value" if path else \
-              f"{CDSE_ODATA_URL}/Products({product_id})/Nodes"
-        # listing endpoint (no $value)
-        url = f"{CDSE_ODATA_URL}/Products({product_id})/Nodes"
-        if path:
-            url = f"{CDSE_ODATA_URL}/Products({product_id})/Nodes({path})"
+    # suffix is the part after Products(<id>)/ e.g. "" or "Nodes(X.SAFE)" or "Nodes(X.SAFE)/Nodes(measurement)"
+    def list_nodes(suffix=""):
+        if suffix:
+            url = f"{CDSE_DL_BASE}/Products({product_id})/{suffix}"
+        else:
+            url = f"{CDSE_DL_BASE}/Products({product_id})/Nodes"
         r = requests.get(url, headers={"Authorization": f"Bearer {token}"}, timeout=60)
         if r.status_code != 200:
-            log(f"    list_nodes({path}) failed {r.status_code}: {r.text[:200]}")
+            log(f"    list_nodes({suffix!r}) failed {r.status_code}: {r.text[:300]}")
             return []
-        return r.json().get("result", [])
+        data = r.json()
+        return data.get("result", data.get("value", []))
 
     # top level
-    root = list_nodes("")
+    root = list_nodes()
     log(f"  root nodes: {[n['Id'] for n in root]}")
 
     # SAFE dir
     safe_node = safe_name + ".SAFE"
-    nodes_l1 = list_nodes(safe_node)
+    nodes_l1 = list_nodes(f"Nodes({safe_node})")
     log(f"  {safe_node}/ nodes: {[n['Id'] for n in nodes_l1]}")
 
     # measurement dir
-    meas_path = f"{safe_node}/Nodes(measurement)"
-    nodes_meas = list_nodes(meas_path)
+    nodes_meas = list_nodes(f"Nodes({safe_node})/Nodes(measurement)")
     log(f"  measurement/ nodes ({len(nodes_meas)}):")
     tiff_files = []
     for n in nodes_meas:
