@@ -1,0 +1,292 @@
+p9b_profile_export.py  2026-10-27T15:31:49.216840+00:00
+
+=== identify tank groups ===
+  kharg tanks in CSV: 61  n_dates=12
+  with_peaks (all 12 dates): 12 → ['t40_9', 't55_0', 't55_11', 't55_13', 't55_15', 't55_21', 't55_26', 't55_27', 't55_29', 't60_0', 't60_1', 't60_2']
+  no_peaks (0 dates):               49  → ['t25_0', 't25_1', 't25_10', 't25_11', 't25_2', 't25_3', 't25_4', 't25_5', 't25_6', 't25_7']
+  wrote p9b_tank_groups.txt
+  selected with_peaks: ['t40_9', 't55_0', 't55_11', 't55_13', 't55_15', 't55_21', 't55_26', 't55_27', 't55_29', 't60_0']
+  selected no_peaks:   ['t25_0', 't25_1', 't25_10', 't25_11', 't25_2', 't25_3', 't25_4', 't25_5', 't25_6', 't25_7']
+  total tanks: 20  × 12 dates
+
+=== get token ===
+  token OK
+
+  [1/12] 2019-04-21
+    shape=(438, 355)  res≈10.0 m
+    t40_9        (with_peaks)  profile pts=13
+    t55_0        (with_peaks)  profile pts=19
+    t55_11       (with_peaks)  profile pts=19
+    t55_13       (with_peaks)  profile pts=18
+    t55_15       (with_peaks)  profile pts=19
+    t55_21       (with_peaks)  profile pts=19
+    t55_26       (with_peaks)  profile pts=19
+    t55_27       (with_peaks)  profile pts=19
+    t55_29       (with_peaks)  profile pts=19
+    t60_0        (with_peaks)  profile pts=19
+    t25_0        (no_peaks  )  profile pts=9
+    t25_1        (no_peaks  )  profile pts=9
+    t25_10       (no_peaks  )  profile pts=9
+    t25_11       (no_peaks  )  profile pts=9
+    t25_2        (no_peaks  )  profile pts=9
+    t25_3        (no_peaks  )  profile pts=9
+    t25_4        (no_peaks  )  profile pts=9
+    t25_5        (no_peaks  )  profile pts=9
+    t25_6        (no_peaks  )  profile pts=9
+    t25_7        (no_peaks  )  profile pts=9
+
+  [2/12] 2019-05-03
+    shape=(438, 355)  res≈10.0 m
+    t40_9        (with_peaks)  profile pts=13
+    t55_0        (with_peaks)  profile pts=19
+    t55_11       (with_peaks)  profile pts=19
+    t55_13       (with_peaks)  profile pts=18
+    t55_15       (with_peaks)  profile pts=19
+    t55_21       (with_peaks)  profile pts=19
+    t55_26       (with_peaks)  profile pts=19
+    t55_27       (with_peaks)  profile pts=19
+    t55_29       (with_peaks)  profile pts=19
+    t60_0        (with_peaks)  profile pts=19
+    t25_0        (no_peaks  )  profile pts=9
+    t25_1        (no_peaks  )  profile pts=9
+    t25_10       (no_peaks  )  profile pts=9
+    t25_11       (no_peaks  )  profile pts=9
+    t25_2        (no_peaks  )  profile pts=9
+    t25_3        (no_peaks  )  profile pts=9
+    t25_4        (no_peaks  )  profile pts=9
+    t25_5        (no_peaks  )  profile pts=9
+    t25_6        (no_peaks  )  profile pts=9
+    t25_7        (no_peaks  )  profile pts=9
+
+  [3/12] 2019-06-08
+    shape=(438, 355)  res≈10.0 m
+    t40_9        (with_peaks)  profile pts=13
+    t55_0        (with_peaks)  profile pts=19
+    t55_11       (with_peaks)  profile pts=19
+    t55_13       (with_peaks)  profile pts=18
+    t55_15       (with_peaks)  profile pts=19
+    t55_21       (with_peaks)  profile pts=19
+    t55_26       (with_peaks)  profile pts=19
+    t55_27       (with_peaks)  profile pts=19
+    t55_29       (with_peaks)  profile pts=19
+    t60_0        (with_peaks)  profile pts=19
+    t25_0        (no_peaks  )  profile pts=9
+    t25_1        (no_peaks  )  profile pts=9
+    t25_10       (no_peaks  )  profile pts=9
+    t25_11       (no_peaks  )  profile pts=9
+    t25_2        (no_peaks  )  profile pts=9
+    t25_3        (no_peaks  )  profile pts=9
+    t25_4        (no_peaks  )  profile pts=9
+    t25_5        (no_peaks  )  profile pts=9
+    t25_6        (no_peaks  )  profile pts=9
+    t25_7        (no_peaks  )  profile pts=9
+
+  [4/12] 2024-09-21
+    shape=(438, 355)  res≈10.0 m
+    t40_9        (with_peaks)  profile pts=13
+    t55_0        (with_peaks)  profile pts=19
+    t55_11       (with_peaks)  profile pts=19
+    t55_13       (with_peaks)  profile pts=18
+    t55_15       (with_peaks)  profile pts=19
+    t55_21       (with_peaks)  profile pts=19
+    t55_26       (with_peaks)  profile pts=19
+    t55_27       (with_peaks)  profile pts=19
+    t55_29       (with_peaks)  profile pts=19
+    t60_0        (with_peaks)  profile pts=19
+    t25_0        (no_peaks  )  profile pts=9
+    t25_1        (no_peaks  )  profile pts=9
+    t25_10       (no_peaks  )  profile pts=9
+    t25_11       (no_peaks  )  profile pts=9
+    t25_2        (no_peaks  )  profile pts=9
+    t25_3        (no_peaks  )  profile pts=9
+    t25_4        (no_peaks  )  profile pts=9
+    t25_5        (no_peaks  )  profile pts=9
+    t25_6        (no_peaks  )  profile pts=9
+    t25_7        (no_peaks  )  profile pts=9
+
+  [5/12] 2024-10-03
+    shape=(438, 355)  res≈10.0 m
+    t40_9        (with_peaks)  profile pts=13
+    t55_0        (with_peaks)  profile pts=19
+    t55_11       (with_peaks)  profile pts=19
+    t55_13       (with_peaks)  profile pts=18
+    t55_15       (with_peaks)  profile pts=19
+    t55_21       (with_peaks)  profile pts=19
+    t55_26       (with_peaks)  profile pts=19
+    t55_27       (with_peaks)  profile pts=19
+    t55_29       (with_peaks)  profile pts=19
+    t60_0        (with_peaks)  profile pts=19
+    t25_0        (no_peaks  )  profile pts=9
+    t25_1        (no_peaks  )  profile pts=9
+    t25_10       (no_peaks  )  profile pts=9
+    t25_11       (no_peaks  )  profile pts=9
+    t25_2        (no_peaks  )  profile pts=9
+    t25_3        (no_peaks  )  profile pts=9
+    t25_4        (no_peaks  )  profile pts=9
+    t25_5        (no_peaks  )  profile pts=9
+    t25_6        (no_peaks  )  profile pts=9
+    t25_7        (no_peaks  )  profile pts=9
+
+  [6/12] 2024-10-15
+    shape=(438, 355)  res≈10.0 m
+    t40_9        (with_peaks)  profile pts=13
+    t55_0        (with_peaks)  profile pts=19
+    t55_11       (with_peaks)  profile pts=19
+    t55_13       (with_peaks)  profile pts=18
+    t55_15       (with_peaks)  profile pts=19
+    t55_21       (with_peaks)  profile pts=19
+    t55_26       (with_peaks)  profile pts=19
+    t55_27       (with_peaks)  profile pts=19
+    t55_29       (with_peaks)  profile pts=19
+    t60_0        (with_peaks)  profile pts=19
+    t25_0        (no_peaks  )  profile pts=9
+    t25_1        (no_peaks  )  profile pts=9
+    t25_10       (no_peaks  )  profile pts=9
+    t25_11       (no_peaks  )  profile pts=9
+    t25_2        (no_peaks  )  profile pts=9
+    t25_3        (no_peaks  )  profile pts=9
+    t25_4        (no_peaks  )  profile pts=9
+    t25_5        (no_peaks  )  profile pts=9
+    t25_6        (no_peaks  )  profile pts=9
+    t25_7        (no_peaks  )  profile pts=9
+
+  [7/12] 2026-04-14
+    shape=(438, 355)  res≈10.0 m
+    t40_9        (with_peaks)  profile pts=13
+    t55_0        (with_peaks)  profile pts=19
+    t55_11       (with_peaks)  profile pts=19
+    t55_13       (with_peaks)  profile pts=18
+    t55_15       (with_peaks)  profile pts=19
+    t55_21       (with_peaks)  profile pts=19
+    t55_26       (with_peaks)  profile pts=19
+    t55_27       (with_peaks)  profile pts=19
+    t55_29       (with_peaks)  profile pts=19
+    t60_0        (with_peaks)  profile pts=19
+    t25_0        (no_peaks  )  profile pts=9
+    t25_1        (no_peaks  )  profile pts=9
+    t25_10       (no_peaks  )  profile pts=9
+    t25_11       (no_peaks  )  profile pts=9
+    t25_2        (no_peaks  )  profile pts=9
+    t25_3        (no_peaks  )  profile pts=9
+    t25_4        (no_peaks  )  profile pts=9
+    t25_5        (no_peaks  )  profile pts=9
+    t25_6        (no_peaks  )  profile pts=9
+    t25_7        (no_peaks  )  profile pts=9
+
+  [8/12] 2026-05-02
+    shape=(438, 355)  res≈10.0 m
+    t40_9        (with_peaks)  profile pts=13
+    t55_0        (with_peaks)  profile pts=19
+    t55_11       (with_peaks)  profile pts=19
+    t55_13       (with_peaks)  profile pts=18
+    t55_15       (with_peaks)  profile pts=19
+    t55_21       (with_peaks)  profile pts=19
+    t55_26       (with_peaks)  profile pts=19
+    t55_27       (with_peaks)  profile pts=19
+    t55_29       (with_peaks)  profile pts=19
+    t60_0        (with_peaks)  profile pts=19
+    t25_0        (no_peaks  )  profile pts=9
+    t25_1        (no_peaks  )  profile pts=9
+    t25_10       (no_peaks  )  profile pts=9
+    t25_11       (no_peaks  )  profile pts=9
+    t25_2        (no_peaks  )  profile pts=9
+    t25_3        (no_peaks  )  profile pts=9
+    t25_4        (no_peaks  )  profile pts=9
+    t25_5        (no_peaks  )  profile pts=9
+    t25_6        (no_peaks  )  profile pts=9
+    t25_7        (no_peaks  )  profile pts=9
+
+  [9/12] 2026-05-14
+    shape=(438, 355)  res≈10.0 m
+    t40_9        (with_peaks)  profile pts=13
+    t55_0        (with_peaks)  profile pts=19
+    t55_11       (with_peaks)  profile pts=19
+    t55_13       (with_peaks)  profile pts=18
+    t55_15       (with_peaks)  profile pts=19
+    t55_21       (with_peaks)  profile pts=19
+    t55_26       (with_peaks)  profile pts=19
+    t55_27       (with_peaks)  profile pts=19
+    t55_29       (with_peaks)  profile pts=19
+    t60_0        (with_peaks)  profile pts=19
+    t25_0        (no_peaks  )  profile pts=9
+    t25_1        (no_peaks  )  profile pts=9
+    t25_10       (no_peaks  )  profile pts=9
+    t25_11       (no_peaks  )  profile pts=9
+    t25_2        (no_peaks  )  profile pts=9
+    t25_3        (no_peaks  )  profile pts=9
+    t25_4        (no_peaks  )  profile pts=9
+    t25_5        (no_peaks  )  profile pts=9
+    t25_6        (no_peaks  )  profile pts=9
+    t25_7        (no_peaks  )  profile pts=9
+
+  [10/12] 2026-06-19
+    shape=(438, 355)  res≈10.0 m
+    t40_9        (with_peaks)  profile pts=13
+    t55_0        (with_peaks)  profile pts=19
+    t55_11       (with_peaks)  profile pts=19
+    t55_13       (with_peaks)  profile pts=18
+    t55_15       (with_peaks)  profile pts=19
+    t55_21       (with_peaks)  profile pts=19
+    t55_26       (with_peaks)  profile pts=19
+    t55_27       (with_peaks)  profile pts=19
+    t55_29       (with_peaks)  profile pts=19
+    t60_0        (with_peaks)  profile pts=19
+    t25_0        (no_peaks  )  profile pts=9
+    t25_1        (no_peaks  )  profile pts=9
+    t25_10       (no_peaks  )  profile pts=9
+    t25_11       (no_peaks  )  profile pts=9
+    t25_2        (no_peaks  )  profile pts=9
+    t25_3        (no_peaks  )  profile pts=9
+    t25_4        (no_peaks  )  profile pts=9
+    t25_5        (no_peaks  )  profile pts=9
+    t25_6        (no_peaks  )  profile pts=9
+    t25_7        (no_peaks  )  profile pts=9
+
+  [11/12] 2026-06-26
+    shape=(438, 355)  res≈10.0 m
+    t40_9        (with_peaks)  profile pts=13
+    t55_0        (with_peaks)  profile pts=19
+    t55_11       (with_peaks)  profile pts=19
+    t55_13       (with_peaks)  profile pts=18
+    t55_15       (with_peaks)  profile pts=19
+    t55_21       (with_peaks)  profile pts=19
+    t55_26       (with_peaks)  profile pts=19
+    t55_27       (with_peaks)  profile pts=19
+    t55_29       (with_peaks)  profile pts=19
+    t60_0        (with_peaks)  profile pts=19
+    t25_0        (no_peaks  )  profile pts=9
+    t25_1        (no_peaks  )  profile pts=9
+    t25_10       (no_peaks  )  profile pts=9
+    t25_11       (no_peaks  )  profile pts=9
+    t25_2        (no_peaks  )  profile pts=9
+    t25_3        (no_peaks  )  profile pts=9
+    t25_4        (no_peaks  )  profile pts=9
+    t25_5        (no_peaks  )  profile pts=9
+    t25_6        (no_peaks  )  profile pts=9
+    t25_7        (no_peaks  )  profile pts=9
+
+  [12/12] 2026-07-08
+    shape=(438, 355)  res≈10.0 m
+    t40_9        (with_peaks)  profile pts=13
+    t55_0        (with_peaks)  profile pts=19
+    t55_11       (with_peaks)  profile pts=19
+    t55_13       (with_peaks)  profile pts=18
+    t55_15       (with_peaks)  profile pts=19
+    t55_21       (with_peaks)  profile pts=19
+    t55_26       (with_peaks)  profile pts=19
+    t55_27       (with_peaks)  profile pts=19
+    t55_29       (with_peaks)  profile pts=19
+    t60_0        (with_peaks)  profile pts=19
+    t25_0        (no_peaks  )  profile pts=9
+    t25_1        (no_peaks  )  profile pts=9
+    t25_10       (no_peaks  )  profile pts=9
+    t25_11       (no_peaks  )  profile pts=9
+    t25_2        (no_peaks  )  profile pts=9
+    t25_3        (no_peaks  )  profile pts=9
+    t25_4        (no_peaks  )  profile pts=9
+    t25_5        (no_peaks  )  profile pts=9
+    t25_6        (no_peaks  )  profile pts=9
+    t25_7        (no_peaks  )  profile pts=9
+
+  wrote p9b_profiles_raw.csv  rows=3276
+DONE  2026-10-27T15:32:23.159582+00:00
