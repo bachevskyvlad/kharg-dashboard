@@ -1,0 +1,66 @@
+p8c_tank_closeup.py  2026-10-27T22:34:29.238106+00:00
+token OK
+
+=== 2024-09-21 ===
+  S1A_IW_SLC__1SDV_20240921T023929_20240921T023956_055757_06CFAC_8CED.SAFE
+    annotation nodes (8): ['s1a-iw3-slc-vv-20240921t023929-20240921t023954-055757-06cfac-006.xml', 'calibration', 'rfi', 's1a-iw1-slc-vh-20240921t023930-20240921t023955-055757-06cfac-001.xml', 's1a-iw1-slc-vv-20240921t023930-20240921t023955-055757-06cfac-004.xml']
+  annotation node: s1a-iw2-slc-vv-20240921t023931-20240921t023956-055757-06cfac-005.xml
+  rps=2.330m  aps=13.958m  lpb=1510  spb=25448  bursts=9
+    calibration nodes (12): ['noise-s1a-iw3-slc-vv-20240921t023929-20240921t023954-055757-06cfac-006.xml', 'noise-s1a-iw1-slc-vv-20240921t023930-20240921t023955-055757-06cfac-004.xml', 'noise-s1a-iw2-slc-vh-20240921t023931-20240921t023956-055757-06cfac-002.xml', 'noise-s1a-iw3-slc-vh-20240921t023929-20240921t023954-055757-06cfac-003.xml', 'calibration-s1a-iw2-slc-vv-20240921t023931-20240921t023956-055757-06cfac-005.xml']
+  calibration node: calibration-s1a-iw2-slc-vv-20240921t023931-20240921t023956-055757-06cfac-005.xml
+    cal grid: 29 lines × 638 pixels  sigma range [289.8, 307.8]
+  farm centre → line_global=1231.4  sample=1257.5  burst=0
+    Range bytes=109035-153814954  (153.7 MB)
+    ... 10 MB
+    ... 20 MB
+    ... 30 MB
+    ... 40 MB
+    ... 50 MB
+    ... 60 MB
+    ... 70 MB
+    ... 80 MB
+    ... 90 MB
+    ... 100 MB
+    ... 110 MB
+    ... 120 MB
+    ... 130 MB
+    ... 140 MB
+    ... 146 MB
+    done 153.7 MB
+  applying sigmaNought calibration (burst_idx=0) ...
+  sigma0 shape=(1510, 25448)  mean_dB=-17.47  std_dB_approx=204.74
+  azimuth multilook ×6 ...
+  multilook shape=(251, 25448)  mean_dB=-17.49  std_dB_approx=112.60
+
+=== 2024-10-03 ===
+  S1A_IW_SLC__1SDV_20241003T023929_20241003T023956_055932_06D6A2_7F43.SAFE
+    annotation nodes (8): ['s1a-iw1-slc-vv-20241003t023930-20241003t023955-055932-06d6a2-004.xml', 's1a-iw2-slc-vh-20241003t023931-20241003t023956-055932-06d6a2-002.xml', 's1a-iw2-slc-vv-20241003t023931-20241003t023956-055932-06d6a2-005.xml', 's1a-iw3-slc-vh-20241003t023929-20241003t023955-055932-06d6a2-003.xml', 's1a-iw3-slc-vv-20241003t023929-20241003t023955-055932-06d6a2-006.xml']
+  annotation node: s1a-iw2-slc-vv-20241003t023931-20241003t023956-055932-06d6a2-005.xml
+  rps=2.330m  aps=13.958m  lpb=1510  spb=25448  bursts=9
+    calibration nodes (12): ['calibration-s1a-iw3-slc-vv-20241003t023929-20241003t023955-055932-06d6a2-006.xml', 'noise-s1a-iw1-slc-vh-20241003t023930-20241003t023955-055932-06d6a2-001.xml', 'noise-s1a-iw1-slc-vv-20241003t023930-20241003t023955-055932-06d6a2-004.xml', 'calibration-s1a-iw1-slc-vh-20241003t023930-20241003t023955-055932-06d6a2-001.xml', 'calibration-s1a-iw2-slc-vv-20241003t023931-20241003t023956-055932-06d6a2-005.xml']
+  calibration node: calibration-s1a-iw2-slc-vv-20241003t023931-20241003t023956-055932-06d6a2-005.xml
+    cal grid: 29 lines × 638 pixels  sigma range [289.8, 307.8]
+  farm centre → line_global=1237.5  sample=1271.0  burst=0
+    Range bytes=109035-153814954  (153.7 MB)
+    ... 10 MB
+    ... 20 MB
+    ... 30 MB
+    ... 40 MB
+    ... 50 MB
+    ... 60 MB
+    ... 70 MB
+    ... 80 MB
+    ... 90 MB
+    ... 100 MB
+    ... 110 MB
+    ... 120 MB
+    ... 130 MB
+    ... 140 MB
+    ... 146 MB
+    done 153.7 MB
+  applying sigmaNought calibration (burst_idx=0) ...
+  sigma0 shape=(1510, 25448)  mean_dB=-20.53  std_dB_approx=346.93
+  azimuth multilook ×6 ...
+  multilook shape=(251, 25448)  mean_dB=-20.58  std_dB_approx=210.70
+
+--- t60_1  r=60m ---
