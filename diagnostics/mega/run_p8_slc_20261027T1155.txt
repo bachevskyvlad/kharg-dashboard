@@ -1,0 +1,19 @@
+p8_slc_pilot.py  start 2026-10-27T11:55:26.340647+00:00
+pilot date: 2024-10-03  location: POINT(50.33 29.23)
+=== Step 1: CDSE token ===
+  token OK (len=1999)
+
+=== Step 2: OData search SLC 2024-10-03 ===
+  URL: https://catalogue.dataspace.copernicus.eu/odata/v1/Products?$filter=Collection/Name eq 'SENTINEL-1' and contains(Name,'SLC') and OData.CSC.Intersects(area=geography'SRID=4326;POINT(50.33 29.23)') and ContentDate/Start gt 2024-10-03T00:00:00.000Z and ContentDate/Start lt 2024-10-04T00:00:00.000Z&$orderby=ContentDate/Start desc&$top=5
+  products found: 1
+    id=93fd8d06-d1e7-4955-b317-5ef7888d6e90  name=S1A_IW_SLC__1SDV_20241003T023929_20241003T023956_055932_06D6A2_7F43.SAFE  size=7427 MB
+
+=== Step 3: node tree ===
+  root nodes: ['S1A_IW_SLC__1SDV_20241003T023929_20241003T023956_055932_06D6A2_7F43.SAFE']
+    list_nodes('Nodes(S1A_IW_SLC__1SDV_20241003T023929_20241003T023956_055932_06D6A2_7F43.SAFE)') failed 400: {"trace-id":"474d3b33474f309548638e5dc0dd364c","code":"DAT-ZIP-104","message":"Malformed OData request path"}
+  S1A_IW_SLC__1SDV_20241003T023929_20241003T023956_055932_06D6A2_7F43.SAFE/ nodes: []
+    list_nodes('Nodes(S1A_IW_SLC__1SDV_20241003T023929_20241003T023956_055932_06D6A2_7F43.SAFE)/Nodes(measurement)') failed 400: {"trace-id":"f94fde6bee3e96b241b634d53dc88ce2","code":"DAT-ZIP-104","message":"Malformed OData request path"}
+  measurement/ nodes (0):
+
+=== Step 4: pick subswath burst ===
+  FATAL: no VV tiff found in measurement/
