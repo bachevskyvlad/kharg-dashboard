@@ -1,0 +1,52 @@
+p9_peak_gap.py  start 2026-10-27T12:55:25.142390+00:00
+  token OK
+
+  Terminal: kharg  tanks=61  dates=12
+  [1/12] 2019-04-21
+    peaks found: 12/61  (19%)
+  [2/12] 2019-05-03
+    peaks found: 12/61  (19%)
+  [3/12] 2019-06-08
+    peaks found: 12/61  (19%)
+  [4/12] 2024-09-21
+    peaks found: 12/61  (19%)
+  [5/12] 2024-10-03
+    peaks found: 12/61  (19%)
+  [6/12] 2024-10-15
+    peaks found: 12/61  (19%)
+  [7/12] 2026-04-14
+    peaks found: 12/61  (19%)
+  [8/12] 2026-05-02
+    peaks found: 12/61  (19%)
+  [9/12] 2026-05-14
+    peaks found: 12/61  (19%)
+  [10/12] 2026-06-19
+    peaks found: 12/61  (19%)
+  [11/12] 2026-06-26
+    peaks found: 12/61  (19%)
+  [12/12] 2026-07-08
+    peaks found: 12/61  (19%)
+
+  Terminal: ras_tanura  tanks=66  dates=8
+  [1/8] 2018-06-12
+    peaks found: 4/66  (6%)
+  [2/8] 2018-07-06
+    peaks found: 4/66  (6%)
+  [3/8] 2019-08-31
+    peaks found: 4/66  (6%)
+  [4/8] 2019-09-24
+    peaks found: 4/66  (6%)
+  [5/8] 2019-10-06
+    peaks found: 4/66  (6%)
+  [6/8] 2022-11-14
+    peaks found: 4/66  (6%)
+  [7/8] 2023-03-19
+    peaks found: 4/66  (6%)
+  [8/8] 2023-04-12
+    peaks found: 4/66  (6%)
+
+=== Quality report: non-null peak_gap_m per terminal ===
+  kharg          144/732  0.197
+  ras_tanura      32/528  0.061
+
+DONE  2026-10-27T12:56:17.406962+00:00
