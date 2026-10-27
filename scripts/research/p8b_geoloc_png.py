@@ -6,8 +6,8 @@ Steps:
   2. Build bilinear (lat,lon) → (line_global, sample) interpolator
   3. Geolocate 5 reference tanks + coastline, check in-burst bounds
   4. Download burst bytes (Range), compute amplitude
-  5. PNG-A: SLC amplitude ±500m around Kharg centroid, tank circles overlay
-  6. PNG-B: GRD (SH) same date, same extent, tank circles overlay
+  5. PNG-A: SLC amplitude ±800m around Kharg centroid, all-47 tank circles
+  6. PNG-B: GRD (SH) same date, same extent, all-47 tank circles
 
 Outputs (diagnostics/mega/):
   p8b_geoloc_<ts>.txt
@@ -46,87 +46,80 @@ CDSE_DL_BASE   = "https://download.dataspace.copernicus.eu/odata/v1"
 SH_PROCESS     = "https://sh.dataspace.copernicus.eu/api/v1/process"
 
 PILOT_DATE  = "2024-10-03"
-KHARG_LAT   = 29.23
-KHARG_LON   = 50.33
+# Correct farm centre (tank_registry.py bounding box: lat 29.2217-29.2391, lon 50.3068-50.3166)
+KHARG_LAT   = 29.2296
+KHARG_LON   = 50.3126
 REL_ORBIT   = 35
 DIRECTION   = "DESCENDING"
 
 # annotation XML already committed
 ANNOT_XML = OUT_DIR / "s1a-iw2-slc-vv-20241003t023931-20241003t023956-055932-06d6a2-005.xml"
 
-# 5 reference tanks + coastline point
+# 5 reference tanks + coastline — coordinates from tank_registry.py
 CHECK_POINTS = [
-    {"id": "t60_1",  "lat": 29.22422756973714, "lon": 50.31692094143066},
-    {"id": "t55_5",  "lat": 29.23062747,        "lon": 50.32382152},
-    {"id": "t55_17", "lat": 29.23720187,        "lon": 50.33057032},
-    {"id": "t60_2",  "lat": 29.22671505899543,  "lon": 50.31729348356078},
-    {"id": "t25_0",  "lat": 29.22488648,        "lon": 50.30613213},
-    {"id": "coastline", "lat": 29.21,           "lon": 50.26},
+    {"id": "t60_1",  "lat": 29.221638820210273, "lon": 50.315043243946754},
+    {"id": "t55_5",  "lat": 29.23596908236423,  "lon": 50.31262041733899},
+    {"id": "t55_17", "lat": 29.23144045674206,  "lon": 50.308740382712706},
+    {"id": "t60_2",  "lat": 29.221840470329855, "lon": 50.31352911803618},
+    {"id": "t25_35", "lat": 29.226211162396392, "lon": 50.31288089406942},
+    {"id": "coastline", "lat": 29.21, "lon": 50.26},
 ]
 
-# All 47 tanks for circle overlay (subset of kharg)
+# All 47 Kharg tanks — ground-truth coordinates from tank_registry.py
 ALL_KHARG = [
-    {"id":"t60_0","lat":29.22173338156137,"lon":50.31654819949878,"radius_m":60},
-    {"id":"t60_1","lat":29.22422756973714,"lon":50.31692094143066,"radius_m":60},
-    {"id":"t60_2","lat":29.22671505899543,"lon":50.31729348356078,"radius_m":60},
-    {"id":"t60_3","lat":29.22920183961888,"lon":50.31766542582773,"radius_m":60},
-    {"id":"t60_4","lat":29.23168790085929,"lon":50.31803676808742,"radius_m":60},
-    {"id":"t55_0","lat":29.21819823,"lon":50.32196045,"radius_m":55},
-    {"id":"t55_1","lat":29.22068549,"lon":50.32233386,"radius_m":55},
-    {"id":"t55_2","lat":29.22317204,"lon":50.32270667,"radius_m":55},
-    {"id":"t55_3","lat":29.22565789,"lon":50.32307889,"radius_m":55},
-    {"id":"t55_4","lat":29.22814303,"lon":50.32345051,"radius_m":55},
-    {"id":"t55_5","lat":29.23062747,"lon":50.32382152,"radius_m":55},
-    {"id":"t55_6","lat":29.23311121,"lon":50.32419193,"radius_m":55},
-    {"id":"t55_7","lat":29.23559424,"lon":50.32456173,"radius_m":55},
-    {"id":"t55_8","lat":29.21484855,"lon":50.32724142,"radius_m":55},
-    {"id":"t55_9","lat":29.21733506,"lon":50.32761374,"radius_m":55},
-    {"id":"t55_10","lat":29.21982087,"lon":50.32798545,"radius_m":55},
-    {"id":"t55_11","lat":29.22230598,"lon":50.32835655,"radius_m":55},
-    {"id":"t55_12","lat":29.22479038,"lon":50.32872704,"radius_m":55},
-    {"id":"t55_13","lat":29.22727408,"lon":50.32909692,"radius_m":55},
-    {"id":"t55_14","lat":29.22975708,"lon":50.32946619,"radius_m":55},
-    {"id":"t55_15","lat":29.23223938,"lon":50.32983484,"radius_m":55},
-    {"id":"t55_16","lat":29.23472098,"lon":50.33020289,"radius_m":55},
-    {"id":"t55_17","lat":29.23720187,"lon":50.33057032,"radius_m":55},
-    {"id":"t55_18","lat":29.21149828,"lon":50.33252149,"radius_m":55},
-    {"id":"t55_19","lat":29.21398404,"lon":50.33289271,"radius_m":55},
-    {"id":"t55_20","lat":29.21646910,"lon":50.33326332,"radius_m":55},
-    {"id":"t55_21","lat":29.21895345,"lon":50.33363332,"radius_m":55},
-    {"id":"t55_22","lat":29.22143710,"lon":50.33400271,"radius_m":55},
-    {"id":"t55_23","lat":29.22392005,"lon":50.33437148,"radius_m":55},
-    {"id":"t55_24","lat":29.22640229,"lon":50.33473964,"radius_m":55},
-    {"id":"t55_25","lat":29.22888383,"lon":50.33510719,"radius_m":55},
-    {"id":"t55_26","lat":29.23136466,"lon":50.33547412,"radius_m":55},
-    {"id":"t55_27","lat":29.23384479,"lon":50.33584044,"radius_m":55},
-    {"id":"t55_28","lat":29.23632422,"lon":50.33620614,"radius_m":55},
-    {"id":"t55_29","lat":29.23880294,"lon":50.33657123,"radius_m":55},
-    {"id":"t55_30","lat":29.24128095,"lon":50.33693570,"radius_m":55},
-    {"id":"t55_31","lat":29.24375825,"lon":50.33729956,"radius_m":55},
-    {"id":"t40_0","lat":29.21872199,"lon":50.31175232,"radius_m":40},
-    {"id":"t40_1","lat":29.22120781,"lon":50.31212219,"radius_m":40},
-    {"id":"t40_2","lat":29.22369293,"lon":50.31249145,"radius_m":40},
-    {"id":"t40_3","lat":29.22617734,"lon":50.31286010,"radius_m":40},
-    {"id":"t40_4","lat":29.22866104,"lon":50.31322814,"radius_m":40},
-    {"id":"t40_5","lat":29.23114404,"lon":50.31359557,"radius_m":40},
-    {"id":"t40_6","lat":29.23362633,"lon":50.31396239,"radius_m":40},
-    {"id":"t40_7","lat":29.23610791,"lon":50.31432860,"radius_m":40},
-    {"id":"t40_8","lat":29.23858878,"lon":50.31469419,"radius_m":40},
-    {"id":"t40_9","lat":29.24106895,"lon":50.31505917,"radius_m":40},
-    {"id":"t40_10","lat":29.24354840,"lon":50.31542354,"radius_m":40},
-    {"id":"t40_11","lat":29.24602715,"lon":50.31578729,"radius_m":40},
-    {"id":"t25_0","lat":29.22488648,"lon":50.30613213,"radius_m":25},
-    {"id":"t25_1","lat":29.22737066,"lon":50.30649949,"radius_m":25},
-    {"id":"t25_2","lat":29.22985413,"lon":50.30686624,"radius_m":25},
-    {"id":"t25_3","lat":29.23233689,"lon":50.30723237,"radius_m":25},
-    {"id":"t25_4","lat":29.23481894,"lon":50.30759789,"radius_m":25},
-    {"id":"t25_5","lat":29.23730027,"lon":50.30796280,"radius_m":25},
-    {"id":"t25_6","lat":29.23978089,"lon":50.30832709,"radius_m":25},
-    {"id":"t25_7","lat":29.24226080,"lon":50.30869077,"radius_m":25},
-    {"id":"t25_8","lat":29.24474000,"lon":50.30905384,"radius_m":25},
-    {"id":"t25_9","lat":29.24721848,"lon":50.30941629,"radius_m":25},
-    {"id":"t25_10","lat":29.24969625,"lon":50.30977812,"radius_m":25},
-    {"id":"t25_11","lat":29.25217330,"lon":50.31013933,"radius_m":25},
+    # t60 cluster (5)
+    {"id": "t60_0", "lat": 29.22173338156137,  "lon": 50.31654819949878,  "radius_m": 60},
+    {"id": "t60_1", "lat": 29.221638820210273, "lon": 50.315043243946754, "radius_m": 60},
+    {"id": "t60_2", "lat": 29.221840470329855, "lon": 50.31352911803618,  "radius_m": 60},
+    {"id": "t60_3", "lat": 29.223156804822317, "lon": 50.315849029771684, "radius_m": 60},
+    {"id": "t60_4", "lat": 29.222897954869325, "lon": 50.3144195158663,   "radius_m": 60},
+    # t55 cluster (17)
+    {"id": "t55_5",  "lat": 29.23596908236423,  "lon": 50.31262041733899,  "radius_m": 55},
+    {"id": "t55_6",  "lat": 29.236450714039865, "lon": 50.31093940154909,  "radius_m": 55},
+    {"id": "t55_7",  "lat": 29.237953299445927, "lon": 50.31084946173491,  "radius_m": 55},
+    {"id": "t55_8",  "lat": 29.239068986858886, "lon": 50.30968216852048,  "radius_m": 55},
+    {"id": "t55_9",  "lat": 29.238926386438376, "lon": 50.306814019231595, "radius_m": 55},
+    {"id": "t55_10", "lat": 29.237608159424354, "lon": 50.30726790052075,  "radius_m": 55},
+    {"id": "t55_11", "lat": 29.236277626607237, "lon": 50.307724616432196, "radius_m": 55},
+    {"id": "t55_12", "lat": 29.23632825886285,  "lon": 50.30930379724654,  "radius_m": 55},
+    {"id": "t55_13", "lat": 29.234972729277782, "lon": 50.3081865326845,   "radius_m": 55},
+    {"id": "t55_14", "lat": 29.23511372342508,  "lon": 50.30981988700097,  "radius_m": 55},
+    {"id": "t55_15", "lat": 29.233643820114974, "lon": 50.30863801777735,  "radius_m": 55},
+    {"id": "t55_16", "lat": 29.233830846966335, "lon": 50.31028094525233,  "radius_m": 55},
+    {"id": "t55_17", "lat": 29.23144045674206,  "lon": 50.308740382712706, "radius_m": 55},
+    {"id": "t55_18", "lat": 29.231783644202153, "lon": 50.310385461009616, "radius_m": 55},
+    {"id": "t55_19", "lat": 29.232076421746672, "lon": 50.312234207587345, "radius_m": 55},
+    {"id": "t55_20", "lat": 29.23021527314446,  "lon": 50.3101614506557,   "radius_m": 55},
+    {"id": "t55_21", "lat": 29.228871179764596, "lon": 50.309966015820464, "radius_m": 55},
+    # t40 cluster (9)
+    {"id": "t40_22", "lat": 29.22952889859548,  "lon": 50.312187062458655, "radius_m": 40},
+    {"id": "t40_23", "lat": 29.22976318244905,  "lon": 50.313501526357314, "radius_m": 40},
+    {"id": "t40_24", "lat": 29.229963868790236, "lon": 50.31481471193477,  "radius_m": 40},
+    {"id": "t40_25", "lat": 29.228423649589555, "lon": 50.31244141506387,  "radius_m": 40},
+    {"id": "t40_26", "lat": 29.228616543309535, "lon": 50.313733669284346, "radius_m": 40},
+    {"id": "t40_27", "lat": 29.22881135666992,  "lon": 50.31501996070619,  "radius_m": 40},
+    {"id": "t40_28", "lat": 29.22720915866873,  "lon": 50.312698386632235, "radius_m": 40},
+    {"id": "t40_29", "lat": 29.227435720069668, "lon": 50.31399368455909,  "radius_m": 40},
+    {"id": "t40_30", "lat": 29.227640813983122, "lon": 50.31526721678495,  "radius_m": 40},
+    # t55_31 strategic reserve
+    {"id": "t55_31", "lat": 29.232346117474552, "lon": 50.313766336270064, "radius_m": 55},
+    # t40 additions (3)
+    {"id": "t40_32", "lat": 29.230717804109947, "lon": 50.31192906218232,  "radius_m": 40},
+    {"id": "t40_33", "lat": 29.230947410364493, "lon": 50.31324186520479,  "radius_m": 40},
+    {"id": "t40_34", "lat": 29.231135117157258, "lon": 50.31454377331308,  "radius_m": 40},
+    # t25 cluster (12)
+    {"id": "t25_35", "lat": 29.226211162396392, "lon": 50.31288089406942,  "radius_m": 25},
+    {"id": "t25_36", "lat": 29.226383532289553, "lon": 50.313809940357444, "radius_m": 25},
+    {"id": "t25_37", "lat": 29.226542892768347, "lon": 50.31474811903658,  "radius_m": 25},
+    {"id": "t25_38", "lat": 29.226689095834363, "lon": 50.31565041182445,  "radius_m": 25},
+    {"id": "t25_39", "lat": 29.22515641565613,  "lon": 50.31310639099006,  "radius_m": 25},
+    {"id": "t25_40", "lat": 29.22532307473051,  "lon": 50.31405678957588,  "radius_m": 25},
+    {"id": "t25_41", "lat": 29.225474230400657, "lon": 50.31496277701283,  "radius_m": 25},
+    {"id": "t25_42", "lat": 29.22561536435356,  "lon": 50.315886541434466, "radius_m": 25},
+    {"id": "t25_43", "lat": 29.22435349448338,  "lon": 50.313281303050275, "radius_m": 25},
+    {"id": "t25_44", "lat": 29.224512933127766, "lon": 50.31422412891253,  "radius_m": 25},
+    {"id": "t25_45", "lat": 29.224656215116465, "lon": 50.31513496008376,  "radius_m": 25},
+    {"id": "t25_46", "lat": 29.22481810164328,  "lon": 50.316063441149545, "radius_m": 25},
 ]
 
 
@@ -147,32 +140,23 @@ def parse_annotation(xml_path):
     tree = ET.parse(xml_path)
     root = tree.getroot()
 
-    # pixel spacings
     rps = float(root.findtext(".//rangePixelSpacing"))
     aps_az_raw = root.findtext(".//azimuthPixelSpacing")
-    # azimuth time interval → effective azimuth spacing
-    ati = root.findtext(".//azimuthTimeInterval")
-    prf = root.findtext(".//prf")  # may be absent for TOPS
-
-    # lines/samples per burst
     lpb = int(root.findtext(".//linesPerBurst"))
     spb = int(root.findtext(".//samplesPerBurst"))
 
-    # burst list → find burst covering Kharg
-    bursts = root.findall(".//burst")
+    bursts   = root.findall(".//burst")
     n_bursts = len(bursts)
 
-    # geolocationGridPointList
     gcps = []
     for pt in root.findall(".//geolocationGridPoint"):
         gcps.append({
-            "line":   int(pt.findtext("line")),
-            "pixel":  int(pt.findtext("pixel")),
-            "lat":    float(pt.findtext("latitude")),
-            "lon":    float(pt.findtext("longitude")),
+            "line":  int(pt.findtext("line")),
+            "pixel": int(pt.findtext("pixel")),
+            "lat":   float(pt.findtext("latitude")),
+            "lon":   float(pt.findtext("longitude")),
         })
 
-    # azimuthPixelSpacing may appear directly
     try:
         aps = float(aps_az_raw) if aps_az_raw else None
     except Exception:
@@ -192,14 +176,10 @@ def parse_annotation(xml_path):
 # ── bilinear GCP interpolator ─────────────────────────────────────────────────
 
 def build_gcp_interpolator(gcps):
-    """
-    Returns callable interp(lat, lon) → (line_global_float, sample_float)
-    using scipy griddata bilinear over the GCP grid.
-    """
     from scipy.interpolate import griddata
-    pts      = np.array([[g["lat"], g["lon"]] for g in gcps])
-    lines    = np.array([g["line"]  for g in gcps], dtype=np.float64)
-    samples  = np.array([g["pixel"] for g in gcps], dtype=np.float64)
+    pts     = np.array([[g["lat"], g["lon"]] for g in gcps])
+    lines   = np.array([g["line"]  for g in gcps], dtype=np.float64)
+    samples = np.array([g["pixel"] for g in gcps], dtype=np.float64)
 
     def interp(lat, lon):
         q  = np.array([[lat, lon]])
@@ -224,22 +204,21 @@ def search_slc(token, date_str):
            f"&$top=5")
     r = requests.get(url, headers={"Authorization": f"Bearer {token}"}, timeout=30)
     r.raise_for_status()
-    items = r.json().get("value", [])
-    return items
+    return r.json().get("value", [])
 
 
-# ── burst byte range (from annotation XML byteOffset) ────────────────────────
+# ── burst byte range ──────────────────────────────────────────────────────────
 
 def burst_byte_range(xml_root, burst_idx):
     bursts = xml_root.findall(".//burst")
-    b = bursts[burst_idx]
-    bo_el = b.find("byteOffset")
+    b      = bursts[burst_idx]
+    bo_el  = b.find("byteOffset")
     if bo_el is None:
         return None, None
     lpb  = int(xml_root.findtext(".//linesPerBurst"))
     spb  = int(xml_root.findtext(".//samplesPerBurst"))
     bo   = int(bo_el.text)
-    size = lpb * spb * 4   # complex int16 = 4 bytes/pixel
+    size = lpb * spb * 4
     return bo, bo + size - 1
 
 
@@ -255,11 +234,9 @@ def download_burst_range(token, product_id, safe_name, tiff_name, byte_start, by
     if r.status_code not in (200, 206):
         log(f"  ERROR: HTTP {r.status_code}")
         return None
-    chunks = []
-    n = 0
+    chunks = []; n = 0
     for chunk in r.iter_content(chunk_size=10*1024*1024):
-        chunks.append(chunk)
-        n += len(chunk)
+        chunks.append(chunk); n += len(chunk)
         log(f"  ... {n//1024//1024} MB")
     data = b"".join(chunks)
     log(f"  done: {len(data)/1e6:.1f} MB")
@@ -270,7 +247,7 @@ def download_burst_range(token, product_id, safe_name, tiff_name, byte_start, by
 
 _EVALSCRIPT = """
 //VERSION=3
-function setup(){return{input:[{bands:["VV"]}],output:{bands:1,sampleType:"FLOAT32"}};}
+function setup(){return{input:[{bands:[\"VV\"]}],output:{bands:1,sampleType:\"FLOAT32\"}};}
 function evaluatePixel(s){return[s.VV];}
 """
 
@@ -309,19 +286,6 @@ def sh_grd(token, bbox, date_str, resolution=10):
 
 # ── plot helpers ──────────────────────────────────────────────────────────────
 
-def _add_tank_circles_slc(ax, tanks, interp, burst_idx, lpb, rps, aps):
-    """Overlay tank circles on SLC amplitude image (meters axes)."""
-    import matplotlib.patches as mpatches
-    for t in tanks:
-        li_g, sa = interp(t["lat"], t["lon"])
-        if np.isnan(li_g) or np.isnan(sa):
-            continue
-        li_b = li_g - burst_idx * lpb   # burst-local line
-        # centre in meters (from crop origin, added in caller)
-        ax._tank_slc_pts = getattr(ax, "_tank_slc_pts", [])
-        ax._tank_slc_pts.append((li_b * aps, sa * rps, t["radius_m"]))
-
-
 def plot_slc(amp, burst_idx, lpb, rps, aps, interp, tanks,
              center_line_b, center_sample, half_az, half_rg, out_path):
     import matplotlib
@@ -329,7 +293,6 @@ def plot_slc(amp, burst_idx, lpb, rps, aps, interp, tanks,
     import matplotlib.pyplot as plt
     import matplotlib.patches as mpatches
 
-    # crop window
     l0 = max(0, int(center_line_b  - half_az))
     l1 = min(amp.shape[0], int(center_line_b  + half_az))
     s0 = max(0, int(center_sample  - half_rg))
@@ -339,36 +302,35 @@ def plot_slc(amp, burst_idx, lpb, rps, aps, interp, tanks,
     db = 10 * np.log10(np.clip(crop, 1e-6, None))
     vmin, vmax = np.percentile(db, [2, 98])
 
-    # extent in meters from crop origin
     extent = [s0*rps, s1*rps, l1*aps, l0*aps]
 
-    fig, ax = plt.subplots(figsize=(12, 5))
+    fig, ax = plt.subplots(figsize=(14, 7))
     im = ax.imshow(db, extent=extent, cmap="gray", vmin=vmin, vmax=vmax,
                    aspect="equal", origin="upper", interpolation="nearest")
     plt.colorbar(im, ax=ax, label="Amplitude (dB)", fraction=0.02)
 
-    # tank circles
+    n_drawn = 0
     for t in tanks:
         li_g, sa = interp(t["lat"], t["lon"])
         if np.isnan(li_g) or np.isnan(sa):
             continue
         li_b = li_g - burst_idx * lpb
-        cx = sa  * rps
+        cx = sa   * rps
         cy = li_b * aps
         if s0*rps <= cx <= s1*rps and l0*aps <= cy <= l1*aps:
             circ = mpatches.Circle((cx, cy), t["radius_m"],
                                    edgecolor="cyan", facecolor="none", lw=0.8)
             ax.add_patch(circ)
+            n_drawn += 1
 
     ax.set_xlabel("Range (m, slant)")
     ax.set_ylabel("Azimuth (m)")
-    ax.set_title(f"SLC IW2/VV amplitude — {PILOT_DATE} — burst {burst_idx}\n"
-                 f"range px {rps:.3f} m  azimuth px {aps:.3f} m  "
-                 f"[cyan circles = tank registry]")
+    ax.set_title(f"SLC IW2/VV amplitude — {PILOT_DATE} — burst {burst_idx}  [{n_drawn}/{len(tanks)} tanks in frame]\n"
+                 f"range {rps:.3f} m/px  azimuth {aps:.3f} m/px  [cyan = tank registry]")
     fig.tight_layout()
     fig.savefig(out_path, dpi=150)
     plt.close(fig)
-    log(f"  saved: {out_path.name}")
+    log(f"  saved: {out_path.name}  ({n_drawn} circles drawn)")
 
 
 def plot_grd(arr_grd, bbox_deg, tanks, out_path, date_str):
@@ -379,20 +341,19 @@ def plot_grd(arr_grd, bbox_deg, tanks, out_path, date_str):
 
     lon0, lat0, lon1, lat1 = bbox_deg
     h, w = arr_grd.shape
-    res_lon = (lon1 - lon0) / w
-    res_lat = (lat1 - lat0) / h
-    res_m   = res_lon * 111320 * math.cos(math.radians((lat0+lat1)/2))
+    res_m = (lon1 - lon0) / w * 111320 * math.cos(math.radians((lat0+lat1)/2))
 
     db = 10 * np.log10(np.clip(arr_grd, 1e-10, None))
     db[~np.isfinite(db)] = np.nan
     vmin, vmax = np.nanpercentile(db, [2, 98])
 
-    fig, ax = plt.subplots(figsize=(8, 8))
+    fig, ax = plt.subplots(figsize=(10, 10))
     im = ax.imshow(np.flipud(db), extent=[lon0, lon1, lat0, lat1],
                    cmap="gray", vmin=vmin, vmax=vmax, aspect="equal",
                    origin="lower", interpolation="nearest")
     plt.colorbar(im, ax=ax, label="Amplitude (dB)", fraction=0.02)
 
+    n_drawn = 0
     for t in tanks:
         if not (lon0 <= t["lon"] <= lon1 and lat0 <= t["lat"] <= lat1):
             continue
@@ -402,21 +363,24 @@ def plot_grd(arr_grd, bbox_deg, tanks, out_path, date_str):
                                  width=2*r_deg_lon, height=2*r_deg_lat,
                                  edgecolor="cyan", facecolor="none", lw=0.8)
         ax.add_patch(circ)
+        n_drawn += 1
 
     ax.set_xlabel("Longitude")
     ax.set_ylabel("Latitude")
-    ax.set_title(f"GRD Γ₀ VV — {date_str} — {res_m:.0f} m/px\n"
-                 f"[cyan circles = tank registry, same extent as SLC]")
+    ax.set_title(f"GRD Γ₀ VV — {date_str} — {res_m:.0f} m/px  [{n_drawn}/{len(tanks)} tanks in frame]\n"
+                 f"[cyan = tank registry, same extent as SLC]")
     fig.tight_layout()
     fig.savefig(out_path, dpi=150)
     plt.close(fig)
-    log(f"  saved: {out_path.name}")
+    log(f"  saved: {out_path.name}  ({n_drawn} circles drawn)")
 
 
 # ── main ──────────────────────────────────────────────────────────────────────
 
 def main():
     log(f"p8b_geoloc_png.py  {datetime.now(timezone.utc).isoformat()}")
+    log(f"Window centre: lat={KHARG_LAT}  lon={KHARG_LON}  (farm centroid from registry)")
+    log(f"Tank count:    {len(ALL_KHARG)}")
 
     # ── Step 1: parse annotation ──────────────────────────────────────────────
     log(f"\n=== Step 1: parse annotation XML ===")
@@ -432,13 +396,11 @@ def main():
     gcps = info["gcps"]
 
     log(f"  rangePixelSpacing:   {rps:.6f} m")
-    log(f"  azimuthPixelSpacing: {aps if aps else 'not in XML (derived below)'}")
     log(f"  linesPerBurst:       {lpb}")
     log(f"  samplesPerBurst:     {spb}")
     log(f"  n_bursts:            {info['n_bursts']}")
     log(f"  GCP count:           {len(gcps)}")
 
-    # If azimuth spacing missing, derive from azimuthTimeInterval × velocity ≈ 7300 m/s
     if aps is None or aps == 0:
         ati_str = ET.parse(ANNOT_XML).getroot().findtext(".//azimuthTimeInterval")
         aps = float(ati_str) * 7300.0
@@ -450,32 +412,28 @@ def main():
     log(f"\n=== Step 2: build GCP interpolator ===")
     interp = build_gcp_interpolator(gcps)
 
-    # find burst index for Kharg using GCPs (same logic as p8 pilot)
     li_c, sa_c = interp(KHARG_LAT, KHARG_LON)
-    burst_idx = int(li_c // lpb)
-    log(f"  Kharg centre → line_global={li_c:.1f}  sample={sa_c:.1f}  burst_idx={burst_idx}")
+    burst_idx  = int(li_c // lpb)
+    log(f"  Farm centre ({KHARG_LAT},{KHARG_LON}) → line_global={li_c:.1f}  sample={sa_c:.1f}  burst_idx={burst_idx}")
 
-    # burst-local line for centroid
-    center_line_b  = li_c - burst_idx * lpb
-    center_sample  = sa_c
-    half_az = 500.0 / aps   # lines
-    half_rg = 500.0 / rps   # samples
-    log(f"  ±500m crop: ±{half_az:.1f} lines (az)  ±{half_rg:.1f} samples (rg)")
+    center_line_b = li_c - burst_idx * lpb
+    center_sample = sa_c
+    half_az = 800.0 / aps
+    half_rg = 800.0 / rps
+    log(f"  ±800m crop: ±{half_az:.1f} lines (az)  ±{half_rg:.1f} samples (rg)")
 
     # ── Step 3: geolocate reference points ───────────────────────────────────
     log(f"\n=== Step 3: geolocate reference points ===")
     burst_line_min = burst_idx * lpb
     burst_line_max = (burst_idx + 1) * lpb - 1
-    log(f"  burst {burst_idx}: global lines {burst_line_min}–{burst_line_max}, "
-        f"samples 0–{spb-1}")
-    log(f"  {'Point':<12}  {'lat':>8}  {'lon':>8}  "
-        f"{'line_g':>8}  {'sample':>8}  {'in_burst':>10}  {'line_b':>7}")
+    log(f"  burst {burst_idx}: global lines {burst_line_min}–{burst_line_max}, samples 0–{spb-1}")
+    log(f"  {'Point':<12}  {'lat':>9}  {'lon':>9}  {'line_g':>8}  {'sample':>8}  {'in_burst':>10}  {'line_b':>7}")
     for pt in CHECK_POINTS:
         li, sa = interp(pt["lat"], pt["lon"])
-        in_b = (burst_line_min <= li <= burst_line_max and 0 <= sa <= spb-1)
-        lib  = li - burst_idx * lpb
-        flag = "YES" if in_b else "NO "
-        log(f"  {pt['id']:<12}  {pt['lat']:>8.5f}  {pt['lon']:>8.5f}  "
+        in_b   = (burst_line_min <= li <= burst_line_max and 0 <= sa <= spb-1)
+        lib    = li - burst_idx * lpb
+        flag   = "YES" if in_b else "NO "
+        log(f"  {pt['id']:<12}  {pt['lat']:>9.5f}  {pt['lon']:>9.5f}  "
             f"{li:>8.1f}  {sa:>8.1f}  {flag:>10}  {lib:>7.1f}")
 
     # ── Step 4: get token + find SLC product ──────────────────────────────────
@@ -488,14 +446,12 @@ def main():
         log("  FATAL: no SLC product found")
         sys.exit(1)
 
-    prod  = items[0]
-    pid   = prod["Id"]
-    safe  = prod["Name"]
+    prod = items[0]
+    pid  = prod["Id"]
+    safe = prod["Name"]
     log(f"  product: {pid}  {safe}")
 
-    # tiff name for IW2/VV
-    tiff_name = ANNOT_XML.name.replace(".xml", ".tiff").replace(
-        "s1a-iw2-slc-vv-", "s1a-iw2-slc-vv-")
+    tiff_name = ANNOT_XML.name.replace(".xml", ".tiff")
 
     # ── Step 5: burst byte range + download ───────────────────────────────────
     log(f"\n=== Step 5: burst byte range ===")
@@ -527,11 +483,11 @@ def main():
 
     # ── Step 8: GRD comparison PNG ────────────────────────────────────────────
     log(f"\n=== Step 8: GRD (SH) comparison ===")
-    # ±600m bbox in degrees
-    buf_deg_lat = 600 / 111320
-    buf_deg_lon = 600 / (111320 * math.cos(math.radians(KHARG_LAT)))
+    buf_deg_lat = 800 / 111320
+    buf_deg_lon = 800 / (111320 * math.cos(math.radians(KHARG_LAT)))
     bbox_grd = (KHARG_LON - buf_deg_lon, KHARG_LAT - buf_deg_lat,
                 KHARG_LON + buf_deg_lon, KHARG_LAT + buf_deg_lat)
+    log(f"  GRD bbox: lon {bbox_grd[0]:.5f}–{bbox_grd[2]:.5f}  lat {bbox_grd[1]:.5f}–{bbox_grd[3]:.5f}")
     arr_grd, gw, gh = sh_grd(token, bbox_grd, PILOT_DATE, resolution=10)
     if arr_grd is None:
         log("  SH GRD failed — skipping comparison PNG")
