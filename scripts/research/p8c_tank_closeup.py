@@ -167,7 +167,8 @@ def download_annotation_xml(token, product_id, safe_node, xml_node):
 
 
 def find_calibration_node(token, product_id, safe_node, xml_node):
-    """Return node_id of the calibration XML matching xml_node (iw2/vv)."""
+    """Return node_id of the calibration XML matching xml_node (iw2/vv).
+    Node names: calibration-s1a-iw2-... and noise-s1a-iw2-... — must pick calibration-, not noise-."""
     url = (f"{CDSE_DL_BASE}/Products({product_id})"
            f"/Nodes({safe_node})/Nodes(annotation)/Nodes(calibration)/Nodes")
     nodes = _list_nodes(token, url)
@@ -175,11 +176,15 @@ def find_calibration_node(token, product_id, safe_node, xml_node):
     stem = xml_node.replace(".xml", "")  # e.g. s1a-iw2-slc-vv-...
     for n in nodes:
         nid = n.get("Id", "")
-        if stem in nid and nid.lower().endswith(".xml"):
+        nid_l = nid.lower()
+        if nid_l.startswith("calibration-") and stem in nid and nid_l.endswith(".xml"):
             return nid
+    # fallback: any calibration- node for iw2/vv
     for n in nodes:
         nid = n.get("Id", "")
-        if re.search(r"calibration.*iw2.*vv", nid, re.I) and nid.lower().endswith(".xml"):
+        nid_l = nid.lower()
+        if nid_l.startswith("calibration-") and re.search(r"iw2.*vv", nid_l) and nid_l.endswith(".xml"):
+            log(f"    fallback calibration node: {nid}")
             return nid
     return None
 
