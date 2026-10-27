@@ -1,0 +1,61 @@
+p8b_geoloc_png.py  2026-10-27T15:29:54.247659+00:00
+
+=== Step 1: parse annotation XML ===
+  rangePixelSpacing:   2.329562 m
+  azimuthPixelSpacing: 13.95816
+  linesPerBurst:       1510
+  samplesPerBurst:     25448
+  n_bursts:            9
+  GCP count:           210
+  azimuthPixelSpacing: 13.958160 m
+
+=== Step 2: build GCP interpolator ===
+  Kharg centre → line_global=1209.2  sample=848.2  burst_idx=0
+  ±500m crop: ±35.8 lines (az)  ±214.6 samples (rg)
+
+=== Step 3: geolocate reference points ===
+  burst 0: global lines 0–1509, samples 0–25447
+  Point              lat       lon    line_g    sample    in_burst   line_b
+  t60_1         29.22423  50.31692    1278.4    1137.6         YES   1278.4
+  t55_5         29.23063  50.32382    1212.5    1002.3         YES   1212.5
+  t55_17        29.23720  50.33057    1145.3     871.7         YES   1145.3
+  t60_2         29.22672  50.31729    1256.1    1141.4         YES   1256.1
+  t25_0         29.22489  50.30613    1288.0    1405.2         YES   1288.0
+  coastline     29.21000  50.26000    1484.0    2462.2         YES   1484.0
+
+=== Step 4: CDSE token + SLC product ===
+  token OK
+  product: 93fd8d06-d1e7-4955-b317-5ef7888d6e90  S1A_IW_SLC__1SDV_20241003T023929_20241003T023956_055932_06D6A2_7F43.SAFE
+
+=== Step 5: burst byte range ===
+  burst 0: bytes 109035–153814954  (153.7 MB)
+
+=== Step 6: download burst ===
+  Range: bytes=109035-153814954 (153.7 MB)
+  ... 10 MB
+  ... 20 MB
+  ... 30 MB
+  ... 40 MB
+  ... 50 MB
+  ... 60 MB
+  ... 70 MB
+  ... 80 MB
+  ... 90 MB
+  ... 100 MB
+  ... 110 MB
+  ... 120 MB
+  ... 130 MB
+  ... 140 MB
+  ... 146 MB
+  done: 153.7 MB
+  expected 153705920 bytes, got 153705920
+  amplitude shape=(1510, 25448)  mean=18.26  max=14897.65
+
+=== Step 7: SLC amplitude PNG ===
+  saved: p8b_slc_amplitude_20261027T1529.png
+
+=== Step 8: GRD (SH) comparison ===
+  GRD shape=(119, 119)  res≈10m
+  saved: p8b_grd_comparison_20261027T1529.png
+
+DONE  2026-10-27T15:30:06.634794+00:00
