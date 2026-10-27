@@ -421,11 +421,16 @@ def apply_quegan5(arr):
 
 
 def apply_nlm(arr):
+    # NLM must work in dB-domain: linear float32 has near-zero variance
+    # → estimate_sigma≈0 → h≈0 → NLM is a no-op equal to baseline.
     try:
         from skimage.restoration import denoise_nl_means, estimate_sigma
-        a = np.nan_to_num(arr.astype(np.float32))
-        sig = float(estimate_sigma(a))
-        return denoise_nl_means(a, h=0.8*sig, fast_mode=True, patch_size=5, patch_distance=6).astype(np.float32)
+        a_lin = np.nan_to_num(arr.astype(np.float32))
+        a_db  = (10 * np.log10(np.clip(a_lin, 1e-10, None))).astype(np.float32)
+        sig   = float(estimate_sigma(a_db))
+        h     = max(sig * 0.8, 0.1)  # guard against zero h
+        out_db = denoise_nl_means(a_db, h=h, fast_mode=True, patch_size=5, patch_distance=6)
+        return (10 ** (out_db / 10)).astype(np.float32)
     except ImportError:
         return None
 
@@ -440,26 +445,28 @@ def apply_bm3d(arr):
         return None
 
 
-def coregister(arr_target, arr_ref):
+def coregister(arr_target, arr_ref, _log_label=""):
+    # Returns (shifted_array, (dy_px, dx_px)) or (None, None) when no real ref.
     if arr_ref is None:
-        return arr_target
+        return None, None
     try:
         from skimage.registration import phase_cross_correlation
         shift, _, _ = phase_cross_correlation(
             np.nan_to_num(arr_ref), np.nan_to_num(arr_target), upsample_factor=20
         )
         dy, dx = int(round(shift[0])), int(round(shift[1]))
-        return np.roll(np.roll(arr_target, dy, axis=0), dx, axis=1).astype(np.float32)
     except Exception:
         from numpy.fft import fft2, ifft2
         f1 = fft2(np.nan_to_num(arr_ref))
         f2 = fft2(np.nan_to_num(arr_target))
         cross = f1 * np.conj(f2)
         corr  = np.real(ifft2(cross / (np.abs(cross) + 1e-12)))
-        shift = np.unravel_index(np.argmax(corr), corr.shape)
-        dy = shift[0] if shift[0] < arr_target.shape[0]//2 else shift[0] - arr_target.shape[0]
-        dx = shift[1] if shift[1] < arr_target.shape[1]//2 else shift[1] - arr_target.shape[1]
-        return np.roll(np.roll(arr_target, dy, axis=0), dx, axis=1).astype(np.float32)
+        sh = np.unravel_index(np.argmax(corr), corr.shape)
+        dy = sh[0] if sh[0] < arr_target.shape[0]//2 else sh[0] - arr_target.shape[0]
+        dx = sh[1] if sh[1] < arr_target.shape[1]//2 else sh[1] - arr_target.shape[1]
+    if _log_label:
+        print(f"    coreg {_log_label}: shift dy={dy}px dx={dx}px", flush=True)
+    return np.roll(np.roll(arr_target, dy, axis=0), dx, axis=1).astype(np.float32), (dy, dx)
 
 
 # ── PNG check output ─────────────────────────────────────────────────────────
@@ -574,8 +581,9 @@ def process_terminal(terminal_id, config, token, out_rows, crops_dict, var_npz_b
             crops_dict[f"{key}__5m_bilinear"] = arr5b.copy()
 
         # neighbour arrays for multi-temporal variants
-        prev_d = [d for d in sorted(cache10) if d < date]
-        next_d = [d for d in dates if d > date and d in cache10]
+        # Use full dates list, not cache keys — cache only has already-processed dates.
+        prev_d = [d for d in dates if d < date]   # all dates BEFORE current in pilot list
+        next_d = [d for d in dates if d > date]   # all dates AFTER current in pilot list
 
         def get10(d):
             if d not in cache10:
@@ -584,9 +592,10 @@ def process_terminal(terminal_id, config, token, out_rows, crops_dict, var_npz_b
                     cache10[d] = a
             return cache10.get(d)
 
-        prev1 = get10(prev_d[-1]) if prev_d else None
+        # nearest orbit neighbours: closest prev and next date in the pilot list
+        prev1 = get10(prev_d[-1]) if prev_d else None   # immediately prior date
         prev2 = get10(prev_d[-2]) if len(prev_d) >= 2 else None
-        next1 = get10(next_d[0])  if next_d else None
+        next1 = get10(next_d[0])  if next_d else None   # immediately next date
 
         nb2 = [a for a in [prev1, next1] if a is not None]
         nb3 = [a for a in [prev2, prev1, next1] if a is not None]
@@ -594,10 +603,28 @@ def process_terminal(terminal_id, config, token, out_rows, crops_dict, var_npz_b
         arr_mean2 = np.mean([arr10] + nb2[:1], axis=0).astype(np.float32) if nb2 else arr10
         arr_mean3 = np.mean([arr10] + nb3[:2], axis=0).astype(np.float32) if len(nb3) >= 2 else arr_mean2
 
-        ref = prev1 if prev1 is not None else arr10
-        arr_coreg     = coregister(arr10, ref)
-        arr_cm2       = np.mean([arr_coreg] + [coregister(a, ref) for a in nb2[:1]], axis=0).astype(np.float32) if nb2 else arr_coreg
-        arr_cm3       = np.mean([arr_coreg] + [coregister(a, ref) for a in nb3[:2]], axis=0).astype(np.float32) if len(nb3) >= 2 else arr_cm2
+        # coreg: only when a real previous scene exists; otherwise record None (empty rows)
+        ref = prev1  # None when no previous scene
+        coreg_result, coreg_shift = coregister(arr10, ref, _log_label=f"{terminal_id}/{date}")
+        arr_coreg = coreg_result  # may be None
+
+        def _coreg_nb(a):
+            arr, _ = coregister(a, ref)
+            return arr
+
+        if arr_coreg is not None and nb2:
+            nb2_coreg = [_coreg_nb(a) for a in nb2[:1]]
+            nb2_coreg = [a for a in nb2_coreg if a is not None]
+            arr_cm2 = np.mean([arr_coreg] + nb2_coreg, axis=0).astype(np.float32) if nb2_coreg else arr_coreg
+        else:
+            arr_cm2 = arr_coreg  # None when coreg is None
+
+        if arr_coreg is not None and len(nb3) >= 2:
+            nb3_coreg = [_coreg_nb(a) for a in nb3[:2]]
+            nb3_coreg = [a for a in nb3_coreg if a is not None]
+            arr_cm3 = np.mean([arr_coreg] + nb3_coreg, axis=0).astype(np.float32) if nb3_coreg else arr_coreg
+        else:
+            arr_cm3 = arr_cm2  # None when coreg is None
 
         arr_lee5      = apply_lee(arr10, 5)
         arr_lee7      = apply_lee(arr10, 7)
