@@ -1,0 +1,106 @@
+=== P7 image_variants_pilot — 2026-10-27T11:30 UTC ===
+
+Installing optional deps...
+
+[notice] A new release of pip is available: 26.2.1 -> 26.2.2
+[notice] To update, run: pip install --upgrade pip
+
+[notice] A new release of pip is available: 26.2.1 -> 26.2.2
+[notice] To update, run: pip install --upgrade pip
+Auth SentinelHub...
+  OK
+
+
+  Terminal: kharg  tanks=47  dates=12
+  [1/12] 2019-04-21
+  [2/12] 2019-05-03
+  [3/12] 2019-06-08
+  PNG saved: png_check_2019-06-08_kharg.png
+  [4/12] 2024-09-21
+  [5/12] 2024-10-03
+  PNG saved: png_check_2024-10-03_kharg.png
+  [6/12] 2024-10-15
+  [7/12] 2026-04-14
+  [8/12] 2026-05-02
+  [9/12] 2026-05-14
+  PNG saved: png_check_2026-05-14_kharg.png
+  [10/12] 2026-06-19
+  [11/12] 2026-06-26
+  [12/12] 2026-07-08
+
+  Terminal: ras_tanura  tanks=66  dates=8
+  [1/8] 2018-06-12
+/home/runner/work/kharg-dashboard/kharg-dashboard/scripts/research/p7_image_variants_pilot.py:448: UserWarning: Could not determine RMS error between images with the normalized average intensities np.float32(0.0) and np.float32(0.0). Either the reference or moving image may be empty.
+  shift, _, _ = phase_cross_correlation(
+/opt/hostedtoolcache/Python/3.11.17/x64/lib/python3.11/site-packages/numpy/_core/fromnumeric.py:3824: RuntimeWarning: Mean of empty slice
+  return _methods._mean(a, axis=axis, dtype=dtype,
+/opt/hostedtoolcache/Python/3.11.17/x64/lib/python3.11/site-packages/numpy/_core/_methods.py:142: RuntimeWarning: invalid value encountered in divide
+  ret = ret.dtype.type(ret / rcount)
+  [2/8] 2018-07-06
+  [3/8] 2019-08-31
+/home/runner/work/kharg-dashboard/kharg-dashboard/scripts/research/p7_image_variants_pilot.py:448: UserWarning: Could not determine RMS error between images with the normalized average intensities np.float32(0.0) and np.float32(3.001044e+11). Either the reference or moving image may be empty.
+  shift, _, _ = phase_cross_correlation(
+  [4/8] 2019-09-24
+/home/runner/work/kharg-dashboard/kharg-dashboard/scripts/research/p7_image_variants_pilot.py:448: UserWarning: Could not determine RMS error between images with the normalized average intensities np.float32(3.001044e+11) and np.float32(0.0). Either the reference or moving image may be empty.
+  shift, _, _ = phase_cross_correlation(
+  PNG saved: png_check_2019-09-24_ras_tanura.png
+  [5/8] 2019-10-06
+  [6/8] 2022-11-14
+  [7/8] 2023-03-19
+  [8/8] 2023-04-12
+
+Saving crops_pilot.npz (40 arrays)...
+  saved variant_lee5.npz (20 arrays)
+  saved variant_lee7.npz (20 arrays)
+  saved variant_rlf5.npz (20 arrays)
+  saved variant_frost5.npz (20 arrays)
+  saved variant_gamma_map5.npz (20 arrays)
+  saved variant_quegan5.npz (20 arrays)
+  saved variant_nlm.npz (20 arrays)
+  saved variant_bm3d.npz (20 arrays)
+  saved variant_mean2.npz (20 arrays)
+  saved variant_mean3.npz (20 arrays)
+  saved variant_coreg.npz (20 arrays)
+  saved variant_resamp5_bilinear.npz (20 arrays)
+  saved variant_resamp5_bicubic.npz (20 arrays)
+  saved variant_coreg_mean2.npz (20 arrays)
+  saved variant_coreg_mean3.npz (20 arrays)
+
+Saving image_variants_pilot.csv (17472 rows)...
+
+=== Quality report: non-null ring15_far per (terminal, variant) ===
+terminal       variant                   nn    tot    frac
+  kharg        baseline                 564    564   1.000
+  kharg        bm3d                     564    564   1.000
+  kharg        coreg                    564    564   1.000
+  kharg        coreg_mean2              564    564   1.000
+  kharg        coreg_mean3              564    564   1.000
+  kharg        frost5                   564    564   1.000
+  kharg        gamma_map5               564    564   1.000
+  kharg        lee5                     564    564   1.000
+  kharg        lee7                     564    564   1.000
+  kharg        mean2                    564    564   1.000
+  kharg        mean3                    564    564   1.000
+  kharg        nlm                      564    564   1.000
+  kharg        quegan5                  564    564   1.000
+  kharg        resamp5_bicubic          564    564   1.000
+  kharg        resamp5_bilinear         564    564   1.000
+  kharg        rlf5                     564    564   1.000
+  ras_tanura   baseline                 331    528   0.627
+  ras_tanura   bm3d                     331    528   0.627
+  ras_tanura   coreg                    333    528   0.631
+  ras_tanura   coreg_mean2              203    528   0.384
+  ras_tanura   coreg_mean3               73    528   0.138
+  ras_tanura   frost5                   331    528   0.627
+  ras_tanura   gamma_map5               331    528   0.627
+  ras_tanura   lee5                     331    528   0.627
+  ras_tanura   lee7                     331    528   0.627
+  ras_tanura   mean2                    200    528   0.379
+  ras_tanura   mean3                     69    528   0.131
+  ras_tanura   nlm                      331    528   0.627
+  ras_tanura   quegan5                  331    528   0.627
+  ras_tanura   resamp5_bicubic          331    528   0.627
+  ras_tanura   resamp5_bilinear         331    528   0.627
+  ras_tanura   rlf5                     331    528   0.627
+
+DONE
