@@ -166,6 +166,70 @@ def download_annotation_xml(token, product_id, safe_node, xml_node):
     return r.content
 
 
+def find_calibration_node(token, product_id, safe_node, xml_node):
+    """Return node_id of the calibration XML matching xml_node (iw2/vv)."""
+    url = (f"{CDSE_DL_BASE}/Products({product_id})"
+           f"/Nodes({safe_node})/Nodes(annotation)/Nodes(calibration)/Nodes")
+    nodes = _list_nodes(token, url)
+    log(f"    calibration nodes ({len(nodes)}): {[n.get('Id', '?') for n in nodes[:5]]}")
+    stem = xml_node.replace(".xml", "")  # e.g. s1a-iw2-slc-vv-...
+    for n in nodes:
+        nid = n.get("Id", "")
+        if stem in nid and nid.lower().endswith(".xml"):
+            return nid
+    for n in nodes:
+        nid = n.get("Id", "")
+        if re.search(r"calibration.*iw2.*vv", nid, re.I) and nid.lower().endswith(".xml"):
+            return nid
+    return None
+
+
+def download_calibration_xml(token, product_id, safe_node, cal_node):
+    url = (f"{CDSE_DL_BASE}/Products({product_id})"
+           f"/Nodes({safe_node})/Nodes(annotation)/Nodes(calibration)/Nodes({cal_node})/$value")
+    r = requests.get(url, headers={"Authorization": f"Bearer {token}"}, timeout=60)
+    r.raise_for_status()
+    return r.content
+
+
+def parse_calibration(cal_bytes):
+    """Return scipy RegularGridInterpolator for sigmaNought(line, sample)."""
+    from scipy.interpolate import RegularGridInterpolator
+    root = ET.fromstring(cal_bytes)
+    vectors = root.findall(".//calibrationVector")
+    cal_lines = np.array([int(v.findtext("line")) for v in vectors], dtype=np.float64)
+    cal_pixels = np.array([int(p) for p in vectors[0].findtext("pixel").split()],
+                          dtype=np.float64)
+    cal_sigma = np.array(
+        [[float(s) for s in v.findtext("sigmaNought").split()] for v in vectors],
+        dtype=np.float64)
+    interp = RegularGridInterpolator(
+        (cal_lines, cal_pixels), cal_sigma,
+        method="linear", bounds_error=False, fill_value=None)
+    log(f"    cal grid: {len(cal_lines)} lines × {len(cal_pixels)} pixels  "
+        f"sigma range [{cal_sigma.min():.1f}, {cal_sigma.max():.1f}]")
+    return interp
+
+
+def apply_sigma0(z_complex, burst_idx, lpb, cal_interp):
+    """sigma0 = |DN|^2 / A(line,sample)^2  — returns linear sigma0 array."""
+    n_lines, n_samples = z_complex.shape
+    global_lines = (burst_idx * lpb + np.arange(n_lines, dtype=np.float64))
+    samples      = np.arange(n_samples, dtype=np.float64)
+    gg, ss = np.meshgrid(global_lines, samples, indexing="ij")  # (n_lines, n_samples)
+    coords  = np.stack([gg.ravel(), ss.ravel()], axis=-1)
+    A = cal_interp(coords).reshape(n_lines, n_samples)
+    A = np.where(A > 0, A, 1.0)
+    sigma0 = (np.abs(z_complex) ** 2) / (A ** 2)
+    return sigma0.astype(np.float32)
+
+
+def azimuth_multilook(arr, n=6):
+    """Average n azimuth lines; drops trailing partial block."""
+    cut = (arr.shape[0] // n) * n
+    return arr[:cut, :].reshape(-1, n, arr.shape[1]).mean(axis=1)
+
+
 def parse_annotation(xml_bytes):
     root = ET.fromstring(xml_bytes)
     rps  = float(root.findtext(".//rangePixelSpacing"))
@@ -280,9 +344,10 @@ def sh_grd(token, date_str, resolution=10):
 
 def tank_closeup_png(amp_by_date, info_by_date, burst_idx_by_date, tank, out_path):
     """Two-panel PNG: left=2024-09-21, right=2024-10-03.
-    Axes in metres (range horizontal, azimuth vertical).
-    aspect="equal" — azimuth stretched to real-world scale.
-    Satellite approach direction annotated."""
+    amp_by_date contains sigma0 (linear) after calibration + azimuth multilook.
+    Axes in metres (range horizontal, azimuth vertical), aspect=equal.
+    Far wall / shadow arc direction annotated (S-1 descending look azimuth ~282°,
+    near range = W/WNW, far range = E/ESE → shadow on right half of circle)."""
     import matplotlib
     matplotlib.use("Agg")
     import matplotlib.pyplot as plt
@@ -292,11 +357,13 @@ def tank_closeup_png(amp_by_date, info_by_date, burst_idx_by_date, tank, out_pat
 
     fig, axes = plt.subplots(1, 2, figsize=(12, 7))
 
+    MULTILOOK_N = 6
+
     for ax, date in zip(axes, DATES):
-        amp       = amp_by_date[date]
+        amp       = amp_by_date[date]   # sigma0, after multilook
         info      = info_by_date[date]
         rps       = info["rps"]
-        aps       = info["aps"]
+        aps       = info["aps"] * MULTILOOK_N   # effective az pixel size after multilook
         lpb       = info["lpb"]
         burst_idx = burst_idx_by_date[date]
         interp    = info["interp"]
@@ -313,7 +380,7 @@ def tank_closeup_png(amp_by_date, info_by_date, burst_idx_by_date, tank, out_pat
         s1 = min(amp.shape[1], int(sa_c + half_rg_px) + 1)
 
         crop = amp[l0:l1, s0:s1]
-        db   = 10 * np.log10(np.clip(crop, 1e-6, None))
+        db   = 10 * np.log10(np.clip(crop, 1e-10, None))
         vmin, vmax = np.percentile(db, [1, 99])
 
         # extent in metres (range × azimuth) → aspect="equal" gives correct geometry
@@ -333,19 +400,27 @@ def tank_closeup_png(amp_by_date, info_by_date, burst_idx_by_date, tank, out_pat
         for sgn in (-1, 1):
             ax.axvline(sgn * tank["radius_m"], color="cyan", lw=0.5, ls="--", alpha=0.6)
 
-        # satellite direction: for descending S-1 over Kharg, near range is to the west
-        # In slant-range image, range axis runs left (near, ~W) to right (far, ~E)
+        # Satellite direction: S-1 descending, look azimuth ~282° → satellite W/WNW of target
+        # Near range = left (W), far range = right (E/ESE)
         ax.annotate("", xy=(-WIN_M * 0.85, -WIN_M * 0.85),
                     xytext=(-WIN_M * 0.55, -WIN_M * 0.85),
                     arrowprops=dict(arrowstyle="->", color="yellow", lw=1.2))
-        ax.text(-WIN_M * 0.85, -WIN_M * 0.77, "satellite", color="yellow",
+        ax.text(-WIN_M * 0.85, -WIN_M * 0.77, "← satellite (near rng)", color="yellow",
                 fontsize=7, ha="left")
+
+        # Far wall / shadow arc: on the FAR range side (right half of circle)
+        # floating roof crescent shadow appears here as dark arc
+        r = tank["radius_m"]
+        ax.annotate("far wall\n(shadow arc)", xy=(r * 0.9, 0),
+                    xytext=(r * 1.35, WIN_M * 0.35),
+                    color="#ff9933", fontsize=7, ha="left",
+                    arrowprops=dict(arrowstyle="->", color="#ff9933", lw=0.9))
 
         ax.set_xlim(-WIN_M, WIN_M)
         ax.set_ylim(WIN_M, -WIN_M)
-        ax.set_xlabel("Range offset (m, slant)")
+        ax.set_xlabel("Range offset (m, slant)   ← near    far →")
         ax.set_ylabel("Azimuth offset (m)")
-        ax.set_title(f"{date}\nrps={rps:.3f}m  aps={aps:.3f}m")
+        ax.set_title(f"{date}\nrps={rps:.3f}m  aps_eff={aps:.1f}m (×6 multilook)")
 
     fig.suptitle(f"{tank['id']}  r={tank['radius_m']}m  [cyan circle = registry radius]", fontsize=12)
     fig.tight_layout()
@@ -356,21 +431,24 @@ def tank_closeup_png(amp_by_date, info_by_date, burst_idx_by_date, tank, out_pat
 
 # ── range profile ─────────────────────────────────────────────────────────────
 
+MULTILOOK_N = 6   # azimuth multilook factor applied in main()
+
+
 def range_profile(amp, info, burst_idx, tank, date_str):
-    """Extract amplitude profile along range through tank centre.
-    Returns (dist_m array, db array) at 1m steps, ±1.5×radius."""
+    """Extract sigma0 profile along range through tank centre.
+    amp is already multilook-averaged (MULTILOOK_N lines per output row).
+    Returns (dist_m array, sigma0_db array) at 1m steps, ±1.5×radius."""
     rps   = info["rps"]
-    aps   = info["aps"]
-    lpb   = info["lpb"]
+    lpb   = info["lpb"] // MULTILOOK_N   # rows in multilook array per burst
     interp = info["interp"]
 
     li_g, sa_c = interp(tank["lat"], tank["lon"])
-    li_b = li_g - burst_idx * lpb
+    li_b = (li_g - burst_idx * info["lpb"]) / MULTILOOK_N
     row  = int(round(li_b))
-    row  = max(1, min(amp.shape[0] - 2, row))
+    row  = max(0, min(amp.shape[0] - 1, row))
 
-    # Average 3 azimuth lines to reduce speckle (14m res → centre ±1 line)
-    amp_row = amp[row-1:row+2, :].mean(axis=0)
+    # Single multilook row (already 6-line average); no further averaging needed
+    amp_row = amp[row, :]
 
     win_m  = 1.5 * tank["radius_m"]
     dists  = np.arange(-win_m, win_m + 1.0, 1.0)
@@ -392,7 +470,7 @@ def range_profile(amp, info, burst_idx, tank, date_str):
 def save_profile_csv(dists, db_arr, tank_id, date_str, out_path):
     with open(out_path, "w", newline="") as f:
         w = csv.writer(f)
-        w.writerow(["tank_id", "date", "distance_m", "amplitude_db"])
+        w.writerow(["tank_id", "date", "distance_m", "sigma0_db"])
         for d, v in zip(dists, db_arr):
             w.writerow([tank_id, date_str, f"{d:.1f}",
                         f"{v:.4f}" if np.isfinite(v) else ""])
@@ -420,7 +498,7 @@ def plot_profiles(profiles_by_date, tank, out_path):
 
     ax.set_xlabel("Distance from tank centre (m, range)")
     ax.set_ylabel("Amplitude (dB)")
-    ax.set_title(f"{tank['id']}  r={r}m — range profile  (3-line az average)")
+    ax.set_title(f"{tank['id']}  r={r}m — sigma0 range profile  (×{MULTILOOK_N} az multilook)")
     ax.legend(fontsize=9)
     ax.grid(True, alpha=0.3)
     fig.tight_layout()
@@ -497,6 +575,14 @@ def main():
         log(f"  rps={info['rps']:.3f}m  aps={info['aps']:.3f}m  "
             f"lpb={info['lpb']}  spb={info['spb']}  bursts={info['n_bursts']}")
 
+        cal_node = find_calibration_node(token, pid, safe_node, xml_node)
+        if not cal_node:
+            log("  FATAL: cannot find calibration XML node")
+            sys.exit(1)
+        log(f"  calibration node: {cal_node}")
+        cal_bytes  = download_calibration_xml(token, pid, safe_node, cal_node)
+        cal_interp = parse_calibration(cal_bytes)
+
         interp     = build_interp(info["gcps"])
         info["interp"] = interp
         li_c, sa_c = interp(KHARG_LAT, KHARG_LON)
@@ -516,10 +602,20 @@ def main():
 
         arr16 = np.frombuffer(raw, dtype=np.int16).reshape(info["lpb"], info["spb"], 2)
         z     = arr16[:, :, 0].astype(np.float32) + 1j * arr16[:, :, 1].astype(np.float32)
-        amp   = np.abs(z)
-        log(f"  amp shape={amp.shape}  mean={amp.mean():.2f}  max={amp.max():.2f}")
 
-        amp_by_date[date]       = amp
+        log(f"  applying sigmaNought calibration (burst_idx={burst_idx}) ...")
+        sigma0 = apply_sigma0(z, burst_idx, info["lpb"], cal_interp)
+        log(f"  sigma0 shape={sigma0.shape}  "
+            f"mean_dB={10*np.log10(sigma0[sigma0>0].mean()):.2f}  "
+            f"std_dB_approx={sigma0[sigma0>0].std()/sigma0[sigma0>0].mean()/np.log(10)*10:.2f}")
+
+        log(f"  azimuth multilook ×{MULTILOOK_N} ...")
+        ml = azimuth_multilook(sigma0, n=MULTILOOK_N)
+        log(f"  multilook shape={ml.shape}  "
+            f"mean_dB={10*np.log10(ml[ml>0].mean()):.2f}  "
+            f"std_dB_approx={ml[ml>0].std()/ml[ml>0].mean()/np.log(10)*10:.2f}")
+
+        amp_by_date[date]       = ml
         info_by_date[date]      = info
         burst_idx_by_date[date] = burst_idx
 
