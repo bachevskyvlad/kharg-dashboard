@@ -374,10 +374,10 @@ def tank_closeup_png(amp_by_date, info_by_date, burst_idx_by_date, tank, out_pat
         interp    = info["interp"]
 
         li_g, sa_c = interp(tank["lat"], tank["lon"])
-        li_b = li_g - burst_idx * lpb
+        li_b = (li_g - burst_idx * lpb) / MULTILOOK_N   # multilook-space row
 
         half_rg_px = WIN_M / rps
-        half_az_px = WIN_M / aps
+        half_az_px = WIN_M / aps   # aps already = info["aps"]*MULTILOOK_N
 
         l0 = max(0, int(li_b - half_az_px))
         l1 = min(amp.shape[0], int(li_b + half_az_px) + 1)
