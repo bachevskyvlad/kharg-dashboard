@@ -1,1 +1,542 @@
-"""\np8c_tank_closeup.py — P8 Step 3: per-tank close-up + range profiles\n\nFor 4 tanks on two dates (2024-09-21 before, 2024-10-03 after):\n  1. Download SLC IW2/VV burst for each date\n  2. Close-up PNG ±120m, aspect-corrected (azimuth stretched to match range scale)\n  3. Range profile at 1m step, ±1.5×radius → CSV + overlaid plot\n\nAlso retries the GRD comparison PNG (SH error 500 on first attempt).\n"""\n\nimport csv, io, math, os, re, struct, sys\nimport xml.etree.ElementTree as ET\nfrom datetime import datetime, timedelta, timezone\nfrom pathlib import Path\n\nimport numpy as np\nimport requests\n\nREPO_ROOT = Path(__file__).resolve().parent.parent.parent\nOUT_DIR   = REPO_ROOT / "diagnostics" / "mega"\nOUT_DIR.mkdir(parents=True, exist_ok=True)\n\nTS  = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M")\nLOG = OUT_DIR / f"p8c_tank_closeup_{TS}.txt"\n_lf = open(LOG, "w", buffering=1)\n\ndef log(msg):\n    print(msg, flush=True)\n    _lf.write(msg + "\n")\n\n# ── credentials ───────────────────────────────────────────────────────────────\nCLIENT_ID     = os.environ["CLIENT_ID"]\nCLIENT_SECRET = os.environ["CLIENT_SECRET"]\n\nCDSE_TOKEN_URL = "https://identity.dataspace.copernicus.eu/auth/realms/CDSE/protocol/openid-connect/token"\nCDSE_CATALOG   = "https://catalogue.dataspace.copernicus.eu/odata/v1"\nCDSE_DL_BASE   = "https://download.dataspace.copernicus.eu/odata/v1"\nSH_PROCESS     = "https://sh.dataspace.copernicus.eu/api/v1/process"\n\nKHARG_LAT  = 29.2296\nKHARG_LON  = 50.3126\nREL_ORBIT  = 35\nDIRECTION  = "DESCENDING"\n\nDATES = ["2024-09-21", "2024-10-03"]\n\nTARGET_TANK_IDS = ["t60_1", "t60_2", "t55_5", "t55_17"]\n\nALL_KHARG = [\n    {"id": "t60_0",  "lat": 29.22173338156137,  "lon": 50.31654819949878,  "radius_m": 60},\n    {"id": "t60_1",  "lat": 29.221638820210273, "lon": 50.315043243946754, "radius_m": 60},\n    {"id": "t60_2",  "lat": 29.221840470329855, "lon": 50.31352911803618,  "radius_m": 60},\n    {"id": "t60_3",  "lat": 29.223156804822317, "lon": 50.315849029771684, "radius_m": 60},\n    {"id": "t60_4",  "lat": 29.222897954869325, "lon": 50.3144195158663,   "radius_m": 60},\n    {"id": "t55_5",  "lat": 29.23596908236423,  "lon": 50.31262041733899,  "radius_m": 55},\n    {"id": "t55_6",  "lat": 29.236450714039865, "lon": 50.31093940154909,  "radius_m": 55},\n    {"id": "t55_7",  "lat": 29.237953299445927, "lon": 50.31084946173491,  "radius_m": 55},\n    {"id": "t55_8",  "lat": 29.239068986858886, "lon": 50.30968216852048,  "radius_m": 55},\n    {"id": "t55_9",  "lat": 29.238926386438376, "lon": 50.306814019231595, "radius_m": 55},\n    {"id": "t55_10", "lat": 29.237608159424354, "lon": 50.30726790052075,  "radius_m": 55},\n    {"id": "t55_11", "lat": 29.236277626607237, "lon": 50.307724616432196, "radius_m": 55},\n    {"id": "t55_12", "lat": 29.23632825886285,  "lon": 50.30930379724654,  "radius_m": 55},\n    {"id": "t55_13", "lat": 29.234972729277782, "lon": 50.3081865326845,   "radius_m": 55},\n    {"id": "t55_14", "lat": 29.23511372342508,  "lon": 50.30981988700097,  "radius_m": 55},\n    {"id": "t55_15", "lat": 29.233643820114974, "lon": 50.30863801777735,  "radius_m": 55},\n    {"id": "t55_16", "lat": 29.233830846966335, "lon": 50.31028094525233,  "radius_m": 55},\n    {"id": "t55_17", "lat": 29.23144045674206,  "lon": 50.308740382712706, "radius_m": 55},\n    {"id": "t55_18", "lat": 29.231783644202153, "lon": 50.310385461009616, "radius_m": 55},\n    {"id": "t55_19", "lat": 29.232076421746672, "lon": 50.312234207587345, "radius_m": 55},\n    {"id": "t55_20", "lat": 29.23021527314446,  "lon": 50.3101614506557,   "radius_m": 55},\n    {"id": "t55_21", "lat": 29.228871179764596, "lon": 50.309966015820464, "radius_m": 55},\n    {"id": "t40_22", "lat": 29.22952889859548,  "lon": 50.312187062458655, "radius_m": 40},\n    {"id": "t40_23", "lat": 29.22976318244905,  "lon": 50.313501526357314, "radius_m": 40},\n    {"id": "t40_24", "lat": 29.229963868790236, "lon": 50.31481471193477,  "radius_m": 40},\n    {"id": "t40_25", "lat": 29.228423649589555, "lon": 50.31244141506387,  "radius_m": 40},\n    {"id": "t40_26", "lat": 29.228616543309535, "lon": 50.313733669284346, "radius_m": 40},\n    {"id": "t40_27", "lat": 29.22881135666992,  "lon": 50.31501996070619,  "radius_m": 40},\n    {"id": "t40_28", "lat": 29.22720915866873,  "lon": 50.312698386632235, "radius_m": 40},\n    {"id": "t40_29", "lat": 29.227435720069668, "lon": 50.31399368455909,  "radius_m": 40},\n    {"id": "t40_30", "lat": 29.227640813983122, "lon": 50.31526721678495,  "radius_m": 40},\n    {"id": "t55_31", "lat": 29.232346117474552, "lon": 50.313766336270064, "radius_m": 55},\n    {"id": "t40_32", "lat": 29.230717804109947, "lon": 50.31192906218232,  "radius_m": 40},\n    {"id": "t40_33", "lat": 29.230947410364493, "lon": 50.31324186520479,  "radius_m": 40},\n    {"id": "t40_34", "lat": 29.231135117157258, "lon": 50.31454377331308,  "radius_m": 40},\n    {"id": "t25_35", "lat": 29.226211162396392, "lon": 50.31288089406942,  "radius_m": 25},\n    {"id": "t25_36", "lat": 29.226383532289553, "lon": 50.313809940357444, "radius_m": 25},\n    {"id": "t25_37", "lat": 29.226542892768347, "lon": 50.31474811903658,  "radius_m": 25},\n    {"id": "t25_38", "lat": 29.226689095834363, "lon": 50.31565041182445,  "radius_m": 25},\n    {"id": "t25_39", "lat": 29.22515641565613,  "lon": 50.31310639099006,  "radius_m": 25},\n    {"id": "t25_40", "lat": 29.22532307473051,  "lon": 50.31405678957588,  "radius_m": 25},\n    {"id": "t25_41", "lat": 29.225474230400657, "lon": 50.31496277701283,  "radius_m": 25},\n    {"id": "t25_42", "lat": 29.22561536435356,  "lon": 50.315886541434466, "radius_m": 25},\n    {"id": "t25_43", "lat": 29.22435349448338,  "lon": 50.313281303050275, "radius_m": 25},\n    {"id": "t25_44", "lat": 29.224512933127766, "lon": 50.31422412891253,  "radius_m": 25},\n    {"id": "t25_45", "lat": 29.224656215116465, "lon": 50.31513496008376,  "radius_m": 25},\n    {"id": "t25_46", "lat": 29.22481810164328,  "lon": 50.316063441149545, "radius_m": 25},\n]\nTANK_BY_ID = {t["id"]: t for t in ALL_KHARG}\n\n\n# ── auth ──────────────────────────────────────────────────────────────────────\n\ndef get_token():\n    r = requests.post(CDSE_TOKEN_URL,\n        data={"grant_type": "client_credentials",\n              "client_id": CLIENT_ID, "client_secret": CLIENT_SECRET},\n        timeout=30)\n    r.raise_for_status()\n    return r.json()["access_token"]\n\n\n# ── CDSE search + annotation download ────────────────────────────────────────\n\ndef search_slc(token, date_str):\n    d1 = (datetime.strptime(date_str, "%Y-%m-%d") + timedelta(days=1)).strftime("%Y-%m-%d")\n    url = (f"{CDSE_CATALOG}/Products"\n           f"?$filter=Collection/Name eq 'SENTINEL-1'"\n           f" and Attributes/OData.CSC.StringAttribute/any(a:a/Name eq 'productType' and a/Value eq 'IW_SLC__1S')"\n           f" and OData.CSC.Intersects(area=geography'SRID=4326;POINT({KHARG_LON} {KHARG_LAT})')"\n           f" and Attributes/OData.CSC.StringAttribute/any(a:a/Name eq 'orbitDirection' and a/Value eq 'DESCENDING')"\n           f" and ContentDate/Start ge {date_str}T00:00:00.000Z"\n           f" and ContentDate/Start lt {d1}T00:00:00.000Z"\n           f"&$top=5")\n    r = requests.get(url, headers={"Authorization": f"Bearer {token}"}, timeout=30)\n    r.raise_for_status()\n    return r.json().get("value", [])\n\n\ndef find_iw2_vv_annotation_node(token, product_id, safe_name):\n    """Return annotation XML node name for IW2/VV."""\n    url = (f"{CDSE_DL_BASE}/Products({product_id})"\n           f"/Nodes({safe_name})/Nodes(annotation)/Nodes")\n    r = requests.get(url, headers={"Authorization": f"Bearer {token}"}, timeout=30)\n    r.raise_for_status()\n    nodes = r.json().get("value", [])\n    for n in nodes:\n        nm = n.get("Id", "")\n        if re.search(r"iw2.*vv", nm, re.I):\n            return nm\n    return None\n\n\ndef download_annotation_xml(token, product_id, safe_name, xml_node):\n    url = (f"{CDSE_DL_BASE}/Products({product_id})"\n           f"/Nodes({safe_name})/Nodes(annotation)/Nodes({xml_node})/$value")\n    r = requests.get(url, headers={"Authorization": f"Bearer {token}"}, timeout=60)\n    r.raise_for_status()\n    return r.content\n\n\ndef parse_annotation(xml_bytes):\n    root = ET.fromstring(xml_bytes)\n    rps  = float(root.findtext(".//rangePixelSpacing"))\n    lpb  = int(root.findtext(".//linesPerBurst"))\n    spb  = int(root.findtext(".//samplesPerBurst"))\n    aps_raw = root.findtext(".//azimuthPixelSpacing")\n    if aps_raw:\n        aps = float(aps_raw)\n    else:\n        ati = float(root.findtext(".//azimuthTimeInterval"))\n        aps = ati * 7300.0\n    gcps = [{"line":  int(pt.findtext("line")),\n             "pixel": int(pt.findtext("pixel")),\n             "lat":   float(pt.findtext("latitude")),\n             "lon":   float(pt.findtext("longitude"))}\n            for pt in root.findall(".//geolocationGridPoint")]\n    n_bursts = len(root.findall(".//burst"))\n    return {"rps": rps, "aps": aps, "lpb": lpb, "spb": spb,\n            "gcps": gcps, "n_bursts": n_bursts, "root": root}\n\n\ndef build_interp(gcps):\n    from scipy.interpolate import griddata\n    pts     = np.array([[g["lat"], g["lon"]] for g in gcps])\n    lines   = np.array([g["line"]  for g in gcps], dtype=np.float64)\n    samples = np.array([g["pixel"] for g in gcps], dtype=np.float64)\n    def interp(lat, lon):\n        q  = np.array([[lat, lon]])\n        li = griddata(pts, lines,   q, method="linear")\n        sa = griddata(pts, samples, q, method="linear")\n        return float(li[0]), float(sa[0])\n    return interp\n\n\ndef burst_byte_range(root, burst_idx):\n    bursts = root.findall(".//burst")\n    b      = bursts[burst_idx]\n    bo_el  = b.find("byteOffset")\n    if bo_el is None:\n        return None, None\n    lpb  = int(root.findtext(".//linesPerBurst"))\n    spb  = int(root.findtext(".//samplesPerBurst"))\n    bo   = int(bo_el.text)\n    size = lpb * spb * 4\n    return bo, bo + size - 1\n\n\ndef download_burst(token, product_id, safe_name, tiff_node, b_start, b_end):\n    url = (f"{CDSE_DL_BASE}/Products({product_id})"\n           f"/Nodes({safe_name})/Nodes(measurement)/Nodes({tiff_node})/$value")\n    headers = {"Authorization": f"Bearer {token}",\n               "Range": f"bytes={b_start}-{b_end}"}\n    log(f"    Range bytes={b_start}-{b_end}  ({(b_end-b_start+1)/1e6:.1f} MB)")\n    r = requests.get(url, headers=headers, stream=True, timeout=600)\n    if r.status_code not in (200, 206):\n        log(f"    HTTP {r.status_code}")\n        return None\n    chunks = []; n = 0\n    for chunk in r.iter_content(chunk_size=10*1024*1024):\n        chunks.append(chunk); n += len(chunk)\n        log(f"    ... {n//1024//1024} MB")\n    data = b"".join(chunks)\n    log(f"    done {len(data)/1e6:.1f} MB")\n    return data\n\n\n# ── GRD retry ─────────────────────────────────────────────────────────────────\n\n_EVALSCRIPT_GRD = """\n//VERSION=3\nfunction setup(){return{input:[{bands:[\"VV\"]}],output:{bands:1,sampleType:\"FLOAT32\"}};} \nfunction evaluatePixel(s){return[s.VV];}\n"""\n\ndef sh_grd(token, date_str, resolution=10):\n    import tifffile\n    buf_deg_lat = 800 / 111320\n    buf_deg_lon = 800 / (111320 * math.cos(math.radians(KHARG_LAT)))\n    lon0 = KHARG_LON - buf_deg_lon; lon1 = KHARG_LON + buf_deg_lon\n    lat0 = KHARG_LAT - buf_deg_lat; lat1 = KHARG_LAT + buf_deg_lat\n    d1 = (datetime.strptime(date_str, "%Y-%m-%d") + timedelta(days=1)).strftime("%Y-%m-%d")\n    w  = int(abs(lon1-lon0)*111320*math.cos(math.radians(KHARG_LAT))/resolution)\n    h  = int(abs(lat1-lat0)*111320/resolution)\n    payload = {\n        "input": {\n            "bounds": {"bbox": [lon0, lat0, lon1, lat1],\n                       "properties": {"crs": "http://www.opengis.net/def/crs/EPSG/0/4326"}},\n            "data": [{"type": "sentinel-1-grd",\n                      "dataFilter": {"orbitDirection": DIRECTION,\n                                     "relativeOrbitNumber": REL_ORBIT,\n                                     "resolution": "HIGH"},\n                      "processing": {"orthorectify": True, "backCoeff": "GAMMA0_TERRAIN",\n                                     "demInstance": "COPERNICUS_30",\n                                     "speckleFilter": {"type": "NONE"}},\n                      "timeRange": {"from": date_str+"T00:00:00Z", "to": d1+"T00:00:00Z"}}]},\n        "output": {"width": w, "height": h,\n                   "responses": [{"identifier": "default", "format": {"type": "image/tiff"}}]},\n        "evalscript": _EVALSCRIPT_GRD,\n    }\n    r = requests.post(SH_PROCESS, json=payload,\n                      headers={"Authorization": f"Bearer {token}",\n                               "Content-Type": "application/json"},\n                      timeout=120)\n    if r.status_code != 200:\n        log(f"  SH GRD {r.status_code}: {r.text[:300]}")\n        return None, (lon0, lat0, lon1, lat1)\n    arr = __import__("tifffile").imread(io.BytesIO(r.content)).squeeze().astype(np.float32)\n    return arr, (lon0, lat0, lon1, lat1)\n\n\n# ── close-up PNG ──────────────────────────────────────────────────────────────\n\ndef tank_closeup_png(amp_by_date, info_by_date, burst_idx_by_date, tank, out_path):\n    """Two-panel PNG: left=2024-09-21, right=2024-10-03.\n    Axes in metres (range horizontal, azimuth vertical).\n    aspect=\"equal\" — azimuth stretched to real-world scale.\n    Satellite approach direction annotated."""\n    import matplotlib\n    matplotlib.use("Agg")\n    import matplotlib.pyplot as plt\n    import matplotlib.patches as mpatches\n\n    WIN_M = 120.0  # ±120 m window\n\n    fig, axes = plt.subplots(1, 2, figsize=(12, 7))\n\n    for ax, date in zip(axes, DATES):\n        amp       = amp_by_date[date]\n        info      = info_by_date[date]\n        rps       = info["rps"]\n        aps       = info["aps"]\n        lpb       = info["lpb"]\n        burst_idx = burst_idx_by_date[date]\n        interp    = info["interp"]\n\n        li_g, sa_c = interp(tank["lat"], tank["lon"])\n        li_b = li_g - burst_idx * lpb\n\n        half_rg_px = WIN_M / rps\n        half_az_px = WIN_M / aps\n\n        l0 = max(0, int(li_b - half_az_px))\n        l1 = min(amp.shape[0], int(li_b + half_az_px) + 1)\n        s0 = max(0, int(sa_c - half_rg_px))\n        s1 = min(amp.shape[1], int(sa_c + half_rg_px) + 1)\n\n        crop = amp[l0:l1, s0:s1]\n        db   = 10 * np.log10(np.clip(crop, 1e-6, None))\n        vmin, vmax = np.percentile(db, [1, 99])\n\n        # extent in metres (range × azimuth) → aspect=\"equal\" gives correct geometry\n        ext = [(s0 - sa_c) * rps, (s1 - sa_c) * rps,\n               (l1 - li_b) * aps, (l0 - li_b) * aps]\n\n        ax.imshow(db, extent=ext, cmap=\"gray\", vmin=vmin, vmax=vmax,\n                  aspect=\"equal\", origin=\"upper\", interpolation=\"nearest\")\n\n        # tank circle\n        circ = mpatches.Circle((0, 0), tank[\"radius_m\"],\n                                edgecolor=\"cyan\", facecolor=\"none\", lw=1.2)\n        ax.add_patch(circ)\n        ax.plot(0, 0, \"+\", color=\"cyan\", ms=6, lw=0.8)\n\n        # ±radius markers\n        for sgn in (-1, 1):\n            ax.axvline(sgn * tank[\"radius_m\"], color=\"cyan\", lw=0.5, ls=\"--\", alpha=0.6)\n\n        # satellite direction: for descending S-1 over Kharg, near range is to the west\n        # In slant-range image, range axis runs left (near, ~W) to right (far, ~E)\n        ax.annotate(\"\", xy=(-WIN_M * 0.85, -WIN_M * 0.85),\n                    xytext=(-WIN_M * 0.55, -WIN_M * 0.85),\n                    arrowprops=dict(arrowstyle=\"->\", color=\"yellow\", lw=1.2))\n        ax.text(-WIN_M * 0.85, -WIN_M * 0.77, \"satellite\", color=\"yellow\",\n                fontsize=7, ha=\"left\")\n\n        ax.set_xlim(-WIN_M, WIN_M)\n        ax.set_ylim(WIN_M, -WIN_M)\n        ax.set_xlabel(\"Range offset (m, slant)\")\n        ax.set_ylabel(\"Azimuth offset (m)\")\n        ax.set_title(f\"{date}\\nrps={rps:.3f}m  aps={aps:.3f}m\")\n\n    fig.suptitle(f\"{tank['id']}  r={tank['radius_m']}m  [cyan circle = registry radius]\", fontsize=12)\n    fig.tight_layout()\n    fig.savefig(out_path, dpi=150)\n    plt.close(fig)\n    log(f\"  saved {out_path.name}\")\n\n\n# ── range profile ─────────────────────────────────────────────────────────────\n\ndef range_profile(amp, info, burst_idx, tank, date_str):\n    \"\"\"Extract amplitude profile along range through tank centre.\n    Returns (dist_m array, db array) at 1m steps, ±1.5×radius.\"\"\"\n    rps   = info[\"rps\"]\n    aps   = info[\"aps\"]\n    lpb   = info[\"lpb\"]\n    interp = info[\"interp\"]\n\n    li_g, sa_c = interp(tank[\"lat\"], tank[\"lon\"])\n    li_b = li_g - burst_idx * lpb\n    row  = int(round(li_b))\n    row  = max(1, min(amp.shape[0] - 2, row))\n\n    # Average 3 azimuth lines to reduce speckle (14m res → centre ±1 line)\n    amp_row = amp[row-1:row+2, :].mean(axis=0)\n\n    win_m  = 1.5 * tank[\"radius_m\"]\n    dists  = np.arange(-win_m, win_m + 1.0, 1.0)\n    samps  = sa_c + dists / rps\n\n    in_bounds = (samps >= 0) & (samps < amp_row.shape[0] - 1)\n    amp_interp = np.full(len(dists), np.nan)\n    if in_bounds.any():\n        xi = samps[in_bounds]\n        lo = np.floor(xi).astype(int)\n        frac = xi - lo\n        amp_interp[in_bounds] = (amp_row[lo] * (1 - frac) + amp_row[lo + 1] * frac)\n\n    db_interp = 10 * np.log10(np.clip(amp_interp, 1e-10, None))\n    db_interp[~np.isfinite(db_interp)] = np.nan\n    return dists, db_interp\n\n\ndef save_profile_csv(dists, db_arr, tank_id, date_str, out_path):\n    with open(out_path, \"w\", newline=\"\") as f:\n        w = csv.writer(f)\n        w.writerow([\"tank_id\", \"date\", \"distance_m\", \"amplitude_db\"])\n        for d, v in zip(dists, db_arr):\n            w.writerow([tank_id, date_str, f\"{d:.1f}\",\n                        f\"{v:.4f}\" if np.isfinite(v) else \"\"])\n    log(f\"  CSV: {out_path.name}  ({len(dists)} rows)\")\n\n\ndef plot_profiles(profiles_by_date, tank, out_path):\n    \"\"\"Overlay profiles from both dates on one figure.\"\"\"\n    import matplotlib\n    matplotlib.use(\"Agg\")\n    import matplotlib.pyplot as plt\n\n    colors = {\"2024-09-21\": \"#5599ff\", \"2024-10-03\": \"#ff7755\"}\n    labels = {\"2024-09-21\": \"2024-09-21 (before)\", \"2024-10-03\": \"2024-10-03 (after)\"}\n\n    fig, ax = plt.subplots(figsize=(10, 4))\n    for date, (dists, dbs) in profiles_by_date.items():\n        mask = np.isfinite(dbs)\n        ax.plot(dists[mask], dbs[mask], color=colors[date], lw=1.2, label=labels[date])\n\n    r = tank[\"radius_m\"]\n    for sgn in (-1, 1):\n        ax.axvline(sgn * r, color=\"gray\", lw=0.8, ls=\"--\", label=f\"±r={r}m\" if sgn == 1 else \"\")\n    ax.axvline(0, color=\"white\", lw=0.5, ls=\":\")\n\n    ax.set_xlabel(\"Distance from tank centre (m, range)\")\n    ax.set_ylabel(\"Amplitude (dB)\")\n    ax.set_title(f\"{tank['id']}  r={r}m — range profile  (3-line az average)\")\n    ax.legend(fontsize=9)\n    ax.grid(True, alpha=0.3)\n    fig.tight_layout()\n    fig.savefig(out_path, dpi=150)\n    plt.close(fig)\n    log(f\"  profile PNG: {out_path.name}\")\n\n\n# ── GRD comparison PNG ────────────────────────────────────────────────────────\n\ndef plot_grd(arr_grd, bbox_deg, tanks, out_path, date_str):\n    import matplotlib\n    matplotlib.use(\"Agg\")\n    import matplotlib.pyplot as plt\n    import matplotlib.patches as mpatches\n\n    lon0, lat0, lon1, lat1 = bbox_deg\n    db = 10 * np.log10(np.clip(arr_grd, 1e-10, None))\n    db[~np.isfinite(db)] = np.nan\n    vmin, vmax = np.nanpercentile(db, [2, 98])\n\n    fig, ax = plt.subplots(figsize=(10, 10))\n    ax.imshow(np.flipud(db), extent=[lon0, lon1, lat0, lat1],\n              cmap=\"gray\", vmin=vmin, vmax=vmax, aspect=\"equal\",\n              origin=\"lower\", interpolation=\"nearest\")\n    n = 0\n    for t in tanks:\n        if not (lon0 <= t[\"lon\"] <= lon1 and lat0 <= t[\"lat\"] <= lat1):\n            continue\n        r_lon = t[\"radius_m\"] / (111320 * math.cos(math.radians(t[\"lat\"])))\n        r_lat = t[\"radius_m\"] / 111320\n        circ  = mpatches.Ellipse((t[\"lon\"], t[\"lat\"]),\n                                  width=2*r_lon, height=2*r_lat,\n                                  edgecolor=\"cyan\", facecolor=\"none\", lw=0.8)\n        ax.add_patch(circ); n += 1\n    ax.set_xlabel(\"Longitude\"); ax.set_ylabel(\"Latitude\")\n    ax.set_title(f\"GRD Γ\u2080 VV — {date_str} — \u226410m/px  [{n}/{len(tanks)} tanks]\")\n    fig.tight_layout()\n    fig.savefig(out_path, dpi=150); plt.close(fig)\n    log(f\"  saved {out_path.name}  ({n} circles)\")\n\n\n# ── main ──────────────────────────────────────────────────────────────────────\n\ndef main():\n    log(f\"p8c_tank_closeup.py  {datetime.now(timezone.utc).isoformat()}\")\n\n    token = get_token()\n    log(\"token OK\")\n\n    amp_by_date       = {}\n    info_by_date      = {}\n    burst_idx_by_date = {}\n\n    for date in DATES:\n        log(f\"\\n=== {date} ===")\n        items = search_slc(token, date)\n        if not items:\n            log(f\"  FATAL: no SLC product for {date}\")\n            sys.exit(1)\n        prod  = items[0]\n        pid   = prod[\"Id\"]\n        safe  = prod[\"Name\"]\n        log(f\"  {safe}\")\n\n        xml_node = find_iw2_vv_annotation_node(token, pid, safe)\n        if not xml_node:\n            log(\"  FATAL: cannot find IW2/VV annotation node\")\n            sys.exit(1)\n        log(f\"  annotation node: {xml_node}\")\n\n        xml_bytes = download_annotation_xml(token, pid, safe, xml_node)\n        info      = parse_annotation(xml_bytes)\n        log(f\"  rps={info['rps']:.3f}m  aps={info['aps']:.3f}m  \"\n            f\"lpb={info['lpb']}  spb={info['spb']}  bursts={info['n_bursts']}\")\n\n        interp     = build_interp(info[\"gcps\"])\n        info[\"interp\"] = interp\n        li_c, sa_c = interp(KHARG_LAT, KHARG_LON)\n        burst_idx  = int(li_c // info[\"lpb\"])\n        log(f\"  farm centre → line_global={li_c:.1f}  sample={sa_c:.1f}  burst={burst_idx}\")\n\n        b_start, b_end = burst_byte_range(info[\"root\"], burst_idx)\n        if b_start is None:\n            log(\"  FATAL: no byteOffset in annotation\")\n            sys.exit(1)\n\n        tiff_node = xml_node.replace(\".xml\", \".tiff\")\n        raw = download_burst(token, pid, safe, tiff_node, b_start, b_end)\n        if raw is None:\n            log(\"  FATAL: burst download failed\")\n            sys.exit(1)\n\n        arr16 = np.frombuffer(raw, dtype=np.int16).reshape(info[\"lpb\"], info[\"spb\"], 2)\n        z     = arr16[:, :, 0].astype(np.float32) + 1j * arr16[:, :, 1].astype(np.float32)\n        amp   = np.abs(z)\n        log(f\"  amp shape={amp.shape}  mean={amp.mean():.2f}  max={amp.max():.2f}\")\n\n        amp_by_date[date]       = amp\n        info_by_date[date]      = info\n        burst_idx_by_date[date] = burst_idx\n\n    # ── close-ups + profiles ──────────────────────────────────────────────────\n    for tid in TARGET_TANK_IDS:\n        tank = TANK_BY_ID[tid]\n        log(f\"\\n--- {tid}  r={tank['radius_m']}m ---\")\n\n        closeup_path = OUT_DIR / f\"p8c_closeup_{tid}_{TS}.png\"\n        tank_closeup_png(amp_by_date, info_by_date, burst_idx_by_date, tank, closeup_path)\n\n        profiles_by_date = {}\n        for date in DATES:\n            dists, dbs = range_profile(\n                amp_by_date[date], info_by_date[date],\n                burst_idx_by_date[date], tank, date)\n            profiles_by_date[date] = (dists, dbs)\n            csv_path = OUT_DIR / f\"p8c_profile_{tid}_{date}_{TS}.csv\"\n            save_profile_csv(dists, dbs, tid, date, csv_path)\n\n        prof_png = OUT_DIR / f\"p8c_profile_{tid}_{TS}.png\"\n        plot_profiles(profiles_by_date, tank, prof_png)\n\n    # ── GRD retry ─────────────────────────────────────────────────────────────\n    log(f\"\\n=== GRD retry (2024-10-03) ===")\n    arr_grd, bbox_grd = sh_grd(token, \"2024-10-03\", resolution=10)\n    if arr_grd is not None:\n        grd_png = OUT_DIR / f\"p8c_grd_{TS}.png\"\n        plot_grd(arr_grd, bbox_grd, ALL_KHARG, grd_png, \"2024-10-03\")\n    else:\n        log(\"  GRD failed again — skip\")\n\n    log(f\"\\nDONE  {datetime.now(timezone.utc).isoformat()}\")\n    _lf.close()\n\n\nif __name__ == \"__main__\":\n    main()\n
+"""
+p8c_tank_closeup.py — P8 Step 3: per-tank close-up + range profiles
+
+For 4 tanks on two dates (2024-09-21 before, 2024-10-03 after):
+  1. Download SLC IW2/VV burst for each date
+  2. Close-up PNG ±120m, aspect-corrected (azimuth stretched to match range scale)
+  3. Range profile at 1m step, ±1.5×radius → CSV + overlaid plot
+
+Also retries the GRD comparison PNG (SH error 500 on first attempt).
+"""
+
+import csv, io, math, os, re, struct, sys
+import xml.etree.ElementTree as ET
+from datetime import datetime, timedelta, timezone
+from pathlib import Path
+
+import numpy as np
+import requests
+
+REPO_ROOT = Path(__file__).resolve().parent.parent.parent
+OUT_DIR   = REPO_ROOT / "diagnostics" / "mega"
+OUT_DIR.mkdir(parents=True, exist_ok=True)
+
+TS  = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M")
+LOG = OUT_DIR / f"p8c_tank_closeup_{TS}.txt"
+_lf = open(LOG, "w", buffering=1)
+
+def log(msg):
+    print(msg, flush=True)
+    _lf.write(msg + "\n")
+
+# ── credentials ───────────────────────────────────────────────────────────────
+CLIENT_ID     = os.environ["CLIENT_ID"]
+CLIENT_SECRET = os.environ["CLIENT_SECRET"]
+
+CDSE_TOKEN_URL = "https://identity.dataspace.copernicus.eu/auth/realms/CDSE/protocol/openid-connect/token"
+CDSE_CATALOG   = "https://catalogue.dataspace.copernicus.eu/odata/v1"
+CDSE_DL_BASE   = "https://download.dataspace.copernicus.eu/odata/v1"
+SH_PROCESS     = "https://sh.dataspace.copernicus.eu/api/v1/process"
+
+KHARG_LAT  = 29.2296
+KHARG_LON  = 50.3126
+REL_ORBIT  = 35
+DIRECTION  = "DESCENDING"
+
+DATES = ["2024-09-21", "2024-10-03"]
+
+TARGET_TANK_IDS = ["t60_1", "t60_2", "t55_5", "t55_17"]
+
+ALL_KHARG = [
+    {"id": "t60_0",  "lat": 29.22173338156137,  "lon": 50.31654819949878,  "radius_m": 60},
+    {"id": "t60_1",  "lat": 29.221638820210273, "lon": 50.315043243946754, "radius_m": 60},
+    {"id": "t60_2",  "lat": 29.221840470329855, "lon": 50.31352911803618,  "radius_m": 60},
+    {"id": "t60_3",  "lat": 29.223156804822317, "lon": 50.315849029771684, "radius_m": 60},
+    {"id": "t60_4",  "lat": 29.222897954869325, "lon": 50.3144195158663,   "radius_m": 60},
+    {"id": "t55_5",  "lat": 29.23596908236423,  "lon": 50.31262041733899,  "radius_m": 55},
+    {"id": "t55_6",  "lat": 29.236450714039865, "lon": 50.31093940154909,  "radius_m": 55},
+    {"id": "t55_7",  "lat": 29.237953299445927, "lon": 50.31084946173491,  "radius_m": 55},
+    {"id": "t55_8",  "lat": 29.239068986858886, "lon": 50.30968216852048,  "radius_m": 55},
+    {"id": "t55_9",  "lat": 29.238926386438376, "lon": 50.306814019231595, "radius_m": 55},
+    {"id": "t55_10", "lat": 29.237608159424354, "lon": 50.30726790052075,  "radius_m": 55},
+    {"id": "t55_11", "lat": 29.236277626607237, "lon": 50.307724616432196, "radius_m": 55},
+    {"id": "t55_12", "lat": 29.23632825886285,  "lon": 50.30930379724654,  "radius_m": 55},
+    {"id": "t55_13", "lat": 29.234972729277782, "lon": 50.3081865326845,   "radius_m": 55},
+    {"id": "t55_14", "lat": 29.23511372342508,  "lon": 50.30981988700097,  "radius_m": 55},
+    {"id": "t55_15", "lat": 29.233643820114974, "lon": 50.30863801777735,  "radius_m": 55},
+    {"id": "t55_16", "lat": 29.233830846966335, "lon": 50.31028094525233,  "radius_m": 55},
+    {"id": "t55_17", "lat": 29.23144045674206,  "lon": 50.308740382712706, "radius_m": 55},
+    {"id": "t55_18", "lat": 29.231783644202153, "lon": 50.310385461009616, "radius_m": 55},
+    {"id": "t55_19", "lat": 29.232076421746672, "lon": 50.312234207587345, "radius_m": 55},
+    {"id": "t55_20", "lat": 29.23021527314446,  "lon": 50.3101614506557,   "radius_m": 55},
+    {"id": "t55_21", "lat": 29.228871179764596, "lon": 50.309966015820464, "radius_m": 55},
+    {"id": "t40_22", "lat": 29.22952889859548,  "lon": 50.312187062458655, "radius_m": 40},
+    {"id": "t40_23", "lat": 29.22976318244905,  "lon": 50.313501526357314, "radius_m": 40},
+    {"id": "t40_24", "lat": 29.229963868790236, "lon": 50.31481471193477,  "radius_m": 40},
+    {"id": "t40_25", "lat": 29.228423649589555, "lon": 50.31244141506387,  "radius_m": 40},
+    {"id": "t40_26", "lat": 29.228616543309535, "lon": 50.313733669284346, "radius_m": 40},
+    {"id": "t40_27", "lat": 29.22881135666992,  "lon": 50.31501996070619,  "radius_m": 40},
+    {"id": "t40_28", "lat": 29.22720915866873,  "lon": 50.312698386632235, "radius_m": 40},
+    {"id": "t40_29", "lat": 29.227435720069668, "lon": 50.31399368455909,  "radius_m": 40},
+    {"id": "t40_30", "lat": 29.227640813983122, "lon": 50.31526721678495,  "radius_m": 40},
+    {"id": "t55_31", "lat": 29.232346117474552, "lon": 50.313766336270064, "radius_m": 55},
+    {"id": "t40_32", "lat": 29.230717804109947, "lon": 50.31192906218232,  "radius_m": 40},
+    {"id": "t40_33", "lat": 29.230947410364493, "lon": 50.31324186520479,  "radius_m": 40},
+    {"id": "t40_34", "lat": 29.231135117157258, "lon": 50.31454377331308,  "radius_m": 40},
+    {"id": "t25_35", "lat": 29.226211162396392, "lon": 50.31288089406942,  "radius_m": 25},
+    {"id": "t25_36", "lat": 29.226383532289553, "lon": 50.313809940357444, "radius_m": 25},
+    {"id": "t25_37", "lat": 29.226542892768347, "lon": 50.31474811903658,  "radius_m": 25},
+    {"id": "t25_38", "lat": 29.226689095834363, "lon": 50.31565041182445,  "radius_m": 25},
+    {"id": "t25_39", "lat": 29.22515641565613,  "lon": 50.31310639099006,  "radius_m": 25},
+    {"id": "t25_40", "lat": 29.22532307473051,  "lon": 50.31405678957588,  "radius_m": 25},
+    {"id": "t25_41", "lat": 29.225474230400657, "lon": 50.31496277701283,  "radius_m": 25},
+    {"id": "t25_42", "lat": 29.22561536435356,  "lon": 50.315886541434466, "radius_m": 25},
+    {"id": "t25_43", "lat": 29.22435349448338,  "lon": 50.313281303050275, "radius_m": 25},
+    {"id": "t25_44", "lat": 29.224512933127766, "lon": 50.31422412891253,  "radius_m": 25},
+    {"id": "t25_45", "lat": 29.224656215116465, "lon": 50.31513496008376,  "radius_m": 25},
+    {"id": "t25_46", "lat": 29.22481810164328,  "lon": 50.316063441149545, "radius_m": 25},
+]
+TANK_BY_ID = {t["id"]: t for t in ALL_KHARG}
+
+
+# ── auth ──────────────────────────────────────────────────────────────────────
+
+def get_token():
+    r = requests.post(CDSE_TOKEN_URL,
+        data={"grant_type": "client_credentials",
+              "client_id": CLIENT_ID, "client_secret": CLIENT_SECRET},
+        timeout=30)
+    r.raise_for_status()
+    return r.json()["access_token"]
+
+
+# ── CDSE search + annotation download ────────────────────────────────────────
+
+def search_slc(token, date_str):
+    d1 = (datetime.strptime(date_str, "%Y-%m-%d") + timedelta(days=1)).strftime("%Y-%m-%d")
+    url = (f"{CDSE_CATALOG}/Products"
+           f"?$filter=Collection/Name eq 'SENTINEL-1'"
+           f" and Attributes/OData.CSC.StringAttribute/any(a:a/Name eq 'productType' and a/Value eq 'IW_SLC__1S')"
+           f" and OData.CSC.Intersects(area=geography'SRID=4326;POINT({KHARG_LON} {KHARG_LAT})')"
+           f" and Attributes/OData.CSC.StringAttribute/any(a:a/Name eq 'orbitDirection' and a/Value eq 'DESCENDING')"
+           f" and ContentDate/Start ge {date_str}T00:00:00.000Z"
+           f" and ContentDate/Start lt {d1}T00:00:00.000Z"
+           f"&$top=5")
+    r = requests.get(url, headers={"Authorization": f"Bearer {token}"}, timeout=30)
+    r.raise_for_status()
+    return r.json().get("value", [])
+
+
+def find_iw2_vv_annotation_node(token, product_id, safe_name):
+    """Return annotation XML node name for IW2/VV."""
+    url = (f"{CDSE_DL_BASE}/Products({product_id})"
+           f"/Nodes({safe_name})/Nodes(annotation)/Nodes")
+    r = requests.get(url, headers={"Authorization": f"Bearer {token}"}, timeout=30)
+    r.raise_for_status()
+    nodes = r.json().get("value", [])
+    for n in nodes:
+        nm = n.get("Id", "")
+        if re.search(r"iw2.*vv", nm, re.I):
+            return nm
+    return None
+
+
+def download_annotation_xml(token, product_id, safe_name, xml_node):
+    url = (f"{CDSE_DL_BASE}/Products({product_id})"
+           f"/Nodes({safe_name})/Nodes(annotation)/Nodes({xml_node})/$value")
+    r = requests.get(url, headers={"Authorization": f"Bearer {token}"}, timeout=60)
+    r.raise_for_status()
+    return r.content
+
+
+def parse_annotation(xml_bytes):
+    root = ET.fromstring(xml_bytes)
+    rps  = float(root.findtext(".//rangePixelSpacing"))
+    lpb  = int(root.findtext(".//linesPerBurst"))
+    spb  = int(root.findtext(".//samplesPerBurst"))
+    aps_raw = root.findtext(".//azimuthPixelSpacing")
+    if aps_raw:
+        aps = float(aps_raw)
+    else:
+        ati = float(root.findtext(".//azimuthTimeInterval"))
+        aps = ati * 7300.0
+    gcps = [{"line":  int(pt.findtext("line")),
+             "pixel": int(pt.findtext("pixel")),
+             "lat":   float(pt.findtext("latitude")),
+             "lon":   float(pt.findtext("longitude"))}
+            for pt in root.findall(".//geolocationGridPoint")]
+    n_bursts = len(root.findall(".//burst"))
+    return {"rps": rps, "aps": aps, "lpb": lpb, "spb": spb,
+            "gcps": gcps, "n_bursts": n_bursts, "root": root}
+
+
+def build_interp(gcps):
+    from scipy.interpolate import griddata
+    pts     = np.array([[g["lat"], g["lon"]] for g in gcps])
+    lines   = np.array([g["line"]  for g in gcps], dtype=np.float64)
+    samples = np.array([g["pixel"] for g in gcps], dtype=np.float64)
+    def interp(lat, lon):
+        q  = np.array([[lat, lon]])
+        li = griddata(pts, lines,   q, method="linear")
+        sa = griddata(pts, samples, q, method="linear")
+        return float(li[0]), float(sa[0])
+    return interp
+
+
+def burst_byte_range(root, burst_idx):
+    bursts = root.findall(".//burst")
+    b      = bursts[burst_idx]
+    bo_el  = b.find("byteOffset")
+    if bo_el is None:
+        return None, None
+    lpb  = int(root.findtext(".//linesPerBurst"))
+    spb  = int(root.findtext(".//samplesPerBurst"))
+    bo   = int(bo_el.text)
+    size = lpb * spb * 4
+    return bo, bo + size - 1
+
+
+def download_burst(token, product_id, safe_name, tiff_node, b_start, b_end):
+    url = (f"{CDSE_DL_BASE}/Products({product_id})"
+           f"/Nodes({safe_name})/Nodes(measurement)/Nodes({tiff_node})/$value")
+    headers = {"Authorization": f"Bearer {token}",
+               "Range": f"bytes={b_start}-{b_end}"}
+    log(f"    Range bytes={b_start}-{b_end}  ({(b_end-b_start+1)/1e6:.1f} MB)")
+    r = requests.get(url, headers=headers, stream=True, timeout=600)
+    if r.status_code not in (200, 206):
+        log(f"    HTTP {r.status_code}")
+        return None
+    chunks = []; n = 0
+    for chunk in r.iter_content(chunk_size=10*1024*1024):
+        chunks.append(chunk); n += len(chunk)
+        log(f"    ... {n//1024//1024} MB")
+    data = b"".join(chunks)
+    log(f"    done {len(data)/1e6:.1f} MB")
+    return data
+
+
+# ── GRD retry ─────────────────────────────────────────────────────────────────
+
+_EVALSCRIPT_GRD = """
+//VERSION=3
+function setup(){return{input:[{bands:["VV"]}],output:{bands:1,sampleType:"FLOAT32"}};}
+function evaluatePixel(s){return[s.VV];}
+"""
+
+def sh_grd(token, date_str, resolution=10):
+    import tifffile
+    buf_deg_lat = 800 / 111320
+    buf_deg_lon = 800 / (111320 * math.cos(math.radians(KHARG_LAT)))
+    lon0 = KHARG_LON - buf_deg_lon; lon1 = KHARG_LON + buf_deg_lon
+    lat0 = KHARG_LAT - buf_deg_lat; lat1 = KHARG_LAT + buf_deg_lat
+    d1 = (datetime.strptime(date_str, "%Y-%m-%d") + timedelta(days=1)).strftime("%Y-%m-%d")
+    w  = int(abs(lon1-lon0)*111320*math.cos(math.radians(KHARG_LAT))/resolution)
+    h  = int(abs(lat1-lat0)*111320/resolution)
+    payload = {
+        "input": {
+            "bounds": {"bbox": [lon0, lat0, lon1, lat1],
+                       "properties": {"crs": "http://www.opengis.net/def/crs/EPSG/0/4326"}},
+            "data": [{"type": "sentinel-1-grd",
+                      "dataFilter": {"orbitDirection": DIRECTION,
+                                     "relativeOrbitNumber": REL_ORBIT,
+                                     "resolution": "HIGH"},
+                      "processing": {"orthorectify": True, "backCoeff": "GAMMA0_TERRAIN",
+                                     "demInstance": "COPERNICUS_30",
+                                     "speckleFilter": {"type": "NONE"}},
+                      "timeRange": {"from": date_str+"T00:00:00Z", "to": d1+"T00:00:00Z"}}]},
+        "output": {"width": w, "height": h,
+                   "responses": [{"identifier": "default", "format": {"type": "image/tiff"}}]},
+        "evalscript": _EVALSCRIPT_GRD,
+    }
+    r = requests.post(SH_PROCESS, json=payload,
+                      headers={"Authorization": f"Bearer {token}",
+                               "Content-Type": "application/json"},
+                      timeout=120)
+    if r.status_code != 200:
+        log(f"  SH GRD {r.status_code}: {r.text[:300]}")
+        return None, (lon0, lat0, lon1, lat1)
+    arr = __import__("tifffile").imread(io.BytesIO(r.content)).squeeze().astype(np.float32)
+    return arr, (lon0, lat0, lon1, lat1)
+
+
+# ── close-up PNG ──────────────────────────────────────────────────────────────
+
+def tank_closeup_png(amp_by_date, info_by_date, burst_idx_by_date, tank, out_path):
+    """Two-panel PNG: left=2024-09-21, right=2024-10-03.
+    Axes in metres (range horizontal, azimuth vertical).
+    aspect="equal" — azimuth stretched to real-world scale.
+    Satellite approach direction annotated."""
+    import matplotlib
+    matplotlib.use("Agg")
+    import matplotlib.pyplot as plt
+    import matplotlib.patches as mpatches
+
+    WIN_M = 120.0  # ±120 m window
+
+    fig, axes = plt.subplots(1, 2, figsize=(12, 7))
+
+    for ax, date in zip(axes, DATES):
+        amp       = amp_by_date[date]
+        info      = info_by_date[date]
+        rps       = info["rps"]
+        aps       = info["aps"]
+        lpb       = info["lpb"]
+        burst_idx = burst_idx_by_date[date]
+        interp    = info["interp"]
+
+        li_g, sa_c = interp(tank["lat"], tank["lon"])
+        li_b = li_g - burst_idx * lpb
+
+        half_rg_px = WIN_M / rps
+        half_az_px = WIN_M / aps
+
+        l0 = max(0, int(li_b - half_az_px))
+        l1 = min(amp.shape[0], int(li_b + half_az_px) + 1)
+        s0 = max(0, int(sa_c - half_rg_px))
+        s1 = min(amp.shape[1], int(sa_c + half_rg_px) + 1)
+
+        crop = amp[l0:l1, s0:s1]
+        db   = 10 * np.log10(np.clip(crop, 1e-6, None))
+        vmin, vmax = np.percentile(db, [1, 99])
+
+        # extent in metres (range x azimuth) -> aspect="equal" gives correct geometry
+        ext = [(s0 - sa_c) * rps, (s1 - sa_c) * rps,
+               (l1 - li_b) * aps, (l0 - li_b) * aps]
+
+        ax.imshow(db, extent=ext, cmap="gray", vmin=vmin, vmax=vmax,
+                  aspect="equal", origin="upper", interpolation="nearest")
+
+        # tank circle
+        circ = mpatches.Circle((0, 0), tank["radius_m"],
+                                edgecolor="cyan", facecolor="none", lw=1.2)
+        ax.add_patch(circ)
+        ax.plot(0, 0, "+", color="cyan", ms=6, lw=0.8)
+
+        # radius markers
+        for sgn in (-1, 1):
+            ax.axvline(sgn * tank["radius_m"], color="cyan", lw=0.5, ls="--", alpha=0.6)
+
+        # satellite direction annotation
+        ax.annotate("", xy=(-WIN_M * 0.85, -WIN_M * 0.85),
+                    xytext=(-WIN_M * 0.55, -WIN_M * 0.85),
+                    arrowprops=dict(arrowstyle="->", color="yellow", lw=1.2))
+        ax.text(-WIN_M * 0.85, -WIN_M * 0.77, "satellite", color="yellow",
+                fontsize=7, ha="left")
+
+        ax.set_xlim(-WIN_M, WIN_M)
+        ax.set_ylim(WIN_M, -WIN_M)
+        ax.set_xlabel("Range offset (m, slant)")
+        ax.set_ylabel("Azimuth offset (m)")
+        ax.set_title(f"{date}\nrps={rps:.3f}m  aps={aps:.3f}m")
+
+    fig.suptitle(f"{tank['id']}  r={tank['radius_m']}m  [cyan circle = registry radius]", fontsize=12)
+    fig.tight_layout()
+    fig.savefig(out_path, dpi=150)
+    plt.close(fig)
+    log(f"  saved {out_path.name}")
+
+
+# ── range profile ─────────────────────────────────────────────────────────────
+
+def range_profile(amp, info, burst_idx, tank, date_str):
+    """Extract amplitude profile along range through tank centre.
+    Returns (dist_m array, db array) at 1m steps, +-1.5*radius."""
+    rps   = info["rps"]
+    aps   = info["aps"]
+    lpb   = info["lpb"]
+    interp = info["interp"]
+
+    li_g, sa_c = interp(tank["lat"], tank["lon"])
+    li_b = li_g - burst_idx * lpb
+    row  = int(round(li_b))
+    row  = max(1, min(amp.shape[0] - 2, row))
+
+    # Average 3 azimuth lines to reduce speckle
+    amp_row = amp[row-1:row+2, :].mean(axis=0)
+
+    win_m  = 1.5 * tank["radius_m"]
+    dists  = np.arange(-win_m, win_m + 1.0, 1.0)
+    samps  = sa_c + dists / rps
+
+    in_bounds = (samps >= 0) & (samps < amp_row.shape[0] - 1)
+    amp_interp = np.full(len(dists), np.nan)
+    if in_bounds.any():
+        xi = samps[in_bounds]
+        lo = np.floor(xi).astype(int)
+        frac = xi - lo
+        amp_interp[in_bounds] = (amp_row[lo] * (1 - frac) + amp_row[lo + 1] * frac)
+
+    db_interp = 10 * np.log10(np.clip(amp_interp, 1e-10, None))
+    db_interp[~np.isfinite(db_interp)] = np.nan
+    return dists, db_interp
+
+
+def save_profile_csv(dists, db_arr, tank_id, date_str, out_path):
+    with open(out_path, "w", newline="") as f:
+        w = csv.writer(f)
+        w.writerow(["tank_id", "date", "distance_m", "amplitude_db"])
+        for d, v in zip(dists, db_arr):
+            w.writerow([tank_id, date_str, f"{d:.1f}",
+                        f"{v:.4f}" if np.isfinite(v) else ""])
+    log(f"  CSV: {out_path.name}  ({len(dists)} rows)")
+
+
+def plot_profiles(profiles_by_date, tank, out_path):
+    """Overlay profiles from both dates on one figure."""
+    import matplotlib
+    matplotlib.use("Agg")
+    import matplotlib.pyplot as plt
+
+    colors = {"2024-09-21": "#5599ff", "2024-10-03": "#ff7755"}
+    labels = {"2024-09-21": "2024-09-21 (before)", "2024-10-03": "2024-10-03 (after)"}
+
+    fig, ax = plt.subplots(figsize=(10, 4))
+    for date, (dists, dbs) in profiles_by_date.items():
+        mask = np.isfinite(dbs)
+        ax.plot(dists[mask], dbs[mask], color=colors[date], lw=1.2, label=labels[date])
+
+    r = tank["radius_m"]
+    for sgn in (-1, 1):
+        ax.axvline(sgn * r, color="gray", lw=0.8, ls="--", label=f"+-r={r}m" if sgn == 1 else "")
+    ax.axvline(0, color="white", lw=0.5, ls=":")
+
+    ax.set_xlabel("Distance from tank centre (m, range)")
+    ax.set_ylabel("Amplitude (dB)")
+    ax.set_title(f"{tank['id']}  r={r}m -- range profile  (3-line az average)")
+    ax.legend(fontsize=9)
+    ax.grid(True, alpha=0.3)
+    fig.tight_layout()
+    fig.savefig(out_path, dpi=150)
+    plt.close(fig)
+    log(f"  profile PNG: {out_path.name}")
+
+
+# ── GRD comparison PNG ────────────────────────────────────────────────────────
+
+def plot_grd(arr_grd, bbox_deg, tanks, out_path, date_str):
+    import matplotlib
+    matplotlib.use("Agg")
+    import matplotlib.pyplot as plt
+    import matplotlib.patches as mpatches
+
+    lon0, lat0, lon1, lat1 = bbox_deg
+    db = 10 * np.log10(np.clip(arr_grd, 1e-10, None))
+    db[~np.isfinite(db)] = np.nan
+    vmin, vmax = np.nanpercentile(db, [2, 98])
+
+    fig, ax = plt.subplots(figsize=(10, 10))
+    ax.imshow(np.flipud(db), extent=[lon0, lon1, lat0, lat1],
+              cmap="gray", vmin=vmin, vmax=vmax, aspect="equal",
+              origin="lower", interpolation="nearest")
+    n = 0
+    for t in tanks:
+        if not (lon0 <= t["lon"] <= lon1 and lat0 <= t["lat"] <= lat1):
+            continue
+        r_lon = t["radius_m"] / (111320 * math.cos(math.radians(t["lat"])))
+        r_lat = t["radius_m"] / 111320
+        circ  = mpatches.Ellipse((t["lon"], t["lat"]),
+                                  width=2*r_lon, height=2*r_lat,
+                                  edgecolor="cyan", facecolor="none", lw=0.8)
+        ax.add_patch(circ); n += 1
+    ax.set_xlabel("Longitude"); ax.set_ylabel("Latitude")
+    ax.set_title(f"GRD VV -- {date_str} -- ~10m/px  [{n}/{len(tanks)} tanks]")
+    fig.tight_layout()
+    fig.savefig(out_path, dpi=150); plt.close(fig)
+    log(f"  saved {out_path.name}  ({n} circles)")
+
+
+# ── main ──────────────────────────────────────────────────────────────────────
+
+def main():
+    log(f"p8c_tank_closeup.py  {datetime.now(timezone.utc).isoformat()}")
+
+    token = get_token()
+    log("token OK")
+
+    amp_by_date       = {}
+    info_by_date      = {}
+    burst_idx_by_date = {}
+
+    for date in DATES:
+        log(f"\n=== {date} ===")
+        items = search_slc(token, date)
+        if not items:
+            log(f"  FATAL: no SLC product for {date}")
+            sys.exit(1)
+        prod  = items[0]
+        pid   = prod["Id"]
+        safe  = prod["Name"]
+        log(f"  {safe}")
+
+        xml_node = find_iw2_vv_annotation_node(token, pid, safe)
+        if not xml_node:
+            log("  FATAL: cannot find IW2/VV annotation node")
+            sys.exit(1)
+        log(f"  annotation node: {xml_node}")
+
+        xml_bytes = download_annotation_xml(token, pid, safe, xml_node)
+        info      = parse_annotation(xml_bytes)
+        log(f"  rps={info['rps']:.3f}m  aps={info['aps']:.3f}m  "
+            f"lpb={info['lpb']}  spb={info['spb']}  bursts={info['n_bursts']}")
+
+        interp     = build_interp(info["gcps"])
+        info["interp"] = interp
+        li_c, sa_c = interp(KHARG_LAT, KHARG_LON)
+        burst_idx  = int(li_c // info["lpb"])
+        log(f"  farm centre -> line_global={li_c:.1f}  sample={sa_c:.1f}  burst={burst_idx}")
+
+        b_start, b_end = burst_byte_range(info["root"], burst_idx)
+        if b_start is None:
+            log("  FATAL: no byteOffset in annotation")
+            sys.exit(1)
+
+        tiff_node = xml_node.replace(".xml", ".tiff")
+        raw = download_burst(token, pid, safe, tiff_node, b_start, b_end)
+        if raw is None:
+            log("  FATAL: burst download failed")
+            sys.exit(1)
+
+        arr16 = np.frombuffer(raw, dtype=np.int16).reshape(info["lpb"], info["spb"], 2)
+        z     = arr16[:, :, 0].astype(np.float32) + 1j * arr16[:, :, 1].astype(np.float32)
+        amp   = np.abs(z)
+        log(f"  amp shape={amp.shape}  mean={amp.mean():.2f}  max={amp.max():.2f}")
+
+        amp_by_date[date]       = amp
+        info_by_date[date]      = info
+        burst_idx_by_date[date] = burst_idx
+
+    # ── close-ups + profiles ──────────────────────────────────────────────────
+    for tid in TARGET_TANK_IDS:
+        tank = TANK_BY_ID[tid]
+        log(f"\n--- {tid}  r={tank['radius_m']}m ---")
+
+        closeup_path = OUT_DIR / f"p8c_closeup_{tid}_{TS}.png"
+        tank_closeup_png(amp_by_date, info_by_date, burst_idx_by_date, tank, closeup_path)
+
+        profiles_by_date = {}
+        for date in DATES:
+            dists, dbs = range_profile(
+                amp_by_date[date], info_by_date[date],
+                burst_idx_by_date[date], tank, date)
+            profiles_by_date[date] = (dists, dbs)
+            csv_path = OUT_DIR / f"p8c_profile_{tid}_{date}_{TS}.csv"
+            save_profile_csv(dists, dbs, tid, date, csv_path)
+
+        prof_png = OUT_DIR / f"p8c_profile_{tid}_{TS}.png"
+        plot_profiles(profiles_by_date, tank, prof_png)
+
+    # ── GRD retry ─────────────────────────────────────────────────────────────
+    log(f"\n=== GRD retry (2024-10-03) ===")
+    arr_grd, bbox_grd = sh_grd(token, "2024-10-03", resolution=10)
+    if arr_grd is not None:
+        grd_png = OUT_DIR / f"p8c_grd_{TS}.png"
+        plot_grd(arr_grd, bbox_grd, ALL_KHARG, grd_png, "2024-10-03")
+    else:
+        log("  GRD failed again -- skip")
+
+    log(f"\nDONE  {datetime.now(timezone.utc).isoformat()}")
+    _lf.close()
+
+
+if __name__ == "__main__":
+    main()
