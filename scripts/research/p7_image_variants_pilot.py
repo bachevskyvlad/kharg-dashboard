@@ -111,7 +111,7 @@ def sh_request(token, bbox, date_str, rel_orbit, direction, resolution=10, resam
                     "orthorectify": True,
                     "demInstance": "COPERNICUS",
                     "backCoeff": "GAMMA0_ELLIPSOID",
-                    "speckleFilter": {"isActive": False},
+                    "speckleFilter": {"type": "NONE"},
                     "upsampling": resampling,
                     "downsampling": resampling,
                 },
