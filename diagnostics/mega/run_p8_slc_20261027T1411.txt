@@ -1,0 +1,70 @@
+p8_slc_pilot.py rev2  2026-10-27T14:11:02.620378+00:00
+pilot: 2024-10-03  Kharg: POINT(50.33 29.23)
+=== Step 1: CDSE token ===
+  token OK (len=1997)
+
+=== Step 2: search SLC 2024-10-03 ===
+  found 1 products
+    93fd8d06-d1e7-4955-b317-5ef7888d6e90  S1A_IW_SLC__1SDV_20241003T023929_20241003T023956_055932_06D6A2_7F43.SAFE  7427 MB
+
+=== Step 3: node tree ===
+  annotation/ (8 files):
+    s1a-iw2-slc-vh-20241003t023931-20241003t023956-055932-06d6a2-002.xml  867 KB
+    s1a-iw2-slc-vv-20241003t023931-20241003t023956-055932-06d6a2-005.xml  867 KB
+    s1a-iw3-slc-vh-20241003t023929-20241003t023955-055932-06d6a2-003.xml  782 KB
+    s1a-iw3-slc-vv-20241003t023929-20241003t023955-055932-06d6a2-006.xml  782 KB
+    calibration  0 KB
+    rfi  0 KB
+    s1a-iw1-slc-vh-20241003t023930-20241003t023955-055932-06d6a2-001.xml  874 KB
+    s1a-iw1-slc-vv-20241003t023930-20241003t023955-055932-06d6a2-004.xml  874 KB
+  measurement/ (6 files):
+    s1a-iw2-slc-vh-20241003t023931-20241003t023956-055932-06d6a2-002.tiff  1319 MB
+    s1a-iw2-slc-vv-20241003t023931-20241003t023956-055932-06d6a2-005.tiff  1319 MB
+    s1a-iw3-slc-vh-20241003t023929-20241003t023955-055932-06d6a2-003.tiff  1278 MB
+    s1a-iw3-slc-vv-20241003t023929-20241003t023955-055932-06d6a2-006.tiff  1278 MB
+    s1a-iw1-slc-vh-20241003t023930-20241003t023955-055932-06d6a2-001.tiff  1107 MB
+    s1a-iw1-slc-vv-20241003t023930-20241003t023955-055932-06d6a2-004.tiff  1107 MB
+
+=== Step 4: download annotation (867 KB) ===
+  saved 867 KB → s1a-iw2-slc-vv-20241003t023931-20241003t023956-055932-06d6a2-005.xml
+
+=== Step 5: parse annotation XML ===
+  9 bursts × 1510 lines × 25448 samples
+  GCP nearest lat=29.23: line=1510 → burst_idx=1
+  burst 1: lines 1510–3019
+  azimuthTime: 2024-10-03T02:39:34.463731
+  byteOffset from annotation: 153814955
+  burst size: 146 MB  (153705920 bytes)
+
+=== Step 6: byte range for burst ===
+  source: annotation byteOffset=153814955, range bytes=153814955-307520874 (146 MB)
+
+=== Step 7: download burst via Range (147 MB) ===
+  Range: bytes=153814955-307520874
+  ... 10 MB
+  ... 20 MB
+  ... 30 MB
+  ... 40 MB
+  ... 50 MB
+  ... 60 MB
+  ... 70 MB
+  ... 80 MB
+  ... 90 MB
+  ... 100 MB
+  ... 110 MB
+  ... 120 MB
+  ... 130 MB
+  ... 140 MB
+  done: 146.6 MB in 23.5s (6.2 MB/s)
+
+=== Step 8: verify complex int16 ===
+  expected 153705920 bytes (1510×25448×4),  got 153705920 bytes
+  complex shape: (1510, 25448)  dtype=complex64  ✓
+  amplitude:  min=0.00  max=10501.15  mean=16.90  std=12.72
+  non-zero px: 36293884/38426480 (94.5%)
+
+=== Step 9: xarray-sentinel (group='IW2/VV') ===
+  full subswath tiff not downloaded — xarray-sentinel requires full .SAFE measurement file
+  annotation + burst-bytes verified above via numpy; SAFE read skipped
+
+DONE  2026-10-27T14:11:34.084255+00:00
