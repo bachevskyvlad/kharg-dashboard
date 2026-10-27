@@ -1,0 +1,151 @@
+p8c_tank_closeup.py  2026-10-27T22:56:57.619713+00:00
+token OK
+
+=== 2024-09-21 ===
+  S1A_IW_SLC__1SDV_20240921T023929_20240921T023956_055757_06CFAC_8CED.SAFE
+    annotation nodes (8): ['s1a-iw1-slc-vv-20240921t023930-20240921t023955-055757-06cfac-004.xml', 's1a-iw2-slc-vh-20240921t023931-20240921t023956-055757-06cfac-002.xml', 's1a-iw2-slc-vv-20240921t023931-20240921t023956-055757-06cfac-005.xml', 's1a-iw3-slc-vh-20240921t023929-20240921t023954-055757-06cfac-003.xml', 's1a-iw3-slc-vv-20240921t023929-20240921t023954-055757-06cfac-006.xml']
+  annotation node: s1a-iw2-slc-vv-20240921t023931-20240921t023956-055757-06cfac-005.xml
+  rps=2.330m  aps=13.958m  lpb=1510  spb=25448  bursts=9
+    calibration nodes (12): ['calibration-s1a-iw2-slc-vh-20240921t023931-20240921t023956-055757-06cfac-002.xml', 'calibration-s1a-iw2-slc-vv-20240921t023931-20240921t023956-055757-06cfac-005.xml', 'calibration-s1a-iw3-slc-vh-20240921t023929-20240921t023954-055757-06cfac-003.xml', 'noise-s1a-iw1-slc-vh-20240921t023930-20240921t023955-055757-06cfac-001.xml', 'calibration-s1a-iw1-slc-vh-20240921t023930-20240921t023955-055757-06cfac-001.xml']
+  calibration node: calibration-s1a-iw2-slc-vv-20240921t023931-20240921t023956-055757-06cfac-005.xml
+    cal grid: 29 lines × 638 pixels  sigma range [289.8, 307.8]
+  farm centre → line_global=1231.4  sample=1257.5  burst=0
+    Range bytes=109035-153814954  (153.7 MB)
+    ... 10 MB
+    ... 20 MB
+    ... 30 MB
+    ... 40 MB
+    ... 50 MB
+    ... 60 MB
+    ... 70 MB
+    ... 80 MB
+    ... 90 MB
+    ... 100 MB
+    ... 110 MB
+    ... 120 MB
+    ... 130 MB
+    ... 140 MB
+    ... 146 MB
+    done 153.7 MB
+  applying sigmaNought calibration (burst_idx=0) ...
+  sigma0 shape=(1510, 25448)  mean_dB=-17.47  std_dB_approx=204.74
+
+=== 2024-10-03 ===
+  S1A_IW_SLC__1SDV_20241003T023929_20241003T023956_055932_06D6A2_7F43.SAFE
+    annotation nodes (8): ['s1a-iw2-slc-vv-20241003t023931-20241003t023956-055932-06d6a2-005.xml', 's1a-iw3-slc-vh-20241003t023929-20241003t023955-055932-06d6a2-003.xml', 's1a-iw3-slc-vv-20241003t023929-20241003t023955-055932-06d6a2-006.xml', 'calibration', 'rfi']
+  annotation node: s1a-iw2-slc-vv-20241003t023931-20241003t023956-055932-06d6a2-005.xml
+  rps=2.330m  aps=13.958m  lpb=1510  spb=25448  bursts=9
+    calibration nodes (12): ['calibration-s1a-iw2-slc-vv-20241003t023931-20241003t023956-055932-06d6a2-005.xml', 'calibration-s1a-iw3-slc-vv-20241003t023929-20241003t023955-055932-06d6a2-006.xml', 'noise-s1a-iw1-slc-vh-20241003t023930-20241003t023955-055932-06d6a2-001.xml', 'noise-s1a-iw1-slc-vv-20241003t023930-20241003t023955-055932-06d6a2-004.xml', 'noise-s1a-iw2-slc-vv-20241003t023931-20241003t023956-055932-06d6a2-005.xml']
+  calibration node: calibration-s1a-iw2-slc-vv-20241003t023931-20241003t023956-055932-06d6a2-005.xml
+    cal grid: 29 lines × 638 pixels  sigma range [289.8, 307.8]
+  farm centre → line_global=1237.5  sample=1271.0  burst=0
+    Range bytes=109035-153814954  (153.7 MB)
+    ... 10 MB
+    ... 20 MB
+    ... 30 MB
+    ... 40 MB
+    ... 50 MB
+    ... 60 MB
+    ... 70 MB
+    ... 80 MB
+    ... 90 MB
+    ... 100 MB
+    ... 110 MB
+    ... 120 MB
+    ... 130 MB
+    ... 140 MB
+    ... 146 MB
+    done 153.7 MB
+  applying sigmaNought calibration (burst_idx=0) ...
+  sigma0 shape=(1510, 25448)  mean_dB=-20.53  std_dB_approx=346.93
+
+============================================================
+=== MULTILOOK ×1  (aps_eff ≈ 14.0 m) ===
+  multilook ×1 for 2024-09-21 ...
+    shape=(1510, 25448)  mean_dB=-17.47
+  multilook ×1 for 2024-10-03 ...
+    shape=(1510, 25448)  mean_dB=-20.53
+
+--- t60_1  r=60m  ×1 ---
+  saved p8c_closeup_t60_1_ml1_20261027T2256.png
+    2024-09-21 bg_median=-22.30 dB  (annulus r+40…r+80 m)
+  CSV: p8c_profile_t60_1_ml1_2024-09-21_20261027T2256.csv  (181 rows)
+    2024-10-03 bg_median=-19.80 dB  (annulus r+40…r+80 m)
+  CSV: p8c_profile_t60_1_ml1_2024-10-03_20261027T2256.csv  (181 rows)
+  profile PNG: p8c_profile_t60_1_ml1_20261027T2256.png
+  profile PNG: p8c_profile_t60_1_ml1_norm_20261027T2256.png
+
+--- t60_2  r=60m  ×1 ---
+  saved p8c_closeup_t60_2_ml1_20261027T2256.png
+    2024-09-21 bg_median=-22.24 dB  (annulus r+40…r+80 m)
+  CSV: p8c_profile_t60_2_ml1_2024-09-21_20261027T2256.csv  (181 rows)
+    2024-10-03 bg_median=-19.80 dB  (annulus r+40…r+80 m)
+  CSV: p8c_profile_t60_2_ml1_2024-10-03_20261027T2256.csv  (181 rows)
+  profile PNG: p8c_profile_t60_2_ml1_20261027T2256.png
+  profile PNG: p8c_profile_t60_2_ml1_norm_20261027T2256.png
+
+--- t55_5  r=55m  ×1 ---
+  saved p8c_closeup_t55_5_ml1_20261027T2256.png
+    2024-09-21 bg_median=-12.31 dB  (annulus r+40…r+80 m)
+  CSV: p8c_profile_t55_5_ml1_2024-09-21_20261027T2256.csv  (166 rows)
+    2024-10-03 bg_median=-11.87 dB  (annulus r+40…r+80 m)
+  CSV: p8c_profile_t55_5_ml1_2024-10-03_20261027T2256.csv  (166 rows)
+  profile PNG: p8c_profile_t55_5_ml1_20261027T2256.png
+  profile PNG: p8c_profile_t55_5_ml1_norm_20261027T2256.png
+
+--- t55_17  r=55m  ×1 ---
+  saved p8c_closeup_t55_17_ml1_20261027T2256.png
+    2024-09-21 bg_median=-20.48 dB  (annulus r+40…r+80 m)
+  CSV: p8c_profile_t55_17_ml1_2024-09-21_20261027T2256.csv  (166 rows)
+    2024-10-03 bg_median=-17.76 dB  (annulus r+40…r+80 m)
+  CSV: p8c_profile_t55_17_ml1_2024-10-03_20261027T2256.csv  (166 rows)
+  profile PNG: p8c_profile_t55_17_ml1_20261027T2256.png
+  profile PNG: p8c_profile_t55_17_ml1_norm_20261027T2256.png
+
+============================================================
+=== MULTILOOK ×2  (aps_eff ≈ 27.9 m) ===
+  multilook ×2 for 2024-09-21 ...
+    shape=(755, 25448)  mean_dB=-17.50
+  multilook ×2 for 2024-10-03 ...
+    shape=(755, 25448)  mean_dB=-20.57
+
+--- t60_1  r=60m  ×2 ---
+  saved p8c_closeup_t60_1_ml2_20261027T2256.png
+    2024-09-21 bg_median=-21.80 dB  (annulus r+40…r+80 m)
+  CSV: p8c_profile_t60_1_ml2_2024-09-21_20261027T2256.csv  (181 rows)
+    2024-10-03 bg_median=-19.31 dB  (annulus r+40…r+80 m)
+  CSV: p8c_profile_t60_1_ml2_2024-10-03_20261027T2256.csv  (181 rows)
+  profile PNG: p8c_profile_t60_1_ml2_20261027T2256.png
+  profile PNG: p8c_profile_t60_1_ml2_norm_20261027T2256.png
+
+--- t60_2  r=60m  ×2 ---
+  saved p8c_closeup_t60_2_ml2_20261027T2256.png
+    2024-09-21 bg_median=-21.80 dB  (annulus r+40…r+80 m)
+  CSV: p8c_profile_t60_2_ml2_2024-09-21_20261027T2256.csv  (181 rows)
+    2024-10-03 bg_median=-19.54 dB  (annulus r+40…r+80 m)
+  CSV: p8c_profile_t60_2_ml2_2024-10-03_20261027T2256.csv  (181 rows)
+  profile PNG: p8c_profile_t60_2_ml2_20261027T2256.png
+  profile PNG: p8c_profile_t60_2_ml2_norm_20261027T2256.png
+
+--- t55_5  r=55m  ×2 ---
+  saved p8c_closeup_t55_5_ml2_20261027T2256.png
+    2024-09-21 bg_median=-11.54 dB  (annulus r+40…r+80 m)
+  CSV: p8c_profile_t55_5_ml2_2024-09-21_20261027T2256.csv  (166 rows)
+    2024-10-03 bg_median=-11.30 dB  (annulus r+40…r+80 m)
+  CSV: p8c_profile_t55_5_ml2_2024-10-03_20261027T2256.csv  (166 rows)
+  profile PNG: p8c_profile_t55_5_ml2_20261027T2256.png
+  profile PNG: p8c_profile_t55_5_ml2_norm_20261027T2256.png
+
+--- t55_17  r=55m  ×2 ---
+  saved p8c_closeup_t55_17_ml2_20261027T2256.png
+    2024-09-21 bg_median=-19.99 dB  (annulus r+40…r+80 m)
+  CSV: p8c_profile_t55_17_ml2_2024-09-21_20261027T2256.csv  (166 rows)
+    2024-10-03 bg_median=-16.86 dB  (annulus r+40…r+80 m)
+  CSV: p8c_profile_t55_17_ml2_2024-10-03_20261027T2256.csv  (166 rows)
+  profile PNG: p8c_profile_t55_17_ml2_20261027T2256.png
+  profile PNG: p8c_profile_t55_17_ml2_norm_20261027T2256.png
+
+=== GRD retry (2024-10-03) ===
+  saved p8c_grd_20261027T2256.png  (40 circles)
+
+DONE  2026-10-27T22:58:18.209530+00:00
