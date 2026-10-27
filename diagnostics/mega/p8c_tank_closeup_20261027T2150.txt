@@ -1,0 +1,81 @@
+p8c_tank_closeup.py  2026-10-27T21:50:57.077615+00:00
+token OK
+
+=== 2024-09-21 ===
+  S1A_IW_SLC__1SDV_20240921T023929_20240921T023956_055757_06CFAC_8CED.SAFE
+    annotation nodes (8): ['s1a-iw2-slc-vv-20240921t023931-20240921t023956-055757-06cfac-005.xml', 's1a-iw3-slc-vh-20240921t023929-20240921t023954-055757-06cfac-003.xml', 's1a-iw3-slc-vv-20240921t023929-20240921t023954-055757-06cfac-006.xml', 'calibration', 'rfi']
+  annotation node: s1a-iw2-slc-vv-20240921t023931-20240921t023956-055757-06cfac-005.xml
+  rps=2.330m  aps=13.958m  lpb=1510  spb=25448  bursts=9
+  farm centre → line_global=1231.4  sample=1257.5  burst=0
+    Range bytes=109035-153814954  (153.7 MB)
+    ... 10 MB
+    ... 20 MB
+    ... 30 MB
+    ... 40 MB
+    ... 50 MB
+    ... 60 MB
+    ... 70 MB
+    ... 80 MB
+    ... 90 MB
+    ... 100 MB
+    ... 110 MB
+    ... 120 MB
+    ... 130 MB
+    ... 140 MB
+    ... 146 MB
+    done 153.7 MB
+  amp shape=(1510, 25448)  mean=30.15  max=17270.30
+
+=== 2024-10-03 ===
+  S1A_IW_SLC__1SDV_20241003T023929_20241003T023956_055932_06D6A2_7F43.SAFE
+    annotation nodes (8): ['s1a-iw1-slc-vh-20241003t023930-20241003t023955-055932-06d6a2-001.xml', 's1a-iw1-slc-vv-20241003t023930-20241003t023955-055932-06d6a2-004.xml', 's1a-iw2-slc-vh-20241003t023931-20241003t023956-055932-06d6a2-002.xml', 's1a-iw2-slc-vv-20241003t023931-20241003t023956-055932-06d6a2-005.xml', 's1a-iw3-slc-vh-20241003t023929-20241003t023955-055932-06d6a2-003.xml']
+  annotation node: s1a-iw2-slc-vv-20241003t023931-20241003t023956-055932-06d6a2-005.xml
+  rps=2.330m  aps=13.958m  lpb=1510  spb=25448  bursts=9
+  farm centre → line_global=1237.5  sample=1271.0  burst=0
+    Range bytes=109035-153814954  (153.7 MB)
+    ... 10 MB
+    ... 20 MB
+    ... 30 MB
+    ... 40 MB
+    ... 50 MB
+    ... 60 MB
+    ... 70 MB
+    ... 80 MB
+    ... 90 MB
+    ... 100 MB
+    ... 110 MB
+    ... 120 MB
+    ... 130 MB
+    ... 140 MB
+    ... 146 MB
+    done 153.7 MB
+  amp shape=(1510, 25448)  mean=18.26  max=14897.65
+
+--- t60_1  r=60m ---
+  saved p8c_closeup_t60_1_20261027T2150.png
+  CSV: p8c_profile_t60_1_2024-09-21_20261027T2150.csv  (181 rows)
+  CSV: p8c_profile_t60_1_2024-10-03_20261027T2150.csv  (181 rows)
+  profile PNG: p8c_profile_t60_1_20261027T2150.png
+
+--- t60_2  r=60m ---
+  saved p8c_closeup_t60_2_20261027T2150.png
+  CSV: p8c_profile_t60_2_2024-09-21_20261027T2150.csv  (181 rows)
+  CSV: p8c_profile_t60_2_2024-10-03_20261027T2150.csv  (181 rows)
+  profile PNG: p8c_profile_t60_2_20261027T2150.png
+
+--- t55_5  r=55m ---
+  saved p8c_closeup_t55_5_20261027T2150.png
+  CSV: p8c_profile_t55_5_2024-09-21_20261027T2150.csv  (166 rows)
+  CSV: p8c_profile_t55_5_2024-10-03_20261027T2150.csv  (166 rows)
+  profile PNG: p8c_profile_t55_5_20261027T2150.png
+
+--- t55_17  r=55m ---
+  saved p8c_closeup_t55_17_20261027T2150.png
+  CSV: p8c_profile_t55_17_2024-09-21_20261027T2150.csv  (166 rows)
+  CSV: p8c_profile_t55_17_2024-10-03_20261027T2150.csv  (166 rows)
+  profile PNG: p8c_profile_t55_17_20261027T2150.png
+
+=== GRD retry (2024-10-03) ===
+  saved p8c_grd_20261027T2150.png  (40 circles)
+
+DONE  2026-10-27T21:52:46.335511+00:00
