@@ -1,0 +1,63 @@
+p8b_geoloc_png.py  2026-10-27T19:17:54.926718+00:00
+Window centre: lat=29.2296  lon=50.3126  (farm centroid from registry)
+Tank count:    47
+
+=== Step 1: parse annotation XML ===
+  rangePixelSpacing:   2.329562 m
+  linesPerBurst:       1510
+  samplesPerBurst:     25448
+  n_bursts:            9
+  GCP count:           210
+  azimuthPixelSpacing: 13.958160 m
+
+=== Step 2: build GCP interpolator ===
+  Farm centre (29.2296,50.3126) → line_global=1237.5  sample=1271.0  burst_idx=0
+  ±800m crop: ±57.3 lines (az)  ±343.4 samples (rg)
+
+=== Step 3: geolocate reference points ===
+  burst 0: global lines 0–1509, samples 0–25447
+  Point               lat        lon    line_g    sample    in_burst   line_b
+  t60_1          29.22164   50.31504    1303.8    1170.0         YES   1303.8
+  t55_5          29.23597   50.31262    1181.6    1303.7         YES   1181.6
+  t55_17         29.23144   50.30874    1226.8    1375.4         YES   1226.8
+  t60_2          29.22184   50.31353    1304.2    1208.0         YES   1304.2
+  t25_35         29.22621   50.31288    1266.8    1246.5         YES   1266.8
+  coastline      29.21000   50.26000    1484.0    2462.2         YES   1484.0
+
+=== Step 4: CDSE token + SLC product ===
+  token OK
+  product: 93fd8d06-d1e7-4955-b317-5ef7888d6e90  S1A_IW_SLC__1SDV_20241003T023929_20241003T023956_055932_06D6A2_7F43.SAFE
+
+=== Step 5: burst byte range ===
+  burst 0: bytes 109035–153814954  (153.7 MB)
+
+=== Step 6: download burst ===
+  Range: bytes=109035-153814954 (153.7 MB)
+  ... 10 MB
+  ... 20 MB
+  ... 30 MB
+  ... 40 MB
+  ... 50 MB
+  ... 60 MB
+  ... 70 MB
+  ... 80 MB
+  ... 90 MB
+  ... 100 MB
+  ... 110 MB
+  ... 120 MB
+  ... 130 MB
+  ... 140 MB
+  ... 146 MB
+  done: 153.7 MB
+  expected 153705920 bytes, got 153705920
+  amplitude shape=(1510, 25448)  mean=18.26  max=14897.65
+
+=== Step 7: SLC amplitude PNG ===
+  saved: p8b_slc_amplitude_20261027T1917.png  (39 circles drawn)
+
+=== Step 8: GRD (SH) comparison ===
+  GRD bbox: lon 50.30436–50.32084  lat 29.22241–29.23679
+  SH GRD error 500: {"error":{"status":500,"reason":"Internal Server Error","message":"java.util.concurrent.ExecutionException: java.util.concurrent.ExecutionException: java.lang.RuntimeException: Could not load necessar
+  SH GRD failed — skipping comparison PNG
+
+DONE  2026-10-27T19:18:18.322078+00:00
