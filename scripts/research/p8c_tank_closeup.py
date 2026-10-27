@@ -128,45 +128,39 @@ def search_slc(token, date_str):
 
 
 def _list_nodes(token, url):
-    r = requests.get(url, headers={"Authorization": f"Bearer {token}"}, timeout=30)
-    r.raise_for_status()
-    items = r.json().get("value", [])
-    return [n.get("Id", n.get("Name", "?")) for n in items]
+    r = requests.get(url, headers={"Authorization": f"Bearer {token}"}, timeout=60)
+    if r.status_code != 200:
+        log(f"    _list_nodes HTTP {r.status_code}: {r.text[:300]}")
+        return []
+    d = r.json()
+    items = d.get("value", d.get("result", []))
+    return items  # return full dicts
 
 
 def find_iw2_vv_annotation_node(token, product_id, safe_name):
-    """Return annotation XML node name for IW2/VV."""
-    # Step 1: list root product nodes to find actual SAFE folder key
-    root_names = _list_nodes(token,
-        f"{CDSE_DL_BASE}/Products({product_id})/Nodes?$top=10")
-    log(f"    root nodes ({len(root_names)}): {root_names}")
-
-    actual_safe = safe_name
-    for nm in root_names:
-        if nm.upper().startswith("S1") and "SLC" in nm.upper():
-            actual_safe = nm
-            break
-    log(f"    actual_safe={actual_safe!r}")
-
-    # Step 2: list annotation folder
-    ann_names = _list_nodes(token,
-        f"{CDSE_DL_BASE}/Products({product_id})"
-        f"/Nodes({actual_safe})/Nodes(annotation)/Nodes?$top=50")
-    log(f"    annotation nodes ({len(ann_names)}): {ann_names[:10]}")
-
-    for nm in ann_names:
-        if re.search(r"iw2.*vv", nm, re.I):
-            return nm
-    for nm in ann_names:
-        if re.search(r"iw2", nm, re.I) and nm.lower().endswith(".xml"):
-            log(f"    fallback iw2: {nm}")
-            return nm
-    return None
-
-
-def download_annotation_xml(token, product_id, safe_name, xml_node):
+    """Return (node_id, safe_node) for the IW2/VV annotation XML."""
+    # safe_name from catalog already ends with .SAFE
+    safe_node = safe_name if safe_name.endswith(".SAFE") else safe_name + ".SAFE"
     url = (f"{CDSE_DL_BASE}/Products({product_id})"
-           f"/Nodes({safe_name})/Nodes(annotation)/Nodes({xml_node})/$value")
+           f"/Nodes({safe_node})/Nodes(annotation)/Nodes")
+    nodes = _list_nodes(token, url)
+    log(f"    annotation nodes ({len(nodes)}): {[n.get('Id', '?') for n in nodes[:5]]}")
+    for n in nodes:
+        nid = n.get("Id", "")
+        if re.search(r"iw2.*vv", nid, re.I) and nid.lower().endswith(".xml"):
+            return nid, safe_node
+    # fallback: any iw2 xml
+    for n in nodes:
+        nid = n.get("Id", "")
+        if re.search(r"iw2", nid, re.I) and nid.lower().endswith(".xml"):
+            log(f"    fallback iw2: {nid}")
+            return nid, safe_node
+    return None, safe_node
+
+
+def download_annotation_xml(token, product_id, safe_node, xml_node):
+    url = (f"{CDSE_DL_BASE}/Products({product_id})"
+           f"/Nodes({safe_node})/Nodes(annotation)/Nodes({xml_node})/$value")
     r = requests.get(url, headers={"Authorization": f"Bearer {token}"}, timeout=60)
     r.raise_for_status()
     return r.content
@@ -492,13 +486,13 @@ def main():
         safe  = prod["Name"]
         log(f"  {safe}")
 
-        xml_node = find_iw2_vv_annotation_node(token, pid, safe)
+        xml_node, safe_node = find_iw2_vv_annotation_node(token, pid, safe)
         if not xml_node:
             log("  FATAL: cannot find IW2/VV annotation node")
             sys.exit(1)
         log(f"  annotation node: {xml_node}")
 
-        xml_bytes = download_annotation_xml(token, pid, safe, xml_node)
+        xml_bytes = download_annotation_xml(token, pid, safe_node, xml_node)
         info      = parse_annotation(xml_bytes)
         log(f"  rps={info['rps']:.3f}m  aps={info['aps']:.3f}m  "
             f"lpb={info['lpb']}  spb={info['spb']}  bursts={info['n_bursts']}")
@@ -515,7 +509,7 @@ def main():
             sys.exit(1)
 
         tiff_node = xml_node.replace(".xml", ".tiff")
-        raw = download_burst(token, pid, safe, tiff_node, b_start, b_end)
+        raw = download_burst(token, pid, safe_node, tiff_node, b_start, b_end)
         if raw is None:
             log("  FATAL: burst download failed")
             sys.exit(1)
