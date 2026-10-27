@@ -52,16 +52,33 @@ def _bbox(tanks, buffer_m=300):
     dlon = buffer_m / (111320 * np.cos(np.deg2rad(min(lats))))
     return BBox([min(lons)-dlon, min(lats)-dlat, max(lons)+dlon, max(lats)+dlat], crs=CRS.WGS84)
 
-def _existing_dates_terminal(tid):
+def _existing_dates_terminal(tid, expected_tank_ids=None):
+    """Return dates that are fully loaded (all expected_tank_ids present).
+
+    When expected_tank_ids is None, falls back to any-record check (legacy).
+    A date is "existing" only when every enabled tank has a row for it — so a
+    partial ingestion (e.g. one cluster missed) does not permanently block a
+    re-fetch for the missing tanks.
+    """
     rows = []; offset = 0
+    select_cols = "date,tank_id" if expected_tank_ids else "date"
     while True:
-        batch = (sb.table("terminal_observations").select("date")
+        batch = (sb.table("terminal_observations").select(select_cols)
                    .eq("terminal_id", tid).range(offset, offset+999).execute().data)
         rows.extend(batch)
         if len(batch) < 1000:
             break
         offset += 1000
-    return {pd.to_datetime(r["date"]).normalize() for r in rows}
+
+    if not expected_tank_ids:
+        return {pd.to_datetime(r["date"]).normalize() for r in rows}
+
+    from collections import defaultdict
+    date_tanks = defaultdict(set)
+    for r in rows:
+        date_tanks[pd.to_datetime(r["date"]).normalize()].add(r["tank_id"])
+    expected = set(expected_tank_ids)
+    return {d for d, present in date_tanks.items() if expected.issubset(present)}
 
 
 # ── Kharg ─────────────────────────────────────────────────────────────────────
@@ -142,7 +159,8 @@ for terminal in TERMINALS:
                             "direction": orbit_state,
                             "los_azimuth": los_azimuth}]
 
-    existing = set() if args.force else _existing_dates_terminal(tid)
+    existing = (set() if args.force
+                else _existing_dates_terminal(tid, [t["id"] for t in tanks_enabled]))
 
     if args.force:
         catalog_start = START_DATE

@@ -120,6 +120,8 @@ def get_all_scene_dates(super_bbox, start_date=None, orbit_state="descending", r
         # Deduplicate by relative orbit number: one physical pass = one orbit number per day.
         # This handles both the UTC-midnight straddle and multi-satellite overlap (S1A/C)
         # where two scenes from different swaths of the same orbit reach the bbox hours apart.
+        # A 6-hour shift before 12-hour flooring collapses scenes straddling midnight
+        # (e.g. 23:55 and 00:05) into the same bucket — fixes d/d+1 duplicate pairs.
         seen_orbits = set()
         deduped = []
         for s in sorted(scenes, key=lambda x: x["properties"]["datetime"]):
@@ -128,8 +130,10 @@ def get_all_scene_dates(super_bbox, start_date=None, orbit_state="descending", r
             if relative_orbit is not None and orbit != relative_orbit:
                 continue
             dt = pd.to_datetime(s["properties"]["datetime"])
-            # Key = (orbit_number, calendar_date) — unique physical pass
-            key = (orbit, dt.normalize().date())
+            # Key = (orbit_number, 12h-bucket) — shift by 6h so midnight-straddle scenes
+            # land in the same bucket instead of creating spurious d/d+1 duplicates.
+            bucket = (dt - pd.Timedelta(hours=6)).floor("12h")
+            key = (orbit, bucket)
             if key not in seen_orbits:
                 seen_orbits.add(key)
                 deduped.append(dt)

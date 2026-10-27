@@ -18,8 +18,9 @@ warnings.filterwarnings("ignore")
 
 from config import sb
 from locations import TERMINALS
-from volume import compute_volumes, aggregate_daily, aggregate_weekly
+from volume import compute_volumes, compute_volumes_by_group, aggregate_daily, aggregate_weekly
 from coverage_filter import apply_coverage_filter
+import math
 
 os.makedirs("data", exist_ok=True)
 
@@ -83,6 +84,77 @@ def _bbox(tanks, buffer_m=300):
     dlon = buffer_m / (111320 * np.cos(np.deg2rad(min(lats))))
     return BBox([min(lons)-dlon, min(lats)-dlat, max(lons)+dlon, max(lats)+dlat], crs=CRS.WGS84)
 
+# ── Orbit/satellite cross-calibration helper ──────────────────────────────────
+def _infer_platform(dates: pd.Series) -> pd.Series:
+    """Infer Sentinel-1 platform from acquisition date.
+    S-1B failed 2021-11; S-1C became operational ~2025-05."""
+    plat = pd.Series("S1A", index=dates.index, dtype=str)
+    plat[dates < pd.Timestamp("2022-01-01")] = "S1B"
+    plat[dates >= pd.Timestamp("2025-05-01")] = "S1C"
+    return plat
+
+
+def _cross_calibrate(df_t: pd.DataFrame, group_cols: list) -> tuple:
+    """
+    Additive cross-calibration via overlapping months.
+    For each group, compute the mean-dB offset vs the reference group
+    (largest by row count) in months where both overlap.
+    Returns (adjusted_df, offsets_dict).
+    """
+    df_t = df_t.copy()
+    df_t["_month"] = df_t["date"].dt.to_period("M")
+
+    counts = df_t.groupby(group_cols).size()
+    ref_key = counts.idxmax()
+    if not isinstance(ref_key, tuple):
+        ref_key = (ref_key,)
+
+    monthly = (df_t.groupby(group_cols + ["_month"])["db_mean"]
+               .mean().reset_index(name="mdb"))
+
+    def _sel(val):
+        mask = pd.Series(True, index=monthly.index)
+        v_tuple = val if isinstance(val, tuple) else (val,)
+        for col, v in zip(group_cols, v_tuple):
+            mask &= (monthly[col] == v)
+        return mask
+
+    ref_months = set(monthly.loc[_sel(ref_key), "_month"])
+    offsets = {}
+
+    for grp_key in counts.index:
+        if not isinstance(grp_key, tuple):
+            grp_key = (grp_key,)
+        if grp_key == ref_key:
+            offsets[grp_key] = 0.0
+            continue
+        grp_months = set(monthly.loc[_sel(grp_key), "_month"])
+        overlap = ref_months & grp_months
+        if not overlap:
+            offsets[grp_key] = 0.0
+            print(f"  [cal] {grp_key}: no overlap with ref {ref_key} — offset=0")
+            continue
+        r_mean = monthly.loc[_sel(ref_key) & monthly["_month"].isin(overlap), "mdb"].mean()
+        g_mean = monthly.loc[_sel(grp_key) & monthly["_month"].isin(overlap), "mdb"].mean()
+        offset = float(r_mean - g_mean)
+        offsets[grp_key] = offset
+        print(f"  [cal] {grp_key}: offset={offset:+.3f} dB vs ref {ref_key} ({len(overlap)} mo overlap)")
+
+    for grp_key, offset in offsets.items():
+        if offset == 0.0:
+            continue
+        mask = pd.Series(True, index=df_t.index)
+        v_tuple = grp_key if isinstance(grp_key, tuple) else (grp_key,)
+        for col, v in zip(group_cols, v_tuple):
+            mask &= (df_t[col] == v)
+        df_t.loc[mask, "db_mean"] = df_t.loc[mask, "db_mean"] + offset
+
+    df_t.drop(columns=["_month"], inplace=True)
+    return df_t, offsets
+
+
+_CAL_GROUP_COLS = ["relative_orbit", "orbit_direction", "platform"]
+
 terminal_daily = {}
 
 for terminal in TERMINALS:
@@ -94,7 +166,7 @@ for terminal in TERMINALS:
         all_obs = []; offset = 0
         while True:
             batch = (sb.table("terminal_observations")
-                       .select("date,tank_id,db_mean")
+                       .select("date,tank_id,db_mean,relative_orbit,orbit_direction")
                        .eq("terminal_id", tid).range(offset, offset+999).execute().data)
             all_obs.extend(batch)
             if len(batch) < 1000: break
@@ -116,11 +188,39 @@ for terminal in TERMINALS:
         df_t["h_max"]    = df_t["tank_id"].map(lambda t_id: tank_geom.get(t_id, {}).get("h_max_m"))
         df_t = df_t.dropna(subset=["radius_m", "h_max"])
 
-        df_t, n_dropped, max_tanks = apply_coverage_filter(df_t, min_share=0.5)
-        if n_dropped:
-            print(f"  dropping {n_dropped} partial-coverage dates (max_tanks={max_tanks})")
+        # RT: first pass uses DESC orbit 35 only; ASC 101 mixed in old data would
+        # bias the global percentile — exclude it until per-orbit calibration is validated.
+        if tid == "ras_tanura":
+            before = len(df_t)
+            df_t = df_t[
+                (df_t["orbit_direction"].str.upper() == "DESC") &
+                (df_t["relative_orbit"] == 35)
+            ].copy()
+            dropped_orbit = before - len(df_t)
+            if dropped_orbit:
+                print(f"  [orbit filter] dropped {dropped_orbit} non-DESC-35 rows")
 
-        df_t, _, _ = compute_volumes(df_t)
+        # Capacity-weighted coverage filter
+        tank_cap = {t["id"]: math.pi * tank_geom[t["id"]]["radius_m"]**2 * tank_geom[t["id"]]["h_max_m"]
+                    for t in tanks if t.get("enabled", True)}
+        df_t, n_dropped, ref_val = apply_coverage_filter(df_t, min_share=0.5,
+                                                          tank_capacity=tank_cap)
+        if n_dropped:
+            print(f"  dropping {n_dropped} partial-coverage dates (capacity threshold)")
+
+        # Orbit/satellite calibration
+        df_t["platform"] = _infer_platform(df_t["date"]).values
+        has_orbit_cols = all(c in df_t.columns and df_t[c].notna().any()
+                             for c in ["relative_orbit", "orbit_direction"])
+        n_groups = df_t.groupby(_CAL_GROUP_COLS).ngroups if has_orbit_cols else 1
+
+        if has_orbit_cols and n_groups > 1:
+            df_t, cal_offsets = _cross_calibrate(df_t, _CAL_GROUP_COLS)
+            df_t, cal_map = compute_volumes_by_group(df_t, _CAL_GROUP_COLS)
+            print(f"  per-group calibration: {list(cal_map.keys())}")
+        else:
+            df_t, _, _ = compute_volumes(df_t)
+
         daily_t = aggregate_daily(df_t)
 
         rows = [{"terminal_id": tid, "date": r["day"].strftime("%Y-%m-%d"),
