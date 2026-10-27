@@ -130,13 +130,19 @@ def search_slc(token, date_str):
 def find_iw2_vv_annotation_node(token, product_id, safe_name):
     """Return annotation XML node name for IW2/VV."""
     url = (f"{CDSE_DL_BASE}/Products({product_id})"
-           f"/Nodes({safe_name})/Nodes(annotation)/Nodes")
+           f"/Nodes({safe_name})/Nodes(annotation)/Nodes?$top=50")
     r = requests.get(url, headers={"Authorization": f"Bearer {token}"}, timeout=30)
     r.raise_for_status()
     nodes = r.json().get("value", [])
-    for n in nodes:
-        nm = n.get("Id", "")
+    names = [n.get("Id", n.get("Name", "?")) for n in nodes]
+    log(f"    annotation nodes ({len(nodes)}): {names[:10]}")
+    for nm in names:
         if re.search(r"iw2.*vv", nm, re.I):
+            return nm
+    # fallback: any iw2 xml
+    for nm in names:
+        if re.search(r"iw2", nm, re.I) and nm.lower().endswith(".xml"):
+            log(f"    fallback iw2 node: {nm}")
             return nm
     return None
 
