@@ -21,13 +21,12 @@ jobs:
           python-version: "3.11"
 
       - name: Install dependencies
-        run: pip install requests numpy scipy tifffile scikit-image -q
+        run: pip install requests numpy scipy tifffile scikit-image xarray-sentinel rasterio -q
 
       - name: Run SLC pilot
         run: |
           mkdir -p diagnostics/mega
-          python scripts/research/p8_slc_pilot.py \
-            2>&1 | tee diagnostics/mega/run_p8_slc_$(date -u +%Y%m%dT%H%M).txt
+          python scripts/research/p8_slc_pilot.py
         env:
           CLIENT_ID:     ${{ secrets.CLIENT_ID }}
           CLIENT_SECRET: ${{ secrets.CLIENT_SECRET }}
@@ -38,9 +37,8 @@ jobs:
           git config user.email "actions@github.com"
           git config user.name "GitHub Actions"
           git add \
-            diagnostics/mega/slc_kharg.csv.gz \
-            diagnostics/mega/slc_profiles.npz \
             diagnostics/mega/run_p8_slc_*.txt \
+            diagnostics/mega/*.tiff \
             2>/dev/null || true
           git diff --cached --quiet && echo "No changes" && exit 0
           git commit -m "research: p8_slc_pilot [run ${{ github.run_id }}] [skip ci]"
