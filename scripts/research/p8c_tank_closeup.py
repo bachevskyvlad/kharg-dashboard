@@ -127,22 +127,39 @@ def search_slc(token, date_str):
     return r.json().get("value", [])
 
 
-def find_iw2_vv_annotation_node(token, product_id, safe_name):
-    """Return annotation XML node name for IW2/VV."""
-    url = (f"{CDSE_DL_BASE}/Products({product_id})"
-           f"/Nodes({safe_name})/Nodes(annotation)/Nodes?$top=50")
+def _list_nodes(token, url):
     r = requests.get(url, headers={"Authorization": f"Bearer {token}"}, timeout=30)
     r.raise_for_status()
-    nodes = r.json().get("value", [])
-    names = [n.get("Id", n.get("Name", "?")) for n in nodes]
-    log(f"    annotation nodes ({len(nodes)}): {names[:10]}")
-    for nm in names:
+    items = r.json().get("value", [])
+    return [n.get("Id", n.get("Name", "?")) for n in items]
+
+
+def find_iw2_vv_annotation_node(token, product_id, safe_name):
+    """Return annotation XML node name for IW2/VV."""
+    # Step 1: list root product nodes to find actual SAFE folder key
+    root_names = _list_nodes(token,
+        f"{CDSE_DL_BASE}/Products({product_id})/Nodes?$top=10")
+    log(f"    root nodes ({len(root_names)}): {root_names}")
+
+    actual_safe = safe_name
+    for nm in root_names:
+        if nm.upper().startswith("S1") and "SLC" in nm.upper():
+            actual_safe = nm
+            break
+    log(f"    actual_safe={actual_safe!r}")
+
+    # Step 2: list annotation folder
+    ann_names = _list_nodes(token,
+        f"{CDSE_DL_BASE}/Products({product_id})"
+        f"/Nodes({actual_safe})/Nodes(annotation)/Nodes?$top=50")
+    log(f"    annotation nodes ({len(ann_names)}): {ann_names[:10]}")
+
+    for nm in ann_names:
         if re.search(r"iw2.*vv", nm, re.I):
             return nm
-    # fallback: any iw2 xml
-    for nm in names:
+    for nm in ann_names:
         if re.search(r"iw2", nm, re.I) and nm.lower().endswith(".xml"):
-            log(f"    fallback iw2 node: {nm}")
+            log(f"    fallback iw2: {nm}")
             return nm
     return None
 
