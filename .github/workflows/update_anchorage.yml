@@ -34,4 +34,5 @@ jobs:
           git config user.name "GitHub Actions"
           git add data/anchorage.json
           git diff --cached --quiet && echo "No changes" || git commit -m "data: update anchorage tanker queue"
-          git push origin main || true
+          git pull --rebase --autostash origin main
+          git push origin main
