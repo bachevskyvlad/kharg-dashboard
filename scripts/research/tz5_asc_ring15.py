@@ -113,10 +113,15 @@ def fetch_ring15(terminal_id, rel_orbit, direction, tanks, az_deg, obs_dates):
     cfg.sh_token_url     = CDSE_TOKEN_URL
     cfg.sh_base_url      = "https://sh.dataspace.copernicus.eu"
 
-    S1_CDSE = DataCollection.SENTINEL1_IW.define_from(
-        f"s1iw_cdse_tz5_{terminal_id}",
-        service_url="https://sh.dataspace.copernicus.eu"
-    )
+    # define_from raises ValueError if name already registered; reuse existing
+    _coll_name = "s1iw_cdse_tz5"
+    try:
+        S1_CDSE = DataCollection.SENTINEL1_IW.define_from(
+            _coll_name,
+            service_url="https://sh.dataspace.copernicus.eu"
+        )
+    except ValueError:
+        S1_CDSE = DataCollection[_coll_name]
 
     lats = [t["lat"] for t in tanks]
     lons = [t["lon"] for t in tanks]
