@@ -103,7 +103,7 @@ def get_heading_for_orbit(token, terminal_id, rel_orbit, direction):
     dir_val = "DESCENDING" if direction.upper().startswith("D") else "ASCENDING"
     url = (f"{CDSE_CATALOG}/Products"
            f"?$filter=Collection/Name eq 'SENTINEL-1'"
-           f" and Attributes/OData.CSC.StringAttribute/any(a:a/Name eq 'productType' and a/Value eq 'IW_GRDH')"
+           f" and Attributes/OData.CSC.StringAttribute/any(a:a/Name eq 'productType' and a/Value eq 'IW_GRDH_1SDV')"
            f" and OData.CSC.Intersects(area=geography'SRID=4326;{wkt}')"
            f" and Attributes/OData.CSC.StringAttribute/any(a:a/Name eq 'orbitDirection' and a/Value eq '{dir_val}')"
            f" and Attributes/OData.CSC.IntegerAttribute/any(a:a/Name eq 'relativeOrbitNumber' and a/Value eq {rel_orbit})"
@@ -437,7 +437,9 @@ def main():
     log()
     if kharg_az is None:
         log("WARN: could not get Kharg heading — cannot validate formula. Proceeding with registry 282°.")
-        kharg_az = REGISTRY_KHARG_AZ
+        kharg_az  = REGISTRY_KHARG_AZ
+        yanbu_az  = None
+        rt_asc_az = None
     else:
         delta = abs(kharg_az - REGISTRY_KHARG_AZ)
         if delta > 5:
