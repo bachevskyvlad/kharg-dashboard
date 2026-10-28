@@ -7,6 +7,9 @@ jobs:
   run:
     runs-on: ubuntu-latest
     timeout-minutes: 120
+    env:
+      TG_BOT: "https://api.telegram.org/bot7745904293:AAHV2qN_5_XNxpg6Ir3iV3XmEKpokthi308/sendMessage"
+      TG_CHAT: "204715787"
     steps:
       - uses: actions/checkout@v4
         with:
@@ -29,7 +32,6 @@ jobs:
 
       - name: Copy latest p9 CSV from research branch
         run: |
-          # git ls-tree returns full path e.g. diagnostics/mega/p9_pertank_all_*.csv
           P9_PATH=$(git ls-tree --name-only origin/research/2026-10-auto diagnostics/mega/ \
             | grep 'p9_pertank_all_' | sort | tail -1)
           P9_FILE=$(basename "$P9_PATH")
@@ -37,11 +39,71 @@ jobs:
           git show origin/research/2026-10-auto:diagnostics/mega/$P9_FILE \
             > diagnostics/mega/$P9_FILE
 
+      - name: Notify start
+        run: |
+          TEXT="▶️ <b>tz5_asc_ring15</b> run #${{ github.run_number }} started
+run_id: ${{ github.run_id }}
+actor: ${{ github.actor }}
+branch: claude/oilradar-dashboard-iran-zchdva"
+          curl -s -X POST "$TG_BOT" -d chat_id="$TG_CHAT" -d parse_mode="HTML" \
+            --data-urlencode text="$TEXT"
+
       - name: Run tz5_asc_ring15.py
+        id: run_script
         env:
           CLIENT_ID: ${{ secrets.CLIENT_ID }}
           CLIENT_SECRET: ${{ secrets.CLIENT_SECRET }}
-        run: python scripts/research/tz5_asc_ring15.py
+        run: |
+          python scripts/research/tz5_asc_ring15.py 2>&1 | tee /tmp/tz5_out.txt
+          echo "exit_code=${PIPESTATUS[0]}" >> $GITHUB_OUTPUT
+
+      - name: Validate and notify result
+        if: always()
+        run: |
+          # Extract key validation lines from script output
+          FRACS=$(grep -E 'frac=|FATAL:|WRITTEN:|ring15_far_dB' /tmp/tz5_out.txt 2>/dev/null | head -30 || echo "(no output)")
+          GAPS=$(grep -E 'gap_m_asc=' /tmp/tz5_out.txt 2>/dev/null | head -20 || echo "")
+          EXIT_CODE="${{ steps.run_script.outputs.exit_code }}"
+
+          # Outlier check on ring15_far_dB values: extract dB values and flag if outside [-30, 5]
+          DB_VALS=$(grep -oP 'ring15_far_dB=\K[-0-9.]+' /tmp/tz5_out.txt 2>/dev/null || true)
+          OUTLIER_WARN=""
+          if [ -n "$DB_VALS" ]; then
+            OUTLIER_WARN=$(echo "$DB_VALS" | awk '
+              BEGIN { n=0; sum=0; min=999; max=-999; out=0 }
+              {
+                v=$1+0
+                n++; sum+=v
+                if(v<min) min=v
+                if(v>max) max=v
+                if(v < -30 || v > 5) out++
+              }
+              END {
+                if(n>0) printf "ring15_far_dB: n=%d  mean=%.2f  min=%.2f  max=%.2f  outliers(outside[-30,5])=%d", n, sum/n, min, max, out
+              }
+            ')
+          fi
+
+          if [ "$EXIT_CODE" = "0" ]; then
+            STATUS="✅ SUCCESS"
+          else
+            STATUS="❌ FAILED (exit $EXIT_CODE)"
+          fi
+
+          TEXT="$STATUS <b>tz5_asc_ring15</b> run #${{ github.run_number }}
+
+<b>Доля непустых ring15_far_dB:</b>
+<pre>$FRACS</pre>
+
+<b>gap_m_asc:</b>
+<pre>$GAPS</pre>
+
+<b>Outlier check:</b>
+<pre>${OUTLIER_WARN:-не вычислено}</pre>
+
+run_id: ${{ github.run_id }}"
+          curl -s -X POST "$TG_BOT" -d chat_id="$TG_CHAT" -d parse_mode="HTML" \
+            --data-urlencode text="$TEXT"
 
       - name: Commit and push outputs
         run: |
