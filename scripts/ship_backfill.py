@@ -158,7 +158,7 @@ def fetch_pass(pass_date):
             data_collection=S1_CDSE,
             time_interval=(d, d),
             mosaicking_order=MosaickingOrder.MOST_RECENT,
-            other_args={"dataFilter": {"polarization": "SV"}},
+            other_args={"dataFilter": {"polarization": "VV"}},
         )],
         responses=[SentinelHubRequest.output_response("default", MimeType.TIFF)],
         bbox=bbox, size=size, config=config,
@@ -245,7 +245,7 @@ def main():
 
         # Skip zero detections for recent passes — data may not be fully available
         days_ago = (today.date() - pass_date).days if hasattr(pass_date, 'year') else (today - datetime.strptime(date_key, '%Y-%m-%d')).days
-        if total_export == 0 and days_ago < 5:
+        if total_export == 0 and days_ago < 2:
             print(f"  → skipping {date_key}: zero detections, SAR data may not be available yet")
             continue
 
