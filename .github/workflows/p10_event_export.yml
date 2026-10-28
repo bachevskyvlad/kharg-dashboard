@@ -1,0 +1,46 @@
+name: p10_event_export
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [claude/laughing-wright-20l7cr]
+    paths:
+      - scripts/research/p10_event_export.py
+      - .github/workflows/p10_event_export.yml
+
+permissions:
+  contents: write
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Fetch research branch (section-4 ring15 variants)
+        run: git fetch --depth=1 origin research/2026-10-auto:refs/remotes/origin/research/2026-10-auto
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: pip install --quiet numpy pandas requests shapely
+
+      - name: Run p10_event_export
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+        run: python scripts/research/p10_event_export.py
+
+      - name: Commit outputs
+        if: always()
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add diagnostics/event_export/ || true
+          git diff --cached --quiet || git commit -m "p10_event_export: outputs [run ${{ github.run_id }}]"
+          git push origin HEAD:${{ github.ref_name }}
