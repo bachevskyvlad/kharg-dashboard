@@ -1,0 +1,52 @@
+name: tz5_asc_ring15
+
+on:
+  workflow_dispatch:
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: claude/oilradar-dashboard-iran-zchdva
+          fetch-depth: 1
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install deps
+        run: pip install numpy scipy requests pandas sentinelhub
+
+      - name: Copy observations_all from research branch
+        run: |
+          git fetch origin research/2026-10-auto
+          mkdir -p diagnostics/mega
+          git show origin/research/2026-10-auto:diagnostics/mega/observations_all.csv.gz \
+            > diagnostics/mega/observations_all.csv.gz
+
+      - name: Copy latest p9 CSV from research branch
+        run: |
+          # Get latest p9_pertank_all_*.csv from research branch
+          P9_FILE=$(git ls-tree --name-only origin/research/2026-10-auto diagnostics/mega/ \
+            | grep 'p9_pertank_all_' | sort | tail -1)
+          echo "Using p9 file: $P9_FILE"
+          git show origin/research/2026-10-auto:diagnostics/mega/$P9_FILE \
+            > diagnostics/mega/$P9_FILE
+
+      - name: Run tz5_asc_ring15.py
+        env:
+          CLIENT_ID: ${{ secrets.CLIENT_ID }}
+          CLIENT_SECRET: ${{ secrets.CLIENT_SECRET }}
+        run: python scripts/research/tz5_asc_ring15.py
+
+      - name: Commit and push outputs
+        run: |
+          git config user.email "actions@github.com"
+          git config user.name "GitHub Actions"
+          git add diagnostics/mega/tz5_asc_ring15_*.csv
+          git diff --staged --quiet || \
+            git commit -m "tz5 item2: ring15 recomputed az=80 const for Yanbu o14 RT o101"
+          git push -u origin claude/oilradar-dashboard-iran-zchdva
