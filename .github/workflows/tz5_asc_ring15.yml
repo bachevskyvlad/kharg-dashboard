@@ -29,9 +29,10 @@ jobs:
 
       - name: Copy latest p9 CSV from research branch
         run: |
-          # Get latest p9_pertank_all_*.csv from research branch
-          P9_FILE=$(git ls-tree --name-only origin/research/2026-10-auto diagnostics/mega/ \
+          # git ls-tree returns full path e.g. diagnostics/mega/p9_pertank_all_*.csv
+          P9_PATH=$(git ls-tree --name-only origin/research/2026-10-auto diagnostics/mega/ \
             | grep 'p9_pertank_all_' | sort | tail -1)
+          P9_FILE=$(basename "$P9_PATH")
           echo "Using p9 file: $P9_FILE"
           git show origin/research/2026-10-auto:diagnostics/mega/$P9_FILE \
             > diagnostics/mega/$P9_FILE
