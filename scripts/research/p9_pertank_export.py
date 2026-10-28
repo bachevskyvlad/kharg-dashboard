@@ -512,14 +512,17 @@ def main():
         if c not in obs.columns:
             obs[c] = float("nan")
 
-    # Use ring15_far = ring15_far (already populated by ring15_far from obs for Kharg/RT)
-    # Rename ring15_far → ring15_far_dB for clarity
-    obs.rename(columns={
-        "ring15_far":  "ring15_far_dB",
-        "ring15_near": "ring15_near_dB",
-    }, inplace=True)
-    keep_cols = [c.replace("ring15_far", "ring15_far_dB").replace("ring15_near", "ring15_near_dB")
-                 for c in keep_cols]
+    # Rename ring15_far → ring15_far_dB, ring15_near → ring15_near_dB (exact match only)
+    rename_map = {
+        "ring15_far":              "ring15_far_dB",
+        "ring15_near":             "ring15_near_dB",
+        "ring15_far_old":          "ring15_far_dB_old",
+        "ring15_near_old":         "ring15_near_dB_old",
+        "ring15_far_old_az_used":  "ring15_far_dB_old_az_used",
+        "ring15_near_old_az_used": "ring15_near_dB_old_az_used",
+    }
+    obs.rename(columns=rename_map, inplace=True)
+    keep_cols = [rename_map.get(c, c) for c in keep_cols]
     obs = obs[keep_cols].sort_values(["terminal", "date", "tank_id"]).reset_index(drop=True)
 
     # ── Pre-delivery checks ───────────────────────────────────────────────────
