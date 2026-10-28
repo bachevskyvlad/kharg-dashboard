@@ -2,5 +2,5 @@
   Cache-Control: no-cache, must-revalidate
 
 /data/*
-  Cache-Control: no-cache, must-revalidate
+  Cache-Control: no-store, no-cache, must-revalidate
   Pragma: no-cache
