@@ -21,10 +21,8 @@ import urllib.parse
 import urllib.request
 from datetime import datetime, timedelta, timezone
 
-_sb_url = os.environ.get("SUPABASE_URL") or ""
-_sb_key = os.environ.get("SUPABASE_KEY") or ""
-if not _sb_url or not _sb_key:
-    sys.exit("FATAL: SUPABASE_URL and SUPABASE_KEY must be set")
+_sb_url = os.environ.get("SUPABASE_URL") or "https://yoekhkczwdeyauwarsyy.supabase.co"
+_sb_key = os.environ.get("SUPABASE_KEY") or "sb_publishable_7j07_zzdqTGM1LXf7-o9Tg_JJRbJQSM"
 
 from supabase import create_client
 sb = create_client(_sb_url, _sb_key)

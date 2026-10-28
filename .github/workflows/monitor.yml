@@ -65,9 +65,6 @@ jobs:
           key: ingest-summary-${{ github.run_id }}
       - name: Telegram — Signal Quality
         if: success()
-        env:
-          SUPABASE_URL: https://yoekhkczwdeyauwarsyy.supabase.co
-          SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
         run: python3 scripts/tg_quality.py --send
       - name: Telegram — Ingest FAILED
         if: failure()
