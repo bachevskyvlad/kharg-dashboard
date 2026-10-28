@@ -1,0 +1,217 @@
+p8e_burst_overview.py  2026-10-28T10:18:30.227949+00:00
+token OK
+product: S1A_IW_SLC__1SDV_20241003T023929_20241003T023956_055932_06D6A2_7F43.SAFE
+annotation: s1a-iw2-slc-vv-20241003t023931-20241003t023956-055932-06d6a2-005.xml
+rps=2.330m  aps=13.958m  lpb=1510  spb=25448  bursts=9
+GCP farm ctr: line_global=1237.5  sample=1271.0  → burst=0
+GCP lat range: [27.8400, 29.5086]
+GCP lon range: [49.1328, 50.3920]
+
+--- burst 0 ---
+    Range 109035-153814954  (153.7 MB)
+    ... 10 MB
+    ... 20 MB
+    ... 30 MB
+    ... 40 MB
+    ... 50 MB
+    ... 60 MB
+    ... 70 MB
+    ... 80 MB
+    ... 90 MB
+    ... 100 MB
+    ... 110 MB
+    ... 120 MB
+    ... 130 MB
+    ... 140 MB
+    ... 146 MB
+    done 153.7 MB
+  amplitude dB: p5=12.0  p50=24.4  p95=32.6
+  left  cols 0-200:   median=0.0 dB
+  right cols -200:    median=0.0 dB
+  PNG: p8e_burst0_20261028T1018.png
+
+--- burst 1 ---
+    Range 153814955-307520874  (153.7 MB)
+    ... 10 MB
+    ... 20 MB
+    ... 30 MB
+    ... 40 MB
+    ... 50 MB
+    ... 60 MB
+    ... 70 MB
+    ... 80 MB
+    ... 90 MB
+    ... 100 MB
+    ... 110 MB
+    ... 120 MB
+    ... 130 MB
+    ... 140 MB
+    ... 146 MB
+    done 153.7 MB
+  amplitude dB: p5=12.0  p50=24.1  p95=31.9
+  left  cols 0-200:   median=0.0 dB
+  right cols -200:    median=0.0 dB
+  PNG: p8e_burst1_20261028T1018.png
+
+--- burst 2 ---
+    Range 307520875-461226794  (153.7 MB)
+    ... 10 MB
+    ... 20 MB
+    ... 30 MB
+    ... 40 MB
+    ... 50 MB
+    ... 60 MB
+    ... 70 MB
+    ... 80 MB
+    ... 90 MB
+    ... 100 MB
+    ... 110 MB
+    ... 120 MB
+    ... 130 MB
+    ... 140 MB
+    ... 146 MB
+    done 153.7 MB
+  amplitude dB: p5=12.3  p50=24.5  p95=31.9
+  left  cols 0-200:   median=0.0 dB
+  right cols -200:    median=0.0 dB
+  PNG: p8e_burst2_20261028T1018.png
+
+--- burst 3 ---
+    Range 461226795-614932714  (153.7 MB)
+    ... 10 MB
+    ... 20 MB
+    ... 30 MB
+    ... 40 MB
+    ... 50 MB
+    ... 60 MB
+    ... 70 MB
+    ... 80 MB
+    ... 90 MB
+    ... 100 MB
+    ... 110 MB
+    ... 120 MB
+    ... 130 MB
+    ... 140 MB
+    ... 146 MB
+    done 153.7 MB
+  amplitude dB: p5=12.3  p50=25.0  p95=32.3
+  left  cols 0-200:   median=0.0 dB
+  right cols -200:    median=0.0 dB
+  PNG: p8e_burst3_20261028T1018.png
+
+--- burst 4 ---
+    Range 614932715-768638634  (153.7 MB)
+    ... 10 MB
+    ... 20 MB
+    ... 30 MB
+    ... 40 MB
+    ... 50 MB
+    ... 60 MB
+    ... 70 MB
+    ... 80 MB
+    ... 90 MB
+    ... 100 MB
+    ... 110 MB
+    ... 120 MB
+    ... 130 MB
+    ... 140 MB
+    ... 146 MB
+    done 153.7 MB
+  amplitude dB: p5=13.0  p50=25.8  p95=33.2
+  left  cols 0-200:   median=0.0 dB
+  right cols -200:    median=0.0 dB
+  PNG: p8e_burst4_20261028T1018.png
+
+--- burst 5 ---
+    Range 768638635-922344554  (153.7 MB)
+    ... 10 MB
+    ... 20 MB
+    ... 30 MB
+    ... 40 MB
+    ... 50 MB
+    ... 60 MB
+    ... 70 MB
+    ... 80 MB
+    ... 90 MB
+    ... 100 MB
+    ... 110 MB
+    ... 120 MB
+    ... 130 MB
+    ... 140 MB
+    ... 146 MB
+    done 153.7 MB
+  amplitude dB: p5=14.0  p50=26.6  p95=34.0
+  left  cols 0-200:   median=0.0 dB
+  right cols -200:    median=0.0 dB
+  PNG: p8e_burst5_20261028T1018.png
+
+--- burst 6 ---
+    Range 922344555-1076050474  (153.7 MB)
+    ... 10 MB
+    ... 20 MB
+    ... 30 MB
+    ... 40 MB
+    ... 50 MB
+    ... 60 MB
+    ... 70 MB
+    ... 80 MB
+    ... 90 MB
+    ... 100 MB
+    ... 110 MB
+    ... 120 MB
+    ... 130 MB
+    ... 140 MB
+    ... 146 MB
+    done 153.7 MB
+  amplitude dB: p5=14.6  p50=27.6  p95=34.4
+  left  cols 0-200:   median=0.0 dB
+  right cols -200:    median=0.0 dB
+  PNG: p8e_burst6_20261028T1018.png
+
+--- burst 7 ---
+    Range 1076050475-1229756394  (153.7 MB)
+    ... 10 MB
+    ... 20 MB
+    ... 30 MB
+    ... 40 MB
+    ... 50 MB
+    ... 60 MB
+    ... 70 MB
+    ... 80 MB
+    ... 90 MB
+    ... 100 MB
+    ... 110 MB
+    ... 120 MB
+    ... 130 MB
+    ... 140 MB
+    ... 146 MB
+    done 153.7 MB
+  amplitude dB: p5=15.3  p50=28.0  p95=34.7
+  left  cols 0-200:   median=0.0 dB
+  right cols -200:    median=0.0 dB
+  PNG: p8e_burst7_20261028T1018.png
+
+--- burst 8 ---
+    Range 1229756395-1383462314  (153.7 MB)
+    ... 10 MB
+    ... 20 MB
+    ... 30 MB
+    ... 40 MB
+    ... 50 MB
+    ... 60 MB
+    ... 70 MB
+    ... 80 MB
+    ... 90 MB
+    ... 100 MB
+    ... 110 MB
+    ... 120 MB
+    ... 130 MB
+    ... 140 MB
+    ... 146 MB
+    done 153.7 MB
+  amplitude dB: p5=15.6  p50=28.2  p95=34.9
+  left  cols 0-200:   median=0.0 dB
+  right cols -200:    median=0.0 dB
+  PNG: p8e_burst8_20261028T1018.png
+
+DONE  2026-10-28T10:24:42.784502+00:00
