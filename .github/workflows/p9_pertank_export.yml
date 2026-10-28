@@ -1,0 +1,43 @@
+name: p9_pertank_export
+
+on:
+  workflow_dispatch:
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+
+    steps:
+      - name: Checkout research branch
+        uses: actions/checkout@v4
+        with:
+          ref: research/2026-10-auto
+          fetch-depth: 1
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          pip install --quiet numpy scipy requests matplotlib sentinelhub supabase
+
+      - name: Run p9_pertank_export
+        env:
+          CLIENT_ID: ${{ secrets.CLIENT_ID }}
+          CLIENT_SECRET: ${{ secrets.CLIENT_SECRET }}
+        run: |
+          python scripts/research/p9_pertank_export.py
+
+      - name: Commit outputs
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add diagnostics/mega/p9_pertank_all_*.csv diagnostics/mega/p9_tank_ref_*.csv || true
+          git diff --cached --quiet || git commit -m "p9_pertank_export: add per-tank CSV outputs"
+
+      - name: Push outputs
+        run: |
+          git push origin research/2026-10-auto
