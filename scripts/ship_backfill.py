@@ -35,7 +35,7 @@ bbox = BBox(
         KHARG_CENTER[0] - 0.27,
         KHARG_CENTER[1] - 0.15,
         KHARG_CENTER[0] + 0.27,
-        KHARG_CENTER[1] + 0.41,
+        KHARG_CENTER[1] + 0.27,
     ],
     crs=CRS.WGS84
 )
