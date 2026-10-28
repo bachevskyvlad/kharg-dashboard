@@ -1,4 +1,4 @@
-p10_event_export  run 2026-10-28T11:30Z
+p10_event_export  run 2026-10-28T11:35Z
 
 ── Volume tables
   kharg: 324 daily DB volume rows
@@ -26,7 +26,7 @@ p10_event_export  run 2026-10-28T11:30Z
   rt_tank_daily.csv            rows=  21252  period=2016-12-08 … 2026-10-24
   rt_asc_tank_daily.csv        rows=  23562  period=2015-05-04 … 2026-10-22
   tanks_reference.csv          rows=    113  kharg=47, ras_tanura=66
-  scenes_catalog.csv           rows=   3482  period=2014-10-08 … 2026-10-25
+  scenes_catalog.csv           rows=   1725  period=2014-10-08 … 2026-10-25
 
 2) Non-empty vol_mn_bbl share by terminal × rel_orbit (daily rows)
   kharg       orbit=   35 DESCENDING  rows=  356  vol non-null=  324 (0.910)
