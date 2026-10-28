@@ -22,7 +22,7 @@ jobs:
 
       - name: Install dependencies
         run: |
-          pip install --quiet numpy scipy requests matplotlib sentinelhub supabase
+          pip install --quiet numpy scipy requests matplotlib pandas sentinelhub supabase
 
       - name: Run p9_pertank_export
         env:
