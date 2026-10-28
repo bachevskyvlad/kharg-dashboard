@@ -171,7 +171,7 @@ jobs:
 
   commit_data:
     runs-on: ubuntu-latest
-    needs: [gate, export]
+    needs: [gate, export, anchorage]
     if: always() && needs.gate.outputs.run == 'true'
     steps:
       - uses: actions/checkout@v4
@@ -195,6 +195,12 @@ jobs:
         run: python scripts/export_from_supabase.py
       - name: Export Iran terminal JSON files
         run: python scripts/export_terminal_json.py
+        continue-on-error: true
+      - name: Restore anchorage.json from cache
+        uses: actions/cache/restore@v4
+        with:
+          path: data/anchorage.json
+          key: anchorage-${{ github.run_id }}
         continue-on-error: true
       - name: Commit and push
         run: |
@@ -222,8 +228,6 @@ jobs:
     timeout-minutes: 60
     steps:
       - uses: actions/checkout@v4
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
@@ -234,11 +238,9 @@ jobs:
           CLIENT_ID:     ${{ secrets.CLIENT_ID }}
           CLIENT_SECRET: ${{ secrets.CLIENT_SECRET }}
         run: python scripts/ship_backfill.py --resume
-      - name: Commit updated anchorage.json
-        run: |
-          git config user.email "actions@github.com"
-          git config user.name "GitHub Actions"
-          git add data/anchorage.json
-          git diff --cached --quiet && echo "No changes" || git commit -m "data: update anchorage tanker queue"
-          git pull --rebase --autostash origin main
-          git push origin main || true
+      - name: Save anchorage.json to cache
+        if: always()
+        uses: actions/cache/save@v4
+        with:
+          path: data/anchorage.json
+          key: anchorage-${{ github.run_id }}
