@@ -158,8 +158,8 @@ def cdse_catalog(terminal, tanks):
         return cat
     cat["rel_orbit"] = cat["rel_orbit"].astype("Int64")
     # One acquisition can exist as both .SAFE and _COG.SAFE (and reprocessed copies):
-    # key = mission_mode_type_start_stop_absorbit_datatake; prefer the COG name.
-    cat["acq_key"] = cat["scene_id"].str.replace("_COG", "", regex=False).str.split("_").str[:9].str.join("_")
+    # key = mission_mode_type_pol_start_stop_absorbit_datatake (drop product uid); prefer COG.
+    cat["acq_key"] = cat["scene_id"].str.replace("_COG", "", regex=False).str.split("_").str[:8].str.join("_")
     cat["_cog"] = cat["scene_id"].str.contains("_COG")
     n0 = len(cat)
     cat = (cat.sort_values(["acq_key", "_cog"], ascending=[True, False])
