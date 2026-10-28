@@ -1,0 +1,42 @@
+p8d_coastline_check.py  2026-10-28T10:05:40.117322+00:00
+token OK
+
+=== SLC 2024-10-03 ===
+  S1A_IW_SLC__1SDV_20241003T023929_20241003T023956_055932_06D6A2_7F43.SAFE
+    annotation nodes (8): ['s1a-iw3-slc-vh-20241003t023929-20241003t023955-055932-06d6a2-003.xml', 's1a-iw3-slc-vv-20241003t023929-20241003t023955-055932-06d6a2-006.xml', 'calibration', 'rfi', 's1a-iw1-slc-vh-20241003t023930-20241003t023955-055932-06d6a2-001.xml']
+  annotation: s1a-iw2-slc-vv-20241003t023931-20241003t023956-055932-06d6a2-005.xml
+  rps=2.330m  aps=13.958m  lpb=1510  spb=25448
+  window centre → line_global=1259.0  sample=1705.6  burst=0
+    Range bytes=109035-153814954  (153.7 MB)
+    ... 10 MB
+    ... 20 MB
+    ... 30 MB
+    ... 40 MB
+    ... 50 MB
+    ... 60 MB
+    ... 70 MB
+    ... 80 MB
+    ... 90 MB
+    ... 100 MB
+    ... 110 MB
+    ... 120 MB
+    ... 130 MB
+    ... 140 MB
+    ... 146 MB
+    done 153.7 MB
+  sigma0 shape=(1510, 25448)  mean_dB=-20.53
+  crop shape=(216, 1289)  l0=1151 l1=1367  s0=1061 s1=2350
+  crop extent: lat [29.21397, 29.24601]  lon [50.26715, 50.32294]
+  dense grid computed ((22, 129))
+  downloading NE coastline from https://naciscdn.org/naturalearth/10m/physical/ne_10m_coastline.zip ...
+  NE coastline: 1 segments near Kharg
+  dense grid span: 4893 m W-E  ×  2578 m N-S  (should be ~3000×3000)
+  saved p8d_coastline_20261028T1005.png
+  NE coast lon at lat=29.23: [np.float64(50.30011022891114), np.float64(50.33202046083681)]
+  SAR transition lon=50.31958  lat=29.22601
+  NE coast lon=50.31607  SAR transition lon=50.31958
+  OFFSET range: +341.1 m  (positive = SAR right/east of NE)
+  OFFSET azimuth: estimated 0 m (not computed from single row)
+  RESULT: offset +341 m → CHECK geolocation
+
+DONE  2026-10-28T10:06:19.149600+00:00
