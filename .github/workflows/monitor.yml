@@ -216,3 +216,32 @@ jobs:
             --data-urlencode text="&#10060; <b>Commit FAILED</b>
           &#128197; <code>$(date -u +'%Y-%m-%d %H:%M UTC')</code>
           &#128279; <a href='https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}'>Open logs</a>"
+
+  anchorage:
+    needs: gate
+    if: needs.gate.outputs.run == 'true'
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install dependencies
+        run: pip install sentinelhub scipy numpy -q
+      - name: Run ship backfill (resume mode)
+        env:
+          CLIENT_ID:     ${{ secrets.CLIENT_ID }}
+          CLIENT_SECRET: ${{ secrets.CLIENT_SECRET }}
+        run: python scripts/ship_backfill.py --resume
+      - name: Commit updated anchorage.json
+        run: |
+          git config user.email "actions@github.com"
+          git config user.name "GitHub Actions"
+          git add data/anchorage.json
+          git diff --cached --quiet && echo "No changes" || git commit -m "data: update anchorage tanker queue"
+          git pull --rebase --autostash origin main
+          git push origin main || true
