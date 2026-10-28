@@ -1,0 +1,50 @@
+p10_event_export  run 2026-10-28T11:30Z
+
+── Volume tables
+  kharg: 324 daily DB volume rows
+  ras_tanura: 564 daily DB volume rows
+
+── CDSE catalog
+
+── kharg: DB raw_observations
+  rows=15228 columns=['id', 'date', 'tank_id', 'radius_m', 'diameter', 'h_max', 'db_mean', 'created_at']
+  prod calibration (p5/p95, enabled tanks, full DB history, all orbits): dB_min=-0.2221 dB_max=14.1318
+  check Σbarrels(enabled, prod formula) vs DB vol_mn_bbl: n=324 median|Δ|=0.000 p95|Δ|=0.000 max|Δ|=0.000 Mn bbl
+
+── ras_tanura: DB terminal_observations
+  rows=37127 columns=['id', 'terminal_id', 'date', 'tank_id', 'radius_m', 'diameter', 'h_max', 'db_mean', 'created_at', 'relative_orbit', 'orbit_direction', 'db_norm']
+  prod calibration (p5/p95, enabled tanks, full DB history, all orbits): dB_min=-1.5783 dB_max=14.4230
+  check Σbarrels(enabled, prod formula) vs DB vol_mn_bbl: n=564 median|Δ|=0.000 p95|Δ|=0.001 max|Δ|=0.001 Mn bbl
+
+══ PRE-DELIVERY CHECKS ══
+
+1) Rows and period per file
+  kharg_daily.csv              rows=    356  period=2014-11-01 … 2026-10-24
+  ras_tanura_daily.csv         rows=    322  period=2016-12-08 … 2026-10-24
+  ras_tanura_asc_daily.csv     rows=    357  period=2015-05-04 … 2026-10-22
+  kharg_tank_daily.csv         rows=  16732  period=2014-11-01 … 2026-10-24
+  rt_tank_daily.csv            rows=  21252  period=2016-12-08 … 2026-10-24
+  rt_asc_tank_daily.csv        rows=  23562  period=2015-05-04 … 2026-10-22
+  tanks_reference.csv          rows=    113  kharg=47, ras_tanura=66
+  scenes_catalog.csv           rows=   3482  period=2014-10-08 … 2026-10-25
+
+2) Non-empty vol_mn_bbl share by terminal × rel_orbit (daily rows)
+  kharg       orbit=   35 DESCENDING  rows=  356  vol non-null=  324 (0.910)
+  ras_tanura  orbit=   35 DESCENDING  rows=  322  vol non-null=  321 (0.997)
+  ras_tanura  orbit=  101 ASCENDING   rows=  357  vol non-null=  243 (0.681)
+  ras_tanura  orbit=  137 DESCENDING  rows=  321  vol non-null=    0 (0.000)
+  NOTE: 321 RT rows on other DESC orbits [np.int64(137)] are in neither RT daily file
+
+3) Dates: CDSE catalog vs DB
+  kharg: catalog dates (all orbits)=725  DB dates=324  DB∩catalog=324  DB-only=0
+     orbit  35 DESCENDING  catalog dates= 356  in DB= 324
+     orbit  37 DESCENDING  catalog dates=   1  in DB=   0
+     orbit 101 ASCENDING   catalog dates= 368  in DB=   0
+     db_match: {'date_dir': 324}
+  ras_tanura: catalog dates (all orbits)=995  DB dates=572  DB∩catalog=572  DB-only=0
+     orbit  35 DESCENDING  catalog dates= 322  in DB= 321
+     orbit 101 ASCENDING   catalog dates= 357  in DB= 243
+     orbit 137 DESCENDING  catalog dates= 321  in DB=   8
+     db_match: {'exact': 558, 'date_dir': 14}
+
+Wrote 8 files to /home/runner/work/kharg-dashboard/kharg-dashboard/diagnostics/event_export
