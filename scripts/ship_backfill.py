@@ -35,7 +35,7 @@ bbox = BBox(
         KHARG_CENTER[0] - 0.27,
         KHARG_CENTER[1] - 0.15,
         KHARG_CENTER[0] + 0.27,
-        KHARG_CENTER[1] + 0.27,
+        KHARG_CENTER[1] + 0.41,
     ],
     crs=CRS.WGS84
 )
@@ -158,7 +158,6 @@ def fetch_pass(pass_date):
             data_collection=S1_CDSE,
             time_interval=(d, d),
             mosaicking_order=MosaickingOrder.MOST_RECENT,
-            other_args={"dataFilter": {"polarization": "VV"}},
         )],
         responses=[SentinelHubRequest.output_response("default", MimeType.TIFF)],
         bbox=bbox, size=size, config=config,
