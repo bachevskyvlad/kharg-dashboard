@@ -2,6 +2,8 @@ name: Update Tanker Queue (Anchorage)
 
 on:
   workflow_dispatch:
+  schedule:
+    - cron: "0 6 * * 1"   # every Monday 06:00 UTC
 
 jobs:
   update:
