@@ -191,6 +191,9 @@ jobs:
       - name: Fetch crude prices
         run: pip install yfinance --quiet && python scripts/fetch_prices.py
         continue-on-error: true
+      - name: Fetch EU gas storage
+        run: pip install requests --quiet && python scripts/fetch_gas_storage.py
+        continue-on-error: true
       - name: Export Kharg data from Supabase
         run: python scripts/export_from_supabase.py
       - name: Export Iran terminal JSON files
