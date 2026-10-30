@@ -1,0 +1,35 @@
+name: Update EU Gas Storage
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 8 * * *"   # daily 08:00 UTC
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: pip install requests -q
+
+      - name: Fetch EU gas storage
+        run: python scripts/fetch_gas_storage.py
+
+      - name: Commit and push
+        run: |
+          git config user.email "actions@github.com"
+          git config user.name "GitHub Actions"
+          git add data/gas_storage.json
+          git diff --cached --quiet && echo "No changes" || git commit -m "data: update EU gas storage $(date -u +'%Y-%m-%d')"
+          git pull --rebase --autostash origin main
+          git push origin main
