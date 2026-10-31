@@ -109,7 +109,7 @@ def sh_catalog_search(bbox_list, rel_orbit, direction, limit=500):
         bbox=bbox,
         time=("2018-01-01", "2026-12-31"),
         fields={"include": ["id", "properties"]},
-        limit=200,
+        limit=100,
     ))
     results = []
     for feat in raw:
