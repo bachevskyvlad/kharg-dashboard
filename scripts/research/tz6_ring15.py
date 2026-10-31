@@ -25,7 +25,8 @@ TS = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M")
 # ── Credentials ───────────────────────────────────────────────────────────────
 _CID = os.environ.get("CLIENT_ID") or "sh-5215639c-a2e5-47db-8d46-7e28a3150cde"
 _CSC = os.environ.get("CLIENT_SECRET") or "UyosmDOgQ4ejiHbrWpDCT0WzLYgvhfloa3VgOLTtLd7c050tvejLgIVCcXfr3eLXT2JWqfrqjQhBgewF3g6nGF"
-CA  = os.environ.get("REQUESTS_CA_BUNDLE", "/root/.ccr/ca-bundle.crt")
+_ca_path = os.environ.get("REQUESTS_CA_BUNDLE", "/root/.ccr/ca-bundle.crt")
+CA = _ca_path if os.path.exists(_ca_path) else True  # True = system CA in GHA
 
 CDSE_TOKEN_URL = "https://identity.dataspace.copernicus.eu/auth/realms/CDSE/protocol/openid-connect/token"
 SH_BASE        = "https://sh.dataspace.copernicus.eu"
