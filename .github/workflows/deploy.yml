@@ -6,6 +6,7 @@ on:
     workflows:
       - "Monitor — Kharg SAR"
       - "Update Tanker Queue (Anchorage)"
+      - "Update EU Gas Storage"
     types:
       - completed
     branches:
