@@ -79,51 +79,63 @@ def _get_sh_token():
 
 # ── SH Catalog: get scene dates + heading for one orbit ───────────────────────
 
-def sh_catalog_search(bbox, rel_orbit, direction, token, limit=500):
+def _make_sh_config():
+    from sentinelhub import SHConfig
+    cfg = SHConfig()
+    cfg.sh_client_id     = _CID
+    cfg.sh_client_secret = _CSC
+    cfg.sh_token_url     = CDSE_TOKEN_URL
+    cfg.sh_base_url      = SH_BASE
+    return cfg
+
+
+def sh_catalog_search(bbox_list, rel_orbit, direction, limit=500):
     """
-    Returns list of dicts: {date, scene_id, platform, heading (or None)}.
-    bbox: [lon_min, lat_min, lon_max, lat_max]
+    Returns list of dicts: {date, scene_id, platform, heading (or None), props}.
+    bbox_list: [lon_min, lat_min, lon_max, lat_max]
     """
-    import requests
-    url = f"{SH_BASE}/api/v1/catalog/1.0.0/search"
-    headers = {"Authorization": f"Bearer {token}", "Content-Type": "application/json"}
+    from sentinelhub import SentinelHubCatalog, BBox, CRS, DataCollection
+    cfg = _make_sh_config()
+    try:
+        S1_CDSE = DataCollection.SENTINEL1_IW.define_from(
+            "s1iw_cdse_tz6", service_url=SH_BASE)
+    except ValueError:
+        S1_CDSE = DataCollection["s1iw_cdse_tz6"]
+
+    catalog = SentinelHubCatalog(config=cfg)
+    bbox = BBox(bbox_list, crs=CRS.WGS84)
+    raw = list(catalog.search(
+        collection=S1_CDSE,
+        bbox=bbox,
+        time=("2018-01-01", "2026-12-31"),
+        fields={"include": ["id", "properties"]},
+        limit=200,
+    ))
     results = []
-    next_token = None
-    while True:
-        body = {
-            "collections": ["sentinel-1-grd"],
-            "bbox": bbox,
-            "limit": 100,
-            "filter": {
-                "op": "and",
-                "args": [
-                    {"op": "=", "args": [{"property": "sat:relative_orbit"}, rel_orbit]},
-                    {"op": "=", "args": [{"property": "sat:orbit_state"}, direction.lower()]},
-                    {"op": "=", "args": [{"property": "sar:instrument_mode"}, "IW"]},
-                ]
-            },
-            "filter-lang": "cql2-json",
-        }
-        if next_token:
-            body["next"] = next_token
-        r = requests.post(url, json=body, headers=headers, verify=CA, timeout=30)
-        r.raise_for_status()
-        data = r.json()
-        for feat in data.get("features", []):
-            props = feat.get("properties", {})
-            dt_str = props.get("datetime", "")
-            date = dt_str[:10] if dt_str else ""
-            scene_id = feat.get("id", "")
-            platform = props.get("platform", "")
-            # Try multiple heading field names
-            heading = (props.get("platform_heading") or
-                       props.get("sat:platform_heading") or
-                       props.get("view:sun_azimuth") or  # not right but fallback
-                       None)
-            results.append(dict(date=date, scene_id=scene_id, platform=platform,
-                                heading=heading, props=props))
-        next_token = data.get("context", {}).get("next") or data.get("next")
-        if not next_token or len(results) >= limit:
+    for feat in raw:
+        props = feat.get("properties", {})
+        dt_str = (props.get("datetime") or "")
+        date = dt_str[:10] if dt_str else ""
+        ro   = props.get("sat:relative_orbit")
+        dir_ = (props.get("sat:orbit_state") or "").upper()
+        if ro != rel_orbit or dir_ != direction.upper():
+            continue
+        scene_id = feat.get("id", "")
+        platform = props.get("platform", "")
+        # Try to find heading under various field names
+        heading = None
+        for k in ("platform_heading", "sat:platform_heading",
+                  "s1:platformHeading", "platformHeading"):
+            v = props.get(k)
+            if v is not None:
+                try:
+                    heading = float(v)
+                except (ValueError, TypeError):
+                    pass
+                break
+        results.append(dict(date=date, scene_id=scene_id, platform=platform,
+                            heading=heading, props=props))
+        if len(results) >= limit:
             break
     return results
 
@@ -276,7 +288,7 @@ def main():
     # ── 2. Get heading from SH Catalog — Yanbu ASC-14 ─────────────────────────
     print("2. SH Catalog: Yanbu ASC-14 scenes (heading + dates)...")
     yanbu_bbox = [38.20, 23.92, 38.30, 24.00]
-    yanbu_scenes = sh_catalog_search(yanbu_bbox, 14, "ascending", token)
+    yanbu_scenes = sh_catalog_search(yanbu_bbox, 14, "ascending")
     print(f"   found {len(yanbu_scenes)} scenes")
 
     # Try to extract heading
@@ -365,7 +377,7 @@ def main():
     # Get RT heading from SH Catalog too
     print("   SH Catalog: RT ASC-101 heading check...")
     rt_bbox = [50.10, 26.59, 50.22, 26.69]
-    rt_scenes_cat = sh_catalog_search(rt_bbox, 101, "ascending", token, limit=5)
+    rt_scenes_cat = sh_catalog_search(rt_bbox, 101, "ascending", limit=5)
     print(f"   found {len(rt_scenes_cat)} scenes")
     rt_heading = None
     for sc in rt_scenes_cat[:3]:
