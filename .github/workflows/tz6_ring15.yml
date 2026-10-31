@@ -1,0 +1,51 @@
+name: tz6_ring15
+
+on:
+  workflow_dispatch:
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+
+    steps:
+      - name: Checkout research branch
+        uses: actions/checkout@v4
+        with:
+          ref: research/2026-10-auto
+          fetch-depth: 1
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          pip install --quiet numpy requests sentinelhub Pillow pandas
+
+      - name: Run tz6_ring15
+        env:
+          CLIENT_ID: ${{ secrets.CLIENT_ID }}
+          CLIENT_SECRET: ${{ secrets.CLIENT_SECRET }}
+        run: |
+          python scripts/research/tz6_ring15.py 2>&1 | tee tz6_run.log
+
+      - name: Upload log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: tz6_run_log
+          path: tz6_run.log
+
+      - name: Commit CSV outputs
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add diagnostics/mega/tz6_ring15_*.csv || true
+          git diff --cached --quiet && echo "No CSV output" || \
+            git commit -m "tz6_ring15: ring15_far/near Yanbu o14 + RT o101"
+
+      - name: Push outputs
+        run: |
+          git push origin research/2026-10-auto
