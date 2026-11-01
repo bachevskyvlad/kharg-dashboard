@@ -213,7 +213,7 @@ jobs:
           git add data/ volume_graph.png
           git diff --cached --quiet && echo "no changes" && exit 0
           git commit -m "auto update kharg $(date -u +'%Y-%m-%d')"
-          git pull --rebase --autostash origin main
+          git pull -X ours origin main
           git push
       - name: Telegram — Commit FAILED
         if: failure()
