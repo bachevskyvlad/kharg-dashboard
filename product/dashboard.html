@@ -908,6 +908,20 @@
                 <a href="https://calendly.com/bachevsky/intro" target="_blank" style="background:var(--accent);color:#fff;padding:0.5rem 1.25rem;font-size:0.75rem;text-decoration:none;margin-top:0.25rem">Request full access →</a>
             </div>
         </div>
+
+        <div style="background:var(--surface);border:1px solid var(--border);padding:1.25rem 1.5rem 1rem;margin-top:1.25rem;">
+            <div style="font-size:0.7rem;letter-spacing:1px;text-transform:uppercase;color:var(--accent);margin-bottom:1rem">SAR Passes — Last Two Acquisitions</div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;" id="sar-passes-grid">
+                <div>
+                    <div style="font-size:0.65rem;color:var(--muted);margin-bottom:0.5rem;font-family:monospace" id="sar-pass1-label">Pass 1 — —</div>
+                    <img src="/public/kharg_ships_pass1.png" alt="SAR Pass 1" style="width:100%;display:block;border:1px solid var(--border);">
+                </div>
+                <div>
+                    <div style="font-size:0.65rem;color:var(--muted);margin-bottom:0.5rem;font-family:monospace" id="sar-pass2-label">Pass 2 — —</div>
+                    <img src="/public/kharg_ships_pass2.png" alt="SAR Pass 2" style="width:100%;display:block;border:1px solid var(--border);">
+                </div>
+            </div>
+        </div>
     </div>
 
     <!-- ── SECTION: EXPORT SIGNALS ── -->
@@ -2436,6 +2450,11 @@ async function initAnchorage() {
     document.getElementById('aq-total').textContent = latest.total;
     document.getElementById('aq-date').textContent = latest.date;
     document.getElementById('aq-avg').textContent = mean.toFixed(1);
+
+    // SAR pass labels from last two records
+    const n = _aqRecords.length;
+    if (n >= 1) document.getElementById('sar-pass1-label').textContent = 'Pass 1 — ' + _aqRecords[n-1].date;
+    if (n >= 2) document.getElementById('sar-pass2-label').textContent = 'Pass 2 — ' + _aqRecords[n-2].date;
 
     // Weekly table — last 52 weeks, newest first
     const tbody = document.getElementById('aq-table-body');
