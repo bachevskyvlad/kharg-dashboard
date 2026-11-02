@@ -559,10 +559,7 @@
                 <span class="ctrl-label">Country</span>
                 <div class="btn-group">
                     <button class="tbtn tbtn-country active" data-terminal="kharg"      onclick="setTerminal('kharg')">🇮🇷 Iran</button>
-                    <button class="tbtn tbtn-country"        data-terminal="ras_tanura" onclick="setTerminal('ras_tanura')">🇸🇦 Saudi</button>
-                    <button class="tbtn tbtn-country"        data-terminal="lavan"      onclick="setTerminal('lavan')">🇮🇷 Lavan</button>
                     <button class="tbtn tbtn-country"        data-terminal="siri"       onclick="setTerminal('siri')">🇮🇷 Siri</button>
-                    <button class="tbtn tbtn-country"        data-terminal="jask"       onclick="setTerminal('jask')">🇮🇷 Jask</button>
                 </div>
             </div>
         </div>
@@ -879,10 +876,7 @@ async function checkAuth() {
 // ── Country filter (admin-only extras) ───────────────────────────────────────
 const COUNTRY_TERMINALS = [
     { id: 'kharg',      label: 'Iran (Kharg)',  file: null },
-    { id: 'ras_tanura', label: 'Ras Tanura',    file: '/data/terminals/ras_tanura_daily.json' },
-    { id: 'lavan',      label: 'Lavan',         file: '/data/terminals/lavan_daily.json' },
     { id: 'siri',       label: 'Siri',          file: '/data/terminals/siri_daily.json' },
-    { id: 'jask',       label: 'Jask',          file: '/data/terminals/jask_daily.json' },
 ];
 let _activeTerminal = 'kharg';
 let _khargDates = [], _khargValues = [];
