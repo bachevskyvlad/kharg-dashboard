@@ -559,7 +559,6 @@
                 <span class="ctrl-label">Country</span>
                 <div class="btn-group">
                     <button class="tbtn tbtn-country active" data-terminal="kharg"      onclick="setTerminal('kharg')">🇮🇷 Iran</button>
-                    <button class="tbtn tbtn-country"        data-terminal="siri"       onclick="setTerminal('siri')">🇮🇷 Siri</button>
                 </div>
             </div>
         </div>
@@ -895,7 +894,6 @@ async function checkAuth() {
 // ── Country filter (admin-only extras) ───────────────────────────────────────
 const COUNTRY_TERMINALS = [
     { id: 'kharg',      label: 'Iran (Kharg)',  file: null },
-    { id: 'siri',       label: 'Siri',          file: '/data/terminals/siri_daily.json' },
 ];
 let _activeTerminal = 'kharg';
 let _khargDates = [], _khargValues = [];
