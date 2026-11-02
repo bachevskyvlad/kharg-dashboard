@@ -630,6 +630,19 @@
                 Rough estimate based on observed outflow and current crude prices. Actual deal terms are unknown.
             </div>
         </div>
+
+        <!-- ── Export Velocity & Production Inflow ── -->
+        <div class="chart-card" style="margin-bottom:1.25rem">
+            <div class="chart-head">
+                <div class="chart-ttl">Export Velocity &amp; Production Inflow</div>
+                <div class="chart-meta">Mb/d · exports below zero · inflow above zero</div>
+            </div>
+            <div class="ch ch-280"><canvas id="velocityChart"></canvas></div>
+            <div style="font-size:0.67rem;color:var(--muted);padding:0.75rem 0 0;line-height:1.6">
+                <b style="color:#34d399">Export Velocity (green)</b> — net daily outflow rate from terminal into tankers.<br>
+                <b style="color:#f87171">Production Inflow (red)</b> — net daily inflow from upstream fields into storage.
+            </div>
+        </div>
     </div>
 
     <!-- ── SECTION: PER-TANK MAP ── -->
@@ -1234,6 +1247,7 @@ function render() {
     destroyCharts();
     renderMainChart(dates, values);
     renderFillRateChart(dates, chartFR);
+    renderVelocityChart(rawSlice.dates, rawSlice.values);
     renderMonthlyChart(rawSlice.dates, rawSlice.values);
 }
 
@@ -1331,9 +1345,55 @@ function setEsRow(id, active, hot, p, trigger, status) {
 
 function destroyCharts() {
     Object.entries(charts).forEach(([k, c]) => {
-        if (k === 'flowsDivergent' || k === 'flowsECR' || k === 'flowsTurnover' || k === 'spi') return;
+        if (k === 'flowsECR' || k === 'flowsTurnover' || k === 'spi') return;
         c?.destroy();
         delete charts[k];
+    });
+}
+
+function renderVelocityChart(dates, values) {
+    const N = Math.min(dates.length, values.length);
+    const labels = [], expData = [], infData = [];
+    for (let i = 1; i < N; i++) {
+        const delta = values[i] - values[i - 1];
+        labels.push(dates[i]);
+        expData.push(delta < 0 ? +delta.toFixed(3) : null);
+        infData.push(delta > 0 ? +delta.toFixed(3) : null);
+    }
+    charts.velocity && charts.velocity.destroy();
+    charts.velocity = new Chart(document.getElementById('velocityChart').getContext('2d'), {
+        type: 'bar',
+        data: {
+            labels,
+            datasets: [
+                { label: 'Export Velocity', data: expData, backgroundColor: 'rgba(5,150,105,0.75)', borderWidth: 0, borderRadius: 2 },
+                { label: 'Production Inflow', data: infData, backgroundColor: 'rgba(220,38,38,0.75)', borderWidth: 0, borderRadius: 2 }
+            ]
+        },
+        options: {
+            responsive: true, maintainAspectRatio: false,
+            interaction: { intersect: false, mode: 'index' },
+            plugins: {
+                legend: { labels: { color: '#6b7280', boxWidth: 10, font: { size: 10 } } },
+                tooltip: { backgroundColor: '#111827', borderColor: 'rgba(255,255,255,0.1)', borderWidth: 1, titleColor: '#e2e8f0', bodyColor: '#94a3b8',
+                    callbacks: {
+                        label: ctx => {
+                            const v = ctx.parsed.y;
+                            if (v == null) return null;
+                            const rate = (Math.abs(v)).toFixed(3);
+                            return ctx.datasetIndex === 0 ? ` Export: −${rate} Mb` : ` Inflow: +${rate} Mb`;
+                        }
+                    }
+                }
+            },
+            scales: {
+                x: gX,
+                y: { ...gY,
+                    ticks: { ...gY.ticks, callback: v => v.toFixed(2) + ' Mb' },
+                    grid: { color: ctx => ctx.tick.value === 0 ? 'rgba(255,255,255,0.15)' : 'rgba(255,255,255,0.05)' }
+                }
+            }
+        }
     });
 }
 
