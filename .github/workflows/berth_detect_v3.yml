@@ -57,6 +57,7 @@ jobs:
             echo "Nothing to commit"
           else
             git commit -m "ТЗ-7.3: berth_v3 results"
+            git pull --rebase origin claude/oilradar-dashboard-iran-zchdva
             git push origin claude/oilradar-dashboard-iran-zchdva
           fi
 
