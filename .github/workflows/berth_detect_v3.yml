@@ -1,0 +1,69 @@
+name: Berth Detect v3
+
+on:
+  workflow_dispatch:
+    inputs:
+      dates:
+        description: "Space-separated dates YYYY-MM-DD"
+        required: true
+        default: "2018-03-09 2018-09-05 2021-06-09 2021-12-06 2024-01-13 2024-08-04 2026-01-02 2026-05-02 2026-05-08 2026-05-11 2026-05-14"
+      orbits:
+        description: "Relative orbit numbers (space-separated)"
+        required: false
+        default: "35 101"
+
+jobs:
+  detect:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: scripts
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: claude/oilradar-dashboard-iran-zchdva
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          pip install \
+            sentinelhub \
+            scipy \
+            numpy \
+            Pillow \
+            shapely \
+            matplotlib
+
+      - name: Run berth detector v3
+        env:
+          CLIENT_ID: ${{ secrets.CLIENT_ID }}
+          CLIENT_SECRET: ${{ secrets.CLIENT_SECRET }}
+        run: |
+          python berth_detect_v3.py \
+            --dates ${{ inputs.dates }} \
+            --orbits ${{ inputs.orbits }}
+
+      - name: Commit results
+        run: |
+          cd ..
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add diagnostics/berth_v3/
+          if git diff --cached --quiet; then
+            echo "Nothing to commit"
+          else
+            git commit -m "ТЗ-7.3: berth_v3 results"
+            git push origin claude/oilradar-dashboard-iran-zchdva
+          fi
+
+      - name: Upload artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: berth_v3_${{ github.run_id }}
+          path: diagnostics/berth_v3/
+          retention-days: 30

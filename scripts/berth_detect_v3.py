@@ -1,0 +1,744 @@
+"""
+berth_detect_v3.py — Kharg Island tanker detector at three loading piers.
+
+ISOLATION: research only. Does NOT touch ship_backfill.py, update_anchorage.yml,
+           data/anchorage.json, or any Supabase table.
+Output: diagnostics/berth_v3/
+
+Algorithm:
+  1. Three corridors (150 m buffer ± axis, +100 m at ends). Axis is first
+     refined from the background image (line of stably-bright pixels); shift
+     from spec geometry is printed in metres.
+  2. Background: 20th-pct σ0 VV linear, per orbit, ±24 months, min 10 dates.
+     Dates with <10 scenes → no_background flag, skipped silently.
+  3. ratio_dB = 10·log10(scene / bg) on 10 m grid, inside corridors only.
+     Candidate: connected blob ratio_dB > 6 dB, area ≥ 5 px.
+  4. Per candidate: date, scene_id, rel_orbit, platform, berth,
+     lat, lon, length_m, width_m, orientation_deg, max_ratio_dB, area_px.
+  5. Per date × berth: n_candidates, max_length_m, occupied (≥ 150 m candidate).
+  6. Tripanel per date × berth (scene_dB | bg_dB | ratio_dB), corridor+300 m crop,
+     candidates boxed with length_m labels.
+  7. GeoJSON corridors + PNG overlay per orbit.
+  8. Summary table: CSV + per-berth occupancy.
+
+Usage:
+  python berth_detect_v3.py --dates 2021-06-09 2026-05-02
+  python berth_detect_v3.py --dates 2021-06-09 --orbits 35
+"""
+
+import os, sys, json, csv, argparse
+from pathlib import Path
+from datetime import datetime, timedelta, timezone
+
+import numpy as np
+from scipy import ndimage
+
+import matplotlib
+matplotlib.use("Agg")
+import matplotlib.pyplot as plt
+import matplotlib.patches as mpatches
+
+from sentinelhub import (
+    SHConfig, BBox, CRS, DataCollection, SentinelHubRequest,
+    SentinelHubCatalog, MimeType, bbox_to_dimensions, MosaickingOrder,
+)
+from shapely.geometry import Point, LineString, Polygon
+from shapely.ops import unary_union
+import shapely
+
+# ── Config ────────────────────────────────────────────────────────────────────
+config = SHConfig()
+config.sh_client_id     = os.environ.get("CLIENT_ID") or ""
+config.sh_client_secret = os.environ.get("CLIENT_SECRET") or ""
+config.sh_token_url     = "https://identity.dataspace.copernicus.eu/auth/realms/CDSE/protocol/openid-connect/token"
+config.sh_base_url      = "https://sh.dataspace.copernicus.eu"
+
+if not config.sh_client_id or not config.sh_client_secret:
+    sys.exit("FATAL: CLIENT_ID and CLIENT_SECRET env vars must be set")
+
+S1_CDSE = DataCollection.SENTINEL1_IW.define_from(
+    "s1iw_cdse_v3", service_url="https://sh.dataspace.copernicus.eu"
+)
+
+# ── AOI ───────────────────────────────────────────────────────────────────────
+AOI_BBOX   = BBox(bbox=[50.26, 29.17, 50.40, 29.31], crs=CRS.WGS84)
+RESOLUTION = 10
+SIZE       = bbox_to_dimensions(AOI_BBOX, resolution=RESOLUTION)  # (W, H)
+
+# ── Berth corridor spec (ТЗ coords are lat,lon → flip to lon,lat for shapely) ─
+# Each entry: list of (lon, lat) waypoints
+BERTH_SPEC = {
+    "sea_island":     [(50.28316, 29.23318), (50.28816, 29.22433)],
+    "east_t_head":    [(50.33833, 29.23812), (50.34054, 29.22189)],
+    "southeast_pier": [(50.33646, 29.21764), (50.33591, 29.21424), (50.33522, 29.21264)],
+}
+
+CORRIDOR_HALF_M  = 150   # metres each side of axis
+CORRIDOR_END_M   = 100   # extension beyond each end of axis
+
+RATIO_THR        = 6.0   # dB
+MIN_AREA_PX      = 5
+OCCUPIED_LEN_M   = 150.0
+
+BG_PCT           = 20
+BG_WINDOW_DAYS   = 365 * 2  # ±24 months
+BG_MIN_DATES     = 10
+
+ORBIT_35         = 35
+ORBIT_101        = 101
+
+# ── Directories ───────────────────────────────────────────────────────────────
+ROOT      = Path(__file__).parent.parent
+OUT_DIR   = ROOT / "diagnostics" / "berth_v3"
+BG_CACHE  = OUT_DIR / "bg_cache"
+CROP_DIR  = OUT_DIR / "tripanels"
+
+# ── Evalscript ────────────────────────────────────────────────────────────────
+EVALSCRIPT_LINEAR = """
+//VERSION=3
+function setup() {
+  return { input: ["VV"], output: { bands: 1, sampleType: "FLOAT32" } };
+}
+function evaluatePixel(s) {
+  return [Math.max(s.VV, 1e-10)];
+}
+"""
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# Coordinate helpers
+# ═══════════════════════════════════════════════════════════════════════════════
+
+def px_to_lonlat(px, py):
+    lon = AOI_BBOX.min_x + (px + 0.5) / SIZE[0] * (AOI_BBOX.max_x - AOI_BBOX.min_x)
+    lat = AOI_BBOX.max_y - (py + 0.5) / SIZE[1] * (AOI_BBOX.max_y - AOI_BBOX.min_y)
+    return lon, lat
+
+def lonlat_to_px(lon, lat):
+    px = (lon - AOI_BBOX.min_x) / (AOI_BBOX.max_x - AOI_BBOX.min_x) * SIZE[0]
+    py = (AOI_BBOX.max_y - lat) / (AOI_BBOX.max_y - AOI_BBOX.min_y) * SIZE[1]
+    return px, py
+
+def metres_per_deg_lat():
+    return 111320.0
+
+def metres_per_deg_lon(lat):
+    return 111320.0 * np.cos(np.deg2rad(lat))
+
+def haversine_m(lon1, lat1, lon2, lat2):
+    R = 6371000
+    phi1, phi2 = np.deg2rad(lat1), np.deg2rad(lat2)
+    dphi = np.deg2rad(lat2 - lat1)
+    dlam = np.deg2rad(lon2 - lon1)
+    a = np.sin(dphi/2)**2 + np.cos(phi1)*np.cos(phi2)*np.sin(dlam/2)**2
+    return R * 2 * np.arctan2(np.sqrt(a), np.sqrt(1 - a))
+
+def metres_to_deg(m):
+    """Approximate degrees for a given distance at Kharg's latitude."""
+    lat_mid = (AOI_BBOX.min_y + AOI_BBOX.max_y) / 2
+    return m / metres_per_deg_lat(), m / metres_per_deg_lon(lat_mid)
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# Corridor geometry
+# ═══════════════════════════════════════════════════════════════════════════════
+
+def _extend_line(pts_lonlat, end_m):
+    """Extend a polyline end_m metres beyond both endpoints."""
+    lat_mid = np.mean([p[1] for p in pts_lonlat])
+    mpdlat = metres_per_deg_lat()
+    mpdlon = metres_per_deg_lon(lat_mid)
+
+    def extend_end(a, b, dist_m):
+        dx = (b[0] - a[0]) * mpdlon
+        dy = (b[1] - a[1]) * mpdlat
+        length = np.hypot(dx, dy)
+        if length < 1e-6:
+            return b
+        ux, uy = dx / length, dy / length
+        return (b[0] + ux * dist_m / mpdlon, b[1] + uy * dist_m / mpdlat)
+
+    pts = list(pts_lonlat)
+    start_ext = extend_end(pts[1], pts[0], end_m)
+    end_ext   = extend_end(pts[-2], pts[-1], end_m)
+    return [start_ext] + pts[1:-1] + [end_ext]
+
+def build_corridor_polygon(pts_lonlat, half_m, end_m):
+    """
+    Build shapely Polygon: half_m buffer around polyline, extended end_m at both ends.
+    """
+    ext_pts = _extend_line(pts_lonlat, end_m)
+    line = LineString(ext_pts)
+    # Buffer in degrees (approximate isotropic: use lat degrees)
+    lat_mid = np.mean([p[1] for p in pts_lonlat])
+    buf_deg_lat = half_m / metres_per_deg_lat()
+    buf_deg_lon = half_m / metres_per_deg_lon(lat_mid)
+    # Use average as approximation; anisotropy <5% at Kharg
+    buf_deg = (buf_deg_lat + buf_deg_lon) / 2
+    return line.buffer(buf_deg), ext_pts
+
+# ── Rasterise a shapely polygon to a boolean mask (H, W) ─────────────────────
+
+def rasterise_poly(poly) -> np.ndarray:
+    h, w = SIZE[1], SIZE[0]
+    lons = np.linspace(AOI_BBOX.min_x + 0.5*(AOI_BBOX.max_x-AOI_BBOX.min_x)/w,
+                       AOI_BBOX.max_x - 0.5*(AOI_BBOX.max_x-AOI_BBOX.min_x)/w, w)
+    lats = np.linspace(AOI_BBOX.max_y - 0.5*(AOI_BBOX.max_y-AOI_BBOX.min_y)/h,
+                       AOI_BBOX.min_y + 0.5*(AOI_BBOX.max_y-AOI_BBOX.min_y)/h, h)
+    lon_g, lat_g = np.meshgrid(lons, lats)
+    try:
+        return shapely.contains_xy(poly, lon_g.ravel(), lat_g.ravel()).reshape(h, w)
+    except AttributeError:
+        # Shapely <2.0 fallback (slow)
+        from shapely.vectorized import contains  # type: ignore
+        return contains(poly, lon_g, lat_g)
+
+# ── Axis refinement from background ──────────────────────────────────────────
+
+def refine_axis(bg_linear: np.ndarray, corridor_mask: np.ndarray,
+                spec_pts: list, berth_name: str) -> float:
+    """
+    Find the centroid of the stably-bright pixels (top-20th-pct σ0) inside
+    the corridor. Project spec axis and refined centroid onto the perpendicular;
+    return shift_m (positive = centroid is to the right of spec axis).
+    Prints the shift.
+    """
+    db = 10 * np.log10(np.where(bg_linear < 1e-10, 1e-10, bg_linear))
+    vals = db[corridor_mask]
+    if len(vals) < 20:
+        print(f"  [{berth_name}] axis refine: too few pixels ({len(vals)}), skip")
+        return 0.0
+    thr = np.percentile(vals, 80)
+    bright = corridor_mask & (db >= thr)
+    ys, xs = np.where(bright)
+    if len(xs) == 0:
+        print(f"  [{berth_name}] axis refine: no bright pixels, skip")
+        return 0.0
+    # Centroid in geo coords
+    cx_px = float(xs.mean()); cy_px = float(ys.mean())
+    clon, clat = px_to_lonlat(cx_px, cy_px)
+
+    # Spec axis: project centroid onto axis
+    lat_mid = np.mean([p[1] for p in spec_pts])
+    mpdlat = metres_per_deg_lat(); mpdlon = metres_per_deg_lon(lat_mid)
+    # Direction vector of spec axis (in metres)
+    ax = (spec_pts[-1][0] - spec_pts[0][0]) * mpdlon
+    ay = (spec_pts[-1][1] - spec_pts[0][1]) * mpdlat
+    alen = np.hypot(ax, ay)
+    if alen < 1:
+        print(f"  [{berth_name}] axis refine: zero-length axis, skip")
+        return 0.0
+    ux, uy = ax / alen, ay / alen
+    # Perpendicular component of centroid offset from spec start
+    ox = (clon - spec_pts[0][0]) * mpdlon
+    oy = (clat - spec_pts[0][1]) * mpdlat
+    shift_m = float(-ux * oy + uy * ox)   # signed cross product → perp shift
+    print(f"  [{berth_name}] axis refine: bright centroid ({clon:.5f},{clat:.5f}), "
+          f"shift {shift_m:+.0f} m from spec axis")
+    return shift_m
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# SentinelHub helpers
+# ═══════════════════════════════════════════════════════════════════════════════
+
+def catalog_search(date_from: str, date_to: str) -> list:
+    catalog = SentinelHubCatalog(config=config)
+    results = list(catalog.search(
+        S1_CDSE, bbox=AOI_BBOX,
+        time=(date_from + "T00:00:00Z", date_to + "T23:59:59Z"),
+        fields={"include": ["id", "properties.datetime",
+                            "properties.sat:relative_orbit",
+                            "properties.sat:orbit_state",
+                            "properties.platform"]},
+    ))
+    out = []
+    for r in results:
+        p = r.get("properties", {})
+        out.append({
+            "scene_id": r.get("id", ""),
+            "datetime": p.get("datetime", ""),
+            "rel_orbit": p.get("sat:relative_orbit"),
+            "orbit_dir": p.get("sat:orbit_state", ""),
+            "platform":  p.get("platform", ""),
+        })
+    return out
+
+def fetch_linear(scene_datetime: str) -> np.ndarray | None:
+    try:
+        dt = datetime.fromisoformat(scene_datetime.replace("Z", "+00:00"))
+    except Exception:
+        dt = datetime.strptime(scene_datetime[:19], "%Y-%m-%dT%H:%M:%S").replace(tzinfo=timezone.utc)
+    t0 = (dt - timedelta(minutes=30)).strftime("%Y-%m-%dT%H:%M:%SZ")
+    t1 = (dt + timedelta(minutes=30)).strftime("%Y-%m-%dT%H:%M:%SZ")
+    req = SentinelHubRequest(
+        evalscript=EVALSCRIPT_LINEAR,
+        input_data=[SentinelHubRequest.input_data(
+            data_collection=S1_CDSE,
+            time_interval=(t0, t1),
+            mosaicking_order=MosaickingOrder.MOST_RECENT,
+            other_args={"dataFilter": {"polarization": "DV"}},
+        )],
+        responses=[SentinelHubRequest.output_response("default", MimeType.TIFF)],
+        bbox=AOI_BBOX, size=SIZE, config=config,
+    )
+    try:
+        data = req.get_data()
+    except Exception as e:
+        print(f"    fetch error: {e}")
+        return None
+    if not data or data[0] is None:
+        return None
+    raw = np.array(data[0], dtype=np.float32)
+    arr = raw[:, :, 0] if raw.ndim == 3 else raw
+    return np.where(arr < 1e-10, 1e-10, arr)
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# Background
+# ═══════════════════════════════════════════════════════════════════════════════
+
+def bg_paths(date_str: str, orbit: int):
+    ym = date_str[:7]
+    return (BG_CACHE / f"bg_o{orbit}_{ym}.npy",
+            BG_CACHE / f"bg_o{orbit}_{ym}_meta.json")
+
+def load_or_build_bg(date_str: str, orbit: int) -> np.ndarray | None:
+    npy, meta_p = bg_paths(date_str, orbit)
+    if npy.exists():
+        print(f"    bg cache hit: {npy.name}")
+        return np.load(npy)
+    target = datetime.strptime(date_str, "%Y-%m-%d")
+    d0 = (target - timedelta(days=BG_WINDOW_DAYS)).strftime("%Y-%m-%d")
+    d1 = (target + timedelta(days=BG_WINDOW_DAYS)).strftime("%Y-%m-%d")
+    scenes = catalog_search(d0, d1)
+    orbit_sc = [s for s in scenes if s["rel_orbit"] == orbit]
+    print(f"    bg build orbit {orbit}: {len(orbit_sc)} scenes in ±24 mo")
+    if len(orbit_sc) < BG_MIN_DATES:
+        print(f"    no_background: only {len(orbit_sc)} scenes (need {BG_MIN_DATES})")
+        return None
+    stack = []
+    for s in orbit_sc:
+        arr = fetch_linear(s["datetime"])
+        if arr is not None:
+            stack.append(arr)
+    if len(stack) < BG_MIN_DATES:
+        print(f"    no_background: fetched only {len(stack)}")
+        return None
+    bg = np.percentile(np.stack(stack, axis=0), BG_PCT, axis=0).astype(np.float32)
+    BG_CACHE.mkdir(parents=True, exist_ok=True)
+    np.save(npy, bg)
+    with open(meta_p, "w") as f:
+        json.dump({"orbit": orbit, "date": date_str, "n": len(stack),
+                   "d0": d0, "d1": d1, "pct": BG_PCT}, f)
+    print(f"    bg saved: {npy.name}  ({len(stack)} scenes)")
+    return bg
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# Detection
+# ═══════════════════════════════════════════════════════════════════════════════
+
+def pca_dims(ys, xs):
+    pts = np.column_stack([xs - xs.mean(), ys - ys.mean()])
+    if len(pts) < 2:
+        return 1.0, 1.0, 0.0
+    cov = np.cov(pts.T)
+    evals, evecs = np.linalg.eigh(cov)
+    idx = np.argsort(evals)[::-1]
+    evecs = evecs[:, idx]
+    p0 = pts @ evecs[:, 0]; p1 = pts @ evecs[:, 1]
+    length = float(p0.max() - p0.min()) + 1
+    width  = float(p1.max() - p1.min()) + 1
+    angle  = float(np.degrees(np.arctan2(evecs[1, 0], evecs[0, 0]))) % 180
+    return length, width, angle
+
+def detect_in_corridors(scene_linear: np.ndarray, bg_linear: np.ndarray,
+                        corridor_masks: dict, meta: dict, date_str: str) -> list:
+    eps = 1e-10
+    scene_db = 10 * np.log10(np.where(scene_linear < eps, eps, scene_linear))
+    bg_db    = 10 * np.log10(np.where(bg_linear   < eps, eps, bg_linear))
+    ratio_db = np.clip(scene_db - bg_db, -30, 30)
+
+    detections = []
+    for berth, cmask in corridor_masks.items():
+        ratio_in = np.where(cmask, ratio_db, -999)
+        blobs    = ratio_in > RATIO_THR
+        labeled, num = ndimage.label(blobs)
+        for i in range(1, num + 1):
+            comp = (labeled == i)
+            area_px = int(comp.sum())
+            if area_px < MIN_AREA_PX:
+                continue
+            ys_c, xs_c = np.where(comp)
+            cx_px = float(xs_c.mean()); cy_px = float(ys_c.mean())
+            lon, lat = px_to_lonlat(cx_px, cy_px)
+            length_px, width_px, orient = pca_dims(ys_c, xs_c)
+            detections.append({
+                "date":           date_str,
+                "scene_id":       meta["scene_id"],
+                "rel_orbit":      meta["rel_orbit"],
+                "platform":       meta["platform"],
+                "berth":          berth,
+                "lat":            round(lat, 6),
+                "lon":            round(lon, 6),
+                "length_m":       round(length_px * RESOLUTION, 1),
+                "width_m":        round(width_px  * RESOLUTION, 1),
+                "orientation_deg": round(orient, 1),
+                "max_ratio_dB":   round(float(ratio_db[comp].max()), 2),
+                "area_px":        area_px,
+                "_cx": int(round(cx_px)), "_cy": int(round(cy_px)),
+                "_xs_min": int(xs_c.min()), "_xs_max": int(xs_c.max()),
+                "_ys_min": int(ys_c.min()), "_ys_max": int(ys_c.max()),
+            })
+    return detections
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# Rendering
+# ═══════════════════════════════════════════════════════════════════════════════
+
+BERTH_COLORS = {
+    "sea_island":     "#4DD9FF",
+    "east_t_head":    "#FF5050",
+    "southeast_pier": "#A0FF50",
+}
+
+def _crop_bounds(corridor_mask, pad_m=300):
+    rows, cols = np.where(corridor_mask)
+    if len(rows) == 0:
+        return 0, SIZE[1], 0, SIZE[0]
+    lat_mid = (AOI_BBOX.min_y + AOI_BBOX.max_y) / 2
+    pad_px_lat = int(pad_m / metres_per_deg_lat()
+                     / (AOI_BBOX.max_y - AOI_BBOX.min_y) * SIZE[1])
+    pad_px_lon = int(pad_m / metres_per_deg_lon(lat_mid)
+                     / (AOI_BBOX.max_x - AOI_BBOX.min_x) * SIZE[0])
+    r0 = max(0, int(rows.min()) - pad_px_lat)
+    r1 = min(SIZE[1], int(rows.max()) + pad_px_lat)
+    c0 = max(0, int(cols.min()) - pad_px_lon)
+    c1 = min(SIZE[0], int(cols.max()) + pad_px_lon)
+    return r0, r1, c0, c1
+
+def render_tripanel(scene_linear, bg_linear, ratio_db_full,
+                    berth, corridor_mask, detections_berth,
+                    date_str, orbit, out_dir):
+    r0, r1, c0, c1 = _crop_bounds(corridor_mask, pad_m=300)
+    if r1 <= r0 or c1 <= c0:
+        return None
+    eps = 1e-10
+    sc_db = 10 * np.log10(np.where(scene_linear[r0:r1, c0:c1] < eps, eps,
+                                   scene_linear[r0:r1, c0:c1]))
+    bg_db = 10 * np.log10(np.where(bg_linear[r0:r1, c0:c1]    < eps, eps,
+                                   bg_linear[r0:r1, c0:c1]))
+    rt_db = ratio_db_full[r0:r1, c0:c1]
+    cmask_crop = corridor_mask[r0:r1, c0:c1]
+
+    fig, axes = plt.subplots(1, 3, figsize=(16, 6))
+    for ax, (data, title, cmap, vr) in zip(axes, [
+        (sc_db, "Scene dB",      "gray",   (-25, 5)),
+        (bg_db, "Background dB", "gray",   (-25, 5)),
+        (rt_db, "Ratio dB",      "RdBu_r", (-12, 12)),
+    ]):
+        im = ax.imshow(data, cmap=cmap, vmin=vr[0], vmax=vr[1],
+                       origin="upper", aspect="equal")
+        plt.colorbar(im, ax=ax, fraction=0.03, pad=0.02)
+        # Corridor outline
+        outline = np.zeros_like(cmask_crop, dtype=float)
+        outline[cmask_crop] = 1
+        ax.contour(outline, levels=[0.5], colors=[BERTH_COLORS.get(berth, "#fff")],
+                   linewidths=1.0)
+        # Detection boxes
+        for det in detections_berth:
+            x0 = det["_xs_min"] - c0 - 2; x1 = det["_xs_max"] - c0 + 2
+            y0 = det["_ys_min"] - r0 - 2; y1 = det["_ys_max"] - r0 + 2
+            rect = mpatches.Rectangle((x0, y0), x1-x0, y1-y0,
+                                      edgecolor="#FFE000", facecolor="none", lw=1.5)
+            ax.add_patch(rect)
+            ax.text(x1 + 2, y0, f"{det['length_m']:.0f}m",
+                    color="#FFE000", fontsize=6, va="top")
+        ax.set_title(title, fontsize=9)
+        ax.axis("off")
+
+    occupied = any(d["length_m"] >= OCCUPIED_LEN_M for d in detections_berth)
+    n = len(detections_berth)
+    fig.suptitle(f"{berth}  {date_str}  orbit {orbit}  "
+                 f"({n} candidates, {'OCCUPIED' if occupied else 'clear'})",
+                 fontsize=11, y=0.99)
+    plt.tight_layout()
+    out_dir.mkdir(parents=True, exist_ok=True)
+    fname = out_dir / f"{date_str}_o{orbit}_{berth}_tripanel.png"
+    plt.savefig(fname, dpi=130, bbox_inches="tight")
+    plt.close()
+    print(f"  saved: {fname.name}")
+    return fname
+
+def render_corridor_overlay(bg_linear, corridor_masks, corridor_polys,
+                            orbit, out_dir):
+    """PNG: background dB with corridor outlines for the given orbit."""
+    eps = 1e-10
+    bg_db = 10 * np.log10(np.where(bg_linear < eps, eps, bg_linear))
+    fig, ax = plt.subplots(figsize=(8, 9))
+    ax.imshow(bg_db, cmap="gray", vmin=-25, vmax=5, origin="upper", aspect="equal")
+    for berth, cmask in corridor_masks.items():
+        outline = np.zeros_like(cmask, dtype=float)
+        outline[cmask] = 1
+        ax.contour(outline, levels=[0.5], colors=[BERTH_COLORS.get(berth, "#fff")],
+                   linewidths=2.0, linestyles="solid")
+    ax.set_title(f"Kharg Island — corridors overlay, orbit {orbit}", fontsize=10)
+    ax.axis("off")
+    fname = out_dir / f"corridors_o{orbit}_overlay.png"
+    plt.savefig(fname, dpi=130, bbox_inches="tight")
+    plt.close()
+    print(f"  saved: {fname.name}")
+    return fname
+
+# ── 5 ship + 5 empty crops with one-line reason ──────────────────────────────
+
+def render_annotated_crops(scene_linear, bg_linear, ratio_db_full,
+                           all_detections, corridor_masks, date_str, orbit, out_dir):
+    """
+    5 likely-ship crops and 5 likely-empty crops with text annotation.
+    Ships: top-5 by max_ratio_dB among length_m >= 100 m candidates.
+    Empty: berth centroids with no candidate >= 50 m.
+    """
+    eps = 1e-10
+    sc_db = 10 * np.log10(np.where(scene_linear < eps, eps, scene_linear))
+    bg_db = 10 * np.log10(np.where(bg_linear   < eps, eps, bg_linear))
+
+    crops_dir = out_dir / "annotated"
+    crops_dir.mkdir(parents=True, exist_ok=True)
+
+    # Ship candidates ≥ 100 m
+    ships = sorted(
+        [d for d in all_detections if d["length_m"] >= 100],
+        key=lambda d: d["max_ratio_dB"], reverse=True
+    )[:5]
+
+    for j, det in enumerate(ships, 1):
+        cx, cy = det["_cx"], det["_cy"]
+        half = 30  # 300 m in px
+        r0 = max(0, cy - half); r1 = min(SIZE[1], cy + half)
+        c0 = max(0, cx - half); c1 = min(SIZE[0], cx + half)
+        fig, axes = plt.subplots(1, 2, figsize=(10, 5))
+        axes[0].imshow(sc_db[r0:r1, c0:c1], cmap="gray", vmin=-25, vmax=5,
+                       origin="upper", aspect="equal")
+        axes[0].set_title("Scene dB", fontsize=8); axes[0].axis("off")
+        axes[1].imshow(ratio_db_full[r0:r1, c0:c1], cmap="RdBu_r", vmin=-12, vmax=12,
+                       origin="upper", aspect="equal")
+        axes[1].set_title("Ratio dB", fontsize=8); axes[1].axis("off")
+        reason = (f"ratio_dB={det['max_ratio_dB']:.1f}, length={det['length_m']:.0f}m "
+                  f"in {det['berth']}")
+        fig.suptitle(f"SHIP-CANDIDATE {j}: {reason}", fontsize=9)
+        plt.tight_layout()
+        plt.savefig(crops_dir / f"{date_str}_o{orbit}_ship_{j:02d}.png",
+                    dpi=100, bbox_inches="tight")
+        plt.close()
+
+    # Empty berths: centroids with no long candidate
+    busy_berths = {d["berth"] for d in all_detections if d["length_m"] >= 50}
+    empty_count = 0
+    for berth, cmask in corridor_masks.items():
+        if berth in busy_berths or empty_count >= 5:
+            continue
+        rows, cols = np.where(cmask)
+        if len(rows) == 0:
+            continue
+        cy = int(rows.mean()); cx = int(cols.mean())
+        half = 30
+        r0 = max(0, cy - half); r1 = min(SIZE[1], cy + half)
+        c0 = max(0, cx - half); c1 = min(SIZE[0], cx + half)
+        fig, axes = plt.subplots(1, 2, figsize=(10, 5))
+        axes[0].imshow(sc_db[r0:r1, c0:c1], cmap="gray", vmin=-25, vmax=5,
+                       origin="upper", aspect="equal")
+        axes[0].set_title("Scene dB", fontsize=8); axes[0].axis("off")
+        axes[1].imshow(ratio_db_full[r0:r1, c0:c1], cmap="RdBu_r", vmin=-12, vmax=12,
+                       origin="upper", aspect="equal")
+        axes[1].set_title("Ratio dB", fontsize=8); axes[1].axis("off")
+        reason = f"no candidate ≥50 m at {berth} centroid"
+        fig.suptitle(f"EMPTY-BERTH {empty_count+1}: {reason}", fontsize=9)
+        plt.tight_layout()
+        plt.savefig(crops_dir / f"{date_str}_o{orbit}_empty_{empty_count+1:02d}.png",
+                    dpi=100, bbox_inches="tight")
+        plt.close()
+        empty_count += 1
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# GeoJSON export
+# ═══════════════════════════════════════════════════════════════════════════════
+
+def save_corridors_geojson(corridor_polys: dict, corridor_ext_pts: dict, out_dir):
+    features = []
+    for berth, (poly, ext_pts) in corridor_polys.items():
+        # Polygon exterior
+        coords = list(poly.exterior.coords)
+        features.append({
+            "type": "Feature",
+            "properties": {"berth": berth, "half_m": CORRIDOR_HALF_M,
+                           "end_m": CORRIDOR_END_M},
+            "geometry": {"type": "Polygon", "coordinates": [coords]}
+        })
+        # Refined axis line
+        features.append({
+            "type": "Feature",
+            "properties": {"berth": berth, "type": "axis"},
+            "geometry": {"type": "LineString", "coordinates": ext_pts}
+        })
+    fc = {"type": "FeatureCollection", "features": features}
+    path = out_dir / "corridors.geojson"
+    with open(path, "w") as f:
+        json.dump(fc, f, indent=2)
+    print(f"  saved: corridors.geojson")
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# CSV / summary
+# ═══════════════════════════════════════════════════════════════════════════════
+
+CAND_FIELDS = ["date", "scene_id", "rel_orbit", "platform", "berth",
+               "lat", "lon", "length_m", "width_m", "orientation_deg",
+               "max_ratio_dB", "area_px"]
+
+def append_candidates_csv(dets: list, path: Path):
+    write_hdr = not path.exists()
+    with open(path, "a", newline="") as f:
+        w = csv.DictWriter(f, fieldnames=CAND_FIELDS, extrasaction="ignore")
+        if write_hdr:
+            w.writeheader()
+        w.writerows(dets)
+
+def append_summary_csv(rows: list, path: Path):
+    fields = ["date", "rel_orbit", "no_background",
+              "sea_island_n", "sea_island_occ", "sea_island_max_len",
+              "east_t_head_n", "east_t_occ", "east_t_max_len",
+              "southeast_pier_n", "southeast_occ", "southeast_max_len"]
+    write_hdr = not path.exists()
+    with open(path, "a", newline="") as f:
+        w = csv.DictWriter(f, fieldnames=fields, extrasaction="ignore")
+        if write_hdr:
+            w.writeheader()
+        w.writerows(rows)
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# Main
+# ═══════════════════════════════════════════════════════════════════════════════
+
+def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--dates",  nargs="+", required=True, metavar="YYYY-MM-DD")
+    parser.add_argument("--orbits", nargs="+", type=int,
+                        default=[ORBIT_35, ORBIT_101])
+    args = parser.parse_args()
+
+    OUT_DIR.mkdir(parents=True, exist_ok=True)
+    BG_CACHE.mkdir(parents=True, exist_ok=True)
+    CROP_DIR.mkdir(parents=True, exist_ok=True)
+
+    # Build corridor polygons & raster masks
+    print("Building corridor geometry ...")
+    corridor_polys  = {}  # berth → (poly, ext_pts)
+    corridor_masks  = {}  # berth → bool ndarray (H, W)
+    for berth, pts in BERTH_SPEC.items():
+        poly, ext_pts = build_corridor_polygon(pts, CORRIDOR_HALF_M, CORRIDOR_END_M)
+        mask = rasterise_poly(poly)
+        corridor_polys[berth] = (poly, ext_pts)
+        corridor_masks[berth] = mask
+        print(f"  {berth}: {mask.sum()} px in corridor")
+
+    save_corridors_geojson(corridor_polys, corridor_polys, OUT_DIR)
+
+    # Track which orbits have already had overlay rendered
+    overlay_done = set()
+    cand_csv  = OUT_DIR / "candidates.csv"
+    summ_csv  = OUT_DIR / "summary.csv"
+
+    for date_str in args.dates:
+        for orbit in args.orbits:
+            print(f"\n[{date_str}  orbit={orbit}]")
+
+            # Find scene
+            scenes = catalog_search(date_str, date_str)
+            orbit_sc = [s for s in scenes if s["rel_orbit"] == orbit]
+            if not orbit_sc:
+                print(f"  no scene for orbit {orbit}")
+                append_summary_csv([{
+                    "date": date_str, "rel_orbit": orbit, "no_background": "no_scene",
+                    "sea_island_n": 0, "sea_island_occ": 0, "sea_island_max_len": 0,
+                    "east_t_head_n": 0, "east_t_occ": 0, "east_t_max_len": 0,
+                    "southeast_pier_n": 0, "southeast_occ": 0, "southeast_max_len": 0,
+                }], summ_csv)
+                continue
+
+            meta = orbit_sc[0]
+            print(f"  scene_id={meta['scene_id']}  dir={meta['orbit_dir']}")
+
+            # Fetch scene
+            scene_linear = fetch_linear(meta["datetime"])
+            if scene_linear is None:
+                print("  fetch failed")
+                continue
+
+            # Background
+            bg_linear = load_or_build_bg(date_str, orbit)
+            if bg_linear is None:
+                append_summary_csv([{
+                    "date": date_str, "rel_orbit": orbit, "no_background": True,
+                    "sea_island_n": 0, "sea_island_occ": 0, "sea_island_max_len": 0,
+                    "east_t_head_n": 0, "east_t_occ": 0, "east_t_max_len": 0,
+                    "southeast_pier_n": 0, "southeast_occ": 0, "southeast_max_len": 0,
+                }], summ_csv)
+                continue
+
+            # Axis refinement (once per bg build — use first date that triggers build)
+            for berth, cmask in corridor_masks.items():
+                refine_axis(bg_linear, cmask, BERTH_SPEC[berth], berth)
+
+            # Corridor overlay (once per orbit)
+            if orbit not in overlay_done:
+                render_corridor_overlay(bg_linear, corridor_masks, corridor_polys,
+                                        orbit, OUT_DIR)
+                overlay_done.add(orbit)
+
+            # Ratio
+            eps = 1e-10
+            ratio_db_full = np.clip(
+                10 * np.log10(np.where(scene_linear < eps, eps, scene_linear) /
+                              np.where(bg_linear   < eps, eps, bg_linear)),
+                -30, 30)
+
+            # Detect
+            dets = detect_in_corridors(scene_linear, bg_linear, corridor_masks,
+                                       meta, date_str)
+            print(f"  total candidates: {len(dets)}")
+
+            # Per-berth stats
+            sumrow = {"date": date_str, "rel_orbit": orbit, "no_background": False}
+            for berth in BERTH_SPEC:
+                bd = [d for d in dets if d["berth"] == berth]
+                occ = int(any(d["length_m"] >= OCCUPIED_LEN_M for d in bd))
+                maxl = max((d["length_m"] for d in bd), default=0)
+                key = berth.replace("east_t_head", "east_t")
+                sumrow[f"{berth}_n"]   = len(bd)
+                sumrow[f"{berth}_occ"] = occ
+                sumrow[f"{berth}_max_len"] = maxl
+                print(f"    {berth}: {len(bd)} candidates, max_len={maxl:.0f}m, "
+                      f"{'OCCUPIED' if occ else 'clear'}")
+
+            # Tripanels
+            for berth, cmask in corridor_masks.items():
+                bd = [d for d in dets if d["berth"] == berth]
+                render_tripanel(scene_linear, bg_linear, ratio_db_full,
+                                berth, cmask, bd, date_str, orbit, CROP_DIR)
+
+            # Annotated crops
+            render_annotated_crops(scene_linear, bg_linear, ratio_db_full,
+                                   dets, corridor_masks, date_str, orbit, OUT_DIR)
+
+            # Save
+            if dets:
+                append_candidates_csv(dets, cand_csv)
+            append_summary_csv([sumrow], summ_csv)
+
+    # Print final count table from files
+    print("\n=== SUMMARY ===")
+    if summ_csv.exists():
+        with open(summ_csv) as f:
+            print(f.read())
+    print(f"candidates CSV: {cand_csv} "
+          f"({sum(1 for _ in open(cand_csv))-1 if cand_csv.exists() else 0} rows)")
+
+
+if __name__ == "__main__":
+    main()
