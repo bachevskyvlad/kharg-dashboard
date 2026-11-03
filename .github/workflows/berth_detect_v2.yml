@@ -1,0 +1,72 @@
+name: Berth Detect v2
+
+on:
+  workflow_dispatch:
+    inputs:
+      dates:
+        description: "Space-separated dates YYYY-MM-DD"
+        required: true
+        default: "2021-06-20 2024-01-10 2026-05-02"
+      orbits:
+        description: "Orbits (space-separated, e.g. 35 101)"
+        required: false
+        default: "35 101"
+
+jobs:
+  detect:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: scripts
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: claude/oilradar-dashboard-iran-zchdva
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          pip install \
+            sentinelhub \
+            scipy \
+            numpy \
+            Pillow \
+            shapely \
+            matplotlib \
+            rasterio
+
+      - name: Run berth detector v2
+        env:
+          CLIENT_ID: ${{ secrets.CLIENT_ID }}
+          CLIENT_SECRET: ${{ secrets.CLIENT_SECRET }}
+        run: |
+          DATES="${{ inputs.dates }}"
+          ORBITS="${{ inputs.orbits }}"
+          python berth_detect_v2.py \
+            --dates $DATES \
+            --orbits $ORBITS
+
+      - name: Commit results to feature branch
+        run: |
+          cd ..
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add diagnostics/berth_v2/
+          if git diff --cached --quiet; then
+            echo "Nothing to commit"
+          else
+            git commit -m "ТЗ-7.2: berth_v2 results ${{ inputs.dates }}"
+            git push origin claude/oilradar-dashboard-iran-zchdva
+          fi
+
+      - name: Upload diagnostics artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: berth_v2_diagnostics_${{ github.run_id }}
+          path: diagnostics/berth_v2/
+          retention-days: 30
