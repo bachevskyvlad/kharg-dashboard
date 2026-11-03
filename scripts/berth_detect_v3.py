@@ -13,13 +13,27 @@ Algorithm:
      Dates with <10 scenes → no_background flag, skipped silently.
   3. ratio_dB = 10·log10(scene / bg) on 10 m grid, inside corridors only.
      Candidate: connected blob ratio_dB > 6 dB, area ≥ 5 px.
-  4. Per candidate: date, scene_id, rel_orbit, platform, berth,
-     lat, lon, length_m, width_m, orientation_deg, max_ratio_dB, area_px.
-  5. Per date × berth: n_candidates, max_length_m, occupied (≥ 150 m candidate).
-  6. Tripanel per date × berth (scene_dB | bg_dB | ratio_dB), corridor+300 m crop,
+  4. Azimuth ambiguity ghost filter (ТЗ-7.3 CC §2):
+     S1 IW azimuth ambiguity spacing:
+         Δaz = Va / PRF_az
+       where Va  = effective satellite velocity ≈ 7116 m/s (S1A/B IW nominal),
+             PRF_az = 1717 Hz (IW burst PRF, nominal)
+       → Δaz ≈ 4143 m → 414 px at 10 m GRD spacing.
+     Candidate at pixel (row, col) is flagged as ghost and discarded if:
+       max(scene_dB[(row ± Δaz_px·[0.8, 1.2]), col-half_px:col+half_px])
+         ≥ max_scene_dB(candidate) + GHOST_DB_DELTA (12 dB).
+     The search range half-width in columns equals the candidate bounding-box
+     half-width, minimum 5 px.
+  5. Per candidate: date, scene_id, rel_orbit, platform, berth,
+     lat, lon, length_m, width_m, orientation_deg, max_ratio_dB, area_px,
+     ghost (bool — True = filtered out).
+  6. Per date × berth: n_candidates, max_length_m, occupied (≥ 150 m non-ghost).
+  7. Tripanel per date × berth (scene_dB | bg_dB | ratio_dB), corridor+300 m crop,
      candidates boxed with length_m labels.
-  7. GeoJSON corridors + PNG overlay per orbit.
-  8. Summary table: CSV + per-berth occupancy.
+  8. occupied_for_review.csv — one row per (date, berth): date, berth, occupied,
+     n_candidates — ready for cell-by-cell comparison with K's manual annotation.
+  9. GeoJSON corridors + PNG overlay per orbit.
+ 10. Summary table: summary.csv + per-berth occupancy.
 
 Usage:
   python berth_detect_v3.py --dates 2021-06-09 2026-05-02
@@ -79,6 +93,16 @@ CORRIDOR_END_M   = 100   # extension beyond each end of axis
 RATIO_THR        = 6.0   # dB
 MIN_AREA_PX      = 5
 OCCUPIED_LEN_M   = 150.0
+
+# ── Azimuth ambiguity ghost filter (ТЗ-7.3 CC §2) ─────────────────────────────
+# S1 IW nominal parameters (ESA Product Specification, Table 3-1):
+#   PRF_az   = 1717.0 Hz   burst repetition frequency
+#   Va       = 7116.0 m/s  effective platform velocity at target
+# Ambiguity spacing: Δaz = Va / PRF_az ≈ 4143 m → 414 px @ 10 m GRD
+# Tolerance band: [0.8 × Δaz_px, 1.2 × Δaz_px] in both azimuth directions.
+GHOST_PRF_HZ     = 1717.0   # Hz
+GHOST_VA_MS      = 7116.0   # m/s
+GHOST_DB_DELTA   = 12.0     # dB; bright source must exceed candidate by this
 
 BG_PCT           = 20
 BG_WINDOW_DAYS   = 365 * 2  # ±24 months
@@ -388,6 +412,74 @@ def detect_in_corridors(scene_linear: np.ndarray, bg_linear: np.ndarray,
             })
     return detections
 
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# Azimuth ambiguity ghost filter (ТЗ-7.3 CC §2)
+# ═══════════════════════════════════════════════════════════════════════════════
+
+def filter_azimuth_ghosts(scene_linear: np.ndarray,
+                          detections: list,
+                          pixel_spacing_m: float = RESOLUTION) -> list:
+    """
+    Mark candidates whose scene_dB return is consistent with an azimuth ghost
+    of a brighter target displaced by ±Δaz_px rows at the same range.
+
+    Formula:
+        Δaz = Va / PRF_az   (S1 IW nominal: 7116 / 1717 ≈ 4143 m)
+        Δaz_px = Δaz / pixel_spacing_m          ≈ 414 px @ 10 m
+        search band: row ± int(Δaz_px × [0.8, 1.2])
+
+    A candidate is flagged ghost=True when any pixel in scene_dB within the
+    search band and within the candidate's column half-width satisfies:
+        scene_dB[search_row, col_window] ≥ max_scene_dB(candidate) + 12 dB.
+
+    Returns the same list with 'ghost' field added (True/False).
+    """
+    eps = 1e-10
+    scene_db = 10 * np.log10(np.where(scene_linear < eps, eps, scene_linear))
+    H, W = scene_db.shape
+
+    delta_az_m  = GHOST_VA_MS / GHOST_PRF_HZ          # ≈ 4143 m
+    delta_az_px = delta_az_m / pixel_spacing_m         # ≈ 414 px
+    band_lo = int(round(delta_az_px * 0.8))            # ≈ 331 px
+    band_hi = int(round(delta_az_px * 1.2))            # ≈ 497 px
+
+    for det in detections:
+        cy   = det["_cy"]
+        cx   = det["_cx"]
+        xs0  = det["_xs_min"]
+        xs1  = det["_xs_max"]
+        # column window for the search (half-width of bounding box, min 5 px)
+        col_half = max(5, (xs1 - xs0) // 2 + 2)
+        c0 = max(0, cx - col_half)
+        c1 = min(W, cx + col_half + 1)
+
+        # max scene_dB inside the candidate bounding box
+        ys0 = det["_ys_min"]; ys1 = det["_ys_max"]
+        cand_max_db = float(scene_db[ys0:ys1+1, xs0:xs1+1].max())
+        threshold   = cand_max_db + GHOST_DB_DELTA
+
+        is_ghost = False
+        for sign in (+1, -1):
+            for offset in range(band_lo, band_hi + 1):
+                row_check = cy + sign * offset
+                if row_check < 0 or row_check >= H:
+                    continue
+                if float(scene_db[row_check, c0:c1].max()) >= threshold:
+                    is_ghost = True
+                    break
+            if is_ghost:
+                break
+
+        det["ghost"] = is_ghost
+
+    n_ghost = sum(1 for d in detections if d["ghost"])
+    if n_ghost:
+        print(f"    ghost filter: {n_ghost}/{len(detections)} candidates discarded "
+              f"(Δaz={delta_az_m:.0f} m, band {band_lo}–{band_hi} px)")
+    return detections
+
+
 # ═══════════════════════════════════════════════════════════════════════════════
 # Rendering
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -589,7 +681,7 @@ def save_corridors_geojson(corridor_polys: dict, corridor_ext_pts: dict, out_dir
 
 CAND_FIELDS = ["date", "scene_id", "rel_orbit", "platform", "berth",
                "lat", "lon", "length_m", "width_m", "orientation_deg",
-               "max_ratio_dB", "area_px"]
+               "max_ratio_dB", "area_px", "ghost"]
 
 def append_candidates_csv(dets: list, path: Path):
     write_hdr = not path.exists()
@@ -598,6 +690,21 @@ def append_candidates_csv(dets: list, path: Path):
         if write_hdr:
             w.writeheader()
         w.writerows(dets)
+
+def append_occupied_review_csv(rows: list, path: Path):
+    """
+    occupied_for_review.csv — one row per (date, berth, rel_orbit).
+    Columns: date, berth, rel_orbit, occupied, n_candidates
+    Ready for cell-by-cell comparison with K's manual annotation.
+    """
+    fields = ["date", "berth", "rel_orbit", "occupied", "n_candidates"]
+    write_hdr = not path.exists()
+    with open(path, "a", newline="") as f:
+        w = csv.DictWriter(f, fieldnames=fields, extrasaction="ignore")
+        if write_hdr:
+            w.writeheader()
+        w.writerows(rows)
+
 
 def append_summary_csv(rows: list, path: Path):
     fields = ["date", "rel_orbit", "no_background",
@@ -659,6 +766,11 @@ def main():
                     "east_t_head_n": 0, "east_t_occ": 0, "east_t_max_len": 0,
                     "southeast_pier_n": 0, "southeast_occ": 0, "southeast_max_len": 0,
                 }], summ_csv)
+                append_occupied_review_csv([
+                    {"date": date_str, "berth": b, "rel_orbit": orbit,
+                     "occupied": "no_scene", "n_candidates": 0}
+                    for b in BERTH_SPEC
+                ], OUT_DIR / "occupied_for_review.csv")
                 continue
 
             meta = orbit_sc[0]
@@ -679,6 +791,11 @@ def main():
                     "east_t_head_n": 0, "east_t_occ": 0, "east_t_max_len": 0,
                     "southeast_pier_n": 0, "southeast_occ": 0, "southeast_max_len": 0,
                 }], summ_csv)
+                append_occupied_review_csv([
+                    {"date": date_str, "berth": b, "rel_orbit": orbit,
+                     "occupied": "no_bg", "n_candidates": 0}
+                    for b in BERTH_SPEC
+                ], OUT_DIR / "occupied_for_review.csv")
                 continue
 
             # Axis refinement (once per bg build — use first date that triggers build)
@@ -701,43 +818,67 @@ def main():
             # Detect
             dets = detect_in_corridors(scene_linear, bg_linear, corridor_masks,
                                        meta, date_str)
-            print(f"  total candidates: {len(dets)}")
+            print(f"  total candidates before ghost filter: {len(dets)}")
 
-            # Per-berth stats
+            # Azimuth ghost filter (ТЗ-7.3 CC §2)
+            dets = filter_azimuth_ghosts(scene_linear, dets)
+            real_dets = [d for d in dets if not d.get("ghost")]
+            print(f"  total candidates after ghost filter:  {len(real_dets)}")
+
+            # Per-berth stats (using only non-ghost candidates for occupancy)
+            review_csv  = OUT_DIR / "occupied_for_review.csv"
             sumrow = {"date": date_str, "rel_orbit": orbit, "no_background": False}
+            review_rows = []
             for berth in BERTH_SPEC:
-                bd = [d for d in dets if d["berth"] == berth]
-                occ = int(any(d["length_m"] >= OCCUPIED_LEN_M for d in bd))
-                maxl = max((d["length_m"] for d in bd), default=0)
-                key = berth.replace("east_t_head", "east_t")
-                sumrow[f"{berth}_n"]   = len(bd)
-                sumrow[f"{berth}_occ"] = occ
+                bd      = [d for d in real_dets if d["berth"] == berth]
+                occ     = int(any(d["length_m"] >= OCCUPIED_LEN_M for d in bd))
+                maxl    = max((d["length_m"] for d in bd), default=0)
+                sumrow[f"{berth}_n"]       = len(bd)
+                sumrow[f"{berth}_occ"]     = occ
                 sumrow[f"{berth}_max_len"] = maxl
+                review_rows.append({
+                    "date": date_str, "berth": berth, "rel_orbit": orbit,
+                    "occupied": occ, "n_candidates": len(bd),
+                })
                 print(f"    {berth}: {len(bd)} candidates, max_len={maxl:.0f}m, "
                       f"{'OCCUPIED' if occ else 'clear'}")
+            append_occupied_review_csv(review_rows, review_csv)
 
-            # Tripanels
+            # Tripanels (non-ghost only for boxes/labels)
             for berth, cmask in corridor_masks.items():
-                bd = [d for d in dets if d["berth"] == berth]
+                bd = [d for d in real_dets if d["berth"] == berth]
                 render_tripanel(scene_linear, bg_linear, ratio_db_full,
                                 berth, cmask, bd, date_str, orbit, CROP_DIR)
 
-            # Annotated crops
+            # Annotated crops (non-ghost)
             render_annotated_crops(scene_linear, bg_linear, ratio_db_full,
-                                   dets, corridor_masks, date_str, orbit, OUT_DIR)
+                                   real_dets, corridor_masks, date_str, orbit, OUT_DIR)
 
-            # Save
+            # Save all dets (ghost flag included) + summary
             if dets:
                 append_candidates_csv(dets, cand_csv)
             append_summary_csv([sumrow], summ_csv)
 
-    # Print final count table from files
+    # Print final count tables
+    review_csv = OUT_DIR / "occupied_for_review.csv"
+    print("\n=== OCCUPIED FOR REVIEW ===")
+    if review_csv.exists():
+        with open(review_csv) as f:
+            print(f.read())
+
     print("\n=== SUMMARY ===")
     if summ_csv.exists():
         with open(summ_csv) as f:
             print(f.read())
-    print(f"candidates CSV: {cand_csv} "
-          f"({sum(1 for _ in open(cand_csv))-1 if cand_csv.exists() else 0} rows)")
+    n_cands = sum(1 for _ in open(cand_csv)) - 1 if cand_csv.exists() else 0
+    n_ghost = 0
+    if cand_csv.exists():
+        import csv as _csv
+        with open(cand_csv) as f:
+            reader = _csv.DictReader(f)
+            n_ghost = sum(1 for r in reader if r.get("ghost", "").lower() == "true")
+    print(f"candidates CSV: {cand_csv} ({n_cands} rows, {n_ghost} ghost-filtered)")
+    print(f"review CSV:     {review_csv}")
 
 
 if __name__ == "__main__":
