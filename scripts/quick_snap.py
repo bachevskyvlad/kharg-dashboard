@@ -46,37 +46,29 @@ CROPS = [
     ("southeast_pier", 50.327, 29.205, 50.348, 29.228),
 ]
 
-# One date per year — pick a known S1 repeat date in March (orbit 35 passes)
-DATES = ["2019-03-14", "2020-03-13", "2021-03-14", "2024-03-15"]
+# One scene per year — take the first available scene in Jan-Jun
+YEARS = [2019, 2020, 2021, 2024]
 
 OUT = Path(__file__).parent.parent / "diagnostics" / "berth_v3" / "snaps"
 OUT.mkdir(parents=True, exist_ok=True)
 
 catalog = SentinelHubCatalog(config=config)
 
-for date in DATES:
-    print(f"\n--- {date} ---")
-    # find any scene that day
+for year in YEARS:
+    print(f"\n--- {year} ---")
     results = list(catalog.search(
         S1, bbox=AOI,
-        time=(date + "T00:00:00Z", date + "T23:59:59Z"),
+        time=(f"{year}-01-01T00:00:00Z", f"{year}-06-30T23:59:59Z"),
         fields={"include": ["id", "properties.datetime",
                             "properties.sat:relative_orbit",
                             "properties.sat:orbit_state"]},
     ))
     if not results:
-        print(f"  no scene, trying +1 day")
-        d2 = (datetime.strptime(date, "%Y-%m-%d") + timedelta(days=1)).strftime("%Y-%m-%d")
-        results = list(catalog.search(
-            S1, bbox=AOI,
-            time=(d2 + "T00:00:00Z", d2 + "T23:59:59Z"),
-            fields={"include": ["id", "properties.datetime",
-                                "properties.sat:relative_orbit",
-                                "properties.sat:orbit_state"]},
-        ))
-    if not results:
-        print(f"  still nothing, skip")
+        print(f"  no scene found, skip")
         continue
+    sc = results[0]
+    dt_str = sc["properties"]["datetime"]
+    orbit  = sc["properties"].get("sat:relative_orbit", "?")
 
     sc = results[0]
     dt_str = sc["properties"]["datetime"]
@@ -126,10 +118,11 @@ for date in DATES:
         ax.set_title(name, fontsize=9)
         ax.axis("off")
 
-    fig.suptitle(f"{date}  orbit={orbit}  ({sc['properties'].get('sat:orbit_state','')})",
+    scene_date = dt_str[:10]
+    fig.suptitle(f"{scene_date}  orbit={orbit}  ({sc['properties'].get('sat:orbit_state','')})",
                  fontsize=12)
     plt.tight_layout()
-    fname = OUT / f"{date}_o{orbit}_snaps.png"
+    fname = OUT / f"{year}_{scene_date}_o{orbit}_snaps.png"
     plt.savefig(fname, dpi=140, bbox_inches="tight")
     plt.close()
     print(f"  saved: {fname.name}")
