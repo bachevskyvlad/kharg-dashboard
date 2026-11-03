@@ -487,6 +487,9 @@
         <div class="nav-item" id="nav-signals" onclick="showSection('signals')" style="opacity:0.35;pointer-events:none">
             <span class="nav-icon">⚡</span> Export Signals <span id="signals-badge" style="display:none;background:var(--accent);color:#fff;font-size:0.6rem;font-weight:700;padding:1px 6px;border-radius:10px;margin-left:4px"></span>
         </div>
+        <div class="nav-item" onclick="showSection('upstream')">
+            <span class="nav-icon">⬆</span> Upstream
+        </div>
         <hr class="nav-divider">
         <div class="nav-group-label">Ships</div>
         <div class="nav-item" onclick="showSection('anchorage')">
@@ -517,6 +520,7 @@
         <div class="nav-item active" id="mob-nav-overview" onclick="showSection('overview');closeMobMenu()"><span class="nav-icon">◎</span> Overview</div>
         <div class="nav-item" id="mob-nav-flows" onclick="showSection('flows');closeMobMenu()"><span class="nav-icon">⇅</span> Gross Flows</div>
         <div class="nav-item" id="mob-nav-map" onclick="showSection('map');closeMobMenu()"><span class="nav-icon">⊞</span> Per-Tank Map</div>
+        <div class="nav-item" id="mob-nav-upstream" onclick="showSection('upstream');closeMobMenu()"><span class="nav-icon">⬆</span> Upstream</div>
         <div class="nav-item" id="mob-nav-anchorage" onclick="showSection('anchorage');closeMobMenu()"><span class="nav-icon">⚓</span> Tanker Queue</div>
         <div class="nav-item" id="mob-nav-api" onclick="showSection('api');closeMobMenu()"><span class="nav-icon">⌥</span> API</div>
         <div class="mob-dropdown-footer">
@@ -766,6 +770,57 @@
                 <button class="map-btn" id="mapNext">→</button>
                 <span class="map-date" id="mapDateLabel">—</span>
             </div>
+        </div>
+    </div>
+
+    <!-- ── SECTION: UPSTREAM ── -->
+    <div class="section" id="sec-upstream">
+        <div class="ctrl-row">
+            <div class="ctrl-group">
+                <span class="ctrl-label">Terminal</span>
+                <div class="btn-group" id="upstreamTerminalBtns">
+                    <button class="tbtn active" data-upterm="goreh_omid" onclick="setUpstreamTerminal('goreh_omid')">🇮🇷 Goreh-Omid</button>
+                    <button class="tbtn" data-upterm="jask"       onclick="setUpstreamTerminal('jask')">🇮🇷 Jask</button>
+                    <button class="tbtn" data-upterm="bahregan"   onclick="setUpstreamTerminal('bahregan')">🇮🇷 Bahregan</button>
+                </div>
+            </div>
+            <div class="ctrl-group">
+                <span class="ctrl-label">Period</span>
+                <div class="btn-group">
+                    <button class="tbtn" data-uprange="30"   onclick="setUpstreamRange(30)">1M</button>
+                    <button class="tbtn active" data-uprange="90" onclick="setUpstreamRange(90)">3M</button>
+                    <button class="tbtn" data-uprange="180"  onclick="setUpstreamRange(180)">6M</button>
+                    <button class="tbtn" data-uprange="365"  onclick="setUpstreamRange(365)">1Y</button>
+                    <button class="tbtn" data-uprange="0"    onclick="setUpstreamRange(0)">ALL</button>
+                </div>
+            </div>
+            <div class="ctrl-group">
+                <span class="ctrl-label">Granularity</span>
+                <div class="btn-group">
+                    <button class="tbtn active" data-upgran="daily"   onclick="setUpstreamGran('daily')">Daily</button>
+                    <button class="tbtn"         data-upgran="weekly"  onclick="setUpstreamGran('weekly')">Weekly</button>
+                    <button class="tbtn"         data-upgran="monthly" onclick="setUpstreamGran('monthly')">Monthly</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="sec-title" id="upstreamTitle">Upstream Storage — Goreh-Omid</div>
+        <div class="signal" id="upstreamSig">Loading…</div>
+
+        <div class="cards c4">
+            <div class="card"><div class="card-label">Current Storage</div><div class="card-val" id="upVol">--<span class="cu"> Mb</span></div><div class="card-sub" id="upVolSub"></div></div>
+            <div class="card"><div class="card-label">Utilization</div><div class="card-val" id="upUtil">--<span class="cu">%</span></div><div class="badge" id="upUtilBadge"></div></div>
+            <div class="card"><div class="card-label">7-Day Change</div><div class="card-val" id="upRate">--<span class="cu"> Mb</span></div><div class="card-sub" id="upRateSub"></div></div>
+            <div class="card"><div class="card-label">Data Points</div><div class="card-val" id="upCount">--</div><div class="card-sub">SAR passes in view</div></div>
+        </div>
+
+        <div class="chart-card">
+            <div class="chart-head"><div class="chart-ttl">Volume History</div></div>
+            <div class="ch ch-300"><canvas id="upMainChart"></canvas></div>
+        </div>
+        <div class="chart-card">
+            <div class="chart-head"><div class="chart-ttl">Storage Change</div><div class="chart-meta">red = build · green = draw</div></div>
+            <div class="ch ch-240"><canvas id="upDeltaChart"></canvas></div>
         </div>
     </div>
 
@@ -1129,6 +1184,151 @@ function showUpgradeToast(feature) {
 }
 function logout() { window.location.href = '/auth/logout'; }
 
+// ── Upstream section ──────────────────────────────────────────────────────
+const UPSTREAM_TERMINALS = [
+    { id: 'goreh_omid', label: 'Goreh-Omid', file: '/data/terminals/goreh_omid_daily.json', max_cap: 9.0 },
+    { id: 'jask',       label: 'Jask',        file: '/data/terminals/jask_daily.json',       max_cap: 9.8 },
+    { id: 'bahregan',   label: 'Bahregan',    file: '/data/terminals/bahregan_daily.json',   max_cap: 5.5 },
+];
+let _upTerminal   = 'goreh_omid';
+let _upRange      = 90;
+let _upGran       = 'daily';
+let _upDates      = [];
+let _upValues     = [];
+let _upMaxCap     = 9.0;
+let _upCharts     = {};
+
+function setUpstreamTerminal(id) {
+    if (id === _upTerminal) return;
+    _upTerminal = id;
+    document.querySelectorAll('[data-upterm]').forEach(b =>
+        b.classList.toggle('active', b.dataset.upterm === id));
+    const t = UPSTREAM_TERMINALS.find(x => x.id === id);
+    document.getElementById('upstreamTitle').textContent = 'Upstream Storage — ' + (t ? t.label : id);
+    _upMaxCap = t ? t.max_cap : 9.0;
+    loadUpstream();
+}
+function setUpstreamRange(r) {
+    _upRange = r;
+    document.querySelectorAll('[data-uprange]').forEach(b =>
+        b.classList.toggle('active', +b.dataset.uprange === r));
+    renderUpstream();
+}
+function setUpstreamGran(g) {
+    _upGran = g;
+    document.querySelectorAll('[data-upgran]').forEach(b =>
+        b.classList.toggle('active', b.dataset.upgran === g));
+    renderUpstream();
+}
+
+async function loadUpstream() {
+    const t = UPSTREAM_TERMINALS.find(x => x.id === _upTerminal);
+    if (!t) return;
+    document.getElementById('upstreamSig').textContent = 'Loading…';
+    try {
+        const r = await fetch(t.file);
+        const d = await r.json();
+        _upDates  = d.dates  || [];
+        _upValues = d.values || [];
+        if (d.max_capacity_mb) _upMaxCap = d.max_capacity_mb;
+        renderUpstream();
+    } catch (e) {
+        document.getElementById('upstreamSig').textContent = 'No data available yet.';
+        console.error('loadUpstream failed', e);
+    }
+}
+
+function renderUpstream() {
+    let dates  = _upDates.slice();
+    let values = _upValues.slice();
+
+    // Date range filter
+    if (_upRange > 0 && dates.length > 0) {
+        const cutoff = new Date(dates[dates.length - 1]);
+        cutoff.setDate(cutoff.getDate() - _upRange);
+        const idx = dates.findIndex(d => new Date(d) >= cutoff);
+        if (idx > 0) { dates = dates.slice(idx); values = values.slice(idx); }
+    }
+
+    // Granularity aggregation
+    if (_upGran === 'weekly' || _upGran === 'monthly') {
+        const bucket = (d) => _upGran === 'weekly'
+            ? d.substring(0, 7) + '-W' + String(Math.ceil(new Date(d).getDate() / 7)).padStart(2,'0')
+            : d.substring(0, 7);
+        const agg = {};
+        dates.forEach((d, i) => {
+            const k = bucket(d);
+            if (!agg[k]) agg[k] = { sum: 0, cnt: 0, last: d };
+            agg[k].sum += values[i]; agg[k].cnt++;
+        });
+        const keys = Object.keys(agg).sort();
+        dates  = keys.map(k => agg[k].last);
+        values = keys.map(k => agg[k].sum / agg[k].cnt);
+    }
+
+    // KPI cards
+    if (values.length > 0) {
+        const cur = values[values.length - 1];
+        document.getElementById('upVol').innerHTML = cur.toFixed(2) + '<span class="cu"> Mb</span>';
+        document.getElementById('upVolSub').textContent = 'of ' + _upMaxCap.toFixed(1) + ' Mb capacity';
+        const util = (cur / _upMaxCap * 100);
+        document.getElementById('upUtil').innerHTML = util.toFixed(1) + '<span class="cu">%</span>';
+        const badge = document.getElementById('upUtilBadge');
+        badge.textContent = util >= 85 ? 'CRITICAL' : util >= 70 ? 'ELEVATED' : 'NORMAL';
+        badge.className = 'badge ' + (util >= 85 ? 'badge-red' : util >= 70 ? 'badge-yellow' : 'badge-green');
+
+        // 7-day change
+        if (dates.length >= 2) {
+            const tgt = new Date(dates[dates.length - 1]);
+            tgt.setDate(tgt.getDate() - 7);
+            let prev = values[0];
+            for (let i = 0; i < dates.length; i++) {
+                if (new Date(dates[i]) >= tgt) { prev = values[Math.max(0, i - 1)]; break; }
+            }
+            const delta = cur - prev;
+            const sign  = delta >= 0 ? '+' : '';
+            document.getElementById('upRate').innerHTML = sign + delta.toFixed(2) + '<span class="cu"> Mb</span>';
+            document.getElementById('upRate').style.color = delta >= 0 ? 'var(--red)' : 'var(--green)';
+            document.getElementById('upRateSub').textContent = delta >= 0 ? 'build' : 'drawdown';
+        }
+        document.getElementById('upCount').textContent = values.length;
+        document.getElementById('upstreamSig').textContent = dates[dates.length - 1] + ' — latest SAR pass';
+    }
+
+    // Charts
+    if (_upCharts.main) { _upCharts.main.destroy(); }
+    if (_upCharts.delta) { _upCharts.delta.destroy(); }
+
+    const deltas = values.map((v, i) => i === 0 ? 0 : v - values[i - 1]);
+    const ctx1 = document.getElementById('upMainChart').getContext('2d');
+    _upCharts.main = new Chart(ctx1, {
+        type: 'line',
+        data: {
+            labels: dates,
+            datasets: [{ label: 'Storage (Mb)', data: values, borderColor: '#3b82f6', borderWidth: 1.5,
+                pointRadius: values.length > 100 ? 0 : 2, fill: true,
+                backgroundColor: 'rgba(59,130,246,0.08)', tension: 0.3 }]
+        },
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } },
+            scales: { x: { ticks: { color: '#64748b', maxTicksLimit: 8, font: { size: 10 } }, grid: { color: 'rgba(255,255,255,0.04)' } },
+                y: { ticks: { color: '#64748b', font: { size: 10 } }, grid: { color: 'rgba(255,255,255,0.04)' } } } }
+    });
+
+    const ctx2 = document.getElementById('upDeltaChart').getContext('2d');
+    _upCharts.delta = new Chart(ctx2, {
+        type: 'bar',
+        data: {
+            labels: dates,
+            datasets: [{ label: 'Change (Mb)', data: deltas,
+                backgroundColor: deltas.map(v => v >= 0 ? 'rgba(248,113,113,0.6)' : 'rgba(52,211,153,0.6)'),
+                borderWidth: 0, borderRadius: 2 }]
+        },
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } },
+            scales: { x: { ticks: { color: '#64748b', maxTicksLimit: 8, font: { size: 10 } }, grid: { color: 'rgba(255,255,255,0.04)' } },
+                y: { ticks: { color: '#64748b', font: { size: 10 } }, grid: { color: 'rgba(255,255,255,0.04)' } } } }
+    });
+}
+
 // ── Navigation ─────────────────────────────────────────────────────────────
 function showSection(id) {
     document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
@@ -1145,6 +1345,7 @@ function showSection(id) {
         if (!window._flowsInited) { window._flowsInited = true; _flowsRange = 90; loadFlows(); }
         else if (_flowsData) { renderFlows(_flowsData); }
     }
+    if (id === 'upstream' && !window._upstreamInited) { window._upstreamInited = true; loadUpstream(); }
 }
 
 function toggleMobMenu() {

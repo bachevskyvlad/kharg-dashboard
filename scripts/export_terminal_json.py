@@ -32,10 +32,12 @@ TERMINAL_START = {
 }
 
 TERMINAL_META = {
-    "lavan":  {"name": "Lavan Island",  "max_capacity_mb": 7.5},
-    "siri":   {"name": "Siri Island",   "max_capacity_mb": 3.2},
-    "jask":   {"name": "Jask",          "max_capacity_mb": 9.8},
-    "kharg":  {"name": "Kharg Island",  "max_capacity_mb": 33.2},
+    "lavan":       {"name": "Lavan Island",  "max_capacity_mb": 7.5},
+    "siri":        {"name": "Siri Island",   "max_capacity_mb": 3.2},
+    "jask":        {"name": "Jask",          "max_capacity_mb": 9.8},
+    "kharg":       {"name": "Kharg Island",  "max_capacity_mb": 33.2},
+    "goreh_omid":  {"name": "Goreh-Omid",    "max_capacity_mb": 9.0},
+    "bahregan":    {"name": "Bahregan",      "max_capacity_mb": 5.5},
 }
 KHARG_MAX = 33.2
 
