@@ -210,7 +210,8 @@ jobs:
           git config user.name  "bot"
           git config user.email "bot@github.com"
           [ -f public/volume_graph.png ] && cp public/volume_graph.png volume_graph.png || true
-          git add data/ volume_graph.png
+          git add data/
+          [ -f volume_graph.png ] && git add volume_graph.png || true
           git diff --cached --quiet && echo "no changes" && exit 0
           git commit -m "auto update kharg $(date -u +'%Y-%m-%d')"
           git pull -X ours origin main
