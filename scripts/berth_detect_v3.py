@@ -90,9 +90,12 @@ BERTH_SPEC = {
 CORRIDOR_HALF_M  = 150   # metres each side of axis
 CORRIDOR_END_M   = 100   # extension beyond each end of axis
 
-RATIO_THR        = 6.0   # dB
-MIN_AREA_PX      = 5
-OCCUPIED_LEN_M   = 150.0
+RATIO_THR            = 10.0  # dB  (rule 3: connected blob > 10 dB)
+MIN_AREA_PX          = 15    #      (rule 3: area ≥ 15 px = 1500 m²)
+OCCUPIED_LEN_M       = 150.0
+OCCUPIED_MIN_RATIO   = 12.0  # dB  (rule 4: kernel must have max_ratio ≥ 12)
+WATER_RING_INNER_M   = 300   # m   (rule 2: wind-norm ring inner radius)
+WATER_RING_OUTER_M   = 800   # m   (rule 2: wind-norm ring outer radius)
 
 # ── Azimuth ambiguity ghost filter (ТЗ-7.3 CC §2) ─────────────────────────────
 # S1 IW nominal parameters (ESA Product Specification, Table 3-1):
@@ -160,6 +163,60 @@ def metres_to_deg(m):
     """Approximate degrees for a given distance at Kharg's latitude."""
     lat_mid = (AOI_BBOX.min_y + AOI_BBOX.max_y) / 2
     return m / metres_per_deg_lat(), m / metres_per_deg_lon(lat_mid)
+
+# ── Rule 1: 3×3 boxcar smoothing ─────────────────────────────────────────────
+
+def smooth3x3(arr: np.ndarray) -> np.ndarray:
+    """Apply 3×3 mean (boxcar) filter to a 2-D linear-domain array."""
+    return ndimage.uniform_filter(arr.astype(np.float32), size=3)
+
+
+# ── Rule 2: water-ring wind normalisation ─────────────────────────────────────
+
+def build_water_ring_masks(corridor_polys: dict) -> dict:
+    """
+    For each berth build a boolean mask of water pixels in the annulus
+    [WATER_RING_INNER_M, WATER_RING_OUTER_M] around the corridor polygon.
+    The ring excludes all corridor pixels (union of all corridor polygons).
+    """
+    lat_mid = (AOI_BBOX.min_y + AOI_BBOX.max_y) / 2
+    mpdlat  = metres_per_deg_lat()
+    mpdlon  = metres_per_deg_lon(lat_mid)
+    buf_avg = lambda m: m / ((mpdlat + mpdlon) / 2)  # degrees
+
+    all_corridor_poly = unary_union([p for p, _ in corridor_polys.values()])
+
+    ring_masks = {}
+    for berth, (poly, _) in corridor_polys.items():
+        outer = poly.buffer(buf_avg(WATER_RING_OUTER_M))
+        inner = poly.buffer(buf_avg(WATER_RING_INNER_M))
+        ring  = outer.difference(inner).difference(all_corridor_poly)
+        ring_masks[berth] = rasterise_poly(ring)
+    return ring_masks
+
+
+def wind_normalise(ratio_db: np.ndarray,
+                   corridor_masks: dict,
+                   water_ring_masks: dict) -> np.ndarray:
+    """
+    Rule 2: subtract the per-berth median ratio_dB over the water ring.
+    Returns a full-image array where each corridor's pixels are shifted by
+    its own water median (pixels outside any ring are shifted by 0).
+    """
+    norm = ratio_db.copy()
+    for berth, cmask in corridor_masks.items():
+        ring = water_ring_masks.get(berth)
+        if ring is None or ring.sum() == 0:
+            continue
+        water_vals = ratio_db[ring]
+        water_vals = water_vals[np.isfinite(water_vals)]
+        if water_vals.size == 0:
+            continue
+        bias = float(np.median(water_vals))
+        norm[cmask] = ratio_db[cmask] - bias
+        print(f"  wind-norm [{berth}]: water-ring median = {bias:+.2f} dB → subtracted")
+    return norm
+
 
 # ═══════════════════════════════════════════════════════════════════════════════
 # Corridor geometry
@@ -372,13 +429,27 @@ def pca_dims(ys, xs):
     angle  = float(np.degrees(np.arctan2(evecs[1, 0], evecs[0, 0]))) % 180
     return length, width, angle
 
-def detect_in_corridors(scene_linear: np.ndarray, bg_linear: np.ndarray,
-                        corridor_masks: dict, meta: dict, date_str: str) -> list:
-    eps = 1e-10
-    scene_db = 10 * np.log10(np.where(scene_linear < eps, eps, scene_linear))
-    bg_db    = 10 * np.log10(np.where(bg_linear   < eps, eps, bg_linear))
-    ratio_db = np.clip(scene_db - bg_db, -30, 30)
+def kernel_length_m(ratio_db: np.ndarray, comp: np.ndarray) -> float:
+    """
+    Rule 4: 'kernel' = pixels inside comp where ratio_db > OCCUPIED_MIN_RATIO.
+    PCA major axis of those pixels → kernel_length in metres.
+    Returns 0 if kernel is empty or too small for PCA.
+    """
+    kernel = comp & (ratio_db > OCCUPIED_MIN_RATIO)
+    ys_k, xs_k = np.where(kernel)
+    if len(xs_k) < 2:
+        return 0.0
+    length_px, _, _ = pca_dims(ys_k, xs_k)
+    return round(length_px * RESOLUTION, 1)
 
+
+def detect_in_corridors(ratio_db: np.ndarray,
+                        corridor_masks: dict, meta: dict, date_str: str) -> list:
+    """
+    Rule 3: connected blob where ratio_db > RATIO_THR (10 dB), area ≥ MIN_AREA_PX (15 px).
+    Rule 4: also computes kernel_length_m for each blob.
+    ratio_db must be pre-smoothed and wind-normalised (rules 1 & 2 applied upstream).
+    """
     detections = []
     for berth, cmask in corridor_masks.items():
         ratio_in = np.where(cmask, ratio_db, -999)
@@ -393,19 +464,21 @@ def detect_in_corridors(scene_linear: np.ndarray, bg_linear: np.ndarray,
             cx_px = float(xs_c.mean()); cy_px = float(ys_c.mean())
             lon, lat = px_to_lonlat(cx_px, cy_px)
             length_px, width_px, orient = pca_dims(ys_c, xs_c)
+            klen = kernel_length_m(ratio_db, comp)
             detections.append({
-                "date":           date_str,
-                "scene_id":       meta["scene_id"],
-                "rel_orbit":      meta["rel_orbit"],
-                "platform":       meta["platform"],
-                "berth":          berth,
-                "lat":            round(lat, 6),
-                "lon":            round(lon, 6),
-                "length_m":       round(length_px * RESOLUTION, 1),
-                "width_m":        round(width_px  * RESOLUTION, 1),
-                "orientation_deg": round(orient, 1),
-                "max_ratio_dB":   round(float(ratio_db[comp].max()), 2),
-                "area_px":        area_px,
+                "date":             date_str,
+                "scene_id":         meta["scene_id"],
+                "rel_orbit":        meta["rel_orbit"],
+                "platform":         meta["platform"],
+                "berth":            berth,
+                "lat":              round(lat, 6),
+                "lon":              round(lon, 6),
+                "length_m":         round(length_px * RESOLUTION, 1),
+                "width_m":          round(width_px  * RESOLUTION, 1),
+                "orientation_deg":  round(orient, 1),
+                "max_ratio_dB":     round(float(ratio_db[comp].max()), 2),
+                "area_px":          area_px,
+                "kernel_length_m":  klen,
                 "_cx": int(round(cx_px)), "_cy": int(round(cy_px)),
                 "_xs_min": int(xs_c.min()), "_xs_max": int(xs_c.max()),
                 "_ys_min": int(ys_c.min()), "_ys_max": int(ys_c.max()),
@@ -505,47 +578,75 @@ def _crop_bounds(corridor_mask, pad_m=300):
     c1 = min(SIZE[0], int(cols.max()) + pad_px_lon)
     return r0, r1, c0, c1
 
-def render_tripanel(scene_linear, bg_linear, ratio_db_full,
+def render_tripanel(scene_linear, bg_linear, ratio_db_norm,
                     berth, corridor_mask, detections_berth,
                     date_str, orbit, out_dir):
+    """
+    4-panel figure: Scene dB | Background dB | Ratio dB (norm) | Candidate mask.
+    Panel 4 shows ratio_db_norm pixels > OCCUPIED_MIN_RATIO (12 dB) in red
+    over the ratio image — the 'kernel' pixels that drive the occupied decision.
+    """
     r0, r1, c0, c1 = _crop_bounds(corridor_mask, pad_m=300)
     if r1 <= r0 or c1 <= c0:
         return None
     eps = 1e-10
-    sc_db = 10 * np.log10(np.where(scene_linear[r0:r1, c0:c1] < eps, eps,
-                                   scene_linear[r0:r1, c0:c1]))
-    bg_db = 10 * np.log10(np.where(bg_linear[r0:r1, c0:c1]    < eps, eps,
-                                   bg_linear[r0:r1, c0:c1]))
-    rt_db = ratio_db_full[r0:r1, c0:c1]
+    sc_db      = 10 * np.log10(np.where(scene_linear[r0:r1, c0:c1] < eps, eps,
+                                        scene_linear[r0:r1, c0:c1]))
+    bg_db      = 10 * np.log10(np.where(bg_linear[r0:r1, c0:c1]    < eps, eps,
+                                        bg_linear[r0:r1, c0:c1]))
+    rt_db      = ratio_db_norm[r0:r1, c0:c1]
     cmask_crop = corridor_mask[r0:r1, c0:c1]
+    # Panel 4: candidate mask — pixels inside a blob AND ratio > 12 dB
+    kernel_mask = np.zeros(rt_db.shape, dtype=bool)
+    for det in detections_berth:
+        bx0 = max(0, det["_xs_min"] - c0)
+        bx1 = min(rt_db.shape[1], det["_xs_max"] - c0 + 1)
+        by0 = max(0, det["_ys_min"] - r0)
+        by1 = min(rt_db.shape[0], det["_ys_max"] - r0 + 1)
+        kernel_mask[by0:by1, bx0:bx1] |= (rt_db[by0:by1, bx0:bx1] > OCCUPIED_MIN_RATIO)
 
-    fig, axes = plt.subplots(1, 3, figsize=(16, 6))
-    for ax, (data, title, cmap, vr) in zip(axes, [
-        (sc_db, "Scene dB",      "gray",   (-25, 5)),
-        (bg_db, "Background dB", "gray",   (-25, 5)),
-        (rt_db, "Ratio dB",      "RdBu_r", (-12, 12)),
-    ]):
+    fig, axes = plt.subplots(1, 4, figsize=(22, 6))
+    panels = [
+        (sc_db,    "Scene dB",        "gray",   (-25, 5)),
+        (bg_db,    "Background dB",   "gray",   (-25, 5)),
+        (rt_db,    "Ratio dB (norm)", "RdBu_r", (-12, 12)),
+        (rt_db,    "Kernel mask",     "RdBu_r", (-12, 12)),
+    ]
+    for idx, (ax, (data, title, cmap, vr)) in enumerate(zip(axes, panels)):
         im = ax.imshow(data, cmap=cmap, vmin=vr[0], vmax=vr[1],
                        origin="upper", aspect="equal")
-        plt.colorbar(im, ax=ax, fraction=0.03, pad=0.02)
+        plt.colorbar(im, ax=ax, fraction=0.025, pad=0.02)
         # Corridor outline
         outline = np.zeros_like(cmask_crop, dtype=float)
         outline[cmask_crop] = 1
         ax.contour(outline, levels=[0.5], colors=[BERTH_COLORS.get(berth, "#fff")],
                    linewidths=1.0)
-        # Detection boxes
-        for det in detections_berth:
-            x0 = det["_xs_min"] - c0 - 2; x1 = det["_xs_max"] - c0 + 2
-            y0 = det["_ys_min"] - r0 - 2; y1 = det["_ys_max"] - r0 + 2
-            rect = mpatches.Rectangle((x0, y0), x1-x0, y1-y0,
-                                      edgecolor="#FFE000", facecolor="none", lw=1.5)
-            ax.add_patch(rect)
-            ax.text(x1 + 2, y0, f"{det['length_m']:.0f}m",
-                    color="#FFE000", fontsize=6, va="top")
+        if idx == 3:
+            # Overlay kernel pixels
+            if kernel_mask.any():
+                masked = np.ma.masked_where(~kernel_mask, np.ones(kernel_mask.shape))
+                ax.imshow(masked, cmap="autumn", vmin=0, vmax=1,
+                          origin="upper", aspect="equal", alpha=0.7)
+        else:
+            # Detection boxes on panels 0–2
+            for det in detections_berth:
+                x0 = det["_xs_min"] - c0 - 2; x1 = det["_xs_max"] - c0 + 2
+                y0 = det["_ys_min"] - r0 - 2; y1 = det["_ys_max"] - r0 + 2
+                occ_det = (det["max_ratio_dB"] >= OCCUPIED_MIN_RATIO and
+                           det.get("kernel_length_m", 0) >= OCCUPIED_LEN_M)
+                edge_col = "#FF4444" if occ_det else "#FFE000"
+                rect = mpatches.Rectangle((x0, y0), x1-x0, y1-y0,
+                                          edgecolor=edge_col, facecolor="none", lw=1.5)
+                ax.add_patch(rect)
+                ax.text(x1 + 2, y0,
+                        f"{det['length_m']:.0f}m (k={det.get('kernel_length_m',0):.0f}m)",
+                        color=edge_col, fontsize=5.5, va="top")
         ax.set_title(title, fontsize=9)
         ax.axis("off")
 
-    occupied = any(d["length_m"] >= OCCUPIED_LEN_M for d in detections_berth)
+    occupied = any(d["max_ratio_dB"] >= OCCUPIED_MIN_RATIO and
+                   d.get("kernel_length_m", 0) >= OCCUPIED_LEN_M
+                   for d in detections_berth)
     n = len(detections_berth)
     fig.suptitle(f"{berth}  {date_str}  orbit {orbit}  "
                  f"({n} candidates, {'OCCUPIED' if occupied else 'clear'})",
@@ -557,6 +658,113 @@ def render_tripanel(scene_linear, bg_linear, ratio_db_full,
     plt.close()
     print(f"  saved: {fname.name}")
     return fname
+
+EVALSCRIPT_S2_RGB = """
+//VERSION=3
+function setup() {
+  return { input: ["B04","B03","B02"], output: { bands: 3, sampleType: "UINT8" } };
+}
+function evaluatePixel(s) {
+  return [s.B04*3.5*255, s.B03*3.5*255, s.B02*3.5*255].map(v => Math.min(255,v));
+}
+"""
+
+def render_southeast_optical(bg_linear_full: np.ndarray,
+                              corridor_mask_sp: np.ndarray,
+                              corridor_poly_sp,
+                              out_dir: Path):
+    """
+    Rule 6: for southeast_pier, render two images:
+      (a) Sentinel-2 true-color optical crop with corridor overlay
+      (b) SAR background dB, same crop, same corridor overlay
+    Uses a 600 m pad around the corridor. Sentinel-2 L2A, closest cloud-free
+    scene within 60 days of 2024 (most recent full year with S1 coverage).
+    """
+    from sentinelhub import DataCollection as DC
+
+    r0, r1, c0, c1 = _crop_bounds(corridor_mask_sp, pad_m=600)
+    if r1 <= r0 or c1 <= c0:
+        print("  [southeast_pier] optical: empty crop bounds, skip")
+        return
+
+    # Geographic bbox of the crop
+    lon_min = AOI_BBOX.min_x + c0 / SIZE[0] * (AOI_BBOX.max_x - AOI_BBOX.min_x)
+    lon_max = AOI_BBOX.min_x + c1 / SIZE[0] * (AOI_BBOX.max_x - AOI_BBOX.min_x)
+    lat_max = AOI_BBOX.max_y - r0 / SIZE[1] * (AOI_BBOX.max_y - AOI_BBOX.min_y)
+    lat_min = AOI_BBOX.max_y - r1 / SIZE[1] * (AOI_BBOX.max_y - AOI_BBOX.min_y)
+    crop_bbox = BBox(bbox=[lon_min, lat_min, lon_max, lat_max], crs=CRS.WGS84)
+    crop_size = bbox_to_dimensions(crop_bbox, resolution=10)
+
+    # Fetch Sentinel-2 true color (pick a recent cloud-free date near 2024-06-29)
+    S2_L2A = DataCollection.SENTINEL2_L2A.define_from(
+        "s2l2a_cdse_sp",
+        service_url="https://sh.dataspace.copernicus.eu"
+    )
+    rgb_img = None
+    for time_win in [("2024-06-01", "2024-07-30"),
+                     ("2024-04-01", "2024-09-30"),
+                     ("2023-04-01", "2023-09-30")]:
+        req = SentinelHubRequest(
+            evalscript=EVALSCRIPT_S2_RGB,
+            input_data=[SentinelHubRequest.input_data(
+                data_collection=S2_L2A,
+                time_interval=time_win,
+                mosaicking_order=MosaickingOrder.LEAST_CC,
+                other_args={"dataFilter": {"maxCloudCoverage": 10}},
+            )],
+            responses=[SentinelHubRequest.output_response("default", MimeType.PNG)],
+            bbox=crop_bbox, size=crop_size, config=config,
+        )
+        try:
+            data = req.get_data()
+            if data and data[0] is not None:
+                arr = np.array(data[0])
+                if arr.ndim == 3 and arr.shape[2] >= 3 and arr.max() > 0:
+                    rgb_img = arr[:, :, :3]
+                    print(f"  [southeast_pier] S2 optical fetched: window {time_win}")
+                    break
+        except Exception as e:
+            print(f"  [southeast_pier] S2 fetch attempt {time_win}: {e}")
+
+    # Build corridor contour in crop coords
+    cmask_crop = corridor_mask_sp[r0:r1, c0:c1]
+    outline    = np.zeros_like(cmask_crop, dtype=float); outline[cmask_crop] = 1
+
+    out_dir.mkdir(parents=True, exist_ok=True)
+
+    # (b) SAR background — always available
+    eps   = 1e-10
+    bg_db = 10 * np.log10(np.where(bg_linear_full < eps, eps, bg_linear_full))
+    fig, ax = plt.subplots(figsize=(8, 8))
+    ax.imshow(bg_db[r0:r1, c0:c1], cmap="gray", vmin=-25, vmax=5,
+              origin="upper", aspect="equal")
+    ax.contour(outline, levels=[0.5], colors=["#A0FF50"], linewidths=2.0)
+    ax.set_title("southeast_pier — SAR background dB (600 m crop)\ncorridor overlay in green",
+                 fontsize=9)
+    ax.axis("off")
+    fname_bg = out_dir / "southeast_pier_bg_crop.png"
+    plt.savefig(fname_bg, dpi=160, bbox_inches="tight")
+    plt.close()
+    print(f"  saved: {fname_bg.name}")
+
+    # (a) Optical — if S2 available
+    if rgb_img is not None:
+        fig, ax = plt.subplots(figsize=(8, 8))
+        ax.imshow(rgb_img, origin="upper", aspect="equal")
+        # Re-rasterise corridor in the smaller crop bbox
+        cmask_opt = rasterise_poly(corridor_poly_sp)
+        # Reuse corridor outline at crop resolution (same crop coords)
+        ax.contour(outline, levels=[0.5], colors=["#FF5050"], linewidths=2.0)
+        ax.set_title("southeast_pier — Sentinel-2 true color (10 m)\ncorridor overlay in red",
+                     fontsize=9)
+        ax.axis("off")
+        fname_opt = out_dir / "southeast_pier_optical_crop.png"
+        plt.savefig(fname_opt, dpi=160, bbox_inches="tight")
+        plt.close()
+        print(f"  saved: {fname_opt.name}")
+    else:
+        print("  [southeast_pier] optical: no cloud-free S2 found, skipping optical PNG")
+
 
 def render_corridor_overlay(bg_linear, corridor_masks, corridor_polys,
                             orbit, out_dir):
@@ -681,7 +889,7 @@ def save_corridors_geojson(corridor_polys: dict, corridor_ext_pts: dict, out_dir
 
 CAND_FIELDS = ["date", "scene_id", "rel_orbit", "platform", "berth",
                "lat", "lon", "length_m", "width_m", "orientation_deg",
-               "max_ratio_dB", "area_px", "ghost"]
+               "max_ratio_dB", "kernel_length_m", "area_px", "ghost"]
 
 def append_candidates_csv(dets: list, path: Path):
     write_hdr = not path.exists()
@@ -744,10 +952,17 @@ def main():
         corridor_masks[berth] = mask
         print(f"  {berth}: {mask.sum()} px in corridor")
 
+    # Build water-ring masks for wind normalisation (once)
+    print("Building water-ring masks for wind normalisation ...")
+    water_ring_masks = build_water_ring_masks(corridor_polys)
+    for berth, rm in water_ring_masks.items():
+        print(f"  {berth}: {rm.sum()} px in water ring")
+
     save_corridors_geojson(corridor_polys, corridor_polys, OUT_DIR)
 
     # Track which orbits have already had overlay rendered
-    overlay_done = set()
+    overlay_done   = set()
+    optical_done   = False   # Rule 6: southeast_pier optical rendered once
     cand_csv  = OUT_DIR / "candidates.csv"
     summ_csv  = OUT_DIR / "summary.csv"
 
@@ -808,16 +1023,30 @@ def main():
                                         orbit, OUT_DIR)
                 overlay_done.add(orbit)
 
-            # Ratio
+            # Rule 6: southeast_pier optical crop (once per run)
+            if not optical_done:
+                sp_poly, _ = corridor_polys["southeast_pier"]
+                render_southeast_optical(bg_linear,
+                                         corridor_masks["southeast_pier"],
+                                         sp_poly, OUT_DIR)
+                optical_done = True
+
+            # Rule 1: 3×3 boxcar smoothing before ratio
+            sc_sm = smooth3x3(scene_linear)
+            bg_sm = smooth3x3(bg_linear)
+
+            # Ratio from smoothed arrays
             eps = 1e-10
             ratio_db_full = np.clip(
-                10 * np.log10(np.where(scene_linear < eps, eps, scene_linear) /
-                              np.where(bg_linear   < eps, eps, bg_linear)),
+                10 * np.log10(np.where(sc_sm < eps, eps, sc_sm) /
+                              np.where(bg_sm < eps, eps, bg_sm)),
                 -30, 30)
 
-            # Detect
-            dets = detect_in_corridors(scene_linear, bg_linear, corridor_masks,
-                                       meta, date_str)
+            # Rule 2: wind normalisation — subtract water-ring median per berth
+            ratio_db_norm = wind_normalise(ratio_db_full, corridor_masks, water_ring_masks)
+
+            # Detect (rules 3 & 4)
+            dets = detect_in_corridors(ratio_db_norm, corridor_masks, meta, date_str)
             print(f"  total candidates before ghost filter: {len(dets)}")
 
             # Azimuth ghost filter (ТЗ-7.3 CC §2)
@@ -825,14 +1054,16 @@ def main():
             real_dets = [d for d in dets if not d.get("ghost")]
             print(f"  total candidates after ghost filter:  {len(real_dets)}")
 
-            # Per-berth stats (using only non-ghost candidates for occupancy)
+            # Per-berth stats — Rule 4: occupied = max_ratio_dB≥12 AND kernel_len≥150m
             review_csv  = OUT_DIR / "occupied_for_review.csv"
             sumrow = {"date": date_str, "rel_orbit": orbit, "no_background": False}
             review_rows = []
             for berth in BERTH_SPEC:
-                bd      = [d for d in real_dets if d["berth"] == berth]
-                occ     = int(any(d["length_m"] >= OCCUPIED_LEN_M for d in bd))
-                maxl    = max((d["length_m"] for d in bd), default=0)
+                bd   = [d for d in real_dets if d["berth"] == berth]
+                occ  = int(any(d["max_ratio_dB"] >= OCCUPIED_MIN_RATIO and
+                               d.get("kernel_length_m", 0) >= OCCUPIED_LEN_M
+                               for d in bd))
+                maxl = max((d["length_m"] for d in bd), default=0)
                 sumrow[f"{berth}_n"]       = len(bd)
                 sumrow[f"{berth}_occ"]     = occ
                 sumrow[f"{berth}_max_len"] = maxl
@@ -844,10 +1075,10 @@ def main():
                       f"{'OCCUPIED' if occ else 'clear'}")
             append_occupied_review_csv(review_rows, review_csv)
 
-            # Tripanels (non-ghost only for boxes/labels)
+            # Tripanels — 4 panels now, using normalised ratio
             for berth, cmask in corridor_masks.items():
                 bd = [d for d in real_dets if d["berth"] == berth]
-                render_tripanel(scene_linear, bg_linear, ratio_db_full,
+                render_tripanel(scene_linear, bg_linear, ratio_db_norm,
                                 berth, cmask, bd, date_str, orbit, CROP_DIR)
 
             # Annotated crops (non-ghost)
