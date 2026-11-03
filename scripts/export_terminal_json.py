@@ -24,7 +24,7 @@ if not SUPABASE_URL or not SUPABASE_KEY:
     import sys; sys.exit("FATAL: SUPABASE_URL and SUPABASE_KEY env vars must be set")
 sb = create_client(SUPABASE_URL, SUPABASE_KEY)
 
-IRAN_TERMINALS = ["lavan", "siri", "jask"]
+IRAN_TERMINALS = ["lavan", "siri", "goreh_omid", "jask", "bahregan"]
 
 # Earliest date to include per terminal (terminal launch dates)
 TERMINAL_START = {

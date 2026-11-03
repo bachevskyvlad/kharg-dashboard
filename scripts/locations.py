@@ -18,11 +18,15 @@ _BY_ID = {loc["id"]: loc for loc in LOCATIONS}
 
 
 def _to_pipeline_tank(t):
-    entry = {"id": t["id"], "lat": t["lat"], "lon": t["lon"],
-             "radius": t["radius_m"], "h_max": t["h_max_m"]}
+    entry = {
+        "id":       t["id"],
+        "lat":      t["lat"],
+        "lon":      t["lon"],
+        "radius":   t["radius_m"],
+        "h_max":    t["h_max_m"],
+    }
     if t.get("uncertain"):
         entry["uncertain"] = True
-    # Propagate enabled flag; absent means True (Kharg tanks have no field → always enabled)
     if "enabled" in t:
         entry["enabled"] = t["enabled"]
     return entry
@@ -32,16 +36,25 @@ raw_tanks = [_to_pipeline_tank(t) for t in _BY_ID["kharg"]["tanks"]]
 
 TERMINALS = [
     {
-        "id": loc["id"],
-        "name": loc["name"],
-        "country": loc["country"],
-        "los_azimuth": loc.get("los_azimuth", 282),
-        "orbit_state": loc.get("orbit_state", "descending"),
+        "id":             loc["id"],
+        "name":           loc["name"],
+        "country":        loc["country"],
+        "los_azimuth":    loc.get("los_azimuth", 282),
+        "orbit_state":    loc.get("orbit_state", "descending"),
         "relative_orbit": loc.get("relative_orbit"),
-        "tanks": [_to_pipeline_tank(t) for t in loc["tanks"]],
-        **( {"clusters": loc["clusters"]} if "clusters" in loc else {} ),
+        "tanks":          [_to_pipeline_tank(t) for t in loc["tanks"]],
+        **({
+            "allowed_orbits": loc["allowed_orbits"],
+        } if "allowed_orbits" in loc else {}),
+        **({
+            "clusters": loc["clusters"],
+        } if "clusters" in loc else {}),
+        **({
+            "status": loc["status"],
+        } if "status" in loc else {}),
     }
-    for loc in LOCATIONS if loc["id"] != "kharg"
+    for loc in LOCATIONS
+    if loc["id"] != "kharg"
 ]
 
 
@@ -52,5 +65,5 @@ def get_super_bbox(tanks, buffer_m=200):
     dlon = buffer_m / (111320 * np.cos(np.deg2rad(min(lats))))
     return BBox(
         [min(lons) - dlon, min(lats) - dlat, max(lons) + dlon, max(lats) + dlat],
-        crs=CRS.WGS84
+        crs=CRS.WGS84,
     )

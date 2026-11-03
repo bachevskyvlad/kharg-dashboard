@@ -109,41 +109,95 @@ LOCATIONS = [
         ],
     },
 
+    # ── Goreh-Omid ───────────────────────────────────────────────────────────
+    # Iranian crude terminal, Persian Gulf (~15 km NE of Kharg).
+    # geom_source: reviewer_2026-11-03
+    # r=55 → h_max=16.7 m (nominal from rated capacity); r=42 → h_max=14.3 m
+    {
+        "id": "goreh_omid",
+        "name": "Goreh-Omid",
+        "country": "IR",
+        "status": "active",
+        "allowed_orbits": [
+            {"relative_orbit": 35,  "direction": "DESC", "los_azimuth": 282},
+            {"relative_orbit": 101, "direction": "ASCE", "los_azimuth": 98},
+        ],
+        "tanks": [
+            {"id": "goreh_omid_01", "lat": 29.83639, "lon": 50.45355, "radius_m": 55, "h_max_m": 16.7, "geom_source": "reviewer_2026-11-03"},
+            {"id": "goreh_omid_02", "lat": 29.83462, "lon": 50.45071, "radius_m": 55, "h_max_m": 16.7, "geom_source": "reviewer_2026-11-03"},
+            {"id": "goreh_omid_03", "lat": 29.83479, "lon": 50.45267, "radius_m": 55, "h_max_m": 16.7, "geom_source": "reviewer_2026-11-03"},
+            {"id": "goreh_omid_04", "lat": 29.83300, "lon": 50.44973, "radius_m": 55, "h_max_m": 16.7, "geom_source": "reviewer_2026-11-03"},
+            {"id": "goreh_omid_05", "lat": 29.83207, "lon": 50.45680, "radius_m": 55, "h_max_m": 16.7, "geom_source": "reviewer_2026-11-03"},
+            {"id": "goreh_omid_06", "lat": 29.83066, "lon": 50.45568, "radius_m": 55, "h_max_m": 16.7, "geom_source": "reviewer_2026-11-03"},
+            {"id": "goreh_omid_07", "lat": 29.83027, "lon": 50.45389, "radius_m": 55, "h_max_m": 16.7, "geom_source": "reviewer_2026-11-03"},
+            {"id": "goreh_omid_08", "lat": 29.82889, "lon": 50.45282, "radius_m": 55, "h_max_m": 16.7, "geom_source": "reviewer_2026-11-03"},
+            {"id": "goreh_omid_09", "lat": 29.83445, "lon": 50.45707, "radius_m": 42, "h_max_m": 14.3, "geom_source": "reviewer_2026-11-03"},
+            {"id": "goreh_omid_10", "lat": 29.83394, "lon": 50.45860, "radius_m": 42, "h_max_m": 14.3, "geom_source": "reviewer_2026-11-03"},
+        ],
+    },
+
     # ── Jask ─────────────────────────────────────────────────────────────────
     # Iranian terminal near Strait of Hormuz mouth. Strategic bypass route.
-    # Data available from 2022-01-01 (earlier passes too sparse to calibrate).
+    # Tanks built ~2021–2024; full history from 2017-01-01 ingested.
+    # geom_source v2: reviewer_2026-11-03 (uniform r=40, h=15.8 m)
+    # Previous geometry (jk_0..19, esri_z18 + eye_r_esri) superseded.
     {
         "id": "jask",
         "allowed_orbits": [
             {"relative_orbit": 93, "direction": "DESC", "los_azimuth": 282},
-            {"relative_orbit": 57, "direction": "ASCE", "los_azimuth": 98}
+            {"relative_orbit": 57, "direction": "ASCE", "los_azimuth": 98},
         ],
         "name": "Jask",
         "country": "IR",
         "status": "active",
         "tanks": [
-            # geom_source: esri_z18 — 32-ray gradient + circle fit on ESRI z=18 imagery, 2026-10-08
-            # center shifts applied; radii from least-squares fit (r_reg was 35m for all)
-            {"id": "jk_0",  "lat": 25.854575807, "lon": 57.304184128, "radius_m": 38.3, "h_max_m": 13, "geom_source": "esri_z18"},
-            {"id": "jk_1",  "lat": 25.854290389, "lon": 57.302805193, "radius_m": 37.9, "h_max_m": 13, "geom_source": "esri_z18"},
-            {"id": "jk_2",  "lat": 25.853049156, "lon": 57.303027087, "radius_m": 36.7, "h_max_m": 13, "geom_source": "esri_z18"},
-            {"id": "jk_3",  "lat": 25.853262315, "lon": 57.304478451, "radius_m": 39.6, "h_max_m": 13, "geom_source": "esri_z18"},
-            {"id": "jk_4",  "lat": 25.861242540725943, "lon": 57.30140013397687,  "radius_m": 36.9, "h_max_m": 13, "geom_source": "eye_r_esri"},
-            {"id": "jk_5",  "lat": 25.859992238216282, "lon": 57.301668785557,    "radius_m": 36.3, "h_max_m": 13, "geom_source": "eye_r_esri"},
-            {"id": "jk_6",  "lat": 25.860252259, "lon": 57.302961780, "radius_m": 36.7, "h_max_m": 13, "geom_source": "esri_z18"},
-            {"id": "jk_7",  "lat": 25.861527234, "lon": 57.302683980, "radius_m": 36.8, "h_max_m": 13, "geom_source": "esri_z18"},
-            {"id": "jk_8",  "lat": 25.853687716748603, "lon": 57.30698588912281,  "radius_m": 41.2, "h_max_m": 14, "geom_source": "eye_r_esri"},
-            {"id": "jk_9",  "lat": 25.853956990, "lon": 57.308340776, "radius_m": 39.6, "h_max_m": 13, "geom_source": "esri_z18"},
-            {"id": "jk_10", "lat": 25.855252023, "lon": 57.308039099, "radius_m": 42.3, "h_max_m": 14, "geom_source": "esri_z18"},
-            {"id": "jk_11", "lat": 25.855000865, "lon": 57.306648174, "radius_m": 41.8, "h_max_m": 14, "geom_source": "esri_z18"},
-            {"id": "jk_12", "lat": 25.861946310, "lon": 57.305238458, "radius_m": 35.0, "h_max_m": 13, "geom_source": "esri_z18"},
-            {"id": "jk_13", "lat": 25.862228421, "lon": 57.306587685, "radius_m": 33.2, "h_max_m": 13, "geom_source": "esri_z18"},
-            {"id": "jk_14", "lat": 25.860704129, "lon": 57.305475512, "radius_m": 32.5, "h_max_m": 13, "geom_source": "esri_z18"},
-            {"id": "jk_15", "lat": 25.860904481636084, "lon": 57.30691674803369,  "radius_m": 33.2, "h_max_m": 13, "geom_source": "eye_r_esri"},
-            {"id": "jk_16", "lat": 25.858447932, "lon": 57.305924122, "radius_m": 39.0, "h_max_m": 13, "geom_source": "esri_z18"},
-            {"id": "jk_17", "lat": 25.858696487, "lon": 57.307318681, "radius_m": 36.5, "h_max_m": 13, "geom_source": "esri_z18"},
-            {"id": "jk_18", "lat": 25.857197864, "lon": 57.306191087, "radius_m": 37.6, "h_max_m": 13, "geom_source": "esri_z18"},
-            {"id": "jk_19", "lat": 25.857398072650852, "lon": 57.30766780088818,  "radius_m": 36.5, "h_max_m": 13, "geom_source": "eye_r_esri"},
+            {"id": "jask_01", "lat": 25.86127, "lon": 57.30133, "radius_m": 40, "h_max_m": 15.8, "geom_source": "reviewer_2026-11-03"},
+            {"id": "jask_02", "lat": 25.86151, "lon": 57.30274, "radius_m": 40, "h_max_m": 15.8, "geom_source": "reviewer_2026-11-03"},
+            {"id": "jask_03", "lat": 25.86000, "lon": 57.30160, "radius_m": 40, "h_max_m": 15.8, "geom_source": "reviewer_2026-11-03"},
+            {"id": "jask_04", "lat": 25.86024, "lon": 57.30301, "radius_m": 40, "h_max_m": 15.8, "geom_source": "reviewer_2026-11-03"},
+            {"id": "jask_05", "lat": 25.86195, "lon": 57.30518, "radius_m": 40, "h_max_m": 15.8, "geom_source": "reviewer_2026-11-03"},
+            {"id": "jask_06", "lat": 25.86220, "lon": 57.30658, "radius_m": 40, "h_max_m": 15.8, "geom_source": "reviewer_2026-11-03"},
+            {"id": "jask_07", "lat": 25.86069, "lon": 57.30545, "radius_m": 40, "h_max_m": 15.8, "geom_source": "reviewer_2026-11-03"},
+            {"id": "jask_08", "lat": 25.86093, "lon": 57.30686, "radius_m": 40, "h_max_m": 15.8, "geom_source": "reviewer_2026-11-03"},
+            {"id": "jask_09", "lat": 25.85847, "lon": 57.30593, "radius_m": 40, "h_max_m": 15.8, "geom_source": "reviewer_2026-11-03"},
+            {"id": "jask_10", "lat": 25.85871, "lon": 57.30733, "radius_m": 40, "h_max_m": 15.8, "geom_source": "reviewer_2026-11-03"},
+            {"id": "jask_11", "lat": 25.85712, "lon": 57.30628, "radius_m": 40, "h_max_m": 15.8, "geom_source": "reviewer_2026-11-03"},
+            {"id": "jask_12", "lat": 25.85745, "lon": 57.30761, "radius_m": 40, "h_max_m": 15.8, "geom_source": "reviewer_2026-11-03"},
+            {"id": "jask_13", "lat": 25.85430, "lon": 57.30283, "radius_m": 40, "h_max_m": 15.8, "geom_source": "reviewer_2026-11-03"},
+            {"id": "jask_14", "lat": 25.85455, "lon": 57.30423, "radius_m": 40, "h_max_m": 15.8, "geom_source": "reviewer_2026-11-03"},
+            {"id": "jask_15", "lat": 25.85303, "lon": 57.30310, "radius_m": 40, "h_max_m": 15.8, "geom_source": "reviewer_2026-11-03"},
+            {"id": "jask_16", "lat": 25.85328, "lon": 57.30451, "radius_m": 40, "h_max_m": 15.8, "geom_source": "reviewer_2026-11-03"},
+            {"id": "jask_17", "lat": 25.85497, "lon": 57.30668, "radius_m": 40, "h_max_m": 15.8, "geom_source": "reviewer_2026-11-03"},
+            {"id": "jask_18", "lat": 25.85523, "lon": 57.30808, "radius_m": 40, "h_max_m": 15.8, "geom_source": "reviewer_2026-11-03"},
+            {"id": "jask_19", "lat": 25.85372, "lon": 57.30695, "radius_m": 40, "h_max_m": 15.8, "geom_source": "reviewer_2026-11-03"},
+            {"id": "jask_20", "lat": 25.85396, "lon": 57.30835, "radius_m": 40, "h_max_m": 15.8, "geom_source": "reviewer_2026-11-03"},
+        ],
+    },
+
+    # ── Bahregan ──────────────────────────────────────────────────────────────
+    # Iranian crude terminal, Persian Gulf (~20 km W of Goreh-Omid).
+    # geom_source: reviewer_2026-11-03
+    # r=55 → h=16.7 m; r=37 → h=18.5 m (unconfirmed capacity — bahregan gate п.2)
+    # NOT included: bahregan_06, 08, 10, 12, 14 (r=22)
+    {
+        "id": "bahregan",
+        "name": "Bahregan",
+        "country": "IR",
+        "status": "active",
+        "allowed_orbits": [
+            {"relative_orbit": 35,  "direction": "DESC", "los_azimuth": 282},
+            {"relative_orbit": 101, "direction": "ASCE", "los_azimuth": 98},
+        ],
+        "tanks": [
+            {"id": "bahregan_01", "lat": 29.82638, "lon": 50.26977, "radius_m": 37, "h_max_m": 18.5, "geom_source": "reviewer_2026-11-03"},
+            {"id": "bahregan_02", "lat": 29.82545, "lon": 50.27024, "radius_m": 37, "h_max_m": 18.5, "geom_source": "reviewer_2026-11-03"},
+            {"id": "bahregan_03", "lat": 29.82436, "lon": 50.27022, "radius_m": 37, "h_max_m": 18.5, "geom_source": "reviewer_2026-11-03"},
+            {"id": "bahregan_04", "lat": 29.82568, "lon": 50.27207, "radius_m": 55, "h_max_m": 16.7, "geom_source": "reviewer_2026-11-03"},
+            {"id": "bahregan_05", "lat": 29.82419, "lon": 50.27219, "radius_m": 55, "h_max_m": 16.7, "geom_source": "reviewer_2026-11-03"},
+            {"id": "bahregan_07", "lat": 29.82533, "lon": 50.27382, "radius_m": 37, "h_max_m": 18.5, "geom_source": "reviewer_2026-11-03"},
+            {"id": "bahregan_09", "lat": 29.82675, "lon": 50.27514, "radius_m": 37, "h_max_m": 18.5, "geom_source": "reviewer_2026-11-03"},
+            {"id": "bahregan_11", "lat": 29.82447, "lon": 50.27583, "radius_m": 37, "h_max_m": 18.5, "geom_source": "reviewer_2026-11-03"},
+            {"id": "bahregan_13", "lat": 29.82600, "lon": 50.27703, "radius_m": 37, "h_max_m": 18.5, "geom_source": "reviewer_2026-11-03"},
         ],
     },
 
