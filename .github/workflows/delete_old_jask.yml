@@ -1,0 +1,37 @@
+name: Delete Old Jask (jk_*) Records
+
+on:
+  workflow_dispatch:
+
+jobs:
+  delete:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: scripts
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: pip install supabase -q
+
+      - name: Backup + delete old jk_* records
+        env:
+          SUPABASE_URL: https://yoekhkczwdeyauwarsyy.supabase.co
+          SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+        run: python delete_old_jask.py
+
+      - name: Commit backup CSVs
+        run: |
+          cd ..
+          git config user.email "actions@github.com"
+          git config user.name "GitHub Actions"
+          git add data/backups/
+          git diff --cached --quiet && echo "No backup files" || \
+            git commit -m "backup: jask old jk_* records before deletion"
+          git push origin HEAD || true
