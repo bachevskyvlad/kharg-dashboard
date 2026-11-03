@@ -1,0 +1,9 @@
+date,rel_orbit,no_background,sea_island_n,sea_island_occ,sea_island_max_len,east_t_head_n,east_t_occ,east_t_max_len,southeast_pier_n,southeast_occ,southeast_max_len
+2019-06-24,35,no_scene,0,0,0,0,0,0,0,0,0
+2019-06-24,101,False,8,0,46.0,18,,,19,,
+2020-06-30,35,no_scene,0,0,0,0,0,0,0,0,0
+2020-06-30,101,False,23,0,72.5,33,,,23,,
+2021-06-25,35,no_scene,0,0,0,0,0,0,0,0,0
+2021-06-25,101,False,11,1,494.6,20,,,5,,
+2024-06-29,35,False,23,1,461.1,34,,,19,,
+2024-06-29,101,no_scene,0,0,0,0,0,0,0,0,0
