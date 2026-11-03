@@ -1,0 +1,50 @@
+name: Quick SAR Snaps
+
+on:
+  workflow_dispatch:
+
+jobs:
+  snap:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: scripts
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: claude/oilradar-dashboard-iran-zchdva
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: pip install sentinelhub numpy matplotlib Pillow
+
+      - name: Run quick_snap
+        env:
+          CLIENT_ID: ${{ secrets.CLIENT_ID }}
+          CLIENT_SECRET: ${{ secrets.CLIENT_SECRET }}
+        run: python quick_snap.py
+
+      - name: Commit snaps
+        run: |
+          cd ..
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add diagnostics/berth_v3/snaps/
+          if git diff --cached --quiet; then
+            echo "Nothing to commit"
+          else
+            git commit -m "quick_snap: raw SAR crops 2019-2024"
+            git push origin claude/oilradar-dashboard-iran-zchdva
+          fi
+
+      - name: Upload snaps
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: quick_snaps_${{ github.run_id }}
+          path: diagnostics/berth_v3/snaps/
+          retention-days: 14
