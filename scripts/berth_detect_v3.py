@@ -92,7 +92,9 @@ CORRIDOR_END_M   = 100   # extension beyond each end of axis
 
 RATIO_THR            = 10.0  # dB  (rule 3: connected blob > 10 dB)
 MIN_AREA_PX          = 15    #      (rule 3: area ≥ 15 px = 1500 m²)
-OCCUPIED_LEN_M       = 150.0
+OCCUPIED_LEN_M       = 150.0 # kernel ≥ 150 m → occupied (default)
+OCCUPIED_LEN_SP_M    = 100.0 # southeast_pier: kernel ≥ 100 m
+MERGE_GAP_M          = 80.0  # merge blobs with axis-projection gap < 80 m
 OCCUPIED_MIN_RATIO   = 12.0  # dB  (rule 4: kernel must have max_ratio ≥ 12)
 WATER_RING_INNER_M   = 300   # m   (rule 2: wind-norm ring inner radius)
 WATER_RING_OUTER_M   = 800   # m   (rule 2: wind-norm ring outer radius)
@@ -429,6 +431,23 @@ def pca_dims(ys, xs):
     angle  = float(np.degrees(np.arctan2(evecs[1, 0], evecs[0, 0]))) % 180
     return length, width, angle
 
+def _occ_len(berth: str) -> float:
+    """Per-berth kernel-length threshold for occupied decision."""
+    return OCCUPIED_LEN_SP_M if berth == "southeast_pier" else OCCUPIED_LEN_M
+
+
+def _berth_axis_px(berth: str):
+    """Return (ux, uy, ox, oy) in pixel space for the berth axis, or None."""
+    pts = BERTH_SPEC[berth]
+    ox, oy = lonlat_to_px(*pts[0])
+    ex, ey = lonlat_to_px(*pts[-1])
+    dx, dy = ex - ox, ey - oy
+    length = np.hypot(dx, dy)
+    if length < 1:
+        return None
+    return (dx / length, dy / length, ox, oy)
+
+
 def kernel_length_m(ratio_db: np.ndarray, comp: np.ndarray) -> float:
     """
     Rule 4: 'kernel' = pixels inside comp where ratio_db > OCCUPIED_MIN_RATIO.
@@ -447,7 +466,9 @@ def detect_in_corridors(ratio_db: np.ndarray,
                         corridor_masks: dict, meta: dict, date_str: str) -> list:
     """
     Rule 3: connected blob where ratio_db > RATIO_THR (10 dB), area ≥ MIN_AREA_PX (15 px).
-    Rule 4: also computes kernel_length_m for each blob.
+    Merge rule: blobs within one corridor whose axis-projection gap < MERGE_GAP_M (80 m)
+                are merged into one detection; n_parts records the blob count.
+    Rule 4: kernel_length_m from the union pixel set.
     ratio_db must be pre-smoothed and wind-normalised (rules 1 & 2 applied upstream).
     """
     detections = []
@@ -455,16 +476,59 @@ def detect_in_corridors(ratio_db: np.ndarray,
         ratio_in = np.where(cmask, ratio_db, -999)
         blobs    = ratio_in > RATIO_THR
         labeled, num = ndimage.label(blobs)
+
+        # Collect raw blobs above area threshold, project onto berth axis
+        raw_blobs = []
+        axis_px = _berth_axis_px(berth)
         for i in range(1, num + 1):
             comp = (labeled == i)
-            area_px = int(comp.sum())
-            if area_px < MIN_AREA_PX:
+            if comp.sum() < MIN_AREA_PX:
                 continue
             ys_c, xs_c = np.where(comp)
-            cx_px = float(xs_c.mean()); cy_px = float(ys_c.mean())
-            lon, lat = px_to_lonlat(cx_px, cy_px)
-            length_px, width_px, orient = pca_dims(ys_c, xs_c)
-            klen = kernel_length_m(ratio_db, comp)
+            if axis_px is not None:
+                ux, uy, ox, oy = axis_px
+                projs = ux * (xs_c - ox) + uy * (ys_c - oy)
+            else:
+                projs = ys_c.astype(float)
+            raw_blobs.append({
+                '_comp': comp, '_ys': ys_c, '_xs': xs_c,
+                '_proj_min': float(projs.min()), '_proj_max': float(projs.max()),
+            })
+
+        if not raw_blobs:
+            continue
+
+        # Sort by projection and merge blobs with gap < MERGE_GAP_M
+        gap_px = MERGE_GAP_M / RESOLUTION
+        raw_blobs.sort(key=lambda b: b['_proj_min'])
+        groups = []
+        cur = [raw_blobs[0]]
+        cur_max = raw_blobs[0]['_proj_max']
+        for blob in raw_blobs[1:]:
+            if blob['_proj_min'] - cur_max < gap_px:
+                cur.append(blob)
+                cur_max = max(cur_max, blob['_proj_max'])
+            else:
+                groups.append(cur)
+                cur = [blob]
+                cur_max = blob['_proj_max']
+        groups.append(cur)
+
+        for group in groups:
+            n_parts    = len(group)
+            ys_all     = np.concatenate([b['_ys'] for b in group])
+            xs_all     = np.concatenate([b['_xs'] for b in group])
+            comp_union = np.zeros(ratio_db.shape, dtype=bool)
+            for b in group:
+                comp_union |= b['_comp']
+            area_px   = int(comp_union.sum())
+            cx_px     = float(xs_all.mean()); cy_px = float(ys_all.mean())
+            lon, lat  = px_to_lonlat(cx_px, cy_px)
+            length_px, width_px, orient = pca_dims(ys_all, xs_all)
+            klen      = kernel_length_m(ratio_db, comp_union)
+            if n_parts > 1:
+                print(f"    [{berth}] merged {n_parts} blobs "
+                      f"(gap < {MERGE_GAP_M:.0f} m) → 1 detection")
             detections.append({
                 "date":             date_str,
                 "scene_id":         meta["scene_id"],
@@ -476,12 +540,13 @@ def detect_in_corridors(ratio_db: np.ndarray,
                 "length_m":         round(length_px * RESOLUTION, 1),
                 "width_m":          round(width_px  * RESOLUTION, 1),
                 "orientation_deg":  round(orient, 1),
-                "max_ratio_dB":     round(float(ratio_db[comp].max()), 2),
+                "max_ratio_dB":     round(float(ratio_db[comp_union].max()), 2),
                 "area_px":          area_px,
                 "kernel_length_m":  klen,
+                "n_parts":          n_parts,
                 "_cx": int(round(cx_px)), "_cy": int(round(cy_px)),
-                "_xs_min": int(xs_c.min()), "_xs_max": int(xs_c.max()),
-                "_ys_min": int(ys_c.min()), "_ys_max": int(ys_c.max()),
+                "_xs_min": int(xs_all.min()), "_xs_max": int(xs_all.max()),
+                "_ys_min": int(ys_all.min()), "_ys_max": int(ys_all.max()),
             })
     return detections
 
@@ -633,7 +698,7 @@ def render_tripanel(scene_linear, bg_linear, ratio_db_norm,
                 x0 = det["_xs_min"] - c0 - 2; x1 = det["_xs_max"] - c0 + 2
                 y0 = det["_ys_min"] - r0 - 2; y1 = det["_ys_max"] - r0 + 2
                 occ_det = (det["max_ratio_dB"] >= OCCUPIED_MIN_RATIO and
-                           det.get("kernel_length_m", 0) >= OCCUPIED_LEN_M)
+                           det.get("kernel_length_m", 0) >= _occ_len(berth))
                 edge_col = "#FF4444" if occ_det else "#FFE000"
                 rect = mpatches.Rectangle((x0, y0), x1-x0, y1-y0,
                                           edgecolor=edge_col, facecolor="none", lw=1.5)
@@ -645,7 +710,7 @@ def render_tripanel(scene_linear, bg_linear, ratio_db_norm,
         ax.axis("off")
 
     occupied = any(d["max_ratio_dB"] >= OCCUPIED_MIN_RATIO and
-                   d.get("kernel_length_m", 0) >= OCCUPIED_LEN_M
+                   d.get("kernel_length_m", 0) >= _occ_len(berth)
                    for d in detections_berth)
     n = len(detections_berth)
     fig.suptitle(f"{berth}  {date_str}  orbit {orbit}  "
@@ -889,7 +954,7 @@ def save_corridors_geojson(corridor_polys: dict, corridor_ext_pts: dict, out_dir
 
 CAND_FIELDS = ["date", "scene_id", "rel_orbit", "platform", "berth",
                "lat", "lon", "length_m", "width_m", "orientation_deg",
-               "max_ratio_dB", "kernel_length_m", "area_px", "ghost"]
+               "max_ratio_dB", "kernel_length_m", "n_parts", "area_px", "ghost"]
 
 def append_candidates_csv(dets: list, path: Path):
     write_hdr = not path.exists()
@@ -963,6 +1028,7 @@ def main():
     # Track which orbits have already had overlay rendered
     overlay_done   = set()
     optical_done   = False   # Rule 6: southeast_pier optical rendered once
+    result_rows    = []      # for final results table
     cand_csv  = OUT_DIR / "candidates.csv"
     summ_csv  = OUT_DIR / "summary.csv"
 
@@ -1054,19 +1120,31 @@ def main():
             real_dets = [d for d in dets if not d.get("ghost")]
             print(f"  total candidates after ghost filter:  {len(real_dets)}")
 
-            # Per-berth stats — Rule 4: occupied = max_ratio_dB≥12 AND kernel_len≥150m
+            # Per-berth stats — Rule 4 with per-berth threshold
             review_csv  = OUT_DIR / "occupied_for_review.csv"
             sumrow = {"date": date_str, "rel_orbit": orbit, "no_background": False}
             review_rows = []
             for berth in BERTH_SPEC:
                 bd   = [d for d in real_dets if d["berth"] == berth]
                 occ  = int(any(d["max_ratio_dB"] >= OCCUPIED_MIN_RATIO and
-                               d.get("kernel_length_m", 0) >= OCCUPIED_LEN_M
+                               d.get("kernel_length_m", 0) >= _occ_len(berth)
                                for d in bd))
                 maxl = max((d["length_m"] for d in bd), default=0)
                 sumrow[f"{berth}_n"]       = len(bd)
                 sumrow[f"{berth}_occ"]     = occ
                 sumrow[f"{berth}_max_len"] = maxl
+                # Best candidate for results table: occupied one, else max_ratio_dB
+                occ_cands = [d for d in bd if d["max_ratio_dB"] >= OCCUPIED_MIN_RATIO and
+                             d.get("kernel_length_m", 0) >= _occ_len(berth)]
+                best = (occ_cands[0] if occ_cands else
+                        max(bd, key=lambda d: d["max_ratio_dB"]) if bd else None)
+                result_rows.append({
+                    "date": date_str, "orbit": orbit, "berth": berth,
+                    "occupied": bool(occ),
+                    "core_length_m": best.get("kernel_length_m", 0) if best else 0,
+                    "n_parts": best.get("n_parts", 0) if best else 0,
+                    "max_ratio_dB": best.get("max_ratio_dB", 0) if best else 0,
+                })
                 review_rows.append({
                     "date": date_str, "berth": berth, "rel_orbit": orbit,
                     "occupied": occ, "n_candidates": len(bd),
@@ -1101,6 +1179,25 @@ def main():
     if summ_csv.exists():
         with open(summ_csv) as f:
             print(f.read())
+    # Print results table (ТЗ-7.3 iter-3 §4)
+    print("\n=== RESULTS TABLE (seed=42 for random dates) ===")
+    hdr = f"{'date':<12} {'orbit':>5} {'berth':<18} {'occupied':>8} {'core_m':>8} {'n_parts':>7} {'max_dB':>8}"
+    print(hdr)
+    print("-" * len(hdr))
+    for r in result_rows:
+        print(f"{r['date']:<12} {r['orbit']:>5} {r['berth']:<18} "
+              f"{'YES' if r['occupied'] else 'no':>8} "
+              f"{r['core_length_m']:>8.1f} {r['n_parts']:>7} {r['max_ratio_dB']:>8.2f}")
+
+    # Save results table CSV
+    res_csv = OUT_DIR / "results_table.csv"
+    res_fields = ["date", "orbit", "berth", "occupied", "core_length_m", "n_parts", "max_ratio_dB"]
+    with open(res_csv, "w", newline="") as f:
+        w = csv.DictWriter(f, fieldnames=res_fields)
+        w.writeheader()
+        w.writerows(result_rows)
+    print(f"\nresults_table.csv: {res_csv}")
+
     n_cands = sum(1 for _ in open(cand_csv)) - 1 if cand_csv.exists() else 0
     n_ghost = 0
     if cand_csv.exists():
