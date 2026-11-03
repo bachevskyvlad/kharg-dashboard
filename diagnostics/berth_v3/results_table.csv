@@ -1,0 +1,4 @@
+date,orbit,berth,occupied,core_length_m,n_parts,max_ratio_dB
+2019-06-24,101,sea_island,False,0,0,0
+2019-06-24,101,east_t_head,True,235.0,1,26.64
+2019-06-24,101,southeast_pier,False,0,0,0
