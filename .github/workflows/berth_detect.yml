@@ -1,0 +1,49 @@
+name: Berth Detect — 8-Date Sample (ТЗ-7.1)
+
+on:
+  workflow_dispatch:
+    inputs:
+      dates:
+        description: "Space-separated dates YYYY-MM-DD (default: 8-date sample)"
+        required: false
+        default: "2018-03-09 2018-09-05 2021-06-09 2021-12-06 2024-01-13 2024-08-04 2026-05-02 2026-01-02"
+
+jobs:
+  detect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          pip install sentinelhub scipy numpy Pillow shapely -q
+
+      - name: Run berth detector
+        env:
+          CLIENT_ID:     ${{ secrets.CLIENT_ID }}
+          CLIENT_SECRET: ${{ secrets.CLIENT_SECRET }}
+        run: |
+          python scripts/berth_detect.py \
+            --dates ${{ inputs.dates || '2018-03-09 2018-09-05 2021-06-09 2021-12-06 2024-01-13 2024-08-04 2026-05-02 2026-01-02' }}
+
+      - name: Upload diagnostics
+        uses: actions/upload-artifact@v4
+        with:
+          name: berth-detect-${{ github.run_id }}
+          path: diagnostics/berth/
+          retention-days: 30
+
+      - name: Commit results to research branch
+        run: |
+          git config user.email "actions@github.com"
+          git config user.name "GitHub Actions"
+          git add diagnostics/berth/
+          git diff --cached --quiet && echo "No changes" || \
+            git commit -m "ТЗ-7.1: berth detect 8-date sample run ${{ github.run_id }}"
+          git push origin HEAD || true
