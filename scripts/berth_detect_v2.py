@@ -29,7 +29,6 @@ Usage:
 import os, sys, json, csv, argparse
 from pathlib import Path
 from datetime import datetime, timedelta, timezone
-import warnings
 
 import numpy as np
 from scipy import ndimage
@@ -42,7 +41,7 @@ from sentinelhub import (
     SHConfig, BBox, CRS, DataCollection, SentinelHubRequest,
     SentinelHubCatalog, MimeType, bbox_to_dimensions, MosaickingOrder
 )
-from shapely.geometry import Point, LineString, Polygon, MultiPolygon
+from shapely.geometry import Point, LineString, Polygon
 
 # ── Config ────────────────────────────────────────────────────────────────────
 config = SHConfig()
@@ -155,14 +154,12 @@ def build_land_mask():
     lon_g, lat_g = np.meshgrid(lons, lats)
     buffered = KHARG_COAST.buffer(LAND_BUFFER_DEG)
     try:
-        from shapely.vectorized import contains
+        import shapely
+        return shapely.contains_xy(buffered, lon_g.ravel(), lat_g.ravel()).reshape(h, w)
+    except AttributeError:
+        # Shapely < 2.0 fallback
+        from shapely.vectorized import contains  # type: ignore
         return contains(buffered, lon_g, lat_g)
-    except Exception:
-        mask = np.zeros((h, w), dtype=bool)
-        for r in range(h):
-            for c in range(w):
-                mask[r, c] = buffered.contains(Point(lon_g[r, c], lat_g[r, c]))
-        return mask
 
 def build_berth_zones(land_mask):
     """
@@ -180,13 +177,11 @@ def build_berth_zones(land_mask):
     for zname, geom in BERTH_LINES.items():
         buffered = geom.buffer(BERTH_BUFFER_DEG)
         try:
-            from shapely.vectorized import contains
+            import shapely as _shp
+            in_zone = _shp.contains_xy(buffered, lon_g.ravel(), lat_g.ravel()).reshape(h, w)
+        except AttributeError:
+            from shapely.vectorized import contains  # type: ignore
             in_zone = contains(buffered, lon_g, lat_g)
-        except Exception:
-            in_zone = np.zeros((h, w), dtype=bool)
-            for r in range(h):
-                for c in range(w):
-                    in_zone[r, c] = buffered.contains(Point(lon_g[r, c], lat_g[r, c]))
         zones[zname] = in_zone & ~land_mask
     return zones
 
@@ -393,7 +388,9 @@ def detect_scene(scene_linear: np.ndarray, bg_linear: np.ndarray,
         # Local sea contrast check
         local_sea = compute_local_sea_db(scene_db, cx_px, cy_px, water_mask)
         peak_db   = float(scene_db[comp].max())
-        if local_sea is not None and peak_db < local_sea + LOCAL_CONTRAST:
+        if local_sea is None:
+            continue  # not enough water pixels in ring — skip near-shore candidates
+        if peak_db < local_sea + LOCAL_CONTRAST:
             continue  # fails local contrast test
 
         ratio_peak = float(ratio_db[comp].max())
@@ -401,8 +398,7 @@ def detect_scene(scene_linear: np.ndarray, bg_linear: np.ndarray,
         length_m = length_px * RESOLUTION
         width_m  = width_px  * RESOLUTION
 
-        # Zone assignment
-        pt = Point(lon, lat)
+        # Zone assignment (pixel mask lookup — fast, consistent with berth zone rasters)
         zone = "other"
         for zname, zmask in zone_masks.items():
             if zmask[cy_px, cx_px]:
@@ -524,9 +520,8 @@ def render_crop(scene_linear, bg_linear, cx_px, cy_px, half_m, label, crop_dir):
         ax.set_title(title, fontsize=9)
         plt.colorbar(im, ax=ax, fraction=0.04, pad=0.02)
         ax.axis("off")
-    # Centre marker on scene panel
-    axes[0].plot(c1-c0 - (c1-c0)//2, r1-r0 - (r1-r0)//2 if r1>r0 else 0,
-                 "r+", markersize=10, markeredgewidth=2)
+    # Centre marker: detection centroid in crop-local coords
+    axes[0].plot(cx_px - c0, cy_px - r0, "r+", markersize=10, markeredgewidth=2)
     fig.suptitle(label, fontsize=9, y=0.98)
     plt.tight_layout()
     crop_dir.mkdir(parents=True, exist_ok=True)
