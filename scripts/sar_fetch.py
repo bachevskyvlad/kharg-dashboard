@@ -105,7 +105,7 @@ def get_all_scene_dates(super_bbox, start_date=None, orbit_state="descending", r
     try:
         catalog = SentinelHubCatalog(config=config)
         # Normalise short codes ("DESC"/"ASC") to full words required by the STAC API
-        _norm = {"desc": "descending", "asc": "ascending"}
+        _norm = {"desc": "descending", "asc": "ascending", "asce": "ascending"}
         orbit_state_api = _norm.get(orbit_state.lower(), orbit_state.lower())
         stac_filter = f"sat:orbit_state = '{orbit_state_api}'"
         # sat:relative_orbit is NOT supported as a STAC filter property on CDSE —
