@@ -651,7 +651,7 @@ LOCATIONS = [
         "country": "SA",
         "allowed_orbits": [
             {"relative_orbit": 35,  "direction": "DESC", "los_azimuth": 283},
-            {"relative_orbit": 101, "direction": "ASCE", "los_azimuth": 97},
+            {"relative_orbit": 101, "direction": "ASCE", "los_azimuth": 80},
         ],
         "status": "active",
         "clusters": [
