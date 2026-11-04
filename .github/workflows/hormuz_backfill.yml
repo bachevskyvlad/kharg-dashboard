@@ -1,0 +1,31 @@
+name: Hormuz Ship Backfill
+
+on:
+  workflow_dispatch:
+
+jobs:
+  backfill:
+    runs-on: ubuntu-latest
+    timeout-minutes: 350
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - name: Install dependencies
+        run: pip install sentinelhub scipy numpy -q
+
+      - name: Run backfill
+        run: python scripts/hormuz_backfill.py
+        env:
+          CLIENT_ID: ${{ secrets.CLIENT_ID }}
+          CLIENT_SECRET: ${{ secrets.CLIENT_SECRET }}
+
+      - name: Commit result
+        run: |
+          git config user.email "actions@github.com"
+          git config user.name "GitHub Actions"
+          git add data/hormuz_timeseries_history.csv
+          git commit -m "data: hormuz ship detection history 2017-2025 [skip ci]" || echo "nothing to commit"
+          git push origin main
