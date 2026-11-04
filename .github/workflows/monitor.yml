@@ -173,6 +173,8 @@ jobs:
     runs-on: ubuntu-latest
     needs: [gate, export, anchorage]
     if: always() && (needs.anchorage.result == 'success' || needs.export.result == 'success')
+    permissions:
+      contents: write
     steps:
       - uses: actions/checkout@v4
         with:
@@ -199,6 +201,9 @@ jobs:
       - name: Export Iran terminal JSON files
         run: python scripts/export_terminal_json.py
         continue-on-error: true
+        env:
+          SUPABASE_URL: https://yoekhkczwdeyauwarsyy.supabase.co
+          SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
       - name: Restore anchorage.json from cache
         uses: actions/cache/restore@v4
         with:
