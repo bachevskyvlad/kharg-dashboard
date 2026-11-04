@@ -618,10 +618,14 @@
 
         <div class="chart-card">
             <div class="chart-head">
-                <div class="chart-ttl">Terminal Fill Level</div>
-                <div class="chart-meta">% of 31.78 Mb capacity</div>
+                <div class="chart-ttl">Export Velocity &amp; Production Inflow</div>
+                <div class="chart-meta">Mb/d per SAR pass · export below zero · inflow above zero</div>
             </div>
-            <div class="ch ch-240"><canvas id="spiChart"></canvas></div>
+            <div class="ch ch-240"><canvas id="overviewVelocityChart"></canvas></div>
+            <div style="font-size:0.7rem;color:var(--muted);padding:0.75rem 0 0.25rem;line-height:1.6">
+                <b style="color:#34d399">Export Velocity</b> — oil leaving into tankers, Mb/d. &nbsp;
+                <b style="color:#f87171">Production Inflow</b> — oil arriving from upstream fields, Mb/d.
+            </div>
         </div>
     </div>
 
@@ -1627,8 +1631,10 @@ function render() {
     destroyCharts();
     renderMainChart(dates, values);
     renderFillRateChart(dates, chartFR);
-    renderSPIChart(dates, spiSeries);
     renderMonthlyChart(rawSlice.dates, rawSlice.values);
+    // Load flows data for Export Velocity chart in Overview
+    if (!window._flowsInited) { window._flowsInited = true; _flowsRange = 90; loadFlows(); }
+    else if (_flowsData) { renderFlows(_flowsData); }
 }
 
 // ── EXPORT SETUP ──────────────────────────────────────────────────────────────
@@ -2033,9 +2039,10 @@ function renderFlows(raw) {
 
     // Divergent chart — export below zero (green), inflow above zero (red)
     charts.flowsDivergent && charts.flowsDivergent.destroy();
+    if (charts.overviewVelocity) { charts.overviewVelocity.destroy(); charts.overviewVelocity = null; }
     const expVelData = buckets.map(p => p.days > 0 ? +(-p.grossOut / p.days).toFixed(2) : null);
     const infVelData = buckets.map(p => p.days > 0 ? +(p.grossIn  / p.days).toFixed(2) : null);
-    charts.flowsDivergent = new Chart(document.getElementById('flowsDivergentChart').getContext('2d'), {
+    const _velCfg = {
         type: 'bar',
         data: {
             labels: buckets.map(p => p.d1),
@@ -2070,7 +2077,10 @@ function renderFlows(raw) {
                 }
             }
         }
-    });
+    };
+    charts.flowsDivergent = new Chart(document.getElementById('flowsDivergentChart').getContext('2d'), _velCfg);
+    const _ovEl = document.getElementById('overviewVelocityChart');
+    if (_ovEl) charts.overviewVelocity = new Chart(_ovEl.getContext('2d'), JSON.parse(JSON.stringify(_velCfg)));
 
 
     // Revenue
