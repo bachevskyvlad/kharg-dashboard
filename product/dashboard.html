@@ -594,10 +594,10 @@
                 <div class="card-val" id="mRate">--<span class="cu"> Mb</span></div>
                 <div class="card-sub" id="mRateSub"></div>
             </div>
-            <div class="card" id="cDays">
-                <div class="card-label" id="mDaysLabel">Days to Capacity</div>
-                <div class="card-val" id="mDays">--<span class="cu"> d</span></div>
-                <div class="card-sub" id="mDaysSub"></div>
+            <div class="card" id="cEV">
+                <div class="card-label">Export Velocity</div>
+                <div class="card-val" id="mEV">--<span class="cu"> Mb/d</span></div>
+                <div class="card-sub" id="mEVSub"></div>
             </div>
         </div>
 
@@ -1190,9 +1190,9 @@ function logout() { window.location.href = '/auth/logout'; }
 
 // ── Upstream section ──────────────────────────────────────────────────────
 const UPSTREAM_TERMINALS = [
-    { id: 'goreh_omid', label: 'Goreh-Omid', file: '/data/terminals/goreh_omid_daily.json', max_cap: 9.0 },
-    { id: 'jask',       label: 'Jask',        file: '/data/terminals/jask_daily.json',       max_cap: 9.8 },
-    { id: 'bahregan',   label: 'Bahregan',    file: '/data/terminals/bahregan_daily.json',   max_cap: 5.5 },
+    { id: 'goreh_omid', label: 'Goreh-Omid', file: '/data/goreh_omid_daily.json', max_cap: 9.0 },
+    { id: 'jask',       label: 'Jask',        file: '/data/jask_daily.json',       max_cap: 9.8 },
+    { id: 'bahregan',   label: 'Bahregan',    file: '/data/bahregan_daily.json',   max_cap: 5.5 },
 ];
 let _upTerminal   = 'goreh_omid';
 let _upRange      = 90;
@@ -1600,13 +1600,7 @@ function render() {
         document.getElementById('cRate').className = latestFR >= 0 ? 'card red' : 'card green';
     }
 
-    document.getElementById('mDaysLabel').textContent = daysLabel;
-    if (daysVal !== null) {
-        document.getElementById('mDays').innerHTML = daysVal + '<span class="cu"> d</span>';
-        document.getElementById('mDays').style.color = daysVal < 30 ? '#f87171' : daysVal < 60 ? '#fbbf24' : '#f1f5f9';
-        document.getElementById('cDays').className = daysVal < 30 ? 'card orange' : daysVal < 60 ? 'card yellow' : 'card';
-    } else { document.getElementById('mDays').innerHTML = '—'; }
-    document.getElementById('mDaysSub').textContent = daysSub;
+    // Days card removed — replaced by Export Velocity card (populated by renderFlows)
 
     // ── ALERT ──
     const banner = document.getElementById('alertBanner');
@@ -2082,6 +2076,18 @@ function renderFlows(raw) {
     const _ovEl = document.getElementById('overviewVelocityChart');
     if (_ovEl) charts.overviewVelocity = new Chart(_ovEl.getContext('2d'), JSON.parse(JSON.stringify(_velCfg)));
 
+    // Export Velocity KPI card
+    const evCard = document.getElementById('cEV');
+    if (evCard) {
+        const lastEV = [...expVelData].reverse().find(v => v !== null);
+        const lastInf = [...infVelData].reverse().find(v => v !== null);
+        if (lastEV != null) {
+            document.getElementById('mEV').innerHTML = lastEV.toFixed(2) + '<span class="cu"> Mb/d</span>';
+            document.getElementById('mEV').style.color = lastEV >= 0.5 ? '#34d399' : '#6b7280';
+            document.getElementById('mEVSub').textContent = lastInf != null ? 'inflow ' + lastInf.toFixed(2) + ' Mb/d' : '';
+            evCard.className = lastEV >= 0.5 ? 'card green' : 'card';
+        }
+    }
 
     // Revenue
     _flowsBuckets = buckets;
