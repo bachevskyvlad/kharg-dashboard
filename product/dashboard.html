@@ -1972,6 +1972,7 @@ function renderFlows(raw) {
         document.getElementById('fECRSub').textContent = e > 1.2 ? '▲ Reserve drawdown regime' : e < 0.85 ? '▼ Accumulation regime' : '≈ Pass-through / balanced';
     }
     charts.flowsECR && charts.flowsECR.destroy();
+    if (document.getElementById('flowsECRChart'))
     charts.flowsECR = new Chart(document.getElementById('flowsECRChart').getContext('2d'), {
         type: 'bar',
         data: { labels: buckets.map(p => p.d1), datasets: [{ label: 'ECR', data: ecrData,
@@ -1986,6 +1987,7 @@ function renderFlows(raw) {
     });
 
     // Storage Turnover per bucket
+
     const currentVol = allValues.length ? allValues[allValues.length - 1] : null;
     const turnoverData = buckets.map(p => {
         const throughput = p.days > 0 ? (p.grossOut + p.grossIn) / p.days : null;
@@ -1997,6 +1999,7 @@ function renderFlows(raw) {
         document.getElementById('fTurnoverSub').textContent = lastTurnover < 40 ? 'Fast drain — active loading' : lastTurnover > 90 ? 'Slow drain — exports below average' : 'at current export rate · how long until storage is drained';
     }
     charts.flowsTurnover && charts.flowsTurnover.destroy();
+    if (document.getElementById('flowsTurnoverChart'))
     charts.flowsTurnover = new Chart(document.getElementById('flowsTurnoverChart').getContext('2d'), {
         type: 'bar',
         data: { labels: buckets.map(p => p.d1), datasets: [{ label: 'Turnover (days)', data: turnoverData,
@@ -2014,6 +2017,7 @@ function renderFlows(raw) {
     charts.flowsDivergent && charts.flowsDivergent.destroy();
     const expVelData = buckets.map(p => p.days > 0 ? +(-p.grossOut / p.days).toFixed(2) : null);
     const infVelData = buckets.map(p => p.days > 0 ? +(p.grossIn  / p.days).toFixed(2) : null);
+    if (document.getElementById('flowsDivergentChart'))
     charts.flowsDivergent = new Chart(document.getElementById('flowsDivergentChart').getContext('2d'), {
         type: 'bar',
         data: {
@@ -2055,17 +2059,31 @@ function renderFlows(raw) {
     if (charts.overviewVelocity) { charts.overviewVelocity.destroy(); charts.overviewVelocity = null; }
     const _ovEl = document.getElementById('overviewVelocityChart');
     if (_ovEl) {
-        const _ovCfg = JSON.parse(JSON.stringify({
+        charts.overviewVelocity = new Chart(_ovEl.getContext('2d'), {
             type: 'bar',
             data: { labels: buckets.map(p => p.d1), datasets: [
                 { label: 'Export Velocity', data: expVelData, backgroundColor: 'rgba(5,150,105,0.75)', borderWidth: 0, borderRadius: 2 },
                 { label: 'Production Inflow', data: infVelData, backgroundColor: 'rgba(220,38,38,0.75)', borderWidth: 0, borderRadius: 2 }
             ]},
             options: { responsive: true, maintainAspectRatio: false,
-                plugins: { legend: { labels: { color: '#6b7280', boxWidth: 10, font: { size: 10 } } } },
-                scales: { x: gX, y: { ...gY, ticks: { ...gY.ticks, callback: v => v.toFixed(2) + ' Mb/d' } } } }
-        }));
-        charts.overviewVelocity = new Chart(_ovEl.getContext('2d'), _ovCfg);
+                interaction: { intersect: false, mode: 'index' },
+                plugins: { legend: { labels: { color: '#6b7280', boxWidth: 10, font: { size: 10 } } },
+                    tooltip: { backgroundColor: '#111827', borderColor: 'rgba(255,255,255,0.1)', borderWidth: 1, titleColor: '#e2e8f0', bodyColor: '#94a3b8',
+                        callbacks: {
+                            title: ctx => { const p = buckets[ctx[0].dataIndex]; return p ? `${p.d0} → ${p.d1}` : ''; },
+                            label: ctx => {
+                                const p = buckets[ctx.dataIndex];
+                                if (!p) return '';
+                                if (ctx.datasetIndex === 0) return ` Export: ${Math.abs(p.grossOut).toFixed(2)} Mb · ${(p.grossOut/p.days).toFixed(2)} Mb/d · ${p.tanksOut} tanks`;
+                                return ` Inflow: ${p.grossIn.toFixed(2)} Mb · ${(p.grossIn/p.days).toFixed(2)} Mb/d · ${p.tanksIn} tanks`;
+                            }
+                        }
+                    }
+                },
+                scales: { x: gX, y: { ...gY, ticks: { ...gY.ticks, callback: v => v.toFixed(2) + ' Mb/d' },
+                    grid: { ...gY.grid, color: ctx => ctx.tick.value === 0 ? 'rgba(255,255,255,0.15)' : 'rgba(255,255,255,0.05)' }
+                } } }
+        });
     }
 
     // Export Velocity KPI card
