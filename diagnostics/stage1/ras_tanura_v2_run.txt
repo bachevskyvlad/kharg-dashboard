@@ -1,1 +1,62 @@
-FATAL: SUPABASE_URL and SUPABASE_KEY env vars must be set
+[stage1] Terminal : ras_tanura_v2
+[stage1] Primary orbit: rel=35 DESC los=282
+[stage1] Survey start: 2017-01-01
+[stage1] Tanks (confirmed): 30
+[stage1] Checkpoint: 0 dates already processed
+
+[stage1] Querying catalog: descending rel=35 from 2017-01-01 …
+[stage1] Catalog: 322 scene dates
+[stage1] Pending (not yet processed): 322 dates
+[stage1] Date range: 2017-03-14 → 2026-10-30
+  … 10/322 scenes, 300 rows so far
+  … 20/322 scenes, 600 rows so far
+  … 30/322 scenes, 900 rows so far
+  … 40/322 scenes, 1200 rows so far
+  … 50/322 scenes, 1500 rows so far
+  … 60/322 scenes, 1800 rows so far
+  … 70/322 scenes, 2100 rows so far
+  … 80/322 scenes, 2400 rows so far
+  … 90/322 scenes, 2700 rows so far
+  … 100/322 scenes, 3000 rows so far
+  … 110/322 scenes, 3300 rows so far
+  … 120/322 scenes, 3600 rows so far
+  … 130/322 scenes, 3900 rows so far
+  … 140/322 scenes, 4200 rows so far
+  … 150/322 scenes, 4500 rows so far
+  … 160/322 scenes, 4800 rows so far
+  … 170/322 scenes, 5100 rows so far
+  … 180/322 scenes, 5400 rows so far
+  … 190/322 scenes, 5700 rows so far
+  … 200/322 scenes, 6000 rows so far
+  … 210/322 scenes, 6300 rows so far
+  … 220/322 scenes, 6600 rows so far
+  … 230/322 scenes, 6900 rows so far
+  … 240/322 scenes, 7200 rows so far
+  … 250/322 scenes, 7500 rows so far
+  … 260/322 scenes, 7800 rows so far
+  … 270/322 scenes, 8100 rows so far
+  … 280/322 scenes, 8400 rows so far
+  … 290/322 scenes, 8700 rows so far
+  … 300/322 scenes, 9000 rows so far
+  … 310/322 scenes, 9300 rows so far
+  … 320/322 scenes, 9600 rows so far
+
+============================================================
+STAGE-1 BASELINE — RAS_TANURA_V2
+============================================================
+  Orbit                : rel=35 DESC
+  Catalog scenes       : 322
+  Scenes processed     : 322
+  Scenes skipped(err)  : 0
+  Rows prepared        : 9660
+  Distinct dates       : 322
+  Distinct tanks       : 30
+  Date range           : 2017-03-14 → 2026-10-30
+  Tanks/date (med/min/max): 30 / 30 / 30
+  db_mean (p5/p50/p95): -2.68 / 2.56 / 11.62 dB
+============================================================
+
+[stage1] Existing rows for ras_tanura_v2: 0
+[stage1] Deleting existing rows …
+[stage1] Inserting 9660 rows …
+[stage1] Insert complete. ras_tanura_v2 Stage-1 baseline committed.
