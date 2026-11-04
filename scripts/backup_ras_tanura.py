@@ -17,8 +17,8 @@ import datetime
 # ---------------------------------------------------------------------------
 # credentials (env vars preferred; hardcoded fallbacks for CI)
 # ---------------------------------------------------------------------------
-SUPABASE_URL = os.environ.get("SUPABASE_URL") or "https://yoekhkczwdeyauwarsyy.supabase.co"
-SUPABASE_KEY = os.environ.get("SUPABASE_KEY") or "sb_publishable_7j07_zzdqTGM1LXf7-o9Tg_JJRbJQSM"
+SUPABASE_URL = os.environ.get("SUPABASE_URL") or ""
+SUPABASE_KEY = os.environ.get("SUPABASE_KEY") or ""
 
 from supabase import create_client
 sb = create_client(SUPABASE_URL, SUPABASE_KEY)

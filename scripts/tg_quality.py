@@ -21,8 +21,10 @@ import urllib.parse
 import urllib.request
 from datetime import datetime, timedelta, timezone
 
-_sb_url = os.environ.get("SUPABASE_URL") or "https://yoekhkczwdeyauwarsyy.supabase.co"
-_sb_key = os.environ.get("SUPABASE_KEY") or "sb_publishable_7j07_zzdqTGM1LXf7-o9Tg_JJRbJQSM"
+_sb_url = os.environ.get("SUPABASE_URL") or ""
+_sb_key = os.environ.get("SUPABASE_KEY") or ""
+if not _sb_url or not _sb_key:
+    sys.exit("FATAL: SUPABASE_URL and SUPABASE_KEY must be set")
 
 from supabase import create_client
 sb = create_client(_sb_url, _sb_key)
@@ -95,18 +97,18 @@ def _quality(tid, new_date_str):
 
     delta = round(mean_db - baseline, 2) if baseline is not None else None
 
-    outliers = 0  # counted below in outlier_tanks loop
-
-    # Collect outlier tank ids with their dB values
-    outlier_tanks = []
+    # Per-tank outlier count: tanks on new_date where |db - tank_4w_median| > 2σ
+    outliers = 0
     for tank_id, hist_vs in by_tank.items():
+        hist_excl = [v for v in hist_vs]  # includes new date; find new val
+        # new val for this tank
         tank_new = next(
             (r["db_mean"] for r in rows
              if r["date"][:10] == new_date_str and r["tank_id"] == tank_id
              and r.get("db_mean") is not None),
             None
         )
-        if tank_new is None:
+        if tank_new is None or len(hist_excl) < 3:
             continue
         hist_excl_only = [v for r in rows
                           if r["date"][:10] != new_date_str
@@ -121,17 +123,7 @@ def _quality(tid, new_date_str):
         t_std = (sum((v - (sum(hist_excl_only)/len(hist_excl_only)))**2
                      for v in hist_excl_only) / len(hist_excl_only)) ** 0.5
         if t_std > 0 and abs(tank_new - t_med) > OUTLIER_SIGMA * t_std:
-            outlier_tanks.append((tank_id, round(tank_new, 1), round(t_med, 1)))
-    outliers = len(outlier_tanks)
-
-    # Tanks with extreme dB on current pass (likely idle/structural)
-    extreme_tanks = [
-        (r["tank_id"], round(r["db_mean"], 1))
-        for r in rows
-        if r["date"][:10] == new_date_str
-        and r.get("db_mean") is not None
-        and r["db_mean"] > 12.0
-    ]
+            outliers += 1
 
     return {
         "n": n,
@@ -140,8 +132,6 @@ def _quality(tid, new_date_str):
         "baseline": round(baseline, 1) if baseline is not None else None,
         "delta":   delta,
         "outliers": outliers,
-        "outlier_tanks": outlier_tanks,
-        "extreme_tanks": extreme_tanks,
     }
 
 
@@ -187,7 +177,6 @@ def build_message(summary, run_number, run_id, repo):
             if not new_date:
                 continue
 
-            expected_n = v.get("expected_tanks")
             q = _quality(tid, new_date)
             if q is None:
                 lines.append(f"{flag} <b>{name}</b>  {new_date}  <i>no db data</i>")
@@ -202,24 +191,6 @@ def build_message(summary, run_number, run_id, repo):
                 f"{base_str}  {_fmt_outlier(q['outliers'], q['n'])}"
             )
 
-            # Warnings block
-            warns = []
-            if expected_n and q["n"] < expected_n:
-                missing = expected_n - q["n"]
-                warns.append(f"⚠️ Missing {missing} tank{'s' if missing>1 else ''} ({q['n']}/{expected_n})")
-            if q["delta"] is not None and abs(q["delta"]) >= 3.0:
-                direction = "spike ▲" if q["delta"] > 0 else "drop ▼"
-                warns.append(f"⚠️ Large Δ={q['delta']:+.1f} dB {direction} vs 4w baseline")
-            if q["outlier_tanks"]:
-                tank_list = ", ".join(f"{tid}={db}dB (med {med})" for tid, db, med in q["outlier_tanks"][:5])
-                suffix = f" +{len(q['outlier_tanks'])-5} more" if len(q["outlier_tanks"]) > 5 else ""
-                warns.append(f"⚠️ Outlier tanks: <code>{tank_list}{suffix}</code>")
-            if q["extreme_tanks"]:
-                ext_list = ", ".join(f"{tid}={db}dB" for tid, db in q["extreme_tanks"][:5])
-                warns.append(f"⚠️ Extreme dB (>12): <code>{ext_list}</code>")
-            for w in warns:
-                lines.append(f"  {w}")
-
     lines.append("")
     ts = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
     lines.append(f"📅 <code>{ts}</code>")
@@ -229,12 +200,8 @@ def build_message(summary, run_number, run_id, repo):
     return "\n".join(lines)
 
 
-EXPECTED_TANKS = {
-    "kharg": 47,
-}
-
 def _inject_new_dates(summary):
-    """Add new_date and expected_tanks to each terminal with new > 0."""
+    """Add new_date to each terminal with new > 0 by querying latest date."""
     for tid, v in summary.items():
         if v.get("new", 0) == 0:
             continue
@@ -245,8 +212,6 @@ def _inject_new_dates(summary):
         rows = q.execute().data
         if rows:
             v["new_date"] = rows[0]["date"][:10]
-        if tid in EXPECTED_TANKS:
-            v["expected_tanks"] = EXPECTED_TANKS[tid]
 
 
 def _send(text, bot_url, chat_id):

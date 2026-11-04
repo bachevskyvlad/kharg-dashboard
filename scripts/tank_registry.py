@@ -641,6 +641,64 @@ LOCATIONS = [
             {"id": "rt_65", "lat": 26.637591408424406, "lon": 50.160445373274800, "radius_m": 20, "h_max_m": 9, "enabled": True, "wl_step": 1.0654, "wl_date": "2026-09-29", "wl_n_scenes": 18},
         ],
     },
+
+    # ── Ras Tanura v2 ─────────────────────────────────────────────────────────
+    # Saudi Aramco primary crude export terminal, Saudi Arabia.
+    # Reviewer geometry 2026-11-04. 30 tanks (rt_26…rt_60, rt_65 excluded).
+    {
+        "id": "ras_tanura_v2",
+        "name": "Ras Tanura",
+        "country": "SA",
+        "allowed_orbits": [
+            {"relative_orbit": 35,  "direction": "DESC", "los_azimuth": 282},
+            {"relative_orbit": 101, "direction": "ASCE", "los_azimuth": 80},
+        ],
+        "status": "active",
+        "clusters": [
+            {"name": "north", "tank_ids": ["rt_5","rt_6","rt_7","rt_8","rt_9","rt_10"]},
+            {"name": "south", "tank_ids": [
+                "rt_0","rt_1","rt_2","rt_3","rt_4",
+                "rt_11","rt_12","rt_13","rt_14","rt_15","rt_16","rt_17","rt_18","rt_19","rt_20",
+                "rt_21","rt_22","rt_23","rt_24","rt_25",
+                "rt_61","rt_62","rt_63","rt_64",
+            ]},
+        ],
+        "tanks": [
+            # ── north cluster (6 tanks) ──────────────────────────────────────
+            {"id": "rt_5",  "lat": 26.68848, "lon": 50.11876, "radius_m": 55, "h_max_m": 18, "geom_source": "reviewer_2026-11-04"},
+            {"id": "rt_6",  "lat": 26.68706, "lon": 50.11801, "radius_m": 55, "h_max_m": 18, "geom_source": "reviewer_2026-11-04"},
+            {"id": "rt_7",  "lat": 26.68761, "lon": 50.11666, "radius_m": 55, "h_max_m": 18, "geom_source": "reviewer_2026-11-04"},
+            {"id": "rt_8",  "lat": 26.68912, "lon": 50.11726, "radius_m": 55, "h_max_m": 18, "geom_source": "reviewer_2026-11-04"},
+            {"id": "rt_9",  "lat": 26.68827, "lon": 50.11494, "radius_m": 55, "h_max_m": 18, "geom_source": "reviewer_2026-11-04"},
+            {"id": "rt_10", "lat": 26.68977, "lon": 50.11573, "radius_m": 70, "h_max_m": 18, "geom_source": "reviewer_2026-11-04"},
+            # ── south cluster (24 tanks) ─────────────────────────────────────
+            {"id": "rt_0",  "lat": 26.63863, "lon": 50.15436, "radius_m": 55, "h_max_m": 18, "geom_source": "reviewer_2026-11-04"},
+            {"id": "rt_1",  "lat": 26.64040, "lon": 50.15332, "radius_m": 55, "h_max_m": 18, "geom_source": "reviewer_2026-11-04"},
+            {"id": "rt_2",  "lat": 26.64190, "lon": 50.15271, "radius_m": 55, "h_max_m": 18, "geom_source": "reviewer_2026-11-04"},
+            {"id": "rt_3",  "lat": 26.64999, "lon": 50.15283, "radius_m": 55, "h_max_m": 18, "geom_source": "reviewer_2026-11-04"},
+            {"id": "rt_4",  "lat": 26.65203, "lon": 50.14996, "radius_m": 55, "h_max_m": 18, "geom_source": "reviewer_2026-11-04"},
+            {"id": "rt_11", "lat": 26.65160, "lon": 50.14837, "radius_m": 38, "h_max_m": 13, "geom_source": "reviewer_2026-11-04"},
+            {"id": "rt_12", "lat": 26.64995, "lon": 50.14822, "radius_m": 38, "h_max_m": 13, "geom_source": "reviewer_2026-11-04"},
+            {"id": "rt_13", "lat": 26.65083, "lon": 50.14898, "radius_m": 38, "h_max_m": 13, "geom_source": "reviewer_2026-11-04"},
+            {"id": "rt_14", "lat": 26.65095, "lon": 50.15064, "radius_m": 38, "h_max_m": 13, "geom_source": "reviewer_2026-11-04"},
+            {"id": "rt_15", "lat": 26.64893, "lon": 50.14901, "radius_m": 38, "h_max_m": 13, "geom_source": "reviewer_2026-11-04"},
+            {"id": "rt_16", "lat": 26.64957, "lon": 50.14996, "radius_m": 38, "h_max_m": 13, "geom_source": "reviewer_2026-11-04"},
+            {"id": "rt_17", "lat": 26.65010, "lon": 50.15112, "radius_m": 32, "h_max_m": 13, "geom_source": "reviewer_2026-11-04"},
+            {"id": "rt_18", "lat": 26.64801, "lon": 50.14973, "radius_m": 38, "h_max_m": 13, "geom_source": "reviewer_2026-11-04"},
+            {"id": "rt_19", "lat": 26.64883, "lon": 50.15051, "radius_m": 38, "h_max_m": 13, "geom_source": "reviewer_2026-11-04"},
+            {"id": "rt_20", "lat": 26.64930, "lon": 50.15176, "radius_m": 32, "h_max_m": 13, "geom_source": "reviewer_2026-11-04"},
+            {"id": "rt_21", "lat": 26.64695, "lon": 50.15028, "radius_m": 38, "h_max_m": 13, "geom_source": "reviewer_2026-11-04"},
+            {"id": "rt_22", "lat": 26.64798, "lon": 50.15099, "radius_m": 38, "h_max_m": 13, "geom_source": "reviewer_2026-11-04"},
+            {"id": "rt_23", "lat": 26.64845, "lon": 50.15254, "radius_m": 32, "h_max_m": 13, "geom_source": "reviewer_2026-11-04"},
+            {"id": "rt_24", "lat": 26.64883, "lon": 50.15346, "radius_m": 32, "h_max_m": 13, "geom_source": "reviewer_2026-11-04"},
+            {"id": "rt_25", "lat": 26.64719, "lon": 50.15139, "radius_m": 32, "h_max_m": 13, "geom_source": "reviewer_2026-11-04"},
+            {"id": "rt_61", "lat": 26.64359, "lon": 50.15217, "radius_m": 38, "h_max_m": 13, "geom_source": "reviewer_2026-11-04"},
+            {"id": "rt_62", "lat": 26.64509, "lon": 50.15150, "radius_m": 32, "h_max_m": 13, "geom_source": "reviewer_2026-11-04"},
+            {"id": "rt_63", "lat": 26.64589, "lon": 50.15110, "radius_m": 32, "h_max_m": 13, "geom_source": "reviewer_2026-11-04"},
+            {"id": "rt_64", "lat": 26.63995, "lon": 50.15500, "radius_m": 38, "h_max_m": 13, "geom_source": "reviewer_2026-11-04"},
+        ],
+    },
+
     {
         "id": "fujairah",
         "geom_source": "esri_z18",

@@ -1,0 +1,26 @@
+=== Al-Faw DB_FLOOR=-5.0 retroactive UPDATE ===
+  mode: LIVE --force
+
+[1] Counting rows with db_mean < -5.0 …
+  Found: 2252 rows across 23 tanks
+  Per-tank count (top 10):
+    af_9: 306
+    af_7: 215
+    af_0: 210
+    af_2: 193
+    af_6: 176
+    af_3: 157
+    af_11: 153
+    af_10: 128
+    af_1: 125
+    af_5: 120
+
+[2] Applying UPDATE db_mean = -5.0 where db_mean < -5.0 …
+  Updated: 2252 rows (db_mean set to -5.0)
+
+[3] Verification: re-count rows with db_mean < -5.0 …
+  Remaining below floor: 0
+  [OK] All rows at or above floor.
+
+Done. 2252 rows updated to db_mean=-5.0.
+Note: db_norm is NOT recomputed here — run h1_db_norm_refix.py --force after.

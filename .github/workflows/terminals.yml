@@ -21,8 +21,6 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
-        with:
-          ref: claude/oilradar-dashboard-iran-zchdva
 
       - uses: actions/setup-python@v5
         with:
@@ -33,10 +31,10 @@ jobs:
 
       - name: Run ingest
         env:
-          CLIENT_ID:     ${{ secrets.CLIENT_ID }}
+          CLIENT_ID: ${{ secrets.CLIENT_ID }}
           CLIENT_SECRET: ${{ secrets.CLIENT_SECRET }}
-          SUPABASE_URL:  https://yoekhkczwdeyauwarsyy.supabase.co
-          SUPABASE_KEY:  sb_publishable_7j07_zzdqTGM1LXf7-o9Tg_JJRbJQSM
+          SUPABASE_URL: https://yoekhkczwdeyauwarsyy.supabase.co
+          SUPABASE_KEY: sb_publishable_7j07_zzdqTGM1LXf7-o9Tg_JJRbJQSM
         run: |
           ARGS="--terminal ${{ inputs.terminal || 'all' }}"
           if [ "${{ inputs.force }}" = "true" ]; then ARGS="$ARGS --force"; fi

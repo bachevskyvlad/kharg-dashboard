@@ -1,0 +1,14 @@
+{
+  "gate_pass": 0,
+  "gate1_gap": 0.1487,
+  "gate1_pass": 1,
+  "gate2_med_corr": 0.2353,
+  "gate2_pass": 0,
+  "med_empty": 0.45455,
+  "med_full": 0.30585,
+  "n_s2_scenes": 30,
+  "n_shadow_rows": 150,
+  "n_sar_rows": 15087,
+  "sar_date_min": "2015-04-06",
+  "sar_date_max": "2026-10-06"
+}

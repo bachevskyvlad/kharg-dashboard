@@ -1,0 +1,20 @@
+{
+  "terminal": "yanbu",
+  "relative_orbit": null,
+  "verdict": "PASS",
+  "diagnosis": null,
+  "flags": {},
+  "metrics": {
+    "dynamic_range_db": 5.736897182916666,
+    "cv_level": 0.30172852194802213,
+    "vel_std_norm": 0.16031072068270563,
+    "delta_p50_norm": 0.18944581574566693,
+    "delta_p90_norm": 0.4356289216364777,
+    "delta_p99_norm": 0.6676958098952519,
+    "cycles_per_year": 2.175103069170866,
+    "cycle_depth_norm": 0.10379160820509895,
+    "max_flat_passes": 1,
+    "per_tank_step_norm": 0.535901185253063,
+    "live_fraction": 1.0
+  }
+}

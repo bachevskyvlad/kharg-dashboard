@@ -1,0 +1,2 @@
+terminal_id,event_label,date_start,date_end,source,expected_sign,unambiguous,note,check_id,run_date,git_sha,verdict
+yanbu,NOT_DOCUMENTED,,,,,,"No documented anchor events found. Sources searched: diagnostics/STAGE2_GATE.md, SERIES_HEALTH_STANDARD.md, DIAGNOSTIC_JUAYMAH_YANBU.md, INSTRUMENT_AUDIT_7.md. OILRADAR_KNOWLEDGE_BASE.md and oilradar_konspekt.md not present in repo.",C12,2026-10-10,f87b1bf,

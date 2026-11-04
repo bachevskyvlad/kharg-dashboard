@@ -1,0 +1,191 @@
+{
+  "jask": [
+    {
+      "relative_orbit": 93,
+      "direction": "DESC",
+      "los_azimuth": 282,
+      "orbit_source": "survey_2026-10",
+      "primary": true
+    },
+    {
+      "relative_orbit": 57,
+      "direction": "ASCE",
+      "los_azimuth": 98,
+      "orbit_source": "survey_2026-10"
+    }
+  ],
+  "lavan": [
+    {
+      "relative_orbit": 64,
+      "direction": "DESC",
+      "los_azimuth": 282,
+      "orbit_source": "survey_2026-10",
+      "primary": true
+    },
+    {
+      "relative_orbit": 28,
+      "direction": "ASCE",
+      "los_azimuth": 98,
+      "orbit_source": "survey_2026-10"
+    }
+  ],
+  "siri": [
+    {
+      "relative_orbit": 166,
+      "direction": "DESC",
+      "los_azimuth": 282,
+      "orbit_source": "survey_2026-10",
+      "primary": true
+    },
+    {
+      "relative_orbit": 64,
+      "direction": "DESC",
+      "los_azimuth": 282,
+      "orbit_source": "survey_2026-10"
+    },
+    {
+      "relative_orbit": 130,
+      "direction": "ASCE",
+      "los_azimuth": 98,
+      "orbit_source": "survey_2026-10"
+    }
+  ],
+  "halul": [
+    {
+      "relative_orbit": 137,
+      "direction": "DESC",
+      "los_azimuth": 282,
+      "orbit_source": "survey_2026-10",
+      "primary": true
+    },
+    {
+      "relative_orbit": 64,
+      "direction": "DESC",
+      "los_azimuth": 282,
+      "orbit_source": "survey_2026-10"
+    },
+    {
+      "relative_orbit": 28,
+      "direction": "ASCE",
+      "los_azimuth": 98,
+      "orbit_source": "survey_2026-10"
+    }
+  ],
+  "sitra": [
+    {
+      "relative_orbit": 137,
+      "direction": "DESC",
+      "los_azimuth": 282,
+      "orbit_source": "survey_2026-10",
+      "primary": true
+    },
+    {
+      "relative_orbit": 101,
+      "direction": "ASCE",
+      "los_azimuth": 98,
+      "orbit_source": "survey_2026-10"
+    }
+  ],
+  "ras_laffan": [
+    {
+      "relative_orbit": 137,
+      "direction": "DESC",
+      "los_azimuth": 282,
+      "orbit_source": "survey_2026-10",
+      "primary": true
+    },
+    {
+      "relative_orbit": 101,
+      "direction": "ASCE",
+      "los_azimuth": 98,
+      "orbit_source": "survey_2026-10"
+    }
+  ],
+  "fujairah": [
+    {
+      "relative_orbit": 166,
+      "direction": "DESC",
+      "los_azimuth": 282,
+      "orbit_source": "survey_2026-10",
+      "primary": true
+    },
+    {
+      "relative_orbit": 93,
+      "direction": "DESC",
+      "los_azimuth": 282,
+      "orbit_source": "survey_2026-10"
+    },
+    {
+      "relative_orbit": 130,
+      "direction": "ASCE",
+      "los_azimuth": 98,
+      "orbit_source": "survey_2026-10"
+    },
+    {
+      "relative_orbit": 57,
+      "direction": "ASCE",
+      "los_azimuth": 98,
+      "orbit_source": "survey_2026-10"
+    }
+  ],
+  "zirku": [
+    {
+      "relative_orbit": 64,
+      "direction": "DESC",
+      "los_azimuth": 282,
+      "orbit_source": "survey_2026-10",
+      "primary": true
+    },
+    {
+      "relative_orbit": 28,
+      "direction": "ASCE",
+      "los_azimuth": 98,
+      "orbit_source": "survey_2026-10"
+    }
+  ],
+  "das_island": [
+    {
+      "relative_orbit": 64,
+      "direction": "DESC",
+      "los_azimuth": 282,
+      "orbit_source": "survey_2026-10",
+      "primary": true
+    },
+    {
+      "relative_orbit": 28,
+      "direction": "ASCE",
+      "los_azimuth": 98,
+      "orbit_source": "survey_2026-10"
+    }
+  ],
+  "ruwais": [
+    {
+      "relative_orbit": 64,
+      "direction": "DESC",
+      "los_azimuth": 282,
+      "orbit_source": "survey_2026-10",
+      "primary": true
+    },
+    {
+      "relative_orbit": 28,
+      "direction": "ASCE",
+      "los_azimuth": 98,
+      "orbit_source": "survey_2026-10"
+    }
+  ],
+  "mina_ahmadi": [
+    {
+      "relative_orbit": 108,
+      "direction": "DESC",
+      "los_azimuth": 282,
+      "orbit_source": "survey_2026-10",
+      "primary": true
+    },
+    {
+      "relative_orbit": 174,
+      "direction": "ASCE",
+      "los_azimuth": 98,
+      "orbit_source": "survey_2026-10"
+    }
+  ]
+}

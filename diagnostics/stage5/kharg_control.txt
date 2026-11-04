@@ -1,0 +1,6 @@
+Kharg Control  2026-09-29 16:04 UTC
+n_tanks_total=47  n_top30=30
+n_dates_overlap=319
+top30_step_range: 4.828 – 2.026 dB
+raw_corr(Δ_all47, Δ_top30)     = 0.9246
+smoothed_corr(Δ_all47, Δ_top30) = 0.8131

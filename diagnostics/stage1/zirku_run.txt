@@ -1,0 +1,60 @@
+[stage1] Terminal : zirku
+[stage1] Primary orbit: rel=64 DESC los=282
+[stage1] Survey start: 2017-01-01
+[stage1] Tanks (confirmed): 10
+[stage1] Checkpoint: 0 dates already processed
+
+[stage1] Querying catalog: descending rel=64 from 2017-01-01 …
+[stage1] Catalog: 300 scene dates
+[stage1] Pending (not yet processed): 300 dates
+[stage1] Date range: 2017-03-16 → 2026-10-08
+  … 10/300 scenes, 100 rows so far
+  … 20/300 scenes, 200 rows so far
+  … 30/300 scenes, 300 rows so far
+  … 40/300 scenes, 400 rows so far
+  … 50/300 scenes, 500 rows so far
+  … 60/300 scenes, 600 rows so far
+  … 70/300 scenes, 700 rows so far
+  … 80/300 scenes, 800 rows so far
+  … 90/300 scenes, 900 rows so far
+  … 100/300 scenes, 1000 rows so far
+  … 110/300 scenes, 1100 rows so far
+  … 120/300 scenes, 1200 rows so far
+  … 130/300 scenes, 1300 rows so far
+  … 140/300 scenes, 1400 rows so far
+  … 150/300 scenes, 1500 rows so far
+  … 160/300 scenes, 1600 rows so far
+  … 170/300 scenes, 1700 rows so far
+  … 180/300 scenes, 1800 rows so far
+  … 190/300 scenes, 1900 rows so far
+  … 200/300 scenes, 2000 rows so far
+  … 210/300 scenes, 2100 rows so far
+  … 220/300 scenes, 2200 rows so far
+  … 230/300 scenes, 2300 rows so far
+  … 240/300 scenes, 2400 rows so far
+  … 250/300 scenes, 2500 rows so far
+  … 260/300 scenes, 2600 rows so far
+  … 270/300 scenes, 2700 rows so far
+  … 280/300 scenes, 2800 rows so far
+  … 290/300 scenes, 2900 rows so far
+  … 300/300 scenes, 3000 rows so far
+
+============================================================
+STAGE-1 BASELINE — ZIRKU
+============================================================
+  Orbit                : rel=64 DESC
+  Catalog scenes       : 300
+  Scenes processed     : 300
+  Scenes skipped(err)  : 0
+  Rows prepared        : 3000
+  Distinct dates       : 300
+  Distinct tanks       : 10
+  Date range           : 2017-03-16 → 2026-10-08
+  Tanks/date (med/min/max): 10 / 10 / 10
+  db_mean (p5/p50/p95): 0.22 / 7.07 / 16.48 dB
+============================================================
+
+[stage1] Existing rows for zirku: 2990
+[stage1] Deleting existing rows …
+[stage1] Inserting 3000 rows …
+[stage1] Insert complete. zirku Stage-1 baseline committed.

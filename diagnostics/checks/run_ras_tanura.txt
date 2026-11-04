@@ -1,0 +1,8 @@
+[terminal_checks] terminal=ras_tanura  checks=['C04']  orbit=None
+  fetching terminal_observations for ras_tanura…
+  36,989 rows fetched, 566 dates, 66 tanks
+  registry: 66 tanks
+  running C04…
+  → /home/runner/work/kharg-dashboard/kharg-dashboard/diagnostics/checks/ras_tanura/C04.csv (66 rows)
+  → /home/runner/work/kharg-dashboard/kharg-dashboard/diagnostics/checks/CHECK_MATRIX.md
+done.

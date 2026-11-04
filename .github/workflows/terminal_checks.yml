@@ -1,0 +1,90 @@
+name: Terminal health checks — Block B
+
+on:
+  workflow_dispatch:
+    inputs:
+      terminal:
+        description: "Terminal ID (yanbu / ras_tanura / jask / …)"
+        required: true
+        default: "yanbu"
+      checks:
+        description: "Comma-separated check IDs (default: all)"
+        required: false
+        default: "C11,C04,C05,C06,C06B,C07,C14,C15,C16,C12"
+      orbit:
+        description: "Filter by relative orbit (leave blank for all)"
+        required: false
+        default: ""
+
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: claude/oilradar-dashboard-iran-zchdva
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: pip install numpy pandas scipy diptest supabase requests sentinelhub -q
+
+      - name: Run checks
+        env:
+          SUPABASE_URL: https://yoekhkczwdeyauwarsyy.supabase.co
+          SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+        run: |
+          ORBIT_ARG=""
+          if [ -n "${{ github.event.inputs.orbit }}" ]; then
+            ORBIT_ARG="--orbit ${{ github.event.inputs.orbit }}"
+          fi
+          mkdir -p diagnostics/checks
+          cd scripts
+          python terminal_checks.py \
+            --terminal "${{ github.event.inputs.terminal }}" \
+            --checks "${{ github.event.inputs.checks }}" \
+            $ORBIT_ARG \
+            2>&1 | tee ../diagnostics/checks/run_${{ github.event.inputs.terminal }}.txt
+
+      - name: Orbit label audit (RT + Yanbu)
+        env:
+          SUPABASE_URL: https://yoekhkczwdeyauwarsyy.supabase.co
+          SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+        if: contains('ras_tanura yanbu', github.event.inputs.terminal)
+        run: |
+          mkdir -p diagnostics/rt_orbit diagnostics/yanbu_orbit
+          cd scripts
+          python diag_orbit_labels.py 2>&1 | tee ../diagnostics/rt_orbit/run.txt
+
+      - name: Closure audit (items 1–5)
+        env:
+          SUPABASE_URL: https://yoekhkczwdeyauwarsyy.supabase.co
+          SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+          CLIENT_ID: ${{ secrets.CLIENT_ID }}
+          CLIENT_SECRET: ${{ secrets.CLIENT_SECRET }}
+        if: github.event.inputs.terminal == 'ras_tanura'
+        run: |
+          mkdir -p diagnostics/closure
+          cd scripts
+          python diag_closure.py 2>&1 | tee ../diagnostics/closure/run.txt
+
+      - name: Save results
+        if: always()
+        run: |
+          git config user.email "actions@github.com"
+          git config user.name "GitHub Actions"
+          git add -f diagnostics/checks/ diagnostics/rt_orbit/ diagnostics/yanbu_orbit/ diagnostics/closure/ || true
+          git diff --cached --quiet && echo "No changes" || \
+            git commit -m "ci: terminal-checks ${{ github.event.inputs.terminal }} [skip ci]"
+          # rebase+retry loop to avoid race between concurrent terminal jobs
+          for attempt in 1 2 3 4; do
+            git pull --rebase origin claude/oilradar-dashboard-iran-zchdva && \
+            git push origin HEAD:claude/oilradar-dashboard-iran-zchdva && break
+            echo "push attempt $attempt failed, retrying in ${attempt}s"
+            sleep $attempt
+          done || true

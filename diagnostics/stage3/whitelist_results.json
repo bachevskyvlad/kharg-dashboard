@@ -1,0 +1,906 @@
+{
+  "run_date": "2026-09-29T10:02:37.043770",
+  "n_scenes": 18,
+  "step_thresh": 2.5,
+  "venue_verdicts": {
+    "juwaymah": {
+      "n_tanks": 19,
+      "n_whitelist": 9,
+      "wl_cap_mb": 7.1136,
+      "total_cap_mb": 15.0176,
+      "pct_cap": 47.4,
+      "verdict": "TANK_LEVEL_OR_DROP"
+    },
+    "ras_tanura": {
+      "n_tanks": 66,
+      "n_whitelist": 45,
+      "wl_cap_mb": 19.7116,
+      "total_cap_mb": 31.1487,
+      "pct_cap": 63.3,
+      "verdict": "TERMINAL_SERIES"
+    },
+    "yanbu": {
+      "n_tanks": 12,
+      "n_whitelist": 8,
+      "wl_cap_mb": 10.2436,
+      "total_cap_mb": 15.3654,
+      "pct_cap": 66.7,
+      "verdict": "TERMINAL_SERIES"
+    }
+  },
+  "tanks": [
+    {
+      "terminal": "juwaymah",
+      "tank_id": "jw_0",
+      "step": 2.293175220489502,
+      "n_obs": 18,
+      "whitelist": true,
+      "status": "whitelist",
+      "vol_max_mb": 0.7904
+    },
+    {
+      "terminal": "juwaymah",
+      "tank_id": "jw_1",
+      "step": 12.666991710662842,
+      "n_obs": 18,
+      "whitelist": false,
+      "status": "excluded",
+      "vol_max_mb": 0.7904
+    },
+    {
+      "terminal": "juwaymah",
+      "tank_id": "jw_2",
+      "step": 2.134511947631836,
+      "n_obs": 18,
+      "whitelist": true,
+      "status": "whitelist",
+      "vol_max_mb": 0.7904
+    },
+    {
+      "terminal": "juwaymah",
+      "tank_id": "jw_3",
+      "step": 1.435542106628418,
+      "n_obs": 18,
+      "whitelist": true,
+      "status": "whitelist",
+      "vol_max_mb": 0.7904
+    },
+    {
+      "terminal": "juwaymah",
+      "tank_id": "jw_4",
+      "step": 2.6440858840942383,
+      "n_obs": 18,
+      "whitelist": false,
+      "status": "excluded",
+      "vol_max_mb": 0.7904
+    },
+    {
+      "terminal": "juwaymah",
+      "tank_id": "jw_5",
+      "step": 3.0782861709594727,
+      "n_obs": 18,
+      "whitelist": false,
+      "status": "excluded",
+      "vol_max_mb": 0.7904
+    },
+    {
+      "terminal": "juwaymah",
+      "tank_id": "jw_6",
+      "step": 4.24444580078125,
+      "n_obs": 18,
+      "whitelist": false,
+      "status": "excluded",
+      "vol_max_mb": 0.7904
+    },
+    {
+      "terminal": "juwaymah",
+      "tank_id": "jw_7",
+      "step": 1.8572502136230469,
+      "n_obs": 18,
+      "whitelist": true,
+      "status": "whitelist",
+      "vol_max_mb": 0.7904
+    },
+    {
+      "terminal": "juwaymah",
+      "tank_id": "jw_8",
+      "step": 2.221264973282814,
+      "n_obs": 18,
+      "whitelist": true,
+      "status": "whitelist",
+      "vol_max_mb": 0.7904
+    },
+    {
+      "terminal": "juwaymah",
+      "tank_id": "jw_9",
+      "step": 1.2740306854248047,
+      "n_obs": 18,
+      "whitelist": true,
+      "status": "whitelist",
+      "vol_max_mb": 0.7904
+    },
+    {
+      "terminal": "juwaymah",
+      "tank_id": "jw_10",
+      "step": 5.991888999938965,
+      "n_obs": 18,
+      "whitelist": false,
+      "status": "excluded",
+      "vol_max_mb": 0.7904
+    },
+    {
+      "terminal": "juwaymah",
+      "tank_id": "jw_11",
+      "step": 1.5304632186889648,
+      "n_obs": 18,
+      "whitelist": true,
+      "status": "whitelist",
+      "vol_max_mb": 0.7904
+    },
+    {
+      "terminal": "juwaymah",
+      "tank_id": "jw_12",
+      "step": 4.519158363342285,
+      "n_obs": 18,
+      "whitelist": false,
+      "status": "excluded",
+      "vol_max_mb": 0.7904
+    },
+    {
+      "terminal": "juwaymah",
+      "tank_id": "jw_13",
+      "step": 5.522078514099121,
+      "n_obs": 18,
+      "whitelist": false,
+      "status": "excluded",
+      "vol_max_mb": 0.7904
+    },
+    {
+      "terminal": "juwaymah",
+      "tank_id": "jw_14",
+      "step": 9.281712532043457,
+      "n_obs": 18,
+      "whitelist": false,
+      "status": "excluded",
+      "vol_max_mb": 0.7904
+    },
+    {
+      "terminal": "juwaymah",
+      "tank_id": "jw_15",
+      "step": 6.099891662597656,
+      "n_obs": 18,
+      "whitelist": false,
+      "status": "excluded",
+      "vol_max_mb": 0.7904
+    },
+    {
+      "terminal": "juwaymah",
+      "tank_id": "jw_16",
+      "step": 2.22760009765625,
+      "n_obs": 18,
+      "whitelist": true,
+      "status": "whitelist",
+      "vol_max_mb": 0.7904
+    },
+    {
+      "terminal": "juwaymah",
+      "tank_id": "jw_17",
+      "step": 6.85896110534668,
+      "n_obs": 18,
+      "whitelist": false,
+      "status": "excluded",
+      "vol_max_mb": 0.7904
+    },
+    {
+      "terminal": "juwaymah",
+      "tank_id": "jw_18",
+      "step": 2.404916763305664,
+      "n_obs": 18,
+      "whitelist": true,
+      "status": "whitelist",
+      "vol_max_mb": 0.7904
+    },
+    {
+      "terminal": "ras_tanura",
+      "tank_id": "rt_0",
+      "step": 2.6404701471328735,
+      "n_obs": 18,
+      "whitelist": false,
+      "status": "excluded",
+      "vol_max_mb": 1.2804
+    },
+    {
+      "terminal": "ras_tanura",
+      "tank_id": "rt_1",
+      "step": 2.839632034301758,
+      "n_obs": 18,
+      "whitelist": false,
+      "status": "excluded",
+      "vol_max_mb": 1.2804
+    },
+    {
+      "terminal": "ras_tanura",
+      "tank_id": "rt_2",
+      "step": 0.6752185821533203,
+      "n_obs": 18,
+      "whitelist": true,
+      "status": "whitelist",
+      "vol_max_mb": 1.2804
+    },
+    {
+      "terminal": "ras_tanura",
+      "tank_id": "rt_3",
+      "step": 3.8375377655029297,
+      "n_obs": 18,
+      "whitelist": false,
+      "status": "excluded",
+      "vol_max_mb": 1.2804
+    },
+    {
+      "terminal": "ras_tanura",
+      "tank_id": "rt_4",
+      "step": 1.1638264656066895,
+      "n_obs": 18,
+      "whitelist": true,
+      "status": "whitelist",
+      "vol_max_mb": 1.2804
+    },
+    {
+      "terminal": "ras_tanura",
+      "tank_id": "rt_5",
+      "step": 1.189535140991211,
+      "n_obs": 18,
+      "whitelist": true,
+      "status": "whitelist",
+      "vol_max_mb": 1.2804
+    },
+    {
+      "terminal": "ras_tanura",
+      "tank_id": "rt_6",
+      "step": 0.538156270980835,
+      "n_obs": 18,
+      "whitelist": true,
+      "status": "whitelist",
+      "vol_max_mb": 1.2804
+    },
+    {
+      "terminal": "ras_tanura",
+      "tank_id": "rt_7",
+      "step": 1.9382731914520264,
+      "n_obs": 18,
+      "whitelist": true,
+      "status": "whitelist",
+      "vol_max_mb": 1.2804
+    },
+    {
+      "terminal": "ras_tanura",
+      "tank_id": "rt_8",
+      "step": 1.430690050125122,
+      "n_obs": 18,
+      "whitelist": true,
+      "status": "whitelist",
+      "vol_max_mb": 1.2804
+    },
+    {
+      "terminal": "ras_tanura",
+      "tank_id": "rt_9",
+      "step": 3.7006821632385254,
+      "n_obs": 18,
+      "whitelist": false,
+      "status": "excluded",
+      "vol_max_mb": 1.2804
+    },
+    {
+      "terminal": "ras_tanura",
+      "tank_id": "rt_10",
+      "step": 3.3155425786972046,
+      "n_obs": 18,
+      "whitelist": false,
+      "status": "excluded",
+      "vol_max_mb": 1.2804
+    },
+    {
+      "terminal": "ras_tanura",
+      "tank_id": "rt_11",
+      "step": 0.8630027770996094,
+      "n_obs": 18,
+      "whitelist": true,
+      "status": "whitelist",
+      "vol_max_mb": 0.3147
+    },
+    {
+      "terminal": "ras_tanura",
+      "tank_id": "rt_12",
+      "step": 1.7976126670837402,
+      "n_obs": 18,
+      "whitelist": true,
+      "status": "whitelist",
+      "vol_max_mb": 0.3147
+    },
+    {
+      "terminal": "ras_tanura",
+      "tank_id": "rt_13",
+      "step": 1.0102881789207458,
+      "n_obs": 18,
+      "whitelist": true,
+      "status": "whitelist",
+      "vol_max_mb": 0.3147
+    },
+    {
+      "terminal": "ras_tanura",
+      "tank_id": "rt_14",
+      "step": 0.9777604639530182,
+      "n_obs": 18,
+      "whitelist": true,
+      "status": "whitelist",
+      "vol_max_mb": 0.3147
+    },
+    {
+      "terminal": "ras_tanura",
+      "tank_id": "rt_15",
+      "step": 1.479234218597412,
+      "n_obs": 18,
+      "whitelist": true,
+      "status": "whitelist",
+      "vol_max_mb": 0.3147
+    },
+    {
+      "terminal": "ras_tanura",
+      "tank_id": "rt_16",
+      "step": 1.0660544037818909,
+      "n_obs": 18,
+      "whitelist": true,
+      "status": "whitelist",
+      "vol_max_mb": 0.3147
+    },
+    {
+      "terminal": "ras_tanura",
+      "tank_id": "rt_17",
+      "step": 2.4971694946289062,
+      "n_obs": 18,
+      "whitelist": true,
+      "status": "whitelist",
+      "vol_max_mb": 0.3147
+    },
+    {
+      "terminal": "ras_tanura",
+      "tank_id": "rt_18",
+      "step": 0.33445024490356445,
+      "n_obs": 18,
+      "whitelist": true,
+      "status": "whitelist",
+      "vol_max_mb": 0.3147
+    },
+    {
+      "terminal": "ras_tanura",
+      "tank_id": "rt_19",
+      "step": 0.7588322162628174,
+      "n_obs": 18,
+      "whitelist": true,
+      "status": "whitelist",
+      "vol_max_mb": 0.3147
+    },
+    {
+      "terminal": "ras_tanura",
+      "tank_id": "rt_20",
+      "step": 0.8758549690246582,
+      "n_obs": 18,
+      "whitelist": true,
+      "status": "whitelist",
+      "vol_max_mb": 0.3147
+    },
+    {
+      "terminal": "ras_tanura",
+      "tank_id": "rt_21",
+      "step": 1.22206449508667,
+      "n_obs": 18,
+      "whitelist": true,
+      "status": "whitelist",
+      "vol_max_mb": 0.3147
+    },
+    {
+      "terminal": "ras_tanura",
+      "tank_id": "rt_22",
+      "step": 0.7314167022705078,
+      "n_obs": 18,
+      "whitelist": true,
+      "status": "whitelist",
+      "vol_max_mb": 0.3147
+    },
+    {
+      "terminal": "ras_tanura",
+      "tank_id": "rt_23",
+      "step": 1.503173589706421,
+      "n_obs": 18,
+      "whitelist": true,
+      "status": "whitelist",
+      "vol_max_mb": 0.3147
+    },
+    {
+      "terminal": "ras_tanura",
+      "tank_id": "rt_24",
+      "step": 1.5397313237190247,
+      "n_obs": 18,
+      "whitelist": true,
+      "status": "whitelist",
+      "vol_max_mb": 0.3147
+    },
+    {
+      "terminal": "ras_tanura",
+      "tank_id": "rt_25",
+      "step": 1.2440630197525024,
+      "n_obs": 18,
+      "whitelist": true,
+      "status": "whitelist",
+      "vol_max_mb": 0.3147
+    },
+    {
+      "terminal": "ras_tanura",
+      "tank_id": "rt_26",
+      "step": 0.47056055068969727,
+      "n_obs": 18,
+      "whitelist": true,
+      "status": "whitelist",
+      "vol_max_mb": 0.3147
+    },
+    {
+      "terminal": "ras_tanura",
+      "tank_id": "rt_27",
+      "step": 1.3367030620574951,
+      "n_obs": 18,
+      "whitelist": true,
+      "status": "whitelist",
+      "vol_max_mb": 0.3147
+    },
+    {
+      "terminal": "ras_tanura",
+      "tank_id": "rt_28",
+      "step": 1.2161836624145508,
+      "n_obs": 18,
+      "whitelist": true,
+      "status": "whitelist",
+      "vol_max_mb": 0.3147
+    },
+    {
+      "terminal": "ras_tanura",
+      "tank_id": "rt_29",
+      "step": 0.5649757385253906,
+      "n_obs": 18,
+      "whitelist": true,
+      "status": "whitelist",
+      "vol_max_mb": 0.3147
+    },
+    {
+      "terminal": "ras_tanura",
+      "tank_id": "rt_30",
+      "step": 1.13102126121521,
+      "n_obs": 18,
+      "whitelist": true,
+      "status": "whitelist",
+      "vol_max_mb": 0.3147
+    },
+    {
+      "terminal": "ras_tanura",
+      "tank_id": "rt_31",
+      "step": 1.1398803144693375,
+      "n_obs": 18,
+      "whitelist": true,
+      "status": "whitelist",
+      "vol_max_mb": 0.3147
+    },
+    {
+      "terminal": "ras_tanura",
+      "tank_id": "rt_32",
+      "step": 1.0856695175170898,
+      "n_obs": 18,
+      "whitelist": true,
+      "status": "whitelist",
+      "vol_max_mb": 0.3147
+    },
+    {
+      "terminal": "ras_tanura",
+      "tank_id": "rt_33",
+      "step": 2.2422565817832947,
+      "n_obs": 18,
+      "whitelist": true,
+      "status": "whitelist",
+      "vol_max_mb": 0.3147
+    },
+    {
+      "terminal": "ras_tanura",
+      "tank_id": "rt_34",
+      "step": 0.9324600398540497,
+      "n_obs": 18,
+      "whitelist": true,
+      "status": "whitelist",
+      "vol_max_mb": 0.3147
+    },
+    {
+      "terminal": "ras_tanura",
+      "tank_id": "rt_35",
+      "step": 1.1208186447620392,
+      "n_obs": 18,
+      "whitelist": true,
+      "status": "whitelist",
+      "vol_max_mb": 0.3147
+    },
+    {
+      "terminal": "ras_tanura",
+      "tank_id": "rt_36",
+      "step": 1.7400640919804573,
+      "n_obs": 18,
+      "whitelist": true,
+      "status": "whitelist",
+      "vol_max_mb": 0.3147
+    },
+    {
+      "terminal": "ras_tanura",
+      "tank_id": "rt_37",
+      "step": 1.4583516120910645,
+      "n_obs": 18,
+      "whitelist": true,
+      "status": "whitelist",
+      "vol_max_mb": 0.3147
+    },
+    {
+      "terminal": "ras_tanura",
+      "tank_id": "rt_38",
+      "step": 0.43334388732910156,
+      "n_obs": 18,
+      "whitelist": true,
+      "status": "whitelist",
+      "vol_max_mb": 0.3147
+    },
+    {
+      "terminal": "ras_tanura",
+      "tank_id": "rt_39",
+      "step": 3.768771171569824,
+      "n_obs": 18,
+      "whitelist": false,
+      "status": "excluded",
+      "vol_max_mb": 0.3147
+    },
+    {
+      "terminal": "ras_tanura",
+      "tank_id": "rt_40",
+      "step": 2.65368914604187,
+      "n_obs": 18,
+      "whitelist": false,
+      "status": "excluded",
+      "vol_max_mb": 0.3147
+    },
+    {
+      "terminal": "ras_tanura",
+      "tank_id": "rt_41",
+      "step": 1.801438331604004,
+      "n_obs": 18,
+      "whitelist": true,
+      "status": "whitelist",
+      "vol_max_mb": 0.3147
+    },
+    {
+      "terminal": "ras_tanura",
+      "tank_id": "rt_42",
+      "step": 0.7956876754760742,
+      "n_obs": 18,
+      "whitelist": true,
+      "status": "whitelist",
+      "vol_max_mb": 0.3147
+    },
+    {
+      "terminal": "ras_tanura",
+      "tank_id": "rt_43",
+      "step": 4.370312690734863,
+      "n_obs": 18,
+      "whitelist": false,
+      "status": "excluded",
+      "vol_max_mb": 0.3147
+    },
+    {
+      "terminal": "ras_tanura",
+      "tank_id": "rt_44",
+      "step": 2.1074304580688477,
+      "n_obs": 18,
+      "whitelist": true,
+      "status": "whitelist",
+      "vol_max_mb": 0.3147
+    },
+    {
+      "terminal": "ras_tanura",
+      "tank_id": "rt_45",
+      "step": 2.9881471395492554,
+      "n_obs": 18,
+      "whitelist": false,
+      "status": "excluded",
+      "vol_max_mb": 0.3147
+    },
+    {
+      "terminal": "ras_tanura",
+      "tank_id": "rt_46",
+      "step": 3.049337387084961,
+      "n_obs": 18,
+      "whitelist": false,
+      "status": "excluded",
+      "vol_max_mb": 0.3147
+    },
+    {
+      "terminal": "ras_tanura",
+      "tank_id": "rt_47",
+      "step": 6.3266072273254395,
+      "n_obs": 18,
+      "whitelist": false,
+      "status": "excluded",
+      "vol_max_mb": 0.3147
+    },
+    {
+      "terminal": "ras_tanura",
+      "tank_id": "rt_48",
+      "step": 5.2912797927856445,
+      "n_obs": 18,
+      "whitelist": false,
+      "status": "excluded",
+      "vol_max_mb": 0.3147
+    },
+    {
+      "terminal": "ras_tanura",
+      "tank_id": "rt_49",
+      "step": 4.071557521820068,
+      "n_obs": 18,
+      "whitelist": false,
+      "status": "excluded",
+      "vol_max_mb": 0.3147
+    },
+    {
+      "terminal": "ras_tanura",
+      "tank_id": "rt_50",
+      "step": 9.202327728271484,
+      "n_obs": 18,
+      "whitelist": false,
+      "status": "excluded",
+      "vol_max_mb": 0.3147
+    },
+    {
+      "terminal": "ras_tanura",
+      "tank_id": "rt_51",
+      "step": 2.9057323932647705,
+      "n_obs": 18,
+      "whitelist": false,
+      "status": "excluded",
+      "vol_max_mb": 0.3147
+    },
+    {
+      "terminal": "ras_tanura",
+      "tank_id": "rt_52",
+      "step": 5.115963935852051,
+      "n_obs": 18,
+      "whitelist": false,
+      "status": "excluded",
+      "vol_max_mb": 0.3147
+    },
+    {
+      "terminal": "ras_tanura",
+      "tank_id": "rt_53",
+      "step": 2.9348511695861816,
+      "n_obs": 18,
+      "whitelist": false,
+      "status": "excluded",
+      "vol_max_mb": 0.3147
+    },
+    {
+      "terminal": "ras_tanura",
+      "tank_id": "rt_54",
+      "step": 3.042017936706543,
+      "n_obs": 18,
+      "whitelist": false,
+      "status": "excluded",
+      "vol_max_mb": 0.3147
+    },
+    {
+      "terminal": "ras_tanura",
+      "tank_id": "rt_55",
+      "step": 4.304389953613281,
+      "n_obs": 18,
+      "whitelist": false,
+      "status": "excluded",
+      "vol_max_mb": 0.3147
+    },
+    {
+      "terminal": "ras_tanura",
+      "tank_id": "rt_56",
+      "step": 2.639896869659424,
+      "n_obs": 18,
+      "whitelist": false,
+      "status": "excluded",
+      "vol_max_mb": 0.3147
+    },
+    {
+      "terminal": "ras_tanura",
+      "tank_id": "rt_57",
+      "step": 2.1397881507873535,
+      "n_obs": 18,
+      "whitelist": true,
+      "status": "whitelist",
+      "vol_max_mb": 0.3147
+    },
+    {
+      "terminal": "ras_tanura",
+      "tank_id": "rt_58",
+      "step": 2.981962203979492,
+      "n_obs": 18,
+      "whitelist": false,
+      "status": "excluded",
+      "vol_max_mb": 0.3147
+    },
+    {
+      "terminal": "ras_tanura",
+      "tank_id": "rt_59",
+      "step": 0.2907419204711914,
+      "n_obs": 18,
+      "whitelist": true,
+      "status": "whitelist",
+      "vol_max_mb": 0.3147
+    },
+    {
+      "terminal": "ras_tanura",
+      "tank_id": "rt_60",
+      "step": 0.7870492935180664,
+      "n_obs": 18,
+      "whitelist": true,
+      "status": "whitelist",
+      "vol_max_mb": 0.3147
+    },
+    {
+      "terminal": "ras_tanura",
+      "tank_id": "rt_61",
+      "step": 1.6174931526184082,
+      "n_obs": 18,
+      "whitelist": true,
+      "status": "whitelist",
+      "vol_max_mb": 0.3147
+    },
+    {
+      "terminal": "ras_tanura",
+      "tank_id": "rt_62",
+      "step": 1.9125971794128418,
+      "n_obs": 18,
+      "whitelist": true,
+      "status": "whitelist",
+      "vol_max_mb": 0.3147
+    },
+    {
+      "terminal": "ras_tanura",
+      "tank_id": "rt_63",
+      "step": 1.2690677642822266,
+      "n_obs": 18,
+      "whitelist": true,
+      "status": "whitelist",
+      "vol_max_mb": 0.3147
+    },
+    {
+      "terminal": "ras_tanura",
+      "tank_id": "rt_64",
+      "step": 1.809678554534912,
+      "n_obs": 18,
+      "whitelist": true,
+      "status": "whitelist",
+      "vol_max_mb": 0.3147
+    },
+    {
+      "terminal": "ras_tanura",
+      "tank_id": "rt_65",
+      "step": 1.06535005569458,
+      "n_obs": 18,
+      "whitelist": true,
+      "status": "whitelist",
+      "vol_max_mb": 0.0711
+    },
+    {
+      "terminal": "yanbu",
+      "tank_id": "yb_0",
+      "step": 0.4736330509185791,
+      "n_obs": 18,
+      "whitelist": true,
+      "status": "whitelist",
+      "vol_max_mb": 1.2804
+    },
+    {
+      "terminal": "yanbu",
+      "tank_id": "yb_1",
+      "step": 2.6467905044555664,
+      "n_obs": 18,
+      "whitelist": false,
+      "status": "excluded",
+      "vol_max_mb": 1.2804
+    },
+    {
+      "terminal": "yanbu",
+      "tank_id": "yb_2",
+      "step": 0.9482995271682739,
+      "n_obs": 18,
+      "whitelist": true,
+      "status": "whitelist",
+      "vol_max_mb": 1.2804
+    },
+    {
+      "terminal": "yanbu",
+      "tank_id": "yb_3",
+      "step": 2.207643508911133,
+      "n_obs": 18,
+      "whitelist": true,
+      "status": "whitelist",
+      "vol_max_mb": 1.2804
+    },
+    {
+      "terminal": "yanbu",
+      "tank_id": "yb_4",
+      "step": 4.839757919311523,
+      "n_obs": 18,
+      "whitelist": false,
+      "status": "excluded",
+      "vol_max_mb": 1.2804
+    },
+    {
+      "terminal": "yanbu",
+      "tank_id": "yb_5",
+      "step": 2.404307782649994,
+      "n_obs": 18,
+      "whitelist": true,
+      "status": "whitelist",
+      "vol_max_mb": 1.2804
+    },
+    {
+      "terminal": "yanbu",
+      "tank_id": "yb_6",
+      "step": 4.358142852783203,
+      "n_obs": 18,
+      "whitelist": false,
+      "status": "excluded",
+      "vol_max_mb": 1.2804
+    },
+    {
+      "terminal": "yanbu",
+      "tank_id": "yb_7",
+      "step": 2.1594114303588867,
+      "n_obs": 18,
+      "whitelist": true,
+      "status": "whitelist",
+      "vol_max_mb": 1.2804
+    },
+    {
+      "terminal": "yanbu",
+      "tank_id": "yb_8",
+      "step": 2.0186997652053833,
+      "n_obs": 18,
+      "whitelist": true,
+      "status": "whitelist",
+      "vol_max_mb": 1.2804
+    },
+    {
+      "terminal": "yanbu",
+      "tank_id": "yb_9",
+      "step": 1.4186201095581055,
+      "n_obs": 18,
+      "whitelist": true,
+      "status": "whitelist",
+      "vol_max_mb": 1.2804
+    },
+    {
+      "terminal": "yanbu",
+      "tank_id": "yb_10",
+      "step": 3.0958433151245117,
+      "n_obs": 18,
+      "whitelist": false,
+      "status": "excluded",
+      "vol_max_mb": 1.2804
+    },
+    {
+      "terminal": "yanbu",
+      "tank_id": "yb_11",
+      "step": 1.0530900955200195,
+      "n_obs": 18,
+      "whitelist": true,
+      "status": "whitelist",
+      "vol_max_mb": 1.2804
+    }
+  ]
+}

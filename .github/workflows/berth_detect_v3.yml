@@ -6,7 +6,7 @@ on:
       dates:
         description: "Space-separated dates YYYY-MM-DD"
         required: true
-        default: "2018-03-09 2018-09-05 2021-06-09 2021-12-06 2024-01-13 2024-08-04 2026-01-02 2026-05-02 2026-05-08 2026-05-11 2026-05-14"
+        default: "2019-06-24 2026-04-05 2026-04-11 2026-04-17 2026-04-29 2026-05-11 2026-05-23 2025-08-02 2022-08-17 2022-02-21 2023-07-18 2023-05-17 2023-04-03"
       orbits:
         description: "Relative orbit numbers (space-separated)"
         required: false
@@ -42,8 +42,10 @@ jobs:
         env:
           CLIENT_ID: ${{ secrets.CLIENT_ID }}
           CLIENT_SECRET: ${{ secrets.CLIENT_SECRET }}
+          GITHUB_RUN_ID: ${{ github.run_id }}
         run: |
           python berth_detect_v3.py \
+            --clean \
             --dates ${{ inputs.dates }} \
             --orbits ${{ inputs.orbits }}
 
@@ -57,6 +59,7 @@ jobs:
             echo "Nothing to commit"
           else
             git commit -m "ТЗ-7.3: berth_v3 results"
+            git pull --rebase origin claude/oilradar-dashboard-iran-zchdva
             git push origin claude/oilradar-dashboard-iran-zchdva
           fi
 

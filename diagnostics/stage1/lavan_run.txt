@@ -1,0 +1,56 @@
+[stage1] Terminal : lavan
+[stage1] Primary orbit: rel=64 DESC los=282
+[stage1] Survey start: 2017-01-01
+[stage1] Tanks (confirmed): 24
+[stage1] Checkpoint: 0 dates already processed
+
+[stage1] Querying catalog: descending rel=64 from 2017-01-01 …
+[stage1] Catalog: 299 scene dates
+[stage1] Pending (not yet processed): 299 dates
+[stage1] Date range: 2017-03-16 → 2026-10-08
+  … 10/299 scenes, 240 rows so far
+  … 20/299 scenes, 480 rows so far
+  … 30/299 scenes, 720 rows so far
+  … 40/299 scenes, 960 rows so far
+  … 50/299 scenes, 1200 rows so far
+  … 60/299 scenes, 1440 rows so far
+  … 70/299 scenes, 1680 rows so far
+  … 80/299 scenes, 1920 rows so far
+  … 90/299 scenes, 2160 rows so far
+  … 100/299 scenes, 2400 rows so far
+  … 110/299 scenes, 2640 rows so far
+  … 120/299 scenes, 2880 rows so far
+  … 130/299 scenes, 3120 rows so far
+  … 140/299 scenes, 3360 rows so far
+  … 150/299 scenes, 3600 rows so far
+  … 160/299 scenes, 3840 rows so far
+  … 170/299 scenes, 4080 rows so far
+  … 180/299 scenes, 4320 rows so far
+  … 190/299 scenes, 4560 rows so far
+  … 200/299 scenes, 4800 rows so far
+  … 210/299 scenes, 5040 rows so far
+  … 220/299 scenes, 5280 rows so far
+  … 230/299 scenes, 5520 rows so far
+  … 240/299 scenes, 5760 rows so far
+  … 250/299 scenes, 6000 rows so far
+  … 260/299 scenes, 6240 rows so far
+  … 270/299 scenes, 6480 rows so far
+  … 280/299 scenes, 6720 rows so far
+  … 290/299 scenes, 6960 rows so far
+
+============================================================
+STAGE-1 BASELINE — LAVAN
+============================================================
+  Orbit                : rel=64 DESC
+  Catalog scenes       : 299
+  Scenes processed     : 299
+  Scenes skipped(err)  : 0
+  Rows prepared        : 7176
+  Distinct dates       : 299
+  Distinct tanks       : 24
+  Date range           : 2017-03-16 → 2026-10-08
+  Tanks/date (med/min/max): 24 / 24 / 24
+  db_mean (p5/p50/p95): -2.18 / 3.96 / 11.85 dB
+============================================================
+
+[stage1] Dry-run complete for lavan. Pass --commit to write to Supabase.

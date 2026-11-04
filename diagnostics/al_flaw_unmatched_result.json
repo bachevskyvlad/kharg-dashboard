@@ -1,0 +1,31 @@
+{
+  "terminal": "al_flaw",
+  "historical_orbit": 108,
+  "supabase_total_dates": 317,
+  "cat_108_dates": 316,
+  "unmatched_total": 1,
+  "pm1_artefact": 0,
+  "foreign_track": 0,
+  "true_gap": 1,
+  "verdict": "GAPS_ONLY",
+  "per_year": {
+    "2015": {
+      "total": 1,
+      "pm1": 0,
+      "foreign": 0,
+      "gap": 1
+    }
+  },
+  "attribution": [
+    {
+      "date": "2015-04-11",
+      "year": 2015,
+      "nearest_108_date": "2017-02-23",
+      "delta_days_to_108": 684,
+      "pm1_108_match": false,
+      "same_day_orbits": [],
+      "pm1_foreign_orbits": [],
+      "no_catalog_scene": true
+    }
+  ]
+}

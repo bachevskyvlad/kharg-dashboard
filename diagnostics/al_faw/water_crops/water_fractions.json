@@ -1,0 +1,22 @@
+{
+  "af_9": {
+    "water_frac": 0.0,
+    "ndwi_median": -0.2206
+  },
+  "af_2": {
+    "water_frac": 0.0,
+    "ndwi_median": -0.1869
+  },
+  "af_0": {
+    "water_frac": 0.0,
+    "ndwi_median": -0.1969
+  },
+  "af_3": {
+    "water_frac": 0.0,
+    "ndwi_median": -0.1904
+  },
+  "af_6": {
+    "water_frac": 0.0,
+    "ndwi_median": -0.1926
+  }
+}

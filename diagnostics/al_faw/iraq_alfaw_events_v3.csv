@@ -1,0 +1,11 @@
+id,sign,note,url,delta_raw24,verdict_raw24,delta_live17,verdict_live17,delta_norm17,verdict_norm17
+basra_2021q3,DRAW,Iraq post-OPEC+ ramp-up Jul-Sep 2021; Basra_pw peak exports,https://momr.opec.org,0.6671,WRONG,0.2943,WRONG,0.1977,WRONG
+basra_2022q2,DRAW,Iraq production push post-Ukraine May-Aug 2022; Basra_pw peak,https://momr.opec.org,-0.4464,SIGNAL,-0.2475,SIGNAL,0.1488,WRONG
+basra_2023h1,DRAW,Basra_pw peak Jan-Feb 2023 (pre-cut),https://momr.opec.org,0.4799,WRONG,0.3462,WRONG,0.7063,WRONG
+opec_cuts_2025h1,BUILD,Iraq voluntary OPEC+ makeup cuts H1 2025 → less loading,https://www.opec.org/opec_web/en/press_room/7438.htm,0.916,SIGNAL,0.7247,SIGNAL,0.4236,SIGNAL
+jcpoa_2015,BUILD,JCPOA signed July 2015 → anticipatory storage build (Iran/Iraq),https://www.iaea.org/newscenter/focus/iran/iaea-and-iran-jcpoa,,NO_DATA,,NO_DATA,,NO_DATA
+jcpoa_lift_2016,DRAW,JCPOA implementation day Jan 2016 → ramp-up exports,https://www.iaea.org/newscenter/pressreleases/iaea-verifies-iran-has-met-commitments,,NO_DATA,,NO_DATA,,NO_DATA
+reimpose_2018,BUILD,US re-imposes Iran sanctions May 2018 → curtailed exports → build,https://home.treasury.gov/news/press-releases/sm0409,-1.1504,WRONG,-0.6037,WRONG,-0.9128,WRONG
+waivers_2019,DRAW,"Waiver end May 2019 → Iran volumes fall further, Iraq compensates",https://home.treasury.gov/news/press-releases/sm667,-0.2518,SIGNAL,-0.1424,WEAK,0.2465,WRONG
+covid_2020,BUILD,COVID demand collapse Mar 2020 → exports fall → storage builds,https://www.who.int/director-general/speeches/detail/who-director-general-s-opening-remarks-at-the-media-briefing-on-covid-19---11-march-2020,0.9213,SIGNAL,0.7732,SIGNAL,0.7982,SIGNAL
+war_2026,DRAW,Regional conflict 2026 → supply uncertainty → drawdown pressure,,-0.3241,SIGNAL,-0.3494,SIGNAL,-0.8263,SIGNAL

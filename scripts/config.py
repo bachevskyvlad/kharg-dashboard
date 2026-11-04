@@ -18,8 +18,12 @@ config = SHConfig()
 # Use env var if non-empty, otherwise fall back to the hardcoded credentials.
 # os.environ.get(key, default) doesn't help when the env var is set to ""
 # (GitHub Actions sets it to "" if the secret is missing), hence the `or`.
-config.sh_client_id     = os.environ.get("CLIENT_ID")     or "sh-5215639c-a2e5-47db-8d46-7e28a3150cde"
-config.sh_client_secret = os.environ.get("CLIENT_SECRET") or "UyosmDOgQ4ejiHbrWpDCT0WzLYgvhfloa3VgOLTtLd7c050tvejLgIVCcXfr3eLXT2JWqfrqjQhBgewF3g6nGF"
+_sh_id  = os.environ.get("CLIENT_ID")     or ""
+_sh_sec = os.environ.get("CLIENT_SECRET") or ""
+if not _sh_id or not _sh_sec:
+    import sys; sys.exit("FATAL: CLIENT_ID and CLIENT_SECRET env vars must be set")
+config.sh_client_id     = _sh_id
+config.sh_client_secret = _sh_sec
 config.sh_token_url     = "https://identity.dataspace.copernicus.eu/auth/realms/CDSE/protocol/openid-connect/token"
 config.sh_base_url      = "https://sh.dataspace.copernicus.eu"
 
@@ -32,12 +36,11 @@ S1_CDSE = DataCollection.SENTINEL1_IW.define_from(
 )
 
 # ── Supabase ─────────────────────────────────────────────────────────────────
-# Publishable (anon) key — safe to commit. Row-level security controls writes.
-# Tables: raw_observations, volume_timeseries, kharg_daily, kharg_signals.
-sb = create_client(
-    "https://yoekhkczwdeyauwarsyy.supabase.co",
-    "sb_publishable_7j07_zzdqTGM1LXf7-o9Tg_JJRbJQSM"
-)
+_sb_url = os.environ.get("SUPABASE_URL") or ""
+_sb_key = os.environ.get("SUPABASE_KEY") or ""
+if not _sb_url or not _sb_key:
+    import sys; sys.exit("FATAL: SUPABASE_URL and SUPABASE_KEY env vars must be set")
+sb = create_client(_sb_url, _sb_key)
 
 # ── SAR / imagery constants ───────────────────────────────────────────────────
 # Sentinel-1 descending orbit over Kharg: ~6-day revisit.

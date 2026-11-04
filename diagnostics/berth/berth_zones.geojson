@@ -1,0 +1,41 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "zone": "berth_east",
+        "name": "East T-Jetty (SPM + loading arms)",
+        "note": "DRAFT — drawn from ESRI imagery; requires reviewer confirmation"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[
+          [50.353, 29.230],
+          [50.390, 29.230],
+          [50.390, 29.265],
+          [50.353, 29.265],
+          [50.353, 29.230]
+        ]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "zone": "berth_west",
+        "name": "Sea Island (west loading terminal)",
+        "note": "DRAFT — drawn from ESRI imagery; requires reviewer confirmation"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[
+          [50.283, 29.190],
+          [50.315, 29.190],
+          [50.315, 29.215],
+          [50.283, 29.215],
+          [50.283, 29.190]
+        ]]
+      }
+    }
+  ]
+}

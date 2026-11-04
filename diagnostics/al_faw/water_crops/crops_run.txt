@@ -1,0 +1,17 @@
+=== ESRI crops ===
+  af_9 … saved (1084×1084px)
+  af_2 … saved (1144×1144px)
+  af_0 … saved (1152×1152px)
+  af_3 … saved (1132×1132px)
+  af_6 … saved (1118×1118px)
+
+=== S2 NDWI water fraction ===
+  af_9 … water_frac=0.000  ndwi_median=-0.221
+  af_2 … water_frac=0.000  ndwi_median=-0.187
+  af_0 … water_frac=0.000  ndwi_median=-0.197
+  af_3 … water_frac=0.000  ndwi_median=-0.190
+  af_6 … water_frac=0.000  ndwi_median=-0.193
+
+  → /home/runner/work/kharg-dashboard/kharg-dashboard/diagnostics/al_faw/water_crops/water_fractions.json
+
+Done.

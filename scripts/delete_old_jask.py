@@ -60,7 +60,7 @@ def delete_in_batches(table, col, values, batch_size=100):
     return deleted
 
 
-# ── 1. Fetch ─────────────────────────────────────────────────────────────────────────────
+# ── 1. Fetch ──────────────────────────────────────────────────────────────────
 print("Fetching terminal_observations jk_* ...")
 obs_rows = fetch_all("terminal_observations", [("tank_id", "like", "jk_%")])
 print(f"  Found: {len(obs_rows)} rows")
@@ -73,7 +73,7 @@ if not obs_rows and not vol_rows:
     print("Nothing to delete. Exiting.")
     sys.exit(0)
 
-# ── 2. Write CSVs ─────────────────────────────────────────────────────────────────────────────
+# ── 2. Write CSVs ─────────────────────────────────────────────────────────────
 obs_path = BACKUP_DIR / "jask_old_terminal_observations.csv"
 vol_path = BACKUP_DIR / "jask_old_terminal_volume_timeseries.csv"
 write_csv(obs_rows, obs_path)
@@ -81,19 +81,21 @@ write_csv(vol_rows, vol_path)
 print(f"Backup written: {obs_path} ({len(obs_rows)} rows)")
 print(f"Backup written: {vol_path} ({len(vol_rows)} rows)")
 
-# ── 3. Dry-run summary ─────────────────────────────────────────────────────────────────────────────
+# ── 3. Dry-run summary ────────────────────────────────────────────────────────
 jk_ids = list({r["tank_id"] for r in obs_rows})
 print(f"\nDRY-RUN:")
 print(f"  terminal_observations: DELETE WHERE tank_id IN {sorted(jk_ids)[:5]}... ({len(obs_rows)} rows total)")
 print(f"  terminal_volume_timeseries: DELETE WHERE terminal_id='jask' ({len(vol_rows)} rows total)")
 
-# ── 4. Delete ─────────────────────────────────────────────────────────────────────────────
+# ── 4. Delete ─────────────────────────────────────────────────────────────────
 print("\nDeleting ...")
 
+# Delete by tank_id batches (jk_0 .. jk_19)
 obs_tank_ids = list({r["tank_id"] for r in obs_rows})
 deleted_obs = delete_in_batches("terminal_observations", "tank_id", obs_tank_ids)
 print(f"  Deleted terminal_observations (tank_id groups): {deleted_obs} tank_ids, ~{len(obs_rows)} rows")
 
+# Delete terminal_volume_timeseries by terminal_id=jask
 sb.table("terminal_volume_timeseries").delete().eq("terminal_id", "jask").execute()
 print(f"  Deleted terminal_volume_timeseries jask: {len(vol_rows)} rows")
 

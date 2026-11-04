@@ -1,0 +1,14 @@
+{
+  "rt_north_centroid": {
+    "lat": 26.6883,
+    "lon": 50.1168
+  },
+  "juwaymah_centroid": {
+    "lat": 26.8192,
+    "lon": 49.9871
+  },
+  "distance_km": 19.5,
+  "separate_groups": true,
+  "duplicate_tanks": [],
+  "verdict": "rt_north (rt_5\u2013rt_10) is a SEPARATE group from Juwaymah Tank Farm. Distance 19.5 km. 0 coordinate overlaps within 500m. No double-counting risk at current registry scope. If both terminals are ever merged into a single query, they must be treated as separate physical facilities."
+}

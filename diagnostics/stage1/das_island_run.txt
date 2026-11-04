@@ -1,0 +1,60 @@
+[stage1] Terminal : das_island
+[stage1] Primary orbit: rel=64 DESC los=282
+[stage1] Survey start: 2017-01-01
+[stage1] Tanks (confirmed): 12
+[stage1] Checkpoint: 0 dates already processed
+
+[stage1] Querying catalog: descending rel=64 from 2017-01-01 …
+[stage1] Catalog: 300 scene dates
+[stage1] Pending (not yet processed): 300 dates
+[stage1] Date range: 2017-03-16 → 2026-10-08
+  … 10/300 scenes, 120 rows so far
+  … 20/300 scenes, 240 rows so far
+  … 30/300 scenes, 360 rows so far
+  … 40/300 scenes, 480 rows so far
+  … 50/300 scenes, 600 rows so far
+  … 60/300 scenes, 720 rows so far
+  … 70/300 scenes, 840 rows so far
+  … 80/300 scenes, 960 rows so far
+  … 90/300 scenes, 1080 rows so far
+  … 100/300 scenes, 1200 rows so far
+  … 110/300 scenes, 1320 rows so far
+  … 120/300 scenes, 1440 rows so far
+  … 130/300 scenes, 1560 rows so far
+  … 140/300 scenes, 1680 rows so far
+  … 150/300 scenes, 1800 rows so far
+  … 160/300 scenes, 1920 rows so far
+  … 170/300 scenes, 2040 rows so far
+  … 180/300 scenes, 2160 rows so far
+  … 190/300 scenes, 2280 rows so far
+  … 200/300 scenes, 2400 rows so far
+  … 210/300 scenes, 2520 rows so far
+  … 220/300 scenes, 2640 rows so far
+  … 230/300 scenes, 2760 rows so far
+  … 240/300 scenes, 2880 rows so far
+  … 250/300 scenes, 3000 rows so far
+  … 260/300 scenes, 3120 rows so far
+  … 270/300 scenes, 3240 rows so far
+  … 280/300 scenes, 3360 rows so far
+  … 290/300 scenes, 3480 rows so far
+  … 300/300 scenes, 3600 rows so far
+
+============================================================
+STAGE-1 BASELINE — DAS_ISLAND
+============================================================
+  Orbit                : rel=64 DESC
+  Catalog scenes       : 300
+  Scenes processed     : 300
+  Scenes skipped(err)  : 0
+  Rows prepared        : 3600
+  Distinct dates       : 300
+  Distinct tanks       : 12
+  Date range           : 2017-03-16 → 2026-10-08
+  Tanks/date (med/min/max): 12 / 12 / 12
+  db_mean (p5/p50/p95): -1.94 / 4.22 / 12.12 dB
+============================================================
+
+[stage1] Existing rows for das_island: 4485
+[stage1] Deleting existing rows …
+[stage1] Inserting 3600 rows …
+[stage1] Insert complete. das_island Stage-1 baseline committed.

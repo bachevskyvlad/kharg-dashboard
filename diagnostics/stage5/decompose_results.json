@@ -1,0 +1,70 @@
+{
+  "ras_tanura": {
+    "terminal": "ras_tanura",
+    "n_wl": 45,
+    "n_excl": 21,
+    "n_overlap": 316,
+    "corr_old_wl": 0.7885281097047545,
+    "corr_excl_wl": 0.09285989082283665,
+    "smoothed_corr_old_wl": 0.6478727811126892,
+    "smoothed_corr_excl_wl": 0.07660254666072232,
+    "san1": true,
+    "san2": true,
+    "san3": true,
+    "verdict": "HUMAN_REVIEW",
+    "top5_excl": [
+      [
+        "rt_58",
+        0.1424
+      ],
+      [
+        "rt_53",
+        0.1422
+      ],
+      [
+        "rt_48",
+        0.114
+      ],
+      [
+        "rt_43",
+        0.1004
+      ],
+      [
+        "rt_55",
+        0.0624
+      ]
+    ]
+  },
+  "yanbu": {
+    "terminal": "yanbu",
+    "n_wl": 8,
+    "n_excl": 4,
+    "n_overlap": 332,
+    "corr_old_wl": 0.7757949537383445,
+    "corr_excl_wl": -0.08999367911325082,
+    "smoothed_corr_old_wl": 0.5735697451847099,
+    "smoothed_corr_excl_wl": -0.053177335513269135,
+    "san1": true,
+    "san2": true,
+    "san3": true,
+    "verdict": "HUMAN_REVIEW",
+    "top5_excl": [
+      [
+        "yb_1",
+        -0.0895
+      ],
+      [
+        "yb_10",
+        -0.0708
+      ],
+      [
+        "yb_6",
+        -0.0313
+      ],
+      [
+        "yb_4",
+        -0.0063
+      ]
+    ]
+  }
+}

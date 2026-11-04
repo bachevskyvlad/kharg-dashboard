@@ -1,0 +1,6 @@
+pair,lag,corr,reading
+north~south,7,0.17,north leads south by 7w
+north~central,0,0.38,move together
+south~central,2,0.18,south leads central by 2w
+loading~reserve,2,0.21,loading leads reserve by 2w
+loading~swing,0,0.34,move together

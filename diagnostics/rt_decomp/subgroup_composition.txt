@@ -1,0 +1,72 @@
+Sub-series composition (frozen before correlation):
+
+south_pier (4 tanks):
+  rt_28         lat=26.64824  lon=50.15430  r=35m  dist_pier=567m
+  rt_32         lat=26.64739  lon=50.15473  r=35m  dist_pier=528m
+  rt_36         lat=26.64657  lon=50.15516  r=35m  dist_pier=507m
+  rt_44         lat=26.64416  lon=50.15638  r=35m  dist_pier=558m
+
+south_inland (37 tanks):
+  rt_11         lat=26.65166  lon=50.14832  r=35m  dist_pier=1230m
+  rt_12         lat=26.64999  lon=50.14818  r=35m  dist_pier=1196m
+  rt_13         lat=26.65086  lon=50.14895  r=35m  dist_pier=1144m
+  rt_14         lat=26.65098  lon=50.15060  r=35m  dist_pier=991m
+  rt_15         lat=26.64898  lon=50.14898  r=35m  dist_pier=1100m
+  rt_16         lat=26.64961  lon=50.14993  r=35m  dist_pier=1016m
+  rt_17         lat=26.65014  lon=50.15109  r=35m  dist_pier=917m
+  rt_18         lat=26.64803  lon=50.14973  r=35m  dist_pier=1021m
+  rt_19         lat=26.64882  lon=50.15055  r=35m  dist_pier=944m
+  rt_2          lat=26.64191  lon=50.15268  r=60m  dist_pier=994m
+  rt_20         lat=26.64934  lon=50.15173  r=35m  dist_pier=835m
+  rt_21         lat=26.64700  lon=50.15026  r=35m  dist_pier=975m
+  rt_22         lat=26.64797  lon=50.15102  r=35m  dist_pier=892m
+  rt_23         lat=26.64851  lon=50.15250  r=35m  dist_pier=747m
+  rt_24         lat=26.64887  lon=50.15344  r=35m  dist_pier=660m
+  rt_25         lat=26.64718  lon=50.15142  r=35m  dist_pier=858m
+  rt_26         lat=26.64750  lon=50.15249  r=35m  dist_pier=749m
+  rt_27         lat=26.64787  lon=50.15340  r=35m  dist_pier=656m
+  rt_29         lat=26.64627  lon=50.15197  r=35m  dist_pier=820m
+  rt_30         lat=26.64664  lon=50.15293  r=35m  dist_pier=719m
+  rt_31         lat=26.64703  lon=50.15383  r=35m  dist_pier=622m
+  rt_33         lat=26.64543  lon=50.15239  r=35m  dist_pier=808m
+  rt_34         lat=26.64583  lon=50.15335  r=35m  dist_pier=704m
+  rt_35         lat=26.64620  lon=50.15425  r=35m  dist_pier=605m
+  rt_37         lat=26.64384  lon=50.15320  r=35m  dist_pier=819m
+  rt_38         lat=26.64423  lon=50.15414  r=35m  dist_pier=717m
+  rt_4          lat=26.65208  lon=50.14992  r=60m  dist_pier=1100m
+  rt_41         lat=26.64302  lon=50.15361  r=35m  dist_pier=843m
+  rt_42         lat=26.64341  lon=50.15457  r=35m  dist_pier=743m
+  rt_57         lat=26.64043  lon=50.15817  r=35m  dist_pier=861m
+  rt_59         lat=26.64035  lon=50.15905  r=35m  dist_pier=856m
+  rt_60         lat=26.63968  lon=50.15855  r=35m  dist_pier=937m
+  rt_61         lat=26.64355  lon=50.15219  r=35m  dist_pier=920m
+  rt_62         lat=26.64514  lon=50.15145  r=35m  dist_pier=907m
+  rt_63         lat=26.64595  lon=50.15104  r=35m  dist_pier=919m
+  rt_64         lat=26.63999  lon=50.15495  r=35m  dist_pier=1022m
+  rt_65         lat=26.63759  lon=50.16045  r=20m  dist_pier=1158m
+
+north (4 tanks):
+  rt_5          lat=26.68844  lon=50.11871  r=60m  dist_pier=6087m
+  rt_6          lat=26.68701  lon=50.11797  r=60m  dist_pier=6022m
+  rt_7          lat=26.68755  lon=50.11660  r=60m  dist_pier=6160m
+  rt_8          lat=26.68909  lon=50.11719  r=60m  dist_pier=6242m
+
+t60_class (6 tanks):
+  rt_2          lat=26.64191  lon=50.15268  r=60m  dist_pier=994m
+  rt_4          lat=26.65208  lon=50.14992  r=60m  dist_pier=1100m
+  rt_5          lat=26.68844  lon=50.11871  r=60m  dist_pier=6087m
+  rt_6          lat=26.68701  lon=50.11797  r=60m  dist_pier=6022m
+  rt_7          lat=26.68755  lon=50.11660  r=60m  dist_pier=6160m
+  rt_8          lat=26.68909  lon=50.11719  r=60m  dist_pier=6242m
+
+active10 (10 tanks):
+  rt_12         lat=26.64999  lon=50.14818  r=35m  dist_pier=1196m
+  rt_17         lat=26.65014  lon=50.15109  r=35m  dist_pier=917m
+  rt_2          lat=26.64191  lon=50.15268  r=60m  dist_pier=994m
+  rt_28         lat=26.64824  lon=50.15430  r=35m  dist_pier=567m
+  rt_30         lat=26.64664  lon=50.15293  r=35m  dist_pier=719m
+  rt_31         lat=26.64703  lon=50.15383  r=35m  dist_pier=622m
+  rt_35         lat=26.64620  lon=50.15425  r=35m  dist_pier=605m
+  rt_38         lat=26.64423  lon=50.15414  r=35m  dist_pier=717m
+  rt_5          lat=26.68844  lon=50.11871  r=60m  dist_pier=6087m
+  rt_57         lat=26.64043  lon=50.15817  r=35m  dist_pier=861m

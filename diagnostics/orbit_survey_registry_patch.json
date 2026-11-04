@@ -1,0 +1,238 @@
+{
+  "jask": [
+    {
+      "relative_orbit": 57,
+      "direction": "ASCE",
+      "los_azimuth": 98
+    },
+    {
+      "relative_orbit": 93,
+      "direction": "DESC",
+      "los_azimuth": 282
+    }
+  ],
+  "lavan": [
+    {
+      "relative_orbit": 28,
+      "direction": "ASCE",
+      "los_azimuth": 98
+    },
+    {
+      "relative_orbit": 64,
+      "direction": "DESC",
+      "los_azimuth": 282
+    }
+  ],
+  "siri": [
+    {
+      "relative_orbit": 130,
+      "direction": "ASCE",
+      "los_azimuth": 98
+    },
+    {
+      "relative_orbit": 166,
+      "direction": "DESC",
+      "los_azimuth": 282
+    },
+    {
+      "relative_orbit": 64,
+      "direction": "DESC",
+      "los_azimuth": 282
+    }
+  ],
+  "al_flaw": [
+    {
+      "relative_orbit": 174,
+      "direction": "ASCE",
+      "los_azimuth": 98
+    },
+    {
+      "relative_orbit": 108,
+      "direction": "DESC",
+      "los_azimuth": 282
+    }
+  ],
+  "halul": [
+    {
+      "relative_orbit": 28,
+      "direction": "ASCE",
+      "los_azimuth": 98
+    },
+    {
+      "relative_orbit": 137,
+      "direction": "DESC",
+      "los_azimuth": 282
+    },
+    {
+      "relative_orbit": 64,
+      "direction": "DESC",
+      "los_azimuth": 282
+    }
+  ],
+  "sitra": [
+    {
+      "relative_orbit": 101,
+      "direction": "ASCE",
+      "los_azimuth": 98
+    },
+    {
+      "relative_orbit": 137,
+      "direction": "DESC",
+      "los_azimuth": 282
+    }
+  ],
+  "de_kastri": [
+    {
+      "relative_orbit": 17,
+      "direction": "DESC",
+      "los_azimuth": 282
+    },
+    {
+      "relative_orbit": 170,
+      "direction": "ASCE",
+      "los_azimuth": 98
+    }
+  ],
+  "primorsk": [
+    {
+      "relative_orbit": 80,
+      "direction": "DESC",
+      "los_azimuth": 282
+    },
+    {
+      "relative_orbit": 7,
+      "direction": "DESC",
+      "los_azimuth": 282
+    },
+    {
+      "relative_orbit": 87,
+      "direction": "ASCE",
+      "los_azimuth": 98
+    }
+  ],
+  "novorossiysk": [
+    {
+      "relative_orbit": 116,
+      "direction": "ASCE",
+      "los_azimuth": 98
+    },
+    {
+      "relative_orbit": 43,
+      "direction": "ASCE",
+      "los_azimuth": 98
+    },
+    {
+      "relative_orbit": 94,
+      "direction": "DESC",
+      "los_azimuth": 282
+    }
+  ],
+  "ras_laffan": [
+    {
+      "relative_orbit": 101,
+      "direction": "ASCE",
+      "los_azimuth": 98
+    },
+    {
+      "relative_orbit": 137,
+      "direction": "DESC",
+      "los_azimuth": 282
+    }
+  ],
+  "juwaymah": [
+    {
+      "relative_orbit": 101,
+      "direction": "ASCE",
+      "los_azimuth": 98
+    },
+    {
+      "relative_orbit": 35,
+      "direction": "DESC",
+      "los_azimuth": 282
+    }
+  ],
+  "ras_tanura": [
+    {
+      "relative_orbit": 101,
+      "direction": "ASCE",
+      "los_azimuth": 98
+    },
+    {
+      "relative_orbit": 35,
+      "direction": "DESC",
+      "los_azimuth": 282
+    }
+  ],
+  "fujairah": [
+    {
+      "relative_orbit": 130,
+      "direction": "ASCE",
+      "los_azimuth": 98
+    },
+    {
+      "relative_orbit": 57,
+      "direction": "ASCE",
+      "los_azimuth": 98
+    },
+    {
+      "relative_orbit": 166,
+      "direction": "DESC",
+      "los_azimuth": 282
+    }
+  ],
+  "zirku": [
+    {
+      "relative_orbit": 28,
+      "direction": "ASCE",
+      "los_azimuth": 98
+    },
+    {
+      "relative_orbit": 64,
+      "direction": "DESC",
+      "los_azimuth": 282
+    }
+  ],
+  "das_island": [
+    {
+      "relative_orbit": 28,
+      "direction": "ASCE",
+      "los_azimuth": 98
+    },
+    {
+      "relative_orbit": 64,
+      "direction": "DESC",
+      "los_azimuth": 282
+    }
+  ],
+  "ruwais": [
+    {
+      "relative_orbit": 28,
+      "direction": "ASCE",
+      "los_azimuth": 98
+    },
+    {
+      "relative_orbit": 64,
+      "direction": "DESC",
+      "los_azimuth": 282
+    }
+  ],
+  "mina_ahmadi": [
+    {
+      "relative_orbit": 174,
+      "direction": "ASCE",
+      "los_azimuth": 98
+    },
+    {
+      "relative_orbit": 108,
+      "direction": "DESC",
+      "los_azimuth": 282
+    }
+  ],
+  "yanbu": [
+    {
+      "relative_orbit": 14,
+      "direction": "ASCE",
+      "los_azimuth": 98
+    }
+  ]
+}

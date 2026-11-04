@@ -63,9 +63,6 @@ jobs:
         with:
           path: data/ingest_summary.json
           key: ingest-summary-${{ github.run_id }}
-      - name: Telegram — Signal Quality
-        if: success()
-        run: python3 scripts/tg_quality.py --send
       - name: Telegram — Ingest FAILED
         if: failure()
         run: |
@@ -168,13 +165,17 @@ jobs:
           LINES=$(python3 scripts/tg_summary.py)
           TEXT="$(printf '&#9989; <b>OilRadar SAR &#8212; SUCCESS</b>\n\n%s\n\n&#128197; <code>%s</code>\n&#128279; <a href="https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}">Run #${{ github.run_number }}</a>' "$LINES" "$(date -u +'%Y-%m-%d %H:%M UTC')")"
           curl -s -X POST "$TG_BOT" -d chat_id="$TG_CHAT" -d parse_mode="HTML" --data-urlencode text="$TEXT"
+      - name: Telegram — Signal Quality
+        if: success()
+        env:
+          SUPABASE_URL: https://yoekhkczwdeyauwarsyy.supabase.co
+          SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+        run: python3 scripts/tg_quality.py --send
 
   commit_data:
     runs-on: ubuntu-latest
-    needs: [gate, export, anchorage]
-    if: always() && (needs.anchorage.result == 'success' || needs.export.result == 'success')
-    permissions:
-      contents: write
+    needs: [gate, export]
+    if: always() && needs.gate.outputs.run == 'true'
     steps:
       - uses: actions/checkout@v4
         with:
@@ -193,33 +194,20 @@ jobs:
       - name: Fetch crude prices
         run: pip install yfinance --quiet && python scripts/fetch_prices.py
         continue-on-error: true
-      - name: Fetch EU gas storage
-        run: pip install requests --quiet && python scripts/fetch_gas_storage.py
-        continue-on-error: true
       - name: Export Kharg data from Supabase
         run: python scripts/export_from_supabase.py
       - name: Export Iran terminal JSON files
         run: python scripts/export_terminal_json.py
-        continue-on-error: true
-        env:
-          SUPABASE_URL: https://yoekhkczwdeyauwarsyy.supabase.co
-          SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
-      - name: Restore anchorage.json from cache
-        uses: actions/cache/restore@v4
-        with:
-          path: data/anchorage.json
-          key: anchorage-${{ github.run_id }}
         continue-on-error: true
       - name: Commit and push
         run: |
           git config user.name  "bot"
           git config user.email "bot@github.com"
           [ -f public/volume_graph.png ] && cp public/volume_graph.png volume_graph.png || true
-          git add data/
-          [ -f volume_graph.png ] && git add volume_graph.png || true
+          git add data/ volume_graph.png
           git diff --cached --quiet && echo "no changes" && exit 0
           git commit -m "auto update kharg $(date -u +'%Y-%m-%d')"
-          git pull -X ours origin main
+          git pull --rebase --autostash origin main
           git push
       - name: Telegram — Commit FAILED
         if: failure()
@@ -228,26 +216,3 @@ jobs:
             --data-urlencode text="&#10060; <b>Commit FAILED</b>
           &#128197; <code>$(date -u +'%Y-%m-%d %H:%M UTC')</code>
           &#128279; <a href='https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}'>Open logs</a>"
-
-  anchorage:
-    runs-on: ubuntu-latest
-    continue-on-error: true
-    timeout-minutes: 60
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "3.11"
-      - name: Install dependencies
-        run: pip install sentinelhub scipy numpy -q
-      - name: Run ship backfill (resume mode)
-        env:
-          CLIENT_ID:     ${{ secrets.CLIENT_ID }}
-          CLIENT_SECRET: ${{ secrets.CLIENT_SECRET }}
-        run: python scripts/ship_backfill.py --resume
-      - name: Save anchorage.json to cache
-        if: always()
-        uses: actions/cache/save@v4
-        with:
-          path: data/anchorage.json
-          key: anchorage-${{ github.run_id }}
