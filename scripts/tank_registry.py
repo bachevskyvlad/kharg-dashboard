@@ -645,14 +645,13 @@ LOCATIONS = [
     # ── Ras Tanura v2 ─────────────────────────────────────────────────────────
     # Saudi Aramco primary crude export terminal, Saudi Arabia.
     # Reviewer geometry 2026-11-04. 30 tanks (rt_26…rt_60, rt_65 excluded).
-    # LOS azimuth NOT stored here — derived from scene heading per row in pipeline.
     {
         "id": "ras_tanura_v2",
         "name": "Ras Tanura",
         "country": "SA",
         "allowed_orbits": [
-            {"relative_orbit": 35,  "direction": "DESC"},
-            {"relative_orbit": 101, "direction": "ASCE"},
+            {"relative_orbit": 35,  "direction": "DESC", "los_azimuth": 283},
+            {"relative_orbit": 101, "direction": "ASCE", "los_azimuth": 97},
         ],
         "status": "active",
         "clusters": [
