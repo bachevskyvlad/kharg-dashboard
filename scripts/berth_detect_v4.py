@@ -1,12 +1,12 @@
 """
-berth_detect_v4.py — ТЗ-7.4: Kharg berth detector, v4 changes over v3.
+berth_detect_v4.py — ТЗ-7.4 rev2: Kharg berth detector.
 
 Changes vs v3:
-  a) Merge condition: gap < 80 m AND merged total PCA length ≤ 360 m.
-  b) n_ships from kernels: each kernel blob = one ship;
-     kernel PCA length > 360 m → split_by_length=1, counts as 2 ships.
-  c) occupied threshold identical to v3 (≥150 m sea_island/east_t_head,
-     ≥100 m southeast_pier) — applied to kernel blobs.
+  a) Merge condition: gap < 80 m only (no total-length cap).
+  b) Group ≥ 120 m = ship; groups < 120 m → lengths_small_m (not counted).
+  c) n_ships per group by length: ≤420m→1, 420-780m→2, >780m→3.
+  d) occupied unchanged: kernel blob ≥ 150 m (sea_island/east_t_head),
+     ≥ 100 m (southeast_pier).
 
 Output: diagnostics/berth_v4/
   results_table.csv (60 rows)
@@ -67,10 +67,9 @@ RATIO_THR          = 10.0
 MIN_AREA_PX        = 15
 KERNEL_RATIO_THR   = 12.0   # dB — kernel threshold
 MERGE_GAP_M        = 80.0
-MERGE_MAX_LEN_M    = 360.0  # v4: merged group must be ≤ 360 m total PCA length
-SPLIT_LEN_M        = 360.0  # v4: kernel > 360 m → 2 ships
-OCCUPIED_LEN_M     = 150.0  # sea_island, east_t_head
-OCCUPIED_LEN_SP_M  = 100.0  # southeast_pier
+MIN_SHIP_GROUP_M   = 120.0   # groups < 120 m → lengths_small_m, not counted
+OCCUPIED_LEN_M     = 150.0   # sea_island, east_t_head
+OCCUPIED_LEN_SP_M  = 100.0   # southeast_pier
 WATER_RING_INNER_M = 300
 WATER_RING_OUTER_M = 800
 
@@ -320,8 +319,7 @@ def _berth_axis_px(berth):
 def kernel_blobs(ratio_db, comp_union):
     """
     Find connected components of (ratio_db > KERNEL_RATIO_THR) inside comp_union.
-    Returns list of dicts with ys, xs, length_m, n_ships.
-    n_ships=2 if length_m > SPLIT_LEN_M (split_by_length).
+    Used for occupied detection only (not for n_ships counting).
     """
     kernel_mask = comp_union & (ratio_db > KERNEL_RATIO_THR)
     labeled, n = ndimage.label(kernel_mask)
@@ -333,12 +331,9 @@ def kernel_blobs(ratio_db, comp_union):
             continue
         length_px, _, _ = pca_dims(ys_k, xs_k)
         length_m = round(length_px * RESOLUTION, 1)
-        split = length_m > SPLIT_LEN_M
         blobs.append({
             "ys": ys_k, "xs": xs_k,
             "length_m": length_m,
-            "n_ships": 2 if split else 1,
-            "split_by_length": int(split),
             "max_ratio_dB": float(ratio_db[m].max()),
             "_ys_min": int(ys_k.min()), "_ys_max": int(ys_k.max()),
             "_xs_min": int(xs_k.min()), "_xs_max": int(xs_k.max()),
@@ -346,16 +341,27 @@ def kernel_blobs(ratio_db, comp_union):
     return blobs
 
 
+def _n_ships_from_length(length_m):
+    """Rev2: n_ships per merged group by PCA length."""
+    if length_m <= 420:
+        return 1
+    elif length_m <= 780:
+        return 2
+    else:
+        return 3
+
+
 def detect_in_corridors_v4(ratio_db, corridor_masks, meta, date_str):
     """
-    v4 detection: same as v3 candidate/merge logic, with:
-      a) merge condition: gap < 80 m AND merged PCA length ≤ 360 m
-      b) ship counting from kernel blobs
+    Rev2 detection:
+      a) merge: gap < 80 m (no length cap)
+      b) group < 120 m → lengths_small_m (not counted)
+      c) n_ships per group: ≤420m→1, 420-780m→2, >780m→3
+      d) occupied: kernel blob ≥ occ_threshold
     Returns list of per-berth result dicts.
     """
     results = []
     gap_px = MERGE_GAP_M / RESOLUTION
-    merge_max_px = MERGE_MAX_LEN_M / RESOLUTION
 
     for berth, cmask in corridor_masks.items():
         ratio_in = np.where(cmask, ratio_db, -999)
@@ -385,19 +391,14 @@ def detect_in_corridors_v4(ratio_db, corridor_masks, meta, date_str):
             results.append(_empty_berth_row(date_str, meta, berth))
             continue
 
-        # Sort by projection, merge with v4 condition: gap < 80m AND total ≤ 360m
+        # Sort by projection; merge if gap < 80m (no length cap)
         raw_blobs.sort(key=lambda b: b['_proj_min'])
         groups = []
         cur = [raw_blobs[0]]
         cur_max = raw_blobs[0]['_proj_max']
         for blob in raw_blobs[1:]:
             gap = blob['_proj_min'] - cur_max
-            # tentative merged PCA length
-            all_ys = np.concatenate([b['_ys'] for b in cur] + [blob['_ys']])
-            all_xs = np.concatenate([b['_xs'] for b in cur] + [blob['_xs']])
-            merged_len_px, _, _ = pca_dims(all_ys, all_xs)
-            # v4 merge condition: gap < 80m AND merged total ≤ 360m
-            if gap < gap_px and merged_len_px <= merge_max_px:
+            if gap < gap_px:
                 cur.append(blob)
                 cur_max = max(cur_max, blob['_proj_max'])
             else:
@@ -406,49 +407,76 @@ def detect_in_corridors_v4(ratio_db, corridor_masks, meta, date_str):
                 cur_max = blob['_proj_max']
         groups.append(cur)
 
-        # Per group: compute kernel blobs → ships
+        # Per group: group-length → n_ships; kernel blobs → occupied
+        occ_thr = _occ_len(berth)
+        lengths_large = []   # groups ≥ 120 m
+        lengths_small = []   # groups < 120 m
+        n_ships_total = 0
+        split_any = 0
+        any_occupied = False
+        all_comp_union = np.zeros(ratio_db.shape, dtype=bool)
+        group_boxes = []  # for rendering: (ys_all, xs_all, group_len_m, n_ships_grp)
+
         for group in groups:
-            n_parts    = len(group)
-            ys_all     = np.concatenate([b['_ys'] for b in group])
-            xs_all     = np.concatenate([b['_xs'] for b in group])
+            n_parts = len(group)
+            ys_all  = np.concatenate([b['_ys'] for b in group])
+            xs_all  = np.concatenate([b['_xs'] for b in group])
             comp_union = np.zeros(ratio_db.shape, dtype=bool)
             for b in group:
                 comp_union |= b['_comp']
+            all_comp_union |= comp_union
 
-            kblobs = kernel_blobs(ratio_db, comp_union)
-            n_ships_total = sum(kb["n_ships"] for kb in kblobs)
-            split_any = int(any(kb["split_by_length"] for kb in kblobs))
-            lengths_m = sorted([kb["length_m"] for kb in kblobs], reverse=True)
-            max_ratio = float(ratio_db[comp_union].max())
-
-            # Occupied: any kernel blob with length ≥ occ_threshold
-            occ_thr = _occ_len(berth)
-            occupied = any(kb["length_m"] >= occ_thr for kb in kblobs)
+            group_len_px, _, _ = pca_dims(ys_all, xs_all)
+            group_len_m = round(group_len_px * RESOLUTION, 1)
 
             if n_parts > 1:
-                print(f"    [{berth}] merged {n_parts} blobs → 1 group")
+                print(f"    [{berth}] merged {n_parts} blobs → group {group_len_m:.0f}m")
 
-            results.append({
-                "date": date_str,
-                "rel_orbit": meta["rel_orbit"],
-                "platform": meta["platform"],
-                "berth": berth,
-                "occupied": occupied,
-                "n_ships": n_ships_total,
-                "lengths_m": lengths_m,
-                "n_parts": n_parts,
-                "max_ratio_dB": round(max_ratio, 2),
-                "split_by_length": split_any,
-                "_comp_union": comp_union,
-                "_kblobs": kblobs,
+            if group_len_m < MIN_SHIP_GROUP_M:
+                lengths_small.append(group_len_m)
+                continue
+
+            # Count ships from length
+            n_ships_grp = _n_ships_from_length(group_len_m)
+            split = n_ships_grp > 1
+            lengths_large.append(group_len_m)
+            n_ships_total += n_ships_grp
+            if split:
+                split_any = 1
+
+            group_boxes.append({
                 "_ys_all": ys_all, "_xs_all": xs_all,
+                "length_m": group_len_m,
+                "n_ships": n_ships_grp,
+                "split": split,
+                "_ys_min": int(ys_all.min()), "_ys_max": int(ys_all.max()),
+                "_xs_min": int(xs_all.min()), "_xs_max": int(xs_all.max()),
             })
-            print(f"    [{berth}] n_ships={n_ships_total} occupied={'YES' if occupied else 'no'} "
-                  f"lengths={lengths_m} split={split_any}")
 
-        # If no group produced a result for this berth, add empty row
-        if not any(r["berth"] == berth for r in results):
-            results.append(_empty_berth_row(date_str, meta, berth))
+            # Occupied: any kernel blob inside this group ≥ occ_threshold
+            kblobs = kernel_blobs(ratio_db, comp_union)
+            if any(kb["length_m"] >= occ_thr for kb in kblobs):
+                any_occupied = True
+
+        max_ratio = float(ratio_db[all_comp_union].max()) if all_comp_union.any() else 0.0
+
+        results.append({
+            "date":            date_str,
+            "rel_orbit":       meta["rel_orbit"],
+            "platform":        meta["platform"],
+            "berth":           berth,
+            "occupied":        any_occupied,
+            "n_ships":         n_ships_total,
+            "lengths_m":       sorted(lengths_large, reverse=True),
+            "lengths_small_m": sorted(lengths_small, reverse=True),
+            "n_parts":         sum(len(g) for g in groups),
+            "max_ratio_dB":    round(max_ratio, 2),
+            "split_by_length": split_any,
+            "_comp_union":     all_comp_union,
+            "_group_boxes":    group_boxes,
+        })
+        print(f"    [{berth}] n_ships={n_ships_total} occ={'YES' if any_occupied else 'no'} "
+              f"lengths={sorted(lengths_large, reverse=True)} small={sorted(lengths_small, reverse=True)}")
 
     return results
 
@@ -457,9 +485,9 @@ def _empty_berth_row(date_str, meta, berth):
     return {
         "date": date_str, "rel_orbit": meta["rel_orbit"],
         "platform": meta["platform"], "berth": berth,
-        "occupied": False, "n_ships": 0, "lengths_m": [],
+        "occupied": False, "n_ships": 0, "lengths_m": [], "lengths_small_m": [], "lengths_small_m": [],
         "n_parts": 0, "max_ratio_dB": 0.0, "split_by_length": 0,
-        "_comp_union": None, "_kblobs": [], "_ys_all": np.array([]), "_xs_all": np.array([]),
+        "_comp_union": None, "_group_boxes": [],
     }
 
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -512,27 +540,40 @@ def render_v4(scene_linear, bg_linear, ratio_db_norm,
     rt_db = ratio_db_norm[r0:r1, c0:c1]
     cmask_crop = corridor_mask[r0:r1, c0:c1]
 
-    # Build kernel mask for panel 4
-    kernel_mask = np.zeros(rt_db.shape, dtype=bool)
-    ship_boxes  = []  # (x0,y0,x1,y1, ship_num, length_m)
-    ship_num = 0
+    # Build group-based ship boxes for panel 4
+    ship_boxes  = []  # (x0,y0,x1,y1, label, length_m)
+    ship_num_start = 0
     for res in berth_results:
-        for kb in res.get("_kblobs", []):
-            ship_num += 1
-            ys_k = kb["ys"] - r0
-            xs_k = kb["xs"] - c0
-            valid = (ys_k >= 0) & (ys_k < rt_db.shape[0]) & (xs_k >= 0) & (xs_k < rt_db.shape[1])
-            if valid.any():
-                kernel_mask[ys_k[valid], xs_k[valid]] = True
-            bx0 = max(0, kb["_xs_min"] - c0 - 3)
-            bx1 = min(rt_db.shape[1], kb["_xs_max"] - c0 + 3)
-            by0 = max(0, kb["_ys_min"] - r0 - 3)
-            by1 = min(rt_db.shape[0], kb["_ys_max"] - r0 + 3)
-            # If split, label as "Xa" / "Xb"
-            if kb["split_by_length"]:
-                ship_boxes.append((bx0, by0, bx1, by1, f"{ship_num}a/{ship_num}b", kb["length_m"]))
+        for gb in res.get("_group_boxes", []):
+            ship_num_start += 1
+            bx0 = max(0, gb["_xs_min"] - c0 - 3)
+            bx1 = min(rt_db.shape[1], gb["_xs_max"] - c0 + 3)
+            by0 = max(0, gb["_ys_min"] - r0 - 3)
+            by1 = min(rt_db.shape[0], gb["_ys_max"] - r0 + 3)
+            n = gb["n_ships"]
+            if n > 1:
+                label = f"{ship_num_start}×{n}"
             else:
-                ship_boxes.append((bx0, by0, bx1, by1, str(ship_num), kb["length_m"]))
+                label = str(ship_num_start)
+            ship_boxes.append((bx0, by0, bx1, by1, label, gb["length_m"]))
+
+    # Also paint kernel pixels for visual reference on panel 4
+    kernel_mask = np.zeros(rt_db.shape, dtype=bool)
+    comp_union = None
+    for res in berth_results:
+        cu = res.get("_comp_union")
+        if cu is not None:
+            if comp_union is None:
+                comp_union = cu
+            else:
+                comp_union |= cu
+    if comp_union is not None:
+        kernel_px = comp_union & (ratio_db_norm > KERNEL_RATIO_THR)
+        ky, kx = np.where(kernel_px)
+        ky2 = ky - r0; kx2 = kx - c0
+        valid = (ky2 >= 0) & (ky2 < rt_db.shape[0]) & (kx2 >= 0) & (kx2 < rt_db.shape[1])
+        if valid.any():
+            kernel_mask[ky2[valid], kx2[valid]] = True
 
     occupied = any(r["occupied"] for r in berth_results)
     n_ships  = sum(r["n_ships"] for r in berth_results)
@@ -591,7 +632,7 @@ def render_v4(scene_linear, bg_linear, ratio_db_norm,
 # ═══════════════════════════════════════════════════════════════════════════════
 
 RES_FIELDS = ["date", "rel_orbit", "platform", "berth",
-              "occupied", "n_ships", "lengths_m",
+              "occupied", "n_ships", "lengths_m", "lengths_small_m",
               "n_parts", "max_ratio_dB", "split_by_length", "run_id"]
 
 
@@ -600,8 +641,9 @@ def write_results_csv(rows, path):
         w = csv.DictWriter(f, fieldnames=RES_FIELDS)
         w.writeheader()
         for r in rows:
-            row = {k: r[k] for k in RES_FIELDS}
+            row = {k: r.get(k, "") for k in RES_FIELDS}
             row["lengths_m"] = str(row["lengths_m"])
+            row["lengths_small_m"] = str(row["lengths_small_m"])
             w.writerow(row)
     print(f"results_table.csv: {path} ({len(rows)} rows)")
 
@@ -647,7 +689,7 @@ def main():
                     all_result_rows.append({
                         "date": date_str, "rel_orbit": orbit,
                         "platform": "", "berth": berth,
-                        "occupied": False, "n_ships": 0, "lengths_m": [],
+                        "occupied": False, "n_ships": 0, "lengths_m": [], "lengths_small_m": [],
                         "n_parts": 0, "max_ratio_dB": 0.0, "split_by_length": 0,
                         "run_id": run_id,
                     })
@@ -663,7 +705,7 @@ def main():
                     all_result_rows.append({
                         "date": date_str, "rel_orbit": orbit,
                         "platform": meta["platform"], "berth": berth,
-                        "occupied": False, "n_ships": 0, "lengths_m": [],
+                        "occupied": False, "n_ships": 0, "lengths_m": [], "lengths_small_m": [],
                         "n_parts": 0, "max_ratio_dB": 0.0, "split_by_length": 0,
                         "run_id": run_id,
                     })
@@ -676,7 +718,7 @@ def main():
                     all_result_rows.append({
                         "date": date_str, "rel_orbit": orbit,
                         "platform": meta["platform"], "berth": berth,
-                        "occupied": False, "n_ships": 0, "lengths_m": [],
+                        "occupied": False, "n_ships": 0, "lengths_m": [], "lengths_small_m": [],
                         "n_parts": 0, "max_ratio_dB": 0.0, "split_by_length": 0,
                         "run_id": run_id,
                     })
@@ -702,25 +744,27 @@ def main():
                 n_ships      = sum(r["n_ships"] for r in bd)
                 occupied     = any(r["occupied"] for r in bd)
                 lengths_m    = sorted([l for r in bd for l in r["lengths_m"]], reverse=True)
+                lengths_sm   = sorted([l for r in bd for l in r.get("lengths_small_m", [])], reverse=True)
                 n_parts      = sum(r["n_parts"] for r in bd)
                 max_ratio    = max((r["max_ratio_dB"] for r in bd), default=0.0)
                 split_any    = int(any(r["split_by_length"] for r in bd))
 
                 all_result_rows.append({
-                    "date":           date_str,
-                    "rel_orbit":      orbit,
-                    "platform":       meta["platform"],
-                    "berth":          berth,
-                    "occupied":       occupied,
-                    "n_ships":        n_ships,
-                    "lengths_m":      lengths_m,
-                    "n_parts":        n_parts,
-                    "max_ratio_dB":   round(max_ratio, 2),
+                    "date":            date_str,
+                    "rel_orbit":       orbit,
+                    "platform":        meta["platform"],
+                    "berth":           berth,
+                    "occupied":        occupied,
+                    "n_ships":         n_ships,
+                    "lengths_m":       lengths_m,
+                    "lengths_small_m": lengths_sm,
+                    "n_parts":         n_parts,
+                    "max_ratio_dB":    round(max_ratio, 2),
                     "split_by_length": split_any,
-                    "run_id":         run_id,
+                    "run_id":          run_id,
                 })
 
-                # Render PNG
+                # Render PNG (bd already has _group_boxes / _comp_union)
                 render_v4(scene_linear, bg_linear, ratio_db_norm,
                           berth, corridor_masks[berth], bd,
                           date_str, orbit, OUT_DIR)
@@ -739,12 +783,33 @@ def main():
     print(f"occupied cells     : {occupied_count} / {len(all_result_rows)}")
 
     # Print table
-    print(f"\n{'date':<12} {'orbit':>5} {'berth':<18} {'occ':>4} {'n_ships':>7} {'lengths_m':<30} {'split':>5}")
-    print("-" * 85)
+    print(f"\n{'date':<12} {'orbit':>5} {'berth':<18} {'occ':>4} {'n_ships':>7} {'lengths_m':<35} {'small_m':<25} {'split':>5}")
+    print("-" * 100)
     for r in all_result_rows:
         print(f"{r['date']:<12} {r['rel_orbit']:>5} {r['berth']:<18} "
               f"{'Y' if r['occupied'] else 'n':>4} {r['n_ships']:>7} "
-              f"{str(r['lengths_m']):<30} {r['split_by_length']:>5}")
+              f"{str(r['lengths_m']):<35} {str(r.get('lengths_small_m',[])):<25} {r['split_by_length']:>5}")
+
+    # Create labels_template.csv
+    labels_path = OUT_DIR / "labels_template.csv"
+    with open(labels_path, "w", newline="") as f:
+        import csv as _csv
+        w = _csv.DictWriter(f, fieldnames=["date", "rel_orbit", "berth", "png_file"])
+        w.writeheader()
+        for r in all_result_rows:
+            png_name = f"{r['date']}_{r['rel_orbit']}_{r['berth']}.png"
+            w.writerow({"date": r["date"], "rel_orbit": r["rel_orbit"],
+                        "berth": r["berth"], "png_file": png_name})
+    print(f"labels_template.csv: {labels_path}")
+
+    # Create berth_v4_png.zip
+    import zipfile
+    zip_path = OUT_DIR / "berth_v4_png.zip"
+    pngs = sorted(OUT_DIR.glob("????-??-??_*_*.png"))
+    with zipfile.ZipFile(zip_path, "w", zipfile.ZIP_DEFLATED) as zf:
+        for p in pngs:
+            zf.write(p, p.name)
+    print(f"berth_v4_png.zip: {zip_path} ({len(pngs)} files)")
 
 
 if __name__ == "__main__":

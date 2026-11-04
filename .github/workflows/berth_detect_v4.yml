@@ -27,7 +27,16 @@ jobs:
           CLIENT_ID: ${{ secrets.CLIENT_ID }}
           CLIENT_SECRET: ${{ secrets.CLIENT_SECRET }}
 
-      - name: Upload results
+      - name: Upload PNG zip + labels
+        uses: actions/upload-artifact@v4
+        with:
+          name: berth_v4_png_zip
+          path: |
+            diagnostics/berth_v4/berth_v4_png.zip
+            diagnostics/berth_v4/labels_template.csv
+          retention-days: 90
+
+      - name: Upload all results
         uses: actions/upload-artifact@v4
         with:
           name: berth_v4_results
@@ -39,5 +48,5 @@ jobs:
           git config user.email "actions@github.com"
           git config user.name "GitHub Actions"
           git add diagnostics/berth_v4/
-          git commit -m "data: berth_detect_v4 results [skip ci]" || echo "nothing to commit"
+          git commit -m "data: berth_detect_v4 rev2 results [skip ci]" || echo "nothing to commit"
           git push origin claude/oilradar-dashboard-iran-zchdva
