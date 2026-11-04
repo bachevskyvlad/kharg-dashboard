@@ -1,0 +1,43 @@
+name: Berth Detect v4
+
+on:
+  workflow_dispatch:
+    inputs:
+      dates:
+        description: "Space-separated dates YYYY-MM-DD"
+        required: true
+        default: "2019-01-15 2019-03-08 2019-06-24 2020-01-10 2020-03-14 2020-06-14 2020-06-30 2021-01-08 2021-04-10 2021-06-25 2022-01-15 2022-06-16 2023-07-09 2024-01-13 2024-06-29 2024-07-03 2025-01-07 2025-01-11 2026-04-14 2026-04-18"
+
+jobs:
+  detect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 350
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: claude/oilradar-dashboard-iran-zchdva
+
+      - name: Install dependencies
+        run: pip install sentinelhub scipy numpy matplotlib shapely -q
+
+      - name: Run berth detect v4
+        run: python scripts/berth_detect_v4.py --dates ${{ github.event.inputs.dates }}
+        env:
+          CLIENT_ID: ${{ secrets.CLIENT_ID }}
+          CLIENT_SECRET: ${{ secrets.CLIENT_SECRET }}
+
+      - name: Upload results
+        uses: actions/upload-artifact@v4
+        with:
+          name: berth_v4_results
+          path: diagnostics/berth_v4/
+          retention-days: 90
+
+      - name: Commit results
+        run: |
+          git config user.email "actions@github.com"
+          git config user.name "GitHub Actions"
+          git add diagnostics/berth_v4/
+          git commit -m "data: berth_detect_v4 results [skip ci]" || echo "nothing to commit"
+          git push origin claude/oilradar-dashboard-iran-zchdva
