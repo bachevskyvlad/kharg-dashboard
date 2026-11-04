@@ -1,1 +1,904 @@
-/home/user/kharg-dashboard/scripts/tank_registry.py
+"""
+tank_registry.py — Source of truth for all terminal locations and tank geometry.
+
+Structure: LOCATIONS list → each entry is one terminal with its tanks.
+
+Per terminal:
+  id          — machine identifier (used in Supabase as terminal_id)
+  name        — human name
+  country     — ISO 3166-1 alpha-2
+  los_azimuth — Sentinel-1 line-of-sight azimuth for crescent mask direction (degrees)
+  status      — "active" | "legacy"
+
+Per tank:
+  id          — unique across all terminals (prefix_index, e.g. t60_0, jk_3)
+  lat / lon   — WGS84 centre of the tank roof
+  radius_m    — RADIUS from tank centre to the inner wall edge, in metres
+                  (diameter = 2 × radius_m; the SAR crescent sits at the far wall)
+  h_max_m     — maximum fill height in metres (from API 650 floating-roof aspect ratios)
+  uncertain   — True if tank existence/operability not confirmed (optional field)
+  notes       — free-text anomaly note (optional field)
+
+Radius groups and corresponding h_max (API 650 standard):
+  r=60m → h_max=18m   (t60 class, largest)
+  r=55m → h_max=17m   (t55 class, main cluster)
+  r=40m → h_max=14m   (t40 class, mid-size)
+  r=35m → h_max=13m   (jk/lv/af mid)
+  r=25m → h_max=12m   (t25 class, smallest at Kharg)
+  r=20m → h_max=9m    (lv small)
+  r=15m → h_max=7m    (lv smallest)
+
+To add a tank: append to the relevant terminal's "tanks" list with correct
+id prefix and satellite-measured lat/lon/radius. Then re-run the full SAR
+pipeline with force_reset=true to recalculate global percentiles.
+
+To add a terminal: append a new dict to LOCATIONS, then wire it into
+multi_terminal_pipeline.py and export_terminal_json.py.
+"""
+
+LOCATIONS = [
+
+    # ── Kharg Island ─────────────────────────────────────────────────────────
+    # Primary Iranian crude export terminal (~90% of Iranian exports).
+    # 47 tanks. Max theoretical capacity ≈ 33.2 Mn bbl.
+    # Known outliers:
+    #   t55_5, t55_10  → mean dB >14 over 18 months → likely idle/offline
+    #   t55_31, t60_1  → mean dB <1 chronically → probable strategic reserve
+    #   t60_2, t55_17  → std >6 dB → primary active loading terminals
+    {
+        "id": "kharg",
+        "name": "Kharg Island",
+        "country": "IR",
+        "los_azimuth": 282,
+        "status": "active",
+        "tanks": [
+            # ── t60 cluster (5 tanks, southern shore) ────────────────────────
+            {"id": "t60_0", "lat": 29.22173338156137,  "lon": 50.31654819949878,  "radius_m": 60, "h_max_m": 18},
+            {"id": "t60_1", "lat": 29.221638820210273, "lon": 50.315043243946754, "radius_m": 60, "h_max_m": 18},
+            {"id": "t60_2", "lat": 29.221840470329855, "lon": 50.31352911803618,  "radius_m": 60, "h_max_m": 18},
+            {"id": "t60_3", "lat": 29.223156804822317, "lon": 50.315849029771684, "radius_m": 60, "h_max_m": 18},
+            {"id": "t60_4", "lat": 29.222897954869325, "lon": 50.3144195158663,   "radius_m": 60, "h_max_m": 18},
+            # ── t55 cluster (17 tanks, central-northern) ─────────────────────
+            {"id": "t55_5",  "lat": 29.23596908236423,  "lon": 50.31262041733899,  "radius_m": 55, "h_max_m": 17},
+            {"id": "t55_6",  "lat": 29.236450714039865, "lon": 50.31093940154909,  "radius_m": 55, "h_max_m": 17},
+            {"id": "t55_7",  "lat": 29.237953299445927, "lon": 50.31084946173491,  "radius_m": 55, "h_max_m": 17},
+            {"id": "t55_8",  "lat": 29.239068986858886, "lon": 50.30968216852048,  "radius_m": 55, "h_max_m": 17},
+            {"id": "t55_9",  "lat": 29.238926386438376, "lon": 50.306814019231595, "radius_m": 55, "h_max_m": 17},
+            {"id": "t55_10", "lat": 29.237608159424354, "lon": 50.30726790052075,  "radius_m": 55, "h_max_m": 17},
+            {"id": "t55_11", "lat": 29.236277626607237, "lon": 50.307724616432196, "radius_m": 55, "h_max_m": 17},
+            {"id": "t55_12", "lat": 29.23632825886285,  "lon": 50.30930379724654,  "radius_m": 55, "h_max_m": 17},
+            {"id": "t55_13", "lat": 29.234972729277782, "lon": 50.3081865326845,   "radius_m": 55, "h_max_m": 17},
+            {"id": "t55_14", "lat": 29.23511372342508,  "lon": 50.30981988700097,  "radius_m": 55, "h_max_m": 17},
+            {"id": "t55_15", "lat": 29.233643820114974, "lon": 50.30863801777735,  "radius_m": 55, "h_max_m": 17},
+            {"id": "t55_16", "lat": 29.233830846966335, "lon": 50.31028094525233,  "radius_m": 55, "h_max_m": 17},
+            {"id": "t55_17", "lat": 29.23144045674206,  "lon": 50.308740382712706, "radius_m": 55, "h_max_m": 17},
+            {"id": "t55_18", "lat": 29.231783644202153, "lon": 50.310385461009616, "radius_m": 55, "h_max_m": 17},
+            {"id": "t55_19", "lat": 29.232076421746672, "lon": 50.312234207587345, "radius_m": 55, "h_max_m": 17},
+            {"id": "t55_20", "lat": 29.23021527314446,  "lon": 50.3101614506557,   "radius_m": 55, "h_max_m": 17},
+            {"id": "t55_21", "lat": 29.228871179764596, "lon": 50.309966015820464, "radius_m": 55, "h_max_m": 17},
+            # ── t40 cluster (9 tanks, central) ───────────────────────────────
+            {"id": "t40_22", "lat": 29.22952889859548,  "lon": 50.312187062458655, "radius_m": 40, "h_max_m": 14},
+            {"id": "t40_23", "lat": 29.22976318244905,  "lon": 50.313501526357314, "radius_m": 40, "h_max_m": 14},
+            {"id": "t40_24", "lat": 29.229963868790236, "lon": 50.31481471193477,  "radius_m": 40, "h_max_m": 14},
+            {"id": "t40_25", "lat": 29.228423649589555, "lon": 50.31244141506387,  "radius_m": 40, "h_max_m": 14},
+            {"id": "t40_26", "lat": 29.228616543309535, "lon": 50.313733669284346, "radius_m": 40, "h_max_m": 14},
+            {"id": "t40_27", "lat": 29.22881135666992,  "lon": 50.31501996070619,  "radius_m": 40, "h_max_m": 14},
+            {"id": "t40_28", "lat": 29.22720915866873,  "lon": 50.312698386632235, "radius_m": 40, "h_max_m": 14},
+            {"id": "t40_29", "lat": 29.227435720069668, "lon": 50.31399368455909,  "radius_m": 40, "h_max_m": 14},
+            {"id": "t40_30", "lat": 29.227640813983122, "lon": 50.31526721678495,  "radius_m": 40, "h_max_m": 14},
+            # ── t55_31 — strategic reserve tank, added after initial mapping ──
+            {"id": "t55_31", "lat": 29.232346117474552, "lon": 50.313766336270064, "radius_m": 55, "h_max_m": 17,
+             "notes": "Chronically full (dB <1). Probable strategic reserve."},
+            # ── t40 additions (3 tanks, western row) ─────────────────────────
+            {"id": "t40_32", "lat": 29.230717804109947, "lon": 50.31192906218232,  "radius_m": 40, "h_max_m": 14},
+            {"id": "t40_33", "lat": 29.230947410364493, "lon": 50.31324186520479,  "radius_m": 40, "h_max_m": 14},
+            {"id": "t40_34", "lat": 29.231135117157258, "lon": 50.31454377331308,  "radius_m": 40, "h_max_m": 14},
+            # ── t25 cluster (12 tanks, eastern rows) ─────────────────────────
+            {"id": "t25_35", "lat": 29.226211162396392, "lon": 50.31288089406942,  "radius_m": 25, "h_max_m": 12},
+            {"id": "t25_36", "lat": 29.226383532289553, "lon": 50.313809940357444, "radius_m": 25, "h_max_m": 12},
+            {"id": "t25_37", "lat": 29.226542892768347, "lon": 50.31474811903658,  "radius_m": 25, "h_max_m": 12},
+            {"id": "t25_38", "lat": 29.226689095834363, "lon": 50.31565041182445,  "radius_m": 25, "h_max_m": 12},
+            {"id": "t25_39", "lat": 29.22515641565613,  "lon": 50.31310639099006,  "radius_m": 25, "h_max_m": 12},
+            {"id": "t25_40", "lat": 29.22532307473051,  "lon": 50.31405678957588,  "radius_m": 25, "h_max_m": 12},
+            {"id": "t25_41", "lat": 29.225474230400657, "lon": 50.31496277701283,  "radius_m": 25, "h_max_m": 12},
+            {"id": "t25_42", "lat": 29.22561536435356,  "lon": 50.315886541434466, "radius_m": 25, "h_max_m": 12},
+            {"id": "t25_43", "lat": 29.22435349448338,  "lon": 50.313281303050275, "radius_m": 25, "h_max_m": 12},
+            {"id": "t25_44", "lat": 29.224512933127766, "lon": 50.31422412891253,  "radius_m": 25, "h_max_m": 12},
+            {"id": "t25_45", "lat": 29.224656215116465, "lon": 50.31513496008376,  "radius_m": 25, "h_max_m": 12},
+            {"id": "t25_46", "lat": 29.22481810164328,  "lon": 50.316063441149545, "radius_m": 25, "h_max_m": 12},
+        ],
+    },
+
+    # ── Goreh-Omid ───────────────────────────────────────────────────────────
+    # Iranian crude terminal, Persian Gulf (~15 km NE of Kharg).
+    # geom_source: reviewer_2026-11-03
+    # r=55 → h_max=16.7 m (nominal from rated capacity); r=42 → h_max=14.3 m
+    {
+        "id": "goreh_omid",
+        "name": "Goreh-Omid",
+        "country": "IR",
+        "status": "active",
+        "allowed_orbits": [
+            {"relative_orbit": 35,  "direction": "DESC", "los_azimuth": 282},
+            {"relative_orbit": 101, "direction": "ASCE", "los_azimuth": 98},
+        ],
+        "tanks": [
+            {"id": "goreh_omid_01", "lat": 29.83639, "lon": 50.45355, "radius_m": 55, "h_max_m": 16.7, "geom_source": "reviewer_2026-11-03"},
+            {"id": "goreh_omid_02", "lat": 29.83462, "lon": 50.45071, "radius_m": 55, "h_max_m": 16.7, "geom_source": "reviewer_2026-11-03"},
+            {"id": "goreh_omid_03", "lat": 29.83479, "lon": 50.45267, "radius_m": 55, "h_max_m": 16.7, "geom_source": "reviewer_2026-11-03"},
+            {"id": "goreh_omid_04", "lat": 29.83300, "lon": 50.44973, "radius_m": 55, "h_max_m": 16.7, "geom_source": "reviewer_2026-11-03"},
+            {"id": "goreh_omid_05", "lat": 29.83207, "lon": 50.45680, "radius_m": 55, "h_max_m": 16.7, "geom_source": "reviewer_2026-11-03"},
+            {"id": "goreh_omid_06", "lat": 29.83066, "lon": 50.45568, "radius_m": 55, "h_max_m": 16.7, "geom_source": "reviewer_2026-11-03"},
+            {"id": "goreh_omid_07", "lat": 29.83027, "lon": 50.45389, "radius_m": 55, "h_max_m": 16.7, "geom_source": "reviewer_2026-11-03"},
+            {"id": "goreh_omid_08", "lat": 29.82889, "lon": 50.45282, "radius_m": 55, "h_max_m": 16.7, "geom_source": "reviewer_2026-11-03"},
+            {"id": "goreh_omid_09", "lat": 29.83445, "lon": 50.45707, "radius_m": 42, "h_max_m": 14.3, "geom_source": "reviewer_2026-11-03"},
+            {"id": "goreh_omid_10", "lat": 29.83394, "lon": 50.45860, "radius_m": 42, "h_max_m": 14.3, "geom_source": "reviewer_2026-11-03"},
+        ],
+    },
+
+    # ── Jask ─────────────────────────────────────────────────────────────────
+    # Iranian terminal near Strait of Hormuz mouth. Strategic bypass route.
+    # Tanks built ~2021–2024; full history from 2017-01-01 ingested.
+    # geom_source v2: reviewer_2026-11-03 (uniform r=40, h=15.8 m)
+    # Previous geometry (jk_0..19, esri_z18 + eye_r_esri) superseded.
+    {
+        "id": "jask",
+        "allowed_orbits": [
+            {"relative_orbit": 93, "direction": "DESC", "los_azimuth": 282},
+            {"relative_orbit": 57, "direction": "ASCE", "los_azimuth": 98},
+        ],
+        "name": "Jask",
+        "country": "IR",
+        "status": "active",
+        "tanks": [
+            {"id": "jask_01", "lat": 25.86127, "lon": 57.30133, "radius_m": 40, "h_max_m": 15.8, "geom_source": "reviewer_2026-11-03"},
+            {"id": "jask_02", "lat": 25.86151, "lon": 57.30274, "radius_m": 40, "h_max_m": 15.8, "geom_source": "reviewer_2026-11-03"},
+            {"id": "jask_03", "lat": 25.86000, "lon": 57.30160, "radius_m": 40, "h_max_m": 15.8, "geom_source": "reviewer_2026-11-03"},
+            {"id": "jask_04", "lat": 25.86024, "lon": 57.30301, "radius_m": 40, "h_max_m": 15.8, "geom_source": "reviewer_2026-11-03"},
+            {"id": "jask_05", "lat": 25.86195, "lon": 57.30518, "radius_m": 40, "h_max_m": 15.8, "geom_source": "reviewer_2026-11-03"},
+            {"id": "jask_06", "lat": 25.86220, "lon": 57.30658, "radius_m": 40, "h_max_m": 15.8, "geom_source": "reviewer_2026-11-03"},
+            {"id": "jask_07", "lat": 25.86069, "lon": 57.30545, "radius_m": 40, "h_max_m": 15.8, "geom_source": "reviewer_2026-11-03"},
+            {"id": "jask_08", "lat": 25.86093, "lon": 57.30686, "radius_m": 40, "h_max_m": 15.8, "geom_source": "reviewer_2026-11-03"},
+            {"id": "jask_09", "lat": 25.85847, "lon": 57.30593, "radius_m": 40, "h_max_m": 15.8, "geom_source": "reviewer_2026-11-03"},
+            {"id": "jask_10", "lat": 25.85871, "lon": 57.30733, "radius_m": 40, "h_max_m": 15.8, "geom_source": "reviewer_2026-11-03"},
+            {"id": "jask_11", "lat": 25.85712, "lon": 57.30628, "radius_m": 40, "h_max_m": 15.8, "geom_source": "reviewer_2026-11-03"},
+            {"id": "jask_12", "lat": 25.85745, "lon": 57.30761, "radius_m": 40, "h_max_m": 15.8, "geom_source": "reviewer_2026-11-03"},
+            {"id": "jask_13", "lat": 25.85430, "lon": 57.30283, "radius_m": 40, "h_max_m": 15.8, "geom_source": "reviewer_2026-11-03"},
+            {"id": "jask_14", "lat": 25.85455, "lon": 57.30423, "radius_m": 40, "h_max_m": 15.8, "geom_source": "reviewer_2026-11-03"},
+            {"id": "jask_15", "lat": 25.85303, "lon": 57.30310, "radius_m": 40, "h_max_m": 15.8, "geom_source": "reviewer_2026-11-03"},
+            {"id": "jask_16", "lat": 25.85328, "lon": 57.30451, "radius_m": 40, "h_max_m": 15.8, "geom_source": "reviewer_2026-11-03"},
+            {"id": "jask_17", "lat": 25.85497, "lon": 57.30668, "radius_m": 40, "h_max_m": 15.8, "geom_source": "reviewer_2026-11-03"},
+            {"id": "jask_18", "lat": 25.85523, "lon": 57.30808, "radius_m": 40, "h_max_m": 15.8, "geom_source": "reviewer_2026-11-03"},
+            {"id": "jask_19", "lat": 25.85372, "lon": 57.30695, "radius_m": 40, "h_max_m": 15.8, "geom_source": "reviewer_2026-11-03"},
+            {"id": "jask_20", "lat": 25.85396, "lon": 57.30835, "radius_m": 40, "h_max_m": 15.8, "geom_source": "reviewer_2026-11-03"},
+        ],
+    },
+
+    # ── Bahregan ──────────────────────────────────────────────────────────────
+    # Iranian crude terminal, Persian Gulf (~20 km W of Goreh-Omid).
+    # geom_source: reviewer_2026-11-03
+    # r=55 → h=16.7 m; r=37 → h=18.5 m (unconfirmed capacity — bahregan gate п.2)
+    # NOT included: bahregan_06, 08, 10, 12, 14 (r=22)
+    {
+        "id": "bahregan",
+        "name": "Bahregan",
+        "country": "IR",
+        "status": "active",
+        "allowed_orbits": [
+            {"relative_orbit": 35,  "direction": "DESC", "los_azimuth": 282},
+            {"relative_orbit": 101, "direction": "ASCE", "los_azimuth": 98},
+        ],
+        "tanks": [
+            {"id": "bahregan_01", "lat": 29.82638, "lon": 50.26977, "radius_m": 37, "h_max_m": 18.5, "geom_source": "reviewer_2026-11-03"},
+            {"id": "bahregan_02", "lat": 29.82545, "lon": 50.27024, "radius_m": 37, "h_max_m": 18.5, "geom_source": "reviewer_2026-11-03"},
+            {"id": "bahregan_03", "lat": 29.82436, "lon": 50.27022, "radius_m": 37, "h_max_m": 18.5, "geom_source": "reviewer_2026-11-03"},
+            {"id": "bahregan_04", "lat": 29.82568, "lon": 50.27207, "radius_m": 55, "h_max_m": 16.7, "geom_source": "reviewer_2026-11-03"},
+            {"id": "bahregan_05", "lat": 29.82419, "lon": 50.27219, "radius_m": 55, "h_max_m": 16.7, "geom_source": "reviewer_2026-11-03"},
+            {"id": "bahregan_07", "lat": 29.82533, "lon": 50.27382, "radius_m": 37, "h_max_m": 18.5, "geom_source": "reviewer_2026-11-03"},
+            {"id": "bahregan_09", "lat": 29.82675, "lon": 50.27514, "radius_m": 37, "h_max_m": 18.5, "geom_source": "reviewer_2026-11-03"},
+            {"id": "bahregan_11", "lat": 29.82447, "lon": 50.27583, "radius_m": 37, "h_max_m": 18.5, "geom_source": "reviewer_2026-11-03"},
+            {"id": "bahregan_13", "lat": 29.82600, "lon": 50.27703, "radius_m": 37, "h_max_m": 18.5, "geom_source": "reviewer_2026-11-03"},
+        ],
+    },
+
+    # ── Lavan Island ─────────────────────────────────────────────────────────
+    # Iranian island terminal, Persian Gulf. Mixed tank sizes.
+    {
+        "id": "lavan",
+        "geom_source": "esri_z18",
+        "allowed_orbits": [
+            {"relative_orbit": 64, "direction": "DESC", "los_azimuth": 282},
+            {"relative_orbit": 28, "direction": "ASCE", "los_azimuth": 98}
+        ],
+        "name": "Lavan Island",
+        "country": "IR",
+        "status": "active",
+        "tanks": [
+            {"id": "lv_0", "lat": 26.799002024, "lon": 53.353523345, "radius_m": 22.6, "h_max_m": 9, "geom_source": "esri_z18"},
+            {"id": "lv_1", "lat": 26.798528361, "lon": 53.353567725, "radius_m": 18.5, "h_max_m": 9, "geom_source": "esri_z18", "disabled": True, "note": "below_sar_resolution"},
+            {"id": "lv_2", "lat": 26.799123704, "lon": 53.354636674, "radius_m": 20.4, "h_max_m": 9, "geom_source": "esri_z18"},
+            {"id": "lv_3", "lat": 26.798608792, "lon": 53.35469923, "radius_m": 17.4, "h_max_m": 9, "geom_source": "esri_z18", "disabled": True, "note": "below_sar_resolution"},
+            {"id": "lv_4", "lat": 26.798373276, "lon": 53.35236086, "radius_m": 15.0, "h_max_m": 7, "geom_source": "esri_z18", "disabled": True, "note": "below_sar_resolution"},
+            {"id": "lv_5", "lat": 26.798964566, "lon": 53.352302554, "radius_m": 14.8, "h_max_m": 7, "geom_source": "esri_z18", "disabled": True, "note": "below_sar_resolution"},
+            {"id": "lv_6", "lat": 26.798311508, "lon": 53.351837024, "radius_m": 15.0, "h_max_m": 7, "geom_source": "esri_z18", "disabled": True, "note": "below_sar_resolution"},
+            {"id": "lv_7", "lat": 26.798914506, "lon": 53.351767637, "radius_m": 14.9, "h_max_m": 7, "geom_source": "esri_z18", "disabled": True, "note": "below_sar_resolution"},
+            {"id": "lv_8", "lat": 26.799149641, "lon": 53.347489888, "radius_m": 17.1, "h_max_m": 7, "geom_source": "esri_z18", "disabled": True, "note": "below_sar_resolution"},
+            {"id": "lv_9", "lat": 26.79734965, "lon": 53.353569888, "radius_m": 27.9, "h_max_m": 10, "geom_source": "esri_z18"},
+            {"id": "lv_10", "lat": 26.797408122, "lon": 53.354266423, "radius_m": 26.6, "h_max_m": 10, "geom_source": "esri_z18"},
+            {"id": "lv_11", "lat": 26.797459728, "lon": 53.354939982, "radius_m": 24.9, "h_max_m": 10, "geom_source": "esri_z18"},
+            {"id": "lv_12", "lat": 26.796181867, "lon": 53.353632015, "radius_m": 26.0, "h_max_m": 10, "geom_source": "esri_z18"},
+            {"id": "lv_13", "lat": 26.796253171, "lon": 53.354404446, "radius_m": 22.8, "h_max_m": 10, "geom_source": "esri_z18"},
+            {"id": "lv_14", "lat": 26.796316179, "lon": 53.355171886, "radius_m": 23.6, "h_max_m": 10, "geom_source": "esri_z18"},
+            {"id": "lv_15", "lat": 26.799144598, "lon": 53.346748917, "radius_m": 22.3, "h_max_m": 10, "geom_source": "esri_z18"},
+            {"id": "lv_16", "lat": 26.806049086, "lon": 53.338518359, "radius_m": 51.9, "h_max_m": 17, "geom_source": "esri_z18"},
+            {"id": "lv_17", "lat": 26.806181387, "lon": 53.340250672, "radius_m": 51.4, "h_max_m": 17, "geom_source": "esri_z18"},
+            {"id": "lv_18", "lat": 26.804034815, "lon": 53.338733899, "radius_m": 35.6, "h_max_m": 13, "geom_source": "esri_z18"},
+            {"id": "lv_19", "lat": 26.804170875, "lon": 53.340530307, "radius_m": 35.7, "h_max_m": 13, "geom_source": "esri_z18"},
+            {"id": "lv_20", "lat": 26.802452959, "lon": 53.33890947, "radius_m": 37.4, "h_max_m": 13, "geom_source": "esri_z18"},
+            {"id": "lv_21", "lat": 26.802557694, "lon": 53.340713545, "radius_m": 31.8, "h_max_m": 13, "geom_source": "esri_z18"},
+            {"id": "lv_22", "lat": 26.800826829, "lon": 53.339079377, "radius_m": 35.6, "h_max_m": 13, "geom_source": "esri_z18"},
+            {"id": "lv_23", "lat": 26.800965291, "lon": 53.340855701, "radius_m": 34.8, "h_max_m": 13, "geom_source": "esri_z18"}
+        ],
+    },
+
+    # ── Siri Island ──────────────────────────────────────────────────────────
+    # Iranian island terminal, Persian Gulf.
+    {
+        "id": "siri",
+        "geom_source": "esri_z18",
+        "allowed_orbits": [
+            {"relative_orbit": 166, "direction": "DESC", "los_azimuth": 282},
+            {"relative_orbit": 64, "direction": "DESC", "los_azimuth": 282},
+            {"relative_orbit": 130, "direction": "ASCE", "los_azimuth": 98}
+        ],
+        "name": "Siri Island",
+        "country": "IR",
+        "status": "active",
+        "tanks": [
+            {"id": "si_0", "lat": 25.906481274, "lon": 54.537032257, "radius_m": 53.8, "h_max_m": 17, "geom_source": "esri_z18"},
+            {"id": "si_1", "lat": 25.904513571, "lon": 54.535424662, "radius_m": 55.2, "h_max_m": 17, "geom_source": "esri_z18"},
+            {"id": "si_2", "lat": 25.906658825, "lon": 54.534501425, "radius_m": 51.5, "h_max_m": 17, "geom_source": "esri_z18"},
+            {"id": "si_3", "lat": 25.905440607, "lon": 54.533500851, "radius_m": 37.1, "h_max_m": 14, "geom_source": "esri_z18"},
+            {"id": "si_4", "lat": 25.907897251, "lon": 54.5355089, "radius_m": 35.6, "h_max_m": 14, "geom_source": "esri_z18"},
+            {"id": "si_5", "lat": 25.907344805, "lon": 54.53237412, "radius_m": 38.1, "h_max_m": 14, "geom_source": "esri_z18"}
+        ],
+    },
+
+    # ── Al Flaw ───────────────────────────────────────────────────────────────
+    # Iraqi crude export terminal.
+    # v2 geometry (2026-10-04): radii updated from Esri z18 16-ray measurement
+    #   (gate A/B/C run 4, GATE_PASS branch B: radii-only).
+    #   Centres: original registry (unchanged). Radii: r_fit per tank.
+    #   geom_source: esri_z18_2026-10. h_source: assumed (API 650, h_max=14m).
+    #   Max capacity v2: 8.59 Mn bbl (was 10.62 Mn bbl with r=40 uniform).
+    {
+        "id": "al_flaw",
+        "name": "Al Flaw",
+        "country": "IQ",
+        "los_azimuth": 282,
+        "status": "active",
+        "tanks": [
+            {"id": "af_0",  "lat": 29.976037712391882, "lon": 48.44195552300743,  "radius_m": 37.3, "h_max_m": 14},
+            {"id": "af_1",  "lat": 29.97446023561727,  "lon": 48.44041073298363,  "radius_m": 36.8, "h_max_m": 14},
+            {"id": "af_2",  "lat": 29.973482237683964, "lon": 48.44170682926327,  "radius_m": 37.0, "h_max_m": 14},
+            {"id": "af_3",  "lat": 29.97506237979022,  "lon": 48.443256604287775, "radius_m": 36.6, "h_max_m": 14},
+            {"id": "af_4",  "lat": 29.972052466075166, "lon": 48.44360540262179,  "radius_m": 37.0, "h_max_m": 14},
+            {"id": "af_5",  "lat": 29.973613605327138, "lon": 48.44517136039961,  "radius_m": 35.9, "h_max_m": 14},
+            {"id": "af_6",  "lat": 29.971043737749962, "lon": 48.44490239092673,  "radius_m": 36.2, "h_max_m": 14},
+            {"id": "af_7",  "lat": 29.972645241700267, "lon": 48.44646203210755,  "radius_m": 36.3, "h_max_m": 14},
+            {"id": "af_8",  "lat": 29.970602225788706, "lon": 48.44914349229505,  "radius_m": 36.4, "h_max_m": 14},
+            {"id": "af_9",  "lat": 29.96964506640903,  "lon": 48.45042448972437,  "radius_m": 35.1, "h_max_m": 14},
+            {"id": "af_10", "lat": 29.969053578374012, "lon": 48.44757323726147,  "radius_m": 36.6, "h_max_m": 14},
+            {"id": "af_11", "lat": 29.968074369587153, "lon": 48.44888119527686,  "radius_m": 34.4, "h_max_m": 14},
+            {"id": "af_12", "lat": 29.967562585491844, "lon": 48.44613477210609,  "radius_m": 34.2, "h_max_m": 14},
+            {"id": "af_13", "lat": 29.966616705980595, "lon": 48.44740303358956,  "radius_m": 35.2, "h_max_m": 14},
+            {"id": "af_14", "lat": 29.965160381102958, "lon": 48.449324515383225, "radius_m": 33.8, "h_max_m": 14},
+            {"id": "af_15", "lat": 29.966613187227228, "lon": 48.45079062045803,  "radius_m": 37.2, "h_max_m": 14},
+            {"id": "af_16", "lat": 29.964164829146835, "lon": 48.450625111425616, "radius_m": 36.8, "h_max_m": 14},
+            {"id": "af_17", "lat": 29.965658494437534, "lon": 48.45208349893114,  "radius_m": 34.9, "h_max_m": 14},
+            {"id": "af_18", "lat": 29.961779354173064, "lon": 48.45380166725049,  "radius_m": 34.7, "h_max_m": 14},
+            {"id": "af_19", "lat": 29.96274476143991,  "lon": 48.45253449582525,  "radius_m": 36.9, "h_max_m": 14},
+            {"id": "af_20", "lat": 29.964218037290507, "lon": 48.45399437056702,  "radius_m": 35.9, "h_max_m": 14},
+            {"id": "af_21", "lat": 29.96326674821542,  "lon": 48.45527466098349,  "radius_m": 36.7, "h_max_m": 14},
+            {"id": "af_22", "lat": 29.964822804270934, "lon": 48.45681522152186,  "radius_m": 35.5, "h_max_m": 14},
+            {"id": "af_23", "lat": 29.96580178961507,  "lon": 48.45553712042206,  "radius_m": 35.7, "h_max_m": 14},
+        ],
+    },
+
+    # ── Halul Island ─────────────────────────────────────────────────────────
+    # Qatari offshore crude storage and export terminal, Persian Gulf.
+    {
+        "id": "halul",
+        "geom_source": "esri_z18",
+        "allowed_orbits": [
+            {"relative_orbit": 137, "direction": "DESC", "los_azimuth": 282},
+            {"relative_orbit": 64, "direction": "DESC", "los_azimuth": 282},
+            {"relative_orbit": 28, "direction": "ASCE", "los_azimuth": 98}
+        ],
+        "name": "Halul Island",
+        "country": "QA",
+        "status": "active",
+        "tanks": [
+            # hl_0–hl_5: dome-suspect (visual atlas verdict — cone roof profile confirmed by eye)
+            {"id": "hl_0", "lat": 25.676868854, "lon": 52.410680762, "radius_m": 39.6, "h_max_m": 14, "geom_source": "esri_z18", "uncertain": True, "note": "dome_suspect_visual"},
+            {"id": "hl_1", "lat": 25.676742818, "lon": 52.411691647, "radius_m": 39.9, "h_max_m": 14, "geom_source": "esri_z18", "uncertain": True, "note": "dome_suspect_visual"},
+            {"id": "hl_2", "lat": 25.675583992, "lon": 52.409469298, "radius_m": 35.7, "h_max_m": 14, "geom_source": "esri_z18", "uncertain": True, "note": "dome_suspect_visual"},
+            {"id": "hl_3", "lat": 25.675470322, "lon": 52.410456722, "radius_m": 37.7, "h_max_m": 14, "geom_source": "esri_z18", "uncertain": True, "note": "dome_suspect_visual"},
+            {"id": "hl_4", "lat": 25.675337612, "lon": 52.411443578, "radius_m": 40.1, "h_max_m": 14, "geom_source": "esri_z18", "uncertain": True, "note": "dome_suspect_visual"},
+            {"id": "hl_5", "lat": 25.675192803, "lon": 52.412456088, "radius_m": 39.0, "h_max_m": 14, "geom_source": "esri_z18", "uncertain": True, "note": "dome_suspect_visual"},
+            {"id": "hl_6", "lat": 25.672083508, "lon": 52.409471673, "radius_m": 27.5, "h_max_m": 12, "geom_source": "esri_z18"},
+            {"id": "hl_7", "lat": 25.672148004, "lon": 52.410390346, "radius_m": 29.4, "h_max_m": 12, "geom_source": "esri_z18"},
+            {"id": "hl_8", "lat": 25.671385773, "lon": 52.409495131, "radius_m": 30.0, "h_max_m": 12, "geom_source": "esri_z18"},
+            {"id": "hl_9", "lat": 25.671388694, "lon": 52.410397866, "radius_m": 29.5, "h_max_m": 12, "geom_source": "esri_z18"}
+        ],
+    },
+
+    # ── Sitra ─────────────────────────────────────────────────────────────────
+    # Bahraini crude export terminal on Sitra Island.
+    {
+        "id": "sitra",
+        "allowed_orbits": [
+            {"relative_orbit": 137, "direction": "DESC", "los_azimuth": 282},
+            {"relative_orbit": 101, "direction": "ASCE", "los_azimuth": 98}
+        ],
+        "name": "Sitra",
+        "country": "BH",
+        "status": "active",
+        "tanks": [
+            # 35 m tanks
+            {"id": "st_0", "lat": 26.140098518875927, "lon": 50.62276522435159,  "radius_m": 35, "h_max_m": 13},
+            {"id": "st_1", "lat": 26.141444248414057, "lon": 50.62204894891079,  "radius_m": 35, "h_max_m": 13},
+            {"id": "st_2", "lat": 26.142394976346857, "lon": 50.62155267234134,  "radius_m": 35, "h_max_m": 13},
+            {"id": "st_3", "lat": 26.143760784084062, "lon": 50.621845432585495, "radius_m": 35, "h_max_m": 13},
+            {"id": "st_4", "lat": 26.14425516012961,  "lon": 50.623029648397164, "radius_m": 35, "h_max_m": 13},
+            {"id": "st_5", "lat": 26.14849783911835,  "lon": 50.62080072614774,  "radius_m": 35, "h_max_m": 13},
+            {"id": "st_6", "lat": 26.14897577748137,  "lon": 50.62195359341792,  "radius_m": 35, "h_max_m": 13},
+            {"id": "st_7", "lat": 26.149489262797722, "lon": 50.623128461971866, "radius_m": 35, "h_max_m": 13},
+            # 20 m tanks
+            {"id": "st_8",  "lat": 26.13965486549278,  "lon": 50.62413607636621,  "radius_m": 20, "h_max_m": 9},
+            {"id": "st_9",  "lat": 26.140499697464058, "lon": 50.62370804317006,  "radius_m": 20, "h_max_m": 9},
+            {"id": "st_10", "lat": 26.1413831015502,   "lon": 50.62324469369598,  "radius_m": 20, "h_max_m": 9},
+            {"id": "st_11", "lat": 26.142810610135392, "lon": 50.62245437051597,  "radius_m": 20, "h_max_m": 9},
+            {"id": "st_12", "lat": 26.140093713681956, "lon": 50.625191413382296, "radius_m": 20, "h_max_m": 9},
+            {"id": "st_13", "lat": 26.140960225563575, "lon": 50.62472138329379,  "radius_m": 20, "h_max_m": 9},
+            {"id": "st_14", "lat": 26.141826892001568, "lon": 50.624260834007146, "radius_m": 20, "h_max_m": 9},
+            {"id": "st_15", "lat": 26.1425590273849,   "lon": 50.62387574612085,  "radius_m": 20, "h_max_m": 9},
+            {"id": "st_16", "lat": 26.143369636820392, "lon": 50.62346537730636,  "radius_m": 20, "h_max_m": 9},
+            {"id": "st_17", "lat": 26.143755441023796, "lon": 50.62452169294093,  "radius_m": 20, "h_max_m": 9},
+            {"id": "st_18", "lat": 26.142276296164518, "lon": 50.62531169690012,  "radius_m": 20, "h_max_m": 9},
+            {"id": "st_19", "lat": 26.140530304083327, "lon": 50.62623496578369,  "radius_m": 20, "h_max_m": 9},
+            {"id": "st_20", "lat": 26.14087985734535,  "lon": 50.62705558198039,  "radius_m": 20, "h_max_m": 9},
+            {"id": "st_21", "lat": 26.141753499139092, "lon": 50.626594257058834, "radius_m": 20, "h_max_m": 9},
+            {"id": "st_22", "lat": 26.141232889409487, "lon": 50.62789475344393,  "radius_m": 20, "h_max_m": 9},
+            {"id": "st_23", "lat": 26.14193121749768,  "lon": 50.6282548079749,   "radius_m": 20, "h_max_m": 9},
+            {"id": "st_24", "lat": 26.14280381217473,  "lon": 50.62779411411556,  "radius_m": 20, "h_max_m": 9},
+        ],
+    },
+
+    # ── Kozmino (Козьмино) ────────────────────────────────────────────────────
+    # Russian Pacific export terminal (ESPO pipeline endpoint), Primorsky Krai.
+    {
+        "id": "kozmino",
+        "name": "Kozmino",
+        "country": "RU",
+        "los_azimuth": 282,
+        "status": "active",
+        "tanks": [
+            {"id": "kz_0",  "lat": 42.706757525764736, "lon": 133.02624587053907, "radius_m": 25, "h_max_m": 12},
+            {"id": "kz_1",  "lat": 42.70592468737682,  "lon": 133.02616841062266, "radius_m": 25, "h_max_m": 12},
+            {"id": "kz_2",  "lat": 42.70686537452297,  "lon": 133.02513697068338, "radius_m": 25, "h_max_m": 12},
+            {"id": "kz_3",  "lat": 42.706002579210484, "lon": 133.02507174128013, "radius_m": 25, "h_max_m": 12},
+            {"id": "kz_4",  "lat": 42.70619420734662,  "lon": 133.02282739370852, "radius_m": 25, "h_max_m": 12},
+            {"id": "kz_5",  "lat": 42.706978895294284, "lon": 133.0229212374706,  "radius_m": 25, "h_max_m": 12},
+            {"id": "kz_6",  "lat": 42.70631504586464,  "lon": 133.0207332435918,  "radius_m": 25, "h_max_m": 12},
+            {"id": "kz_7",  "lat": 42.70717029403803,  "lon": 133.0207703523172,  "radius_m": 25, "h_max_m": 12},
+            {"id": "kz_8",  "lat": 42.70714567837038,  "lon": 133.01861940540414, "radius_m": 25, "h_max_m": 12},
+            {"id": "kz_9",  "lat": 42.70719364065515,  "lon": 133.0175279471377,  "radius_m": 25, "h_max_m": 12},
+            {"id": "kz_10", "lat": 42.70727151346349,  "lon": 133.01542983927934, "radius_m": 25, "h_max_m": 12},
+            {"id": "kz_11", "lat": 42.707294268431106, "lon": 133.014334765594,   "radius_m": 25, "h_max_m": 12},
+        ],
+    },
+
+    # ── De-Kastri (Де-Кастри) ─────────────────────────────────────────────────
+    # Russian Pacific export terminal (Sakhalin-1 crude), Khabarovsk Krai.
+    {
+        "id": "de_kastri",
+        "name": "De-Kastri",
+        "country": "RU",
+        "los_azimuth": 282,
+        "status": "active",
+        "tanks": [
+            {"id": "dk_0", "lat": 51.49318561259977,  "lon": 140.83513973018194, "radius_m": 45, "h_max_m": 15},
+            {"id": "dk_1", "lat": 51.491778347806694, "lon": 140.8334022665139,  "radius_m": 45, "h_max_m": 15},
+        ],
+    },
+
+    # ── Primorsk (Приморск) ───────────────────────────────────────────────────
+    # Russian Baltic export terminal (BPS-2 pipeline), Leningrad Oblast.
+    {
+        "id": "primorsk",
+        "name": "Primorsk",
+        "country": "RU",
+        "los_azimuth": 282,
+        "status": "active",
+        "tanks": [
+            {"id": "pm_0",  "lat": 60.3386564905217,   "lon": 28.73210755747013,  "radius_m": 30, "h_max_m": 12},
+            {"id": "pm_1",  "lat": 60.33941788537948,  "lon": 28.7329559364783,   "radius_m": 30, "h_max_m": 12},
+            {"id": "pm_2",  "lat": 60.33897314755486,  "lon": 28.729404248026825, "radius_m": 30, "h_max_m": 12},
+            {"id": "pm_3",  "lat": 60.34010810650423,  "lon": 28.73064805794152,  "radius_m": 30, "h_max_m": 12},
+            {"id": "pm_4",  "lat": 60.33934878461961,  "lon": 28.727993486842504, "radius_m": 30, "h_max_m": 12},
+            {"id": "pm_5",  "lat": 60.34048463338634,  "lon": 28.729202242039545, "radius_m": 30, "h_max_m": 12},
+            {"id": "pm_6",  "lat": 60.34002240036064,  "lon": 28.725309162960983, "radius_m": 30, "h_max_m": 12},
+            {"id": "pm_7",  "lat": 60.34114354643627,  "lon": 28.726596765029633, "radius_m": 30, "h_max_m": 12},
+            {"id": "pm_8",  "lat": 60.34041580958968,  "lon": 28.723916731121577, "radius_m": 30, "h_max_m": 12},
+            {"id": "pm_9",  "lat": 60.34153895201405,  "lon": 28.724992813792642, "radius_m": 30, "h_max_m": 12},
+            {"id": "pm_10", "lat": 60.34140628055213,  "lon": 28.73204005355143,  "radius_m": 30, "h_max_m": 12},
+            {"id": "pm_11", "lat": 60.342544747525615, "lon": 28.73323724675183,  "radius_m": 30, "h_max_m": 12},
+            {"id": "pm_12", "lat": 60.34180360334416,  "lon": 28.730576191342386, "radius_m": 30, "h_max_m": 12},
+            {"id": "pm_13", "lat": 60.342924261274035, "lon": 28.731674043130113, "radius_m": 30, "h_max_m": 12},
+            {"id": "pm_14", "lat": 60.34247882004531,  "lon": 28.727982389082886, "radius_m": 30, "h_max_m": 12},
+            {"id": "pm_15", "lat": 60.343562049406735, "lon": 28.729008575975534, "radius_m": 30, "h_max_m": 12},
+            {"id": "pm_16", "lat": 60.34283515521588,  "lon": 28.726416861679184, "radius_m": 30, "h_max_m": 12},
+            {"id": "pm_17", "lat": 60.343923854395484, "lon": 28.727461355217184, "radius_m": 30, "h_max_m": 12},
+        ],
+    },
+
+    # ── Novorossiysk — Grushevaya Balka ──────────────────────────────────────
+    # Russian Black Sea export terminal (CPC + Transneft pipelines).
+    {
+        "id": "novorossiysk",
+        "name": "Novorossiysk",
+        "country": "RU",
+        "los_azimuth": 282,
+        "status": "active",
+        "tanks": [
+            {"id": "nv_0",  "lat": 44.74104887885335,  "lon": 37.88905010107497,  "radius_m": 30, "h_max_m": 12},
+            {"id": "nv_1",  "lat": 44.7416111554177,   "lon": 37.88820101231293,  "radius_m": 30, "h_max_m": 12},
+            {"id": "nv_2",  "lat": 44.742363930390155, "lon": 37.88704415737959,  "radius_m": 30, "h_max_m": 12},
+            {"id": "nv_3",  "lat": 44.7429054579614,   "lon": 37.88615851265624,  "radius_m": 30, "h_max_m": 12},
+            {"id": "nv_4",  "lat": 44.749343370618014, "lon": 37.89307835264009,  "radius_m": 30, "h_max_m": 12},
+            {"id": "nv_5",  "lat": 44.7500035852125,   "lon": 37.892635661476355, "radius_m": 30, "h_max_m": 12},
+            {"id": "nv_6",  "lat": 44.75090023197079,  "lon": 37.89612858628793,  "radius_m": 30, "h_max_m": 12},
+            {"id": "nv_7",  "lat": 44.75110167918635,  "lon": 37.89512084921505,  "radius_m": 30, "h_max_m": 12},
+            {"id": "nv_8",  "lat": 44.751335619215475, "lon": 37.891664921620055, "radius_m": 30, "h_max_m": 12},
+            {"id": "nv_9",  "lat": 44.75201637797468,  "lon": 37.89120195842918,  "radius_m": 30, "h_max_m": 12},
+            {"id": "nv_10", "lat": 44.75028388462647,  "lon": 37.888071908509126, "radius_m": 30, "h_max_m": 12},
+            {"id": "nv_11", "lat": 44.75020881249478,  "lon": 37.88908882184968,  "radius_m": 30, "h_max_m": 12},
+            {"id": "nv_12", "lat": 44.75180312659569,  "lon": 37.889229354711176, "radius_m": 30, "h_max_m": 12},
+            {"id": "nv_13", "lat": 44.75188165397934,  "lon": 37.88823035229361,  "radius_m": 30, "h_max_m": 12},
+            {"id": "nv_14", "lat": 44.74989148906918,  "lon": 37.87690223466067,  "radius_m": 30, "h_max_m": 12},
+        ],
+    },
+    {
+        "id": "ras_laffan",
+        "geom_source": "esri_z18",
+        "allowed_orbits": [
+            {"relative_orbit": 137, "direction": "DESC", "los_azimuth": 282},
+            {"relative_orbit": 101, "direction": "ASCE", "los_azimuth": 98}
+        ],
+        "name": "Ras Laffan",
+        "country": "QA",
+        "status": "active",
+        "tanks": [
+            # geom_source: esri_z18 — 16-ray gradient + circle fit on ESRI z=18 imagery, 2026-10-08
+            {"id": "rl_0",  "lat": 25.894744809, "lon": 51.567995865, "radius_m": 42.4, "h_max_m": 15, "geom_source": "esri_z18"},
+            {"id": "rl_1",  "lat": 25.895515316, "lon": 51.566392739, "radius_m": 43.8, "h_max_m": 15, "geom_source": "esri_z18"},
+            {"id": "rl_2",  "lat": 25.895242118, "lon": 51.571085385, "radius_m": 38.1, "h_max_m": 15, "geom_source": "esri_z18"},
+            {"id": "rl_3",  "lat": 25.895920015, "lon": 51.569712662, "radius_m": 38.9, "h_max_m": 15, "geom_source": "esri_z18"},
+            {"id": "rl_4",  "lat": 25.896512332, "lon": 51.56849043,  "radius_m": 37.1, "h_max_m": 15, "geom_source": "esri_z18"},
+            {"id": "rl_5",  "lat": 25.897188708, "lon": 51.567111132, "radius_m": 37.7, "h_max_m": 15, "geom_source": "esri_z18"},
+            {"id": "rl_6",  "lat": 25.90004876,  "lon": 51.582889465, "radius_m": 33.4, "h_max_m": 14, "geom_source": "esri_z18"},
+            {"id": "rl_7",  "lat": 25.901102985, "lon": 51.583503875, "radius_m": 32.7, "h_max_m": 14, "geom_source": "esri_z18"},
+            {"id": "rl_8",  "lat": 25.902412893, "lon": 51.584262555, "radius_m": 37.0, "h_max_m": 14, "geom_source": "esri_z18"},
+            {"id": "rl_9",  "lat": 25.895232674, "lon": 51.577017698, "radius_m": 38.0, "h_max_m": 14, "geom_source": "esri_z18"},
+            {"id": "rl_10", "lat": 25.896052945, "lon": 51.575328208, "radius_m": 37.7, "h_max_m": 14, "geom_source": "esri_z18"},
+            {"id": "rl_11", "lat": 25.896525341, "lon": 51.577756621, "radius_m": 39.4, "h_max_m": 14, "geom_source": "esri_z18"},
+            {"id": "rl_12", "lat": 25.897313608, "lon": 51.576130765, "radius_m": 37.5, "h_max_m": 14, "geom_source": "esri_z18"},
+            {"id": "rl_13", "lat": 25.898125194, "lon": 51.572621426, "radius_m": 33.8, "h_max_m": 14, "geom_source": "esri_z18"},
+            {"id": "rl_14", "lat": 25.898745462, "lon": 51.571358983, "radius_m": 33.8, "h_max_m": 14, "geom_source": "esri_z18"},
+            {"id": "rl_15", "lat": 25.899367075, "lon": 51.570134572, "radius_m": 32.9, "h_max_m": 14, "geom_source": "esri_z18"},
+            {"id": "rl_16", "lat": 25.899977666, "lon": 51.56887565,  "radius_m": 33.3, "h_max_m": 14, "geom_source": "esri_z18"},
+            {"id": "rl_17", "lat": 25.893558844, "lon": 51.56558951,  "radius_m": 34.0, "h_max_m": 13, "geom_source": "esri_z18"},
+            {"id": "rl_18", "lat": 25.893527942, "lon": 51.564161802, "radius_m": 32.6, "h_max_m": 13, "geom_source": "esri_z18"},
+            {"id": "rl_19", "lat": 25.898043187, "lon": 51.569250877, "radius_m": 34.9, "h_max_m": 13, "geom_source": "esri_z18"},
+            {"id": "rl_20", "lat": 25.898502908, "lon": 51.568279272, "radius_m": 28.0, "h_max_m": 12, "geom_source": "esri_z18"},
+            {"id": "rl_21", "lat": 25.901062305, "lon": 51.573347584, "radius_m": 28.8, "h_max_m": 12, "geom_source": "esri_z18"},
+            {"id": "rl_22", "lat": 25.901833787, "lon": 51.573816351, "radius_m": 29.8, "h_max_m": 12, "geom_source": "esri_z18"},
+            {"id": "rl_23", "lat": 25.901707404, "lon": 51.57195171,  "radius_m": 30.6, "h_max_m": 12, "geom_source": "esri_z18"},
+            {"id": "rl_24", "lat": 25.902485153, "lon": 51.572431472, "radius_m": 32.7, "h_max_m": 12, "geom_source": "esri_z18"},
+            {"id": "rl_25", "lat": 25.903322819, "lon": 51.575448958, "radius_m": 33.7, "h_max_m": 12, "geom_source": "esri_z18"},
+            {"id": "rl_26", "lat": 25.904383326, "lon": 51.576120384, "radius_m": 31.4, "h_max_m": 12, "geom_source": "esri_z18"},
+            {"id": "rl_27", "lat": 25.905423663, "lon": 51.576731655, "radius_m": 30.9, "h_max_m": 12, "geom_source": "esri_z18"},
+            {"id": "rl_28", "lat": 25.90421576,  "lon": 51.573683908, "radius_m": 34.0, "h_max_m": 12, "geom_source": "esri_z18"},
+            {"id": "rl_29", "lat": 25.904773257, "lon": 51.572550163, "radius_m": 33.9, "h_max_m": 12, "geom_source": "esri_z18"},
+            {"id": "rl_30", "lat": 25.905355404, "lon": 51.57447157,  "radius_m": 32.9, "h_max_m": 12, "geom_source": "esri_z18"},
+            {"id": "rl_31", "lat": 25.905969013, "lon": 51.573156128, "radius_m": 30.9, "h_max_m": 12, "geom_source": "esri_z18"},
+            {"id": "rl_32", "lat": 25.90636751,  "lon": 51.575077746, "radius_m": 31.7, "h_max_m": 12, "geom_source": "esri_z18"},
+            {"id": "rl_33", "lat": 25.907006285, "lon": 51.573776485, "radius_m": 31.0, "h_max_m": 12, "geom_source": "esri_z18"},
+        ],
+    },
+    {
+        "id": "juwaymah",
+        "name": "Juwaymah",
+        "country": "SA",
+        "allowed_orbits": [
+            {"relative_orbit": 35, "direction": "DESC", "los_azimuth": 282},
+        ],
+        "status": "active",
+        "tanks": [
+            {"id": "jw_0",  "lat": 26.814939449818950, "lon": 49.987095744022476, "radius_m": 50, "h_max_m": 16, "enabled": True, "wl_step": 2.2932, "wl_date": "2026-09-29", "wl_n_scenes": 18},
+            {"id": "jw_1",  "lat": 26.816115167835957, "lon": 49.985801747261085, "radius_m": 50, "h_max_m": 16, "enabled": False, "wl_step": 12.6670, "wl_date": "2026-09-29", "wl_n_scenes": 18},
+            {"id": "jw_2",  "lat": 26.817719856216030, "lon": 49.984028796562500, "radius_m": 50, "h_max_m": 16, "enabled": True, "wl_step": 2.1345, "wl_date": "2026-09-29", "wl_n_scenes": 18},
+            {"id": "jw_3",  "lat": 26.818881636808456, "lon": 49.982719201457790, "radius_m": 50, "h_max_m": 16, "enabled": True, "wl_step": 1.4355, "wl_date": "2026-09-29", "wl_n_scenes": 18},
+            {"id": "jw_4",  "lat": 26.816309495888724, "lon": 49.988651189962226, "radius_m": 50, "h_max_m": 16, "enabled": False, "wl_step": 2.6441, "wl_date": "2026-09-29", "wl_n_scenes": 18},
+            {"id": "jw_5",  "lat": 26.817523593073770, "lon": 49.987380783090224, "radius_m": 50, "h_max_m": 16, "enabled": False, "wl_step": 3.0783, "wl_date": "2026-09-29", "wl_n_scenes": 18},
+            {"id": "jw_6",  "lat": 26.819128015846970, "lon": 49.985623716671796, "radius_m": 50, "h_max_m": 16, "enabled": False, "wl_step": 4.2444, "wl_date": "2026-09-29", "wl_n_scenes": 18},
+            {"id": "jw_7",  "lat": 26.820299858791643, "lon": 49.984324056007070, "radius_m": 50, "h_max_m": 16, "enabled": True, "wl_step": 1.8573, "wl_date": "2026-09-29", "wl_n_scenes": 18},
+            {"id": "jw_8",  "lat": 26.818163062259000, "lon": 49.990692300527390, "radius_m": 50, "h_max_m": 16, "enabled": True, "wl_step": 2.2213, "wl_date": "2026-09-29", "wl_n_scenes": 18},
+            {"id": "jw_9",  "lat": 26.819531458247540, "lon": 49.992284316605510, "radius_m": 50, "h_max_m": 16, "enabled": True, "wl_step": 1.2740, "wl_date": "2026-09-29", "wl_n_scenes": 18},
+            {"id": "jw_10", "lat": 26.819300433907060, "lon": 49.989417325119426, "radius_m": 50, "h_max_m": 16, "enabled": False, "wl_step": 5.9919, "wl_date": "2026-09-29", "wl_n_scenes": 18},
+            {"id": "jw_11", "lat": 26.820698661135080, "lon": 49.991014367679170, "radius_m": 50, "h_max_m": 16, "enabled": True, "wl_step": 1.5305, "wl_date": "2026-09-29", "wl_n_scenes": 18},
+            {"id": "jw_12", "lat": 26.820894127364330, "lon": 49.987648761169076, "radius_m": 50, "h_max_m": 16, "enabled": False, "wl_step": 4.5192, "wl_date": "2026-09-29", "wl_n_scenes": 18},
+            {"id": "jw_13", "lat": 26.822307642984722, "lon": 49.989232681648080, "radius_m": 50, "h_max_m": 16, "enabled": False, "wl_step": 5.5221, "wl_date": "2026-09-29", "wl_n_scenes": 18},
+            {"id": "jw_14", "lat": 26.822084302491750, "lon": 49.986363350107820, "radius_m": 50, "h_max_m": 16, "enabled": False, "wl_step": 9.2817, "wl_date": "2026-09-29", "wl_n_scenes": 18},
+            {"id": "jw_15", "lat": 26.823495358779535, "lon": 49.987952836960950, "radius_m": 50, "h_max_m": 16, "enabled": False, "wl_step": 6.0999, "wl_date": "2026-09-29", "wl_n_scenes": 18},
+            {"id": "jw_16", "lat": 26.823098922243503, "lon": 49.983801260652840, "radius_m": 50, "h_max_m": 16, "enabled": True, "wl_step": 2.2276, "wl_date": "2026-09-29", "wl_n_scenes": 18},
+            {"id": "jw_17", "lat": 26.824515110824244, "lon": 49.985368840304960, "radius_m": 50, "h_max_m": 16, "enabled": False, "wl_step": 6.8590, "wl_date": "2026-09-29", "wl_n_scenes": 18},
+            {"id": "jw_18", "lat": 26.825690135207460, "lon": 49.984073983323120, "radius_m": 50, "h_max_m": 16, "enabled": True, "wl_step": 2.4049, "wl_date": "2026-09-29", "wl_n_scenes": 18},
+        ],
+    },
+    {
+        "id": "ras_tanura",
+        "name": "Ras Tanura",
+        "country": "SA",
+        # DESC 137 contaminated ~215 historical dates (rt_65 edge-of-frame artefact).
+        # DESC 35 is primary; ASC 101 added as parallel series (Variant A) — per-orbit calibration required.
+        "allowed_orbits": [
+            {"relative_orbit": 35,  "direction": "DESC",      "los_azimuth": 282},
+            {"relative_orbit": 101, "direction": "ascending",  "los_azimuth": 98},
+        ],
+        "status": "active",
+        # Two geographically separate clusters ~5.5 km apart — fetched with independent
+        # bboxes so a single SAR pass covers each tightly without inflating the image frame.
+        "clusters": [
+            {"name": "south", "tank_ids": [
+                "rt_0","rt_1","rt_2","rt_3","rt_4",
+                "rt_11","rt_12","rt_13","rt_14","rt_15","rt_16","rt_17","rt_18","rt_19","rt_20",
+                "rt_21","rt_22","rt_23","rt_24","rt_25","rt_26","rt_27","rt_28","rt_29","rt_30",
+                "rt_31","rt_32","rt_33","rt_34","rt_35","rt_36","rt_37","rt_38","rt_39","rt_40",
+                "rt_41","rt_42","rt_43","rt_44","rt_45","rt_46","rt_47","rt_48","rt_49","rt_50",
+                "rt_51","rt_52","rt_53","rt_54","rt_55","rt_56","rt_57","rt_58","rt_59","rt_60",
+                "rt_61","rt_62","rt_63","rt_64","rt_65",
+            ]},
+            {"name": "north", "tank_ids": ["rt_5","rt_6","rt_7","rt_8","rt_9","rt_10"]},
+        ],
+        "tanks": [
+            {"id": "rt_0",  "lat": 26.638626, "lon": 50.154236, "radius_m": 60, "h_max_m": 18, "enabled": False, "wl_step": 2.6405, "wl_date": "2026-09-29", "wl_n_scenes": 18},
+            {"id": "rt_1",  "lat": 26.640430, "lon": 50.153296, "radius_m": 60, "h_max_m": 18, "enabled": False, "wl_step": 2.8396, "wl_date": "2026-09-29", "wl_n_scenes": 18},
+            {"id": "rt_2",  "lat": 26.641913, "lon": 50.152682, "radius_m": 60, "h_max_m": 18, "enabled": True, "wl_step": 0.6752, "wl_date": "2026-09-29", "wl_n_scenes": 18},
+            {"id": "rt_3",  "lat": 26.650024, "lon": 50.152807, "radius_m": 60, "h_max_m": 18, "enabled": False, "wl_step": 3.8375, "wl_date": "2026-09-29", "wl_n_scenes": 18},
+            {"id": "rt_4",  "lat": 26.652085, "lon": 50.149920, "radius_m": 60, "h_max_m": 18, "enabled": True, "wl_step": 1.1638, "wl_date": "2026-09-29", "wl_n_scenes": 18},
+            {"id": "rt_5",  "lat": 26.688442, "lon": 50.118714, "radius_m": 60, "h_max_m": 18, "enabled": True, "wl_step": 1.1895, "wl_date": "2026-09-29", "wl_n_scenes": 18},
+            {"id": "rt_6",  "lat": 26.687011, "lon": 50.117969, "radius_m": 60, "h_max_m": 18, "enabled": True, "wl_step": 0.5382, "wl_date": "2026-09-29", "wl_n_scenes": 18},
+            {"id": "rt_7",  "lat": 26.687548, "lon": 50.116596, "radius_m": 60, "h_max_m": 18, "enabled": True, "wl_step": 1.9383, "wl_date": "2026-09-29", "wl_n_scenes": 18},
+            {"id": "rt_8",  "lat": 26.689090, "lon": 50.117193, "radius_m": 60, "h_max_m": 18, "enabled": True, "wl_step": 1.4307, "wl_date": "2026-09-29", "wl_n_scenes": 18},
+            {"id": "rt_9",  "lat": 26.688215, "lon": 50.114879, "radius_m": 60, "h_max_m": 18, "enabled": False, "wl_step": 3.7007, "wl_date": "2026-09-29", "wl_n_scenes": 18},
+            {"id": "rt_10", "lat": 26.689749, "lon": 50.115695, "radius_m": 60, "h_max_m": 18, "enabled": False, "wl_step": 3.3155, "wl_date": "2026-09-29", "wl_n_scenes": 18},
+            {"id": "rt_11", "lat": 26.651657, "lon": 50.148320, "radius_m": 35, "h_max_m": 13, "enabled": True, "wl_step": 0.8630, "wl_date": "2026-09-29", "wl_n_scenes": 18},
+            {"id": "rt_12", "lat": 26.649988, "lon": 50.148177, "radius_m": 35, "h_max_m": 13, "enabled": True, "wl_step": 1.7976, "wl_date": "2026-09-29", "wl_n_scenes": 18},
+            {"id": "rt_13", "lat": 26.650865, "lon": 50.148946, "radius_m": 35, "h_max_m": 13, "enabled": True, "wl_step": 1.0103, "wl_date": "2026-09-29", "wl_n_scenes": 18},
+            {"id": "rt_14", "lat": 26.650985, "lon": 50.150605, "radius_m": 35, "h_max_m": 13, "enabled": True, "wl_step": 0.9778, "wl_date": "2026-09-29", "wl_n_scenes": 18},
+            {"id": "rt_15", "lat": 26.648982, "lon": 50.148984, "radius_m": 35, "h_max_m": 13, "enabled": True, "wl_step": 1.4792, "wl_date": "2026-09-29", "wl_n_scenes": 18},
+            {"id": "rt_16", "lat": 26.649609, "lon": 50.149935, "radius_m": 35, "h_max_m": 13, "enabled": True, "wl_step": 1.0661, "wl_date": "2026-09-29", "wl_n_scenes": 18},
+            {"id": "rt_17", "lat": 26.650144, "lon": 50.151086, "radius_m": 35, "h_max_m": 13, "enabled": True, "wl_step": 2.4972, "wl_date": "2026-09-29", "wl_n_scenes": 18},
+            {"id": "rt_18", "lat": 26.648029, "lon": 50.149726, "radius_m": 35, "h_max_m": 13, "enabled": True, "wl_step": 0.3345, "wl_date": "2026-09-29", "wl_n_scenes": 18},
+            {"id": "rt_19", "lat": 26.648818, "lon": 50.150545, "radius_m": 35, "h_max_m": 13, "enabled": True, "wl_step": 0.7588, "wl_date": "2026-09-29", "wl_n_scenes": 18},
+            {"id": "rt_20", "lat": 26.649339, "lon": 50.151734, "radius_m": 35, "h_max_m": 13, "enabled": True, "wl_step": 0.8759, "wl_date": "2026-09-29", "wl_n_scenes": 18},
+            {"id": "rt_21", "lat": 26.646997, "lon": 50.150259, "radius_m": 35, "h_max_m": 13, "enabled": True, "wl_step": 1.2221, "wl_date": "2026-09-29", "wl_n_scenes": 18},
+            {"id": "rt_22", "lat": 26.647971, "lon": 50.151020, "radius_m": 35, "h_max_m": 13, "enabled": True, "wl_step": 0.7314, "wl_date": "2026-09-29", "wl_n_scenes": 18},
+            {"id": "rt_23", "lat": 26.648509, "lon": 50.152502, "radius_m": 35, "h_max_m": 13, "enabled": True, "wl_step": 1.5032, "wl_date": "2026-09-29", "wl_n_scenes": 18},
+            {"id": "rt_24", "lat": 26.648872, "lon": 50.153435, "radius_m": 35, "h_max_m": 13, "enabled": True, "wl_step": 1.5397, "wl_date": "2026-09-29", "wl_n_scenes": 18},
+            {"id": "rt_25", "lat": 26.647181, "lon": 50.151415, "radius_m": 35, "h_max_m": 13, "enabled": True, "wl_step": 1.2441, "wl_date": "2026-09-29", "wl_n_scenes": 18},
+            {"id": "rt_26", "lat": 26.647496613, "lon": 50.152485930, "radius_m": 35, "h_max_m": 13, "enabled": True, "wl_step": 0.4706, "wl_date": "2026-09-29", "wl_n_scenes": 18},
+            {"id": "rt_27", "lat": 26.647870961, "lon": 50.153402153, "radius_m": 35, "h_max_m": 13, "enabled": True, "wl_step": 1.3367, "wl_date": "2026-09-29", "wl_n_scenes": 18},
+            {"id": "rt_28", "lat": 26.648243784, "lon": 50.154304015, "radius_m": 35, "h_max_m": 13, "enabled": True, "wl_step": 1.2162, "wl_date": "2026-09-29", "wl_n_scenes": 18},
+            {"id": "rt_29", "lat": 26.646272546, "lon": 50.151974459, "radius_m": 35, "h_max_m": 13, "enabled": True, "wl_step": 0.5650, "wl_date": "2026-09-29", "wl_n_scenes": 18},
+            {"id": "rt_30", "lat": 26.646641703, "lon": 50.152926255, "radius_m": 35, "h_max_m": 13, "enabled": True, "wl_step": 1.1310, "wl_date": "2026-09-29", "wl_n_scenes": 18},
+            {"id": "rt_31", "lat": 26.647029129, "lon": 50.153832257, "radius_m": 35, "h_max_m": 13, "enabled": True, "wl_step": 1.1399, "wl_date": "2026-09-29", "wl_n_scenes": 18},
+            {"id": "rt_32", "lat": 26.647394612, "lon": 50.154733110, "radius_m": 35, "h_max_m": 13, "enabled": True, "wl_step": 1.0857, "wl_date": "2026-09-29", "wl_n_scenes": 18},
+            {"id": "rt_33", "lat": 26.645433932, "lon": 50.152392769, "radius_m": 35, "h_max_m": 13, "enabled": True, "wl_step": 2.2423, "wl_date": "2026-09-29", "wl_n_scenes": 18},
+            {"id": "rt_34", "lat": 26.645827818, "lon": 50.153347593, "radius_m": 35, "h_max_m": 13, "enabled": True, "wl_step": 0.9325, "wl_date": "2026-09-29", "wl_n_scenes": 18},
+            {"id": "rt_35", "lat": 26.646200394, "lon": 50.154249852, "radius_m": 35, "h_max_m": 13, "enabled": True, "wl_step": 1.1208, "wl_date": "2026-09-29", "wl_n_scenes": 18},
+            {"id": "rt_36", "lat": 26.646570259, "lon": 50.155158460, "radius_m": 35, "h_max_m": 13, "enabled": True, "wl_step": 1.7401, "wl_date": "2026-09-29", "wl_n_scenes": 18},
+            {"id": "rt_37", "lat": 26.643842240, "lon": 50.153203110, "radius_m": 35, "h_max_m": 13, "enabled": True, "wl_step": 1.4584, "wl_date": "2026-09-29", "wl_n_scenes": 18},
+            {"id": "rt_38", "lat": 26.644232379, "lon": 50.154144912, "radius_m": 35, "h_max_m": 13, "enabled": True, "wl_step": 0.4333, "wl_date": "2026-09-29", "wl_n_scenes": 18},
+            {"id": "rt_39", "lat": 26.644607973, "lon": 50.155046837, "radius_m": 35, "h_max_m": 13, "enabled": False, "wl_step": 3.7688, "wl_date": "2026-09-29", "wl_n_scenes": 18},
+            {"id": "rt_40", "lat": 26.644975530, "lon": 50.155944016, "radius_m": 35, "h_max_m": 13, "enabled": False, "wl_step": 2.6537, "wl_date": "2026-09-29", "wl_n_scenes": 18},
+            {"id": "rt_41", "lat": 26.643016459, "lon": 50.153611656, "radius_m": 35, "h_max_m": 13, "enabled": True, "wl_step": 1.8014, "wl_date": "2026-09-29", "wl_n_scenes": 18},
+            {"id": "rt_42", "lat": 26.643406095, "lon": 50.154572485, "radius_m": 35, "h_max_m": 13, "enabled": True, "wl_step": 0.7957, "wl_date": "2026-09-29", "wl_n_scenes": 18},
+            {"id": "rt_43", "lat": 26.643782414, "lon": 50.155472085, "radius_m": 35, "h_max_m": 13, "enabled": False, "wl_step": 4.3703, "wl_date": "2026-09-29", "wl_n_scenes": 18},
+            {"id": "rt_44", "lat": 26.644156293, "lon": 50.156383567, "radius_m": 35, "h_max_m": 13, "enabled": True, "wl_step": 2.1074, "wl_date": "2026-09-29", "wl_n_scenes": 18},
+            {"id": "rt_45", "lat": 26.641814725, "lon": 50.154215785, "radius_m": 35, "h_max_m": 13, "enabled": False, "wl_step": 2.9881, "wl_date": "2026-09-29", "wl_n_scenes": 18},
+            {"id": "rt_46", "lat": 26.642210411, "lon": 50.155178684, "radius_m": 35, "h_max_m": 13, "enabled": False, "wl_step": 3.0493, "wl_date": "2026-09-29", "wl_n_scenes": 18},
+            {"id": "rt_47", "lat": 26.642577330, "lon": 50.156072461, "radius_m": 35, "h_max_m": 13, "enabled": False, "wl_step": 6.3266, "wl_date": "2026-09-29", "wl_n_scenes": 18},
+            {"id": "rt_48", "lat": 26.642950972, "lon": 50.156992054, "radius_m": 35, "h_max_m": 13, "enabled": False, "wl_step": 5.2913, "wl_date": "2026-09-29", "wl_n_scenes": 18},
+            {"id": "rt_49", "lat": 26.641339934, "lon": 50.155599952, "radius_m": 35, "h_max_m": 13, "enabled": False, "wl_step": 4.0716, "wl_date": "2026-09-29", "wl_n_scenes": 18},
+            {"id": "rt_50", "lat": 26.641729102, "lon": 50.156516229, "radius_m": 35, "h_max_m": 13, "enabled": False, "wl_step": 9.2023, "wl_date": "2026-09-29", "wl_n_scenes": 18},
+            {"id": "rt_51", "lat": 26.642073615, "lon": 50.157423258, "radius_m": 35, "h_max_m": 13, "enabled": False, "wl_step": 2.9057, "wl_date": "2026-09-29", "wl_n_scenes": 18},
+            {"id": "rt_52", "lat": 26.640476856, "lon": 50.156043180, "radius_m": 35, "h_max_m": 13, "enabled": False, "wl_step": 5.1160, "wl_date": "2026-09-29", "wl_n_scenes": 18},
+            {"id": "rt_53", "lat": 26.640847523, "lon": 50.156946870, "radius_m": 35, "h_max_m": 13, "enabled": False, "wl_step": 2.9349, "wl_date": "2026-09-29", "wl_n_scenes": 18},
+            {"id": "rt_54", "lat": 26.641188536, "lon": 50.157794617, "radius_m": 35, "h_max_m": 13, "enabled": False, "wl_step": 3.0420, "wl_date": "2026-09-29", "wl_n_scenes": 18},
+            {"id": "rt_55", "lat": 26.641760390, "lon": 50.159183452, "radius_m": 35, "h_max_m": 13, "enabled": False, "wl_step": 4.3044, "wl_date": "2026-09-29", "wl_n_scenes": 18},
+            {"id": "rt_56", "lat": 26.640105425, "lon": 50.157328512, "radius_m": 35, "h_max_m": 13, "enabled": False, "wl_step": 2.6399, "wl_date": "2026-09-29", "wl_n_scenes": 18},
+            {"id": "rt_57", "lat": 26.640432763, "lon": 50.158165902, "radius_m": 35, "h_max_m": 13, "enabled": True, "wl_step": 2.1398, "wl_date": "2026-09-29", "wl_n_scenes": 18},
+            {"id": "rt_58", "lat": 26.641106377, "lon": 50.158670772, "radius_m": 35, "h_max_m": 13, "enabled": False, "wl_step": 2.9820, "wl_date": "2026-09-29", "wl_n_scenes": 18},
+            {"id": "rt_59", "lat": 26.640346939, "lon": 50.159052659, "radius_m": 35, "h_max_m": 13, "enabled": True, "wl_step": 0.2907, "wl_date": "2026-09-29", "wl_n_scenes": 18},
+            {"id": "rt_60", "lat": 26.639675405,       "lon": 50.158553012,       "radius_m": 35, "h_max_m": 13, "enabled": True, "wl_step": 0.7870, "wl_date": "2026-09-29", "wl_n_scenes": 18},
+            {"id": "rt_61", "lat": 26.643554305621972, "lon": 50.152191100588105, "radius_m": 35, "h_max_m": 13, "enabled": True, "wl_step": 1.6175, "wl_date": "2026-09-29", "wl_n_scenes": 18},
+            {"id": "rt_62", "lat": 26.645139789560954, "lon": 50.151448430921810, "radius_m": 35, "h_max_m": 13, "enabled": True, "wl_step": 1.9126, "wl_date": "2026-09-29", "wl_n_scenes": 18},
+            {"id": "rt_63", "lat": 26.645949000703600, "lon": 50.151042337312750, "radius_m": 35, "h_max_m": 13, "enabled": True, "wl_step": 1.2691, "wl_date": "2026-09-29", "wl_n_scenes": 18},
+            {"id": "rt_64", "lat": 26.639988864810530, "lon": 50.154953473357590, "radius_m": 35, "h_max_m": 13, "enabled": True, "wl_step": 1.8097, "wl_date": "2026-09-29", "wl_n_scenes": 18},
+            {"id": "rt_65", "lat": 26.637591408424406, "lon": 50.160445373274800, "radius_m": 20, "h_max_m": 9, "enabled": True, "wl_step": 1.0654, "wl_date": "2026-09-29", "wl_n_scenes": 18},
+        ],
+    },
+
+    # ── Ras Tanura v2 ─────────────────────────────────────────────────────────
+    # Saudi Aramco primary crude export terminal, Saudi Arabia.
+    # Reviewer geometry 2026-11-04. 30 tanks (rt_26…rt_60, rt_65 excluded).
+    # LOS azimuth NOT stored here — derived from scene heading per row in pipeline.
+    {
+        "id": "ras_tanura_v2",
+        "name": "Ras Tanura",
+        "country": "SA",
+        "allowed_orbits": [
+            {"relative_orbit": 35,  "direction": "DESC"},
+            {"relative_orbit": 101, "direction": "ASCE"},
+        ],
+        "status": "active",
+        "clusters": [
+            {"name": "north", "tank_ids": ["rt_5","rt_6","rt_7","rt_8","rt_9","rt_10"]},
+            {"name": "south", "tank_ids": [
+                "rt_0","rt_1","rt_2","rt_3","rt_4",
+                "rt_11","rt_12","rt_13","rt_14","rt_15","rt_16","rt_17","rt_18","rt_19","rt_20",
+                "rt_21","rt_22","rt_23","rt_24","rt_25",
+                "rt_61","rt_62","rt_63","rt_64",
+            ]},
+        ],
+        "tanks": [
+            # ── north cluster (6 tanks) ──────────────────────────────────────
+            {"id": "rt_5",  "lat": 26.68848, "lon": 50.11876, "radius_m": 55, "h_max_m": 18, "geom_source": "reviewer_2026-11-04"},
+            {"id": "rt_6",  "lat": 26.68706, "lon": 50.11801, "radius_m": 55, "h_max_m": 18, "geom_source": "reviewer_2026-11-04"},
+            {"id": "rt_7",  "lat": 26.68761, "lon": 50.11666, "radius_m": 55, "h_max_m": 18, "geom_source": "reviewer_2026-11-04"},
+            {"id": "rt_8",  "lat": 26.68912, "lon": 50.11726, "radius_m": 55, "h_max_m": 18, "geom_source": "reviewer_2026-11-04"},
+            {"id": "rt_9",  "lat": 26.68827, "lon": 50.11494, "radius_m": 55, "h_max_m": 18, "geom_source": "reviewer_2026-11-04"},
+            {"id": "rt_10", "lat": 26.68977, "lon": 50.11573, "radius_m": 70, "h_max_m": 18, "geom_source": "reviewer_2026-11-04"},
+            # ── south cluster (24 tanks) ─────────────────────────────────────
+            {"id": "rt_0",  "lat": 26.63863, "lon": 50.15436, "radius_m": 55, "h_max_m": 18, "geom_source": "reviewer_2026-11-04"},
+            {"id": "rt_1",  "lat": 26.64040, "lon": 50.15332, "radius_m": 55, "h_max_m": 18, "geom_source": "reviewer_2026-11-04"},
+            {"id": "rt_2",  "lat": 26.64190, "lon": 50.15271, "radius_m": 55, "h_max_m": 18, "geom_source": "reviewer_2026-11-04"},
+            {"id": "rt_3",  "lat": 26.64999, "lon": 50.15283, "radius_m": 55, "h_max_m": 18, "geom_source": "reviewer_2026-11-04"},
+            {"id": "rt_4",  "lat": 26.65203, "lon": 50.14996, "radius_m": 55, "h_max_m": 18, "geom_source": "reviewer_2026-11-04"},
+            {"id": "rt_11", "lat": 26.65160, "lon": 50.14837, "radius_m": 38, "h_max_m": 13, "geom_source": "reviewer_2026-11-04"},
+            {"id": "rt_12", "lat": 26.64995, "lon": 50.14822, "radius_m": 38, "h_max_m": 13, "geom_source": "reviewer_2026-11-04"},
+            {"id": "rt_13", "lat": 26.65083, "lon": 50.14898, "radius_m": 38, "h_max_m": 13, "geom_source": "reviewer_2026-11-04"},
+            {"id": "rt_14", "lat": 26.65095, "lon": 50.15064, "radius_m": 38, "h_max_m": 13, "geom_source": "reviewer_2026-11-04"},
+            {"id": "rt_15", "lat": 26.64893, "lon": 50.14901, "radius_m": 38, "h_max_m": 13, "geom_source": "reviewer_2026-11-04"},
+            {"id": "rt_16", "lat": 26.64957, "lon": 50.14996, "radius_m": 38, "h_max_m": 13, "geom_source": "reviewer_2026-11-04"},
+            {"id": "rt_17", "lat": 26.65010, "lon": 50.15112, "radius_m": 32, "h_max_m": 13, "geom_source": "reviewer_2026-11-04"},
+            {"id": "rt_18", "lat": 26.64801, "lon": 50.14973, "radius_m": 38, "h_max_m": 13, "geom_source": "reviewer_2026-11-04"},
+            {"id": "rt_19", "lat": 26.64883, "lon": 50.15051, "radius_m": 38, "h_max_m": 13, "geom_source": "reviewer_2026-11-04"},
+            {"id": "rt_20", "lat": 26.64930, "lon": 50.15176, "radius_m": 32, "h_max_m": 13, "geom_source": "reviewer_2026-11-04"},
+            {"id": "rt_21", "lat": 26.64695, "lon": 50.15028, "radius_m": 38, "h_max_m": 13, "geom_source": "reviewer_2026-11-04"},
+            {"id": "rt_22", "lat": 26.64798, "lon": 50.15099, "radius_m": 38, "h_max_m": 13, "geom_source": "reviewer_2026-11-04"},
+            {"id": "rt_23", "lat": 26.64845, "lon": 50.15254, "radius_m": 32, "h_max_m": 13, "geom_source": "reviewer_2026-11-04"},
+            {"id": "rt_24", "lat": 26.64883, "lon": 50.15346, "radius_m": 32, "h_max_m": 13, "geom_source": "reviewer_2026-11-04"},
+            {"id": "rt_25", "lat": 26.64719, "lon": 50.15139, "radius_m": 32, "h_max_m": 13, "geom_source": "reviewer_2026-11-04"},
+            {"id": "rt_61", "lat": 26.64359, "lon": 50.15217, "radius_m": 38, "h_max_m": 13, "geom_source": "reviewer_2026-11-04"},
+            {"id": "rt_62", "lat": 26.64509, "lon": 50.15150, "radius_m": 32, "h_max_m": 13, "geom_source": "reviewer_2026-11-04"},
+            {"id": "rt_63", "lat": 26.64589, "lon": 50.15110, "radius_m": 32, "h_max_m": 13, "geom_source": "reviewer_2026-11-04"},
+            {"id": "rt_64", "lat": 26.63995, "lon": 50.15500, "radius_m": 38, "h_max_m": 13, "geom_source": "reviewer_2026-11-04"},
+        ],
+    },
+
+    {
+        "id": "fujairah",
+        "geom_source": "esri_z18",
+        "allowed_orbits": [
+            {"relative_orbit": 166, "direction": "DESC", "los_azimuth": 282},
+            {"relative_orbit": 93, "direction": "DESC", "los_azimuth": 282},
+            {"relative_orbit": 130, "direction": "ASCE", "los_azimuth": 98},
+            {"relative_orbit": 57, "direction": "ASCE", "los_azimuth": 98}
+        ],
+        "name": "Fujairah",
+        "country": "AE",
+        "status": "active",
+        "tanks": [
+            # geom_source: esri_z18 — 16-ray gradient + circle fit on ESRI z=18 imagery, 2026-10-08
+            # sphere_check (2026-10-09): all fj_* r>25m — LPG spheres r=5–12m, not present at these coordinates.
+            #   fj_0, fj_7: dome_suspect (rms>10) — domed fixed-roof, not sphere; confirmed by geometry.
+            #   roof_type for all others: floating_roof_assumed (pending human optical panel review).
+            # neighbor_dist_m: minimum center-to-center distance to nearest tank (haversine, computed 2026-10-09)
+            {"id": "fj_0",  "lat": 25.214786692, "lon": 56.347117828, "radius_m": 53.6, "h_max_m": 17, "geom_source": "esri_z18", "roof_type": "dome_suspect", "note": "dome_suspect_rms10.6", "center_gate": True, "neighbor_dist_m": 272},
+            {"id": "fj_1",  "lat": 25.214509942, "lon": 56.34980138,  "radius_m": 53.5, "h_max_m": 17, "geom_source": "esri_z18", "center_gate": True, "neighbor_dist_m": 272},
+            {"id": "fj_2",  "lat": 25.212338987, "lon": 56.346777322, "radius_m": 50.4, "h_max_m": 17, "geom_source": "esri_z18", "neighbor_dist_m": 274},
+            {"id": "fj_3",  "lat": 25.212023801, "lon": 56.349514151, "radius_m": 55.3, "h_max_m": 17, "geom_source": "esri_z18", "neighbor_dist_m": 278},
+            {"id": "fj_4",  "lat": 25.20953691,  "lon": 56.346429244, "radius_m": 46.8, "h_max_m": 17, "geom_source": "esri_z18", "neighbor_dist_m": 272},
+            {"id": "fj_5",  "lat": 25.209273036, "lon": 56.349147413, "radius_m": 47.9, "h_max_m": 17, "geom_source": "esri_z18", "neighbor_dist_m": 275},
+            {"id": "fj_6",  "lat": 25.206769828, "lon": 56.348920539, "radius_m": 50.2, "h_max_m": 17, "geom_source": "esri_z18", "neighbor_dist_m": 274},
+            {"id": "fj_7",  "lat": 25.207093886, "lon": 56.346223606, "radius_m": 50.8, "h_max_m": 17, "geom_source": "esri_z18", "roof_type": "dome_suspect", "note": "dome_suspect_rms10.2", "center_gate": True, "neighbor_dist_m": 272},
+            {"id": "fj_8",  "lat": 25.200968646, "lon": 56.353470919, "radius_m": 33.5, "h_max_m": 13, "geom_source": "esri_z18", "neighbor_dist_m": 145},
+            {"id": "fj_9",  "lat": 25.201974936, "lon": 56.354438154, "radius_m": 34.0, "h_max_m": 13, "geom_source": "esri_z18", "neighbor_dist_m": 107},
+            {"id": "fj_10", "lat": 25.20111512,  "lon": 56.354907586, "radius_m": 34.2, "h_max_m": 13, "geom_source": "esri_z18", "neighbor_dist_m": 107},
+            {"id": "fj_11", "lat": 25.20089923,  "lon": 56.356020719, "radius_m": 37.3, "h_max_m": 13, "geom_source": "esri_z18", "center_gate": True, "neighbor_dist_m": 115},
+            {"id": "fj_12", "lat": 25.191120836, "lon": 56.35528314,  "radius_m": 25.2, "h_max_m": 12, "geom_source": "esri_z18", "note": "borderline_resolution", "neighbor_dist_m": 75},
+            {"id": "fj_13", "lat": 25.191182499, "lon": 56.356176037, "radius_m": 26.5, "h_max_m": 12, "geom_source": "esri_z18", "note": "borderline_resolution", "neighbor_dist_m": 79},
+            {"id": "fj_14", "lat": 25.190446614, "lon": 56.35534786,  "radius_m": 29.3, "h_max_m": 12, "geom_source": "esri_z18", "note": "borderline_resolution", "neighbor_dist_m": 75},
+            {"id": "fj_15", "lat": 25.190472949, "lon": 56.356180065, "radius_m": 26.5, "h_max_m": 12, "geom_source": "esri_z18", "note": "borderline_resolution", "neighbor_dist_m": 79},
+            {"id": "fj_16", "lat": 25.1884247,   "lon": 56.346991138, "radius_m": 33.5, "h_max_m": 12, "geom_source": "esri_z18", "neighbor_dist_m": 108},
+            {"id": "fj_17", "lat": 25.188415691, "lon": 56.348064376, "radius_m": 33.1, "h_max_m": 12, "geom_source": "esri_z18", "neighbor_dist_m": 107},
+            {"id": "fj_18", "lat": 25.188410298, "lon": 56.349123708, "radius_m": 32.2, "h_max_m": 12, "geom_source": "esri_z18", "neighbor_dist_m": 105},
+            {"id": "fj_19", "lat": 25.187424752, "lon": 56.347059647, "radius_m": 32.2, "h_max_m": 12, "geom_source": "esri_z18", "neighbor_dist_m": 106},
+            {"id": "fj_20", "lat": 25.187470581, "lon": 56.349144555, "radius_m": 32.8, "h_max_m": 12, "geom_source": "esri_z18", "neighbor_dist_m": 104},
+            {"id": "fj_21", "lat": 25.187449931, "lon": 56.34810904,  "radius_m": 32.1, "h_max_m": 12, "geom_source": "esri_z18", "neighbor_dist_m": 104},
+        ],
+    },
+    {
+        "id": "zirku",
+        "geom_source": "esri_z18",
+        "allowed_orbits": [
+            {"relative_orbit": 64, "direction": "DESC", "los_azimuth": 282},
+            {"relative_orbit": 28, "direction": "ASCE", "los_azimuth": 98}
+        ],
+        "name": "Zirku Island",
+        "country": "AE",
+        "status": "active",
+        "tanks": [
+            # geom_source: esri_z18 — 16-ray gradient + circle fit on ESRI z=18 imagery, 2026-10-08
+            # zi_0/zi_1: possible soot/darkening on roof (possible strike-2026 trace); not a geometry defect
+            {"id": "zi_0",  "lat": 24.877087534, "lon": 53.07968274,  "radius_m": 50.2, "h_max_m": 16, "geom_source": "esri_z18", "note": "possible_soot_strike2026"},
+            {"id": "zi_1",  "lat": 24.875428178, "lon": 53.078362413, "radius_m": 48.5, "h_max_m": 16, "geom_source": "esri_z18", "note": "possible_soot_strike2026", "center_gate": True},
+            {"id": "zi_2",  "lat": 24.872742426, "lon": 53.077663374, "radius_m": 47.6, "h_max_m": 16, "geom_source": "esri_z18"},
+            {"id": "zi_3",  "lat": 24.872764652, "lon": 53.075570295, "radius_m": 48.7, "h_max_m": 16, "geom_source": "esri_z18"},
+            {"id": "zi_4",  "lat": 24.87323754,  "lon": 53.073442814, "radius_m": 49.4, "h_max_m": 16, "geom_source": "esri_z18"},
+            {"id": "zi_5",  "lat": 24.87293917,  "lon": 53.070988208, "radius_m": 49.2, "h_max_m": 16, "geom_source": "esri_z18"},
+            {"id": "zi_6",  "lat": 24.874001929, "lon": 53.0688538,   "radius_m": 46.6, "h_max_m": 16, "geom_source": "esri_z18"},
+            {"id": "zi_7",  "lat": 24.880216614, "lon": 53.06622284,  "radius_m": 50.0, "h_max_m": 16, "geom_source": "esri_z18"},
+            {"id": "zi_8",  "lat": 24.881865176, "lon": 53.065225864, "radius_m": 49.0, "h_max_m": 16, "geom_source": "esri_z18"},
+            {"id": "zi_9",  "lat": 24.883492878, "lon": 53.064144468, "radius_m": 47.2, "h_max_m": 16, "geom_source": "esri_z18"},
+        ],
+    },
+    {
+        "id": "das_island",
+        "geom_source": "esri_z18",
+        "allowed_orbits": [
+            {"relative_orbit": 64, "direction": "DESC", "los_azimuth": 282},
+            {"relative_orbit": 28, "direction": "ASCE", "los_azimuth": 98}
+        ],
+        "name": "Das Island",
+        "country": "AE",
+        "status": "active",
+        "tanks": [
+            {"id": "di_0", "lat": 25.15177195, "lon": 52.873224166, "radius_m": 47.8, "h_max_m": 16, "geom_source": "esri_z18", "uncertain": True, "note": "dome_suspect_rms14.0", "center_gate": True},
+            {"id": "di_1", "lat": 25.153193996, "lon": 52.873722973, "radius_m": 37.2, "h_max_m": 13, "geom_source": "esri_z18"},
+            {"id": "di_2", "lat": 25.154439092, "lon": 52.87270238, "radius_m": 38.5, "h_max_m": 13, "geom_source": "esri_z18"},
+            {"id": "di_3", "lat": 25.154470375, "lon": 52.873666963, "radius_m": 33.8, "h_max_m": 13, "geom_source": "esri_z18", "uncertain": True, "note": "dome_suspect_rms8.9", "center_gate": True},
+            {"id": "di_4", "lat": 25.154408301, "lon": 52.874679268, "radius_m": 40.4, "h_max_m": 13, "geom_source": "esri_z18"},
+            {"id": "di_5", "lat": 25.15583465, "lon": 52.874668698, "radius_m": 39.8, "h_max_m": 13, "geom_source": "esri_z18"},
+            {"id": "di_6", "lat": 25.155860086, "lon": 52.873847672, "radius_m": 37.8, "h_max_m": 13, "geom_source": "esri_z18"},
+            {"id": "di_7", "lat": 25.155844871, "lon": 52.872951871, "radius_m": 38.1, "h_max_m": 13, "geom_source": "esri_z18"},
+            {"id": "di_8", "lat": 25.157446091, "lon": 52.874549136, "radius_m": 39.6, "h_max_m": 13, "geom_source": "esri_z18"},
+            {"id": "di_9", "lat": 25.157445371, "lon": 52.875608102, "radius_m": 41.3, "h_max_m": 13, "geom_source": "esri_z18"},
+            {"id": "di_10", "lat": 25.157524434, "lon": 52.876679171, "radius_m": 34.6, "h_max_m": 13, "geom_source": "esri_z18", "uncertain": True, "note": "dome_suspect_rms8.3", "center_gate": True},
+            {"id": "di_11", "lat": 25.155916882, "lon": 52.876199875, "radius_m": 39.6, "h_max_m": 13, "geom_source": "esri_z18"},
+            {"id": "di_12", "lat": 25.154924946, "lon": 52.876208144, "radius_m": 36.9, "h_max_m": 13, "geom_source": "esri_z18"},
+            {"id": "di_13", "lat": 25.153696089, "lon": 52.877803036, "radius_m": 36.6, "h_max_m": 13, "geom_source": "esri_z18"},
+            {"id": "di_14", "lat": 25.153937443, "lon": 52.876224434, "radius_m": 35.3, "h_max_m": 13, "geom_source": "esri_z18", "center_gate": True}
+        ],
+    },
+    {
+        "id": "ruwais",
+        "allowed_orbits": [
+            {"relative_orbit": 64, "direction": "DESC", "los_azimuth": 282},
+            {"relative_orbit": 28, "direction": "ASCE", "los_azimuth": 98}
+        ],
+        "name": "Ruwais",
+        "country": "AE",
+        "status": "active",
+        "tanks": [
+            {"id": "rw_0",  "lat": 24.114956567664525, "lon": 52.71241345383107,  "radius_m": 35, "h_max_m": 13},
+            {"id": "rw_1",  "lat": 24.114907669285742, "lon": 52.713681628007045, "radius_m": 35, "h_max_m": 13},
+            {"id": "rw_2",  "lat": 24.11379070745836,  "lon": 52.713695558267,    "radius_m": 35, "h_max_m": 13},
+            {"id": "rw_3",  "lat": 24.113576277563517, "lon": 52.71605021918839,  "radius_m": 35, "h_max_m": 13},
+            {"id": "rw_4",  "lat": 24.114717733558923, "lon": 52.71607016495887,  "radius_m": 35, "h_max_m": 13},
+            {"id": "rw_5",  "lat": 24.1159251604016,   "lon": 52.7160949088183,   "radius_m": 35, "h_max_m": 13},
+            {"id": "rw_6",  "lat": 24.112377390087346, "lon": 52.71751667155687,  "radius_m": 35, "h_max_m": 13},
+            {"id": "rw_7",  "lat": 24.113596219872896, "lon": 52.717531513035425, "radius_m": 35, "h_max_m": 13},
+            {"id": "rw_8",  "lat": 24.11467201144374,  "lon": 52.71753998573235,  "radius_m": 35, "h_max_m": 13},
+            {"id": "rw_9",  "lat": 24.115911215497633, "lon": 52.717575110413755, "radius_m": 35, "h_max_m": 13},
+            {"id": "rw_10", "lat": 24.11353382485918,  "lon": 52.71896656795626,  "radius_m": 35, "h_max_m": 13},
+            {"id": "rw_11", "lat": 24.11471179820987,  "lon": 52.71896592307926,  "radius_m": 35, "h_max_m": 13},
+            {"id": "rw_12", "lat": 24.115851035546793, "lon": 52.718978467817,    "radius_m": 35, "h_max_m": 13},
+            {"id": "rw_13", "lat": 24.114684373560713, "lon": 52.720276144915694, "radius_m": 35, "h_max_m": 13},
+            {"id": "rw_14", "lat": 24.115827821646256, "lon": 52.72029041013836,  "radius_m": 35, "h_max_m": 13},
+            {"id": "rw_15", "lat": 24.124784742890743, "lon": 52.717482788327075, "radius_m": 35, "h_max_m": 13},
+            {"id": "rw_16", "lat": 24.124823683305152, "lon": 52.71840013034501,  "radius_m": 35, "h_max_m": 13},
+            {"id": "rw_17", "lat": 24.12384367927187,  "lon": 52.71734767593682,  "radius_m": 35, "h_max_m": 13},
+            {"id": "rw_18", "lat": 24.12382060509468,  "lon": 52.71837581949109,  "radius_m": 35, "h_max_m": 13},
+            {"id": "rw_19", "lat": 24.12275031009762,  "lon": 52.717347588721196, "radius_m": 35, "h_max_m": 13},
+            {"id": "rw_20", "lat": 24.122680245573186, "lon": 52.718372997228656, "radius_m": 35, "h_max_m": 13},
+            {"id": "rw_21", "lat": 24.13209242109556,  "lon": 52.7163302554267,   "radius_m": 35, "h_max_m": 13},
+            {"id": "rw_22", "lat": 24.133447309183417, "lon": 52.71631716477099,  "radius_m": 35, "h_max_m": 13},
+            {"id": "rw_23", "lat": 24.13500837782942,  "lon": 52.716328422921194, "radius_m": 35, "h_max_m": 13},
+            {"id": "rw_24", "lat": 24.13498916611015,  "lon": 52.71633193158577,  "radius_m": 35, "h_max_m": 13},
+            {"id": "rw_25", "lat": 24.138263480238198, "lon": 52.71637415335514,  "radius_m": 35, "h_max_m": 13},
+            {"id": "rw_26", "lat": 24.13543832315077,  "lon": 52.71136879413096,  "radius_m": 35, "h_max_m": 13},
+            {"id": "rw_27", "lat": 24.135511794790396, "lon": 52.70941009154833,  "radius_m": 35, "h_max_m": 13},
+            {"id": "rw_28", "lat": 24.135975435618654, "lon": 52.71041016937543,  "radius_m": 35, "h_max_m": 13},
+            {"id": "rw_29", "lat": 24.115538372021355, "lon": 52.72335824045924,  "radius_m": 30, "h_max_m": 12},
+            {"id": "rw_30", "lat": 24.11557550740297,  "lon": 52.72443126312837,  "radius_m": 30, "h_max_m": 12},
+            {"id": "rw_31", "lat": 24.114536471534596, "lon": 52.72330963564494,  "radius_m": 30, "h_max_m": 12},
+            {"id": "rw_32", "lat": 24.114552959590597, "lon": 52.72446576616746,  "radius_m": 30, "h_max_m": 12},
+            {"id": "rw_33", "lat": 24.122746945009705, "lon": 52.71195124402775,  "radius_m": 30, "h_max_m": 12},
+            {"id": "rw_34", "lat": 24.123415750407418, "lon": 52.711969564058045, "radius_m": 30, "h_max_m": 12},
+            {"id": "rw_35", "lat": 24.123459222637255, "lon": 52.710760442058515, "radius_m": 30, "h_max_m": 12},
+            {"id": "rw_36", "lat": 24.124675074524266, "lon": 52.71570454375702,  "radius_m": 30, "h_max_m": 12},
+            {"id": "rw_37", "lat": 24.126507069636926, "lon": 52.711458615827915, "radius_m": 30, "h_max_m": 12},
+            {"id": "rw_38", "lat": 24.12651347027028,  "lon": 52.712461514456244, "radius_m": 30, "h_max_m": 12},
+            {"id": "rw_39", "lat": 24.127527966609872, "lon": 52.7126438596614,   "radius_m": 30, "h_max_m": 12},
+        ],
+    },
+    {
+        "id": "mina_ahmadi",
+        "geom_source": "esri_z18",
+        "allowed_orbits": [
+            {"relative_orbit": 108, "direction": "DESC", "los_azimuth": 282},
+            {"relative_orbit": 174, "direction": "ASCE", "los_azimuth": 98}
+        ],
+        "name": "Mina Al Ahmadi",
+        "country": "KW",
+        "status": "active",
+        "tanks": [
+            {"id": "ma_0", "lat": 29.049522711, "lon": 48.059234586, "radius_m": 31.6, "h_max_m": 12, "geom_source": "esri_z18"},
+            {"id": "ma_1", "lat": 29.048203695, "lon": 48.058528504, "radius_m": 31.2, "h_max_m": 12, "geom_source": "esri_z18"},
+            {"id": "ma_2", "lat": 29.049249847, "lon": 48.055996118, "radius_m": 25.9, "h_max_m": 12, "geom_source": "esri_z18"},
+            {"id": "ma_3", "lat": 29.050561356, "lon": 48.056697614, "radius_m": 30.3, "h_max_m": 12, "geom_source": "esri_z18"},
+            {"id": "ma_4", "lat": 29.055617762, "lon": 48.062154613, "radius_m": 43.2, "h_max_m": 16, "geom_source": "esri_z18"},
+            {"id": "ma_5", "lat": 29.056769916, "lon": 48.05945347, "radius_m": 41.5, "h_max_m": 16, "geom_source": "esri_z18"},
+            {"id": "ma_6", "lat": 29.058583474, "lon": 48.06045136, "radius_m": 43.4, "h_max_m": 16, "geom_source": "esri_z18"},
+            {"id": "ma_7", "lat": 29.057534983, "lon": 48.063107281, "radius_m": 41.9, "h_max_m": 16, "geom_source": "esri_z18"},
+            {"id": "ma_8", "lat": 29.062853237, "lon": 48.059739499, "radius_m": 45.9, "h_max_m": 16, "geom_source": "esri_z18"},
+            {"id": "ma_9", "lat": 29.063673305, "lon": 48.057532252, "radius_m": 44.8, "h_max_m": 16, "geom_source": "esri_z18"},
+            {"id": "ma_10", "lat": 29.054813559, "lon": 48.058466475, "radius_m": 44.4, "h_max_m": 16, "geom_source": "esri_z18"},
+            {"id": "ma_11", "lat": 29.053770695, "lon": 48.061162006, "radius_m": 41.3, "h_max_m": 16, "geom_source": "esri_z18"},
+            {"id": "ma_12", "lat": 29.051843186, "lon": 48.060222166, "radius_m": 46.0, "h_max_m": 16, "geom_source": "esri_z18"},
+            {"id": "ma_13", "lat": 29.052928661, "lon": 48.057497945, "radius_m": 44.5, "h_max_m": 16, "geom_source": "esri_z18"}
+        ],
+    },
+
+    # ── Yanbu ─────────────────────────────────────────────────────────────────
+    # Saudi Aramco Red Sea export terminal. Primary outlet for Arabian crude
+    # bound for Europe and Asia via Suez. 12 tanks, 60m radius.
+    {
+        "id": "yanbu",
+        "name": "Yanbu",
+        "country": "SA",
+        "allowed_orbits": [
+            {"relative_orbit": 14, "direction": "ASC", "los_azimuth": 98},
+        ],
+        "status": "active",
+        "tanks": [
+            {"id": "yb_0",  "lat": 23.959074, "lon": 38.244398, "radius_m": 60, "h_max_m": 18, "enabled": True, "wl_step": 0.4736, "wl_date": "2026-09-29", "wl_n_scenes": 18},
+            {"id": "yb_1",  "lat": 23.962590, "lon": 38.247925, "radius_m": 60, "h_max_m": 18, "enabled": False, "wl_step": 2.6468, "wl_date": "2026-09-29", "wl_n_scenes": 18},
+            {"id": "yb_2",  "lat": 23.964053, "lon": 38.245977, "radius_m": 60, "h_max_m": 18, "enabled": True, "wl_step": 0.9483, "wl_date": "2026-09-29", "wl_n_scenes": 18},
+            {"id": "yb_3",  "lat": 23.965544, "lon": 38.244086, "radius_m": 60, "h_max_m": 18, "enabled": True, "wl_step": 2.2076, "wl_date": "2026-09-29", "wl_n_scenes": 18},
+            {"id": "yb_4",  "lat": 23.964986, "lon": 38.250081, "radius_m": 60, "h_max_m": 18, "enabled": False, "wl_step": 4.8398, "wl_date": "2026-09-29", "wl_n_scenes": 18},
+            {"id": "yb_5",  "lat": 23.966460, "lon": 38.248119, "radius_m": 60, "h_max_m": 18, "enabled": True, "wl_step": 2.4043, "wl_date": "2026-09-29", "wl_n_scenes": 18},
+            {"id": "yb_6",  "lat": 23.967960, "lon": 38.246187, "radius_m": 60, "h_max_m": 18, "enabled": False, "wl_step": 4.3581, "wl_date": "2026-09-29", "wl_n_scenes": 18},
+            {"id": "yb_7",  "lat": 23.967392, "lon": 38.252229, "radius_m": 60, "h_max_m": 18, "enabled": True, "wl_step": 2.1594, "wl_date": "2026-09-29", "wl_n_scenes": 18},
+            {"id": "yb_8",  "lat": 23.968866, "lon": 38.250263, "radius_m": 60, "h_max_m": 18, "enabled": True, "wl_step": 2.0187, "wl_date": "2026-09-29", "wl_n_scenes": 18},
+            {"id": "yb_9",  "lat": 23.970331, "lon": 38.248336, "radius_m": 60, "h_max_m": 18, "enabled": True, "wl_step": 1.4186, "wl_date": "2026-09-29", "wl_n_scenes": 18},
+            {"id": "yb_10", "lat": 23.969788, "lon": 38.254362, "radius_m": 60, "h_max_m": 18, "enabled": False, "wl_step": 3.0958, "wl_date": "2026-09-29", "wl_n_scenes": 18},
+            {"id": "yb_11", "lat": 23.971259, "lon": 38.252416, "radius_m": 60, "h_max_m": 18, "enabled": True, "wl_step": 1.0531, "wl_date": "2026-09-29", "wl_n_scenes": 18},
+        ],
+    },
+]
