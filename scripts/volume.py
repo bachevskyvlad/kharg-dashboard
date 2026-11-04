@@ -104,6 +104,36 @@ def compute_volumes(df, db_min_override=None, db_max_override=None,
     return df, dB_min, dB_max
 
 
+def compute_volumes_by_group(df, group_cols):
+    """
+    Compute volumes with per-group [5th, 95th] percentile calibration.
+
+    group_cols: e.g. ['relative_orbit', 'orbit_direction', 'platform']
+    Returns (df_with_barrels, calibration_map) where
+    calibration_map = {group_key_tuple: (dB_min, dB_max)}.
+    """
+    df = df.copy()
+    df["barrels"] = np.nan
+    calibration_map = {}
+
+    for grp_key, grp in df.groupby(group_cols):
+        if not isinstance(grp_key, tuple):
+            grp_key = (grp_key,)
+        dB_min_g = grp["db_mean"].quantile(0.05)
+        dB_max_g = grp["db_mean"].quantile(0.95)
+        calibration_map[grp_key] = (dB_min_g, dB_max_g)
+
+        def _vol(row, lo=dB_min_g, hi=dB_max_g):
+            vv = np.clip(row["db_mean"], lo, hi)
+            fr = (hi - vv) / (hi - lo)
+            h  = TANK_HEIGHT_MIN + fr * (row["h_max"] - TANK_HEIGHT_MIN)
+            return np.pi * row["radius_m"]**2 * h * BARREL_PER_M3
+
+        df.loc[grp.index, "barrels"] = grp.apply(_vol, axis=1)
+
+    return df, calibration_map
+
+
 def aggregate_daily(df):
     """
     Aggregates per-tank barrel estimates to a daily total volume series.
