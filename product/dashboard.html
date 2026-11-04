@@ -1832,6 +1832,7 @@ function renderFillRateChart(dates, rates) {
 }
 
 function renderSPIChart(dates, spi) {
+    if (!document.getElementById('spiChart')) return;
     const validSpi = spi.filter(v => v != null);
     const spiMin = Math.max(0, Math.floor(Math.min(...validSpi) - 3));
     const spiMax = Math.min(100, Math.ceil(Math.max(...validSpi) + 3));
@@ -1908,7 +1909,8 @@ async function loadFlows() {
         }
     } catch {}
 
-    document.getElementById('sigFlows').textContent = 'Loading gross flow data…';
+    const _sigFlowsEl = document.getElementById('sigFlows');
+    if (_sigFlowsEl) _sigFlowsEl.textContent = 'Loading gross flow data…';
     const headers = { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` };
 
     try {
@@ -2204,13 +2206,14 @@ function renderRevenue() {
         : '';
 }
 
+const SUPABASE_URL = 'https://yoekhkczwdeyauwarsyy.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_7j07_zzdqTGM1LXf7-o9Tg_JJRbJQSM';
+
 checkAuth();
 loadData();
 loadFlows();
 
 // ── Per-Tank Map ───────────────────────────────────────────────────────────
-const SUPABASE_URL = 'https://yoekhkczwdeyauwarsyy.supabase.co';
-const SUPABASE_KEY = 'sb_publishable_7j07_zzdqTGM1LXf7-o9Tg_JJRbJQSM';
 const H_MIN = 2, BBL = 6.2898;
 
 const TANKS = {
