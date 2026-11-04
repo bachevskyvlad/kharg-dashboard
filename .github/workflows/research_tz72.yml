@@ -1,0 +1,69 @@
+name: Research — ТЗ-7.2 Pier Ship Detector
+
+on:
+  workflow_dispatch:
+    inputs:
+      start:
+        description: 'Start date (YYYY-MM-DD)'
+        required: false
+        default: '2024-01-01'
+      end:
+        description: 'End date (YYYY-MM-DD, leave blank = today)'
+        required: false
+        default: ''
+      bg_window:
+        description: 'Background reference window (days before start)'
+        required: false
+        default: '90'
+      rebuild_bg:
+        description: 'Rebuild background (true/false)'
+        required: false
+        default: 'false'
+
+jobs:
+  detect:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: claude/oilradar-dashboard-iran-zchdva
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: pip install -r scripts/requirements.txt matplotlib
+
+      - name: Run detector
+        run: |
+          END_ARG=""
+          if [ -n "${{ github.event.inputs.end }}" ]; then
+            END_ARG="--end ${{ github.event.inputs.end }}"
+          fi
+          REBUILD_ARG=""
+          if [ "${{ github.event.inputs.rebuild_bg }}" = "true" ]; then
+            REBUILD_ARG="--rebuild-bg"
+          fi
+          python scripts/research/tz72_ship_detector.py \
+            --start "${{ github.event.inputs.start }}" \
+            $END_ARG \
+            --bg-window "${{ github.event.inputs.bg_window }}" \
+            $REBUILD_ARG
+        env:
+          CLIENT_ID:     ${{ secrets.CLIENT_ID }}
+          CLIENT_SECRET: ${{ secrets.CLIENT_SECRET }}
+
+      - name: Upload CSV
+        uses: actions/upload-artifact@v4
+        with:
+          name: tz72-detections-${{ github.run_id }}
+          path: data/research/tz72/detections.csv
+          if-no-files-found: warn
+
+      - name: Upload images
+        uses: actions/upload-artifact@v4
+        with:
+          name: tz72-images-${{ github.run_id }}
+          path: data/research/tz72/images/
+          if-no-files-found: warn
