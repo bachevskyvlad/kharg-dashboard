@@ -1,0 +1,63 @@
+name: Berth Catalog Search
+
+on:
+  workflow_dispatch:
+    inputs:
+      start:
+        description: "Search start date YYYY-MM-DD"
+        required: false
+        default: "2019-01-01"
+      end:
+        description: "Search end date YYYY-MM-DD (blank = today)"
+        required: false
+        default: ""
+      orbits:
+        description: "Relative orbit numbers (space-separated)"
+        required: false
+        default: "35 101"
+      limit:
+        description: "Max rows to print"
+        required: false
+        default: "30"
+
+jobs:
+  catalog:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: scripts
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: claude/oilradar-dashboard-iran-zchdva
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          pip install \
+            sentinelhub \
+            scipy \
+            numpy \
+            Pillow \
+            shapely \
+            matplotlib
+
+      - name: Catalog search
+        env:
+          CLIENT_ID: ${{ secrets.CLIENT_ID }}
+          CLIENT_SECRET: ${{ secrets.CLIENT_SECRET }}
+        run: |
+          END_ARG=""
+          if [ -n "${{ github.event.inputs.end }}" ]; then
+            END_ARG="--catalog-end ${{ github.event.inputs.end }}"
+          fi
+          python berth_detect_v3.py \
+            --catalog-only \
+            --catalog-start "${{ github.event.inputs.start }}" \
+            $END_ARG \
+            --catalog-limit "${{ github.event.inputs.limit }}" \
+            --orbits ${{ github.event.inputs.orbits }}

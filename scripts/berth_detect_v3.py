@@ -995,12 +995,93 @@ def append_summary_csv(rows: list, path: Path):
 # Main
 # ═══════════════════════════════════════════════════════════════════════════════
 
+CODE_VERSION = "v3"
+
+
+def catalog_only_mode(start: str, end: str, orbits: list[int], limit: int):
+    """Print scenes from SentinelHub catalog over AOI_BBOX, filtered by orbit."""
+    from datetime import date as _date
+    catalog = SentinelHubCatalog(config=config)
+    results = list(catalog.search(
+        S1_CDSE, bbox=AOI_BBOX,
+        time=(start + "T00:00:00Z", end + "T23:59:59Z"),
+        fields={"include": ["id", "properties.datetime",
+                            "properties.sat:relative_orbit",
+                            "properties.sat:orbit_state",
+                            "properties.platform"]},
+    ))
+    rows = []
+    for r in results:
+        p = r.get("properties", {})
+        rel = p.get("sat:relative_orbit")
+        if rel not in orbits:
+            continue
+        dt_str = p.get("datetime", "")
+        date = dt_str[:10] if dt_str else ""
+        rows.append({
+            "date":     date,
+            "scene_id": r.get("id", ""),
+            "rel_orbit": rel,
+            "platform": p.get("platform", ""),
+        })
+    # deduplicate by (date, rel_orbit) keeping first
+    seen = set()
+    uniq = []
+    for r in sorted(rows, key=lambda x: x["date"]):
+        key = (r["date"], r["rel_orbit"])
+        if key not in seen:
+            seen.add(key)
+            uniq.append(r)
+
+    print(f"\nCATALOG SEARCH: {start} → {end}, orbits={orbits}")
+    print(f"{'date':<12} {'scene_id':<60} {'rel_orbit':>9} {'platform':<10}")
+    print("-" * 95)
+    shown = 0
+    for r in uniq:
+        if limit and shown >= limit:
+            break
+        print(f"{r['date']:<12} {r['scene_id']:<60} {r['rel_orbit']:>9} {r['platform']:<10}")
+        shown += 1
+    print(f"\nTotal unique (date, orbit) scenes shown: {shown}  (of {len(uniq)} available)")
+
+
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--dates",  nargs="+", required=True, metavar="YYYY-MM-DD")
+    parser.add_argument("--dates",  nargs="+", metavar="YYYY-MM-DD")
     parser.add_argument("--orbits", nargs="+", type=int,
                         default=[ORBIT_35, ORBIT_101])
+    # catalog-only mode
+    parser.add_argument("--catalog-only", action="store_true",
+                        help="Print available scenes from catalog and exit, no detection")
+    parser.add_argument("--catalog-start", default="2019-01-01")
+    parser.add_argument("--catalog-end",   default="")
+    parser.add_argument("--catalog-limit", type=int, default=20,
+                        help="Max rows to print in --catalog-only mode")
+    # run control
+    parser.add_argument("--clean", action="store_true",
+                        help="Delete diagnostics/berth_v3/ before running")
     args = parser.parse_args()
+
+    if args.catalog_only:
+        end = args.catalog_end or datetime.utcnow().strftime("%Y-%m-%d")
+        catalog_only_mode(args.catalog_start, end, args.orbits, args.catalog_limit)
+        return
+
+    if not args.dates:
+        parser.error("--dates is required unless --catalog-only is set")
+
+    run_id = os.environ.get("GITHUB_RUN_ID", "local")
+
+    if args.clean and OUT_DIR.exists():
+        import shutil
+        # Keep bg_cache to avoid re-fetching background
+        for item in OUT_DIR.iterdir():
+            if item.name != "bg_cache":
+                if item.is_dir():
+                    shutil.rmtree(item)
+                else:
+                    item.unlink()
+        print(f"Cleaned {OUT_DIR} (bg_cache preserved)")
 
     OUT_DIR.mkdir(parents=True, exist_ok=True)
     BG_CACHE.mkdir(parents=True, exist_ok=True)
@@ -1144,6 +1225,8 @@ def main():
                     "core_length_m": best.get("kernel_length_m", 0) if best else 0,
                     "n_parts": best.get("n_parts", 0) if best else 0,
                     "max_ratio_dB": best.get("max_ratio_dB", 0) if best else 0,
+                    "run_id": run_id,
+                    "code_version": CODE_VERSION,
                 })
                 review_rows.append({
                     "date": date_str, "berth": berth, "rel_orbit": orbit,
@@ -1191,12 +1274,29 @@ def main():
 
     # Save results table CSV
     res_csv = OUT_DIR / "results_table.csv"
-    res_fields = ["date", "orbit", "berth", "occupied", "core_length_m", "n_parts", "max_ratio_dB"]
+    res_fields = ["date", "orbit", "berth", "occupied", "core_length_m", "n_parts", "max_ratio_dB", "run_id", "code_version"]
     with open(res_csv, "w", newline="") as f:
         w = csv.DictWriter(f, fieldnames=res_fields)
         w.writeheader()
         w.writerows(result_rows)
     print(f"\nresults_table.csv: {res_csv}")
+
+    # Pre-delivery summary
+    n_rows = len(result_rows)
+    n_no_scene = sum(1 for r in result_rows if r.get("max_ratio_dB") == 0 and not r.get("occupied") and r.get("core_length_m") == 0 and r.get("n_parts") == 0)
+    # Count no_scene from summary csv
+    n_no_scene_actual = 0
+    if summ_csv.exists():
+        with open(summ_csv) as f:
+            import csv as _csv2
+            for row in _csv2.DictReader(f):
+                if row.get("no_background") == "no_scene":
+                    n_no_scene_actual += 1
+    print(f"\n=== PRE-DELIVERY CHECK ===")
+    print(f"results_table rows: {n_rows}")
+    print(f"no_scene dates:     {n_no_scene_actual}")
+    print(f"run_id:             {run_id}")
+    print(f"code_version:       {CODE_VERSION}")
 
     n_cands = sum(1 for _ in open(cand_csv)) - 1 if cand_csv.exists() else 0
     n_ghost = 0

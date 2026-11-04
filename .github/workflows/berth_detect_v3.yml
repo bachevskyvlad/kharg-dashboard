@@ -42,8 +42,10 @@ jobs:
         env:
           CLIENT_ID: ${{ secrets.CLIENT_ID }}
           CLIENT_SECRET: ${{ secrets.CLIENT_SECRET }}
+          GITHUB_RUN_ID: ${{ github.run_id }}
         run: |
           python berth_detect_v3.py \
+            --clean \
             --dates ${{ inputs.dates }} \
             --orbits ${{ inputs.orbits }}
 
