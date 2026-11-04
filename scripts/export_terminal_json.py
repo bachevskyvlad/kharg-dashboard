@@ -18,14 +18,13 @@ import sys
 import pandas as pd
 from supabase import create_client
 
-SUPABASE_URL = "https://yoekhkczwdeyauwarsyy.supabase.co"
-SUPABASE_KEY = os.environ.get(
-    "SUPABASE_KEY",
-    "sb_publishable_7j07_zzdqTGM1LXf7-o9Tg_JJRbJQSM",
-)
+SUPABASE_URL = os.environ.get("SUPABASE_URL") or ""
+SUPABASE_KEY = os.environ.get("SUPABASE_KEY") or ""
+if not SUPABASE_URL or not SUPABASE_KEY:
+    import sys; sys.exit("FATAL: SUPABASE_URL and SUPABASE_KEY env vars must be set")
 sb = create_client(SUPABASE_URL, SUPABASE_KEY)
 
-IRAN_TERMINALS = ["lavan", "siri", "jask"]
+IRAN_TERMINALS = ["lavan", "siri", "goreh_omid", "jask", "bahregan"]
 
 # Earliest date to include per terminal (terminal launch dates)
 TERMINAL_START = {
@@ -33,10 +32,12 @@ TERMINAL_START = {
 }
 
 TERMINAL_META = {
-    "lavan":  {"name": "Lavan Island",  "max_capacity_mb": 7.5},
-    "siri":   {"name": "Siri Island",   "max_capacity_mb": 3.2},
-    "jask":   {"name": "Jask",          "max_capacity_mb": 9.8},
-    "kharg":  {"name": "Kharg Island",  "max_capacity_mb": 33.2},
+    "lavan":       {"name": "Lavan Island",  "max_capacity_mb": 7.5},
+    "siri":        {"name": "Siri Island",   "max_capacity_mb": 3.2},
+    "jask":        {"name": "Jask",          "max_capacity_mb": 9.8},
+    "kharg":       {"name": "Kharg Island",  "max_capacity_mb": 33.2},
+    "goreh_omid":  {"name": "Goreh-Omid",    "max_capacity_mb": 9.0},
+    "bahregan":    {"name": "Bahregan",      "max_capacity_mb": 5.5},
 }
 KHARG_MAX = 33.2
 
