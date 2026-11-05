@@ -1,0 +1,52 @@
+name: Berth Axis v5
+
+on:
+  workflow_dispatch:
+
+jobs:
+  berth_axis_v5:
+    runs-on: ubuntu-latest
+    timeout-minutes: 350
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: claude/oilradar-dashboard-iran-zchdva
+
+      - name: Install dependencies
+        run: pip install sentinelhub scipy numpy matplotlib shapely -q
+
+      - name: Run berth axis v5
+        run: python scripts/berth_axis_v5.py
+        env:
+          CLIENT_ID:     ${{ secrets.CLIENT_ID }}
+          CLIENT_SECRET: ${{ secrets.CLIENT_SECRET }}
+
+      - name: Upload ships CSV
+        uses: actions/upload-artifact@v4
+        with:
+          name: berth_axis_ships_csv
+          path: diagnostics/berth_axis/ships.csv
+          retention-days: 90
+
+      - name: Upload occupancy CSV
+        uses: actions/upload-artifact@v4
+        with:
+          name: berth_axis_occupancy_csv
+          path: diagnostics/berth_axis/occupancy.csv
+          retention-days: 90
+
+      - name: Upload all results
+        uses: actions/upload-artifact@v4
+        with:
+          name: berth_axis_results
+          path: diagnostics/berth_axis/
+          retention-days: 90
+
+      - name: Commit results
+        run: |
+          git config user.email "actions@github.com"
+          git config user.name "GitHub Actions"
+          git add diagnostics/berth_axis/
+          git commit -m "data: berth_axis_v5 results [skip ci]" || echo "nothing to commit"
+          git push origin claude/oilradar-dashboard-iran-zchdva
