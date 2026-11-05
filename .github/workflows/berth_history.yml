@@ -1,0 +1,52 @@
+name: Berth History
+
+on:
+  workflow_dispatch:
+
+jobs:
+  history:
+    runs-on: ubuntu-latest
+    timeout-minutes: 350
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: claude/oilradar-dashboard-iran-zchdva
+
+      - name: Install dependencies
+        run: pip install sentinelhub scipy numpy matplotlib shapely -q
+
+      - name: Run berth history
+        run: python scripts/berth_detect_history.py
+        env:
+          CLIENT_ID: ${{ secrets.CLIENT_ID }}
+          CLIENT_SECRET: ${{ secrets.CLIENT_SECRET }}
+
+      - name: Upload CSV
+        uses: actions/upload-artifact@v4
+        with:
+          name: berth_history_csv
+          path: diagnostics/berth_history/berth_history.csv
+          retention-days: 90
+
+      - name: Upload PNG zip
+        uses: actions/upload-artifact@v4
+        with:
+          name: berth_history_png_zip
+          path: diagnostics/berth_history/berth_history_png.zip
+          retention-days: 90
+
+      - name: Upload all results
+        uses: actions/upload-artifact@v4
+        with:
+          name: berth_history_results
+          path: diagnostics/berth_history/
+          retention-days: 90
+
+      - name: Commit results
+        run: |
+          git config user.email "actions@github.com"
+          git config user.name "GitHub Actions"
+          git add diagnostics/berth_history/
+          git commit -m "data: berth_history results [skip ci]" || echo "nothing to commit"
+          git push origin claude/oilradar-dashboard-iran-zchdva
