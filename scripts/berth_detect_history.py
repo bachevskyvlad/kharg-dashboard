@@ -485,7 +485,7 @@ def _berth_axis_px(berth):
     return (dx / length, dy / length, ox, oy)
 
 
-def detect_in_corridors(ratio_db, corridor_masks, meta, date_str):
+def detect_in_corridors(ratio_db, corridor_masks, meta, date_str, cand_rows=None, run_id=""):
     results = []
     gap_px = MERGE_GAP_M / RESOLUTION
 
@@ -498,7 +498,8 @@ def detect_in_corridors(ratio_db, corridor_masks, meta, date_str):
         raw_blobs = []
         for i in range(1, num + 1):
             comp = (labeled == i)
-            if comp.sum() < MIN_AREA_PX:
+            area_px = int(comp.sum())
+            if area_px < MIN_AREA_PX:
                 continue
             ys_c, xs_c = np.where(comp)
             if axis_px is not None:
@@ -506,6 +507,37 @@ def detect_in_corridors(ratio_db, corridor_masks, meta, date_str):
                 projs = ux * (xs_c - ox) + uy * (ys_c - oy)
             else:
                 projs = ys_c.astype(float)
+
+            # --- candidate record (before merge) ---
+            if cand_rows is not None:
+                # kernel blob: > KERNEL_RATIO_THR within this component
+                kern_mask = comp & (ratio_db > KERNEL_RATIO_THR)
+                kern_ys, kern_xs = np.where(kern_mask)
+                if len(kern_xs) >= 2:
+                    kern_len_px, _, _ = pca_dims(kern_ys, kern_xs)
+                    kern_len_m = round(kern_len_px * RESOLUTION, 1)
+                    max_ratio  = float(ratio_db[kern_mask].max())
+                    cy = float(kern_ys.mean()); cx = float(kern_xs.mean())
+                else:
+                    kern_len_m = 0.0
+                    max_ratio  = float(ratio_db[comp].max())
+                    cy = float(ys_c.mean()); cx = float(xs_c.mean())
+                lon_c, lat_c = px_to_lonlat(cx, cy)
+                cand_rows.append({
+                    "date":          date_str,
+                    "rel_orbit":     meta.get("rel_orbit", ""),
+                    "berth":         berth,
+                    "blob_idx":      len([r for r in cand_rows
+                                         if r["date"] == date_str
+                                         and r["berth"] == berth]) + 1,
+                    "lat":           round(lat_c, 6),
+                    "lon":           round(lon_c, 6),
+                    "length_m":      kern_len_m,
+                    "max_ratio_dB":  round(max_ratio, 2),
+                    "area_px":       area_px,
+                    "run_id":        run_id,
+                })
+
             raw_blobs.append({
                 '_comp': comp, '_ys': ys_c, '_xs': xs_c,
                 '_proj_min': float(projs.min()), '_proj_max': float(projs.max()),
@@ -724,6 +756,9 @@ CSV_FIELDS = ["date", "rel_orbit", "platform", "berth",
               "occupied", "n_ships", "lengths_m",
               "max_ratio_dB", "no_background", "experimental", "run_id"]
 
+CAND_FIELDS = ["date", "rel_orbit", "berth", "blob_idx",
+               "lat", "lon", "length_m", "max_ratio_dB", "area_px", "run_id"]
+
 
 def write_csv(rows, path):
     with open(path, "w", newline="") as f:
@@ -734,6 +769,15 @@ def write_csv(rows, path):
             row["lengths_m"] = str(row["lengths_m"])
             w.writerow(row)
     print(f"berth_history.csv: {path} ({len(rows)} rows)")
+
+
+def write_candidates_csv(cand_rows, path):
+    with open(path, "w", newline="") as f:
+        w = csv.DictWriter(f, fieldnames=CAND_FIELDS)
+        w.writeheader()
+        for r in cand_rows:
+            w.writerow({k: r.get(k, "") for k in CAND_FIELDS})
+    print(f"berth_candidates.csv: {path} ({len(cand_rows)} rows)")
 
 # ═══════════════════════════════════════════════════════════════════════════════
 # Pre-delivery stats
@@ -783,7 +827,8 @@ def print_stats(rows):
         total_pct  = (total_miss / total_tot * 100) if total_tot > 0 else 0.0
         print(f"{yr:<6}" + "  " + "  ".join(vals) + f"  {total_pct:>5.1f}%")
 
-    # 3. occupied % per year × berth (exclude no_background rows)
+    # 3a. occupied % per year × berth — VERIFIED metric (sea_island, east_t_head only)
+    VERIFIED_BERTHS = ["sea_island", "east_t_head"]
     occ_total  = defaultdict(int)
     occ_yes    = defaultdict(int)
     for r in rows:
@@ -791,22 +836,51 @@ def print_stats(rows):
             continue
         if r["n_ships"] == "NaN":
             continue
+        if r["berth"] not in VERIFIED_BERTHS:
+            continue
         key = (r["date"][:4], r["berth"])
         occ_total[key] += 1
         if r["occupied"] is True or r["occupied"] == "True":
             occ_yes[key] += 1
 
-    berths = list(BERTH_SPEC.keys())
-    print("\n--- occupied % per year × berth (no_background excluded) ---")
-    hdr2 = f"{'year':<6}" + "".join(f"  {b[:14]:>14}" for b in berths)
+    print("\n--- occupied % per year × berth [VERIFIED: sea_island, east_t_head] ---")
+    hdr2 = f"{'year':<6}" + "".join(f"  {b[:14]:>14}" for b in VERIFIED_BERTHS)
     print(hdr2)
     for yr in all_years:
         vals = []
-        for b in berths:
+        for b in VERIFIED_BERTHS:
             key = (yr, b)
             tot = occ_total[key]
             pct = (occ_yes[key] / tot * 100) if tot > 0 else 0.0
             vals.append(f"{pct:>7.1f}%({occ_yes[key]}/{tot})")
+        print(f"{yr:<6}" + "  " + "  ".join(vals))
+
+    # 3b. n_ships mean per year × berth — EXPERIMENTAL (thresholds not validated)
+    nships_sum   = defaultdict(int)
+    nships_count = defaultdict(int)
+    for r in rows:
+        if r["no_background"] == 1:
+            continue
+        if r["n_ships"] == "NaN":
+            continue
+        key = (r["date"][:4], r["berth"])
+        nships_count[key] += 1
+        try:
+            nships_sum[key] += int(r["n_ships"])
+        except (ValueError, TypeError):
+            pass
+
+    berths_all = list(BERTH_SPEC.keys())
+    print("\n--- mean n_ships per year × berth [EXPERIMENTAL — thresholds not validated] ---")
+    hdr3 = f"{'year':<6}" + "".join(f"  {b[:14]:>14}" for b in berths_all)
+    print(hdr3)
+    for yr in all_years:
+        vals = []
+        for b in berths_all:
+            key = (yr, b)
+            cnt = nships_count[key]
+            avg = (nships_sum[key] / cnt) if cnt > 0 else 0.0
+            vals.append(f"{avg:>7.2f}({cnt})")
         print(f"{yr:<6}" + "  " + "  ".join(vals))
 
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -847,6 +921,7 @@ def main():
     print(f"\nPNG dates: {len(random_30)} random + {len(dates_2026)} 2026 = {len(png_dates)} unique")
 
     all_result_rows = []
+    all_cand_rows   = []
     png_dir = OUT_DIR / "pngs"
     png_dir.mkdir(parents=True, exist_ok=True)
 
@@ -898,7 +973,8 @@ def main():
         ratio_db_norm = wind_normalise(ratio_db_full, corridor_masks, water_ring_masks)
 
         # Detect
-        berth_results_all = detect_in_corridors(ratio_db_norm, corridor_masks, entry, date_str)
+        berth_results_all = detect_in_corridors(ratio_db_norm, corridor_masks, entry, date_str,
+                                                 cand_rows=all_cand_rows, run_id=run_id)
 
         do_png = date_str in png_dates
 
@@ -932,9 +1008,12 @@ def main():
                            berth, corridor_masks[berth], bd,
                            date_str, orbit, png_dir, no_background=0)
 
-    # Write CSV
+    # Write CSVs
     csv_path = OUT_DIR / "berth_history.csv"
     write_csv(all_result_rows, csv_path)
+
+    cand_path = OUT_DIR / "berth_candidates.csv"
+    write_candidates_csv(all_cand_rows, cand_path)
 
     # Pre-delivery stats
     print_stats(all_result_rows)
