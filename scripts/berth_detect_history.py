@@ -262,6 +262,7 @@ def discover_all_dates():
         if key not in grouped or dt_raw < grouped[key]["datetime"]:
             grouped[key] = {
                 "date_str":  date_str,
+                "rel_orbit": s["rel_orbit"],
                 "orbit":     s["rel_orbit"],
                 "platform":  s["platform"],
                 "scene_id":  s["scene_id"],
