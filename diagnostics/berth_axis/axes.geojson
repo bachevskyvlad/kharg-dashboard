@@ -5,18 +5,18 @@
       "type": "Feature",
       "properties": {
         "berth": "sea_island",
-        "total_len_m": 1223.1
+        "total_len_m": 1097.2
       },
       "geometry": {
         "type": "LineString",
         "coordinates": [
           [
-            49.998,
-            29.252
+            50.28316,
+            29.23318
           ],
           [
-            49.998,
-            29.263
+            50.28816,
+            29.22433
           ]
         ]
       }
@@ -25,18 +25,18 @@
       "type": "Feature",
       "properties": {
         "berth": "east_t_head",
-        "total_len_m": 1945.9
+        "total_len_m": 1817.4
       },
       "geometry": {
         "type": "LineString",
         "coordinates": [
           [
-            50.012,
-            29.2515
+            50.33833,
+            29.23812
           ],
           [
-            50.012,
-            29.269
+            50.34054,
+            29.22189
           ]
         ]
       }
@@ -45,22 +45,22 @@
       "type": "Feature",
       "properties": {
         "berth": "southeast_pier",
-        "total_len_m": 1013.2
+        "total_len_m": 571.9
       },
       "geometry": {
         "type": "LineString",
         "coordinates": [
           [
-            50.0205,
-            29.247
+            50.33646,
+            29.21764
           ],
           [
-            50.023,
-            29.251
+            50.33591,
+            29.21424
           ],
           [
-            50.0255,
-            29.255
+            50.33522,
+            29.21264
           ]
         ]
       }
