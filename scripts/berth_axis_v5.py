@@ -247,7 +247,7 @@ def catalog_search(cfg, bbox_lonlat, date_from, date_to, orbit):
         fields={"include": ["id", "properties.datetime",
                              "properties.s1:relativeOrbitNumber",
                              "properties.platform"]},
-        limit=200,
+        limit=100,
     )
     for item in search:
         dt_str = item["properties"]["datetime"][:10]
