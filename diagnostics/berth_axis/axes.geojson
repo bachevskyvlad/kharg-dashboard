@@ -1,0 +1,69 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "berth": "sea_island",
+        "total_len_m": 1223.1
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            49.998,
+            29.252
+          ],
+          [
+            49.998,
+            29.263
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "berth": "east_t_head",
+        "total_len_m": 1945.9
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            50.012,
+            29.2515
+          ],
+          [
+            50.012,
+            29.269
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "berth": "southeast_pier",
+        "total_len_m": 1013.2
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            50.0205,
+            29.247
+          ],
+          [
+            50.023,
+            29.251
+          ],
+          [
+            50.0255,
+            29.255
+          ]
+        ]
+      }
+    }
+  ]
+}
