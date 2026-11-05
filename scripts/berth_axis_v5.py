@@ -259,9 +259,6 @@ def catalog_search(cfg, bbox_lonlat, date_from, date_to, orbit):
         rel_orb = p.get("sat:relative_orbit")
         if rel_orb != orbit:
             continue
-        orb_state = p.get("sat:orbit_state", "")
-        if orb_state and orb_state.lower() != "descending":
-            continue
         dt_str = p.get("datetime", "")[:10]
         plat   = p.get("platform", "unknown")
         if dt_str and dt_str not in seen:
@@ -309,11 +306,11 @@ EVALSCRIPT = """
 //VERSION=3
 function setup() {
   return {
-    input:  [{bands:["VV"], units:"LINEAR_POWER"}],
+    input:  [{bands:["VV"]}],
     output: {bands:1, sampleType:"FLOAT32"}
   };
 }
-function evaluatePixel(s) { return [s.VV]; }
+function evaluatePixel(s) { return [Math.max(s.VV, 1e-10)]; }
 """
 
 def fetch_scene(cfg, bbox_lonlat, date_str, orbit):
@@ -328,7 +325,6 @@ def fetch_scene(cfg, bbox_lonlat, date_str, orbit):
             data_collection=S1_CDSE,
             time_interval=(t0, t1),
             other_args={
-                "processing": {"backCoeff": "LINEAR_POWER"},
                 "dataFilter": {
                     "relativeOrbitNumber": orbit,
                     "orbitDirection": "DESCENDING",
