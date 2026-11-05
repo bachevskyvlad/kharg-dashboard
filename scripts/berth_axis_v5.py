@@ -62,26 +62,25 @@ RANDOM_SEED = 17
 
 BERTHS = {
     "sea_island": {
-        # single-segment axis  lat/lon points  (south→north along pier)
+        # axis from berth_detect_history.py BERTH_SPEC
         "axis_lonlat": [
-            (49.9980, 29.2520),
-            (49.9980, 29.2630),
+            (50.28316, 29.23318),
+            (50.28816, 29.22433),
         ],
         "min_len_m": MIN_LEN_M,
     },
     "east_t_head": {
         "axis_lonlat": [
-            (50.0120, 29.2515),
-            (50.0120, 29.2690),
+            (50.33833, 29.23812),
+            (50.34054, 29.22189),
         ],
         "min_len_m": MIN_LEN_M,
     },
     "southeast_pier": {
-        # three-point polyline
         "axis_lonlat": [
-            (50.0205, 29.2470),
-            (50.0230, 29.2510),
-            (50.0255, 29.2550),
+            (50.33646, 29.21764),
+            (50.33591, 29.21424),
+            (50.33522, 29.21264),
         ],
         "min_len_m": MIN_LEN_SOUTHEAST,
     },
@@ -99,7 +98,7 @@ OLD_DATES_ORBITS = [
 ]
 OLD_SET = set(OLD_DATES_ORBITS)
 
-KHARG_BBOX_LONLAT = (49.95, 29.22, 50.07, 29.30)   # catalog search AOI
+KHARG_BBOX_LONLAT = (50.26, 29.17, 50.40, 29.31)   # catalog search AOI (Kharg Island)
 
 # Custom DataCollection pointing at CDSE endpoint
 S1_CDSE = DataCollection.SENTINEL1_IW.define_from(
