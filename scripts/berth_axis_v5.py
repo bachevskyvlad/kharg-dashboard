@@ -1,9 +1,11 @@
 """
 ТЗ-7.8  Axial ship detector — Kharg Island berths
 Outputs: diagnostics/berth_axis/
+v5.1: 40 dates (20 new + 20 old), orbit-101 fix (AXIS_BUFFER_M=250),
+      static-check, before/after-axis PNG, v3 comparison column.
 """
 
-import csv, json, math, os, random, sys, zipfile
+import collections, csv, json, math, os, random, sys, zipfile
 from datetime import datetime, timedelta
 from pathlib import Path
 
@@ -45,7 +47,7 @@ OUT_DIR = Path("diagnostics/berth_axis")
 OUT_DIR.mkdir(parents=True, exist_ok=True)
 
 RESOLUTION_M = 10          # metres per pixel requested from SH
-AXIS_BUFFER_M = 150        # AOI = axis bbox + this buffer
+AXIS_BUFFER_M = 250        # AOI = axis bbox + this buffer (≥130+120 for sea pixels on both sides)
 MIN_LEN_M = 150            # minimum ship length
 MIN_LEN_SOUTHEAST = 100    # shorter threshold for southeast_pier
 BIN_M = 10                 # along-axis bin width
@@ -57,6 +59,29 @@ SEA_EXCESS_DB = 8          # threshold = sea_median + this
 AXIS_SHIFT_MAX = 20        # refinement search ±metres
 AXIS_STRUCT_HALF = 25      # |d| < this = structure zone (excluded from sea, used for shift)
 RANDOM_SEED = 17
+
+# ─────────────────────────── v3 reference data ───────────────────────────────
+# key: (date_str, orbit, berth) → occupied bool (True/False/None)
+_V3_RESULTS_PATH = Path("diagnostics/berth_v3/results_table.csv")
+
+def _load_v3():
+    out = {}
+    if not _V3_RESULTS_PATH.exists():
+        return out
+    with open(_V3_RESULTS_PATH) as f:
+        for row in csv.DictReader(f):
+            occ = row.get("occupied", "").strip()
+            if occ == "True":    val = True
+            elif occ == "False": val = False
+            else:                val = None
+            try:
+                orb = int(row["orbit"])
+            except (ValueError, KeyError):
+                continue
+            out[(row["date"], orb, row["berth"])] = val
+    return out
+
+V3 = _load_v3()
 
 # ─────────────────────────── berth definitions ───────────────────────────────
 
@@ -680,10 +705,7 @@ def write_comparison_table(occ_rows, old_set, path):
     print(f"comparison_table.csv: {path}")
 
 def write_labels_template(selected_dates, path):
-    """
-    Template CSV for round-2 labelling: 20 NEW dates × 3 berths.
-    Columns: date, orbit, platform, berth, label_A (blank), label_B (blank), notes.
-    """
+    """Template CSV for round-2 labelling: all dates × 3 berths."""
     with open(path, "w", newline="") as f:
         w = csv.DictWriter(f, fieldnames=["date", "orbit", "platform",
                                            "berth", "label_A", "label_B", "notes"])
@@ -695,78 +717,260 @@ def write_labels_template(selected_dates, path):
                              "label_A": "", "label_B": "", "notes": ""})
     print(f"labels_round2_template.csv: {path}")
 
+def write_comparison_table_v3(occ_rows, old_set, path):
+    """
+    Table: date | orbit | berth | batch | v3_occ | v5_total | K_says
+    batch = old/new; v3_occ from berth_v3; K_says blank (user to fill).
+    """
+    rows = sorted(occ_rows, key=lambda r: (r["date"], r["orbit"], r["berth"]))
+    with open(path, "w", newline="") as f:
+        fieldnames = ["date", "orbit", "berth", "batch",
+                      "v3_occ", "v5_total", "K_says"]
+        w = csv.DictWriter(f, fieldnames=fieldnames)
+        w.writeheader()
+        for r in rows:
+            key = (r["date"], r["orbit"], r["berth"])
+            v3  = V3.get(key)
+            v3s = "1" if v3 is True else ("0" if v3 is False else "")
+            w.writerow({
+                "date":      r["date"],
+                "orbit":     r["orbit"],
+                "berth":     r["berth"],
+                "batch":     "old" if (r["date"], r["orbit"]) in old_set else "new",
+                "v3_occ":    v3s,
+                "v5_total":  r["ships_total"],
+                "K_says":    "",
+            })
+    print(f"comparison_table_v3.csv: {path}")
+
+# ─────────────────────────── static check ────────────────────────────────────
+
+def static_check(all_ships, new_dates_set, out_dir):
+    """
+    For the NEW 20 dates only (10 per orbit), group by berth×side×s_center_50m.
+    Groups appearing ≥5/10 → structure candidate, not ship.
+    Writes static_candidates.csv and prints summary.
+    """
+    # only new dates
+    new_ships = [sh for sh in all_ships
+                 if (sh["date"], sh["orbit"]) in new_dates_set]
+
+    # per orbit group: (orbit, berth, side, s_ctr_50) → set of dates
+    orb_groups = {}
+    for sh in new_ships:
+        orb  = sh["orbit"]
+        s50  = round(sh["s_center_m"] / 50) * 50
+        key  = (orb, sh["berth"], sh["side"], s50)
+        orb_groups.setdefault(key, set()).add(sh["date"])
+
+    candidates = []
+    print("\n=== Static check: recurring positions (≥5/10 dates per orbit) ===")
+    for (orb, berth, side, s50), dates in sorted(orb_groups.items()):
+        n = len(dates)
+        flag = "STRUCTURE?" if n >= 5 else ""
+        marker = "  *** " if flag else "      "
+        print(f"{marker}orbit={orb} {berth} side={side} s≈{s50:+.0f}m → "
+              f"{n}/10 dates {flag}")
+        if flag:
+            candidates.append({
+                "orbit": orb, "berth": berth, "side": side,
+                "s_center_50m": s50, "n_dates": n,
+                "dates": ";".join(sorted(dates)),
+            })
+
+    path = out_dir / "static_candidates.csv"
+    with open(path, "w", newline="") as f:
+        w = csv.DictWriter(f, fieldnames=["orbit","berth","side",
+                                           "s_center_50m","n_dates","dates"])
+        w.writeheader()
+        for c in candidates:
+            w.writerow(c)
+    print(f"  static_candidates.csv: {path} ({len(candidates)} candidates)")
+    return candidates
+
+# ─────────────────────────── before/after axis PNG ───────────────────────────
+
+def render_axis_refinement_png(berth_axes_orig, berth_axes_refined,
+                                berth_scene_data, out_dir):
+    """
+    For each berth: compute mean dB scene (geo coords), overlay original
+    and refined axis lines. Save as axes_refinement_{berth}.png.
+    """
+    for berth, ac_orig in berth_axes_orig.items():
+        scenes = berth_scene_data.get(berth, [])
+        if not scenes:
+            continue
+        ac_ref = berth_axes_refined[berth]
+
+        # mean dB image (simple average in pixel space using first scene transform)
+        # Use first scene's transform as reference grid
+        ref_arr, ref_transform = scenes[0]
+        mean_db = np.zeros_like(ref_arr)
+        count   = np.zeros_like(ref_arr)
+        for arr_db, transform in scenes:
+            if arr_db.shape == ref_arr.shape:
+                valid = np.isfinite(arr_db)
+                mean_db[valid] += arr_db[valid]
+                count[valid]   += 1
+        with np.errstate(invalid="ignore"):
+            mean_db = np.where(count > 0, mean_db / count, np.nan)
+
+        t = ref_transform
+        fig, ax = plt.subplots(figsize=(10, 7))
+        vmin = np.nanpercentile(mean_db, 2)
+        vmax = np.nanpercentile(mean_db, 98)
+        ax.imshow(mean_db, extent=[t["min_lon"], t["max_lon"],
+                                    t["min_lat"], t["max_lat"]],
+                  origin="upper", aspect="auto", cmap="gray",
+                  vmin=vmin, vmax=vmax, interpolation="nearest")
+
+        def plot_axis(ac, color, label):
+            lons = [p[0] for p in ac.axis_lonlat]
+            lats = [p[1] for p in ac.axis_lonlat]
+            ax.plot(lons, lats, color=color, lw=2, label=label, zorder=5)
+            ax.scatter(lons, lats, color=color, s=30, zorder=6)
+
+        plot_axis(ac_orig, "yellow", "original axis")
+        plot_axis(ac_ref,  "cyan",   f"refined (+{ac_ref.total_len - ac_orig.total_len:.0f}m)")
+
+        ax.set_title(f"{berth} — mean of {len(scenes)} scenes, axis refinement")
+        ax.set_xlabel("Longitude"); ax.set_ylabel("Latitude")
+        ax.legend(fontsize=8)
+        plt.tight_layout()
+        path = out_dir / f"axes_refinement_{berth}.png"
+        plt.savefig(path, dpi=120, bbox_inches="tight")
+        plt.close(fig)
+        print(f"  axes_refinement_{berth}.png: {path}")
+
+# ─────────────────────────── orbit-101 diagnostic ────────────────────────────
+
+def diag_orbit101(arr_lin, transform, berth_axes, berth):
+    """
+    For scene 2026-04-18/101/sea_island: print AOI dims and sea-pixel fraction.
+    Returns (arr_db, s_arr, d_arr) for diagnostic PNG.
+    """
+    t = ref = transform
+    lat_range_m = abs(t["max_lat"] - t["min_lat"]) * 111320
+    lon_range_m = abs(t["max_lon"] - t["min_lon"]) * 111320 * math.cos(
+        math.radians((t["max_lat"] + t["min_lat"]) / 2))
+    print(f"  DIAG orbit101 AOI: {lon_range_m:.0f}m × {lat_range_m:.0f}m "
+          f"({t['w']}×{t['h']} px)")
+    arr_db = to_db(arr_lin)
+    ac = berth_axes[berth]
+    lon_arr, lat_arr = pixel_lonlat(transform)
+    s_arr, d_arr = ac.pixel_sd(lon_arr, lat_arr)
+    sea_mask = np.abs(d_arr) > SEA_D_MIN
+    total_valid = np.isfinite(arr_db).sum()
+    sea_pct = sea_mask.sum() / max(total_valid, 1) * 100
+    print(f"  DIAG orbit101 |d|>{SEA_D_MIN}m pixels: "
+          f"{sea_mask.sum()} / {total_valid} ({sea_pct:.1f}%)")
+    side_a_sea = ((d_arr >  SEA_D_MIN) & np.isfinite(arr_db)).sum()
+    side_b_sea = ((d_arr < -SEA_D_MIN) & np.isfinite(arr_db)).sum()
+    print(f"  DIAG orbit101 side A sea (d>{SEA_D_MIN}): {side_a_sea} px, "
+          f"side B sea (d<-{SEA_D_MIN}): {side_b_sea} px")
+    return arr_db, s_arr, d_arr
+
 # ─────────────────────────── main ────────────────────────────────────────────
 
 def main():
     cfg = make_config()
 
+    # ── Step 1: select NEW dates ──────────────────────────────────────────────
     print("=== Step 1: select new dates ===")
-    selected_dates = select_new_dates(cfg)
-    print(f"  total selected: {len(selected_dates)} scenes")
+    new_dates = select_new_dates(cfg)
+    print(f"  total new: {len(new_dates)} scenes")
 
-    # write selected dates manifest
+    # Resolve platform for OLD dates via catalog
+    print("\n=== Step 1b: resolve platform for OLD dates ===")
+    old_resolved = []
+    all_catalog_cache = {}
+    for orbit in (35, 101):
+        scenes = catalog_search(cfg, KHARG_BBOX_LONLAT,
+                                "2017-01-01", "2026-12-31", orbit)
+        for dt_str, orb, plat in scenes:
+            all_catalog_cache[(dt_str, orb)] = plat
+
+    for dt_str, orbit in OLD_DATES_ORBITS:
+        plat = all_catalog_cache.get((dt_str, orbit), "unknown")
+        old_resolved.append((dt_str, orbit, plat))
+        print(f"  old {dt_str} orbit={orbit} → {plat}")
+
+    all_dates = new_dates + old_resolved
+    new_dates_set = {(dt, orb) for dt, orb, _ in new_dates}
+
     manifest_path = OUT_DIR / "selected_dates.csv"
     with open(manifest_path, "w", newline="") as f:
         w = csv.writer(f)
-        w.writerow(["date", "orbit", "platform"])
-        for row in selected_dates:
-            w.writerow(row)
-    print(f"  manifest: {manifest_path}")
+        w.writerow(["date", "orbit", "platform", "batch"])
+        for dt_str, orbit, plat in new_dates:
+            w.writerow([dt_str, orbit, plat, "new"])
+        for dt_str, orbit, plat in old_resolved:
+            w.writerow([dt_str, orbit, plat, "old"])
+    print(f"  manifest: {manifest_path} ({len(all_dates)} total dates)")
 
+    # ── Step 2: build initial axes ────────────────────────────────────────────
     print("\n=== Step 2: build axes ===")
-    berth_axes = {bname: AxisCoords(bdef["axis_lonlat"])
-                  for bname, bdef in BERTHS.items()}
+    berth_axes_orig = {bname: AxisCoords(bdef["axis_lonlat"])
+                       for bname, bdef in BERTHS.items()}
+    berth_axes = dict(berth_axes_orig)   # will be updated after refinement
 
-    print("\n=== Step 3: fetch ALL scenes (for axis refinement) ===")
-    # group by (date, orbit) → fetch once per scene, then split by berth
+    # ── Step 3: fetch ALL scenes ──────────────────────────────────────────────
+    print("\n=== Step 3: fetch ALL scenes ===")
     unique_scenes = {}
-    for dt_str, orbit, platform in selected_dates:
+    for dt_str, orbit, platform in all_dates:
         key = (dt_str, orbit)
         if key not in unique_scenes:
             unique_scenes[key] = platform
 
-    # For each berth, accumulate (arr_db, transform) pairs for refinement
     berth_scene_data = {b: [] for b in BERTHS}
-
-    # cache fetched arrays  key=(date,orbit,berth) → (arr_db, transform)
     scene_cache = {}
 
     for (dt_str, orbit), platform in sorted(unique_scenes.items()):
         for berth, bdef in BERTHS.items():
             bbox_lonlat = axis_bbox_lonlat(bdef["axis_lonlat"], AXIS_BUFFER_M)
             arr_lin, transform = fetch_scene(cfg, bbox_lonlat, dt_str, orbit)
+
+            # orbit-101 diagnostic for reference scene
+            if dt_str == "2026-04-18" and orbit == 101 and berth == "sea_island":
+                if arr_lin is not None:
+                    diag_orbit101(arr_lin, transform, berth_axes, berth)
+
             if arr_lin is None:
                 scene_cache[(dt_str, orbit, berth)] = None
                 continue
             arr_db = to_db(arr_lin)
             scene_cache[(dt_str, orbit, berth)] = (arr_db, transform)
-            berth_scene_data[berth].append((arr_db, transform))
+            # use only NEW dates for axis refinement
+            if (dt_str, orbit) in new_dates_set:
+                berth_scene_data[berth].append((arr_db, transform))
             print(f"  fetched {berth} {dt_str} orbit={orbit} shape={arr_db.shape}")
 
-    print("\n=== Step 4: axis refinement ===")
+    # ── Step 4: axis refinement (new dates only) ──────────────────────────────
+    print("\n=== Step 4: axis refinement (new dates) ===")
     for berth, ac in berth_axes.items():
         scenes = berth_scene_data[berth]
         if not scenes:
             print(f"  {berth}: no scenes, skipping refinement")
             continue
         print(f"  refining {berth} ({len(scenes)} scenes)…")
-        # compute s,d for each scene using initial axis
-        all_db_sd = []
-        for arr_db, transform in scenes:
-            lon_arr, lat_arr = pixel_lonlat(transform)
-            all_db_sd.append((arr_db, transform))
-        delta_d = refine_axis(ac, all_db_sd)
+        delta_d = refine_axis(ac, scenes)
         if delta_d != 0:
             berth_axes[berth] = ac.shifted(delta_d)
             print(f"  {berth}: axis shifted {delta_d:+.0f}m perp")
         else:
             print(f"  {berth}: no shift needed")
 
-    print("\n=== Step 5: detection + PNG rendering ===")
-    all_ships   = []
-    occ_rows    = []
+    # ── Step 4b: before/after axis PNG ───────────────────────────────────────
+    print("\n=== Step 4b: before/after axis PNG ===")
+    render_axis_refinement_png(berth_axes_orig, berth_axes,
+                                berth_scene_data, OUT_DIR)
 
-    for dt_str, orbit, platform in sorted(selected_dates, key=lambda x: x[0]):
+    # ── Step 5: detection + PNG rendering (all 40 dates) ─────────────────────
+    print("\n=== Step 5: detection + PNG rendering (all 40 dates) ===")
+    all_ships = []
+    occ_rows  = []
+
+    for dt_str, orbit, platform in sorted(all_dates, key=lambda x: x[0]):
         for berth, bdef in BERTHS.items():
             cached = scene_cache.get((dt_str, orbit, berth))
             if cached is None:
@@ -803,17 +1007,23 @@ def main():
                            ships, dt_str, orbit, berth,
                            OUT_DIR / png_name)
 
-    print("\n=== Step 6: write outputs ===")
+    # ── Step 6: static check ─────────────────────────────────────────────────
+    static_check(all_ships, new_dates_set, OUT_DIR)
+
+    # ── Step 7: write outputs ─────────────────────────────────────────────────
+    print("\n=== Step 7: write outputs ===")
     write_ships_csv    (all_ships, OUT_DIR / "ships.csv")
     write_occupancy_csv(occ_rows,  OUT_DIR / "occupancy.csv")
+    write_comparison_table_v3(occ_rows, OLD_SET, OUT_DIR / "comparison_table_v3.csv")
     write_comparison_table(occ_rows, OLD_SET, OUT_DIR / "comparison_table.csv")
-    write_labels_template(selected_dates, OUT_DIR / "labels_round2_template.csv")
+    write_labels_template(all_dates, OUT_DIR / "labels_round2_template.csv")
     write_axes_geojson(berth_axes, OUT_DIR / "axes.geojson")
     render_axes_png   (berth_axes, OUT_DIR / "axes.png")
 
     print(f"\nDone. Output: {OUT_DIR}/")
-    print(f"  ships:     {len(all_ships)}")
-    print(f"  occupancy: {len(occ_rows)} rows")
+    print(f"  dates total:   {len(all_dates)} (new={len(new_dates)}, old={len(old_resolved)})")
+    print(f"  ships:         {len(all_ships)}")
+    print(f"  occupancy:     {len(occ_rows)} rows")
 
 if __name__ == "__main__":
     main()
