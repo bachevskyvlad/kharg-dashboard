@@ -23,7 +23,7 @@ try:
     from sentinelhub import (
         SHConfig, BBox, CRS, DataCollection, SentinelHubCatalog,
         SentinelHubRequest, MimeType, MosaickingOrder,
-        SentinelHubStatistical, Geometry, bbox_to_dimensions,
+        bbox_to_dimensions,
     )
 except ImportError:
     print("FATAL: sentinelhub missing"); sys.exit(1)
@@ -100,6 +100,11 @@ OLD_DATES_ORBITS = [
 OLD_SET = set(OLD_DATES_ORBITS)
 
 KHARG_BBOX_LONLAT = (49.95, 29.22, 50.07, 29.30)   # catalog search AOI
+
+# Custom DataCollection pointing at CDSE endpoint
+S1_CDSE = DataCollection.SENTINEL1_IW.define_from(
+    "s1iw_cdse_axisv5", service_url="https://sh.dataspace.copernicus.eu"
+)
 
 # ─────────────────────────── SH config ───────────────────────────────────────
 
@@ -236,28 +241,34 @@ class AxisCoords:
 # ─────────────────────────── SH catalog helpers ───────────────────────────────
 
 def catalog_search(cfg, bbox_lonlat, date_from, date_to, orbit):
+    """Search catalog for a given orbit number; filter post-hoc on sat:relative_orbit."""
     catalog = SentinelHubCatalog(config=cfg)
     bbox = BBox(bbox=bbox_lonlat, crs=CRS.WGS84)
-    results = []
-    search = catalog.search(
-        DataCollection.SENTINEL1_IW_DES,
+    results = list(catalog.search(
+        S1_CDSE,
         bbox=bbox,
-        time=(date_from, date_to),
-        filter=f"s1:relativeOrbitNumber={orbit}",
+        time=(date_from + "T00:00:00Z", date_to + "T23:59:59Z"),
         fields={"include": ["id", "properties.datetime",
-                             "properties.s1:relativeOrbitNumber",
+                             "properties.sat:relative_orbit",
+                             "properties.sat:orbit_state",
                              "properties.platform"]},
-        limit=100,
-    )
-    for item in search:
-        dt_str = item["properties"]["datetime"][:10]
-        plat   = item["properties"].get("platform", "unknown")
-        results.append((dt_str, orbit, plat))
-    # deduplicate dates
+    ))
+    out = []
     seen = {}
-    for dt_str, orb, plat in results:
-        seen.setdefault(dt_str, (dt_str, orb, plat))
-    return sorted(seen.values())
+    for item in results:
+        p = item.get("properties", {})
+        rel_orb = p.get("sat:relative_orbit")
+        if rel_orb != orbit:
+            continue
+        orb_state = p.get("sat:orbit_state", "")
+        if orb_state and orb_state.lower() != "descending":
+            continue
+        dt_str = p.get("datetime", "")[:10]
+        plat   = p.get("platform", "unknown")
+        if dt_str and dt_str not in seen:
+            seen[dt_str] = True
+            out.append((dt_str, orbit, plat))
+    return sorted(out)
 
 def select_new_dates(cfg):
     """
@@ -315,12 +326,13 @@ def fetch_scene(cfg, bbox_lonlat, date_str, orbit):
     req = SentinelHubRequest(
         evalscript=EVALSCRIPT,
         input_data=[SentinelHubRequest.input_data(
-            data_collection=DataCollection.SENTINEL1_IW_DES,
+            data_collection=S1_CDSE,
             time_interval=(t0, t1),
             other_args={
                 "processing": {"backCoeff": "LINEAR_POWER"},
                 "dataFilter": {
                     "relativeOrbitNumber": orbit,
+                    "orbitDirection": "DESCENDING",
                     "mosaickingOrder": "mostRecent",
                 },
             },
