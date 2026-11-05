@@ -332,9 +332,13 @@ def _build_bg(date_str, orbit, window_days):
     target = datetime.strptime(date_str, "%Y-%m-%d")
     d0 = (target - timedelta(days=window_days)).strftime("%Y-%m-%d")
     d1 = (target + timedelta(days=window_days)).strftime("%Y-%m-%d")
-    scenes = catalog_search(d0, d1)
-    orbit_sc = [s for s in scenes if s["rel_orbit"] == orbit]
     label = "±24mo" if window_days == BG_WINDOW_DAYS else "±48mo"
+    try:
+        scenes = catalog_search(d0, d1)
+    except Exception as e:
+        print(f"    catalog_search failed ({label}): {e}")
+        return None
+    orbit_sc = [s for s in scenes if s["rel_orbit"] == orbit]
     print(f"    bg build orbit {orbit} {label}: {len(orbit_sc)} scenes in window")
     if len(orbit_sc) < BG_MIN_DATES:
         print(f"    insufficient: {len(orbit_sc)} < {BG_MIN_DATES}")
@@ -357,27 +361,68 @@ def _build_bg(date_str, orbit, window_days):
     return bg
 
 
+def _find_nearest_cached_bg(date_str, orbit, max_days=180):
+    """
+    Find the nearest existing BG .npy for this orbit across all cache dirs.
+    Returns (path, lag_days) or (None, None).
+    """
+    target = datetime.strptime(date_str, "%Y-%m-%d")
+    candidates = []
+    for cache_dir in [BG_CACHE_V3, BG_CACHE]:
+        if not cache_dir.exists():
+            continue
+        for npy in cache_dir.glob(f"bg_o{orbit}_????-??.npy"):
+            # parse YYYY-MM from filename
+            parts = npy.stem.split("_")
+            # find the YYYY-MM part
+            ym = None
+            for p in parts:
+                if len(p) == 7 and p[4] == "-":
+                    ym = p
+                    break
+            if ym is None:
+                continue
+            try:
+                ref = datetime.strptime(ym + "-15", "%Y-%m-%d")
+            except ValueError:
+                continue
+            lag = abs((target - ref).days)
+            if lag <= max_days:
+                candidates.append((npy, lag))
+    if not candidates:
+        return None, None
+    best = min(candidates, key=lambda x: x[1])
+    return best
+
+
 def load_or_build_bg_with_fallback(date_str, orbit):
     """
     Returns (bg_array, no_background_flag).
-    1. Try v3 cache (±24mo) — reuse if exists.
-    2. Build ±24mo.
-    3. Fallback to ±48mo.
-    4. If still None → no_background=1.
+    1. Try exact month match (v3 cache or history cache).
+    2. Try nearest cached BG (same orbit, within 180 days) — avoids expensive builds.
+    3. Build ±24mo from scratch.
+    4. Fallback ±48mo.
+    5. If still None → no_background=1.
     """
-    # Try v3 ±24mo cache first
+    # Try v3 ±24mo exact cache first
     v3_npy, _ = _v3_cache_path(date_str, orbit)
     if v3_npy.exists():
         print(f"    bg v3 cache hit: {v3_npy.name}")
         return np.load(v3_npy), 0
 
-    # Try history ±24mo cache
+    # Try history exact cache
     npy24, _ = _bg_cache_path(date_str, orbit, BG_WINDOW_DAYS)
     if npy24.exists():
         print(f"    bg cache hit: {npy24.name}")
         return np.load(npy24), 0
 
-    # Build ±24mo
+    # Try nearest cached BG to avoid expensive builds
+    nearest_npy, lag = _find_nearest_cached_bg(date_str, orbit, max_days=180)
+    if nearest_npy is not None:
+        print(f"    bg nearest cache: {nearest_npy.name} (lag {lag}d)")
+        return np.load(nearest_npy), 0
+
+    # Build ±24mo (may burn quota — only reached when truly no nearby cache)
     bg = _build_bg(date_str, orbit, BG_WINDOW_DAYS)
     if bg is not None:
         return bg, 0
