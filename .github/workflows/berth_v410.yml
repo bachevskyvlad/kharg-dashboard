@@ -1,0 +1,58 @@
+name: Berth v410
+
+on:
+  workflow_dispatch:
+
+jobs:
+  berth_v410:
+    runs-on: ubuntu-latest
+    timeout-minutes: 350
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: claude/oilradar-dashboard-iran-zchdva
+
+      - name: Install dependencies
+        run: pip install sentinelhub scipy numpy matplotlib shapely -q
+
+      - name: Run validation (Step 1 — 40 dates)
+        id: validation
+        run: |
+          python scripts/berth_detect_v410.py --step validation
+          echo "exit_code=$?" >> $GITHUB_OUTPUT
+        continue-on-error: true
+        env:
+          CLIENT_ID:     ${{ secrets.CLIENT_ID }}
+          CLIENT_SECRET: ${{ secrets.CLIENT_SECRET }}
+
+      - name: Upload validation results
+        uses: actions/upload-artifact@v4
+        with:
+          name: berth_v410_validation
+          path: diagnostics/berth_v410/
+          retention-days: 90
+
+      - name: Run history (Step 2 — full 2017→today, both orbits)
+        if: steps.validation.outcome == 'success'
+        run: |
+          python scripts/berth_detect_v410.py --step history
+        env:
+          CLIENT_ID:     ${{ secrets.CLIENT_ID }}
+          CLIENT_SECRET: ${{ secrets.CLIENT_SECRET }}
+
+      - name: Upload history results
+        if: steps.validation.outcome == 'success'
+        uses: actions/upload-artifact@v4
+        with:
+          name: berth_history
+          path: diagnostics/berth_history/
+          retention-days: 90
+
+      - name: Commit results
+        run: |
+          git config user.email "actions@github.com"
+          git config user.name "GitHub Actions"
+          git add diagnostics/berth_v410/ diagnostics/berth_history/ || true
+          git commit -m "data: berth_v410 results [skip ci]" || echo "nothing to commit"
+          git push origin claude/oilradar-dashboard-iran-zchdva
