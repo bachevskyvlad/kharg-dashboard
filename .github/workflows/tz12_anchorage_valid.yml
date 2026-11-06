@@ -40,6 +40,16 @@ jobs:
           RUN_ID: gha-${{ github.run_id }}
         run: python diagnostics/anchorage_valid/run_validation.py 2>&1 | tee diagnostics/anchorage_valid/run_log.txt; exit ${PIPESTATUS[0]}
 
+      - name: Run validation pack — variant B (polarization DV only)
+        if: always()
+        env:
+          CLIENT_ID: ${{ secrets.CLIENT_ID }}
+          CLIENT_SECRET: ${{ secrets.CLIENT_SECRET }}
+          RUN_ID: gha-${{ github.run_id }}
+          FETCH_POL: DV
+          OUT_SUBDIR: dv
+        run: mkdir -p diagnostics/anchorage_valid/dv && python diagnostics/anchorage_valid/run_validation.py 2>&1 | tee diagnostics/anchorage_valid/dv/run_log.txt; exit ${PIPESTATUS[0]}
+
       - name: Upload pack
         if: always()
         uses: actions/upload-artifact@v4
@@ -51,6 +61,7 @@ jobs:
             diagnostics/anchorage_valid/run_meta.json
             diagnostics/anchorage_valid/run_log.txt
             diagnostics/anchorage_valid/png/*.png
+            diagnostics/anchorage_valid/dv/
 
       - name: Commit outputs (only diagnostics/anchorage_valid/)
         if: always()
@@ -59,7 +70,8 @@ jobs:
           git config user.email "github-actions[bot]@users.noreply.github.com"
           cd diagnostics/anchorage_valid
           git add detections.csv summary.csv run_meta.json run_log.txt 2>/dev/null || true
-          for z in *.zip; do
+          git add dv/detections.csv dv/summary.csv dv/run_meta.json dv/run_log.txt 2>/dev/null || true
+          for z in *.zip dv/*.zip; do
             [ -f "$z" ] && [ $(stat -c%s "$z") -lt 94000000 ] && git add "$z"
           done
           cd ../..

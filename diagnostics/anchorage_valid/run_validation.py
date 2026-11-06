@@ -23,7 +23,12 @@ import ship_backfill as sb            # prod detector, imported as-is
 from select_dates import load_records, select
 
 RUN_ID = os.environ.get('RUN_ID') or datetime.utcnow().strftime('local-%Y%m%dT%H%M%SZ')
-OUT = HERE
+# Variant control. Default (A) = prod as-is. FETCH_POL overrides ONLY the
+# dataFilter.polarization of the prod request (B: 'DV', the value anchorage.json
+# was built with before a73f8a8). Everything else identical.
+FETCH_POL = os.environ.get('FETCH_POL', '')
+OUT = os.path.join(HERE, os.environ['OUT_SUBDIR']) if os.environ.get('OUT_SUBDIR') else HERE
+os.makedirs(OUT, exist_ok=True)
 PNG_DIR = os.path.join(OUT, 'png')
 os.makedirs(PNG_DIR, exist_ok=True)
 
@@ -183,12 +188,42 @@ def render_png(d, arr, dets, thr, scene_id, counts, path):
     im.quantize(colors=128, method=Image.Quantize.MEDIANCUT).save(path, optimize=True)
 
 
+def fetch(d):
+    if not FETCH_POL:
+        return sb.fetch_pass(d)                      # prod, untouched
+    # copy of sb.fetch_pass with only the polarization value replaced
+    ds = d.strftime('%Y-%m-%d')
+    request = sb.SentinelHubRequest(
+        evalscript=sb.evalscript,
+        input_data=[sb.SentinelHubRequest.input_data(
+            data_collection=sb.S1_CDSE, time_interval=(ds, ds),
+            mosaicking_order=sb.MosaickingOrder.MOST_RECENT,
+            other_args={"dataFilter": {"polarization": FETCH_POL}})],
+        responses=[sb.SentinelHubRequest.output_response("default", sb.MimeType.TIFF)],
+        bbox=sb.bbox, size=sb.size, config=sb.config)
+    try:
+        data = request.get_data()
+    except Exception as e:
+        print(f"  API error: {e}"); return None
+    if not data or data[0] is None:
+        return None
+    raw = np.array(data[0])
+    if raw.ndim == 3 and raw.shape[2] >= 1: arr = raw[:, :, 0]
+    elif raw.ndim == 3 and raw.shape[0] == 1: arr = raw[0]
+    elif raw.ndim == 2: arr = raw
+    else: arr = raw.reshape(raw.shape[-2], raw.shape[-1])
+    if arr.max() < 0.01:
+        return None
+    return arr
+
+
 # ── main ─────────────────────────────────────────────────────────────────────
 def main():
     records = load_records()
     by_date = {r['date']: r for r in records}
     all_dates = sorted(by_date)
     picks = select(records)
+    print(f'FETCH_POL={FETCH_POL or "prod(SV)"} OUT={OUT}')
     print(f'RUN_ID={RUN_ID}  AOI={list(sb.bbox)}  size={sb.size}  res={sb.RESOLUTION}m')
     print('Selected dates (before run):')
     for p in picks:
@@ -206,7 +241,7 @@ def main():
                        key=lambda x: (abs((date_t.fromisoformat(x) - date_t.fromisoformat(orig)).days), x))
         for cand in [orig] + neigh[:10]:
             tried.append(cand)
-            arr = sb.fetch_pass(date_t.fromisoformat(cand))
+            arr = fetch(date_t.fromisoformat(cand))
             if arr is not None:
                 d = cand
                 break
@@ -243,6 +278,9 @@ def main():
             'year': p['year'], 'slot': p['slot'],
             'replaced': int(d != orig), 'replaced_from': orig if d != orig else '',
             'scene_id': sid, 'n_scenes_that_day': len(sids), 'threshold': round(thr, 4),
+            'nan_frac': round(float(np.mean(~np.isfinite(arr))), 4),
+            'valid_frac_gt001': round(float(np.mean(np.nan_to_num(arr) > 0.01)), 4),
+            'polarization_filter': FETCH_POL or 'SV(prod)',
             'run_id': RUN_ID,
         })
         print(f'  {d} thr={thr:.3f} det={len(dets)} total={tot} anch={a["total"]} '
@@ -258,14 +296,14 @@ def main():
         wr = csv.DictWriter(f, fieldnames=list(sum_rows[0].keys())); wr.writeheader(); wr.writerows(sum_rows)
 
     pngs = sorted(x for x in os.listdir(PNG_DIR) if x.endswith('.png'))
-    zpath = os.path.join(OUT, f'anchorage_valid_{RUN_ID}.zip')
+    zpath = os.path.join(OUT, f'anchorage_valid_{RUN_ID}{"_" + FETCH_POL if FETCH_POL else ""}.zip')
     with zipfile.ZipFile(zpath, 'w', zipfile.ZIP_DEFLATED) as z:
         for x in pngs:
             z.write(os.path.join(PNG_DIR, x), f'png/{x}')
         z.write(os.path.join(OUT, 'detections.csv'), 'detections.csv')
         z.write(os.path.join(OUT, 'summary.csv'), 'summary.csv')
 
-    meta = {'run_id': RUN_ID, 'n_dates': len(sum_rows), 'n_png': len(pngs),
+    meta = {'run_id': RUN_ID, 'polarization_filter': FETCH_POL or 'SV(prod)', 'n_dates': len(sum_rows), 'n_png': len(pngs),
             'no_scene': no_scene_final, 'n_detections': len(det_rows),
             'n_replaced': sum(r['replaced'] for r in sum_rows),
             'n_match': sum(r['match'] for r in sum_rows),
