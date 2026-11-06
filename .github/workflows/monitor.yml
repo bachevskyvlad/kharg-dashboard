@@ -58,7 +58,7 @@ jobs:
           CLIENT_ID: ${{ secrets.CLIENT_ID }}
           CLIENT_SECRET: ${{ secrets.CLIENT_SECRET }}
           SUPABASE_URL: https://yoekhkczwdeyauwarsyy.supabase.co
-          SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+          SUPABASE_KEY: sb_publishable_7j07_zzdqTGM1LXf7-o9Tg_JJRbJQSM
       - name: Save ingest summary
         if: success()
         uses: actions/cache/save@v4
@@ -135,7 +135,7 @@ jobs:
           echo "count=$COUNT" >> $GITHUB_OUTPUT
         env:
           SUPABASE_URL: https://yoekhkczwdeyauwarsyy.supabase.co
-          SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+          SUPABASE_KEY: sb_publishable_7j07_zzdqTGM1LXf7-o9Tg_JJRbJQSM
       - name: Run export
         run: python scripts/export.py
         env:
@@ -148,7 +148,7 @@ jobs:
           echo "count=$COUNT" >> $GITHUB_OUTPUT
         env:
           SUPABASE_URL: https://yoekhkczwdeyauwarsyy.supabase.co
-          SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+          SUPABASE_KEY: sb_publishable_7j07_zzdqTGM1LXf7-o9Tg_JJRbJQSM
       - name: Save volume graph
         uses: actions/cache/save@v4
         with:
@@ -171,7 +171,7 @@ jobs:
         if: success()
         env:
           SUPABASE_URL: https://yoekhkczwdeyauwarsyy.supabase.co
-          SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+          SUPABASE_KEY: sb_publishable_7j07_zzdqTGM1LXf7-o9Tg_JJRbJQSM
         run: python3 scripts/tg_quality.py --send
 
   commit_data:
