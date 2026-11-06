@@ -24,12 +24,15 @@ os.makedirs(OUT, exist_ok=True)
 sb = create_client(os.environ["SUPABASE_URL"], os.environ["SUPABASE_KEY"])
 
 TERMINALS = [  # (label, wide-prefix, candidate terminal_ids in priority order)
-    ("kharg",         "kharg",      ["kharg"]),
     ("goreh_omid",    "goreh_omid", ["goreh_omid", "goreh"]),
     ("jask",          "jask",       ["jask_v2", "jask"]),
     ("bahregan",      "bahregan",   ["bahregan", "bahregan_v2"]),
     ("ras_tanura_v2", "rt_v2",      ["ras_tanura_v2"]),
+    ("kharg",         "kharg",      ["kharg"]),   # last: orbit calendar from goreh/bahregan
 ]
+TANK_PREFIX = {"jask": "jask_"}   # terminal_id=jask also holds legacy jk_* set
+KHARG_IDS = {t["id"] for loc in LOCATIONS if loc["id"] == "kharg" for t in loc["tanks"]}
+ORBIT_CAL = {}  # date -> set(relative_orbit) from goreh_omid/bahregan
 WIDE_COLS = ["kharg_35", "kharg_101", "goreh_omid_35", "goreh_omid_101",
              "jask_57", "jask_93", "bahregan_35", "bahregan_101", "rt_v2_35", "rt_v2_101"]
 TABLES = ["terminal_observations", "raw_observations"]
@@ -100,6 +103,23 @@ for label, prefix, cands in TERMINALS:
                 best = (table, tid)
         if best:
             break
+    kharg_raw = False
+    if best is None and label == "kharg":
+        cols_raw = COLS["raw_observations"]
+        print(f"  raw_observations has no terminal_id; columns={cols_raw}; filtering tank_id in Kharg registry ({len(KHARG_IDS)} ids)")
+        rows, off = [], 0
+        while True:
+            b = (sb.table("raw_observations").select("*").order("date").order("tank_id")
+                 .range(off, off + 999).execute().data)
+            rows.extend(b)
+            if len(b) < 1000:
+                break
+            off += 1000
+        raw = pd.DataFrame(rows)
+        print(f"  raw_observations total rows={len(raw)}  tank_id prefixes={sorted(raw['tank_id'].str.extract(r'^([a-z]+\d*)_')[0].dropna().unique()) if len(raw) else []}")
+        raw = raw[raw["tank_id"].isin(KHARG_IDS)]
+        if len(raw):
+            best = ("raw_observations", "kharg"); kharg_raw = True
     if best is None:
         line = f"{label}: EMPTY (no rows for {cands} in {TABLES})"
         print("  " + line)
@@ -107,7 +127,13 @@ for label, prefix, cands in TERMINALS:
         continue
 
     table, tid = best
-    df = fetch(table, tid)
+    df = raw.copy() if kharg_raw else fetch(table, tid)
+    if label in TANK_PREFIX:
+        pre = TANK_PREFIX[label]
+        excl = df[~df["tank_id"].str.startswith(pre)]
+        print(f"  excluded non-'{pre}' tanks: {excl['tank_id'].nunique()} tanks, {len(excl)} rows "
+              f"({excl['date'].min()}..{excl['date'].max()})")
+        df = df[df["tank_id"].str.startswith(pre)].copy()
     cols = list(df.columns)
     c_orb = first(cols, ["orbit", "relative_orbit", "rel_orbit", "orbit_id", "track"])
     c_rad = first(cols, ["radius_m", "radius"])
@@ -117,7 +143,21 @@ for label, prefix, cands in TERMINALS:
           f"h_max_col={c_h} tank_present_guess={c_pres}")
 
     df["date"] = pd.to_datetime(df["date"]).dt.normalize()
-    df["orbit"] = pd.to_numeric(df[c_orb], errors="coerce").astype("Int64") if c_orb else pd.NA
+    if c_orb:
+        df["orbit"] = pd.to_numeric(df[c_orb], errors="coerce").astype("Int64")
+    elif label == "kharg":
+        def _orb(d):
+            o = ORBIT_CAL.get(d)
+            return list(o)[0] if o and len(o) == 1 else pd.NA
+        df["orbit"] = df["date"].map(_orb).astype("Int64")
+        vc = df.drop_duplicates("date")["orbit"].value_counts(dropna=False)
+        print(f"  kharg orbit from goreh/bahregan date calendar (dates): {vc.to_dict()}")
+    else:
+        df["orbit"] = pd.NA
+    if label in ("goreh_omid", "bahregan"):
+        for d_, o_ in df.drop_duplicates(["date", "orbit"])[["date", "orbit"]].itertuples(index=False):
+            if pd.notna(o_):
+                ORBIT_CAL.setdefault(d_, set()).add(int(o_))
     df["db_mean"] = pd.to_numeric(df["db_mean"], errors="coerce")
     reg_r = df["tank_id"].map(lambda k: REG.get(k, (None, None))[0])
     reg_h = df["tank_id"].map(lambda k: REG.get(k, (None, None))[1])
@@ -161,19 +201,20 @@ for label, prefix, cands in TERMINALS:
         l3 = "    tank_present_guess column: ABSENT (no exclusion applied)"
         print(l3); summary_lines.append(l3)
     d = d[d["radius_m"].notna() & d["h_max"].notna()]
-    g = d.groupby(["tank_id", "orbit"])["db_mean"]
+    g = d.groupby(["tank_id", "orbit"], dropna=False)["db_mean"]
     d["mu"] = g.transform("mean"); d["sd"] = g.transform("std")
     d = d[d["sd"] > 0]
     d["z"] = (d["db_mean"] - d["mu"]) / d["sd"]
     d["w"] = d["radius_m"] ** 2 * d["h_max"]
     d["wz"] = d["w"] * d["z"]
-    agg = d.groupby(["orbit", "date"]).agg(wz=("wz", "sum"), w=("w", "sum"), n_tanks=("tank_id", "nunique"))
+    agg = d.groupby(["orbit", "date"], dropna=False).agg(wz=("wz", "sum"), w=("w", "sum"), n_tanks=("tank_id", "nunique"))
     agg["idx"] = agg["wz"] / agg["w"]
     agg = agg.reset_index()
     agg.insert(0, "terminal", label)
     agg[["terminal", "orbit", "date", "idx", "n_tanks"]].to_csv(
         os.path.join(OUT, f"daily_index_{label}.csv"), index=False)
-    for orb, a in agg.groupby("orbit"):
+    for orb, a in agg.groupby("orbit", dropna=False):
+        orb = "unk" if pd.isna(orb) else int(orb)
         name = f"{prefix}_{orb}"
         series[name] = a.set_index("date")["idx"]
         print(f"    index {name}: {len(a)} dates")
@@ -183,7 +224,7 @@ print("=" * 70)
 print("WEEKLY")
 wk = {}
 for name, s in series.items():
-    monday = pd.to_datetime(s.index) - pd.to_timedelta(s.index.weekday, unit="D")
+    monday = pd.to_datetime(s.index) - pd.to_timedelta(s.index.dayofweek, unit="D")
     wk[name] = s.groupby(monday).mean()
 all_cols = WIDE_COLS + sorted(c for c in wk if c not in WIDE_COLS)
 if wk:
