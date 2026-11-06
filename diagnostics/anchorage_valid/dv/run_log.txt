@@ -1,5 +1,5 @@
 FETCH_POL=DV OUT=/home/runner/work/kharg-dashboard/kharg-dashboard/diagnostics/anchorage_valid/dv
-RUN_ID=gha-42220198173  AOI=[50.05, 29.09, 50.59, 29.509999999999998]  size=(2109, 1849)  res=25m
+RUN_ID=gha-42221912828  AOI=[50.05, 29.09, 50.59, 29.509999999999998]  size=(2109, 1849)  res=25m
 Selected dates (before run):
   2017 zero  2017-01-01 anch_total=0
   2017 mean  2017-07-24 anch_total=15
@@ -95,5 +95,5 @@ Selected dates (before run):
   2026-04-20 thr=0.550 det=22 total=17 anch=17 MATCH (repl 2026-04-19)
   2026-07-12 thr=0.550 det=31 total=27 anch=20 DIFF
   2026-05-20 thr=0.550 det=45 total=34 anch=34 MATCH
-META {"run_id": "gha-42220198173", "polarization_filter": "DV", "n_dates": 30, "n_png": 30, "no_scene": 0, "n_detections": 822, "n_replaced": 25, "n_match": 29, "zip": "anchorage_valid_gha-42220198173_DV.zip", "zip_bytes": 71097657, "aoi": [50.05, 29.09, 50.59, 29.509999999999998], "size_px": [2109, 1849], "resolution_m": 25}
+META {"run_id": "gha-42221912828", "polarization_filter": "DV", "n_dates": 30, "n_png": 30, "no_scene": 0, "n_detections": 822, "n_replaced": 25, "n_match": 29, "zip": "anchorage_valid_gha-42221912828_DV.zip", "zip_bytes": 55075279, "aoi": [50.05, 29.09, 50.59, 29.509999999999998], "size_px": [2109, 1849], "resolution_m": 25}
 CHECK OK

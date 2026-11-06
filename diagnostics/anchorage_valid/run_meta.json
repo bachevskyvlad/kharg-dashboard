@@ -1,5 +1,5 @@
 {
- "run_id": "gha-42220198173",
+ "run_id": "gha-42221912828",
  "polarization_filter": "SV(prod)",
  "n_dates": 30,
  "n_png": 30,
@@ -7,8 +7,8 @@
  "n_detections": 0,
  "n_replaced": 25,
  "n_match": 0,
- "zip": "anchorage_valid_gha-42220198173.zip",
- "zip_bytes": 388198,
+ "zip": "anchorage_valid_gha-42221912828.zip",
+ "zip_bytes": 373477,
  "aoi": [
   50.05,
   29.09,
