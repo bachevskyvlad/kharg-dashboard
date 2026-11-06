@@ -351,7 +351,6 @@ def fetch_scene(cfg, bbox_lonlat, date_str, orbit):
             time_interval=(t0, t1),
             other_args={
                 "dataFilter": {
-                    "relativeOrbitNumber": orbit,
                     "orbitDirection": "DESCENDING",
                     "mosaickingOrder": "mostRecent",
                 },
@@ -868,6 +867,37 @@ def diag_orbit101(arr_lin, transform, berth_axes, berth):
     side_b_sea = ((d_arr < -SEA_D_MIN) & np.isfinite(arr_db)).sum()
     print(f"  DIAG orbit101 side A sea (d>{SEA_D_MIN}): {side_a_sea} px, "
           f"side B sea (d<-{SEA_D_MIN}): {side_b_sea} px")
+
+    # PNG in (s,d) coords
+    png_path = OUT_DIR / "orbit101_sd_scene.png"
+    fig, ax = plt.subplots(figsize=(8, 6))
+    s_flat = s_arr.ravel()
+    d_flat = d_arr.ravel()
+    db_flat = arr_db.ravel()
+    valid = np.isfinite(db_flat)
+    if valid.sum() > 0:
+        sc = ax.scatter(s_flat[valid], d_flat[valid], c=db_flat[valid],
+                        s=1, cmap="gray_r", vmin=-20, vmax=5)
+        plt.colorbar(sc, ax=ax, label="dB")
+    else:
+        ax.text(0.5, 0.5, "all NaN — no valid backscatter",
+                transform=ax.transAxes, ha="center", va="center", color="red")
+    ax.axhline(SEA_D_MIN, color="cyan", lw=0.8, ls="--", label=f"+{SEA_D_MIN}m sea")
+    ax.axhline(-SEA_D_MIN, color="cyan", lw=0.8, ls="--", label=f"-{SEA_D_MIN}m sea")
+    ax.axhline(SIDE_A_D[0], color="lime", lw=0.6, ls=":", label="side A")
+    ax.axhline(SIDE_A_D[1], color="lime", lw=0.6, ls=":")
+    ax.axhline(SIDE_B_D[0], color="orange", lw=0.6, ls=":", label="side B")
+    ax.axhline(SIDE_B_D[1], color="orange", lw=0.6, ls=":")
+    ax.set_xlabel("s (m along axis)")
+    ax.set_ylabel("d (m cross-axis)")
+    ax.set_title(f"orbit101 / 2026-04-18 / sea_island — (s,d) scatter\n"
+                 f"valid={valid.sum()} px  sea_A={side_a_sea} sea_B={side_b_sea}")
+    ax.legend(fontsize=7, markerscale=4)
+    fig.tight_layout()
+    fig.savefig(png_path, dpi=100)
+    plt.close(fig)
+    print(f"  DIAG orbit101 PNG saved: {png_path}")
+
     return arr_db, s_arr, d_arr
 
 # ─────────────────────────── main ────────────────────────────────────────────
