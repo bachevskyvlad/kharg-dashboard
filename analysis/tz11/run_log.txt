@@ -1,4 +1,0 @@
-  File "/home/runner/work/kharg-dashboard/kharg-dashboard/scripts/tz11_upstream_corr.py", line 119
-    print(f"  raw_observations total rows={len(raw)}  tank_id prefixes={sorted(raw['tank_id'].str.extract(r'^([a-z]+\d*)_')[0].dropna().unique()) if len(raw) else []}")
-                                                                                                                                                                       ^
-SyntaxError: f-string expression part cannot include a backslash

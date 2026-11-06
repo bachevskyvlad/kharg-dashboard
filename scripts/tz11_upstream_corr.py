@@ -116,7 +116,8 @@ for label, prefix, cands in TERMINALS:
                 break
             off += 1000
         raw = pd.DataFrame(rows)
-        print(f"  raw_observations total rows={len(raw)}  tank_id prefixes={sorted(raw['tank_id'].str.extract(r'^([a-z]+\d*)_')[0].dropna().unique()) if len(raw) else []}")
+        _pf = sorted(raw["tank_id"].str.extract(r"^([a-z]+[0-9]*)_")[0].dropna().unique()) if len(raw) else []
+        print(f"  raw_observations total rows={len(raw)}  tank_id prefixes={_pf}")
         raw = raw[raw["tank_id"].isin(KHARG_IDS)]
         if len(raw):
             best = ("raw_observations", "kharg"); kharg_raw = True
