@@ -1,0 +1,38 @@
+name: TZ-11 — upstream terminals vs Kharg correlation (read-only)
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [claude/pensive-brown-2n1u1s]
+    paths:
+      - scripts/tz11_upstream_corr.py
+      - .github/workflows/tz11_upstream_corr.yml
+
+jobs:
+  tz11:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: pip install numpy pandas supabase matplotlib -q
+      - name: Run (SELECT only)
+        env:
+          SUPABASE_URL: https://yoekhkczwdeyauwarsyy.supabase.co
+          SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+        run: |
+          mkdir -p analysis/tz11
+          python scripts/tz11_upstream_corr.py 2>&1 | tee analysis/tz11/run_log.txt
+      - name: Commit outputs
+        if: always()
+        run: |
+          git config user.email "actions@github.com"
+          git config user.name "GitHub Actions"
+          git add -f analysis/tz11/ || true
+          git diff --cached --quiet && echo "No changes" || git commit -m "ci: tz11 outputs [skip ci]"
+          git pull --rebase origin ${GITHUB_REF_NAME} || true
+          git push origin HEAD:${GITHUB_REF_NAME}
