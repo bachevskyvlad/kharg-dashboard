@@ -182,10 +182,19 @@ def render_png(d, arr, dets, thr, scene_id, counts, path):
                ncol=len(handles), fontsize=9, frameon=False)
     fig.savefig(path, dpi=dpi, facecolor='white')
     plt.close(fig)
-    # 128-colour palette PNG to keep the pack small (pixel grid unchanged)
+    # Fixed palette PNG to keep the pack small (pixel grid unchanged):
+    # 224 grey levels for SAR + exact overlay colours (no dithering).
     from PIL import Image
     im = Image.open(path).convert('RGB')
-    im.quantize(colors=128, method=Image.Quantize.MEDIANCUT).save(path, optimize=True)
+    overlay = [COLORS[k] for k in CLASSES] + ['#39ff14', '#000000', '#ffffff']
+    pal = []
+    for hx in overlay:
+        pal += [int(hx[i:i + 2], 16) for i in (1, 3, 5)]
+    n_grey = 256 - len(overlay)
+    for g in range(n_grey):
+        v = round(g * 255 / (n_grey - 1)); pal += [v, v, v]
+    pimg = Image.new('P', (1, 1)); pimg.putpalette(pal)
+    im.quantize(palette=pimg, dither=Image.Dither.NONE).save(path, optimize=True)
 
 
 def fetch(d):
