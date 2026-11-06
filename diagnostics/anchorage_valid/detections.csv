@@ -1,0 +1,1 @@
+date,scene_id,det_idx,lat,lon,length_m,class,area_px,peak_norm,in_land_mask_buffer,near_platform,dist_land_rect_m,dist_platform_m
