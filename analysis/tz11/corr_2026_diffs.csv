@@ -1,0 +1,11 @@
+,kharg_35,kharg_101,goreh_omid_35,goreh_omid_101,jask_57,jask_93,bahregan_35,bahregan_101,rt_v2_35,rt_v2_101
+kharg_35,r=1.000; n=42,r=NA; n=0,r=0.078; n=42,r=NA; n=0,r=NA; n=0,r=0.034; n=37,r=0.071; n=42,r=NA; n=0,r=-0.160; n=42,r=NA; n=0
+kharg_101,r=NA; n=0,r=NA; n=0,r=NA; n=0,r=NA; n=0,r=NA; n=0,r=NA; n=0,r=NA; n=0,r=NA; n=0,r=NA; n=0,r=NA; n=0
+goreh_omid_35,r=0.078; n=42,r=NA; n=0,r=1.000; n=42,r=NA; n=0,r=NA; n=0,r=0.501; n=37,r=-0.088; n=42,r=NA; n=0,r=0.024; n=42,r=NA; n=0
+goreh_omid_101,r=NA; n=0,r=NA; n=0,r=NA; n=0,r=NA; n=0,r=NA; n=0,r=NA; n=0,r=NA; n=0,r=NA; n=0,r=NA; n=0,r=NA; n=0
+jask_57,r=NA; n=0,r=NA; n=0,r=NA; n=0,r=NA; n=0,r=NA; n=0,r=NA; n=0,r=NA; n=0,r=NA; n=0,r=NA; n=0,r=NA; n=0
+jask_93,r=0.034; n=37,r=NA; n=0,r=0.501; n=37,r=NA; n=0,r=NA; n=0,r=1.000; n=39,r=0.028; n=37,r=NA; n=0,r=-0.047; n=37,r=NA; n=0
+bahregan_35,r=0.071; n=42,r=NA; n=0,r=-0.088; n=42,r=NA; n=0,r=NA; n=0,r=0.028; n=37,r=1.000; n=42,r=NA; n=0,r=0.247; n=42,r=NA; n=0
+bahregan_101,r=NA; n=0,r=NA; n=0,r=NA; n=0,r=NA; n=0,r=NA; n=0,r=NA; n=0,r=NA; n=0,r=NA; n=0,r=NA; n=0,r=NA; n=0
+rt_v2_35,r=-0.160; n=42,r=NA; n=0,r=0.024; n=42,r=NA; n=0,r=NA; n=0,r=-0.047; n=37,r=0.247; n=42,r=NA; n=0,r=1.000; n=42,r=NA; n=0
+rt_v2_101,r=NA; n=0,r=NA; n=0,r=NA; n=0,r=NA; n=0,r=NA; n=0,r=NA; n=0,r=NA; n=0,r=NA; n=0,r=NA; n=0,r=NA; n=0

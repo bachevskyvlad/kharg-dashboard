@@ -1,0 +1,140 @@
+/home/runner/work/kharg-dashboard/kharg-dashboard/scripts/tz11_upstream_corr.py:228: Pandas4Warning: DatetimeIndex.dayofweek is deprecated and will be removed in a future version. Use DatetimeIndex.day_of_week instead.
+  monday = pd.to_datetime(s.index) - pd.to_timedelta(s.index.dayofweek, unit="D")
+/home/runner/work/kharg-dashboard/kharg-dashboard/scripts/tz11_upstream_corr.py:228: Pandas4Warning: DatetimeIndex.dayofweek is deprecated and will be removed in a future version. Use DatetimeIndex.day_of_week instead.
+  monday = pd.to_datetime(s.index) - pd.to_timedelta(s.index.dayofweek, unit="D")
+/home/runner/work/kharg-dashboard/kharg-dashboard/scripts/tz11_upstream_corr.py:228: Pandas4Warning: DatetimeIndex.dayofweek is deprecated and will be removed in a future version. Use DatetimeIndex.day_of_week instead.
+  monday = pd.to_datetime(s.index) - pd.to_timedelta(s.index.dayofweek, unit="D")
+/home/runner/work/kharg-dashboard/kharg-dashboard/scripts/tz11_upstream_corr.py:228: Pandas4Warning: DatetimeIndex.dayofweek is deprecated and will be removed in a future version. Use DatetimeIndex.day_of_week instead.
+  monday = pd.to_datetime(s.index) - pd.to_timedelta(s.index.dayofweek, unit="D")
+/home/runner/work/kharg-dashboard/kharg-dashboard/scripts/tz11_upstream_corr.py:228: Pandas4Warning: DatetimeIndex.dayofweek is deprecated and will be removed in a future version. Use DatetimeIndex.day_of_week instead.
+  monday = pd.to_datetime(s.index) - pd.to_timedelta(s.index.dayofweek, unit="D")
+/home/runner/work/kharg-dashboard/kharg-dashboard/scripts/tz11_upstream_corr.py:228: Pandas4Warning: DatetimeIndex.dayofweek is deprecated and will be removed in a future version. Use DatetimeIndex.day_of_week instead.
+  monday = pd.to_datetime(s.index) - pd.to_timedelta(s.index.dayofweek, unit="D")
+/home/runner/work/kharg-dashboard/kharg-dashboard/scripts/tz11_upstream_corr.py:228: Pandas4Warning: DatetimeIndex.dayofweek is deprecated and will be removed in a future version. Use DatetimeIndex.day_of_week instead.
+  monday = pd.to_datetime(s.index) - pd.to_timedelta(s.index.dayofweek, unit="D")
+======================================================================
+SCHEMA PROBE
+  terminal_observations: ['id', 'terminal_id', 'date', 'tank_id', 'radius_m', 'diameter', 'h_max', 'db_mean', 'created_at', 'relative_orbit', 'orbit_direction', 'db_norm']
+  raw_observations: ['id', 'date', 'tank_id', 'radius_m', 'diameter', 'h_max', 'db_mean', 'created_at']
+======================================================================
+TERMINAL goreh_omid
+  candidate terminal_observations.terminal_id=goreh_omid: rows=3300
+  candidate terminal_observations.terminal_id=goreh: rows=0
+  source=terminal_observations/goreh_omid  rows=3300  orbit_col=relative_orbit radius_col=radius_m h_max_col=h_max tank_present_guess=None
+  radius_m filled from tank_registry: 0 rows; h_max filled from registry: 0 rows
+  rows still without weight: 0
+  goreh_omid [terminal_observations/goreh_omid]: dates=330 period=2015-04-06..2026-11-05 tanks=10 rows=3300 db_mean_nonnull=1.0000
+    orbit=35: dates=327 period=2015-04-06..2026-11-05 tanks=10 rows=3270 db_mean_nonnull=1.0000
+    orbit=101: dates=3 period=2026-05-13..2026-06-18 tanks=10 rows=30 db_mean_nonnull=1.0000
+    index goreh_omid_35: 327 dates
+    index goreh_omid_101: 3 dates
+======================================================================
+TERMINAL jask
+  candidate terminal_observations.terminal_id=jask_v2: rows=0
+  candidate terminal_observations.terminal_id=jask: rows=8700
+  excluded non-'jask_' tanks: 20 tanks, 2220 rows (2024-06-09..2026-10-16)
+  source=terminal_observations/jask  rows=6480  orbit_col=relative_orbit radius_col=radius_m h_max_col=h_max tank_present_guess=None
+  radius_m filled from tank_registry: 0 rows; h_max filled from registry: 0 rows
+  rows still without weight: 0
+  jask [terminal_observations/jask]: dates=324 period=2015-04-10..2026-11-03 tanks=20 rows=6480 db_mean_nonnull=1.0000
+    orbit=93: dates=324 period=2015-04-10..2026-11-03 tanks=20 rows=6480 db_mean_nonnull=1.0000
+    tank_present_guess column: ABSENT (no exclusion applied)
+    index jask_93: 324 dates
+======================================================================
+TERMINAL bahregan
+  candidate terminal_observations.terminal_id=bahregan: rows=2970
+  candidate terminal_observations.terminal_id=bahregan_v2: rows=0
+  source=terminal_observations/bahregan  rows=2970  orbit_col=relative_orbit radius_col=radius_m h_max_col=h_max tank_present_guess=None
+  radius_m filled from tank_registry: 0 rows; h_max filled from registry: 0 rows
+  rows still without weight: 0
+  bahregan [terminal_observations/bahregan]: dates=330 period=2015-04-06..2026-11-05 tanks=9 rows=2970 db_mean_nonnull=1.0000
+    orbit=35: dates=327 period=2015-04-06..2026-11-05 tanks=9 rows=2943 db_mean_nonnull=1.0000
+    orbit=101: dates=3 period=2026-05-13..2026-06-18 tanks=9 rows=27 db_mean_nonnull=1.0000
+    index bahregan_35: 327 dates
+    index bahregan_101: 3 dates
+======================================================================
+TERMINAL ras_tanura_v2
+  candidate terminal_observations.terminal_id=ras_tanura_v2: rows=9690
+  source=terminal_observations/ras_tanura_v2  rows=9690  orbit_col=relative_orbit radius_col=radius_m h_max_col=h_max tank_present_guess=None
+  radius_m filled from tank_registry: 0 rows; h_max filled from registry: 0 rows
+  rows still without weight: 0
+  ras_tanura_v2 [terminal_observations/ras_tanura_v2]: dates=323 period=2017-03-14..2026-11-05 tanks=30 rows=9690 db_mean_nonnull=1.0000
+    orbit=35: dates=323 period=2017-03-14..2026-11-05 tanks=30 rows=9690 db_mean_nonnull=1.0000
+    index rt_v2_35: 323 dates
+======================================================================
+TERMINAL kharg
+  candidate terminal_observations.terminal_id=kharg: rows=0
+  raw_observations has no terminal_id; columns=['id', 'date', 'tank_id', 'radius_m', 'diameter', 'h_max', 'db_mean', 'created_at']; filtering tank_id in Kharg registry (47 ids)
+  raw_observations total rows=15322  tank_id prefixes=['t25', 't40', 't55', 't60']
+  source=raw_observations/kharg  rows=15322  orbit_col=None radius_col=radius_m h_max_col=h_max tank_present_guess=None
+  kharg orbit from goreh/bahregan date calendar (dates): {np.int64(35): 326}
+  radius_m filled from tank_registry: 0 rows; h_max filled from registry: 0 rows
+  rows still without weight: 0
+  kharg [raw_observations/kharg]: dates=326 period=2015-04-06..2026-11-05 tanks=47 rows=15322 db_mean_nonnull=1.0000
+    orbit=35: dates=326 period=2015-04-06..2026-11-05 tanks=47 rows=15322 db_mean_nonnull=1.0000
+    index kharg_35: 326 dates
+======================================================================
+WEEKLY
+  kharg_35: non-empty weeks=314
+  kharg_101: non-empty weeks=0
+  goreh_omid_35: non-empty weeks=314
+  goreh_omid_101: non-empty weeks=3
+  jask_57: non-empty weeks=0
+  jask_93: non-empty weeks=311
+  bahregan_35: non-empty weeks=314
+  bahregan_101: non-empty weeks=3
+  rt_v2_35: non-empty weeks=311
+  rt_v2_101: non-empty weeks=0
+======================================================================
+corr_levels
+                       kharg_35  kharg_101
+kharg_35         r=1.000; n=314  r=NA; n=0
+kharg_101             r=NA; n=0  r=NA; n=0
+goreh_omid_35    r=0.503; n=314  r=NA; n=0
+goreh_omid_101    r=-0.406; n=3  r=NA; n=0
+jask_57               r=NA; n=0  r=NA; n=0
+jask_93          r=0.190; n=169  r=NA; n=0
+bahregan_35      r=0.083; n=314  r=NA; n=0
+bahregan_101      r=-0.816; n=3  r=NA; n=0
+rt_v2_35        r=-0.010; n=311  r=NA; n=0
+rt_v2_101             r=NA; n=0  r=NA; n=0
+======================================================================
+corr_diffs
+                      kharg_35  kharg_101
+kharg_35        r=1.000; n=135  r=NA; n=0
+kharg_101            r=NA; n=0  r=NA; n=0
+goreh_omid_35   r=0.097; n=135  r=NA; n=0
+goreh_omid_101       r=NA; n=0  r=NA; n=0
+jask_57              r=NA; n=0  r=NA; n=0
+jask_93         r=-0.034; n=60  r=NA; n=0
+bahregan_35     r=0.032; n=135  r=NA; n=0
+bahregan_101         r=NA; n=0  r=NA; n=0
+rt_v2_35        r=0.069; n=135  r=NA; n=0
+rt_v2_101            r=NA; n=0  r=NA; n=0
+======================================================================
+corr_2026_levels
+                      kharg_35  kharg_101
+kharg_35         r=1.000; n=43  r=NA; n=0
+kharg_101            r=NA; n=0  r=NA; n=0
+goreh_omid_35    r=0.484; n=43  r=NA; n=0
+goreh_omid_101   r=-0.406; n=3  r=NA; n=0
+jask_57              r=NA; n=0  r=NA; n=0
+jask_93          r=0.525; n=40  r=NA; n=0
+bahregan_35     r=-0.082; n=43  r=NA; n=0
+bahregan_101     r=-0.816; n=3  r=NA; n=0
+rt_v2_35        r=-0.163; n=43  r=NA; n=0
+rt_v2_101            r=NA; n=0  r=NA; n=0
+======================================================================
+corr_2026_diffs
+                      kharg_35  kharg_101
+kharg_35         r=1.000; n=42  r=NA; n=0
+kharg_101            r=NA; n=0  r=NA; n=0
+goreh_omid_35    r=0.078; n=42  r=NA; n=0
+goreh_omid_101       r=NA; n=0  r=NA; n=0
+jask_57              r=NA; n=0  r=NA; n=0
+jask_93          r=0.034; n=37  r=NA; n=0
+bahregan_35      r=0.071; n=42  r=NA; n=0
+bahregan_101         r=NA; n=0  r=NA; n=0
+rt_v2_35        r=-0.160; n=42  r=NA; n=0
+rt_v2_101            r=NA; n=0  r=NA; n=0
+DONE

@@ -1,0 +1,25 @@
+goreh_omid [terminal_observations/goreh_omid]: dates=330 period=2015-04-06..2026-11-05 tanks=10 rows=3300 db_mean_nonnull=1.0000
+    orbit=35: dates=327 period=2015-04-06..2026-11-05 tanks=10 rows=3270 db_mean_nonnull=1.0000
+    orbit=101: dates=3 period=2026-05-13..2026-06-18 tanks=10 rows=30 db_mean_nonnull=1.0000
+jask [terminal_observations/jask]: dates=324 period=2015-04-10..2026-11-03 tanks=20 rows=6480 db_mean_nonnull=1.0000
+    orbit=93: dates=324 period=2015-04-10..2026-11-03 tanks=20 rows=6480 db_mean_nonnull=1.0000
+    tank_present_guess column: ABSENT (no exclusion applied)
+bahregan [terminal_observations/bahregan]: dates=330 period=2015-04-06..2026-11-05 tanks=9 rows=2970 db_mean_nonnull=1.0000
+    orbit=35: dates=327 period=2015-04-06..2026-11-05 tanks=9 rows=2943 db_mean_nonnull=1.0000
+    orbit=101: dates=3 period=2026-05-13..2026-06-18 tanks=9 rows=27 db_mean_nonnull=1.0000
+ras_tanura_v2 [terminal_observations/ras_tanura_v2]: dates=323 period=2017-03-14..2026-11-05 tanks=30 rows=9690 db_mean_nonnull=1.0000
+    orbit=35: dates=323 period=2017-03-14..2026-11-05 tanks=30 rows=9690 db_mean_nonnull=1.0000
+kharg [raw_observations/kharg]: dates=326 period=2015-04-06..2026-11-05 tanks=47 rows=15322 db_mean_nonnull=1.0000
+    orbit=35: dates=326 period=2015-04-06..2026-11-05 tanks=47 rows=15322 db_mean_nonnull=1.0000
+
+non-empty weeks per column:
+  kharg_35: 314
+  kharg_101: 0
+  goreh_omid_35: 314
+  goreh_omid_101: 3
+  jask_57: 0
+  jask_93: 311
+  bahregan_35: 314
+  bahregan_101: 3
+  rt_v2_35: 311
+  rt_v2_101: 0
