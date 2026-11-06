@@ -1,0 +1,15 @@
+Traceback (most recent call last):
+  File "/home/runner/work/kharg-dashboard/kharg-dashboard/scripts/tz11_upstream_corr.py", line 24, in <module>
+    sb = create_client(os.environ["SUPABASE_URL"], os.environ["SUPABASE_KEY"])
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/hostedtoolcache/Python/3.11.18/x64/lib/python3.11/site-packages/supabase/_sync/client.py", line 391, in create_client
+    return Client.create(
+           ^^^^^^^^^^^^^^
+  File "/opt/hostedtoolcache/Python/3.11.18/x64/lib/python3.11/site-packages/supabase/_sync/client.py", line 114, in create
+    client = cls(supabase_url, supabase_key, options)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/hostedtoolcache/Python/3.11.18/x64/lib/python3.11/site-packages/supabase/_sync/client.py", line 64, in __init__
+    _validate_str_arg("supabase_key", supabase_key)
+  File "/opt/hostedtoolcache/Python/3.11.18/x64/lib/python3.11/site-packages/supabase/_sync/client.py", line 38, in _validate_str_arg
+    raise SupabaseException(f"{name} is required")
+supabase._sync.client.SupabaseException: supabase_key is required
