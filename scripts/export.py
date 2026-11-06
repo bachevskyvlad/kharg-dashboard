@@ -3,7 +3,7 @@ export.py — Write JSON data files and volume chart.
 
 Step 3 of 3 in the pipeline (ingest → compute → export).
 Reads computed aggregates from parquet/pickle written by compute.py,
-writes frontend JSON files, generates chart PNG, refreshes gross_flows.
+writes frontend JSON files, generates chart PNG, updates kharg_gross_flows_v2 (scripts/gross_flows.py).
 """
 
 import os
@@ -18,7 +18,7 @@ warnings.filterwarnings("ignore")
 
 from config import sb, DAILY_PATH, WEEKLY_PATH, PLOT_PATH, EWMA_ALPHA
 from locations import raw_tanks, TERMINALS
-from export_data import refresh_gross_flows
+from export_data import update_gross_flows
 
 # Max capacity from tank geometry: π × r² × h_max × 6.2898 / 1e6 (Mn bbl)
 TERMINAL_MAX_CAP = {
@@ -93,7 +93,7 @@ with open(WEEKLY_PATH, "w") as f:
     json.dump(weekly_payload, f, indent=2)
 print(f"[export] Wrote {WEEKLY_PATH}")
 
-refresh_gross_flows(sb)
+update_gross_flows(sb)
 
 
 # ── Terminal JSON files ────────────────────────────────────────────────────────
