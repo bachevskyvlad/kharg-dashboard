@@ -239,13 +239,20 @@ def main():
         y = orig[:4]
         neigh = sorted((x for x in all_dates if x[:4] == y and x not in used),
                        key=lambda x: (abs((date_t.fromisoformat(x) - date_t.fromisoformat(orig)).days), x))
-        for cand in [orig] + neigh[:10]:
+        # "scene exists" = CDSE catalog has an S1 IW product intersecting the AOI
+        # that day (polarization-independent, so A and B get the same dates).
+        sids = []
+        for cand in [orig] + neigh:
             tried.append(cand)
+            sids = scene_ids_for(cand)
+            if not sids:
+                print(f'  {cand}: no scene in catalog')
+                continue
             arr = fetch(date_t.fromisoformat(cand))
             if arr is not None:
                 d = cand
                 break
-            print(f'  {cand}: no scene')
+            print(f'  {cand}: catalog has scene but fetch returned None')
         if arr is None:
             no_scene_final += 1
             print(f'  {orig}: NO SCENE after {len(tried)} candidates')
@@ -256,7 +263,6 @@ def main():
         prod_counts, prod_thr = sb.detect_ships(arr)
         assert prod_counts == counts and abs(prod_thr - thr) < 1e-12, (d, prod_counts, counts)
 
-        sids = scene_ids_for(d)
         sid = sids[0] if sids else ''
         for k, det in enumerate(dets):
             row = {'date': d, 'scene_id': sid, 'det_idx': k}
@@ -277,6 +283,7 @@ def main():
             'match': int(tot == a['total']),
             'year': p['year'], 'slot': p['slot'],
             'replaced': int(d != orig), 'replaced_from': orig if d != orig else '',
+            'n_candidates_tried': len(tried),
             'scene_id': sid, 'n_scenes_that_day': len(sids), 'threshold': round(thr, 4),
             'nan_frac': round(float(np.mean(~np.isfinite(arr))), 4),
             'valid_frac_gt001': round(float(np.mean(np.nan_to_num(arr) > 0.01)), 4),
