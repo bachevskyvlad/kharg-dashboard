@@ -1,8 +1,7 @@
 """
 ТЗ-7.8  Axial ship detector — Kharg Island berths
 Outputs: diagnostics/berth_axis/
-v5.1: 40 dates (20 new + 20 old), orbit-101 fix (AXIS_BUFFER_M=250),
-      static-check, before/after-axis PNG, v3 comparison column.
+v5.3: orbit-101 ASCENDING fix, review pack (review_XX.png + labels_v5.csv + zip).
 """
 
 import collections, csv, json, math, os, random, sys, zipfile
@@ -59,6 +58,8 @@ SEA_EXCESS_DB = 8          # threshold = sea_median + this
 AXIS_SHIFT_MAX = 20        # refinement search ±metres
 AXIS_STRUCT_HALF = 25      # |d| < this = structure zone (excluded from sea, used for shift)
 RANDOM_SEED = 17
+
+ORBIT_DIR = {35: "DESCENDING", 101: "ASCENDING"}
 
 # ─────────────────────────── v3 reference data ───────────────────────────────
 # key: (date_str, orbit, berth) → occupied bool (True/False/None)
@@ -351,7 +352,7 @@ def fetch_scene(cfg, bbox_lonlat, date_str, orbit):
             time_interval=(t0, t1),
             other_args={
                 "dataFilter": {
-                    "orbitDirection": "DESCENDING",
+                    "orbitDirection": ORBIT_DIR.get(orbit, "DESCENDING"),
                     "mosaickingOrder": "mostRecent",
                 },
             },
@@ -562,12 +563,20 @@ def warp_to_sd(arr_db, s_arr, d_arr, s_res=10, d_res=10,
 # ─────────────────────────── PNG rendering ───────────────────────────────────
 
 def render_png(arr_db, s_arr, d_arr, P_A, P_B, stats,
-               ships, date_str, orbit, berth, out_path):
+               ships, date_str, orbit, berth, out_path,
+               struct_set=None, review_id=None, v3_says=None):
     s_centres, threshold, sea_median = stats
     warped, (s_min, s_max, d_lo, d_hi) = warp_to_sd(arr_db, s_arr, d_arr)
 
     fig, axes = plt.subplots(1, 2, figsize=(14, 5))
-    fig.suptitle(f"{berth}  |  {date_str}  orbit={orbit}", fontsize=11)
+    title = f"{berth}  |  {date_str}  orbit={orbit}"
+    if review_id is not None:
+        title = f"review_{review_id:02d}  " + title
+    if v3_says is True:
+        title += "  [v3=YES]"
+    elif v3_says is False:
+        title += "  [v3=NO]"
+    fig.suptitle(title, fontsize=11)
 
     # --- left: warped SAR ---
     ax = axes[0]
@@ -587,10 +596,18 @@ def render_png(arr_db, s_arr, d_arr, P_A, P_B, stats,
         col  = "cyan" if sh["side"] == "A" else "orange"
         d_c  = (SIDE_A_D[0] + SIDE_A_D[1]) / 2 if sh["side"] == "A" \
                else (SIDE_B_D[0] + SIDE_B_D[1]) / 2
-        ax.annotate(f"{i+1}", xy=(sh["s_center_m"], d_c),
-                    color=col, fontsize=7, ha="center", va="center",
-                    bbox=dict(boxstyle="round,pad=0.1", fc="black", alpha=0.5))
-        ax.hlines(d_c, sh["s_start_m"], sh["s_end_m"], colors=col, lw=2)
+        s50  = round(sh["s_center_m"] / 50) * 50
+        is_struct = struct_set is not None and \
+                    (sh["orbit"], sh["berth"], sh["side"], s50) in struct_set
+        lbl_txt = f"{i+1} {sh['length_m']:.0f}m {sh['side']}"
+        if is_struct:
+            lbl_txt += " STRUCT?"
+        ax.annotate(lbl_txt, xy=(sh["s_center_m"], d_c),
+                    color=col, fontsize=6, ha="center", va="center",
+                    bbox=dict(boxstyle="round,pad=0.1",
+                              fc="darkred" if is_struct else "black", alpha=0.6))
+        ax.hlines(d_c, sh["s_start_m"], sh["s_end_m"],
+                  colors="red" if is_struct else col, lw=2)
     ax.set_xlabel("s (m along axis)")
     ax.set_ylabel("d (m perp, right=+)")
     ax.set_title("SAR warped to (s,d)")
@@ -605,10 +622,14 @@ def render_png(arr_db, s_arr, d_arr, P_A, P_B, stats,
                 label=f"sea={sea_median:.1f} dB")
     for i, sh in enumerate(ships):
         col = "cyan" if sh["side"] == "A" else "orange"
+        s50 = round(sh["s_center_m"] / 50) * 50
+        is_struct = struct_set is not None and \
+                    (sh["orbit"], sh["berth"], sh["side"], s50) in struct_set
         ax2.axvspan(sh["s_start_m"], sh["s_end_m"],
-                    alpha=0.2, color=col)
-        ax2.text(sh["s_center_m"], threshold + 0.3, str(i+1),
-                 color=col, fontsize=7, ha="center")
+                    alpha=0.25, color="red" if is_struct else col)
+        lbl2 = f"{i+1}" + (" S?" if is_struct else "")
+        ax2.text(sh["s_center_m"], threshold + 0.3, lbl2,
+                 color="red" if is_struct else col, fontsize=7, ha="center")
     ax2.set_xlabel("s (m along axis)")
     ax2.set_ylabel("mean dB")
     ax2.set_title(f"Axial profiles  |  {len(ships)} ship(s)")
@@ -786,6 +807,104 @@ def static_check(all_ships, new_dates_set, out_dir):
             w.writerow(c)
     print(f"  static_candidates.csv: {path} ({len(candidates)} candidates)")
     return candidates
+
+# ─────────────────────────── review pack ─────────────────────────────────────
+
+def generate_review_pack(all_ships, scene_cache, berth_axes, all_dates,
+                          static_cands, out_dir):
+    """
+    For each date×berth×orbit where ships>0 OR v3=True:
+      - render review_XX.png (numbered, STRUCT? marked)
+      - build labels_v5.csv (one row per candidate)
+      - zip orbit-35 PNGs → review_orbit35.zip
+      - zip orbit-101 PNGs → review_orbit101.zip
+    """
+    struct_set = set()
+    for c in static_cands:
+        struct_set.add((c["orbit"], c["berth"], c["side"], c["s_center_50m"]))
+
+    # index ships by (date, orbit, berth)
+    ships_index = {}
+    for sh in all_ships:
+        key = (sh["date"], sh["orbit"], sh["berth"])
+        ships_index.setdefault(key, []).append(sh)
+
+    labels   = []
+    rev_id   = 0
+    zip35_files  = []
+    zip101_files = []
+
+    for dt_str, orbit, platform in sorted(all_dates, key=lambda x: x[0]):
+        for berth, bdef in BERTHS.items():
+            cached = scene_cache.get((dt_str, orbit, berth))
+            if cached is None:
+                continue
+            arr_db, transform = cached
+
+            ships = ships_index.get((dt_str, orbit, berth), [])
+            v3_says = V3.get((dt_str, orbit, berth))
+            if not ships and v3_says is not True:
+                continue
+
+            rev_id += 1
+            ac = berth_axes[berth]
+            lon_arr, lat_arr = pixel_lonlat(transform)
+            s_arr, d_arr = ac.pixel_sd(lon_arr, lat_arr)
+            _, P_A, P_B, stats = detect_ships(
+                arr_db, s_arr, d_arr,
+                bdef["min_len_m"], dt_str, orbit, platform, berth
+            )
+            if P_A is None:
+                continue
+
+            png_name = f"review_{rev_id:02d}_{dt_str}_orbit{orbit}_{berth}.png"
+            render_png(arr_db, s_arr, d_arr, P_A, P_B, stats,
+                       ships, dt_str, orbit, berth,
+                       out_dir / png_name,
+                       struct_set=struct_set, review_id=rev_id, v3_says=v3_says)
+
+            if orbit == 35:
+                zip35_files.append(png_name)
+            else:
+                zip101_files.append(png_name)
+
+            for i, sh in enumerate(ships):
+                s50 = round(sh["s_center_m"] / 50) * 50
+                is_struct = (orbit, berth, sh["side"], s50) in struct_set
+                labels.append({
+                    "review_id":          rev_id,
+                    "date":               dt_str,
+                    "orbit":              orbit,
+                    "berth":              berth,
+                    "candidate_id":       f"rv{rev_id:02d}c{i+1}",
+                    "side":               sh["side"],
+                    "s_center_m":         sh["s_center_m"],
+                    "length_m":           sh["length_m"],
+                    "is_static_candidate": "YES" if is_struct else "NO",
+                    "K_says":             "",
+                })
+
+    # labels_v5.csv
+    labels_path = out_dir / "labels_v5.csv"
+    with open(labels_path, "w", newline="") as f:
+        fieldnames = ["review_id","date","orbit","berth","candidate_id",
+                      "side","s_center_m","length_m","is_static_candidate","K_says"]
+        w = csv.DictWriter(f, fieldnames=fieldnames)
+        w.writeheader()
+        for row in labels:
+            w.writerow(row)
+    print(f"labels_v5.csv: {labels_path} ({len(labels)} candidates, {rev_id} reviews)")
+
+    # zips
+    for zip_name, file_list in [("review_orbit35.zip",  zip35_files),
+                                  ("review_orbit101.zip", zip101_files)]:
+        zip_path = out_dir / zip_name
+        with zipfile.ZipFile(zip_path, "w", zipfile.ZIP_DEFLATED) as zf:
+            for fn in file_list:
+                fp = out_dir / fn
+                if fp.exists():
+                    zf.write(fp, fn)
+        print(f"{zip_name}: {zip_path} ({len(file_list)} PNGs)")
 
 # ─────────────────────────── before/after axis PNG ───────────────────────────
 
@@ -1038,7 +1157,12 @@ def main():
                            OUT_DIR / png_name)
 
     # ── Step 6: static check ─────────────────────────────────────────────────
-    static_check(all_ships, new_dates_set, OUT_DIR)
+    static_cands = static_check(all_ships, new_dates_set, OUT_DIR)
+
+    # ── Step 6b: review pack ──────────────────────────────────────────────────
+    print("\n=== Step 6b: review pack ===")
+    generate_review_pack(all_ships, scene_cache, berth_axes, all_dates,
+                          static_cands, OUT_DIR)
 
     # ── Step 7: write outputs ─────────────────────────────────────────────────
     print("\n=== Step 7: write outputs ===")
