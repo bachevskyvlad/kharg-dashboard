@@ -1,0 +1,69 @@
+name: tz12_anchorage_valid
+
+# ТЗ-12 validation pack. Runs only on push to this branch touching the TZ-12 files.
+on:
+  workflow_dispatch:
+  push:
+    branches: [claude/bold-shannon-6c2b8c]
+    paths:
+      - diagnostics/anchorage_valid/run_validation.py
+      - diagnostics/anchorage_valid/select_dates.py
+      - .github/workflows/tz12_anchorage_valid.yml
+
+concurrency:
+  group: tz12-anchorage-valid
+  cancel-in-progress: false
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: claude/bold-shannon-6c2b8c
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: pip install --quiet sentinelhub scipy numpy matplotlib Pillow
+
+      - name: Run validation pack
+        env:
+          CLIENT_ID: ${{ secrets.CLIENT_ID }}
+          CLIENT_SECRET: ${{ secrets.CLIENT_SECRET }}
+          RUN_ID: gha-${{ github.run_id }}
+        run: python diagnostics/anchorage_valid/run_validation.py 2>&1 | tee diagnostics/anchorage_valid/run_log.txt; exit ${PIPESTATUS[0]}
+
+      - name: Upload pack
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: anchorage_valid_gha-${{ github.run_id }}
+          path: |
+            diagnostics/anchorage_valid/*.zip
+            diagnostics/anchorage_valid/*.csv
+            diagnostics/anchorage_valid/run_meta.json
+            diagnostics/anchorage_valid/run_log.txt
+            diagnostics/anchorage_valid/png/*.png
+
+      - name: Commit outputs (only diagnostics/anchorage_valid/)
+        if: always()
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          cd diagnostics/anchorage_valid
+          git add detections.csv summary.csv run_meta.json run_log.txt 2>/dev/null || true
+          for z in *.zip; do
+            [ -f "$z" ] && [ $(stat -c%s "$z") -lt 94000000 ] && git add "$z"
+          done
+          cd ../..
+          git diff --cached --quiet && { echo "nothing to commit"; exit 0; }
+          git commit -m "tz12: anchorage validation pack gha-${{ github.run_id }}"
+          git pull --rebase origin claude/bold-shannon-6c2b8c
+          git push origin HEAD:claude/bold-shannon-6c2b8c
