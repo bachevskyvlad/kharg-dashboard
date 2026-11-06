@@ -88,6 +88,8 @@ jobs:
         env:
           CLIENT_ID: ${{ secrets.CLIENT_ID }}
           CLIENT_SECRET: ${{ secrets.CLIENT_SECRET }}
+          SUPABASE_URL: https://yoekhkczwdeyauwarsyy.supabase.co
+          SUPABASE_KEY: sb_publishable_7j07_zzdqTGM1LXf7-o9Tg_JJRbJQSM
       - name: Save compute artifacts
         uses: actions/cache/save@v4
         with:
@@ -198,9 +200,15 @@ jobs:
         continue-on-error: true
       - name: Export Kharg data from Supabase
         run: python scripts/export_from_supabase.py
+        env:
+          SUPABASE_URL: https://yoekhkczwdeyauwarsyy.supabase.co
+          SUPABASE_KEY: sb_publishable_7j07_zzdqTGM1LXf7-o9Tg_JJRbJQSM
       - name: Export Iran terminal JSON files
         run: python scripts/export_terminal_json.py
         continue-on-error: true
+        env:
+          SUPABASE_URL: https://yoekhkczwdeyauwarsyy.supabase.co
+          SUPABASE_KEY: sb_publishable_7j07_zzdqTGM1LXf7-o9Tg_JJRbJQSM
       - name: Commit and push
         run: |
           git config user.name  "bot"
