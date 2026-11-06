@@ -5,6 +5,7 @@ writes data/data.json and data/data_daily.json
 (lng_data.json is written directly by fetch_lng_data.py)
 """
 import json
+import os
 from pathlib import Path
 from supabase import create_client
 
