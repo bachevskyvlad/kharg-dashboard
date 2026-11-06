@@ -1,0 +1,23 @@
+{
+ "run_id": "gha-42219460699",
+ "polarization_filter": "DV",
+ "n_dates": 30,
+ "n_png": 30,
+ "no_scene": 0,
+ "n_detections": 159,
+ "n_replaced": 0,
+ "n_match": 13,
+ "zip": "anchorage_valid_gha-42219460699_DV.zip",
+ "zip_bytes": 12022460,
+ "aoi": [
+  50.05,
+  29.09,
+  50.59,
+  29.509999999999998
+ ],
+ "size_px": [
+  2109,
+  1849
+ ],
+ "resolution_m": 25
+}

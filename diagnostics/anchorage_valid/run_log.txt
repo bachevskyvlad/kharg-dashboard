@@ -1,4 +1,5 @@
-RUN_ID=gha-42218935900  AOI=[50.05, 29.09, 50.59, 29.509999999999998]  size=(2109, 1849)  res=25m
+FETCH_POL=prod(SV) OUT=/home/runner/work/kharg-dashboard/kharg-dashboard/diagnostics/anchorage_valid
+RUN_ID=gha-42219460699  AOI=[50.05, 29.09, 50.59, 29.509999999999998]  size=(2109, 1849)  res=25m
 Selected dates (before run):
   2017 zero  2017-01-01 anch_total=0
   2017 mean  2017-07-24 anch_total=15
@@ -60,5 +61,5 @@ Selected dates (before run):
   2026-04-19 thr=0.800 det=0 total=0 anch=20 DIFF
   2026-07-12 thr=0.800 det=0 total=0 anch=20 DIFF
   2026-05-20 thr=0.800 det=0 total=0 anch=34 DIFF
-META {"run_id": "gha-42218935900", "n_dates": 30, "n_png": 30, "no_scene": 0, "n_detections": 0, "n_replaced": 0, "n_match": 9, "zip": "anchorage_valid_gha-42218935900.zip", "zip_bytes": 318493, "aoi": [50.05, 29.09, 50.59, 29.509999999999998], "size_px": [2109, 1849], "resolution_m": 25}
+META {"run_id": "gha-42219460699", "polarization_filter": "SV(prod)", "n_dates": 30, "n_png": 30, "no_scene": 0, "n_detections": 0, "n_replaced": 0, "n_match": 9, "zip": "anchorage_valid_gha-42219460699.zip", "zip_bytes": 314696, "aoi": [50.05, 29.09, 50.59, 29.509999999999998], "size_px": [2109, 1849], "resolution_m": 25}
 CHECK OK
