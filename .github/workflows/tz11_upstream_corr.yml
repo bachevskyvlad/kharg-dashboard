@@ -23,9 +23,11 @@ jobs:
       - name: Run (SELECT only)
         env:
           SUPABASE_URL: https://yoekhkczwdeyauwarsyy.supabase.co
-          SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+          SUPABASE_KEY_SECRET: ${{ secrets.SUPABASE_KEY }}
+          SUPABASE_KEY_PUB: sb_publishable_7j07_zzdqTGM1LXf7-o9Tg_JJRbJQSM
         run: |
           mkdir -p analysis/tz11
+          export SUPABASE_KEY="${SUPABASE_KEY_SECRET:-$SUPABASE_KEY_PUB}"
           python scripts/tz11_upstream_corr.py 2>&1 | tee analysis/tz11/run_log.txt
       - name: Commit outputs
         if: always()
