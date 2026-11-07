@@ -44,13 +44,14 @@ AREA_SCALE = (25.0 / PX_M) ** 2           # 25 m px -> 4.17 m px
 AREA_MIN, AREA_MAX = AREA_MIN_25 * AREA_SCALE, AREA_MAX_25 * AREA_SCALE
 EVALSCRIPT = """
 //VERSION=3
+// band 0: same norm as ship_backfill.py; band 1: dataMask (coverage check only)
 function setup() {
-  return { input: ["VV"], output: { bands: 1, sampleType: "FLOAT32" } };
+  return { input: ["VV", "dataMask"], output: { bands: 2, sampleType: "FLOAT32" } };
 }
 function evaluatePixel(s) {
   var db = 10 * Math.log10(s.VV + 1e-10);
   var norm = Math.max(0, Math.min(1, (db + 25) / 40));
-  return [norm];
+  return [norm, s.dataMask];
 }
 """
 CLASSES = ['vlcc', 'suezmax', 'aframax', 'mr', 'small']
@@ -140,9 +141,9 @@ def fetch(cfg, col, bbox, d):
         log(f'  {d}: API error {str(e)[:300]}')
         return None, size
     raw = np.array(data[0]).astype('float32')
-    if raw.ndim == 3:
-        raw = raw[:, :, 0] if raw.shape[2] >= 1 else raw[0]
-    return raw, size
+    norm, dm = raw[:, :, 0], raw[:, :, 1]
+    norm = np.where(dm > 0, norm, np.nan).astype('float32')   # no-data -> NaN
+    return norm, size
 
 
 def upsample(a10):
@@ -299,9 +300,10 @@ def main():
             if len(results) == N_DATES:
                 break
             a10, size = fetch(cfg, col, bbox, d)
-            vf = 0.0 if a10 is None else float(np.mean(np.isfinite(a10) & (a10 > 0.01)))
+            # coverage = share of frame pixels with dataMask=1 (calm dark sea counts as covered)
+            vf = 0.0 if a10 is None else float(np.mean(np.isfinite(a10)))
             if a10 is None or vf < MIN_VALID_FRAC:
-                skipped.append((d, round(vf, 4))); log(f'  skip {d}: valid_frac={vf:.4f}')
+                skipped.append((d, round(vf, 4))); log(f'  skip {d}: dataMask_frac={vf:.4f}')
                 continue
             arr = upsample(a10)
             ships, counts, thr = detect(arr, mask)
@@ -321,7 +323,7 @@ def main():
     for d, thr, counts, ships, meta, size, vf in sorted(results):
         tot = sum(counts[k] for k in ('vlcc', 'suezmax', 'aframax', 'mr'))
         log(f'{d} orbit={REL_ORBIT} {meta["orbit_state"]} scenes={meta["ids"]} req={size[0]}x{size[1]} '
-            f'valid={vf:.4f} thr={thr:.4f} vlcc={counts["vlcc"]} suezmax={counts["suezmax"]} '
+            f'dataMask_frac={vf:.4f} thr={thr:.4f} vlcc={counts["vlcc"]} suezmax={counts["suezmax"]} '
             f'aframax={counts["aframax"]} mr={counts["mr"]} small={counts["small"]} total_no_small={tot}')
         for s in ships:
             rows.append({'date': d, 'lat': s['lat'], 'lon': s['lon'], 'length_m': s['length_m'],
