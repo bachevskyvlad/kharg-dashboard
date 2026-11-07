@@ -1,4 +1,4 @@
-RUN_ID=gha-42320034104 frame lon 50.25-50.52 lat 29.08-29.33; request 10 m (tiled <= 2500 px)
+RUN_ID=gha-42321713876 frame lon 50.25-50.52 lat 29.08-29.33; request 10 m (tiled <= 2500 px)
 catalog: 315 S1 IW features in AOI 2023-01-01..2026-12-31; orbit 35: 154 dates, full cover 154, partial 0
 random.Random(7).sample(full-cover dates, this frame) first 6: ['2025-09-10', '2024-05-12', '2026-01-02', '2023-05-30', '2023-08-10', '2026-08-01']
 dates used (fixed = rev1 seed-7 selection): ['2025-09-10', '2024-05-12', '2026-01-02']
@@ -6,11 +6,11 @@ dates used (fixed = rev1 seed-7 selection): ['2025-09-10', '2024-05-12', '2026-0
   2024-05-12: orbit-35 scenes=['S1A_IW_GRDH_1SDV_20240512T023932_20240512T023957_053832_068ACF_E959_COG.SAFE'] footprint_covers_frame=True
   2026-01-02: orbit-35 scenes=['S1A_IW_GRDH_1SDV_20260102T023916_20260102T023941_062582_07D807_584C_COG.SAFE'] footprint_covers_frame=True
 scale 4.17 m/px -> 6301x6672; blob area 107.8-14377.0 px
-masks: 10 features, masked px 3887795 (9.248% of frame)
+masks: 16 features, masked px 3956987 (9.412% of frame)
   2025-09-10: png 21.0 MB
   2024-05-12: png 9.2 MB
   2026-01-02: png 24.9 MB
-2024-05-12 orbit=35 descending scenes=['S1A_IW_GRDH_1SDV_20240512T023932_20240512T023957_053832_068ACF_E959_COG.SAFE'] req10m=2639x2756 frame=6301x6672@4.17m dataMask_frac=1.0000 thr=0.5500 vlcc=3 suezmax=0 aframax=0 mr=5 small=2 total_no_small=8 png_MB=9.2
+2024-05-12 orbit=35 descending scenes=['S1A_IW_GRDH_1SDV_20240512T023932_20240512T023957_053832_068ACF_E959_COG.SAFE'] req10m=2639x2756 frame=6301x6672@4.17m dataMask_frac=1.0000 thr=0.5500 vlcc=3 suezmax=0 aframax=0 mr=4 small=2 total_no_small=7 png_MB=9.2
 2025-09-10 orbit=35 descending scenes=['S1C_IW_GRDH_1SDV_20250910T023801_20250910T023830_004056_008105_8B5F_COG.SAFE'] req10m=2639x2756 frame=6301x6672@4.17m dataMask_frac=1.0000 thr=0.5500 vlcc=3 suezmax=1 aframax=1 mr=3 small=0 total_no_small=8 png_MB=21.0
 2026-01-02 orbit=35 descending scenes=['S1A_IW_GRDH_1SDV_20260102T023916_20260102T023941_062582_07D807_584C_COG.SAFE'] req10m=2639x2756 frame=6301x6672@4.17m dataMask_frac=1.0000 thr=0.5500 vlcc=0 suezmax=3 aframax=0 mr=3 small=5 total_no_small=6 png_MB=24.9
-ships.csv rows=29  scale=4.17 m/px 6301x6672  RUN_ID=gha-42320034104  DONE
+ships.csv rows=28  scale=4.17 m/px 6301x6672  RUN_ID=gha-42321713876  DONE
