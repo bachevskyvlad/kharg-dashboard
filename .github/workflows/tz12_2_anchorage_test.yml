@@ -1,0 +1,62 @@
+name: tz12_2_anchorage_test
+
+# ТЗ-12.2 test frames. Runs only on push to this branch touching the TZ-12.2 files.
+on:
+  workflow_dispatch:
+  push:
+    branches: [claude/bold-shannon-6c2b8c]
+    paths:
+      - diagnostics/anchorage_test/tz12_2_test.py
+      - .github/workflows/tz12_2_anchorage_test.yml
+
+concurrency:
+  group: tz12-2-anchorage-test
+  cancel-in-progress: false
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: claude/bold-shannon-6c2b8c
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: pip install --quiet sentinelhub scipy numpy Pillow matplotlib rasterio shapely
+
+      - name: Run test frames
+        env:
+          CLIENT_ID: ${{ secrets.CLIENT_ID }}
+          CLIENT_SECRET: ${{ secrets.CLIENT_SECRET }}
+          RUN_ID: gha-${{ github.run_id }}
+        run: python diagnostics/anchorage_test/tz12_2_test.py 2>&1 | tee diagnostics/anchorage_test/run_log.txt; exit ${PIPESTATUS[0]}
+
+      - name: Upload
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: anchorage_test_gha-${{ github.run_id }}
+          path: diagnostics/anchorage_test/
+
+      - name: Commit outputs (only on success, non-empty)
+        run: |
+          cd diagnostics/anchorage_test
+          n_png=$(ls anchorage_test_*.png | wc -l)
+          n_rows=$(($(wc -l < ships.csv) - 1))
+          echo "png=$n_png ships_rows=$n_rows"
+          [ "$n_png" -eq 3 ] && [ "$n_rows" -gt 0 ] || { echo "empty/incomplete — not committing"; exit 1; }
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add anchorage_test_*.png ships.csv run_log.txt
+          cd ../..
+          git commit -m "tz12.2: anchorage test frames gha-${{ github.run_id }}"
+          git pull --rebase origin claude/bold-shannon-6c2b8c
+          git push origin HEAD:claude/bold-shannon-6c2b8c
