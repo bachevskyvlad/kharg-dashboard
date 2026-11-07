@@ -19,12 +19,13 @@ jobs:
       - name: Run validation (Step 1 — 40 dates)
         id: validation
         run: |
-          python scripts/berth_detect_v410.py --step validation
+          python -u scripts/berth_detect_v410.py --step validation
           echo "exit_code=$?" >> $GITHUB_OUTPUT
         continue-on-error: true
         env:
-          CLIENT_ID:     ${{ secrets.CLIENT_ID }}
-          CLIENT_SECRET: ${{ secrets.CLIENT_SECRET }}
+          CLIENT_ID:          ${{ secrets.CLIENT_ID }}
+          CLIENT_SECRET:      ${{ secrets.CLIENT_SECRET }}
+          PYTHONUNBUFFERED:   "1"
 
       - name: Upload validation results
         uses: actions/upload-artifact@v4
@@ -36,10 +37,11 @@ jobs:
       - name: Run history (Step 2 — full 2017→today, both orbits)
         if: steps.validation.outcome == 'success'
         run: |
-          python scripts/berth_detect_v410.py --step history
+          python -u scripts/berth_detect_v410.py --step history --resume
         env:
-          CLIENT_ID:     ${{ secrets.CLIENT_ID }}
-          CLIENT_SECRET: ${{ secrets.CLIENT_SECRET }}
+          CLIENT_ID:          ${{ secrets.CLIENT_ID }}
+          CLIENT_SECRET:      ${{ secrets.CLIENT_SECRET }}
+          PYTHONUNBUFFERED:   "1"
 
       - name: Upload history results
         if: steps.validation.outcome == 'success'
