@@ -1,0 +1,30 @@
+RUN_ID=gha-42367730087
+DB: UNAVAILABLE -> local CSV only (no SUPABASE_WRITE_KEY)
+YEAR 2017: catalog 25, already done 0 (resume), to do 25
+catalog: 674 S1 IW features in AOI 2017-01-01..2026-11-07; orbit 35: 326 dates, full cover 325, partial 1
+  2017-02-18 computed: thr=0.55 total=23 no_small=16 V7 S1 A2 MR6 s7 masked_blobs=202 db=pending
+  2017-03-02 computed: thr=0.55 total=25 no_small=20 V10 S4 A1 MR5 s5 masked_blobs=219 db=pending
+  2017-03-14 computed: thr=0.55 total=27 no_small=23 V7 S2 A4 MR10 s4 masked_blobs=186 db=pending
+  2017-03-26 computed: thr=0.55 total=11 no_small=11 V4 S2 A1 MR4 s0 masked_blobs=245 db=pending
+  2017-04-07 computed: thr=0.55 total=21 no_small=18 V2 S2 A1 MR13 s3 masked_blobs=205 db=pending
+  2017-04-19 computed: thr=0.55 total=16 no_small=14 V4 S0 A5 MR5 s2 masked_blobs=201 db=pending
+  2017-05-01 computed: thr=0.55 total=27 no_small=18 V3 S2 A6 MR7 s9 masked_blobs=192 db=pending
+  2017-05-13 computed: thr=0.55 total=20 no_small=18 V4 S2 A4 MR8 s2 masked_blobs=209 db=pending
+  2017-06-06 computed: thr=0.55 total=16 no_small=12 V3 S2 A1 MR6 s4 masked_blobs=201 db=pending
+  2017-06-30 computed: thr=0.55 total=22 no_small=16 V4 S2 A2 MR8 s6 masked_blobs=200 db=pending
+  2017-07-12 computed: thr=0.55 total=20 no_small=18 V7 S1 A3 MR7 s2 masked_blobs=197 db=pending
+  2017-07-24 computed: thr=0.55 total=11 no_small=10 V3 S0 A2 MR5 s1 masked_blobs=195 db=pending
+  2017-08-05 computed: thr=0.55 total=18 no_small=13 V0 S1 A0 MR12 s5 masked_blobs=187 db=pending
+  2017-08-17 computed: thr=0.55 total=12 no_small=10 V2 S0 A2 MR6 s2 masked_blobs=198 db=pending
+  2017-08-29 from ТЗ-12.1a: thr=0.55 total=23 no_small=18 V5 S1 A5 MR7 s5 masked_blobs=None db=pending
+  2017-09-10 computed: thr=0.55 total=17 no_small=12 V4 S3 A0 MR5 s5 masked_blobs=198 db=pending
+  2017-09-22 computed: thr=0.55 total=22 no_small=17 V7 S2 A4 MR4 s5 masked_blobs=190 db=pending
+  2017-10-04 from ТЗ-12.1a: thr=0.55 total=21 no_small=14 V1 S2 A7 MR4 s7 masked_blobs=None db=pending
+  2017-10-16 computed: thr=0.55 total=10 no_small=6 V2 S0 A1 MR3 s4 masked_blobs=195 db=pending
+  2017-10-28 computed: thr=0.55 total=12 no_small=7 V2 S0 A4 MR1 s5 masked_blobs=201 db=pending
+  2017-11-09 computed: thr=0.55 total=7 no_small=5 V2 S1 A0 MR2 s2 masked_blobs=195 db=pending
+  2017-11-21 computed: thr=0.55 total=10 no_small=8 V2 S1 A1 MR4 s2 masked_blobs=188 db=pending
+  2017-12-03 computed: thr=0.55 total=12 no_small=8 V2 S1 A2 MR3 s4 masked_blobs=198 db=pending
+  2017-12-15 computed: thr=0.55 total=12 no_small=10 V4 S0 A1 MR5 s2 masked_blobs=194 db=pending
+  2017-12-27 from ТЗ-12.1a: thr=0.55 total=9 no_small=6 V1 S1 A2 MR2 s3 masked_blobs=None db=pending
+BATCH 2017: dates processed=25 ships=424 minutes=6.4 PU~407 holes=[]
