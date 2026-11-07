@@ -72,7 +72,7 @@ index 1ac1b47..da1f420 100644
 +          CLIENT_ID:          ${{ secrets.CLIENT_ID }}
 +          CLIENT_SECRET:      ${{ secrets.CLIENT_SECRET }}
 +          SUPABASE_URL:       https://yoekhkczwdeyauwarsyy.supabase.co
-+          SUPABASE_WRITE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
++          SUPABASE_WRITE_KEY: sb_publishable_7j07_zzdqTGM1LXf7-o9Tg_JJRbJQSM   # same key as ingest/compute in monitor.yml
 +          RUN_ID:             gha-${{ github.run_id }}
 +        run: python diagnostics/anchorage_hist/hist_backfill.py --update
 diff --git a/assets/js/anchorage_source.js b/assets/js/anchorage_source.js

@@ -1,0 +1,39 @@
+name: tz12_3_anchorage_sync
+
+# ТЗ-12.3: push local daily.csv / ships.csv (research branch) to Supabase and upload
+# the two latest full PNGs to Storage. Same key as ingest/compute in monitor.yml.
+# Trigger: push touching diagnostics/anchorage_hist/sync_request.txt on this branch.
+on:
+  workflow_dispatch:
+  push:
+    branches: [claude/bold-shannon-6c2b8c]
+    paths:
+      - diagnostics/anchorage_hist/sync_request.txt
+      - .github/workflows/tz12_3_anchorage_sync.yml
+
+concurrency:
+  group: tz12-3-anchorage-hist
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      SUPABASE_URL: https://yoekhkczwdeyauwarsyy.supabase.co
+      SUPABASE_WRITE_KEY: sb_publishable_7j07_zzdqTGM1LXf7-o9Tg_JJRbJQSM
+      CLIENT_ID: ${{ secrets.CLIENT_ID }}
+      CLIENT_SECRET: ${{ secrets.CLIENT_SECRET }}
+      RUN_ID: gha-${{ github.run_id }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: research/2026-10-auto
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: pip install --quiet sentinelhub scipy numpy Pillow matplotlib rasterio shapely requests
+      - name: Sync CSV -> Supabase
+        run: python diagnostics/anchorage_hist/hist_backfill.py --sync
+      - name: Snapshots -> Storage
+        run: python diagnostics/anchorage_hist/hist_backfill.py --snapshots

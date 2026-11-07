@@ -1,6 +1,11 @@
 -- ТЗ-12.3 Phase 1: Kharg anchorage history on the ТЗ-12.2 pipeline.
 -- Run manually in Supabase SQL editor (project yoekhkczwdeyauwarsyy). Idempotent.
--- Reads: anon/publishable key (site). Writes: service_role key only (GHA secret).
+-- Reads: anon/publishable key (site).
+-- Writes: the same publishable key that ingest.py / compute.py use (monitor.yml:61,92,
+-- scripts/config.py:40-43) — there is no service-role secret in GHA. The anon write
+-- policies below cover only these two tables and the anchorage_snapshots bucket.
+-- If a SUPABASE_SERVICE_KEY secret is added later, drop the *_anon_write / *_anon_insert /
+-- *_anon_update policies.
 
 -- ── anchorage_daily ─────────────────────────────────────────────────────────
 create table if not exists public.anchorage_daily (
@@ -45,6 +50,15 @@ create policy anon_select_anchorage_ships on public.anchorage_ships
 
 grant select on public.anchorage_daily, public.anchorage_ships to anon, authenticated;
 
+-- ── WRITE with the publishable key (same model as raw_observations / ingest.py) ─
+drop policy if exists anchorage_daily_anon_write on public.anchorage_daily;
+create policy anchorage_daily_anon_write on public.anchorage_daily
+  for all to anon using (true) with check (true);
+drop policy if exists anchorage_ships_anon_write on public.anchorage_ships;
+create policy anchorage_ships_anon_write on public.anchorage_ships
+  for all to anon using (true) with check (true);
+grant insert, update, delete on public.anchorage_daily, public.anchorage_ships to anon;
+
 -- ── Storage bucket for the two latest full PNGs (public read) ───────────────
 insert into storage.buckets (id, name, public)
 values ('anchorage_snapshots', 'anchorage_snapshots', true)
@@ -53,6 +67,15 @@ on conflict (id) do update set public = true;
 drop policy if exists anchorage_snapshots_public_read on storage.objects;
 create policy anchorage_snapshots_public_read on storage.objects
   for select to anon, authenticated using (bucket_id = 'anchorage_snapshots');
+
+-- Bucket writes with the publishable key (x-upsert = insert + update)
+drop policy if exists anchorage_snapshots_anon_insert on storage.objects;
+create policy anchorage_snapshots_anon_insert on storage.objects
+  for insert to anon with check (bucket_id = 'anchorage_snapshots');
+drop policy if exists anchorage_snapshots_anon_update on storage.objects;
+create policy anchorage_snapshots_anon_update on storage.objects
+  for update to anon using (bucket_id = 'anchorage_snapshots')
+  with check (bucket_id = 'anchorage_snapshots');
 
 -- Verify:
 --   select count(*) from public.anchorage_daily;
