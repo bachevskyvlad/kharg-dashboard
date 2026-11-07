@@ -1,0 +1,66 @@
+name: tz12_1a_anchorage_blind
+
+# ТЗ-12.1a blind-validation pack. Runs only on push touching blind_pack.py or this workflow.
+on:
+  workflow_dispatch:
+  push:
+    branches: [claude/bold-shannon-6c2b8c]
+    paths:
+      - diagnostics/anchorage_blind/blind_pack.py
+      - .github/workflows/tz12_1a_anchorage_blind.yml
+
+concurrency:
+  group: tz12-1a-anchorage-blind
+  cancel-in-progress: false
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: claude/bold-shannon-6c2b8c
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: pip install --quiet sentinelhub scipy numpy Pillow matplotlib rasterio shapely
+
+      - name: Build blind pack
+        env:
+          CLIENT_ID: ${{ secrets.CLIENT_ID }}
+          CLIENT_SECRET: ${{ secrets.CLIENT_SECRET }}
+          RUN_ID: gha-${{ github.run_id }}
+        run: python diagnostics/anchorage_blind/blind_pack.py 2>&1 | tee run_log_blind.txt; exit ${PIPESTATUS[0]}
+
+      - name: Upload
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: anchorage_blind_gha-${{ github.run_id }}
+          path: |
+            diagnostics/anchorage_blind/*.zip
+            diagnostics/anchorage_blind/*.csv
+            run_log_blind.txt
+
+      - name: Commit outputs (only on success)
+        run: |
+          cd diagnostics/anchorage_blind
+          for f in blind.zip full.zip detections.csv key.csv; do [ -s "$f" ] || { echo "missing $f"; exit 1; }; done
+          n_b=$(python -c "import zipfile;print(len(zipfile.ZipFile('blind.zip').namelist()))")
+          n_f=$(python -c "import zipfile;print(len(zipfile.ZipFile('full.zip').namelist()))")
+          echo "blind=$n_b full=$n_f"; [ "$n_b" -eq 30 ] && [ "$n_f" -eq 30 ] || exit 1
+          for z in blind.zip full.zip; do [ $(stat -c%s "$z") -lt 94000000 ] || { echo "$z too big for git"; exit 1; }; done
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add blind.zip full.zip detections.csv key.csv
+          cd ../..
+          git commit -m "tz12.1a: blind pack gha-${{ github.run_id }}"
+          git pull --rebase origin claude/bold-shannon-6c2b8c
+          git push origin HEAD:claude/bold-shannon-6c2b8c
