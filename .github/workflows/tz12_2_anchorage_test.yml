@@ -7,6 +7,7 @@ on:
     branches: [claude/bold-shannon-6c2b8c]
     paths:
       - diagnostics/anchorage_test/tz12_2_test.py
+      - data/exclusion_zones.geojson
       - .github/workflows/tz12_2_anchorage_test.yml
 
 concurrency:
