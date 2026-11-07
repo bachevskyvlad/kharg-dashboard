@@ -1,0 +1,35 @@
+RUN_ID=gha-42367730087
+DB: UNAVAILABLE -> local CSV only (no SUPABASE_WRITE_KEY)
+YEAR 2021: catalog 30, already done 0 (resume), to do 30
+catalog: 674 S1 IW features in AOI 2017-01-01..2026-11-07; orbit 35: 326 dates, full cover 325, partial 1
+  2021-01-04 computed: thr=0.55 total=7 no_small=6 V1 S0 A0 MR5 s1 masked_blobs=183 db=pending
+  2021-01-16 computed: thr=0.55 total=2 no_small=2 V2 S0 A0 MR0 s0 masked_blobs=191 db=pending
+  2021-01-28 computed: thr=0.55 total=5 no_small=4 V0 S0 A1 MR3 s1 masked_blobs=188 db=pending
+  2021-02-09 computed: thr=0.55 total=5 no_small=3 V1 S0 A0 MR2 s2 masked_blobs=219 db=pending
+  2021-02-21 computed: thr=0.55 total=10 no_small=6 V1 S1 A1 MR3 s4 masked_blobs=199 db=pending
+  2021-03-05 from ТЗ-12.1a: thr=0.55 total=7 no_small=4 V0 S2 A0 MR2 s3 masked_blobs=None db=pending
+  2021-03-17 from ТЗ-12.1a: thr=0.55 total=2 no_small=2 V1 S1 A0 MR0 s0 masked_blobs=None db=pending
+  2021-03-29 computed: thr=0.55 total=9 no_small=6 V3 S0 A0 MR3 s3 masked_blobs=187 db=pending
+  2021-04-10 computed: thr=0.55 total=6 no_small=4 V0 S0 A0 MR4 s2 masked_blobs=179 db=pending
+  2021-04-22 computed: thr=0.55 total=4 no_small=4 V1 S1 A0 MR2 s0 masked_blobs=190 db=pending
+  2021-05-04 computed: thr=0.55 total=8 no_small=7 V5 S1 A1 MR0 s1 masked_blobs=179 db=pending
+  2021-05-16 computed: thr=0.55 total=11 no_small=6 V2 S1 A0 MR3 s5 masked_blobs=188 db=pending
+  2021-05-28 from ТЗ-12.1a: thr=0.55 total=10 no_small=8 V2 S2 A1 MR3 s2 masked_blobs=None db=pending
+  2021-06-09 computed: thr=0.55 total=9 no_small=6 V2 S1 A1 MR2 s3 masked_blobs=192 db=pending
+  2021-06-21 computed: thr=0.55 total=5 no_small=3 V1 S0 A1 MR1 s2 masked_blobs=197 db=pending
+  2021-07-03 computed: thr=0.55 total=7 no_small=4 V1 S0 A0 MR3 s3 masked_blobs=202 db=pending
+  2021-07-15 computed: thr=0.55 total=3 no_small=2 V0 S0 A1 MR1 s1 masked_blobs=194 db=pending
+  2021-07-27 computed: thr=0.55 total=2 no_small=1 V0 S0 A1 MR0 s1 masked_blobs=178 db=pending
+  2021-08-08 computed: thr=0.55 total=2 no_small=1 V0 S0 A0 MR1 s1 masked_blobs=195 db=pending
+  2021-08-20 computed: thr=0.55 total=5 no_small=3 V0 S0 A1 MR2 s2 masked_blobs=185 db=pending
+  2021-09-01 computed: thr=0.55 total=7 no_small=6 V1 S2 A0 MR3 s1 masked_blobs=190 db=pending
+  2021-09-13 computed: thr=0.55 total=9 no_small=5 V2 S0 A2 MR1 s4 masked_blobs=184 db=pending
+  2021-09-25 computed: thr=0.55 total=10 no_small=4 V1 S0 A1 MR2 s6 masked_blobs=184 db=pending
+  2021-10-07 computed: thr=0.55 total=7 no_small=5 V1 S0 A0 MR4 s2 masked_blobs=185 db=pending
+  2021-10-19 computed: thr=0.55 total=2 no_small=2 V1 S0 A1 MR0 s0 masked_blobs=182 db=pending
+  2021-10-31 computed: thr=0.55 total=5 no_small=4 V2 S2 A0 MR0 s1 masked_blobs=170 db=pending
+  2021-11-24 computed: thr=0.55 total=12 no_small=6 V0 S0 A1 MR5 s6 masked_blobs=184 db=pending
+  2021-12-06 computed: thr=0.55 total=6 no_small=5 V2 S1 A0 MR2 s1 masked_blobs=192 db=pending
+  2021-12-18 computed: thr=0.55 total=15 no_small=13 V0 S3 A3 MR7 s2 masked_blobs=202 db=pending
+  2021-12-30 computed: thr=0.55 total=4 no_small=4 V0 S2 A1 MR1 s0 masked_blobs=227 db=pending
+BATCH 2021: dates processed=30 ships=196 minutes=7.9 PU~499 holes=[]
