@@ -36,10 +36,11 @@ ONLY_TERMINALS = set(_args.terminal.split(",")) if _args.terminal else None
 
 # Per-terminal calibration window: dB_min/dB_max (p5/p95) are taken only from rows
 # with date >= this value; volumes are still computed for all dates.
-# jask: tanks built ~2021–2024 — before 2022 the crescent sees bare ground and
-# 51% of rows sit at DB_FLOOR (-5 dB), which pins p5 to the floor (ТЗ-16).
+# jask: tanks built ~2021–2024 — before that the crescent sees bare ground and rows
+# sit at DB_FLOOR (-5 dB): 72% of 2022 rows, 28% of 2023, ~2% from 2024. A 2022 window
+# still pinned p5 to the floor (ТЗ-16), so the window starts 2024-01-01 (ТЗ-16.1).
 CALIBRATION_START = {
-    "jask": "2022-01-01",
+    "jask": "2024-01-01",
 }
 
 os.makedirs("data", exist_ok=True)
@@ -53,6 +54,7 @@ if RUN_KHARG:
     while True:
         rows = (sb.table("raw_observations")
                   .select("date,tank_id,radius_m,diameter,h_max,db_mean")
+                  .order("id")  # stable paging: without ORDER BY pages overlap / drop rows
                   .range(offset, offset + 999)
                   .execute().data)
         cached_records.extend(rows)
@@ -182,7 +184,9 @@ for terminal in TERMINALS:
         while True:
             batch = (sb.table("terminal_observations")
                        .select("date,tank_id,db_mean,relative_orbit,orbit_direction")
-                       .eq("terminal_id", tid).range(offset, offset+999).execute().data)
+                       .eq("terminal_id", tid)
+                       .order("id")  # stable paging (ТЗ-16.1: unordered paging lost 1/3 of jask rows)
+                       .range(offset, offset+999).execute().data)
             all_obs.extend(batch)
             if len(batch) < 1000: break
             offset += 1000

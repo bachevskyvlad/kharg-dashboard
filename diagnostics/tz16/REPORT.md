@@ -39,3 +39,30 @@ new = −5.0000 / 15.3797 dB (≥ 2022, 16.4 % at floor). Plot: `diagnostics/tz1
 
 All 18 other terminals: identical before/after.
 JSON regenerated with `scripts/export_terminal_json.py` (goreh_omid, bahregan, jask, lavan, siri, iran_total).
+
+---
+
+# ТЗ-16.1 — follow-up cleanup (2026-11-07)
+
+| Step | Object | Change | Rows | Backup |
+|---|---|---|---|---|
+| 1 | `compute.py` jask | calibration window 2022-01-01 → **2024-01-01**; p5/p95 −5.0000/15.3797 → **−1.3398/15.6086** dB (2 440 rows) | 321 dates recomputed | `diagnostics/tz16_backup/terminal_volume_timeseries_before_tz16_1.csv` |
+| 2 | `terminal_observations` bahregan | deleted duplicate second-day scenes 2026-05-09, 05-21, 06-02 | 27 | `diagnostics/tz16_backup/step4_dupes_bahregan_terminal_observations.csv` |
+| 2 | `terminal_volume_timeseries` bahregan | recomputed, 327 → 324 dates | 324 | same snapshot |
+| 3 | `iran_total` (`export_terminal_json.py`, `export.py`) | outer join + sum of whatever exists → **inner join**: point only if all input terminals have a value on that date | 817 → **0** points | old file in git history |
+| fix | `compute.py` paging | `.order("id")` added to both paged reads (see below) | — | — |
+
+**Paging bug found and fixed.** `compute.py` read `terminal_observations` / `raw_observations` in 1000-row pages
+without `ORDER BY`. For jask this returned 8 580 rows of which only 5 620 were unique (pages overlapped,
+2 960 rows never came back), so the coverage filter dropped dates (jask 321 → 205, bahregan 327 → 214 on the
+first 16.1 run). With `.order("id")` two consecutive runs are identical and all four terminals match an independent
+offline recompute to 0.0000 Mb. The ТЗ-16 values for goreh_omid / ras_tanura_v2 were verified unaffected.
+Kharg read currently returns 15 322 / 15 322 unique rows (not affected now, same latent risk, now fixed).
+The same unordered paging remains in `ingest.py` (date-existence checks only, ingest of terminals is disabled).
+
+**iran_total is empty by construction.** The inputs never share a date: Kharg / Goreh-Omid / Bahregan share
+323 dates (same orbit), Lavan / Siri share 7, Jask shares none with anyone. No page or function reads
+`iran_total_daily.json` (only `export.py`, `export_terminal_json.py`, `main_script.py` reference it).
+
+Jask series (Mb): pre-2022 mean 9.775 → 9.815 (still reads "full" before the tanks existed: floor rows clip to fill = 1);
+2024+ mean 4.480 → 5.505; last (2026-11-03) 4.650 → 5.691.

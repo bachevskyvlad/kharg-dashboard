@@ -131,11 +131,11 @@ if iran_filtered:
     merged = kharg_df.copy()
     for tid, df_t in iran_filtered.items():
         tmp = df_t[["day", "vol_mn_bbl"]].rename(columns={"vol_mn_bbl": tid})
-        merged = merged.merge(tmp, on="day", how="outer")
+        # inner join: a total point only where ALL terminals have a value that day (ТЗ-16.1)
+        merged = merged.merge(tmp, on="day", how="inner")
     merged = merged.sort_values("day")
     vol_cols = [c for c in merged.columns if c != "day"]
-    merged["vol_total"] = merged[vol_cols].sum(axis=1, min_count=1)
-    merged = merged.dropna(subset=["vol_total"])
+    merged["vol_total"] = merged[vol_cols].sum(axis=1)
 
     total_max = 33.2 + sum(TERMINAL_MAX_CAP.get(t, 0) for t in iran_filtered)
     iran_payload = {
