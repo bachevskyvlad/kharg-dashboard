@@ -1,0 +1,14 @@
+RUN_ID=gha-42367730087
+catalog: 674 S1 IW features in AOI 2017-01-01..2026-11-07; orbit 35: 326 dates, full cover 325, partial 1
+RECON 2017-01-01..2026-11-07: orbit-35 full-cover dates = 325; partial = 1; in ТЗ-12.1a = 30 (of 30 in detections.csv); to compute = 295
+  2017: 25 dates (3 from ТЗ-12.1a)  first=2017-02-18 last=2017-12-27
+  2018: 29 dates (3 from ТЗ-12.1a)  first=2018-01-08 last=2018-12-22
+  2019: 28 dates (3 from ТЗ-12.1a)  first=2019-01-15 last=2019-12-29
+  2020: 30 dates (3 from ТЗ-12.1a)  first=2020-01-10 last=2020-12-23
+  2021: 30 dates (3 from ТЗ-12.1a)  first=2021-01-04 last=2021-12-30
+  2022: 29 dates (3 from ТЗ-12.1a)  first=2022-01-11 last=2022-12-25
+  2023: 29 dates (3 from ТЗ-12.1a)  first=2023-01-06 last=2023-12-20
+  2024: 29 dates (3 from ТЗ-12.1a)  first=2024-01-13 last=2024-12-26
+  2025: 43 dates (3 from ТЗ-12.1a)  first=2025-01-07 last=2025-12-27
+  2026: 53 dates (3 from ТЗ-12.1a)  first=2026-01-02 last=2026-11-05
+gaps > 24 d between consecutive dates: 0
