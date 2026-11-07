@@ -91,6 +91,7 @@ footer{background:var(--panel);border-top:1px solid var(--border);padding:24px 1
 .footer-logo{font-family:'Bebas Neue',sans-serif;font-size:20px;letter-spacing:5px;color:var(--accent);}
 .footer-copy{font-family:'DM Mono',monospace;font-size:9px;color:var(--muted);opacity:0.6;text-align:right;}
 </style>
+<script src="/assets/js/anchorage_source.js"></script>
 </head>
 <body>
 
@@ -168,6 +169,22 @@ b.addEventListener('click',function(){b.classList.toggle('open');d.classList.tog
     </div>
   </section>
 
+  <!-- SNAPSHOTS (ТЗ-12.3) -->
+  <section class="breakdown-section">
+<div id="aq-snaps" style="display:none;margin-bottom:1.25rem;">
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:12px;">
+    <div data-snap="previous" style="background:var(--surface,rgba(255,255,255,0.02));border:1px solid var(--border);padding:12px;">
+      <div style="font-size:0.65rem;letter-spacing:1px;text-transform:uppercase;color:var(--muted);margin-bottom:8px">Previous SAR pass · <span class="aq-snap-date">—</span></div>
+      <a target="_blank" rel="noopener"><img loading="lazy" style="width:100%;display:block" alt=""></a>
+    </div>
+    <div data-snap="latest" style="background:var(--surface,rgba(255,255,255,0.02));border:1px solid var(--border);padding:12px;">
+      <div style="font-size:0.65rem;letter-spacing:1px;text-transform:uppercase;color:var(--accent);margin-bottom:8px">Latest SAR pass · <span class="aq-snap-date">—</span></div>
+      <a target="_blank" rel="noopener"><img loading="lazy" style="width:100%;display:block" alt=""></a>
+    </div>
+  </div>
+</div>
+  </section>
+
   <!-- BREAKDOWN -->
   <section class="breakdown-section">
     <div class="section-label" style="font-family:'DM Mono',monospace;font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--accent);margin-bottom:14px;">Latest SAR Pass</div>
@@ -210,9 +227,7 @@ let chartInstance = null;
 
 async function loadData() {
   try {
-    const r = await fetch('/data/anchorage.json');
-    if (!r.ok) throw new Error();
-    return await r.json();
+    return await loadAnchorageSeries();   // ТЗ-12.3: Supabase anchorage_daily, fallback data/anchorage.json (deprecated)
   } catch(e) { return null; }
 }
 

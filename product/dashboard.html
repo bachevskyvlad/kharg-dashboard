@@ -464,6 +464,7 @@
         .ob-next.finish { background: #34d399; }
         .ob-next.finish:hover { background: #047857; }
     </style>
+<script src="/assets/js/anchorage_source.js"></script>
 </head>
 <body>
 
@@ -1052,6 +1053,18 @@
             <canvas id="aqChart" style="width:100%;display:block;height:280px"></canvas>
         </div>
 
+<div id="aq-snaps" style="display:none;margin-bottom:1.25rem;">
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:12px;">
+    <div data-snap="previous" style="background:var(--surface,rgba(255,255,255,0.02));border:1px solid var(--border);padding:12px;">
+      <div style="font-size:0.65rem;letter-spacing:1px;text-transform:uppercase;color:var(--muted);margin-bottom:8px">Previous SAR pass · <span class="aq-snap-date">—</span></div>
+      <a target="_blank" rel="noopener"><img loading="lazy" style="width:100%;display:block" alt=""></a>
+    </div>
+    <div data-snap="latest" style="background:var(--surface,rgba(255,255,255,0.02));border:1px solid var(--border);padding:12px;">
+      <div style="font-size:0.65rem;letter-spacing:1px;text-transform:uppercase;color:var(--accent);margin-bottom:8px">Latest SAR pass · <span class="aq-snap-date">—</span></div>
+      <a target="_blank" rel="noopener"><img loading="lazy" style="width:100%;display:block" alt=""></a>
+    </div>
+  </div>
+</div>
         <div style="position:relative;" id="aq-table-wrap">
             <div style="background:var(--surface);border:1px solid var(--border);padding:1.25rem 1.5rem 1rem;">
                 <div style="font-size:0.7rem;letter-spacing:1px;text-transform:uppercase;color:var(--accent);margin-bottom:1rem">Weekly Breakdown</div>
@@ -2689,8 +2702,7 @@ function aqDraw() {
 async function initAnchorage() {
   if (_aqInited) { aqDraw(); return; }
   try {
-    const res = await fetch('/data/anchorage.json');
-    const json = await res.json();
+    const json = await loadAnchorageSeries();   // ТЗ-12.3: Supabase anchorage_daily, fallback data/anchorage.json (deprecated)
     _aqRecords = (json.records || []).filter(r => r.total !== undefined);
   } catch(e) { return; }
 
