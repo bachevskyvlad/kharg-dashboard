@@ -1,0 +1,48 @@
+RUN_ID=gha-42367730087
+DB: UNAVAILABLE -> local CSV only (no SUPABASE_WRITE_KEY)
+YEAR 2025: catalog 43, already done 0 (resume), to do 43
+catalog: 674 S1 IW features in AOI 2017-01-01..2026-11-07; orbit 35: 326 dates, full cover 325, partial 1
+  2025-01-07 computed: thr=0.55 total=25 no_small=19 V6 S0 A6 MR7 s6 masked_blobs=176 db=pending
+  2025-01-19 computed: thr=0.55 total=21 no_small=15 V5 S0 A5 MR5 s6 masked_blobs=167 db=pending
+  2025-01-31 computed: thr=0.55 total=17 no_small=13 V7 S2 A1 MR3 s4 masked_blobs=174 db=pending
+  2025-02-12 computed: thr=0.55 total=10 no_small=9 V6 S3 A0 MR0 s1 masked_blobs=176 db=pending
+  2025-02-24 computed: thr=0.55 total=12 no_small=12 V6 S1 A1 MR4 s0 masked_blobs=158 db=pending
+  2025-03-08 computed: thr=0.55 total=25 no_small=22 V7 S2 A3 MR10 s3 masked_blobs=236 db=pending
+  2025-03-20 computed: thr=0.55 total=21 no_small=19 V11 S1 A2 MR5 s2 masked_blobs=183 db=pending
+  2025-04-01 computed: thr=0.55 total=36 no_small=29 V10 S1 A5 MR13 s7 masked_blobs=164 db=pending
+  2025-04-13 computed: thr=0.55 total=23 no_small=17 V11 S0 A2 MR4 s6 masked_blobs=167 db=pending
+  2025-04-25 computed: thr=0.55 total=36 no_small=25 V8 S3 A2 MR12 s11 masked_blobs=185 db=pending
+  2025-05-07 computed: thr=0.55 total=28 no_small=27 V20 S3 A3 MR1 s1 masked_blobs=186 db=pending
+  2025-05-19 computed: thr=0.55 total=32 no_small=27 V17 S1 A4 MR5 s5 masked_blobs=179 db=pending
+  2025-05-31 computed: thr=0.55 total=35 no_small=23 V10 S3 A6 MR4 s12 masked_blobs=188 db=pending
+  2025-06-12 computed: thr=0.55 total=39 no_small=35 V8 S2 A7 MR18 s4 masked_blobs=173 db=pending
+  2025-06-24 computed: thr=0.55 total=3 no_small=1 V0 S0 A0 MR1 s2 masked_blobs=183 db=pending
+  2025-07-06 computed: thr=0.55 total=8 no_small=6 V3 S0 A1 MR2 s2 masked_blobs=180 db=pending
+  2025-07-18 computed: thr=0.55 total=5 no_small=4 V2 S1 A1 MR0 s1 masked_blobs=186 db=pending
+  2025-07-24 computed: thr=0.55 total=7 no_small=6 V2 S1 A2 MR1 s1 masked_blobs=173 db=pending
+  2025-07-30 computed: thr=0.55 total=10 no_small=9 V1 S2 A1 MR5 s1 masked_blobs=182 db=pending
+  2025-08-05 computed: thr=0.55 total=9 no_small=8 V6 S0 A1 MR1 s1 masked_blobs=186 db=pending
+  2025-08-17 computed: thr=0.55 total=16 no_small=11 V2 S0 A1 MR8 s5 masked_blobs=177 db=pending
+  2025-08-23 computed: thr=0.55 total=13 no_small=9 V4 S0 A2 MR3 s4 masked_blobs=177 db=pending
+  2025-08-29 computed: thr=0.55 total=17 no_small=12 V3 S2 A1 MR6 s5 masked_blobs=167 db=pending
+  2025-09-04 from ТЗ-12.1a: thr=0.55 total=17 no_small=15 V6 S2 A1 MR6 s2 masked_blobs=None db=pending
+  2025-09-10 computed: thr=0.55 total=8 no_small=8 V3 S1 A1 MR3 s0 masked_blobs=169 db=pending
+  2025-09-16 computed: thr=0.55 total=18 no_small=11 V2 S1 A3 MR5 s7 masked_blobs=178 db=pending
+  2025-09-22 computed: thr=0.55 total=8 no_small=6 V5 S0 A0 MR1 s2 masked_blobs=169 db=pending
+  2025-09-28 computed: thr=0.55 total=16 no_small=12 V4 S0 A3 MR5 s4 masked_blobs=174 db=pending
+  2025-10-04 from ТЗ-12.1a: thr=0.55 total=16 no_small=14 V5 S2 A2 MR5 s2 masked_blobs=None db=pending
+  2025-10-10 computed: thr=0.55 total=18 no_small=17 V4 S3 A3 MR7 s1 masked_blobs=186 db=pending
+  2025-10-16 computed: thr=0.55 total=20 no_small=14 V3 S2 A2 MR7 s6 masked_blobs=168 db=pending
+  2025-10-22 computed: thr=0.55 total=17 no_small=11 V4 S0 A1 MR6 s6 masked_blobs=179 db=pending
+  2025-10-28 computed: thr=0.55 total=15 no_small=11 V0 S2 A5 MR4 s4 masked_blobs=183 db=pending
+  2025-11-03 computed: thr=0.55 total=15 no_small=12 V4 S0 A3 MR5 s3 masked_blobs=204 db=pending
+  2025-11-09 from ТЗ-12.1a: thr=0.55 total=22 no_small=17 V7 S2 A3 MR5 s5 masked_blobs=None db=pending
+  2025-11-15 computed: thr=0.55 total=16 no_small=14 V8 S1 A2 MR3 s2 masked_blobs=186 db=pending
+  2025-11-21 computed: thr=0.55 total=13 no_small=11 V2 S2 A1 MR6 s2 masked_blobs=174 db=pending
+  2025-11-27 computed: thr=0.55 total=12 no_small=9 V4 S1 A1 MR3 s3 masked_blobs=186 db=pending
+  2025-12-03 computed: thr=0.55 total=16 no_small=10 V3 S0 A3 MR4 s6 masked_blobs=191 db=pending
+  2025-12-09 computed: thr=0.55 total=17 no_small=16 V6 S1 A4 MR5 s1 masked_blobs=192 db=pending
+  2025-12-15 computed: thr=0.55 total=17 no_small=12 V4 S1 A1 MR6 s5 masked_blobs=188 db=pending
+  2025-12-21 computed: thr=0.55 total=17 no_small=12 V0 S2 A2 MR8 s5 masked_blobs=254 db=pending
+  2025-12-27 computed: thr=0.55 total=12 no_small=11 V2 S2 A1 MR6 s1 masked_blobs=248 db=pending
+BATCH 2025: dates processed=43 ships=758 minutes=11.5 PU~740 holes=[]
