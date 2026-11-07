@@ -1,0 +1,68 @@
+name: tz12_3_anchorage_hist
+
+# ТЗ-12.3: Phase 0a recon + Phase 2 backfill by year. Works on research/2026-10-auto.
+# Trigger: push to this branch touching the TZ-12.3 script or this workflow.
+on:
+  workflow_dispatch:
+  push:
+    branches: [claude/bold-shannon-6c2b8c]
+    paths:
+      - diagnostics/anchorage_hist/hist_backfill.py
+      - .github/workflows/tz12_3_anchorage_hist.yml
+
+concurrency:
+  group: tz12-3-anchorage-hist
+  cancel-in-progress: false
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 350
+    permissions:
+      contents: write
+    env:
+      CLIENT_ID: ${{ secrets.CLIENT_ID }}
+      CLIENT_SECRET: ${{ secrets.CLIENT_SECRET }}
+      SUPABASE_URL: https://yoekhkczwdeyauwarsyy.supabase.co
+      SUPABASE_WRITE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY || secrets.SUPABASE_KEY }}
+      RUN_ID: gha-${{ github.run_id }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: research/2026-10-auto
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: pip install --quiet sentinelhub scipy numpy Pillow matplotlib rasterio shapely requests
+
+      - name: Git identity
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Phase 0a — recon
+        run: |
+          mkdir -p diagnostics/anchorage_hist/logs
+          python diagnostics/anchorage_hist/hist_backfill.py --recon 2>&1 | tee diagnostics/anchorage_hist/logs/recon.txt
+          rc=${PIPESTATUS[0]}
+          git add diagnostics/anchorage_hist/dates.csv diagnostics/anchorage_hist/logs/recon.txt
+          git diff --cached --quiet || git commit -m "tz12.3: phase 0a recon gha-${{ github.run_id }}"
+          git pull --rebase origin research/2026-10-auto && git push origin HEAD:research/2026-10-auto
+          exit $rc
+
+      - name: Phase 2 — backfill by year (one batch = one script run)
+        run: |
+          for y in 2017 2018 2019 2020 2021 2022 2023 2024 2025 2026; do
+            python diagnostics/anchorage_hist/hist_backfill.py --year $y 2>&1 | tee diagnostics/anchorage_hist/logs/batch_$y.txt
+            rc=${PIPESTATUS[0]}
+            git add diagnostics/anchorage_hist/logs/batch_$y.txt
+            [ -d diagnostics/anchorage_hist/$y ] && git add diagnostics/anchorage_hist/$y
+            [ -f diagnostics/anchorage_hist/daily.csv ] && git add diagnostics/anchorage_hist/daily.csv diagnostics/anchorage_hist/ships.csv
+            git diff --cached --quiet || git commit -m "tz12.3: backfill $y gha-${{ github.run_id }}"
+            for i in 1 2 3 4; do git pull --rebase origin research/2026-10-auto && git push origin HEAD:research/2026-10-auto && break; sleep $((2**i)); done
+            if [ $rc -ne 0 ]; then echo "batch $y exited $rc — stopping"; exit $rc; fi
+          done
