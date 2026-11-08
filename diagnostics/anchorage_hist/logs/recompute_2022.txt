@@ -1,0 +1,34 @@
+RUN_ID=gha-42479016363
+DB: OK
+YEAR 2022: catalog 29, already done 0 (resume), to do 29 [recompute, detector v2.1]
+catalog: 674 S1 IW features in AOI 2017-01-01..2026-11-08; orbit 35: 326 dates, full cover 325, partial 1
+  2022-01-11 computed: thr=0.55 total=7 no_small=6 V3 S3 A0 MR0 s1 masked_blobs=192 db=ok
+  2022-01-23 computed: thr=0.55 total=3 no_small=3 V2 S1 A0 MR0 s0 masked_blobs=189 db=ok
+  2022-02-04 computed: thr=0.55 total=3 no_small=3 V2 S1 A0 MR0 s0 masked_blobs=187 db=ok
+  2022-02-16 computed: thr=0.55 total=11 no_small=11 V6 S4 A0 MR1 s0 masked_blobs=187 db=ok
+  2022-02-28 computed: thr=0.55 total=12 no_small=11 V10 S1 A0 MR0 s1 masked_blobs=182 db=ok
+  2022-03-12 computed: thr=0.55 total=17 no_small=15 V10 S1 A0 MR4 s2 masked_blobs=161 db=ok
+  2022-03-24 computed: thr=0.55 total=15 no_small=12 V9 S0 A0 MR3 s3 masked_blobs=180 db=ok
+  2022-04-05 computed: thr=0.55 total=12 no_small=10 V10 S0 A0 MR0 s2 masked_blobs=174 db=ok
+  2022-04-17 computed: thr=0.55 total=13 no_small=13 V11 S1 A1 MR0 s0 masked_blobs=183 db=ok
+  2022-04-29 computed: thr=0.55 total=11 no_small=11 V11 S0 A0 MR0 s0 masked_blobs=192 db=ok
+  2022-05-11 computed: thr=0.55 total=11 no_small=11 V11 S0 A0 MR0 s0 masked_blobs=187 db=ok
+  2022-05-23 computed: thr=0.55 total=15 no_small=15 V12 S2 A0 MR1 s0 masked_blobs=194 db=ok
+  2022-06-04 computed: thr=0.55 total=15 no_small=15 V10 S3 A0 MR2 s0 masked_blobs=204 db=ok
+  2022-06-16 computed: thr=0.55 total=16 no_small=16 V12 S1 A1 MR2 s0 masked_blobs=180 db=ok
+  2022-06-28 computed: thr=0.55 total=15 no_small=13 V11 S0 A0 MR2 s2 masked_blobs=166 db=ok
+  2022-07-22 computed: thr=0.55 total=17 no_small=17 V11 S5 A1 MR0 s0 masked_blobs=181 db=ok
+  2022-08-03 computed: thr=0.55 total=21 no_small=19 V14 S1 A1 MR3 s2 masked_blobs=182 db=ok
+  2022-08-15 computed: thr=0.55 total=17 no_small=15 V10 S2 A1 MR2 s2 masked_blobs=191 db=ok
+  2022-08-27 computed: thr=0.55 total=12 no_small=12 V9 S1 A0 MR2 s0 masked_blobs=181 db=ok
+  2022-09-08 computed: thr=0.55 total=10 no_small=10 V8 S0 A0 MR2 s0 masked_blobs=185 db=ok
+  2022-09-20 computed: thr=0.55 total=12 no_small=11 V10 S0 A1 MR0 s1 masked_blobs=177 db=ok
+  2022-10-02 computed: thr=0.55 total=11 no_small=10 V10 S0 A0 MR0 s1 masked_blobs=171 db=ok
+  2022-10-14 computed: thr=0.55 total=12 no_small=11 V8 S2 A0 MR1 s1 masked_blobs=177 db=ok
+  2022-10-26 computed: thr=0.55 total=7 no_small=6 V6 S0 A0 MR0 s1 masked_blobs=176 db=ok
+  2022-11-07 computed: thr=0.55 total=9 no_small=9 V6 S1 A1 MR1 s0 masked_blobs=173 db=ok
+  2022-11-19 computed: thr=0.55 total=11 no_small=9 V7 S0 A0 MR2 s2 masked_blobs=174 db=ok
+  2022-12-01 computed: thr=0.55 total=10 no_small=10 V8 S0 A1 MR1 s0 masked_blobs=166 db=ok
+  2022-12-13 computed: thr=0.55 total=6 no_small=5 V5 S0 A0 MR0 s1 masked_blobs=180 db=ok
+  2022-12-25 computed: thr=0.55 total=9 no_small=7 V4 S1 A1 MR1 s2 masked_blobs=191 db=ok
+BATCH 2022: dates processed=29 ships=340 minutes=11.0 PU~536 holes=[]
