@@ -24,7 +24,7 @@
             source: 'supabase:anchorage_daily',
             updated: upd,
             records: rows.map(function (x) {
-              return { date: x.date, vlcc: x.vlcc, suezmax: x.suezmax, aframax: x.aframax, mr: x.mr, total: x.total_no_small };
+              return { date: x.date, vlcc: x.vlcc, suezmax: x.suezmax, aframax: x.aframax, mr: x.mr, small: x.small, total: x.total_no_small };
             })
           };
         }
