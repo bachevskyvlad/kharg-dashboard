@@ -1,21 +1,38 @@
-RUN_ID=gha-42479016363
+RUN_ID=gha-42498513741
 DB: OK
-YEAR 2025: catalog 43, already done 0 (resume), to do 43 [recompute, detector v2.1]
+YEAR 2025: catalog 43, already done 10 (resume), to do 33 [recompute, detector v2.1]
 catalog: 674 S1 IW features in AOI 2017-01-01..2026-11-08; orbit 35: 326 dates, full cover 325, partial 1
-  2025-01-07 computed: thr=0.55 total=19 no_small=17 V10 S3 A2 MR2 s2 masked_blobs=176 db=ok
-  2025-01-19 computed: thr=0.55 total=15 no_small=14 V11 S0 A1 MR2 s1 masked_blobs=167 db=ok
-  2025-01-31 computed: thr=0.55 total=14 no_small=13 V13 S0 A0 MR0 s1 masked_blobs=174 db=ok
-  2025-02-12 computed: thr=0.55 total=10 no_small=9 V8 S1 A0 MR0 s1 masked_blobs=176 db=ok
-  2025-02-24 computed: thr=0.55 total=10 no_small=10 V8 S0 A0 MR2 s0 masked_blobs=158 db=ok
-  2025-03-08 computed: thr=0.55 total=23 no_small=22 V11 S1 A3 MR7 s1 masked_blobs=236 db=ok
-  2025-03-20 computed: thr=0.55 total=18 no_small=17 V15 S0 A0 MR2 s1 masked_blobs=183 db=ok
-  2025-04-01 computed: thr=0.55 total=29 no_small=26 V20 S1 A1 MR4 s3 masked_blobs=164 db=ok
-  2025-04-13 computed: thr=0.55 total=20 no_small=16 V13 S1 A1 MR1 s4 masked_blobs=167 db=ok
-  2025-04-25 computed: thr=0.55 total=26 no_small=24 V19 S2 A0 MR3 s2 masked_blobs=185 db=ok
-STOP: 403 ACCESS_INSUFFICIENT_PROCESSING_UNITS. Остановился на дате 2025-05-07, в базе 325 дат (local daily.csv: 239).
-Failed to download from:
-https://sh.dataspace.copernicus.eu/api/v1/process
-with HTTPError:
-403 Client Error: Forbidden for url: https://sh.dataspace.copernicus.eu/api/v1/process
-Server response: "{"status": 403, "reason": "Forbidden", "message": "Insufficient processing units or requests available in your account. Upgrade account or acquire additional credits.", "code": "ACCESS_INSUFFICIENT_PROCESSING_UNITS"}"
-BATCH 2025: dates processed=10 ships=184 minutes=3.8 PU~185 holes=[]
+  2025-05-07 computed: thr=0.55 total=28 no_small=28 V23 S2 A1 MR2 s0 masked_blobs=186 db=ok
+  2025-05-19 computed: thr=0.55 total=28 no_small=27 V22 S1 A2 MR2 s1 masked_blobs=179 db=ok
+  2025-05-31 computed: thr=0.55 total=29 no_small=22 V18 S1 A1 MR2 s7 masked_blobs=188 db=ok
+  2025-06-12 computed: thr=0.55 total=30 no_small=29 V19 S6 A1 MR3 s1 masked_blobs=173 db=ok
+  2025-06-24 computed: thr=0.55 total=3 no_small=1 V0 S0 A0 MR1 s2 masked_blobs=183 db=ok
+  2025-07-06 computed: thr=0.55 total=9 no_small=7 V4 S0 A1 MR2 s2 masked_blobs=180 db=ok
+  2025-07-18 computed: thr=0.55 total=5 no_small=4 V2 S2 A0 MR0 s1 masked_blobs=186 db=ok
+  2025-07-24 computed: thr=0.55 total=7 no_small=6 V2 S3 A0 MR1 s1 masked_blobs=173 db=ok
+  2025-07-30 computed: thr=0.55 total=8 no_small=7 V2 S4 A0 MR1 s1 masked_blobs=182 db=ok
+  2025-08-05 computed: thr=0.55 total=9 no_small=8 V6 S1 A1 MR0 s1 masked_blobs=186 db=ok
+  2025-08-17 computed: thr=0.55 total=15 no_small=10 V3 S2 A3 MR2 s5 masked_blobs=177 db=ok
+  2025-08-23 computed: thr=0.55 total=10 no_small=9 V5 S3 A1 MR0 s1 masked_blobs=177 db=ok
+  2025-08-29 computed: thr=0.55 total=15 no_small=11 V4 S3 A4 MR0 s4 masked_blobs=167 db=ok
+  2025-09-04 computed: thr=0.55 total=15 no_small=14 V9 S1 A1 MR3 s1 masked_blobs=170 db=ok
+  2025-09-10 computed: thr=0.55 total=8 no_small=8 V3 S2 A0 MR3 s0 masked_blobs=169 db=ok
+  2025-09-16 computed: thr=0.55 total=13 no_small=10 V6 S1 A1 MR2 s3 masked_blobs=178 db=ok
+  2025-09-22 computed: thr=0.55 total=9 no_small=7 V5 S1 A0 MR1 s2 masked_blobs=169 db=ok
+  2025-09-28 computed: thr=0.55 total=11 no_small=11 V9 S1 A1 MR0 s0 masked_blobs=174 db=ok
+  2025-10-04 computed: thr=0.55 total=14 no_small=13 V9 S1 A1 MR2 s1 masked_blobs=168 db=ok
+  2025-10-10 computed: thr=0.55 total=15 no_small=14 V9 S4 A1 MR0 s1 masked_blobs=186 db=ok
+  2025-10-16 computed: thr=0.55 total=14 no_small=12 V8 S3 A0 MR1 s2 masked_blobs=168 db=ok
+  2025-10-22 computed: thr=0.55 total=14 no_small=12 V4 S5 A0 MR3 s2 masked_blobs=179 db=ok
+  2025-10-28 computed: thr=0.55 total=13 no_small=10 V3 S3 A2 MR2 s3 masked_blobs=183 db=ok
+  2025-11-03 computed: thr=0.55 total=13 no_small=12 V6 S3 A0 MR3 s1 masked_blobs=204 db=ok
+  2025-11-09 computed: thr=0.55 total=20 no_small=17 V8 S4 A2 MR3 s3 masked_blobs=186 db=ok
+  2025-11-15 computed: thr=0.55 total=15 no_small=13 V9 S1 A1 MR2 s2 masked_blobs=186 db=ok
+  2025-11-21 computed: thr=0.55 total=11 no_small=10 V6 S1 A1 MR2 s1 masked_blobs=174 db=ok
+  2025-11-27 computed: thr=0.55 total=10 no_small=8 V5 S1 A1 MR1 s2 masked_blobs=186 db=ok
+  2025-12-03 computed: thr=0.55 total=13 no_small=11 V5 S3 A0 MR3 s2 masked_blobs=191 db=ok
+  2025-12-09 computed: thr=0.55 total=14 no_small=14 V9 S1 A2 MR2 s0 masked_blobs=192 db=ok
+  2025-12-15 computed: thr=0.55 total=15 no_small=10 V4 S1 A1 MR4 s5 masked_blobs=188 db=ok
+  2025-12-21 computed: thr=0.55 total=14 no_small=11 V2 S2 A1 MR6 s3 masked_blobs=254 db=ok
+  2025-12-27 computed: thr=0.55 total=12 no_small=11 V4 S1 A1 MR5 s1 masked_blobs=248 db=ok
+BATCH 2025: dates processed=33 ships=459 minutes=12.2 PU~610 holes=[]
