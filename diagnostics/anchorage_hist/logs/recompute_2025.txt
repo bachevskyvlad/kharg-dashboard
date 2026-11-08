@@ -1,0 +1,21 @@
+RUN_ID=gha-42479016363
+DB: OK
+YEAR 2025: catalog 43, already done 0 (resume), to do 43 [recompute, detector v2.1]
+catalog: 674 S1 IW features in AOI 2017-01-01..2026-11-08; orbit 35: 326 dates, full cover 325, partial 1
+  2025-01-07 computed: thr=0.55 total=19 no_small=17 V10 S3 A2 MR2 s2 masked_blobs=176 db=ok
+  2025-01-19 computed: thr=0.55 total=15 no_small=14 V11 S0 A1 MR2 s1 masked_blobs=167 db=ok
+  2025-01-31 computed: thr=0.55 total=14 no_small=13 V13 S0 A0 MR0 s1 masked_blobs=174 db=ok
+  2025-02-12 computed: thr=0.55 total=10 no_small=9 V8 S1 A0 MR0 s1 masked_blobs=176 db=ok
+  2025-02-24 computed: thr=0.55 total=10 no_small=10 V8 S0 A0 MR2 s0 masked_blobs=158 db=ok
+  2025-03-08 computed: thr=0.55 total=23 no_small=22 V11 S1 A3 MR7 s1 masked_blobs=236 db=ok
+  2025-03-20 computed: thr=0.55 total=18 no_small=17 V15 S0 A0 MR2 s1 masked_blobs=183 db=ok
+  2025-04-01 computed: thr=0.55 total=29 no_small=26 V20 S1 A1 MR4 s3 masked_blobs=164 db=ok
+  2025-04-13 computed: thr=0.55 total=20 no_small=16 V13 S1 A1 MR1 s4 masked_blobs=167 db=ok
+  2025-04-25 computed: thr=0.55 total=26 no_small=24 V19 S2 A0 MR3 s2 masked_blobs=185 db=ok
+STOP: 403 ACCESS_INSUFFICIENT_PROCESSING_UNITS. Остановился на дате 2025-05-07, в базе 325 дат (local daily.csv: 239).
+Failed to download from:
+https://sh.dataspace.copernicus.eu/api/v1/process
+with HTTPError:
+403 Client Error: Forbidden for url: https://sh.dataspace.copernicus.eu/api/v1/process
+Server response: "{"status": 403, "reason": "Forbidden", "message": "Insufficient processing units or requests available in your account. Upgrade account or acquire additional credits.", "code": "ACCESS_INSUFFICIENT_PROCESSING_UNITS"}"
+BATCH 2025: dates processed=10 ships=184 minutes=3.8 PU~185 holes=[]
