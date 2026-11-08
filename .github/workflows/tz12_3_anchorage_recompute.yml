@@ -1,6 +1,6 @@
 name: tz12_3_anchorage_recompute
 
-# Split-ship fix (detector v2.1): recompute all orbit-35 dates, upsert Supabase,
+# Split-ship fix (detector v2.1): recompute all orbit-35 dates, upsert Supabase (resumes from local daily.csv),
 # refresh the two snapshots. Old series kept as daily_v2.csv / ships_v2.csv.
 on:
   workflow_dispatch:
