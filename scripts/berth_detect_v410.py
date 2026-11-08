@@ -242,16 +242,26 @@ def wind_normalise(ratio_db, corridor_masks, water_ring_masks):
 # SentinelHub fetch
 # ═══════════════════════════════════════════════════════════════════════════════
 
+class PUExhaustedError(Exception):
+    """Raised when Sentinel Hub returns 403 ACCESS_INSUFFICIENT_PROCESSING_UNITS."""
+
 def catalog_search(date_from, date_to):
     catalog = SentinelHubCatalog(config=config)
-    results = list(catalog.search(
-        S1_CDSE, bbox=AOI_BBOX,
-        time=(date_from + "T00:00:00Z", date_to + "T23:59:59Z"),
-        fields={"include": ["id", "properties.datetime",
-                            "properties.sat:relative_orbit",
-                            "properties.sat:orbit_state",
-                            "properties.platform"]},
-    ))
+    try:
+        results = list(catalog.search(
+            S1_CDSE, bbox=AOI_BBOX,
+            time=(date_from + "T00:00:00Z", date_to + "T23:59:59Z"),
+            fields={"include": ["id", "properties.datetime",
+                                "properties.sat:relative_orbit",
+                                "properties.sat:orbit_state",
+                                "properties.platform"]},
+        ))
+    except Exception as e:
+        msg = str(e)
+        if "ACCESS_INSUFFICIENT_PROCESSING_UNITS" in msg or (
+                "403" in msg and "Insufficient" in msg):
+            raise PUExhaustedError("Processing units exhausted") from e
+        raise
     out = []
     for r in results:
         p = r.get("properties", {})
@@ -308,13 +318,17 @@ def _v3_cache_path(date_str, orbit):
     ym = date_str[:7]
     return BG_CACHE / f"bg_o{orbit}_{ym}.npy"
 
+_PU_EXHAUSTED = False  # set True on first 403; skip all further API calls
+
 def load_or_build_bg(date_str, orbit):
     """
     Try ±24 months; if < BG_MIN_DATES scenes → try ±48 months.
     Returns (bg_array, window_used) or (None, None) if still < BG_MIN_DATES.
     Never returns zero or False — returns None to signal no_background.
     Also checks v3 cache format (no _w2 suffix) before building.
+    On PUExhaustedError: logs warning, marks global flag, returns (None, None).
     """
+    global _PU_EXHAUSTED
     target = datetime.strptime(date_str, "%Y-%m-%d")
     for window_days in [BG_WINDOW_DAYS_1, BG_WINDOW_DAYS_2]:
         npy, meta_p = _bg_cache_path(date_str, orbit, window_days)
@@ -326,9 +340,17 @@ def load_or_build_bg(date_str, orbit):
         if v3.exists():
             print(f"    bg cache hit (v3): {v3.name}")
             return np.load(v3), window_days
+        if _PU_EXHAUSTED:
+            print(f"    skipping bg build (PU exhausted): {date_str} orbit {orbit}")
+            return None, None
         d0 = (target - timedelta(days=window_days)).strftime("%Y-%m-%d")
         d1 = (target + timedelta(days=window_days)).strftime("%Y-%m-%d")
-        scenes = catalog_search(d0, d1)
+        try:
+            scenes = catalog_search(d0, d1)
+        except PUExhaustedError:
+            print(f"    WARNING: Processing units exhausted on catalog_search — marking all remaining as no_background")
+            _PU_EXHAUSTED = True
+            return None, None
         orbit_sc = [s for s in scenes if s["rel_orbit"] == orbit]
         print(f"    bg build orbit {orbit} ±{window_days//365}yr: {len(orbit_sc)} scenes")
         if len(orbit_sc) < BG_MIN_DATES:
