@@ -1,0 +1,33 @@
+RUN_ID=gha-42479016363
+DB: OK
+YEAR 2019: catalog 28, already done 0 (resume), to do 28 [recompute, detector v2.1]
+catalog: 674 S1 IW features in AOI 2017-01-01..2026-11-08; orbit 35: 326 dates, full cover 325, partial 1
+  2019-01-15 computed: thr=0.55 total=15 no_small=14 V10 S1 A2 MR1 s1 masked_blobs=213 db=ok
+  2019-01-27 computed: thr=0.55 total=15 no_small=13 V11 S1 A1 MR0 s2 masked_blobs=204 db=ok
+  2019-02-08 computed: thr=0.55 total=15 no_small=13 V8 S1 A0 MR4 s2 masked_blobs=196 db=ok
+  2019-02-20 computed: thr=0.55 total=9 no_small=8 V7 S1 A0 MR0 s1 masked_blobs=201 db=ok
+  2019-03-04 computed: thr=0.55 total=11 no_small=10 V8 S0 A0 MR2 s1 masked_blobs=195 db=ok
+  2019-03-16 computed: thr=0.55 total=10 no_small=7 V7 S0 A0 MR0 s3 masked_blobs=190 db=ok
+  2019-03-28 computed: thr=0.55 total=8 no_small=8 V6 S1 A0 MR1 s0 masked_blobs=227 db=ok
+  2019-04-09 computed: thr=0.55 total=9 no_small=9 V7 S1 A0 MR1 s0 masked_blobs=191 db=ok
+  2019-04-21 computed: thr=0.55 total=7 no_small=7 V6 S0 A0 MR1 s0 masked_blobs=186 db=ok
+  2019-05-03 computed: thr=0.55 total=6 no_small=5 V5 S0 A0 MR0 s1 masked_blobs=197 db=ok
+  2019-05-15 computed: thr=0.55 total=16 no_small=14 V8 S3 A0 MR3 s2 masked_blobs=197 db=ok
+  2019-05-27 computed: thr=0.55 total=18 no_small=17 V11 S5 A0 MR1 s1 masked_blobs=195 db=ok
+  2019-06-08 computed: thr=0.55 total=17 no_small=17 V15 S1 A0 MR1 s0 masked_blobs=215 db=ok
+  2019-06-20 computed: thr=0.55 total=19 no_small=16 V14 S0 A1 MR1 s3 masked_blobs=199 db=ok
+  2019-07-02 computed: thr=0.55 total=18 no_small=16 V14 S1 A0 MR1 s2 masked_blobs=212 db=ok
+  2019-07-14 computed: thr=0.55 total=18 no_small=16 V13 S1 A0 MR2 s2 masked_blobs=200 db=ok
+  2019-07-26 computed: thr=0.55 total=20 no_small=19 V14 S3 A0 MR2 s1 masked_blobs=199 db=ok
+  2019-08-07 computed: thr=0.55 total=19 no_small=16 V11 S2 A2 MR1 s3 masked_blobs=202 db=ok
+  2019-08-19 computed: thr=0.55 total=19 no_small=17 V14 S1 A1 MR1 s2 masked_blobs=185 db=ok
+  2019-08-31 computed: thr=0.55 total=22 no_small=22 V19 S1 A0 MR2 s0 masked_blobs=195 db=ok
+  2019-09-24 computed: thr=0.55 total=23 no_small=20 V15 S4 A0 MR1 s3 masked_blobs=185 db=ok
+  2019-10-06 computed: thr=0.55 total=20 no_small=20 V18 S1 A0 MR1 s0 masked_blobs=189 db=ok
+  2019-10-18 computed: thr=0.55 total=24 no_small=20 V14 S0 A2 MR4 s4 masked_blobs=195 db=ok
+  2019-10-30 computed: thr=0.55 total=18 no_small=18 V15 S1 A0 MR2 s0 masked_blobs=197 db=ok
+  2019-11-11 computed: thr=0.55 total=20 no_small=20 V16 S0 A0 MR4 s0 masked_blobs=200 db=ok
+  2019-11-23 computed: thr=0.55 total=16 no_small=15 V10 S1 A1 MR3 s1 masked_blobs=229 db=ok
+  2019-12-17 computed: thr=0.55 total=20 no_small=17 V13 S2 A1 MR1 s3 masked_blobs=274 db=ok
+  2019-12-29 computed: thr=0.55 total=21 no_small=19 V12 S2 A0 MR5 s2 masked_blobs=199 db=ok
+BATCH 2019: dates processed=28 ships=453 minutes=10.6 PU~518 holes=[]
