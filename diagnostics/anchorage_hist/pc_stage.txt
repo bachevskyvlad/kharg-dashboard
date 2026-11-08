@@ -1,3 +1,3 @@
-probe
+run+fwhm
 frame
-# 2026-11-08T20:08:48Z
+# ТЗ v2: Sentinel Hub source 2026-11-08T20:11:52Z

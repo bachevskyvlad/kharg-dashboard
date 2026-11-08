@@ -1,6 +1,6 @@
 name: tz12_4_pc_blobs
 
-# Blob patches -> Supabase anchorage_blobs from Planetary Computer (0 SH PU) + FWHM.
+# Blob patches -> Supabase anchorage_blobs (ТЗ v2: Sentinel Hub, v2.1 requests; last mass SH run) + FWHM.
 # Stage and warp mode are read from diagnostics/anchorage_hist/pc_stage.txt:
 #   line 1: probe | run | fwhm | run+fwhm      line 2: frame | 10m
 on:
@@ -21,6 +21,8 @@ jobs:
     permissions:
       contents: write
     env:
+      CLIENT_ID: ${{ secrets.CLIENT_ID }}
+      CLIENT_SECRET: ${{ secrets.CLIENT_SECRET }}
       SUPABASE_URL: https://yoekhkczwdeyauwarsyy.supabase.co
       SUPABASE_WRITE_KEY: sb_publishable_7j07_zzdqTGM1LXf7-o9Tg_JJRbJQSM
       RUN_ID: gha-${{ github.run_id }}

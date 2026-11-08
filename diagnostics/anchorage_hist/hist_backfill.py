@@ -236,6 +236,15 @@ def process_date(d, ctx, db, tz):
         det, counts, thr = t.detect(arr, mask)
         mb = masked_blobs(arr, mask, thr)
         bp.render_full(png, d, meta[d], arr, gj, det, counts, thr)
+        # blob patches -> anchorage_blobs (length formulas are computed from the table later)
+        try:
+            import pc_blobs
+            bcols, _ = pc_blobs.table_columns()
+            if bcols:
+                nbl, _ = pc_blobs.upsert_blobs(d, arr, mask, det, thr, bcols, [], 'sentinelhub_v2.1')
+                log(f'  {d}: {nbl} blob patches -> anchorage_blobs')
+        except Exception as e:
+            log(f'  {d}: anchorage_blobs write skipped: {e}')
         del arr
         tot = sum(counts.values())
         daily = {'date': d, 'orbit': t.REL_ORBIT, 'threshold': round(float(thr), 4), 'total': tot,
