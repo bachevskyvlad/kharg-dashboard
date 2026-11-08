@@ -21,58 +21,81 @@ from locations import TERMINALS
 from volume import compute_volumes, compute_volumes_by_group, aggregate_daily, aggregate_weekly
 from coverage_filter import apply_coverage_filter
 import math
+import argparse
+
+# Defaults = prod behaviour (Kharg + all terminals). Flags are for targeted recomputes
+# (e.g. ТЗ-16 data cleanup) that must not rewrite Kharg's volume_timeseries.
+_ap = argparse.ArgumentParser()
+_ap.add_argument("--terminals-only", action="store_true",
+                 help="skip Kharg (raw_observations / volume_timeseries untouched)")
+_ap.add_argument("--terminal", default=None,
+                 help="comma-separated terminal ids to recompute (default: all)")
+_args = _ap.parse_args()
+RUN_KHARG = not _args.terminals_only
+ONLY_TERMINALS = set(_args.terminal.split(",")) if _args.terminal else None
+
+# Per-terminal calibration window: dB_min/dB_max (p5/p95) are taken only from rows
+# with date >= this value; volumes are still computed for all dates.
+# jask: tanks built ~2021–2024 — before that the crescent sees bare ground and rows
+# sit at DB_FLOOR (-5 dB): 72% of 2022 rows, 28% of 2023, ~2% from 2024. A 2022 window
+# still pinned p5 to the floor (ТЗ-16), so the window starts 2024-01-01 (ТЗ-16.1).
+CALIBRATION_START = {
+    "jask": "2024-01-01",
+}
 
 os.makedirs("data", exist_ok=True)
 
 
 # ── Kharg ─────────────────────────────────────────────────────────────────────
-print("[compute] Loading Kharg raw_observations from Supabase...")
-cached_records = []
-offset = 0
-while True:
-    rows = (sb.table("raw_observations")
-              .select("date,tank_id,radius_m,diameter,h_max,db_mean")
-              .range(offset, offset + 999)
-              .execute().data)
-    cached_records.extend(rows)
-    if len(rows) < 1000:
-        break
-    offset += 1000
-print(f"[compute] Loaded {len(cached_records)} Kharg records")
+if RUN_KHARG:
+    print("[compute] Loading Kharg raw_observations from Supabase...")
+    cached_records = []
+    offset = 0
+    while True:
+        rows = (sb.table("raw_observations")
+                  .select("date,tank_id,radius_m,diameter,h_max,db_mean")
+                  .order("id")  # stable paging: without ORDER BY pages overlap / drop rows
+                  .range(offset, offset + 999)
+                  .execute().data)
+        cached_records.extend(rows)
+        if len(rows) < 1000:
+            break
+        offset += 1000
+    print(f"[compute] Loaded {len(cached_records)} Kharg records")
 
-if not cached_records:
-    print("CRITICAL: No Kharg data in Supabase — run ingest.py first.")
-    sys.exit(1)
+    if not cached_records:
+        print("CRITICAL: No Kharg data in Supabase — run ingest.py first.")
+        sys.exit(1)
 
-df = pd.DataFrame(cached_records)
-df["date"] = pd.to_datetime(df["date"])
-df, _, _ = compute_volumes(df)
+    df = pd.DataFrame(cached_records)
+    df["date"] = pd.to_datetime(df["date"])
+    df, _, _ = compute_volumes(df)
 
-daily_total  = aggregate_daily(df)
-weekly_total = aggregate_weekly(df)
-print(f"[compute] Kharg — {len(daily_total)} daily rows, {len(weekly_total)} weekly rows")
+    daily_total  = aggregate_daily(df)
+    weekly_total = aggregate_weekly(df)
+    print(f"[compute] Kharg — {len(daily_total)} daily rows, {len(weekly_total)} weekly rows")
 
-try:
-    rows = [{"date": r["day"].strftime("%Y-%m-%d"), "vol_mn_bbl": round(float(r["vol_mn_bbl"]), 3),
-             "aggregation": "daily", "smoothed": False}
-            for _, r in daily_total.iterrows()]
-    sb.table("volume_timeseries").upsert(rows, on_conflict="date,aggregation,smoothed").execute()
-    print(f"[compute] volume_timeseries daily: {len(rows)} rows")
-except Exception as e:
-    print(f"[compute] [!] daily upsert failed: {e}")
+    try:
+        rows = [{"date": r["day"].strftime("%Y-%m-%d"), "vol_mn_bbl": round(float(r["vol_mn_bbl"]), 3),
+                 "aggregation": "daily", "smoothed": False}
+                for _, r in daily_total.iterrows()]
+        sb.table("volume_timeseries").upsert(rows, on_conflict="date,aggregation,smoothed").execute()
+        print(f"[compute] volume_timeseries daily: {len(rows)} rows")
+    except Exception as e:
+        print(f"[compute] [!] daily upsert failed: {e}")
 
-try:
-    rows = [{"date": r["week_start"].strftime("%Y-%m-%d"), "vol_mn_bbl": round(float(r["smoothed_vol"]), 3),
-             "aggregation": "weekly", "smoothed": True}
-            for _, r in weekly_total.iterrows()]
-    sb.table("volume_timeseries").upsert(rows, on_conflict="date,aggregation,smoothed").execute()
-    print(f"[compute] volume_timeseries weekly: {len(rows)} rows")
-except Exception as e:
-    print(f"[compute] [!] weekly upsert failed: {e}")
+    try:
+        rows = [{"date": r["week_start"].strftime("%Y-%m-%d"), "vol_mn_bbl": round(float(r["smoothed_vol"]), 3),
+                 "aggregation": "weekly", "smoothed": True}
+                for _, r in weekly_total.iterrows()]
+        sb.table("volume_timeseries").upsert(rows, on_conflict="date,aggregation,smoothed").execute()
+        print(f"[compute] volume_timeseries weekly: {len(rows)} rows")
+    except Exception as e:
+        print(f"[compute] [!] weekly upsert failed: {e}")
 
-# Save for export step (same job, shared filesystem)
-daily_total.to_parquet("data/_kharg_daily.parquet",   index=False)
-weekly_total.to_parquet("data/_kharg_weekly.parquet", index=False)
+    # Save for export step (same job, shared filesystem)
+    daily_total.to_parquet("data/_kharg_daily.parquet",   index=False)
+    weekly_total.to_parquet("data/_kharg_weekly.parquet", index=False)
 
 
 # ── Terminals ─────────────────────────────────────────────────────────────────
@@ -152,6 +175,8 @@ terminal_daily = {}
 for terminal in TERMINALS:
     tid   = terminal["id"]
     tanks = terminal["tanks"]
+    if ONLY_TERMINALS and tid not in ONLY_TERMINALS:
+        continue
     print(f"\n[compute] {terminal['name']} ({tid})")
 
     try:
@@ -159,7 +184,9 @@ for terminal in TERMINALS:
         while True:
             batch = (sb.table("terminal_observations")
                        .select("date,tank_id,db_mean,relative_orbit,orbit_direction")
-                       .eq("terminal_id", tid).range(offset, offset+999).execute().data)
+                       .eq("terminal_id", tid)
+                       .order("id")  # stable paging (ТЗ-16.1: unordered paging lost 1/3 of jask rows)
+                       .range(offset, offset+999).execute().data)
             all_obs.extend(batch)
             if len(batch) < 1000: break
             offset += 1000
@@ -209,6 +236,13 @@ for terminal in TERMINALS:
             df_t, cal_offsets = _cross_calibrate(df_t, _CAL_GROUP_COLS)
             df_t, cal_map = compute_volumes_by_group(df_t, _CAL_GROUP_COLS)
             print(f"  per-group calibration: {list(cal_map.keys())}")
+        elif tid in CALIBRATION_START:
+            cal_rows = df_t[df_t["date"] >= pd.Timestamp(CALIBRATION_START[tid])]
+            cal_min = cal_rows["db_mean"].quantile(0.05)
+            cal_max = cal_rows["db_mean"].quantile(0.95)
+            df_t, _, _ = compute_volumes(df_t, db_min_override=cal_min, db_max_override=cal_max)
+            print(f"  calibration window >= {CALIBRATION_START[tid]} ({len(cal_rows)} rows): "
+                  f"dB_min={cal_min:.4f} dB_max={cal_max:.4f}")
         else:
             df_t, _, _ = compute_volumes(df_t)
 

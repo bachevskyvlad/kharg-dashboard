@@ -139,19 +139,22 @@ for tid in IRAN_TERMINALS:
             df = df[df["date"] >= TERMINAL_START[tid]]
         all_dfs[tid] = df
 
-# Outer join on date, sum non-null values
+# Inner join on date: a total point exists only where EVERY input terminal has a
+# value on that exact date (ТЗ-16.1). Summing whatever happens to be observed on a
+# date (old outer join) mixed e.g. Jask alone (4.9 Mb) with Kharg+others (32 Mb).
 merged = None
 for tid, df in all_dfs.items():
     df2 = df.rename(columns={"vol_mn_bbl": tid})
     if merged is None:
         merged = df2
     else:
-        merged = merged.merge(df2, on="date", how="outer")
+        merged = merged.merge(df2, on="date", how="inner")
 
 merged = merged.sort_values("date")
 vol_cols = [c for c in merged.columns if c != "date"]
-merged["vol_total"] = merged[vol_cols].sum(axis=1, min_count=1)
-merged = merged.dropna(subset=["vol_total"])
+merged["vol_total"] = merged[vol_cols].sum(axis=1)
+if merged.empty:
+    print(f"  [!] iran_total: no date has values for all of {list(all_dfs)} — series is empty")
 
 total_max = KHARG_MAX + sum(
     TERMINAL_META[t]["max_capacity_mb"] for t in IRAN_TERMINALS if t in all_dfs
