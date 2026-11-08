@@ -49,6 +49,10 @@ MIN_VALID_FRAC = 0.999
 AREA_MIN_25, AREA_MAX_25 = 3, 400
 
 
+DETECTOR_VERSION = 'v2.1'          # v2: prod 4-conn + bbox length; v2.1: 8-conn + merge + axis length
+MERGE_GAP_M = 30.0                 # blobs closer than this are one object
+
+
 def area_bounds():
     sc = (25.0 / PX_M) ** 2                  # 25 m px -> frame px
     return AREA_MIN_25 * sc, AREA_MAX_25 * sc
@@ -222,19 +226,46 @@ def detect(arr, mask):
     arr_m[~np.isfinite(arr_m)] = 0
     arr_m[mask] = 0
     thr = adaptive_threshold(arr_m)
-    labeled, num = ndimage.label(arr_m > thr)
-    objs = ndimage.find_objects(labeled)
-    areas = ndimage.sum_labels(np.ones_like(labeled), labeled, index=np.arange(1, num + 1)) if num else []
+    raw = arr_m > thr
+    # only parts >= one 25 m pixel take part (single speckle pixels must not chain
+    # the sea into one giant object when merging)
+    lab8, n8 = ndimage.label(raw, structure=np.ones((3, 3)))
+    if n8:
+        a8 = ndimage.sum_labels(raw, lab8, index=np.arange(1, n8 + 1))
+        keep = np.concatenate([[False], a8 >= (25.0 / PX_M) ** 2])
+        binm = keep[lab8]
+    else:
+        binm = raw
+    # v2.1 (fix of split ships): 8-connectivity, and pixels of blobs separated by a
+    # gap <= MERGE_GAP_M are grouped into one object (a diagonal hull or a hull with
+    # a dim midsection is one ship, not 2–3).
+    r = max(1, int(np.ceil(MERGE_GAP_M / PX_M / 2)))
+    yy, xx = np.ogrid[-r:r + 1, -r:r + 1]
+    disk = (xx * xx + yy * yy) <= r * r
+    grp, num = ndimage.label(ndimage.binary_dilation(binm, structure=disk), structure=np.ones((3, 3)))
+    labeled = np.where(binm, grp, 0)
+    objs = ndimage.find_objects(labeled, max_label=num)
+    areas = ndimage.sum_labels(binm, labeled, index=np.arange(1, num + 1)) if num else []
     AREA_MIN, AREA_MAX = area_bounds()
     ships = []
     for i, sl in enumerate(objs, start=1):
+        if sl is None:
+            continue
         area = float(areas[i - 1])
         if area < AREA_MIN or area > AREA_MAX:
             continue
         comp = labeled[sl] == i
         ys, xs = np.where(comp)
         ys = ys + sl[0].start; xs = xs + sl[1].start
-        length_px = max(xs.max() - xs.min(), ys.max() - ys.min()) + 1
+        # length along the object's major axis (not the bbox side): diagonal hulls
+        # are no longer shortened by up to 1.41x
+        if len(xs) >= 3:
+            c = np.stack([xs - xs.mean(), ys - ys.mean()])
+            w, v = np.linalg.eigh(np.cov(c))
+            proj = v[:, np.argmax(w)] @ c
+            length_px = proj.max() - proj.min() + 1
+        else:
+            length_px = max(xs.max() - xs.min(), ys.max() - ys.min()) + 1
         length_m = int(round(length_px * PX_M))
         lon, lat = px_to_ll(xs.mean() + 0.5, ys.mean() + 0.5)
         ships.append({'lat': round(lat, 6), 'lon': round(lon, 6), 'length_m': length_m,
