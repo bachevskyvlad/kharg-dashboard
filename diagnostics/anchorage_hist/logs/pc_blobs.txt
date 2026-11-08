@@ -1,1 +1,3 @@
 == 2026-11-08T20:07:45.006082Z RUN_ID=gha-42518327615 mode=frame
+== 2026-11-08T20:13:50.894442Z RUN_ID=gha-42518885360 mode=frame
+STEP2 source=Sentinel Hub (v2.1 requests) dates=325 already in anchorage_blobs=0 to do=325 columns=['date', 'x0', 'y0', 'patch_w', 'patch_h', 'patch_b64', 'peak_norm', 'sea_p70', 'threshold', 'area_px', 'length_bbox_m', 'lat', 'lon', 'res_m', 'source', 'run_id', 'created_at', 'id']

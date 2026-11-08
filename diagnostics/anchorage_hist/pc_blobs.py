@@ -44,15 +44,23 @@ def log(*a):
 
 
 # ── Supabase helpers ─────────────────────────────────────────────────────────
+CANDIDATE_COLS = ['date', 'x0', 'y0', 'x1', 'y1', 'w', 'h', 'width', 'height', 'patch_x0', 'patch_y0',
+                  'patch_w', 'patch_h', 'patch', 'patch_b64', 'patch_png_b64', 'peak_norm', 'sea_p70',
+                  'threshold', 'area_px', 'length_bbox_m', 'length_axis_m', 'class_v21', 'lat', 'lon',
+                  'res_m', 'pad_px', 'source', 'scene_ids', 'run_id', 'created_at', 'id']
+
+
 def table_columns():
-    r = requests.get(f'{SB_URL}/rest/v1/', headers={'apikey': SB_KEY, 'Authorization': f'Bearer {SB_KEY}',
-                                                     'Accept': 'application/openapi+json'}, timeout=60)
-    r.raise_for_status()
-    spec = r.json()
-    d = spec.get('definitions', {}).get(TABLE) or spec.get('components', {}).get('schemas', {}).get(TABLE)
-    if not d:
-        return None, []
-    return list(d.get('properties', {}).keys()), d.get('required', [])
+    """The publishable key cannot read the OpenAPI schema, so probe columns one by one:
+    select=<col>&limit=0 -> 200 if the column exists, 400 (42703) if not, 404 if no table."""
+    cols = []
+    for c in CANDIDATE_COLS:
+        r = requests.get(f'{SB_URL}/rest/v1/{TABLE}?select={c}&limit=0', headers=H, timeout=30)
+        if r.status_code == 404:
+            return None, []
+        if r.status_code == 200:
+            cols.append(c)
+    return cols, []
 
 
 def blob_dates():
@@ -169,49 +177,80 @@ def probe():
 
 
 # ── step 2 ───────────────────────────────────────────────────────────────────
+def upsert_blobs(d, arr, mask, det, thr, cols, ids, source):
+    """Write every blob of date d (patch bbox+PAD px, uint8 PNG base64 + stats) to anchorage_blobs.
+    Used by the one-off backfill below and by the weekly update (one date)."""
+    p70 = sea_p70(arr, mask)
+    rows = []
+    for s in det:
+        x0, y0, x1, y1 = s['_box']
+        b64, (px0, py0, pw, ph) = encode_patch(arr, s['_box'])
+        full = {'date': d, 'x0': x0, 'y0': y0, 'x1': x1, 'y1': y1,
+                'patch_x0': px0, 'patch_y0': py0, 'patch_w': pw, 'patch_h': ph, 'w': pw, 'h': ph, 'width': pw, 'height': ph,
+                'patch': b64, 'patch_b64': b64, 'patch_png_b64': b64,
+                'peak_norm': round(float(np.nanmax(arr[y0:y1 + 1, x0:x1 + 1])), 4),
+                'sea_p70': None if p70 is None else round(p70, 4), 'threshold': round(float(thr), 4),
+                'area_px': s['area_px'], 'length_bbox_m': int(round((max(x1 - x0, y1 - y0) + 1) * t.PX_M)),
+                'length_axis_m': s['length_m'], 'class_v21': s['class'], 'lat': s['lat'], 'lon': s['lon'],
+                'res_m': t.PX_M, 'pad_px': PAD, 'source': source, 'scene_ids': ';'.join(ids), 'run_id': RUN_ID}
+        rows.append({c: v for c, v in full.items() if c in cols})
+    r = requests.delete(f'{SB_URL}/rest/v1/{TABLE}?date=eq.{d}', headers=H, timeout=60)
+    if r.status_code >= 300:
+        raise RuntimeError(f'delete {d}: {r.status_code} {r.text[:200]}')
+    for i in range(0, len(rows), 200):
+        r = requests.post(f'{SB_URL}/rest/v1/{TABLE}?on_conflict=date,x0,y0', json=rows[i:i + 200],
+                          headers={**H, 'Prefer': 'resolution=merge-duplicates,return=minimal'}, timeout=120)
+        if r.status_code >= 300:
+            raise RuntimeError(f'upsert {d}: {r.status_code} {r.text[:300]}')
+    return len(rows), p70
+
+
 def run():
+    """ТЗ v2 step 1–2: Sentinel Hub, exactly the v2.1 recompute requests (same frame, 4.17 m,
+    same evalscript/normalisation, 10 m tiles + bilinear upsample). Last mass SH run."""
     cols, _ = table_columns()
     if not cols:
         log(f'STEP2 FAIL: table {TABLE} not visible'); sys.exit(2)
+    t.DATE_FROM, t.DATE_TO = '2017-01-01', datetime.utcnow().strftime('%Y-%m-%d')
     t.set_scale(0)
+    cfg, col, bbox = t.sh()
     gj, mask = t.load_masks()
     dates = [r['date'] for r in csv.DictReader(open(os.path.join(HERE, 'dates.csv')))]
+    ref = {r['date']: r for r in csv.DictReader(open(os.path.join(HERE, 'daily.csv')))}   # v2.1 recompute
     done = blob_dates()
     todo = [d for d in dates if d not in done]
-    log(f'STEP2 mode={MODE} dates={len(dates)} already in {TABLE}={len(done)} to do={len(todo)} columns={cols}')
-    t0 = time.time(); nb = 0; holes = []
+    log(f'STEP2 source=Sentinel Hub (v2.1 requests) dates={len(dates)} already in {TABLE}={len(done)} '
+        f'to do={len(todo)} columns={cols}')
+    t0 = time.time(); nb = 0; holes = []; mism = []
+    pu_total = 0.0; pu_year = {}
     for k, d in enumerate(todo, 1):
-        arr, ids = pc_norm(d)
-        if arr is None or np.mean(np.isfinite(arr)) < t.MIN_VALID_FRAC:
-            holes.append(d); log(f'  [{len(done) + k}/{len(dates)}] {d}: HOLE (items={ids})'); continue
+        try:
+            a10, size = t.fetch(cfg, col, bbox, d)
+        except t.StopPU as e:
+            log(f'STOP: 403 ACCESS_INSUFFICIENT_PROCESSING_UNITS at {d}. In {TABLE}: {len(blob_dates())} dates. '
+                f'PU this run ~{pu_total:.0f}. Re-run resumes from {d}.')
+            log(str(e)[:300]); sys.exit(3)
+        pu = 2 * (size[0] / 2 * size[1] / 262144.0) * (1 / 3) * 2        # same estimate as hist_backfill
+        pu_total += pu; pu_year[d[:4]] = pu_year.get(d[:4], 0) + pu
+        if a10 is None or np.mean(np.isfinite(a10)) < t.MIN_VALID_FRAC:
+            holes.append(d); log(f'  [{len(done) + k}/{len(dates)}] {d}: HOLE'); continue
+        arr = t.upsample(a10); del a10
         det, counts, thr = t.detect(arr, mask)
-        p70 = sea_p70(arr, mask)
-        rows = []
-        for s in det:
-            x0, y0, x1, y1 = s['_box']
-            b64, (px0, py0, pw, ph) = encode_patch(arr, s['_box'])
-            full = {'date': d, 'x0': x0, 'y0': y0, 'x1': x1, 'y1': y1,
-                    'patch_x0': px0, 'patch_y0': py0, 'patch_w': pw, 'patch_h': ph,
-                    'patch': b64, 'patch_b64': b64, 'patch_png_b64': b64,
-                    'peak_norm': round(float(np.nanmax(arr[y0:y1 + 1, x0:x1 + 1])), 4),
-                    'sea_p70': None if p70 is None else round(p70, 4), 'threshold': round(float(thr), 4),
-                    'area_px': s['area_px'], 'length_bbox_m': int(round((max(x1 - x0, y1 - y0) + 1) * t.PX_M)),
-                    'length_axis_m': s['length_m'], 'class_v21': s['class'], 'lat': s['lat'], 'lon': s['lon'],
-                    'res_m': t.PX_M, 'pad_px': PAD, 'source': 'pc_sentinel-1-rtc', 'scene_ids': ';'.join(ids),
-                    'run_id': RUN_ID}
-            rows.append({c: v for c, v in full.items() if c in cols})
-        r = requests.delete(f'{SB_URL}/rest/v1/{TABLE}?date=eq.{d}', headers=H, timeout=60)
-        if r.status_code >= 300:
-            log(f'STEP2 delete {d}: {r.status_code} {r.text[:200]}'); sys.exit(2)
-        for i in range(0, len(rows), 200):
-            r = requests.post(f'{SB_URL}/rest/v1/{TABLE}?on_conflict=date,x0,y0', json=rows[i:i + 200],
-                              headers={**H, 'Prefer': 'resolution=merge-duplicates,return=minimal'}, timeout=120)
-            if r.status_code >= 300:
-                log(f'STEP2 upsert {d}: {r.status_code} {r.text[:300]}'); sys.exit(2)
-        nb += len(rows)
-        log(f'  [{len(done) + k}/{len(dates)}] {d}: blobs={len(rows)} total={sum(counts.values())} thr={thr:.3f} '
-            f'p70={p70:.3f} items={len(ids)} elapsed={(time.time() - t0) / 60:.1f} min')
-    log(f'STEP2 DONE: dates processed={len(todo) - len(holes)} blobs={nb} holes={holes} minutes={(time.time() - t0) / 60:.1f} PU=0')
+        n, p70 = upsert_blobs(d, arr, mask, det, thr, cols, [], 'sentinelhub_v2.1')
+        del arr
+        nb += n
+        rt = ref.get(d, {}).get('total')
+        same = str(sum(counts.values())) == str(rt)
+        if not same:
+            mism.append(d)
+        log(f'  [{len(done) + k}/{len(dates)}] {d}: blobs={n} total={sum(counts.values())} v2.1={rt} '
+            f'{"MATCH" if same else "DIFF"} thr={thr:.3f} p70={p70:.3f} PU~{pu:.0f}')
+        nxt = todo[k] if k < len(todo) else None
+        if nxt is None or nxt[:4] != d[:4]:
+            log(f'YEAR {d[:4]}: PU spent ~{pu_year[d[:4]]:.0f} (run total ~{pu_total:.0f}), blobs so far {nb}, '
+                f'{(time.time() - t0) / 60:.1f} min')
+    log(f'STEP2 DONE: dates processed={len(todo) - len(holes)} blobs={nb} holes={holes} '
+        f'v2.1 total mismatches={mism} PU~{pu_total:.0f} minutes={(time.time() - t0) / 60:.1f}')
 
 
 # ── step 3 + 4 (+5 gated) ────────────────────────────────────────────────────
