@@ -1,0 +1,58 @@
+RUN_ID=gha-42498513741
+DB: OK
+YEAR 2026: catalog 53, already done 0 (resume), to do 53 [recompute, detector v2.1]
+catalog: 674 S1 IW features in AOI 2017-01-01..2026-11-08; orbit 35: 326 dates, full cover 325, partial 1
+  2026-01-02 computed: thr=0.55 total=9 no_small=8 V4 S1 A0 MR3 s1 masked_blobs=201 db=ok
+  2026-01-08 computed: thr=0.55 total=10 no_small=6 V2 S0 A1 MR3 s4 masked_blobs=194 db=ok
+  2026-01-14 computed: thr=0.55 total=11 no_small=10 V6 S0 A0 MR4 s1 masked_blobs=218 db=ok
+  2026-01-20 computed: thr=0.55 total=11 no_small=8 V5 S0 A1 MR2 s3 masked_blobs=195 db=ok
+  2026-01-26 computed: thr=0.55 total=15 no_small=14 V4 S1 A2 MR7 s1 masked_blobs=273 db=ok
+  2026-02-01 computed: thr=0.55 total=8 no_small=8 V4 S2 A0 MR2 s0 masked_blobs=216 db=ok
+  2026-02-13 computed: thr=0.55 total=13 no_small=11 V5 S4 A0 MR2 s2 masked_blobs=199 db=ok
+  2026-02-19 computed: thr=0.55 total=21 no_small=18 V10 S3 A1 MR4 s3 masked_blobs=182 db=ok
+  2026-02-25 computed: thr=0.55 total=15 no_small=12 V9 S3 A0 MR0 s3 masked_blobs=184 db=ok
+  2026-03-03 computed: thr=0.55 total=7 no_small=7 V5 S0 A0 MR2 s0 masked_blobs=183 db=ok
+  2026-03-09 computed: thr=0.55 total=8 no_small=5 V4 S1 A0 MR0 s3 masked_blobs=176 db=ok
+  2026-03-15 computed: thr=0.55 total=13 no_small=8 V3 S1 A1 MR3 s5 masked_blobs=180 db=ok
+  2026-03-21 computed: thr=0.55 total=11 no_small=8 V6 S1 A0 MR1 s3 masked_blobs=202 db=ok
+  2026-03-27 computed: thr=0.55 total=10 no_small=8 V6 S0 A0 MR2 s2 masked_blobs=254 db=ok
+  2026-04-02 computed: thr=0.55 total=6 no_small=4 V3 S0 A0 MR1 s2 masked_blobs=197 db=ok
+  2026-04-08 computed: thr=0.55 total=5 no_small=2 V1 S0 A0 MR1 s3 masked_blobs=198 db=ok
+  2026-04-14 computed: thr=0.55 total=10 no_small=9 V5 S0 A2 MR2 s1 masked_blobs=191 db=ok
+  2026-04-20 computed: thr=0.55 total=15 no_small=14 V5 S4 A4 MR1 s1 masked_blobs=187 db=ok
+  2026-04-26 computed: thr=0.55 total=20 no_small=20 V9 S4 A4 MR3 s0 masked_blobs=174 db=ok
+  2026-05-02 computed: thr=0.55 total=21 no_small=20 V9 S5 A0 MR6 s1 masked_blobs=187 db=ok
+  2026-05-08 computed: thr=0.55 total=21 no_small=19 V10 S5 A1 MR3 s2 masked_blobs=195 db=ok
+  2026-05-09 computed: thr=0.55 total=19 no_small=18 V11 S3 A1 MR3 s1 masked_blobs=183 db=ok
+  2026-05-14 computed: thr=0.55 total=23 no_small=20 V8 S4 A1 MR7 s3 masked_blobs=202 db=ok
+  2026-05-20 computed: thr=0.55 total=29 no_small=29 V14 S7 A0 MR8 s0 masked_blobs=201 db=ok
+  2026-05-21 computed: thr=0.55 total=29 no_small=27 V13 S6 A2 MR6 s2 masked_blobs=183 db=ok
+  2026-05-26 computed: thr=0.55 total=27 no_small=27 V12 S6 A2 MR7 s0 masked_blobs=200 db=ok
+  2026-06-01 computed: thr=0.55 total=25 no_small=23 V10 S7 A0 MR6 s2 masked_blobs=193 db=ok
+  2026-06-02 computed: thr=0.55 total=25 no_small=23 V8 S7 A0 MR8 s2 masked_blobs=194 db=ok
+  2026-06-14 computed: thr=0.55 total=27 no_small=25 V11 S7 A1 MR6 s2 masked_blobs=189 db=ok
+  2026-06-19 computed: thr=0.55 total=28 no_small=25 V10 S8 A3 MR4 s3 masked_blobs=203 db=ok
+  2026-06-26 computed: thr=0.55 total=28 no_small=26 V13 S3 A5 MR5 s2 masked_blobs=188 db=ok
+  2026-07-02 computed: thr=0.55 total=26 no_small=25 V13 S4 A0 MR8 s1 masked_blobs=182 db=ok
+  2026-07-08 computed: thr=0.55 total=26 no_small=25 V13 S3 A0 MR9 s1 masked_blobs=177 db=ok
+  2026-07-14 computed: thr=0.55 total=28 no_small=24 V18 S2 A1 MR3 s4 masked_blobs=184 db=ok
+  2026-07-20 computed: thr=0.55 total=24 no_small=22 V12 S4 A0 MR6 s2 masked_blobs=188 db=ok
+  2026-07-26 computed: thr=0.55 total=27 no_small=25 V12 S5 A5 MR3 s2 masked_blobs=185 db=ok
+  2026-08-01 computed: thr=0.55 total=20 no_small=17 V5 S4 A2 MR6 s3 masked_blobs=182 db=ok
+  2026-08-07 computed: thr=0.55 total=19 no_small=16 V8 S4 A1 MR3 s3 masked_blobs=194 db=ok
+  2026-08-13 computed: thr=0.55 total=17 no_small=15 V9 S2 A1 MR3 s2 masked_blobs=188 db=ok
+  2026-08-19 computed: thr=0.55 total=19 no_small=19 V12 S2 A2 MR3 s0 masked_blobs=198 db=ok
+  2026-08-25 computed: thr=0.55 total=20 no_small=18 V11 S4 A1 MR2 s2 masked_blobs=184 db=ok
+  2026-08-31 computed: thr=0.55 total=23 no_small=20 V12 S5 A1 MR2 s3 masked_blobs=189 db=ok
+  2026-09-06 computed: thr=0.55 total=25 no_small=20 V11 S5 A0 MR4 s5 masked_blobs=203 db=ok
+  2026-09-12 computed: thr=0.55 total=21 no_small=20 V9 S6 A2 MR3 s1 masked_blobs=192 db=ok
+  2026-09-18 computed: thr=0.55 total=22 no_small=20 V9 S4 A2 MR5 s2 masked_blobs=178 db=ok
+  2026-09-24 computed: thr=0.55 total=20 no_small=19 V12 S3 A2 MR2 s1 masked_blobs=186 db=ok
+  2026-09-30 computed: thr=0.55 total=23 no_small=20 V13 S3 A2 MR2 s3 masked_blobs=174 db=ok
+  2026-10-06 computed: thr=0.55 total=22 no_small=21 V11 S3 A1 MR6 s1 masked_blobs=185 db=ok
+  2026-10-12 computed: thr=0.55 total=18 no_small=18 V11 S4 A0 MR3 s0 masked_blobs=185 db=ok
+  2026-10-18 computed: thr=0.55 total=18 no_small=17 V9 S3 A0 MR5 s1 masked_blobs=186 db=ok
+  2026-10-24 computed: thr=0.55 total=18 no_small=17 V10 S3 A1 MR3 s1 masked_blobs=196 db=ok
+  2026-10-30 computed: thr=0.55 total=18 no_small=17 V13 S1 A0 MR3 s1 masked_blobs=194 db=ok
+  2026-11-05 computed: thr=0.55 total=17 no_small=16 V9 S3 A0 MR4 s1 masked_blobs=174 db=ok
+BATCH 2026: dates processed=53 ships=991 minutes=19.4 PU~980 holes=[]
