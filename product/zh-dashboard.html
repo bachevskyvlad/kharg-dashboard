@@ -2175,6 +2175,51 @@ function aqDeltaMbbl(r) {
   const p = _aqRecords[i - 1];
   return aqLayers().reduce((s, k) => s + ((r[k] || 0) - (p[k] || 0)) * AQ_CAP_MBBL[k], 0);
 }
+// Money: Δ cargo (Mbbl) × (Dubai + spread) $/bbl = $M. Spread shares the "vs Dubai"
+// slider of the revenue card (−15…+15 $/bbl) when present on the page.
+let _aqDubai = null;
+fetch('/data/prices.json?v=' + Date.now()).then(r => r.ok ? r.json() : null).then(d => {
+  if (d && d.dubai_usd) { _aqDubai = +d.dubai_usd; if (_aqRecords.length) aqRenderKpisAndTable(); }
+}).catch(() => {});
+function aqSpread() {
+  const el = document.getElementById('aq-discount') || document.getElementById('discountSlider');
+  const v = el ? parseFloat(el.value) : -5;
+  return isNaN(v) ? -5 : v;
+}
+function aqNetPrice() { return _aqDubai === null ? null : _aqDubai + aqSpread(); }
+function aqFmtUsd(mbbl) {
+  const p = aqNetPrice();
+  if (mbbl === null || p === null) return '—';
+  const v = mbbl * p;                                  // $ million
+  const c = v < 0 ? '#f97316' : v > 0 ? '#60a5fa' : 'var(--muted)';
+  const a = Math.abs(v), t = a >= 1000 ? '$' + (a / 1000).toFixed(2) + 'B' : '$' + a.toFixed(0) + 'M';
+  return `<span style="color:${c}">${v > 0 ? '+' : v < 0 ? '−' : ''}${t}</span>`;
+}
+function aqSpreadLabel(v) { return (v >= 0 ? '+$' + v : '-$' + Math.abs(v)) + '/bbl'; }
+function aqOnSpread(v) {
+  ['aq-discount', 'discountSlider'].forEach(id => { const e = document.getElementById(id); if (e && +e.value !== v) e.value = v; });
+  ['aq-discount-label', 'discountLabel'].forEach(id => { const e = document.getElementById(id); if (e) e.textContent = aqSpreadLabel(v); });
+  if (typeof renderRevenue === 'function') renderRevenue();
+  aqRenderKpisAndTable();
+}
+function aqPriceControls(table) {
+  if (document.getElementById('aq-price-ctl')) {
+    document.getElementById('aq-dubai').textContent = _aqDubai === null ? '$--' : '$' + _aqDubai.toFixed(2);
+    return;
+  }
+  const box = document.createElement('div');
+  box.id = 'aq-price-ctl';
+  box.style.cssText = 'display:flex;gap:1rem;align-items:center;justify-content:flex-end;flex-wrap:wrap;font-size:0.72rem;color:var(--muted);margin:-0.5rem 0 0.75rem';
+  const v = aqSpread();
+  box.innerHTML = `<span>Dubai <span id="aq-dubai" style="color:var(--text)">${_aqDubai === null ? '$--' : '$' + _aqDubai.toFixed(2)}</span></span>
+    <label style="display:flex;align-items:center;gap:0.4rem">vs Dubai
+      <input type="range" id="aq-discount" min="-15" max="15" step="1" value="${v}" style="width:90px;accent-color:#60a5fa">
+      <span id="aq-discount-label" style="color:#60a5fa">${aqSpreadLabel(v)}</span></label>`;
+  table.parentElement.parentElement.insertBefore(box, table.parentElement);
+  document.getElementById('aq-discount').addEventListener('input', e => aqOnSpread(+e.target.value));
+  const other = document.getElementById('discountSlider');
+  if (other) other.addEventListener('input', e => aqOnSpread(+e.target.value));
+}
 function aqFmtDelta(v) {
   if (v === null) return '—';
   const c = v < 0 ? '#f97316' : v > 0 ? '#60a5fa' : 'var(--muted)';
@@ -2283,7 +2328,8 @@ function aqDraw() {
       tip.innerHTML = `<div style="color:#94a3b8;margin-bottom:4px">${r.date}</div>` +
         [...aqLayers()].reverse().map(k => `<div style="display:flex;align-items:center;gap:6px;margin-bottom:2px"><span style="width:8px;height:8px;background:${AQ_COLORS[k]};display:inline-block"></span>${AQ_LABELS[k]}: <b>${r[k] ?? 0}</b></div>`).join('') +
         `<div style="border-top:1px solid rgba(255,255,255,0.08);margin-top:4px;padding-top:4px">Total${aqIsDefault() ? '' : ' (selected)'}: <b>${aqSum(r)}</b></div>` +
-        `<div>Δ cargo vs prev pass: <b>${aqFmtDelta(aqDeltaMbbl(r))}</b> Mbbl</div>`;
+        `<div>Δ cargo vs prev pass: <b>${aqFmtDelta(aqDeltaMbbl(r))}</b> Mbbl</div>` +
+        `<div>Δ value: <b>${aqFmtUsd(aqDeltaMbbl(r))}</b>${aqNetPrice() === null ? '' : ' @ $' + aqNetPrice().toFixed(1) + '/bbl'}</div>`;
       const ctx2 = canvas.getContext('2d');
       const dpr2 = window.devicePixelRatio || 1;
       ctx2.setTransform(dpr2, 0, 0, dpr2, 0, 0);
@@ -2328,14 +2374,17 @@ function aqRenderKpisAndTable() {
       <th style="text-align:left;${th}">${table._aqLbl.dateLbl}</th>` +
       cols.map(k => `<th style="${th}">${AQ_LABELS[k]}</th>`).join('') +
       `<th style="${th}">${table._aqLbl.totLbl}${aqIsDefault() ? '' : ' (selected)'}</th>` +
-      `<th style="${th}" title="Change of the anchored fleet's cargo capacity vs the previous SAR pass, million barrels, selected classes only. Per-ship capacity: VLCC 2.0, Suezmax 1.0, Aframax 0.7, MR 0.35, Small 0.05 Mbbl. Negative = tankers left since the last pass (net of arrivals); not a measured export volume.">Δ cargo, Mbbl ⓘ</th></tr>`;
+      `<th style="${th}" title="Change of the anchored fleet's cargo capacity vs the previous SAR pass, million barrels, selected classes only. Per-ship capacity: VLCC 2.0, Suezmax 1.0, Aframax 0.7, MR 0.35, Small 0.05 Mbbl. Negative = tankers left since the last pass (net of arrivals); not a measured export volume.">Δ cargo, Mbbl ⓘ</th>` +
+      `<th style="${th}" title="Δ cargo × (Dubai price + spread from the 'vs Dubai' slider). Rough value estimate; actual deal terms are unknown.">Δ value ⓘ</th></tr>`;
     const tbody = document.getElementById('aq-table-body');
     const rows = [..._aqRecords].reverse().slice(0, 52);
     tbody.innerHTML = rows.map(r => `<tr style="border-bottom:1px solid rgba(255,255,255,0.04);">
-        <td style="padding:0.35rem 0.6rem;color:var(--muted)">${r.date}</td>` +
+        <td style="padding:0.35rem 0.6rem;color:var(--muted);white-space:nowrap">${r.date}</td>` +
       cols.map(k => `<td style="padding:0.35rem 0.6rem;text-align:right;color:${AQ_COLORS[k]}">${r[k] ?? 0}</td>`).join('') +
       `<td style="padding:0.35rem 0.6rem;text-align:right;font-weight:600">${aqSum(r)}</td>` +
-      `<td style="padding:0.35rem 0.6rem;text-align:right">${aqFmtDelta(aqDeltaMbbl(r))}</td></tr>`).join('');
+      `<td style="padding:0.35rem 0.6rem;text-align:right">${aqFmtDelta(aqDeltaMbbl(r))}</td>` +
+      `<td style="padding:0.35rem 0.6rem;text-align:right;white-space:nowrap">${aqFmtUsd(aqDeltaMbbl(r))}</td></tr>`).join('');
+    aqPriceControls(table);
   }
 }
 
