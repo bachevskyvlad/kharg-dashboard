@@ -44,15 +44,23 @@ def log(*a):
 
 
 # ── Supabase helpers ─────────────────────────────────────────────────────────
+CANDIDATE_COLS = ['date', 'x0', 'y0', 'x1', 'y1', 'w', 'h', 'width', 'height', 'patch_x0', 'patch_y0',
+                  'patch_w', 'patch_h', 'patch', 'patch_b64', 'patch_png_b64', 'peak_norm', 'sea_p70',
+                  'threshold', 'area_px', 'length_bbox_m', 'length_axis_m', 'class_v21', 'lat', 'lon',
+                  'res_m', 'pad_px', 'source', 'scene_ids', 'run_id', 'created_at', 'id']
+
+
 def table_columns():
-    r = requests.get(f'{SB_URL}/rest/v1/', headers={'apikey': SB_KEY, 'Authorization': f'Bearer {SB_KEY}',
-                                                     'Accept': 'application/openapi+json'}, timeout=60)
-    r.raise_for_status()
-    spec = r.json()
-    d = spec.get('definitions', {}).get(TABLE) or spec.get('components', {}).get('schemas', {}).get(TABLE)
-    if not d:
-        return None, []
-    return list(d.get('properties', {}).keys()), d.get('required', [])
+    """The publishable key cannot read the OpenAPI schema, so probe columns one by one:
+    select=<col>&limit=0 -> 200 if the column exists, 400 (42703) if not, 404 if no table."""
+    cols = []
+    for c in CANDIDATE_COLS:
+        r = requests.get(f'{SB_URL}/rest/v1/{TABLE}?select={c}&limit=0', headers=H, timeout=30)
+        if r.status_code == 404:
+            return None, []
+        if r.status_code == 200:
+            cols.append(c)
+    return cols, []
 
 
 def blob_dates():
@@ -191,7 +199,7 @@ def run():
             x0, y0, x1, y1 = s['_box']
             b64, (px0, py0, pw, ph) = encode_patch(arr, s['_box'])
             full = {'date': d, 'x0': x0, 'y0': y0, 'x1': x1, 'y1': y1,
-                    'patch_x0': px0, 'patch_y0': py0, 'patch_w': pw, 'patch_h': ph,
+                    'patch_x0': px0, 'patch_y0': py0, 'patch_w': pw, 'patch_h': ph, 'w': pw, 'h': ph, 'width': pw, 'height': ph,
                     'patch': b64, 'patch_b64': b64, 'patch_png_b64': b64,
                     'peak_norm': round(float(np.nanmax(arr[y0:y1 + 1, x0:x1 + 1])), 4),
                     'sea_p70': None if p70 is None else round(p70, 4), 'threshold': round(float(thr), 4),
