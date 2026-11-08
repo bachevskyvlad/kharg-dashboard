@@ -36,7 +36,7 @@ sys.path.insert(0, os.path.join(ROOT, 'diagnostics', 'anchorage_blind'))
 import tz12_2_test as t          # ТЗ-12.2 pipeline
 import blind_pack as bp          # full-PNG renderer (2048 px)
 
-SOURCE = 'tz12_frame_v2'
+SOURCE = 'tz12_frame_v2.1'   # v2.1 = split-ship fix (8-conn + merge + axis length)
 RUN_ID = os.environ.get('RUN_ID') or datetime.utcnow().strftime('local-%Y%m%dT%H%M%SZ')
 DATES_CSV = os.path.join(HERE, 'dates.csv')
 DAILY_CSV = os.path.join(HERE, 'daily.csv')
@@ -260,11 +260,11 @@ def process_date(d, ctx, db, tz):
     return len(uniq), pu
 
 
-def run_dates(dates, db, label):
+def run_dates(dates, db, label, reuse_tz=True):
     cfg, col, bbox = cfg_all()
     gj, mask = t.load_masks()
     full, meta = t.candidate_dates(cfg, col, bbox)
-    tz = load_tz121a()
+    tz = load_tz121a() if reuse_tz else {}
     ctx = (cfg, col, bbox, gj, mask, meta)
     t0 = time.time(); n_ok = n_ship = 0; pu = 0.0; holes = []
     for d in dates:
@@ -290,14 +290,19 @@ def summary(label, n_ok, n_ship, t0, pu, holes):
         f'PU~{pu:.0f} holes={holes}')
 
 
-def year(y, db):
+def year(y, db, recompute=False):
     if not os.path.exists(DATES_CSV):
         log('no dates.csv — run --recon first'); sys.exit(2)
     all_y = [r['date'] for r in read_csv(DATES_CSV) if r['year'] == str(y)]
     done = db.dates(f'{y}-01-01', f'{y}-12-31') | {r['date'] for r in read_csv(DAILY_CSV) if r['date'][:4] == str(y)}
+    if recompute:
+        # detector changed: recompute every date (incl. ТЗ-12.1a ones), resume only
+        # against this run's local daily.csv
+        done = {r['date'] for r in read_csv(DAILY_CSV) if r['date'][:4] == str(y)}
     todo = [d for d in all_y if d not in done]
-    log(f'YEAR {y}: catalog {len(all_y)}, already done {len(set(all_y) & done)} (resume), to do {len(todo)}')
-    run_dates(todo, db, str(y))
+    log(f'YEAR {y}: catalog {len(all_y)}, already done {len(set(all_y) & done)} (resume), to do {len(todo)}'
+        f'{" [recompute, detector " + t.DETECTOR_VERSION + "]" if recompute else ""}')
+    run_dates(todo, db, str(y), reuse_tz=not recompute)
 
 
 def sync(db):
@@ -371,6 +376,7 @@ def main():
     g.add_argument('--sync', action='store_true')
     g.add_argument('--update', action='store_true')
     g.add_argument('--snapshots', action='store_true')
+    ap.add_argument('--recompute', action='store_true', help='with --year: ignore DB resume, no ТЗ-12.1a reuse')
     a = ap.parse_args()
     log(f'RUN_ID={RUN_ID}')
     if a.recon:
@@ -378,7 +384,7 @@ def main():
     db = DB()
     try:
         if a.year:
-            year(a.year, db)
+            year(a.year, db, recompute=a.recompute)
         elif a.sync:
             sync(db)
         elif a.update:

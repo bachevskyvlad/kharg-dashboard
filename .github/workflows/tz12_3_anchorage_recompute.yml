@@ -1,0 +1,62 @@
+name: tz12_3_anchorage_recompute
+
+# Split-ship fix (detector v2.1): recompute all orbit-35 dates, upsert Supabase,
+# refresh the two snapshots. Old series kept as daily_v2.csv / ships_v2.csv.
+on:
+  workflow_dispatch:
+  push:
+    branches: [claude/bold-shannon-6c2b8c]
+    paths:
+      - .github/workflows/tz12_3_anchorage_recompute.yml
+
+concurrency:
+  group: tz12-3-anchorage-hist
+  cancel-in-progress: false
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 350
+    permissions:
+      contents: write
+    env:
+      CLIENT_ID: ${{ secrets.CLIENT_ID }}
+      CLIENT_SECRET: ${{ secrets.CLIENT_SECRET }}
+      SUPABASE_URL: https://yoekhkczwdeyauwarsyy.supabase.co
+      SUPABASE_WRITE_KEY: sb_publishable_7j07_zzdqTGM1LXf7-o9Tg_JJRbJQSM
+      RUN_ID: gha-${{ github.run_id }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: research/2026-10-auto
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: pip install --quiet sentinelhub scipy numpy Pillow matplotlib rasterio shapely requests
+      - name: Git identity + keep old series
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          cd diagnostics/anchorage_hist
+          [ -f daily_v2.csv ] || git mv daily.csv daily_v2.csv
+          [ -f ships_v2.csv ] || git mv ships.csv ships_v2.csv
+          git commit -qm "tz12.3: keep detector-v2 series as daily_v2.csv / ships_v2.csv" || true
+      - name: Recompute by year
+        run: |
+          for y in 2017 2018 2019 2020 2021 2022 2023 2024 2025 2026; do
+            python diagnostics/anchorage_hist/hist_backfill.py --year $y --recompute 2>&1 | tee diagnostics/anchorage_hist/logs/recompute_$y.txt
+            rc=${PIPESTATUS[0]}
+            git add diagnostics/anchorage_hist/logs/recompute_$y.txt diagnostics/anchorage_hist/daily.csv diagnostics/anchorage_hist/ships.csv
+            git commit -qm "tz12.3: recompute $y (detector v2.1) gha-${{ github.run_id }}" || true
+            for i in 1 2 3 4; do git pull -q --rebase --autostash origin research/2026-10-auto && git push -q origin HEAD:research/2026-10-auto && break; sleep $((2**i)); done
+            [ $rc -eq 0 ] || { echo "year $y exit $rc"; exit $rc; }
+          done
+      - name: Snapshots -> Storage
+        run: python diagnostics/anchorage_hist/hist_backfill.py --snapshots
+      - name: Upload PNGs (not committed — repo size)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: anchorage_hist_v21_pngs
+          path: diagnostics/anchorage_hist/20*/full_*.png
