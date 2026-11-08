@@ -51,6 +51,17 @@ AREA_MIN_25, AREA_MAX_25 = 3, 400
 
 DETECTOR_VERSION = 'v2.1'          # v2: prod 4-conn + bbox length; v2.1: 8-conn + merge + axis length
 MERGE_GAP_M = 30.0                 # blobs closer than this are one object
+# Length calibration (ТЗ v2.1): axis length of a SAR blob overstates the hull by the
+# blur/sidelobe extent. Offset found from the length histogram (VLCC LOA peak = 330 m),
+# stored in data/anchorage_length_calibration.json; 0 if the file is absent.
+def _load_len_offset():
+    try:
+        with open(os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..', 'data',
+                               'anchorage_length_calibration.json')) as f:
+            return float(json.load(f).get('length_offset_m', 0.0))
+    except Exception:
+        return 0.0
+LENGTH_OFFSET_M = _load_len_offset()
 
 
 def area_bounds():
@@ -266,7 +277,7 @@ def detect(arr, mask):
             length_px = proj.max() - proj.min() + 1
         else:
             length_px = max(xs.max() - xs.min(), ys.max() - ys.min()) + 1
-        length_m = int(round(length_px * PX_M))
+        length_m = int(round(max(length_px * PX_M - LENGTH_OFFSET_M, PX_M)))
         lon, lat = px_to_ll(xs.mean() + 0.5, ys.mean() + 0.5)
         ships.append({'lat': round(lat, 6), 'lon': round(lon, 6), 'length_m': length_m,
                       'class': classify(length_m), 'area_px': int(area),

@@ -368,6 +368,157 @@ def update(db):
     snapshots(db)
 
 
+# ── ТЗ v2.1 finalize: length calibration + DB load ───────────────────────────
+VLCC_LOA = 330.0
+CAL_JSON = os.path.join(ROOT, 'data', 'anchorage_length_calibration.json')
+
+
+def classify_len(L):
+    if L >= 290: return 'vlcc'
+    if L >= 260: return 'suezmax'
+    if L >= 220: return 'aframax'
+    if L >= 100: return 'mr'
+    return 'small'
+
+
+def calibrate(db):
+    out = []
+    def P(*a):
+        line = ' '.join(str(x) for x in a); out.append(line); log(line)
+    dates_cat = [r['date'] for r in read_csv(DATES_CSV)]
+    daily = {}
+    for r in read_csv(DAILY_CSV):
+        daily[r['date']] = r
+    ships = {}
+    for r in read_csv(SHIPS_CSV):
+        ships.setdefault(r['date'], {})[(r['lat'], r['lon'])] = r
+    v2 = {r['date']: r for r in read_csv(os.path.join(HERE, 'daily_v2.csv'))}
+    missing = [d for d in dates_cat if d not in daily]
+    P(f'STEP1: catalog dates {len(dates_cat)}, v2.1 computed {len(daily)}, missing {len(missing)} {missing[:5]}')
+    if missing:
+        P('STEP1 FAIL: not all dates recomputed — stop'); sys.exit(2)
+    # histogram of large-object axis lengths -> VLCC peak
+    L = np.array([int(s['length_m']) for d in daily for s in ships.get(d, {}).values()])
+    big = L[(L >= 250) & (L <= 500)]
+    edges = np.arange(250, 510, 10)
+    h, _ = np.histogram(big, bins=edges)
+    hs = np.convolve(h, np.ones(3) / 3, mode='same')
+    centers = edges[:-1] + 5
+    zone = (centers >= 280) & (centers <= 480)
+    peak = float(centers[zone][np.argmax(hs[zone])])
+    k = float(np.clip(peak - VLCC_LOA, 0, 150))
+    P(f'STEP2: length histogram (axis length, 10 m bins, >=250 m, n={len(big)}):')
+    for c, n in zip(centers, h):
+        P(f'  {int(c - 5)}-{int(c + 5)} m: {n} ' + '#' * int(n / max(1, h.max()) * 40))
+    P(f'STEP2: VLCC peak at {peak:.0f} m -> length offset k = {k:.0f} m (peak - {VLCC_LOA:.0f})')
+
+    def counts_for(off):
+        res = {}
+        for d in daily:
+            c = {x: 0 for x in ('vlcc', 'suezmax', 'aframax', 'mr', 'small')}
+            for sv in ships.get(d, {}).values():
+                c[classify_len(max(int(sv['length_m']) - off, 4))] += 1
+            res[d] = c
+        return res
+    before, after = counts_for(0), counts_for(k)
+    def mean(src, key, ds):
+        return sum(int(src[d][key]) for d in ds) / len(ds)
+    ds = sorted(daily)
+    share = lambda C: sum(C[d]['vlcc'] for d in ds) / max(1, sum(C[d]['vlcc'] + C[d]['suezmax'] + C[d]['aframax'] + C[d]['mr'] for d in ds))
+    P('STEP2: mean per date            v2(old)   v2.1 raw   v2.1 calibrated')
+    for key in ('vlcc', 'suezmax', 'aframax', 'mr', 'small'):
+        P(f'  {key:<10} {mean(v2, key, ds):>22.2f} {sum(before[d][key] for d in ds)/len(ds):>10.2f} {sum(after[d][key] for d in ds)/len(ds):>16.2f}')
+    tns = lambda C: sum(sum(C[d][x] for x in ('vlcc', 'suezmax', 'aframax', 'mr')) for d in ds) / len(ds)
+    P(f'  {"no_small":<10} {mean(v2, "total_no_small", ds):>22.2f} {tns(before):>10.2f} {tns(after):>16.2f}')
+    v2share = sum(int(v2[d]['vlcc']) for d in ds) / max(1, sum(int(v2[d]['total_no_small']) for d in ds))
+    sh = share(after)
+    P(f'  VLCC share of large: v2 {v2share:.0%}, v2.1 raw {share(before):.0%}, v2.1 calibrated {sh:.0%}')
+    ok = 0.35 <= sh <= 0.55
+    P(f'STEP2 SANITY (VLCC share 35–55%): {"PASS" if ok else "FAIL"} ({sh:.1%})')
+
+    # build rows
+    drows, srows = [], []
+    for d in ds:
+        r = daily[d]
+        base = {'date': d, 'orbit': int(r['orbit']), 'threshold': float(r['threshold']),
+                'total': int(r['total']), 'masked_blobs': None if r['masked_blobs'] in ('', 'None') else int(r['masked_blobs']),
+                'run_id': RUN_ID, 'source': SOURCE}
+        sl = []
+        for sv in ships.get(d, {}).values():
+            Lr = int(sv['length_m'])
+            Lc = max(Lr - int(round(k)), 4) if ok else Lr
+            sl.append({'date': d, 'lat': float(sv['lat']), 'lon': float(sv['lon']), 'length_m': Lc,
+                       'class': classify_len(Lc)})
+        if ok:
+            c = after[d]
+            base.update(c); base['total_no_small'] = base['total'] - c['small']
+        else:
+            # classes NOT trusted: keep old (v2) class columns, take total / total_no_small / masked_blobs from v2.1
+            for x in ('vlcc', 'suezmax', 'aframax', 'mr', 'small'):
+                base[x] = int(v2[d][x]) if d in v2 else int(r[x])
+            base['total_no_small'] = int(r['total_no_small'])
+        drows.append(base); srows.append(sl)
+    with open(os.path.join(HERE, 'daily_cal.csv'), 'w', newline='') as f:
+        w = csv.DictWriter(f, fieldnames=DAILY_FIELDS); w.writeheader(); w.writerows(drows)
+    with open(os.path.join(HERE, 'ships_cal.csv'), 'w', newline='') as f:
+        w = csv.DictWriter(f, fieldnames=SHIP_FIELDS); w.writeheader(); [w.writerows(x) for x in srows]
+    if ok:
+        with open(CAL_JSON, 'w') as f:
+            json.dump({'length_offset_m': round(k), 'method': 'axis-length histogram, VLCC peak -> 330 m',
+                       'peak_m': peak, 'vlcc_share': round(sh, 3), 'detector': 'v2.1', 'run_id': RUN_ID}, f, indent=1)
+        P(f'calibration saved: {CAL_JSON} (offset {round(k)} m)')
+    # STEP 3: upsert
+    if not db.ok:
+        P(f'STEP3 FAIL: DB unavailable: {db.err}'); _save(out); sys.exit(2)
+    t0 = time.time()
+    for row, sl in zip(drows, srows):
+        db.upsert(row, sl)
+    P(f'STEP3: upserted {len(drows)} dates in {(time.time()-t0)/60:.1f} min ({"classes calibrated" if ok else "classes = old v2, totals = v2.1"})')
+    r = requests.get(f'{SB_URL}/rest/v1/anchorage_daily?select=date,source&order=date', headers=db.h, timeout=60).json()
+    from collections import Counter
+    P(f'STEP3 DB: rows={len(r)} min={r[0]["date"]} max={r[-1]["date"]} source={dict(Counter(x["source"] for x in r))}')
+    ns = requests.get(f'{SB_URL}/rest/v1/anchorage_ships?select=date', headers={**db.h, 'Prefer': 'count=exact', 'Range': '0-0'}, timeout=60)
+    P(f'STEP3 DB: anchorage_ships rows={ns.headers.get("content-range", "?").split("/")[-1]}')
+    last3 = requests.get(f'{SB_URL}/rest/v1/anchorage_daily?select=*&order=date.desc&limit=3', headers=db.h, timeout=60).json()
+    P('STEP3 fresh dates — DB (v2.1) vs old v2:')
+    for x in last3:
+        o = v2.get(x['date'], {})
+        P(f'  {x["date"]}: NEW total={x["total"]} no_small={x["total_no_small"]} V{x["vlcc"]} S{x["suezmax"]} A{x["aframax"]} MR{x["mr"]} s{x["small"]} src={x["source"]} | '
+          f'OLD total={o.get("total")} no_small={o.get("total_no_small")} V{o.get("vlcc")} S{o.get("suezmax")} A{o.get("aframax")} MR{o.get("mr")} s{o.get("small")}')
+    _save(out)
+
+
+def _save(lines):
+    os.makedirs(os.path.join(HERE, 'logs'), exist_ok=True)
+    with open(os.path.join(HERE, 'logs', 'finalize_v21.txt'), 'a') as f:
+        f.write('\n'.join(lines) + '\n')
+
+
+def snapshots_refetch(db):
+    """STEP 4: re-render full PNGs of the two latest dates with the final detector
+    (incl. calibration) and upload them + snapshots.json."""
+    cfg, col, bbox = cfg_all()
+    gj, mask = t.load_masks()
+    full, meta = t.candidate_dates(cfg, col, bbox)
+    ds = sorted(db.dates())[-2:]
+    for d in ds:
+        a10, size = t.fetch(cfg, col, bbox, d)
+        arr = t.upsample(a10); del a10
+        det, counts, thr = t.detect(arr, mask)
+        p = os.path.join(HERE, d[:4], f'full_{d}.png'); os.makedirs(os.path.dirname(p), exist_ok=True)
+        bp.render_full(p, d, meta[d], arr, gj, det, counts, thr); del arr
+        log(f'STEP4 rendered {d}: {os.path.getsize(p)/1e6:.2f} MB, offset={t.LENGTH_OFFSET_M} m, counts={counts}')
+    snapshots(db)
+    r = requests.get(f'{SB_URL}/storage/v1/object/public/{BUCKET}/snapshots.json', timeout=30).json()
+    lines = [f'STEP4 snapshots.json: {json.dumps(r)}']
+    for k in ('previous', 'latest'):
+        h = requests.head(f'{SB_URL}/storage/v1/object/public/{BUCKET}/{k}.png', timeout=30)
+        lines.append(f'STEP4 {k}.png: date={r[k]["date"]} size={int(h.headers.get("content-length", 0))/1e6:.2f} MB http={h.status_code}')
+    for l in lines:
+        log(l)
+    _save(lines)
+
+
 def main():
     ap = argparse.ArgumentParser()
     g = ap.add_mutually_exclusive_group(required=True)
@@ -376,6 +527,8 @@ def main():
     g.add_argument('--sync', action='store_true')
     g.add_argument('--update', action='store_true')
     g.add_argument('--snapshots', action='store_true')
+    g.add_argument('--calibrate', action='store_true')
+    g.add_argument('--snapshots-refetch', action='store_true')
     ap.add_argument('--recompute', action='store_true', help='with --year: ignore DB resume, no ТЗ-12.1a reuse')
     a = ap.parse_args()
     log(f'RUN_ID={RUN_ID}')
@@ -391,6 +544,10 @@ def main():
             update(db)
         elif a.snapshots:
             snapshots(db)
+        elif a.calibrate:
+            calibrate(db)
+        elif a.snapshots_refetch:
+            snapshots_refetch(db)
     except t.StopPU as e:
         log(f'STOP: 403 PU. В базе {db.count()} дат.'); log(str(e)); sys.exit(3)
 
