@@ -1,0 +1,56 @@
+STEP1: catalog dates 325, v2.1 computed 325, missing 0 []
+STEP2: length histogram (axis length, 10 m bins, >=250 m, n=2930):
+  250-260 m: 55 ###
+  260-270 m: 151 #########
+  270-280 m: 140 ########
+  280-290 m: 138 ########
+  290-300 m: 229 #############
+  300-310 m: 143 ########
+  310-320 m: 53 ###
+  320-330 m: 37 ##
+  330-340 m: 72 ####
+  340-350 m: 318 ###################
+  350-360 m: 665 ########################################
+  360-370 m: 455 ###########################
+  370-380 m: 195 ###########
+  380-390 m: 111 ######
+  390-400 m: 55 ###
+  400-410 m: 34 ##
+  410-420 m: 12 
+  420-430 m: 19 #
+  430-440 m: 7 
+  440-450 m: 8 
+  450-460 m: 6 
+  460-470 m: 9 
+  470-480 m: 6 
+  480-490 m: 4 
+  490-500 m: 8 
+STEP2: VLCC peak at 355 m -> length offset k = 25 m (peak - 330)
+STEP2: mean per date            v2(old)   v2.1 raw   v2.1 calibrated
+  vlcc                         4.57       7.61             6.39
+  suezmax                      1.35       1.32             1.47
+  aframax                      1.73       0.55             1.28
+  mr                           4.62       1.97             1.85
+  small                        3.20       1.53             1.98
+  no_small                    12.27      11.45            10.99
+  VLCC share of large: v2 37%, v2.1 raw 66%, v2.1 calibrated 58%
+STEP2 SANITY (VLCC share 35–55%): FAIL (58.1%)
+STEP3: upserted 325 dates in 5.5 min (classes = old v2, totals = v2.1)
+STEP3 DB: rows=325 min=2017-02-18 max=2026-11-05 source={'tz12_frame_v2.1': 325}
+STEP3 DB: anchorage_ships rows=4217
+STEP3 fresh dates — DB (v2.1) vs old v2:
+  2026-11-05: NEW total=17 no_small=16 V3 S3 A3 MR10 s3 src=tz12_frame_v2.1 | OLD total=22 no_small=19 V3 S3 A3 MR10 s3
+  2026-10-30: NEW total=18 no_small=17 V11 S1 A2 MR3 s1 src=tz12_frame_v2.1 | OLD total=18 no_small=17 V11 S1 A2 MR3 s1
+  2026-10-24: NEW total=18 no_small=17 V6 S2 A3 MR6 s2 src=tz12_frame_v2.1 | OLD total=19 no_small=17 V6 S2 A3 MR6 s2
+STEP4 snapshots.json: {"previous": {"date": "2026-10-30", "file": "previous.png"}, "latest": {"date": "2026-11-05", "file": "latest.png"}, "updated": "2026-11-08T16:53:57Z"}
+STEP4 previous.png: date=2026-10-30 size=3.03 MB http=200
+STEP4 latest.png: date=2026-11-05 size=1.98 MB http=200
+STEP6 https://app.oilradar.io/anchorage: series source=supabase:anchorage_daily records=325 first=2017-02-18 last=2026-11-05
+STEP6 KPI on page: total=16 date=2026-11-05
+STEP6 compare 2026-10-24: site total=17 | daily_cal.csv total_no_small=17 -> OK
+STEP6 compare 2026-10-30: site total=17 | daily_cal.csv total_no_small=17 -> OK
+STEP6 compare 2026-11-05: site total=16 | daily_cal.csv total_no_small=16 -> OK
+STEP6 compare 2017-02-18: site total=15 | daily_cal.csv total_no_small=15 -> OK
+STEP6 snapshots block visible=True
+STEP6 snapshot previous: caption date=2026-10-30 img=https://yoekhkczwdeyauwarsyy.supabase.co/storage/v1/object/public/anchorage_snapshots/previous.png?v=2026-10-30 natural=2048x2169
+STEP6 snapshot latest: caption date=2026-11-05 img=https://yoekhkczwdeyauwarsyy.supabase.co/storage/v1/object/public/anchorage_snapshots/latest.png?v=2026-11-05 natural=2048x2169
