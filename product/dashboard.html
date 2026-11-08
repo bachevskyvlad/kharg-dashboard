@@ -2586,6 +2586,22 @@ function aqFilter(records, range) {
 const AQ_TQI_LABEL = t => t >= 85 ? 'HIGH PRESSURE' : t >= 70 ? 'Elevated' : 'Normal';
 const AQ_COLORS = { vlcc:'#ef4444', suezmax:'#f97316', aframax:'#eab308', mr:'#22c55e', small:'#a855f7' };
 const AQ_LABELS = { vlcc:'VLCC', suezmax:'Suezmax', aframax:'Aframax', mr:'MR', small:'Small' };
+// Typical full cargo per class, million barrels (crude): VLCC ~2.0, Suezmax ~1.0,
+// Aframax ~0.7, MR/Panamax ~0.35, small (<100 m) ~0.05.
+const AQ_CAP_MBBL = { vlcc:2.0, suezmax:1.0, aframax:0.7, mr:0.35, small:0.05 };
+// Change of the queue's cargo capacity vs the previous SAR pass, over the selected classes:
+// sum_k (n_k(t) - n_k(t-1)) * cap_k. Negative = tankers left the anchorage since the last pass.
+function aqDeltaMbbl(r) {
+  const i = _aqRecords.indexOf(r);
+  if (i <= 0) return null;
+  const p = _aqRecords[i - 1];
+  return aqLayers().reduce((s, k) => s + ((r[k] || 0) - (p[k] || 0)) * AQ_CAP_MBBL[k], 0);
+}
+function aqFmtDelta(v) {
+  if (v === null) return '—';
+  const c = v < 0 ? '#f97316' : v > 0 ? '#60a5fa' : 'var(--muted)';
+  return `<span style="color:${c}">${v > 0 ? '+' : v < 0 ? '−' : ''}${Math.abs(v).toFixed(2)}</span>`;
+}
 const AQ_ALL    = ['small','mr','aframax','suezmax','vlcc'];          // stack order bottom -> top
 const AQ_DEFAULT = { vlcc:true, suezmax:true, aframax:true, mr:true, small:false };
 // Class filter: hidden classes are removed from the chart, the table and every sum (KPIs too).
@@ -2688,7 +2704,8 @@ function aqDraw() {
       tip.style.top  = (e.clientY - 10) + 'px';
       tip.innerHTML = `<div style="color:#94a3b8;margin-bottom:4px">${r.date}</div>` +
         [...aqLayers()].reverse().map(k => `<div style="display:flex;align-items:center;gap:6px;margin-bottom:2px"><span style="width:8px;height:8px;background:${AQ_COLORS[k]};display:inline-block"></span>${AQ_LABELS[k]}: <b>${r[k] ?? 0}</b></div>`).join('') +
-        `<div style="border-top:1px solid rgba(255,255,255,0.08);margin-top:4px;padding-top:4px">Total${aqIsDefault() ? '' : ' (selected)'}: <b>${aqSum(r)}</b></div>`;
+        `<div style="border-top:1px solid rgba(255,255,255,0.08);margin-top:4px;padding-top:4px">Total${aqIsDefault() ? '' : ' (selected)'}: <b>${aqSum(r)}</b></div>` +
+        `<div>Δ cargo vs prev pass: <b>${aqFmtDelta(aqDeltaMbbl(r))}</b> Mbbl</div>`;
       const ctx2 = canvas.getContext('2d');
       const dpr2 = window.devicePixelRatio || 1;
       ctx2.setTransform(dpr2, 0, 0, dpr2, 0, 0);
@@ -2732,13 +2749,15 @@ function aqRenderKpisAndTable() {
     table.querySelector('thead').innerHTML = `<tr style="color:var(--dim);text-align:right;border-bottom:1px solid var(--border);">
       <th style="text-align:left;${th}">${table._aqLbl.dateLbl}</th>` +
       cols.map(k => `<th style="${th}">${AQ_LABELS[k]}</th>`).join('') +
-      `<th style="${th}">${table._aqLbl.totLbl}${aqIsDefault() ? '' : ' (selected)'}</th></tr>`;
+      `<th style="${th}">${table._aqLbl.totLbl}${aqIsDefault() ? '' : ' (selected)'}</th>` +
+      `<th style="${th}" title="Change of the anchored fleet's cargo capacity vs the previous SAR pass, million barrels, selected classes only. Per-ship capacity: VLCC 2.0, Suezmax 1.0, Aframax 0.7, MR 0.35, Small 0.05 Mbbl. Negative = tankers left since the last pass (net of arrivals); not a measured export volume.">Δ cargo, Mbbl ⓘ</th></tr>`;
     const tbody = document.getElementById('aq-table-body');
     const rows = [..._aqRecords].reverse().slice(0, 52);
     tbody.innerHTML = rows.map(r => `<tr style="border-bottom:1px solid rgba(255,255,255,0.04);">
         <td style="padding:0.35rem 0.6rem;color:var(--muted)">${r.date}</td>` +
       cols.map(k => `<td style="padding:0.35rem 0.6rem;text-align:right;color:${AQ_COLORS[k]}">${r[k] ?? 0}</td>`).join('') +
-      `<td style="padding:0.35rem 0.6rem;text-align:right;font-weight:600">${aqSum(r)}</td></tr>`).join('');
+      `<td style="padding:0.35rem 0.6rem;text-align:right;font-weight:600">${aqSum(r)}</td>` +
+      `<td style="padding:0.35rem 0.6rem;text-align:right">${aqFmtDelta(aqDeltaMbbl(r))}</td></tr>`).join('');
   }
 }
 
