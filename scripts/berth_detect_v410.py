@@ -303,11 +303,17 @@ def _bg_cache_path(date_str, orbit, window):
     return (BG_CACHE / f"bg_o{orbit}_{ym}_{tag}.npy",
             BG_CACHE / f"bg_o{orbit}_{ym}_{tag}_meta.json")
 
+def _v3_cache_path(date_str, orbit):
+    """v3 cache uses bg_o{orbit}_{YYYY-MM}.npy (no window suffix)."""
+    ym = date_str[:7]
+    return BG_CACHE / f"bg_o{orbit}_{ym}.npy"
+
 def load_or_build_bg(date_str, orbit):
     """
     Try ±24 months; if < BG_MIN_DATES scenes → try ±48 months.
     Returns (bg_array, window_used) or (None, None) if still < BG_MIN_DATES.
     Never returns zero or False — returns None to signal no_background.
+    Also checks v3 cache format (no _w2 suffix) before building.
     """
     target = datetime.strptime(date_str, "%Y-%m-%d")
     for window_days in [BG_WINDOW_DAYS_1, BG_WINDOW_DAYS_2]:
@@ -315,6 +321,11 @@ def load_or_build_bg(date_str, orbit):
         if npy.exists():
             print(f"    bg cache hit: {npy.name}")
             return np.load(npy), window_days
+        # fallback: v3 cache (no window suffix)
+        v3 = _v3_cache_path(date_str, orbit)
+        if v3.exists():
+            print(f"    bg cache hit (v3): {v3.name}")
+            return np.load(v3), window_days
         d0 = (target - timedelta(days=window_days)).strftime("%Y-%m-%d")
         d1 = (target + timedelta(days=window_days)).strftime("%Y-%m-%d")
         scenes = catalog_search(d0, d1)
