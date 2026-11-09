@@ -1,0 +1,55 @@
+name: tz12_5_v22
+
+# ТЗ v2.2 (anchorage classes from anchorage_blobs_corrected). Stage from
+# diagnostics/anchorage_v22/stage.txt (line 1). Runs on research/2026-10-auto.
+on:
+  workflow_dispatch:
+  push:
+    branches: [claude/bold-shannon-6c2b8c]
+    paths:
+      - diagnostics/anchorage_v22/stage.txt
+
+concurrency:
+  group: tz12-3-anchorage-hist
+  cancel-in-progress: false
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    permissions:
+      contents: write
+    env:
+      CLIENT_ID: ${{ secrets.CLIENT_ID }}
+      CLIENT_SECRET: ${{ secrets.CLIENT_SECRET }}
+      SUPABASE_URL: https://yoekhkczwdeyauwarsyy.supabase.co
+      SUPABASE_WRITE_KEY: sb_publishable_7j07_zzdqTGM1LXf7-o9Tg_JJRbJQSM
+      RUN_ID: gha-${{ github.run_id }}
+    steps:
+      - uses: actions/checkout@v4
+        with: { ref: claude/bold-shannon-6c2b8c, path: dev }
+      - uses: actions/checkout@v4
+        with: { ref: research/2026-10-auto, fetch-depth: 0, path: research }
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.11" }
+      - run: pip install --quiet numpy scipy Pillow matplotlib rasterio shapely requests sentinelhub playwright
+      - name: Stage
+        working-directory: research
+        run: |
+          mkdir -p diagnostics/anchorage_v22
+          cp -r ../dev/diagnostics/anchorage_v22/. diagnostics/anchorage_v22/
+          cp ../dev/diagnostics/anchorage_test/tz12_2_test.py diagnostics/anchorage_test/
+          cp ../dev/diagnostics/anchorage_blind/blind_pack.py diagnostics/anchorage_blind/
+          cp ../dev/diagnostics/anchorage_hist/pc_blobs.py ../dev/diagnostics/anchorage_hist/hist_backfill.py diagnostics/anchorage_hist/
+          STAGE=$(sed -n 1p diagnostics/anchorage_v22/stage.txt); echo "stage=$STAGE"
+          rc=0
+          case "$STAGE" in
+            probe) python diagnostics/anchorage_v22/probe.py || rc=$? ;;
+            *)     python diagnostics/anchorage_v22/v22.py $STAGE || rc=$? ;;
+          esac
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add diagnostics/anchorage_v22 2>/dev/null || true
+          git commit -qm "tz12.5 v2.2 $STAGE gha-${{ github.run_id }}" || true
+          for i in 1 2 3 4; do git pull -q --rebase --autostash origin research/2026-10-auto && git push -q origin HEAD:research/2026-10-auto && break; sleep $((2**i)); done
+          exit $rc
