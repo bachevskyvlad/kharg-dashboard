@@ -1,16 +1,88 @@
-== anchorage_calib: http=200 count=*/0
-   []
-== anchorage_optical_ref: http=200 count=*/0
-   []
-== anchorage_blobs_corrected: http=206 count=0-2/4217
-   columns: ['id', 'date', 'relative_orbit', 'lat', 'lon', 'x0', 'y0', 'patch_w', 'patch_h', 'res_m', 'patch_b64', 'peak_norm', 'sea_p70', 'threshold', 'area_px', 'length_bbox_m', 'run_id', 'source', 'created_at', 'length_corr_m', 'class_corr']
-   {"id": 2, "date": "2017-02-18", "relative_orbit": null, "lat": 29.316545, "lon": 50.362851, "x0": 2627, "y0": 343, "patch_w": 30, "patch_h": 48, "res_m": 4.17, "patch_b64": "iVBORw0KGgoAAAANSUhEUgAAAB4AAAAwCAAAAAAj…", "peak_norm": 0.8504, "sea_p70": 0.3454, "threshold": 0.55, "area_px": 256, "length_bbox_m": 133, "run_id": "gha-42519645064", "source": "sentinelhub_v2.1", "created_at": "2026-11-08T20:24:33.95349+00:00", "length_corr_m": -22.476, "class_corr": "small"}
-   {"id": 3, "date": "2017-02-18", "relative_orbit": null, "lat": 29.310597, "lon": 50.459537, "x0": 4855, "y0": 471, "patch_w": 84, "patch_h": 97, "res_m": 4.17, "patch_b64": "iVBORw0KGgoAAAANSUhEUgAAAFQAAABhCAAAAABt…", "peak_norm": 0.9996, "sea_p70": 0.3454, "threshold": 0.55, "area_px": 1159, "length_bbox_m": 338, "run_id": "gha-42519645064", "source": "sentinelhub_v2.1", "created_at": "2026-11-08T20:24:33.95349+00:00", "length_corr_m": 182.524, "class_corr": "mr"}
-   {"id": 4, "date": "2017-02-18", "relative_orbit": null, "lat": 29.305524, "lon": 50.376702, "x0": 2951, "y0": 642, "patch_w": 27, "patch_h": 37, "res_m": 4.17, "patch_b64": "iVBORw0KGgoAAAANSUhEUgAAABsAAAAlCAAAAACW…", "peak_norm": 0.7499, "sea_p70": 0.3454, "threshold": 0.55, "area_px": 147, "length_bbox_m": 88, "run_id": "gha-42519645064", "source": "sentinelhub_v2.1", "created_at": "2026-11-08T20:24:33.95349+00:00", "length_corr_m": -67.476, "class_corr": "small"}
-== anchorage_blobs: http=206 count=0-0/4217
-   columns: ['id', 'date', 'relative_orbit', 'lat', 'lon', 'x0', 'y0', 'patch_w', 'patch_h', 'res_m', 'patch_b64', 'peak_norm', 'sea_p70', 'threshold', 'area_px', 'length_bbox_m', 'run_id', 'source', 'created_at']
-   {"id": 2, "date": "2017-02-18", "relative_orbit": null, "lat": 29.316545, "lon": 50.362851, "x0": 2627, "y0": 343, "patch_w": 30, "patch_h": 48, "res_m": 4.17, "patch_b64": "iVBORw0KGgoAAAANSUhEUgAAAB4AAAAwCAAAAAAj…", "peak_norm": 0.8504, "sea_p70": 0.3454, "threshold": 0.55, "area_px": 256, "length_bbox_m": 133, "run_id": "gha-42519645064", "source": "sentinelhub_v2.1", "created_at": "2026-11-08T20:24:33.95349+00:00"}
-== anchorage_daily: http=206 count=0-1/325
-   columns: ['date', 'orbit', 'threshold', 'total', 'total_no_small', 'vlcc', 'suezmax', 'aframax', 'mr', 'small', 'masked_blobs', 'run_id', 'source', 'created_at']
-   {"date": "2017-03-26", "orbit": 35, "threshold": 0.55, "total": 11, "total_no_small": 11, "vlcc": 4, "suezmax": 2, "aframax": 1, "mr": 4, "small": 0, "masked_blobs": 245, "run_id": "gha-42499361981", "source": "tz12_frame_v2.1", "created_at": "2026-11-08T11:40:58.313027+00:00"}
-   {"date": "2017-04-07", "orbit": 35, "threshold": 0.55, "total": 15, "total_no_small": 13, "vlcc": 2, "suezmax": 2, "aframax": 1, "mr": 13, "small": 3, "masked_blobs": 205, "run_id": "gha-42499361981", "source": "tz12_frame_v2.1", "created_at": "2026-11-08T11:41:00.379583+00:00"}
+== anchorage_calib: http=200 content-range=*/0 body=[]
+   column exists: k_m_per_sea
+   column exists: sea_ref
+   column exists: merge_m
+   column exists: id
+== anchorage_optical_ref: http=200 content-range=*/0 body=[]
+   column exists: date
+   column exists: vlcc
+   column exists: aframax
+   column exists: mr
+   column exists: suezmax
+   column exists: total
+== view 2026-10-18: n=18
+   {"date": "2026-10-18", "lat": 29.243305, "lon": 50.435391, "sea_p70": 0.1105, "peak_norm": 1, "area_px": 1177, "length_bbox_m": 396, "length_corr_m": 461.33, "class_corr": "vlcc"}
+   {"date": "2026-10-18", "lat": 29.233929, "lon": 50.404689, "sea_p70": 0.1105, "peak_norm": 1, "area_px": 1146, "length_bbox_m": 367, "length_corr_m": 432.33, "class_corr": "vlcc"}
+   {"date": "2026-10-18", "lat": 29.306312, "lon": 50.401845, "sea_p70": 0.1105, "peak_norm": 1, "area_px": 1034, "length_bbox_m": 363, "length_corr_m": 428.33, "class_corr": "vlcc"}
+   {"date": "2026-10-18", "lat": 29.225042, "lon": 50.469722, "sea_p70": 0.1105, "peak_norm": 1, "area_px": 1353, "length_bbox_m": 359, "length_corr_m": 424.33, "class_corr": "vlcc"}
+   {"date": "2026-10-18", "lat": 29.183484, "lon": 50.404575, "sea_p70": 0.1105, "peak_norm": 0.9999, "area_px": 1121, "length_bbox_m": 354, "length_corr_m": 419.33, "class_corr": "vlcc"}
+   {"date": "2026-10-18", "lat": 29.276412, "lon": 50.45762, "sea_p70": 0.1105, "peak_norm": 1, "area_px": 941, "length_bbox_m": 346, "length_corr_m": 411.33, "class_corr": "vlcc"}
+   {"date": "2026-10-18", "lat": 29.103468, "lon": 50.312151, "sea_p70": 0.1105, "peak_norm": 0.9611, "area_px": 914, "length_bbox_m": 296, "length_corr_m": 361.33, "class_corr": "vlcc"}
+   {"date": "2026-10-18", "lat": 29.301468, "lon": 50.484636, "sea_p70": 0.1105, "peak_norm": 1, "area_px": 757, "length_bbox_m": 292, "length_corr_m": 357.33, "class_corr": "vlcc"}
+   {"date": "2026-10-18", "lat": 29.304234, "lon": 50.457365, "sea_p70": 0.1105, "peak_norm": 0.9956, "area_px": 716, "length_bbox_m": 288, "length_corr_m": 353.33, "class_corr": "vlcc"}
+   {"date": "2026-10-18", "lat": 29.085982, "lon": 50.483316, "sea_p70": 0.1105, "peak_norm": 1, "area_px": 603, "length_bbox_m": 271, "length_corr_m": 336.33, "class_corr": "vlcc"}
+   {"date": "2026-10-18", "lat": 29.280339, "lon": 50.397401, "sea_p70": 0.1105, "peak_norm": 0.9933, "area_px": 735, "length_bbox_m": 271, "length_corr_m": 336.33, "class_corr": "vlcc"}
+   {"date": "2026-10-18", "lat": 29.214681, "lon": 50.436049, "sea_p70": 0.1105, "peak_norm": 0.9989, "area_px": 682, "length_bbox_m": 267, "length_corr_m": 332.33, "class_corr": "vlcc"}
+   {"date": "2026-10-18", "lat": 29.302104, "lon": 50.385088, "sea_p70": 0.1105, "peak_norm": 1, "area_px": 562, "length_bbox_m": 200, "length_corr_m": 265.33, "class_corr": "suezmax"}
+   {"date": "2026-10-18", "lat": 29.319837, "lon": 50.466676, "sea_p70": 0.1105, "peak_norm": 0.9995, "area_px": 442, "length_bbox_m": 183, "length_corr_m": 248.33, "class_corr": "aframax"}
+   {"date": "2026-10-18", "lat": 29.163056, "lon": 50.372144, "sea_p70": 0.1105, "peak_norm": 1, "area_px": 681, "length_bbox_m": 183, "length_corr_m": 248.33, "class_corr": "aframax"}
+   {"date": "2026-10-18", "lat": 29.138113, "lon": 50.412115, "sea_p70": 0.1105, "peak_norm": 0.9395, "area_px": 326, "length_bbox_m": 150, "length_corr_m": 215.33, "class_corr": "mr"}
+   {"date": "2026-10-18", "lat": 29.164627, "lon": 50.371032, "sea_p70": 0.1105, "peak_norm": 0.7081, "area_px": 141, "length_bbox_m": 88, "length_corr_m": 153.33, "class_corr": "mr"}
+   {"date": "2026-10-18", "lat": 29.32143, "lon": 50.466048, "sea_p70": 0.1105, "peak_norm": 0.7144, "area_px": 125, "length_bbox_m": 67, "length_corr_m": 132.33, "class_corr": "mr"}
+== view 2026-10-24: n=18
+   {"date": "2026-10-24", "lat": 29.166739, "lon": 50.370935, "sea_p70": 0.1759, "peak_norm": 1, "area_px": 1317, "length_bbox_m": 354, "length_corr_m": 357.854, "class_corr": "vlcc"}
+   {"date": "2026-10-24", "lat": 29.106802, "lon": 50.309792, "sea_p70": 0.1759, "peak_norm": 1, "area_px": 1326, "length_bbox_m": 354, "length_corr_m": 357.854, "class_corr": "vlcc"}
+   {"date": "2026-10-24", "lat": 29.237264, "lon": 50.404164, "sea_p70": 0.1759, "peak_norm": 1, "area_px": 1479, "length_bbox_m": 346, "length_corr_m": 349.854, "class_corr": "vlcc"}
+   {"date": "2026-10-24", "lat": 29.31002, "lon": 50.401142, "sea_p70": 0.1759, "peak_norm": 0.9803, "area_px": 1052, "length_bbox_m": 334, "length_corr_m": 337.854, "class_corr": "vlcc"}
+   {"date": "2026-10-24", "lat": 29.187069, "lon": 50.404939, "sea_p70": 0.1759, "peak_norm": 0.9993, "area_px": 1080, "length_bbox_m": 325, "length_corr_m": 328.854, "class_corr": "vlcc"}
+   {"date": "2026-10-24", "lat": 29.27959, "lon": 50.45821, "sea_p70": 0.1759, "peak_norm": 0.9216, "area_px": 1115, "length_bbox_m": 321, "length_corr_m": 324.854, "class_corr": "vlcc"}
+   {"date": "2026-10-24", "lat": 29.323424, "lon": 50.466285, "sea_p70": 0.1759, "peak_norm": 0.9559, "area_px": 915, "length_bbox_m": 279, "length_corr_m": 282.854, "class_corr": "suezmax"}
+   {"date": "2026-10-24", "lat": 29.304749, "lon": 50.484778, "sea_p70": 0.1759, "peak_norm": 0.9918, "area_px": 819, "length_bbox_m": 279, "length_corr_m": 282.854, "class_corr": "suezmax"}
+   {"date": "2026-10-24", "lat": 29.307701, "lon": 50.45715, "sea_p70": 0.1759, "peak_norm": 0.9928, "area_px": 745, "length_bbox_m": 271, "length_corr_m": 274.854, "class_corr": "suezmax"}
+   {"date": "2026-10-24", "lat": 29.246723, "lon": 50.434331, "sea_p70": 0.1759, "peak_norm": 0.9096, "area_px": 949, "length_bbox_m": 254, "length_corr_m": 257.854, "class_corr": "aframax"}
+   {"date": "2026-10-24", "lat": 29.088895, "lon": 50.483523, "sea_p70": 0.1759, "peak_norm": 0.9573, "area_px": 658, "length_bbox_m": 246, "length_corr_m": 249.854, "class_corr": "aframax"}
+   {"date": "2026-10-24", "lat": 29.283913, "lon": 50.395968, "sea_p70": 0.1759, "peak_norm": 0.8339, "area_px": 657, "length_bbox_m": 238, "length_corr_m": 241.854, "class_corr": "aframax"}
+   {"date": "2026-10-24", "lat": 29.216882, "lon": 50.435537, "sea_p70": 0.1759, "peak_norm": 0.8977, "area_px": 637, "length_bbox_m": 229, "length_corr_m": 232.854, "class_corr": "aframax"}
+   {"date": "2026-10-24", "lat": 29.228455, "lon": 50.469013, "sea_p70": 0.1759, "peak_norm": 0.9884, "area_px": 860, "length_bbox_m": 192, "length_corr_m": 195.854, "class_corr": "mr"}
+   {"date": "2026-10-24", "lat": 29.304775, "lon": 50.384533, "sea_p70": 0.1759, "peak_norm": 0.9924, "area_px": 538, "length_bbox_m": 179, "length_corr_m": 182.854, "class_corr": "mr"}
+   {"date": "2026-10-24", "lat": 29.13811, "lon": 50.412157, "sea_p70": 0.1759, "peak_norm": 0.928, "area_px": 340, "length_bbox_m": 163, "length_corr_m": 166.854, "class_corr": "mr"}
+   {"date": "2026-10-24", "lat": 29.080199, "lon": 50.409528, "sea_p70": 0.1759, "peak_norm": 0.9862, "area_px": 211, "length_bbox_m": 104, "length_corr_m": 107.854, "class_corr": "mr"}
+   {"date": "2026-10-24", "lat": 29.227155, "lon": 50.470384, "sea_p70": 0.1759, "peak_norm": 0.766, "area_px": 169, "length_bbox_m": 88, "length_corr_m": 91.854, "class_corr": "small"}
+== view 2026-10-30: n=18
+   {"date": "2026-10-30", "lat": 29.225429, "lon": 50.47078, "sea_p70": 0.2156, "peak_norm": 1, "area_px": 1467, "length_bbox_m": 400, "length_corr_m": 366.536, "class_corr": "vlcc"}
+   {"date": "2026-10-30", "lat": 29.234227, "lon": 50.405116, "sea_p70": 0.2156, "peak_norm": 1, "area_px": 1553, "length_bbox_m": 396, "length_corr_m": 362.536, "class_corr": "vlcc"}
+   {"date": "2026-10-30", "lat": 29.103176, "lon": 50.311609, "sea_p70": 0.2156, "peak_norm": 0.9309, "area_px": 1051, "length_bbox_m": 379, "length_corr_m": 345.536, "class_corr": "vlcc"}
+   {"date": "2026-10-30", "lat": 29.306914, "lon": 50.401766, "sea_p70": 0.2156, "peak_norm": 1, "area_px": 1343, "length_bbox_m": 367, "length_corr_m": 333.536, "class_corr": "vlcc"}
+   {"date": "2026-10-30", "lat": 29.276631, "lon": 50.457898, "sea_p70": 0.2156, "peak_norm": 1, "area_px": 1387, "length_bbox_m": 363, "length_corr_m": 329.536, "class_corr": "vlcc"}
+   {"date": "2026-10-30", "lat": 29.184274, "lon": 50.404725, "sea_p70": 0.2156, "peak_norm": 0.998, "area_px": 1351, "length_bbox_m": 350, "length_corr_m": 316.536, "class_corr": "vlcc"}
+   {"date": "2026-10-30", "lat": 29.24402, "lon": 50.436142, "sea_p70": 0.2156, "peak_norm": 1, "area_px": 1272, "length_bbox_m": 350, "length_corr_m": 316.536, "class_corr": "vlcc"}
+   {"date": "2026-10-30", "lat": 29.320496, "lon": 50.466884, "sea_p70": 0.2156, "peak_norm": 0.9867, "area_px": 812, "length_bbox_m": 342, "length_corr_m": 308.536, "class_corr": "vlcc"}
+   {"date": "2026-10-30", "lat": 29.163585, "lon": 50.371878, "sea_p70": 0.2156, "peak_norm": 1, "area_px": 780, "length_bbox_m": 338, "length_corr_m": 304.536, "class_corr": "vlcc"}
+   {"date": "2026-10-30", "lat": 29.301329, "lon": 50.484343, "sea_p70": 0.2156, "peak_norm": 1, "area_px": 1117, "length_bbox_m": 329, "length_corr_m": 295.536, "class_corr": "vlcc"}
+   {"date": "2026-10-30", "lat": 29.305143, "lon": 50.456846, "sea_p70": 0.2156, "peak_norm": 1, "area_px": 1123, "length_bbox_m": 321, "length_corr_m": 287.536, "class_corr": "suezmax"}
+   {"date": "2026-10-30", "lat": 29.086552, "lon": 50.483458, "sea_p70": 0.2156, "peak_norm": 0.9927, "area_px": 1000, "length_bbox_m": 309, "length_corr_m": 275.536, "class_corr": "suezmax"}
+   {"date": "2026-10-30", "lat": 29.214712, "lon": 50.436945, "sea_p70": 0.2156, "peak_norm": 1, "area_px": 1014, "length_bbox_m": 300, "length_corr_m": 266.536, "class_corr": "suezmax"}
+   {"date": "2026-10-30", "lat": 29.281307, "lon": 50.396452, "sea_p70": 0.2156, "peak_norm": 0.9784, "area_px": 806, "length_bbox_m": 259, "length_corr_m": 225.536, "class_corr": "aframax"}
+   {"date": "2026-10-30", "lat": 29.303119, "lon": 50.384032, "sea_p70": 0.2156, "peak_norm": 0.9446, "area_px": 602, "length_bbox_m": 183, "length_corr_m": 149.536, "class_corr": "mr"}
+   {"date": "2026-10-30", "lat": 29.08213, "lon": 50.362651, "sea_p70": 0.2156, "peak_norm": 1, "area_px": 480, "length_bbox_m": 163, "length_corr_m": 129.536, "class_corr": "mr"}
+   {"date": "2026-10-30", "lat": 29.138785, "lon": 50.411129, "sea_p70": 0.2156, "peak_norm": 0.9569, "area_px": 280, "length_bbox_m": 125, "length_corr_m": 91.536, "class_corr": "small"}
+   {"date": "2026-10-30", "lat": 29.250842, "lon": 50.348582, "sea_p70": 0.2156, "peak_norm": 0.764, "area_px": 109, "length_bbox_m": 67, "length_corr_m": 33.536, "class_corr": "small"}
+== view 2026-11-05: n=17
+   {"date": "2026-11-05", "lat": 29.237361, "lon": 50.404322, "sea_p70": 0.1515, "peak_norm": 1, "area_px": 1379, "length_bbox_m": 350, "length_corr_m": 376.79, "class_corr": "vlcc"}
+   {"date": "2026-11-05", "lat": 29.309698, "lon": 50.400805, "sea_p70": 0.1515, "peak_norm": 0.9865, "area_px": 945, "length_bbox_m": 346, "length_corr_m": 372.79, "class_corr": "vlcc"}
+   {"date": "2026-11-05", "lat": 29.228482, "lon": 50.471237, "sea_p70": 0.1515, "peak_norm": 1, "area_px": 996, "length_bbox_m": 313, "length_corr_m": 339.79, "class_corr": "vlcc"}
+   {"date": "2026-11-05", "lat": 29.166583, "lon": 50.370008, "sea_p70": 0.1515, "peak_norm": 0.9536, "area_px": 924, "length_bbox_m": 309, "length_corr_m": 335.79, "class_corr": "vlcc"}
+   {"date": "2026-11-05", "lat": 29.106096, "lon": 50.309119, "sea_p70": 0.1515, "peak_norm": 0.9997, "area_px": 1076, "length_bbox_m": 296, "length_corr_m": 322.79, "class_corr": "vlcc"}
+   {"date": "2026-11-05", "lat": 29.323382, "lon": 50.465402, "sea_p70": 0.1515, "peak_norm": 0.9071, "area_px": 555, "length_bbox_m": 288, "length_corr_m": 314.79, "class_corr": "vlcc"}
+   {"date": "2026-11-05", "lat": 29.283568, "lon": 50.396325, "sea_p70": 0.1515, "peak_norm": 1, "area_px": 886, "length_bbox_m": 284, "length_corr_m": 310.79, "class_corr": "vlcc"}
+   {"date": "2026-11-05", "lat": 29.24692, "lon": 50.437232, "sea_p70": 0.1515, "peak_norm": 1, "area_px": 851, "length_bbox_m": 275, "length_corr_m": 301.79, "class_corr": "vlcc"}
+   {"date": "2026-11-05", "lat": 29.304282, "lon": 50.48327, "sea_p70": 0.1515, "peak_norm": 0.9035, "area_px": 678, "length_bbox_m": 267, "length_corr_m": 293.79, "class_corr": "vlcc"}
+   {"date": "2026-11-05", "lat": 29.307314, "lon": 50.455801, "sea_p70": 0.1515, "peak_norm": 0.8549, "area_px": 683, "length_bbox_m": 263, "length_corr_m": 289.79, "class_corr": "suezmax"}
+   {"date": "2026-11-05", "lat": 29.27959, "lon": 50.455606, "sea_p70": 0.1515, "peak_norm": 0.9183, "area_px": 862, "length_bbox_m": 259, "length_corr_m": 285.79, "class_corr": "suezmax"}
+   {"date": "2026-11-05", "lat": 29.088498, "lon": 50.48166, "sea_p70": 0.1515, "peak_norm": 0.9982, "area_px": 769, "length_bbox_m": 242, "length_corr_m": 268.79, "class_corr": "suezmax"}
+   {"date": "2026-11-05", "lat": 29.187726, "lon": 50.403204, "sea_p70": 0.1515, "peak_norm": 0.9766, "area_px": 727, "length_bbox_m": 213, "length_corr_m": 239.79, "class_corr": "aframax"}
+   {"date": "2026-11-05", "lat": 29.304543, "lon": 50.384021, "sea_p70": 0.1515, "peak_norm": 1, "area_px": 681, "length_bbox_m": 192, "length_corr_m": 218.79, "class_corr": "mr"}
+   {"date": "2026-11-05", "lat": 29.13921, "lon": 50.412194, "sea_p70": 0.1515, "peak_norm": 0.9453, "area_px": 347, "length_bbox_m": 154, "length_corr_m": 180.79, "class_corr": "mr"}
+   {"date": "2026-11-05", "lat": 29.080296, "lon": 50.406859, "sea_p70": 0.1515, "peak_norm": 0.9962, "area_px": 293, "length_bbox_m": 108, "length_corr_m": 134.79, "class_corr": "mr"}
+   {"date": "2026-11-05", "lat": 29.185995, "lon": 50.403931, "sea_p70": 0.1515, "peak_norm": 0.7118, "area_px": 147, "length_bbox_m": 79, "length_corr_m": 105.79, "class_corr": "mr"}
+== daily 4 dates: [{"date": "2026-10-18", "orbit": 35, "threshold": 0.55, "total": 18, "total_no_small": 17, "vlcc": 4, "suezmax": 3, "aframax": 3, "mr": 7, "small": 4, "masked_blobs": 186, "run_id": "gha-42499361981", "source": "tz12_frame_v2.1", "created_at": "2026-11-08T11:48:02.153722+00:00"}, {"date": "2026-10-24", "orbit": 35, "threshold": 0.55, "total": 18, "total_no_small": 17, "vlcc": 6, "suezmax": 2, "aframax": 3, "mr": 6, "small": 2, "masked_blobs": 196, "run_id": "gha-42499361981", "source": "tz12_frame_v2.1", "created_at": "2026-11-08T11:48:02.972668+00:00"}, {"date": "2026-10-30", "orbit": 35, "threshold": 0.55, "total": 18, "total_no_small": 17, "vlcc": 11, "suezmax": 1, "aframax": 2, "mr": 3, "small": 1, "masked_blobs": 194, "run_id": "gha-42499361981", "source": "tz12_frame_v2.1", "created_at": "2026-11-08T11:48:04.126787+00:00"}, {"date": "2026-11-05", "orbit": 35, "threshold": 0.55, "total": 17, "total_no_small": 16, "vlcc": 3, "suezmax": 3, "aframax": 3, "mr": 10, "small": 3, "masked_blobs": 174, "run_id": "gha-42499361981", "source": "tz12_frame_v2.1", "created_at": "2026-11-08T11:48:05.28687+00:00"}]
