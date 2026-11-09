@@ -320,6 +320,31 @@ def _v3_cache_path(date_str, orbit):
 
 _PU_EXHAUSTED = False  # set True on first 403; skip all further API calls
 
+
+def _git_commit_cache(npy_path, meta_path):
+    """In CI: commit and push a newly built bg cache so it survives runner eviction."""
+    if not os.environ.get("GITHUB_ACTIONS"):
+        return
+    import subprocess
+    try:
+        subprocess.run(["git", "config", "user.email", "actions@github.com"],
+                       check=True, capture_output=True)
+        subprocess.run(["git", "config", "user.name", "GitHub Actions"],
+                       check=True, capture_output=True)
+        subprocess.run(["git", "add", str(npy_path), str(meta_path)],
+                       check=True, capture_output=True)
+        r = subprocess.run(["git", "diff", "--cached", "--quiet"], capture_output=True)
+        if r.returncode == 0:
+            return  # nothing staged
+        subprocess.run(["git", "commit", "-m",
+                        f"data: bg cache {npy_path.name} [skip ci]"],
+                       check=True, capture_output=True)
+        subprocess.run(["git", "push"], check=True, capture_output=True)
+        print(f"    git: committed {npy_path.name}")
+    except Exception as e:
+        print(f"    WARNING: git commit cache failed: {e}")
+
+
 def load_or_build_bg(date_str, orbit):
     """
     Try ±24 months; if < BG_MIN_DATES scenes → try ±48 months.
@@ -371,6 +396,7 @@ def load_or_build_bg(date_str, orbit):
             json.dump({"orbit": orbit, "date": date_str, "n": len(stack),
                        "d0": d0, "d1": d1, "pct": BG_PCT, "window_days": window_days}, f)
         print(f"    bg saved: {npy.name}  ({len(stack)} scenes)")
+        _git_commit_cache(npy, meta_p)
         return bg, window_days
     # Both windows failed
     print(f"    no_background: cannot build bg for {date_str} orbit {orbit}")
