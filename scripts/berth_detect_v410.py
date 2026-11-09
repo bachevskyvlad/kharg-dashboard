@@ -296,7 +296,14 @@ def fetch_linear(scene_datetime):
     try:
         data = req.get_data()
     except Exception as e:
-        print(f"    fetch error: {e}")
+        msg = str(e)
+        if "ACCESS_INSUFFICIENT_PROCESSING_UNITS" in msg or (
+                "403" in msg and "Insufficient" in msg):
+            global _PU_EXHAUSTED
+            _PU_EXHAUSTED = True
+            print(f"    fetch error: PU exhausted")
+        else:
+            print(f"    fetch error: {e}")
         return None
     if not data or data[0] is None:
         return None
@@ -928,7 +935,19 @@ def process_date_orbit(date_str, orbit, corridor_masks, water_ring_masks,
     """
     print(f"\n[{date_str}  orbit={orbit}]")
 
-    scenes = catalog_search(date_str, date_str)
+    if _PU_EXHAUSTED:
+        print(f"  PU exhausted — skipping")
+        rows = build_no_bg_rows(date_str, orbit, None, run_id)
+        return [], rows, False
+
+    try:
+        scenes = catalog_search(date_str, date_str)
+    except PUExhaustedError:
+        global _PU_EXHAUSTED
+        _PU_EXHAUSTED = True
+        print(f"  PU exhausted on catalog — skipping remaining")
+        rows = build_no_bg_rows(date_str, orbit, None, run_id)
+        return [], rows, False
     orbit_sc = [s for s in scenes if s["rel_orbit"] == orbit]
     if not orbit_sc:
         print(f"  no scene for orbit {orbit} on {date_str}")
