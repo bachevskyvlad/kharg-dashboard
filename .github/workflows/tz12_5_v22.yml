@@ -25,6 +25,18 @@ jobs:
       SUPABASE_URL: https://yoekhkczwdeyauwarsyy.supabase.co
       SUPABASE_WRITE_KEY: sb_publishable_7j07_zzdqTGM1LXf7-o9Tg_JJRbJQSM
       RUN_ID: gha-${{ github.run_id }}
+      K_SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+      K_SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+      K_SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+      K_SUPABASE_SECRET_KEY: ${{ secrets.SUPABASE_SECRET_KEY }}
+      K_SB_SERVICE_KEY: ${{ secrets.SB_SERVICE_KEY }}
+      K_SB_SECRET_KEY: ${{ secrets.SB_SECRET_KEY }}
+      K_SERVICE_ROLE_KEY: ${{ secrets.SERVICE_ROLE_KEY }}
+      K_SUPABASE_ADMIN_KEY: ${{ secrets.SUPABASE_ADMIN_KEY }}
+      K_SUPABASE_SERVICE_ROLE: ${{ secrets.SUPABASE_SERVICE_ROLE }}
+      K_SUPABASE_SR_KEY: ${{ secrets.SUPABASE_SR_KEY }}
+      K_SUPABASE_WRITE_KEY: ${{ secrets.SUPABASE_WRITE_KEY }}
+      K_SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
     steps:
       - uses: actions/checkout@v4
         with: { ref: claude/bold-shannon-6c2b8c, path: dev }
@@ -45,6 +57,7 @@ jobs:
           rc=0
           case "$STAGE" in
             probe) python diagnostics/anchorage_v22/probe.py || rc=$? ;;
+            keyprobe) python diagnostics/anchorage_v22/keyprobe.py || rc=$? ;;
             *)     python diagnostics/anchorage_v22/v22.py $STAGE || rc=$? ;;
           esac
           git config user.name "github-actions[bot]"
