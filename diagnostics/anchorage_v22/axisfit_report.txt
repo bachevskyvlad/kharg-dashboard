@@ -1,0 +1,79 @@
+=== AXISFIT: PCA major-axis from patch_b64 (0 PU) ===
+Fetching blobs...
+blobs=4217 dates=325 optical_ref=['2026-10-12', '2026-10-18', '2026-10-24', '2026-10-30', '2026-11-05']
+optical_ref rows: [{"date": "2026-10-12", "vlcc": 6, "suezmax": 3, "aframax": 1, "mr": null, "total": null, "optical_dates": "10-13,10-15", "note": "MR \u043d\u0435\u043d\u0430\u0434\u0451\u0436\u0435\u043d (\u0441\u0434\u0432\u0438\u0433 \u0434\u0430\u0442)"}, {"date": "2026-10-18", "vlcc": 8, "suezmax": 6, "aframax": 0, "mr": 3, "total": 17, "optical_dates": "10-18", "note": null}, {"date": "2026-10-24", "vlcc": 9, "suezmax": 4, "aframax": 1, "mr": 2, "total": 16, "optical_dates": "10-23,10-25", "note": null}, {"date": "2026-10-30", "vlcc": 8, "suezmax": 5, "aframax": 1, "mr": 3, "total": 17, "optical_dates": "10-30,10-28", "note": "\u0441\u0432\u0435\u0440\u043a\u0430 \u043f\u043e \u043a\u0430\u0436\u0434\u043e\u043c\u0443 \u0441\u0443\u0434\u043d\u0443"}, {"date": "2026-11-05", "vlcc": 10, "suezmax": 2, "aframax": 1, "mr": 3, "total": 16, "optical_dates": "11-04,11-07", "note": "3 \u0441\u0443\u0434\u043d\u0430 \u043f\u043e\u0434 \u043e\u0431\u043b\u0430\u043a\u043e\u043c, \u00b11"}]
+Computing axis lengths...
+axis lengths done: 4217 blobs, 0 fallbacks to bbox
+axis/bbox ratio: min=0.18 p25=1.01 median=1.05 p75=1.13 max=1.36
+
+SWEEP axis: merge_m | k | sea_ref | Spearman | VLCC err (4 dates) | max VLCC err | Af/MR excess
+  150 m | k=  150 | ref=0.12 | rho=-0.086 | err=8 | max=4 | over=0 | merges=1
+  200 m | k=  150 | ref=0.12 | rho=-0.091 | err=8 | max=4 | over=0 | merges=25
+  150 m | k=  150 | ref=0.13 | rho=-0.092 | err=8 | max=4 | over=0 | merges=1
+  200 m | k=  150 | ref=0.13 | rho=-0.097 | err=8 | max=4 | over=0 | merges=25
+  250 m | k=  150 | ref=0.12 | rho=-0.102 | err=8 | max=4 | over=0 | merges=121
+  250 m | k=  150 | ref=0.13 | rho=-0.108 | err=8 | max=4 | over=0 | merges=121
+  150 m | k=  200 | ref=0.15 | rho=-0.110 | err=8 | max=4 | over=0 | merges=1
+  150 m | k=  250 | ref=0.15 | rho=-0.135 | err=8 | max=4 | over=0 | merges=1
+  best ignoring Spearman:
+  150 m | k=  400 | ref=0.12 | rho=-0.301 | err=8 | max=2 | over=1
+  200 m | k=  400 | ref=0.12 | rho=-0.306 | err=8 | max=2 | over=2
+  150 m | k=  550 | ref=0.15 | rho=-0.414 | err=7 | max=3 | over=0
+  150 m | k=  700 | ref=0.14 | rho=-0.582 | err=7 | max=3 | over=1
+  150 m | k=  550 | ref=0.12 | rho=-0.504 | err=7 | max=3 | over=2
+  best with k=0 (no sea correction):
+  250 m | k=    0 | ref=0.12 | rho=+0.014 | err=8 | max=5 | over=0 | merges=121
+  250 m | k=    0 | ref=0.13 | rho=+0.014 | err=8 | max=5 | over=0 | merges=121
+  250 m | k=    0 | ref=0.14 | rho=+0.014 | err=8 | max=5 | over=0 | merges=121
+  250 m | k=    0 | ref=0.15 | rho=+0.014 | err=8 | max=5 | over=0 | merges=121
+  250 m | k=    0 | ref=0.16 | rho=+0.014 | err=8 | max=5 | over=0 | merges=121
+
+FIT axis: merge_m=150, k_m_per_sea=150, sea_ref=0.12, Spearman=-0.086
+
+ACCEPTANCE axis vs anchorage_optical_ref — date: site now | after | optical
+  2026-10-12: now vlcc=5 suezmax=4 aframax=4 mr=5 total=18 | after vlcc=9 suezmax=4 aframax=2 mr=2 total=18 large=15 | optical vlcc=6 suezmax=3 aframax=1 mr=None total=None | merges=0
+      Aframax/MR <= optical+2: PASS; total 18->18 <= merges 0: PASS
+  2026-10-18: now vlcc=4 suezmax=3 aframax=3 mr=7 total=18 | after vlcc=9 suezmax=3 aframax=0 mr=5 total=18 large=12 | optical vlcc=8 suezmax=6 aframax=0 mr=3 total=17 | merges=0
+      VLCC ±1: PASS
+      Aframax/MR <= optical+2: PASS; total 18->18 <= merges 0: PASS
+  2026-10-24: now vlcc=6 suezmax=2 aframax=3 mr=6 total=18 | after vlcc=8 suezmax=3 aframax=3 mr=2 total=18 large=13 | optical vlcc=9 suezmax=4 aframax=1 mr=2 total=16 | merges=0
+      VLCC ±1: PASS
+      Aframax/MR <= optical+2: PASS; total 18->18 <= merges 0: PASS
+  2026-10-30: now vlcc=11 suezmax=1 aframax=2 mr=3 total=18 | after vlcc=12 suezmax=2 aframax=0 mr=3 total=18 large=14 | optical vlcc=8 suezmax=5 aframax=1 mr=3 total=17 | merges=0
+      VLCC ±1: FAIL
+      Aframax/MR <= optical+2: PASS; total 18->18 <= merges 0: PASS
+  2026-11-05: now vlcc=3 suezmax=3 aframax=3 mr=10 total=17 | after vlcc=8 suezmax=4 aframax=0 mr=3 total=17 large=12 | optical vlcc=10 suezmax=2 aframax=1 mr=3 total=16 | merges=0
+      VLCC ±1: FAIL
+      Aframax/MR <= optical+2: PASS; total 17->17 <= merges 0: PASS
+
+ACCEPTANCE OVERALL axis: FAIL  (dry run — nothing written)
+
+=== PER-BLOB 2026-10-30 (optical: V8 S5 A1 MR3 total17) ===
+  bbox_m | axis_m | delta | thr  | sea  | class_bbox -> class_axis |   lat    /   lon
+  bbox=   400 axis=   401 d=    +1= thr=0.550 sea=0.216     vlcc -> vlcc      29.2254/50.4708
+  bbox=   396 axis=   399 d=    +3↑ thr=0.550 sea=0.216     vlcc -> vlcc      29.2342/50.4051
+  bbox=   379 axis=   389 d=   +10↑ thr=0.550 sea=0.216     vlcc -> vlcc      29.1032/50.3116
+  bbox=   367 axis=   385 d=   +18↑ thr=0.550 sea=0.216     vlcc -> vlcc      29.3069/50.4018
+  bbox=   363 axis=   368 d=    +5↑ thr=0.550 sea=0.216     vlcc -> vlcc      29.2766/50.4579
+  bbox=   350 axis=   350 d=    +0= thr=0.550 sea=0.216     vlcc -> vlcc      29.2440/50.4361
+  bbox=   350 axis=   351 d=    +1↑ thr=0.550 sea=0.216     vlcc -> vlcc      29.1843/50.4047
+  bbox=   342 axis=   341 d=    -1= thr=0.550 sea=0.216     vlcc -> vlcc      29.3205/50.4669
+  bbox=   338 axis=   358 d=   +20↑ thr=0.550 sea=0.216     vlcc -> vlcc      29.1636/50.3719
+  bbox=   329 axis=   332 d=    +3↑ thr=0.550 sea=0.216     vlcc -> vlcc      29.3013/50.4843
+  bbox=   321 axis=   325 d=    +4↑ thr=0.550 sea=0.216     vlcc -> vlcc      29.3051/50.4568
+  bbox=   309 axis=   315 d=    +6↑ thr=0.550 sea=0.216     vlcc -> vlcc      29.0866/50.4835
+  bbox=   300 axis=   302 d=    +2↑ thr=0.550 sea=0.216     vlcc -> vlcc      29.2147/50.4369
+  bbox=   259 axis=   286 d=   +27↑ thr=0.550 sea=0.216  aframax -> suezmax   29.2813/50.3965
+  bbox=   183 axis=   219 d=   +36↑ thr=0.550 sea=0.216       mr -> mr        29.3031/50.3840
+  bbox=   163 axis=   173 d=   +10↑ thr=0.550 sea=0.216       mr -> mr        29.0821/50.3627
+  bbox=   125 axis=   128 d=    +3↑ thr=0.550 sea=0.216       mr -> mr        29.1388/50.4111
+  bbox=    67 axis=    69 d=    +2↑ thr=0.550 sea=0.216    small -> small     29.2508/50.3486
+  deltas: axis>bbox=15 axis<bbox=0 same=3
+
+Class counts 2026-10-30 (no sea correction, k=0):
+      vlcc: bbox=13 -> axis=13  =
+   suezmax: bbox= 0 -> axis= 1  ↑
+   aframax: bbox= 1 -> axis= 0  ↓
+        mr: bbox= 3 -> axis= 3  =
+     small: bbox= 1 -> axis= 1  =
+  optical: V8 S5 A1 MR3  total17
