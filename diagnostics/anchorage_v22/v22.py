@@ -121,21 +121,36 @@ def dryfit():
     P(f'  merge    : Spearman(VLCC, sea_p70) = {spear(merged, k0, r0):+.3f}, optical VLCC abs err = {opt_err(merged, k0, r0)}')
     P(f'  uncorrected k=0: Spearman = {spear(raw, 0, r0):+.3f}')
 
-    best = None
-    for k in np.arange(0, 2001, 20):
-        for r in np.arange(0.10, 0.301, 0.005):
-            s = spear(merged, k, r)
-            if not np.isfinite(s) or abs(s) >= 0.15:
-                continue
-            e = opt_err(merged, k, r)
-            key = (e, abs(s), abs(k - k0))
-            if best is None or key < best[0]:
-                best = (key, k, r, s)
-    if best is None:
-        P('\nFIT: no (k, sea_ref) gives |Spearman| < 0.15'); return
-    (_, k1, r1, s1) = best
-    P(f'\nFIT (merge on): k_m_per_sea={k1:.0f}, sea_ref={r1:.3f}, Spearman={s1:+.3f}, optical VLCC abs err={opt_err(merged, k1, r1)}')
-
+    acc_dates = ('2026-10-18', '2026-10-24', '2026-10-30', '2026-11-05')
+    def score(O, k, r):
+        ev = sum(abs(counts(O[d], k, r)['vlcc'] - int(ref[d]['vlcc'])) for d in acc_dates if d in O)
+        vmax = max(abs(counts(O[d], k, r)['vlcc'] - int(ref[d]['vlcc'])) for d in acc_dates if d in O)
+        over = sum(max(0, counts(O[d], k, r)[c] - int(ref[d][c]) - 2) for d in ref for c in ('aframax', 'mr')
+                   if d in O and ref[d][c] is not None)
+        return ev, vmax, over
+    P('\nSWEEP: merge_m | k | sea_ref | Spearman | VLCC abs err (4 dates) | max VLCC err | Aframax/MR excess over optical+2')
+    cands = []
+    for mm in (150, 200, 250):
+        O = {d: merge_date(by[d], mm) for d in dates}
+        nm = sum(len(by[d]) - len(O[d]) for d in dates)
+        for k in np.arange(0, 1501, 50):
+            for r in np.arange(0.12, 0.261, 0.01):
+                sp = spear(O, k, r)
+                ev, vmax, over = score(O, k, r)
+                cands.append((mm, float(k), float(r), float(sp), ev, vmax, over, nm))
+    ok_c = [c for c in cands if abs(c[3]) < 0.15]
+    for c in sorted(ok_c, key=lambda c: (c[5], c[4], c[6], abs(c[3])))[:8]:
+        P(f'  {c[0]:>3} m | k={c[1]:>5.0f} | ref={c[2]:.2f} | rho={c[3]:+.3f} | err={c[4]} | max={c[5]} | over={c[6]} | merges total={c[7]}')
+    P('  best ignoring the Spearman constraint:')
+    for c in sorted(cands, key=lambda c: (c[5], c[4], c[6]))[:5]:
+        P(f'  {c[0]:>3} m | k={c[1]:>5.0f} | ref={c[2]:.2f} | rho={c[3]:+.3f} | err={c[4]} | max={c[5]} | over={c[6]}')
+    pick = sorted(ok_c, key=lambda c: (c[5], c[4], c[6], abs(c[3])))[0] if ok_c else None
+    if pick is None:
+        P('\nFIT: nothing satisfies |Spearman| < 0.15'); return
+    merge_m, k1, r1, s1 = pick[0], pick[1], pick[2], pick[3]
+    merged = {d: merge_date(by[d], merge_m) for d in dates}
+    n_merges = {d: len(by[d]) - len(merged[d]) for d in dates}
+    P(f'\nFIT: merge_m={merge_m}, k_m_per_sea={k1:.0f}, sea_ref={r1:.2f}, Spearman={s1:+.3f}')
     P('\nACCEPTANCE vs anchorage_optical_ref — date: site now (anchorage_daily) | after | optical')
     ok = True
     for d in sorted(ref):
@@ -148,7 +163,7 @@ def dryfit():
             v_ok = abs(a['vlcc'] - int(o['vlcc'])) <= 1
             ok &= v_ok
             P(f'      VLCC ±1: {"PASS" if v_ok else "FAIL"}')
-        af_ok = a['aframax'] <= int(o['aframax']) + 2 and a['mr'] <= int(o['mr']) + 2
+        af_ok = (o['aframax'] is None or a['aframax'] <= int(o['aframax']) + 2) and (o['mr'] is None or a['mr'] <= int(o['mr']) + 2)
         tot_ok = abs(a['total'] - b['total']) <= n_merges.get(d, 0)
         ok &= af_ok and tot_ok
         P(f'      Aframax/MR <= optical+2: {"PASS" if af_ok else "FAIL"}; total change {b["total"]}->{a["total"]} '

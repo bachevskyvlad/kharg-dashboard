@@ -1,0 +1,7 @@
+{
+ "k_m_per_sea": 150,
+ "sea_ref": 0.26,
+ "merge_m": 150,
+ "spearman": -0.146,
+ "acceptance": "FAIL"
+}
