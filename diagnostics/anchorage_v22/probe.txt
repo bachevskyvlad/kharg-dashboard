@@ -1,0 +1,16 @@
+== anchorage_calib: http=200 count=*/0
+   []
+== anchorage_optical_ref: http=200 count=*/0
+   []
+== anchorage_blobs_corrected: http=206 count=0-2/4217
+   columns: ['id', 'date', 'relative_orbit', 'lat', 'lon', 'x0', 'y0', 'patch_w', 'patch_h', 'res_m', 'patch_b64', 'peak_norm', 'sea_p70', 'threshold', 'area_px', 'length_bbox_m', 'run_id', 'source', 'created_at', 'length_corr_m', 'class_corr']
+   {"id": 2, "date": "2017-02-18", "relative_orbit": null, "lat": 29.316545, "lon": 50.362851, "x0": 2627, "y0": 343, "patch_w": 30, "patch_h": 48, "res_m": 4.17, "patch_b64": "iVBORw0KGgoAAAANSUhEUgAAAB4AAAAwCAAAAAAj…", "peak_norm": 0.8504, "sea_p70": 0.3454, "threshold": 0.55, "area_px": 256, "length_bbox_m": 133, "run_id": "gha-42519645064", "source": "sentinelhub_v2.1", "created_at": "2026-11-08T20:24:33.95349+00:00", "length_corr_m": -22.476, "class_corr": "small"}
+   {"id": 3, "date": "2017-02-18", "relative_orbit": null, "lat": 29.310597, "lon": 50.459537, "x0": 4855, "y0": 471, "patch_w": 84, "patch_h": 97, "res_m": 4.17, "patch_b64": "iVBORw0KGgoAAAANSUhEUgAAAFQAAABhCAAAAABt…", "peak_norm": 0.9996, "sea_p70": 0.3454, "threshold": 0.55, "area_px": 1159, "length_bbox_m": 338, "run_id": "gha-42519645064", "source": "sentinelhub_v2.1", "created_at": "2026-11-08T20:24:33.95349+00:00", "length_corr_m": 182.524, "class_corr": "mr"}
+   {"id": 4, "date": "2017-02-18", "relative_orbit": null, "lat": 29.305524, "lon": 50.376702, "x0": 2951, "y0": 642, "patch_w": 27, "patch_h": 37, "res_m": 4.17, "patch_b64": "iVBORw0KGgoAAAANSUhEUgAAABsAAAAlCAAAAACW…", "peak_norm": 0.7499, "sea_p70": 0.3454, "threshold": 0.55, "area_px": 147, "length_bbox_m": 88, "run_id": "gha-42519645064", "source": "sentinelhub_v2.1", "created_at": "2026-11-08T20:24:33.95349+00:00", "length_corr_m": -67.476, "class_corr": "small"}
+== anchorage_blobs: http=206 count=0-0/4217
+   columns: ['id', 'date', 'relative_orbit', 'lat', 'lon', 'x0', 'y0', 'patch_w', 'patch_h', 'res_m', 'patch_b64', 'peak_norm', 'sea_p70', 'threshold', 'area_px', 'length_bbox_m', 'run_id', 'source', 'created_at']
+   {"id": 2, "date": "2017-02-18", "relative_orbit": null, "lat": 29.316545, "lon": 50.362851, "x0": 2627, "y0": 343, "patch_w": 30, "patch_h": 48, "res_m": 4.17, "patch_b64": "iVBORw0KGgoAAAANSUhEUgAAAB4AAAAwCAAAAAAj…", "peak_norm": 0.8504, "sea_p70": 0.3454, "threshold": 0.55, "area_px": 256, "length_bbox_m": 133, "run_id": "gha-42519645064", "source": "sentinelhub_v2.1", "created_at": "2026-11-08T20:24:33.95349+00:00"}
+== anchorage_daily: http=206 count=0-1/325
+   columns: ['date', 'orbit', 'threshold', 'total', 'total_no_small', 'vlcc', 'suezmax', 'aframax', 'mr', 'small', 'masked_blobs', 'run_id', 'source', 'created_at']
+   {"date": "2017-03-26", "orbit": 35, "threshold": 0.55, "total": 11, "total_no_small": 11, "vlcc": 4, "suezmax": 2, "aframax": 1, "mr": 4, "small": 0, "masked_blobs": 245, "run_id": "gha-42499361981", "source": "tz12_frame_v2.1", "created_at": "2026-11-08T11:40:58.313027+00:00"}
+   {"date": "2017-04-07", "orbit": 35, "threshold": 0.55, "total": 15, "total_no_small": 13, "vlcc": 2, "suezmax": 2, "aframax": 1, "mr": 13, "small": 3, "masked_blobs": 205, "run_id": "gha-42499361981", "source": "tz12_frame_v2.1", "created_at": "2026-11-08T11:41:00.379583+00:00"}
