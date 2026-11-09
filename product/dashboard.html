@@ -2589,13 +2589,13 @@ const AQ_LABELS = { vlcc:'VLCC', suezmax:'Suezmax', aframax:'Aframax', mr:'MR', 
 // Typical full cargo per class, million barrels (crude): VLCC ~2.0, Suezmax ~1.0,
 // Aframax ~0.7, MR/Panamax ~0.35, small (<100 m) ~0.05.
 const AQ_CAP_MBBL = { vlcc:2.0, suezmax:1.0, aframax:0.7, mr:0.35, small:0.05 };
-// Change of the queue's cargo capacity vs the previous SAR pass, over the selected classes:
-// sum_k (n_k(t) - n_k(t-1)) * cap_k. Negative = tankers left the anchorage since the last pass.
+// Departed cargo: sum_k max(0, n_k(t-1) - n_k(t)) * cap_k.
+// Only ships that left since the previous pass count; arrivals and stable counts contribute 0.
 function aqDeltaMbbl(r) {
   const i = _aqRecords.indexOf(r);
   if (i <= 0) return null;
   const p = _aqRecords[i - 1];
-  return aqLayers().reduce((s, k) => s + ((r[k] || 0) - (p[k] || 0)) * AQ_CAP_MBBL[k], 0);
+  return aqLayers().reduce((s, k) => s + Math.max(0, (p[k] || 0) - (r[k] || 0)) * AQ_CAP_MBBL[k], 0);
 }
 // Money: Δ cargo (Mbbl) × (Dubai + spread) $/bbl = $M. Spread shares the "vs Dubai"
 // slider of the revenue card (−15…+15 $/bbl) when present on the page.
@@ -2612,10 +2612,10 @@ function aqNetPrice() { return _aqDubai === null ? null : _aqDubai + aqSpread();
 function aqFmtUsd(mbbl) {
   const p = aqNetPrice();
   if (mbbl === null || p === null) return '—';
-  const v = mbbl * p;                                  // $ million
-  const c = v < 0 ? '#f97316' : v > 0 ? '#60a5fa' : 'var(--muted)';
-  const a = Math.abs(v), t = a >= 1000 ? '$' + (a / 1000).toFixed(2) + 'B' : '$' + a.toFixed(0) + 'M';
-  return `<span style="color:${c}">${v > 0 ? '+' : v < 0 ? '−' : ''}${t}</span>`;
+  const v = mbbl * p;                                  // $ million, always ≥ 0
+  const c = v > 0 ? '#60a5fa' : 'var(--muted)';
+  const a = v, t = a >= 1000 ? '$' + (a / 1000).toFixed(2) + 'B' : '+$' + a.toFixed(0) + 'M';
+  return `<span style="color:${c}">${v > 0 ? t : '$0M'}</span>`;
 }
 function aqSpreadLabel(v) { return (v >= 0 ? '+$' + v : '-$' + Math.abs(v)) + '/bbl'; }
 function aqOnSpread(v) {
@@ -2644,8 +2644,8 @@ function aqPriceControls(table) {
 }
 function aqFmtDelta(v) {
   if (v === null) return '—';
-  const c = v < 0 ? '#f97316' : v > 0 ? '#60a5fa' : 'var(--muted)';
-  return `<span style="color:${c}">${v > 0 ? '+' : v < 0 ? '−' : ''}${Math.abs(v).toFixed(2)}</span>`;
+  const c = v > 0 ? '#60a5fa' : 'var(--muted)';
+  return `<span style="color:${c}">${v > 0 ? '+' + v.toFixed(2) : '0'}</span>`;
 }
 const AQ_ALL    = ['small','mr','aframax','suezmax','vlcc'];          // stack order bottom -> top
 const AQ_DEFAULT = { vlcc:true, suezmax:true, aframax:true, mr:true, small:false };
@@ -2750,8 +2750,8 @@ function aqDraw() {
       tip.innerHTML = `<div style="color:#94a3b8;margin-bottom:4px">${r.date}</div>` +
         [...aqLayers()].reverse().map(k => `<div style="display:flex;align-items:center;gap:6px;margin-bottom:2px"><span style="width:8px;height:8px;background:${AQ_COLORS[k]};display:inline-block"></span>${AQ_LABELS[k]}: <b>${r[k] ?? 0}</b></div>`).join('') +
         `<div style="border-top:1px solid rgba(255,255,255,0.08);margin-top:4px;padding-top:4px">Total${aqIsDefault() ? '' : ' (selected)'}: <b>${aqSum(r)}</b></div>` +
-        `<div>Δ cargo vs prev pass: <b>${aqFmtDelta(aqDeltaMbbl(r))}</b> Mbbl</div>` +
-        `<div>Δ value: <b>${aqFmtUsd(aqDeltaMbbl(r))}</b>${aqNetPrice() === null ? '' : ' @ $' + aqNetPrice().toFixed(1) + '/bbl'}</div>`;
+        `<div>Departed cargo: <b>${aqFmtDelta(aqDeltaMbbl(r))}</b> Mbbl</div>` +
+        `<div>Departed value: <b>${aqFmtUsd(aqDeltaMbbl(r))}</b>${aqNetPrice() === null ? '' : ' @ $' + aqNetPrice().toFixed(1) + '/bbl'}</div>`;
       const ctx2 = canvas.getContext('2d');
       const dpr2 = window.devicePixelRatio || 1;
       ctx2.setTransform(dpr2, 0, 0, dpr2, 0, 0);
@@ -2796,7 +2796,7 @@ function aqRenderKpisAndTable() {
       <th style="text-align:left;${th}">${table._aqLbl.dateLbl}</th>` +
       cols.map(k => `<th style="${th}">${AQ_LABELS[k]}</th>`).join('') +
       `<th style="${th}">${table._aqLbl.totLbl}${aqIsDefault() ? '' : ' (selected)'}</th>` +
-      `<th style="${th}" title="Change of the anchored fleet's cargo capacity vs the previous SAR pass, million barrels, selected classes only. Per-ship capacity: VLCC 2.0, Suezmax 1.0, Aframax 0.7, MR 0.35, Small 0.05 Mbbl. Negative = tankers left since the last pass (net of arrivals); not a measured export volume.">Δ cargo, Mbbl ⓘ</th>` +
+      `<th style="${th}" title="Cargo of ships that departed since the previous SAR pass, million barrels. Only departures count — arrivals and unchanged counts contribute 0. Per-ship capacity: VLCC 2.0, Suezmax 1.0, Aframax 0.7, MR 0.35, Small 0.05 Mbbl. Not a measured export volume.">Departed cargo, Mbbl ⓘ</th>` +
       `<th style="${th}" title="Δ cargo × (Dubai price + spread from the 'vs Dubai' slider). Rough value estimate; actual deal terms are unknown.">Δ value ⓘ</th></tr>`;
     const tbody = document.getElementById('aq-table-body');
     const rows = [..._aqRecords].reverse().slice(0, 52);
