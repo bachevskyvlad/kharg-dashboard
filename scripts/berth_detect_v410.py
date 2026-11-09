@@ -83,6 +83,7 @@ BG_PCT             = 20
 BG_WINDOW_DAYS_1   = 365 * 2    # ±24 months (Change 1)
 BG_WINDOW_DAYS_2   = 365 * 4    # ±48 months fallback
 BG_MIN_DATES       = 10
+BG_MAX_SCENES      = 25         # cap stack; evenly subsample if more
 STATIC_MIN_DATES   = 8          # Change 2: static if seen ≥8 dates
 STATIC_ROUND_M     = 50         # group by round-to-50m center
 
@@ -377,6 +378,9 @@ def load_or_build_bg(date_str, orbit):
             _PU_EXHAUSTED = True
             return None, None
         orbit_sc = [s for s in scenes if s["rel_orbit"] == orbit]
+        if len(orbit_sc) > BG_MAX_SCENES:
+            step = len(orbit_sc) / BG_MAX_SCENES
+            orbit_sc = [orbit_sc[int(i * step)] for i in range(BG_MAX_SCENES)]
         print(f"    bg build orbit {orbit} ±{window_days//365}yr: {len(orbit_sc)} scenes")
         if len(orbit_sc) < BG_MIN_DATES:
             print(f"    insufficient scenes ({len(orbit_sc)} < {BG_MIN_DATES}) — trying wider window")
