@@ -69,6 +69,22 @@ jobs:
           path: diagnostics/berth_v4/contact_sheet/
           retention-days: 90
 
+      - name: Build contact sheet v3
+        if: always()
+        run: python -u scripts/berth_contact_sheet_v3.py
+        env:
+          CLIENT_ID:        ${{ secrets.CLIENT_ID }}
+          CLIENT_SECRET:    ${{ secrets.CLIENT_SECRET }}
+          PYTHONUNBUFFERED: "1"
+
+      - name: Upload contact sheet v3
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: berth_contact_sheet_v3
+          path: diagnostics/berth_v4/contact_sheet_v3/
+          retention-days: 90
+
       - name: Run history (Step 2 — full 2017→today, both orbits)
         if: steps.validation.outcome == 'success' && github.event.inputs.contact_sheet_only != 'yes'
         run: |
@@ -95,6 +111,8 @@ jobs:
           git add diagnostics/berth_v410/ || true
           git add diagnostics/berth_history/ || true
           git add diagnostics/berth_v4/contact_sheet/ || true
+          git add diagnostics/berth_v4/bg_v3/ || true
+          git add diagnostics/berth_v4/contact_sheet_v3/ || true
           git diff --staged --quiet && echo "nothing to commit" || git commit -m "data: berth_v410 results [skip ci]"
           git pull --rebase origin claude/oilradar-dashboard-iran-zchdva
           git push origin claude/oilradar-dashboard-iran-zchdva
