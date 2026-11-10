@@ -7,6 +7,10 @@ on:
         description: "Run ROI diagnostics for 4 missed sea_island dates (yes/no)"
         required: false
         default: "no"
+      contact_sheet_only:
+        description: "Skip validation, only build contact sheet (yes/no)"
+        required: false
+        default: "no"
 
 jobs:
   berth_v410:
@@ -22,7 +26,7 @@ jobs:
         run: pip install sentinelhub scipy numpy matplotlib shapely -q
 
       - name: Run ROI diagnostics (sea_island mismatches)
-        if: github.event.inputs.roi_diag == 'yes'
+        if: github.event.inputs.roi_diag == 'yes' && github.event.inputs.contact_sheet_only != 'yes'
         run: python -u scripts/berth_diag_roi.py
         env:
           CLIENT_ID:        ${{ secrets.CLIENT_ID }}
@@ -31,6 +35,7 @@ jobs:
 
       - name: Run validation (Step 1 — 40 dates)
         id: validation
+        if: github.event.inputs.contact_sheet_only != 'yes'
         run: |
           python -u scripts/berth_detect_v410.py --step validation
           echo "exit_code=$?" >> $GITHUB_OUTPUT
@@ -41,6 +46,7 @@ jobs:
           PYTHONUNBUFFERED:   "1"
 
       - name: Upload validation results
+        if: github.event.inputs.contact_sheet_only != 'yes'
         uses: actions/upload-artifact@v4
         with:
           name: berth_v410_validation
@@ -64,7 +70,7 @@ jobs:
           retention-days: 90
 
       - name: Run history (Step 2 — full 2017→today, both orbits)
-        if: steps.validation.outcome == 'success'
+        if: steps.validation.outcome == 'success' && github.event.inputs.contact_sheet_only != 'yes'
         run: |
           python -u scripts/berth_detect_v410.py --step history --resume
         env:
@@ -73,7 +79,7 @@ jobs:
           PYTHONUNBUFFERED:   "1"
 
       - name: Upload history results
-        if: steps.validation.outcome == 'success'
+        if: steps.validation.outcome == 'success' && github.event.inputs.contact_sheet_only != 'yes'
         uses: actions/upload-artifact@v4
         with:
           name: berth_history
