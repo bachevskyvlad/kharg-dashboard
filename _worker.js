@@ -11,7 +11,6 @@ import * as apiStorageDailyFn from './functions/api/v1/storage/daily.js';
 import * as apiStorageWeeklyFn from './functions/api/v1/storage/weekly.js';
 import * as apiStorageMetricsFn from './functions/api/v1/storage/metrics.js';
 import * as apiTanksFn from './functions/api/v1/tanks.js';
-import * as apiHormuzQueueFn from './functions/api/v1/hormuz-queue.js';
 
 export default {
   async fetch(request, env, ctx) {
@@ -33,7 +32,6 @@ export default {
     if (path === '/api/v1/storage/weekly')    return apiStorageWeeklyFn.onRequest(context);
     if (path === '/api/v1/storage/metrics')   return apiStorageMetricsFn.onRequest(context);
     if (path === '/api/v1/tanks')             return apiTanksFn.onRequest(context);
-    if (path === '/api/v1/hormuz-queue')      return apiHormuzQueueFn.onRequest(context);
 
     const ua = request.headers.get('User-Agent') || '';
     const forceDesktop = url.searchParams.get('desktop') === '1';
@@ -60,7 +58,6 @@ export default {
         '/bosphorus':     '/marketing/mobile-bosphorus.html',
         '/dardanelles':   '/marketing/mobile-dardanelles.html',
         '/bab-el-mandeb':  '/marketing/mobile-bab-el-mandeb.html',
-        '/hormuz-queue':   '/marketing/hormuz-queue.html',
         '/zh':            '/marketing/zh-index.html',
         '/zh/monitor':    '/marketing/zh-monitor.html',
         '/zh/gas-storage':'/marketing/zh-gas-storage.html',
@@ -87,7 +84,6 @@ export default {
       '/bosphorus':     '/marketing/bosphorus.html',
       '/dardanelles':   '/marketing/dardanelles.html',
       '/bab-el-mandeb':  '/marketing/bab-el-mandeb.html',
-      '/hormuz-queue':   '/marketing/hormuz-queue.html',
       '/dashboard':      '/product/dashboard.html',
       '/dashboard.html':'/product/dashboard.html',
       '/app':           '/product/index.html',

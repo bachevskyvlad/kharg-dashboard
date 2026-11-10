@@ -494,6 +494,9 @@
         <div class="nav-item" onclick="showSection('anchorage')">
             <span class="nav-icon">⚓</span> Tanker Queue
         </div>
+        <div class="nav-item" onclick="showSection('hormuz')">
+            <span class="nav-icon">🛰</span> Hormuz Strait
+        </div>
         <hr class="nav-divider">
         <div class="nav-group-label">Docs</div>
         <div class="nav-item" onclick="showSection('api')">
@@ -520,6 +523,7 @@
         <div class="nav-item" id="mob-nav-map" onclick="showSection('map');closeMobMenu()"><span class="nav-icon">⊞</span> Per-Tank Map</div>
         <div class="nav-item" id="mob-nav-upstream" onclick="showSection('upstream');closeMobMenu()"><span class="nav-icon">⬆</span> Upstream</div>
         <div class="nav-item" id="mob-nav-anchorage" onclick="showSection('anchorage');closeMobMenu()"><span class="nav-icon">⚓</span> Tanker Queue</div>
+        <div class="nav-item" id="mob-nav-hormuz" onclick="showSection('hormuz');closeMobMenu()"><span class="nav-icon">🛰</span> Hormuz Strait</div>
         <div class="nav-item" id="mob-nav-api" onclick="showSection('api');closeMobMenu()"><span class="nav-icon">⌥</span> API</div>
         <div class="mob-dropdown-footer">
             <button class="logout-btn" onclick="logout()">Logout</button>
@@ -1098,6 +1102,99 @@
         </div>
     </div>
 
+    <!-- ── Hormuz Strait Traffic ──────────────────────────────────────── -->
+    <div class="section" id="sec-hormuz">
+        <div class="sec-title" style="margin-bottom:0.4rem">Hormuz Strait Traffic — SAR Larak Anchorage · 2024–Present</div>
+
+        <!-- KPI row -->
+        <div style="background:var(--surface);border:1px solid var(--border);padding:1.25rem 1.5rem 1rem;margin-bottom:1.25rem;">
+            <div style="display:flex;gap:2rem;flex-wrap:wrap;">
+                <div>
+                    <div style="font-size:0.65rem;letter-spacing:1px;text-transform:uppercase;color:var(--muted);margin-bottom:0.25rem">Large Ships On-Scene</div>
+                    <div style="font-size:2rem;font-weight:700;color:#f59e0b;font-family:'Space Grotesk',sans-serif" id="hz-large">—</div>
+                    <div style="font-size:0.7rem;color:var(--muted)">avg last week (≥250 m)</div>
+                </div>
+                <div>
+                    <div style="font-size:0.65rem;letter-spacing:1px;text-transform:uppercase;color:var(--muted);margin-bottom:0.25rem">Departure Rate</div>
+                    <div style="font-size:2rem;font-weight:700;color:#ef4444;font-family:'Space Grotesk',sans-serif" id="hz-gpd">—</div>
+                    <div style="font-size:0.7rem;color:var(--muted)">ships/day leaving</div>
+                </div>
+                <div>
+                    <div style="font-size:0.65rem;letter-spacing:1px;text-transform:uppercase;color:var(--muted);margin-bottom:0.25rem">Est. Dwell Time</div>
+                    <div style="font-size:2rem;font-weight:700;color:#a78bfa;font-family:'Space Grotesk',sans-serif" id="hz-dwell">—</div>
+                    <div style="font-size:0.7rem;color:var(--muted)">days on-scene</div>
+                </div>
+                <div>
+                    <div style="font-size:0.65rem;letter-spacing:1px;text-transform:uppercase;color:var(--muted);margin-bottom:0.25rem">Stay-Rate</div>
+                    <div style="font-size:2rem;font-weight:700;color:#38bdf8;font-family:'Space Grotesk',sans-serif" id="hz-stay">—</div>
+                    <div style="font-size:0.7rem;color:var(--muted)" id="hz-updated">% large ships persisting</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Chart A: Large ships on-scene -->
+        <div style="background:var(--surface);border:1px solid var(--border);padding:1.25rem 1.5rem 1rem;margin-bottom:1.25rem;">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;flex-wrap:wrap;gap:0.5rem;">
+                <div>
+                    <div style="font-size:0.7rem;letter-spacing:1px;text-transform:uppercase;color:var(--accent)">Ships On-Scene</div>
+                    <div style="font-size:0.65rem;color:var(--muted);margin-top:0.2rem">Large (≥250 m) vs all detected · weekly avg</div>
+                </div>
+                <div style="display:flex;gap:4px" id="hz-range-a">
+                    <button class="aq-rbtn" data-r="3m">3M</button>
+                    <button class="aq-rbtn aq-rbtn-active" data-r="6m">6M</button>
+                    <button class="aq-rbtn" data-r="1y">1Y</button>
+                    <button class="aq-rbtn" data-r="all">ALL</button>
+                </div>
+            </div>
+            <canvas id="hzChartA" style="width:100%;display:block;height:240px"></canvas>
+            <div style="display:flex;gap:16px;flex-wrap:wrap;margin-top:10px;">
+                <span style="display:flex;align-items:center;gap:6px;font-size:0.68rem;color:var(--muted);font-family:monospace"><span style="width:12px;height:12px;border-radius:50%;background:#f59e0b;flex-shrink:0"></span>Large ships (≥250 m)</span>
+                <span style="display:flex;align-items:center;gap:6px;font-size:0.68rem;color:var(--muted);font-family:monospace"><span style="width:18px;height:2px;background:rgba(148,163,184,0.4);flex-shrink:0"></span>All ships</span>
+            </div>
+        </div>
+
+        <!-- Chart B: Departure rate -->
+        <div style="background:var(--surface);border:1px solid var(--border);padding:1.25rem 1.5rem 1rem;margin-bottom:1.25rem;">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;flex-wrap:wrap;gap:0.5rem;">
+                <div>
+                    <div style="font-size:0.7rem;letter-spacing:1px;text-transform:uppercase;color:var(--accent)">Departure Rate</div>
+                    <div style="font-size:0.65rem;color:var(--muted);margin-top:0.2rem">Ships/day leaving Larak staging area · SAR tracking v1.1</div>
+                </div>
+                <div style="display:flex;gap:4px" id="hz-range-b">
+                    <button class="aq-rbtn" data-r="3m">3M</button>
+                    <button class="aq-rbtn aq-rbtn-active" data-r="6m">6M</button>
+                    <button class="aq-rbtn" data-r="1y">1Y</button>
+                    <button class="aq-rbtn" data-r="all">ALL</button>
+                </div>
+            </div>
+            <canvas id="hzChartB" style="width:100%;display:block;height:200px"></canvas>
+        </div>
+
+        <!-- Chart C: Dwell time -->
+        <div style="background:var(--surface);border:1px solid var(--border);padding:1.25rem 1.5rem 1rem;margin-bottom:1.25rem;">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;flex-wrap:wrap;gap:0.5rem;">
+                <div>
+                    <div style="font-size:0.7rem;letter-spacing:1px;text-transform:uppercase;color:var(--accent)">Dwell Time & Stay Rate</div>
+                    <div style="font-size:0.65rem;color:var(--muted);margin-top:0.2rem">Estimated days on-scene + fraction of large ships persisting week-on-week</div>
+                </div>
+                <div style="display:flex;gap:4px" id="hz-range-c">
+                    <button class="aq-rbtn" data-r="3m">3M</button>
+                    <button class="aq-rbtn aq-rbtn-active" data-r="6m">6M</button>
+                    <button class="aq-rbtn" data-r="1y">1Y</button>
+                    <button class="aq-rbtn" data-r="all">ALL</button>
+                </div>
+            </div>
+            <canvas id="hzChartC" style="width:100%;display:block;height:200px"></canvas>
+            <div style="display:flex;gap:16px;flex-wrap:wrap;margin-top:10px;">
+                <span style="display:flex;align-items:center;gap:6px;font-size:0.68rem;color:var(--muted);font-family:monospace"><span style="width:12px;height:12px;border-radius:50%;background:#a78bfa;flex-shrink:0"></span>Dwell days</span>
+                <span style="display:flex;align-items:center;gap:6px;font-size:0.68rem;color:var(--muted);font-family:monospace"><span style="width:18px;height:0;border-top:2px dashed #38bdf8;flex-shrink:0"></span>Stay rate</span>
+            </div>
+        </div>
+
+        <div style="font-size:0.65rem;color:var(--dim);font-family:monospace;padding:0.5rem 0">
+            Source: Sentinel-1 SAR · Microsoft Planetary Computer · orbits 57 &amp; 166 · AOI: 56.30–56.60°E, 26.84–27.03°N
+        </div>
+    </div>
 
 </div><!-- /main -->
 
@@ -1359,6 +1456,7 @@ function showSection(id, callerEl) {
     if (mobNav) mobNav.classList.add('active');
     if (id === 'map' && !window._mapInited) { initTankMap(); window._mapInited = true; }
     if (id === 'anchorage') { initAnchorage(); }
+    if (id === 'hormuz') { initHormuz(); }
     if (id === 'upstream' && !window._upstreamInited) { window._upstreamInited = true; loadUpstream(); }
 }
 
@@ -2856,6 +2954,203 @@ async function initAnchorage() {
   _aqInited = true;
   aqDraw();
 }
+
+// ── Hormuz Strait Traffic ─────────────────────────────────────────────────
+const SB_URL_HZ = 'https://yoekhkczwdeyauwarsyy.supabase.co';
+const SB_KEY_HZ = 'sb_publishable_7j07_zzdqTGM1LXf7-o9Tg_JJRbJQSM';
+let _hzRows = [], _hzInited = false;
+
+function hzFilter(months) {
+    if (!months) return _hzRows;
+    const cut = new Date(); cut.setMonth(cut.getMonth() - months);
+    const cs = cut.toISOString().slice(0,10);
+    return _hzRows.filter(r => r.week >= cs);
+}
+
+function hzNiceMax(v, step) {
+    if (!v || v <= 0) return step;
+    return Math.ceil(v / step) * step;
+}
+
+function hzDrawLine(ctx, w, h, pad, labels, series) {
+    // series: [{vals, color, dashed}]
+    if (!labels.length) return;
+    const allVals = series.flatMap(s => s.vals.filter(v => v != null));
+    const yMax = hzNiceMax(Math.max(...allVals, 0), series[0].step || 1);
+    const x0 = pad.l, x1 = w - pad.r, y0 = pad.t, y1 = h - pad.b;
+    const xw = x1 - x0, yh = y1 - y0;
+    const xStep = xw / Math.max(labels.length - 1, 1);
+
+    ctx.clearRect(0, 0, w, h);
+
+    // grid
+    ctx.strokeStyle = 'rgba(255,255,255,0.05)'; ctx.lineWidth = 1;
+    for (let i = 0; i <= 4; i++) {
+        const y = y1 - (i / 4) * yh;
+        ctx.beginPath(); ctx.moveTo(x0, y); ctx.lineTo(x1, y); ctx.stroke();
+        ctx.fillStyle = 'rgba(100,116,139,0.8)';
+        ctx.font = '10px monospace'; ctx.textAlign = 'right';
+        ctx.fillText((yMax * i / 4).toFixed(yMax < 2 ? 2 : 1), x0 - 4, y + 3);
+    }
+
+    // x labels — show ~6
+    const step = Math.max(1, Math.round(labels.length / 6));
+    ctx.fillStyle = 'rgba(100,116,139,0.8)'; ctx.font = '10px monospace'; ctx.textAlign = 'center';
+    labels.forEach((lbl, i) => {
+        if (i % step !== 0 && i !== labels.length - 1) return;
+        const x = x0 + i * xStep;
+        ctx.fillText(lbl.slice(2, 7), x, y1 + 14);
+    });
+
+    // lines
+    series.forEach(s => {
+        ctx.save();
+        ctx.strokeStyle = s.color; ctx.lineWidth = s.dashed ? 1.5 : 2;
+        if (s.dashed) ctx.setLineDash([4, 3]);
+        ctx.beginPath();
+        let started = false;
+        s.vals.forEach((v, i) => {
+            if (v == null) { started = false; return; }
+            const x = x0 + i * xStep;
+            const y = y1 - (v / yMax) * yh;
+            if (!started) { ctx.moveTo(x, y); started = true; } else ctx.lineTo(x, y);
+        });
+        ctx.stroke(); ctx.restore();
+
+        // fill under first series
+        if (s.fill) {
+            ctx.save(); ctx.globalAlpha = 0.08;
+            ctx.fillStyle = s.color;
+            ctx.beginPath();
+            let fx0 = x0, lastY = y1;
+            s.vals.forEach((v, i) => {
+                const x = x0 + i * xStep;
+                const y = v != null ? y1 - (v / yMax) * yh : y1;
+                if (i === 0) { ctx.moveTo(x, y); fx0 = x; }
+                else ctx.lineTo(x, y);
+                lastY = y;
+            });
+            ctx.lineTo(x0 + (s.vals.length - 1) * xStep, y1);
+            ctx.lineTo(fx0, y1); ctx.closePath(); ctx.fill(); ctx.restore();
+        }
+    });
+}
+
+function hzDrawBar(ctx, w, h, pad, labels, vals, color) {
+    if (!labels.length) return;
+    const yMax = hzNiceMax(Math.max(...vals.filter(v => v != null), 0), 0.5);
+    const x0 = pad.l, x1 = w - pad.r, y0 = pad.t, y1 = h - pad.b;
+    const xw = x1 - x0, yh = y1 - y0;
+    const barW = Math.max(2, xw / labels.length - 2);
+
+    ctx.clearRect(0, 0, w, h);
+    ctx.strokeStyle = 'rgba(255,255,255,0.05)'; ctx.lineWidth = 1;
+    for (let i = 0; i <= 4; i++) {
+        const y = y1 - (i / 4) * yh;
+        ctx.beginPath(); ctx.moveTo(x0, y); ctx.lineTo(x1, y); ctx.stroke();
+        ctx.fillStyle = 'rgba(100,116,139,0.8)'; ctx.font = '10px monospace'; ctx.textAlign = 'right';
+        ctx.fillText((yMax * i / 4).toFixed(2), x0 - 4, y + 3);
+    }
+    const step = Math.max(1, Math.round(labels.length / 6));
+    ctx.fillStyle = 'rgba(100,116,139,0.8)'; ctx.font = '10px monospace'; ctx.textAlign = 'center';
+    labels.forEach((lbl, i) => {
+        if (i % step !== 0 && i !== labels.length - 1) return;
+        ctx.fillText(lbl.slice(2,7), x0 + i * (xw / labels.length) + barW / 2, y1 + 14);
+    });
+    vals.forEach((v, i) => {
+        if (v == null) return;
+        const x = x0 + i * (xw / labels.length);
+        const bh = (v / yMax) * yh;
+        ctx.fillStyle = color + 'cc';
+        ctx.fillRect(x, y1 - bh, barW, bh);
+    });
+}
+
+function hzRedrawAll() {
+    ['a','b','c'].forEach(k => hzRedraw(k, hzCurrentRange(k)));
+}
+
+const _hzRange = {a:'6m', b:'6m', c:'6m'};
+function hzCurrentRange(k) { return _hzRange[k]; }
+
+function hzRedraw(k, r) {
+    _hzRange[k] = r;
+    document.querySelectorAll(`#hz-range-${k} .aq-rbtn`).forEach(b => {
+        b.classList.toggle('aq-rbtn-active', b.dataset.r === r);
+    });
+    const months = r === 'all' ? null : r === '1y' ? 12 : r === '6m' ? 6 : 3;
+    const rows = hzFilter(months);
+    const labels = rows.map(r => r.week);
+    const PAD = {l:42, r:16, t:12, b:22};
+
+    if (k === 'a') {
+        const c = document.getElementById('hzChartA');
+        const ctx = c.getContext('2d');
+        const dpr = window.devicePixelRatio || 1;
+        c.width = c.offsetWidth * dpr; c.height = c.offsetHeight * dpr;
+        ctx.scale(dpr, dpr);
+        hzDrawLine(ctx, c.offsetWidth, c.offsetHeight, PAD, labels, [
+            {vals: rows.map(r => r.large_avg != null ? +r.large_avg : null), color:'#f59e0b', fill:true, step:2},
+            {vals: rows.map(r => r.all_avg   != null ? +r.all_avg   : null), color:'rgba(148,163,184,0.5)', dashed:true, step:5}
+        ]);
+    } else if (k === 'b') {
+        const c = document.getElementById('hzChartB');
+        const ctx = c.getContext('2d');
+        const dpr = window.devicePixelRatio || 1;
+        c.width = c.offsetWidth * dpr; c.height = c.offsetHeight * dpr;
+        ctx.scale(dpr, dpr);
+        hzDrawBar(ctx, c.offsetWidth, c.offsetHeight, PAD, labels,
+            rows.map(r => r.gone_per_day != null ? +r.gone_per_day : null), '#ef4444');
+    } else {
+        const c = document.getElementById('hzChartC');
+        const ctx = c.getContext('2d');
+        const dpr = window.devicePixelRatio || 1;
+        c.width = c.offsetWidth * dpr; c.height = c.offsetHeight * dpr;
+        ctx.scale(dpr, dpr);
+        hzDrawLine(ctx, c.offsetWidth, c.offsetHeight, PAD, labels, [
+            {vals: rows.map(r => r.dwell_days != null ? +r.dwell_days : null), color:'#a78bfa', fill:true, step:5},
+            {vals: rows.map(r => r.stay_share != null ? +r.stay_share * 100 : null), color:'#38bdf8', dashed:true, step:10}
+        ]);
+    }
+}
+
+async function initHormuz() {
+    if (_hzInited && _hzRows.length) { hzRedrawAll(); return; }
+    try {
+        const resp = await fetch(
+            SB_URL_HZ + '/rest/v1/hormuz_weekly?select=week,passes,pairs,large_avg,all_avg,stay_share,gone_per_day,dwell_days&order=week&limit=5000',
+            { headers: { apikey: SB_KEY_HZ, Authorization: 'Bearer ' + SB_KEY_HZ } }
+        );
+        if (!resp.ok) throw new Error(resp.status);
+        _hzRows = await resp.json();
+        if (!Array.isArray(_hzRows) || !_hzRows.length) {
+            document.getElementById('hz-updated').textContent = 'No data loaded';
+            return;
+        }
+        // KPIs from last week
+        const last = _hzRows[_hzRows.length - 1];
+        document.getElementById('hz-large').textContent  = last.large_avg  != null ? (+last.large_avg).toFixed(1) : '—';
+        document.getElementById('hz-gpd').textContent    = last.gone_per_day != null ? (+last.gone_per_day).toFixed(2) : '—';
+        document.getElementById('hz-dwell').textContent  = last.dwell_days != null ? (+last.dwell_days).toFixed(1) : '—';
+        document.getElementById('hz-stay').textContent   = last.stay_share != null ? (+last.stay_share * 100).toFixed(0) + '%' : '—';
+        document.getElementById('hz-updated').textContent = 'Updated ' + last.week + ' · orbits 57 & 166';
+        _hzInited = true;
+        hzRedrawAll();
+    } catch(e) {
+        document.getElementById('hz-updated').textContent = 'Error loading data';
+    }
+}
+
+// range button wiring
+document.addEventListener('DOMContentLoaded', function() {
+    ['a','b','c'].forEach(k => {
+        const wrap = document.getElementById('hz-range-' + k);
+        if (!wrap) return;
+        wrap.querySelectorAll('.aq-rbtn').forEach(btn => {
+            btn.addEventListener('click', () => hzRedraw(k, btn.dataset.r));
+        });
+    });
+});
 </script>
 <div style="text-align:center;padding:12px 16px;font-size:11px;color:#6b7280;font-family:sans-serif;border-top:1px solid #e5e7eb;margin-top:24px">Contains modified Copernicus Sentinel data [2015–2026] · processed by OilRadar</div>
 </body>
