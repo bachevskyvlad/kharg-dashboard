@@ -1,3 +1,7 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
 <title>Hormuz Queue</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <meta name="description" content="SAR-derived tanker queue at Larak–Hormuz: large ships waiting, departure rate, and dwell time vs AIS vessel counts.">
@@ -236,7 +240,7 @@ function filterByMonths(rows, months) {
   var cutoff = new Date();
   cutoff.setMonth(cutoff.getMonth() - months);
   var cs = cutoff.toISOString().slice(0,10);
-  return rows.filter(function(r){ return r.week_start >= cs; });
+  return rows.filter(function(r){ return r.week >= cs; });
 }
 
 // ── KPI tiles ──────────────────────────────────────────────────────────────
@@ -244,12 +248,12 @@ function updateKPIs(rows) {
   var last = rows[rows.length - 1];
   if (!last) return;
   var el = function(id){ return document.getElementById(id); };
-  el('kpi-large').textContent = last.large != null ? (+last.large).toFixed(1) : '—';
+  el('kpi-large').textContent = last.large_avg != null ? (+last.large_avg).toFixed(1) : '—';
   el('kpi-gpd').textContent   = last.gone_per_day != null ? (+last.gone_per_day).toFixed(2) : '—';
-  el('kpi-ais').textContent   = last.n_tanker != null ? (+last.n_tanker).toFixed(1) : '—';
+  el('kpi-ais').textContent   = '—';
   el('kpi-dwell').textContent = last.dwell_days != null ? (+last.dwell_days).toFixed(1) : '—';
   var sub = document.getElementById('hq-sub');
-  if (sub) sub.textContent = 'Updated ' + last.week_start + ' — Sentinel-1 orbits 57 & 166';
+  if (sub) sub.textContent = 'Updated ' + last.week + ' — Sentinel-1 orbits 57 & 166';
 }
 
 // ── generic canvas chart helpers ───────────────────────────────────────────
@@ -380,9 +384,9 @@ function drawA(rows) {
   ctx.clearRect(0, 0, W, H);
   if (!rows.length) return;
 
-  var labels = rows.map(function(r){ return r.week_start; });
-  var large  = rows.map(function(r){ return r.large != null ? +r.large : null; });
-  var nall   = rows.map(function(r){ return r.n_all  != null ? +r.n_all  : null; });
+  var labels = rows.map(function(r){ return r.week; });
+  var large  = rows.map(function(r){ return r.large_avg != null ? +r.large_avg : null; });
+  var nall   = rows.map(function(r){ return r.all_avg  != null ? +r.all_avg  : null; });
 
   var maxL = Math.max.apply(null, large.filter(function(v){ return v!=null; }).concat([0]));
   var maxN = Math.max.apply(null, nall.filter(function(v){ return v!=null; }).concat([0]));
@@ -420,9 +424,9 @@ function drawB(rows) {
   ctx.clearRect(0, 0, W, H);
   if (!rows.length) return;
 
-  var labels = rows.map(function(r){ return r.week_start; });
+  var labels = rows.map(function(r){ return r.week; });
   var gpd    = rows.map(function(r){ return r.gone_per_day != null ? +r.gone_per_day : null; });
-  var ais    = rows.map(function(r){ return r.n_tanker     != null ? +r.n_tanker     : null; });
+  var ais    = rows.map(function(r){ return null; });
 
   var maxGpd = Math.max.apply(null, gpd.filter(function(v){ return v!=null; }).concat([0]));
   var maxAis = Math.max.apply(null, ais.filter(function(v){ return v!=null; }).concat([0]));
@@ -454,7 +458,7 @@ function drawC(rows) {
   ctx.clearRect(0, 0, W, H);
   if (!rows.length) return;
 
-  var labels = rows.map(function(r){ return r.week_start; });
+  var labels = rows.map(function(r){ return r.week; });
   var dwell  = rows.map(function(r){ return r.dwell_days  != null ? +r.dwell_days  : null; });
   var ss     = rows.map(function(r){ return r.stay_share  != null ? +r.stay_share  : null; });
 
@@ -502,7 +506,7 @@ function setupRange(rbId, getter, setter, drawFn) {
 async function load() {
   try {
     var r = await fetch(
-      SB_URL + '/rest/v1/hormuz_weekly?select=week_start,n_passes,n_pairs,large,n_all,stay_share,gone_per_day,dwell_days,n_tanker,n_total&order=week_start&limit=5000',
+      SB_URL + '/rest/v1/hormuz_weekly?select=week,passes,pairs,large_avg,all_avg,stay_share,gone_per_day,dwell_days&order=week&limit=5000',
       { headers: H }
     );
     if (!r.ok) throw new Error('HTTP ' + r.status);
@@ -540,3 +544,5 @@ window.addEventListener('resize', function() {
 });
 })();
 </script>
+</body>
+</html>

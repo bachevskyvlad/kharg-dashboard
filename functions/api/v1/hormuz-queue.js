@@ -15,8 +15,8 @@ export async function onRequest(context) {
 
   try {
     const r = await fetch(
-      `${SB_URL}/rest/v1/hormuz_weekly?select=week_start,n_passes,n_pairs,large,n_all,stay_share,gone_per_day,dwell_days,n_tanker,n_total`
-      + `&week_start=gte.${from}&week_start=lte.${to}&order=week_start`,
+      `${SB_URL}/rest/v1/hormuz_weekly?select=week,passes,pairs,large_avg,all_avg,stay_share,gone_per_day,dwell_days`
+      + `&week=gte.${from}&week=lte.${to}&order=week`,
       { headers: H }
     );
     if (!r.ok) return err("Supabase error", 502);

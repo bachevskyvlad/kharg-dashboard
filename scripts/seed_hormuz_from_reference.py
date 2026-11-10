@@ -163,20 +163,15 @@ def aggregate_weekly(passes, ais_daily):
         dwell_days   = (round(large_mean / gone_per_day, 2)
                         if large_mean and gone_per_day and gone_per_day > 0 else None)
 
-        we = (datetime.strptime(ws, "%Y-%m-%d") + timedelta(days=6)).strftime("%Y-%m-%d")
-        n_tanker, n_total = weekly_ais(ais_daily, ws, we)
-
         rows.append(dict(
-            week_start=ws,
-            n_passes=len(ps),
-            n_pairs=len(paired),
-            large=large_mean,
-            n_all=n_all_mean,
+            week=ws,
+            passes=len(ps),
+            pairs=len(paired),
+            large_avg=large_mean,
+            all_avg=n_all_mean,
             stay_share=stay_share,
             gone_per_day=gone_per_day,
             dwell_days=dwell_days,
-            n_tanker=n_tanker,
-            n_total=n_total,
         ))
     return rows
 
@@ -186,10 +181,7 @@ def build_pass_rows(passes):
         date=p["date"],
         orbit=p["orbit"],
         n_all=p["n_all"],
-        n250=p["large"],
-        gap_days=p.get("gap"),
-        stay=p.get("stay"),
-        gone=p.get("gone"),
+        n_large=p["large"],
     ) for p in passes]
 
 
