@@ -2,7 +2,6 @@ name: Hormuz Queue — Weekly Update
 
 on:
   schedule:
-    # Every Tuesday at 03:17 UTC (orbit 57 passes by ~02:xx UTC)
     - cron: "17 3 * * 2"
   workflow_dispatch:
     inputs:
@@ -34,17 +33,10 @@ jobs:
             rasterio scipy numpy supabase \
             -q
 
-      - name: Rebuild masks quarterly
-        # Only when month is Jan/Apr/Jul/Oct
-        if: |
-          contains(fromJSON('["01","04","07","10"]'),
-            format('{0}', github.event.schedule && toJSON(fromJSON(format('"{0}"', steps.month.outputs.m))) || '00'))
-        run: echo "Mask rebuild scheduled — implement in separate workflow"
-
       - name: Run weekly update
         env:
           SUPABASE_URL:  https://yoekhkczwdeyauwarsyy.supabase.co
-          SUPABASE_KEY:  ${{ secrets.SUPABASE_KEY }}
+          SUPABASE_KEY:  sb_publishable_7j07_zzdqTGM1LXf7-o9Tg_JJRbJQSM
           TG_BOT:        ${{ secrets.TG_BOT }}
           TG_CHAT:       ${{ secrets.TG_CHAT }}
           PC_SDK_SUBSCRIPTION_KEY: ${{ secrets.PC_SDK_SUBSCRIPTION_KEY }}
