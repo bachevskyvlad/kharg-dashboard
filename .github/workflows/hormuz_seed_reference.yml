@@ -23,7 +23,7 @@ jobs:
       - name: Run seed
         env:
           SUPABASE_URL: https://yoekhkczwdeyauwarsyy.supabase.co
-          SUPABASE_KEY: sb_publishable_7j07_zzdqTGM1LXf7-o9Tg_JJRbJQSM
+          SUPABASE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
           TG_BOT:       ${{ secrets.TG_BOT }}
           TG_CHAT:      ${{ secrets.TG_CHAT }}
         run: |

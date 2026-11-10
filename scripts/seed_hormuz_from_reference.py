@@ -67,7 +67,7 @@ def sb_upsert(table, rows):
             except urllib.error.HTTPError as e:
                 body = e.read().decode()
                 print(f"  HTTP {e.code}: {body[:300]}")
-                break  # schema errors won't self-heal on retry
+                raise RuntimeError(f"HTTP {e.code} on {table}: {body[:200]}")
             except Exception as e:
                 print(f"  err: {e}")
             time.sleep(2 ** attempt)
@@ -180,8 +180,8 @@ def build_pass_rows(passes):
     return [dict(
         date=p["date"],
         orbit=p["orbit"],
-        n_all=p["n_all"],
-        n_large=p["large"],
+        n_all=int(round(p["n_all"])),
+        n_large=int(round(p["large"])),
     ) for p in passes]
 
 
