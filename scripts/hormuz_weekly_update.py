@@ -43,7 +43,7 @@ def tg(text):
 
 
 def main():
-    if not os.environ.get("SUPABASE_SERVICE_KEY"):
+    if not (os.environ.get("SUPABASE_KEY") or os.environ.get("SUPABASE_SERVICE_KEY")):
         tg("⚠️ Hormuz weekly: SUPABASE_SERVICE_KEY not set — skipping write")
         sys.exit(0)  # not fatal for cron
 

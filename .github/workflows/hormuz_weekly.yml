@@ -43,10 +43,10 @@ jobs:
 
       - name: Run weekly update
         env:
-          SUPABASE_URL:          ${{ secrets.SUPABASE_URL }}
-          SUPABASE_SERVICE_KEY:  ${{ secrets.SUPABASE_SERVICE_KEY }}
-          TG_BOT:                ${{ secrets.TG_BOT }}
-          TG_CHAT:               ${{ secrets.TG_CHAT }}
+          SUPABASE_URL:  https://yoekhkczwdeyauwarsyy.supabase.co
+          SUPABASE_KEY:  ${{ secrets.SUPABASE_KEY }}
+          TG_BOT:        ${{ secrets.TG_BOT }}
+          TG_CHAT:       ${{ secrets.TG_CHAT }}
           PC_SDK_SUBSCRIPTION_KEY: ${{ secrets.PC_SDK_SUBSCRIPTION_KEY }}
         run: |
           if [ -n "${{ inputs.start }}" ]; then

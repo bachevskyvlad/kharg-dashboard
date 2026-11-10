@@ -1,0 +1,67 @@
+name: Hormuz Queue — Full Backfill
+
+on:
+  workflow_dispatch:
+    inputs:
+      start:
+        description: "Start date YYYY-MM-DD"
+        required: false
+        default: "2024-01-01"
+      end:
+        description: "End date YYYY-MM-DD (default: today)"
+        required: false
+        default: ""
+      validate:
+        description: "Run validation before writing (true/false)"
+        required: false
+        default: "true"
+
+jobs:
+  backfill:
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          pip install \
+            pystac-client planetary-computer \
+            rasterio scipy numpy supabase \
+            -q
+
+      - name: Run backfill
+        env:
+          SUPABASE_URL:  https://yoekhkczwdeyauwarsyy.supabase.co
+          SUPABASE_KEY:  ${{ secrets.SUPABASE_KEY }}
+          TG_BOT:        ${{ secrets.TG_BOT }}
+          TG_CHAT:       ${{ secrets.TG_CHAT }}
+          PC_SDK_SUBSCRIPTION_KEY: ${{ secrets.PC_SDK_SUBSCRIPTION_KEY }}
+        run: |
+          START="${{ inputs.start }}"
+          END_ARG=""
+          if [ -n "${{ inputs.end }}" ]; then
+            END_ARG="--end ${{ inputs.end }}"
+          fi
+          VALIDATE_ARG=""
+          if [ "${{ inputs.validate }}" = "true" ]; then
+            VALIDATE_ARG="--validate"
+          fi
+          python scripts/hormuz_queue_backfill.py \
+            --commit \
+            --start "$START" \
+            $END_ARG \
+            $VALIDATE_ARG
+
+      - name: Upload diagnostics + validation report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: hormuz-backfill-${{ github.run_id }}
+          path: diagnostics/hormuz/
+          retention-days: 90
