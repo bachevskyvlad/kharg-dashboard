@@ -1,0 +1,24 @@
+name: Berth ROI diagnostics
+
+on:
+  workflow_dispatch:
+
+jobs:
+  roi_diag:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: claude/oilradar-dashboard-iran-zchdva
+
+      - name: Install dependencies
+        run: pip install sentinelhub scipy numpy shapely -q
+
+      - name: Run ROI diagnostics
+        run: python -u scripts/berth_diag_roi.py
+        env:
+          CLIENT_ID:        ${{ secrets.CLIENT_ID }}
+          CLIENT_SECRET:    ${{ secrets.CLIENT_SECRET }}
+          PYTHONUNBUFFERED: "1"
