@@ -66,7 +66,8 @@ def sb_upsert(table, rows):
                     break
             except urllib.error.HTTPError as e:
                 body = e.read().decode()
-                print(f"  HTTP {e.code}: {body[:200]}")
+                print(f"  HTTP {e.code}: {body[:300]}")
+                break  # schema errors won't self-heal on retry
             except Exception as e:
                 print(f"  err: {e}")
             time.sleep(2 ** attempt)
@@ -189,7 +190,6 @@ def build_pass_rows(passes):
         gap_days=p.get("gap"),
         stay=p.get("stay"),
         gone=p.get("gone"),
-        fail=p["fail"],
     ) for p in passes]
 
 
