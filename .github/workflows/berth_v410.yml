@@ -2,6 +2,11 @@ name: Berth v410
 
 on:
   workflow_dispatch:
+    inputs:
+      roi_diag:
+        description: "Run ROI diagnostics for 4 missed sea_island dates (yes/no)"
+        required: false
+        default: "no"
 
 jobs:
   berth_v410:
@@ -15,6 +20,14 @@ jobs:
 
       - name: Install dependencies
         run: pip install sentinelhub scipy numpy matplotlib shapely -q
+
+      - name: Run ROI diagnostics (sea_island mismatches)
+        if: github.event.inputs.roi_diag == 'yes'
+        run: python -u scripts/berth_diag_roi.py
+        env:
+          CLIENT_ID:        ${{ secrets.CLIENT_ID }}
+          CLIENT_SECRET:    ${{ secrets.CLIENT_SECRET }}
+          PYTHONUNBUFFERED: "1"
 
       - name: Run validation (Step 1 — 40 dates)
         id: validation
