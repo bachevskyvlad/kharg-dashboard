@@ -1,25 +1,33 @@
 """
-berth_contact_sheet.py — contact sheet for berth validation.
+berth_contact_sheet.py — enhanced contact sheet for berth validation.
 
-Grid: 40 rows (date × orbit) × 3 columns (berths) = 120 cells.
-Each cell: ~1×1 km SAR crop, ROI rectangle, annotation, green/red border.
+Grid: 40 rows (date × orbit) × 3 berths = 120 "mega-cells".
+Each mega-cell has 3 panels:
+  top (scene):  SAR dB + real corridor polygon + red contours of all blobs
+                above RATIO_THR + cyan bbox of largest ROI blob
+  bottom-left:  background image (20th-percentile composite, dB scale)
+  bottom-right: ratio map (scene/bg, dB) + threshold contour
 
-Also writes legend.png with ROI coordinates, threshold, min area.
+Annotation per cell:
+  det=OCC/EMP  ref=OCC/EMP  max_ratio=X dB  area=Y px (thr 15 px)
 
+No detector parameters changed.
 Output: diagnostics/berth_v4/contact_sheet/
 """
 
-import os, sys, csv, ast, zipfile
+import os, sys, csv
 from pathlib import Path
 from datetime import datetime
 
 import numpy as np
+from scipy import ndimage
+from scipy.ndimage import zoom as nd_zoom
+
 import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
-from matplotlib.patches import FancyBboxPatch
-from matplotlib.gridspec import GridSpec
+from matplotlib.gridspec import GridSpec, GridSpecFromSubplotSpec
 
 from sentinelhub import (
     SHConfig, BBox, CRS, DataCollection, SentinelHubRequest,
@@ -39,12 +47,13 @@ if not config.sh_client_id or not config.sh_client_secret:
     sys.exit("FATAL: CLIENT_ID and CLIENT_SECRET env vars must be set")
 
 S1_CDSE = DataCollection.SENTINEL1_IW.define_from(
-    "s1iw_cdse_cs", service_url="https://sh.dataspace.copernicus.eu"
+    "s1iw_cdse_cs2", service_url="https://sh.dataspace.copernicus.eu"
 )
 
 ROOT     = Path(__file__).parent.parent
 OUT_DIR  = ROOT / "diagnostics" / "berth_v4" / "contact_sheet"
 OUT_DIR.mkdir(parents=True, exist_ok=True)
+BG_CACHE = ROOT / "diagnostics" / "berth_v3" / "bg_cache"
 
 # ── Constants (must match berth_detect_v410) ─────────────────────────────────
 BERTH_SPEC = {
@@ -58,12 +67,12 @@ CORRIDOR_HALF_M = 150
 CORRIDOR_END_M  = 100
 RATIO_THR       = 10.0
 MIN_AREA_PX     = 15
+CELL_KM         = 1.0
+RESOLUTION      = 10
 
-# Cell image size per berth: ~1 km × 1 km at 10m resolution = 100×100 px
-CELL_KM    = 1.0
-RESOLUTION = 10
+# Full AOI (same as berth_detect_v410)
+AOI_BBOX = BBox(bbox=[50.26, 29.17, 50.40, 29.31], crs=CRS.WGS84)
 
-# Validation date-orbit list (matches VALIDATION_DATES_ORBITS in berth_detect_v410)
 VALIDATION_DATES_ORBITS = [
     ("2019-01-15", 35),  ("2019-03-08", 101), ("2019-06-24", 101),
     ("2020-01-10", 35),  ("2020-03-14", 101), ("2020-06-14", 35),
@@ -82,20 +91,29 @@ VALIDATION_DATES_ORBITS = [
 ]
 BERTHS = ["sea_island", "east_t_head", "southeast_pier"]
 
-# ── Geometry ─────────────────────────────────────────────────────────────────
+# ── Evalscript: return linear VV ──────────────────────────────────────────────
+EVALSCRIPT_LINEAR = """
+//VERSION=3
+function setup() {
+  return { input: ["VV"], output: { bands: 1, sampleType: "FLOAT32" } };
+}
+function evaluatePixel(s) {
+  return [Math.max(s.VV, 1e-10)];
+}
+"""
+
+# ── Geometry helpers ──────────────────────────────────────────────────────────
 def metres_per_deg_lat(): return 111320.0
 def metres_per_deg_lon(lat): return 111320.0 * np.cos(np.deg2rad(lat))
 
 def berth_center(pts):
-    lons = [p[0] for p in pts]; lats = [p[1] for p in pts]
-    return np.mean(lons), np.mean(lats)
+    return np.mean([p[0] for p in pts]), np.mean([p[1] for p in pts])
 
-def cell_bbox(center_lon, center_lat, km=CELL_KM):
+def cell_bbox(clon, clat, km=CELL_KM):
     half_lat = (km * 500) / metres_per_deg_lat()
-    half_lon = (km * 500) / metres_per_deg_lon(center_lat)
-    return BBox(bbox=[center_lon - half_lon, center_lat - half_lat,
-                      center_lon + half_lon, center_lat + half_lat],
-                crs=CRS.WGS84)
+    half_lon = (km * 500) / metres_per_deg_lon(clat)
+    return BBox(bbox=[clon-half_lon, clat-half_lat,
+                      clon+half_lon, clat+half_lat], crs=CRS.WGS84)
 
 def _extend_line(pts, end_m):
     lat_mid = np.mean([p[1] for p in pts])
@@ -104,30 +122,77 @@ def _extend_line(pts, end_m):
         dx = (b[0]-a[0])*mpdlon; dy = (b[1]-a[1])*mpdlat
         L = np.hypot(dx, dy)
         if L < 1e-6: return b
-        return (b[0] + dx/L*d/mpdlon, b[1] + dy/L*d/mpdlat)
+        return (b[0]+dx/L*d/mpdlon, b[1]+dy/L*d/mpdlat)
     p = list(pts)
-    return [ext(p[1], p[0], end_m)] + p[1:-1] + [ext(p[-2], p[-1], end_m)]
+    return [ext(p[1],p[0],end_m)] + p[1:-1] + [ext(p[-2],p[-1],end_m)]
 
-def build_corridor_bbox(pts_lonlat, half_m, end_m):
-    """Return axis-aligned bounding box of the corridor polygon."""
+def build_corridor_polygon(pts_lonlat, half_m, end_m):
+    """Return shapely polygon for corridor."""
     ext = _extend_line(pts_lonlat, end_m)
+    line = LineString(ext)
     lat_mid = np.mean([p[1] for p in pts_lonlat])
-    mpdlat = metres_per_deg_lat(); mpdlon = metres_per_deg_lon(lat_mid)
-    buf_lat = half_m / mpdlat; buf_lon = half_m / mpdlon
-    lons = [p[0] for p in ext]; lats = [p[1] for p in ext]
-    return (min(lons)-buf_lon, min(lats)-buf_lat,
-            max(lons)+buf_lon, max(lats)+buf_lat)
+    buf_deg = ((half_m/metres_per_deg_lat()) + (half_m/metres_per_deg_lon(lat_mid))) / 2
+    return line.buffer(buf_deg)
 
-EVALSCRIPT_DB = """
-//VERSION=3
-function setup() {
-  return { input: ["VV"], output: { bands: 1, sampleType: "FLOAT32" } };
-}
-function evaluatePixel(s) {
-  var v = Math.max(s.VV, 1e-10);
-  return [10 * Math.log10(v)];
-}
-"""
+def lonlat_to_px(lon, lat, bbox_obj, img_shape):
+    """Convert lon/lat to pixel coords in image."""
+    h, w = img_shape
+    px = (lon - bbox_obj.min_x) / (bbox_obj.max_x - bbox_obj.min_x) * w
+    py = (bbox_obj.max_y - lat) / (bbox_obj.max_y - bbox_obj.min_y) * h
+    return px, py
+
+def rasterize_poly(poly, bbox_obj, img_shape):
+    """Rasterize shapely polygon to boolean mask in image coordinates."""
+    h, w = img_shape
+    lons = np.linspace(
+        bbox_obj.min_x + 0.5*(bbox_obj.max_x-bbox_obj.min_x)/w,
+        bbox_obj.max_x - 0.5*(bbox_obj.max_x-bbox_obj.min_x)/w, w)
+    lats = np.linspace(
+        bbox_obj.max_y - 0.5*(bbox_obj.max_y-bbox_obj.min_y)/h,
+        bbox_obj.min_y + 0.5*(bbox_obj.max_y-bbox_obj.min_y)/h, h)
+    lon_g, lat_g = np.meshgrid(lons, lats)
+    try:
+        return shapely.contains_xy(poly, lon_g.ravel(), lat_g.ravel()).reshape(h, w)
+    except AttributeError:
+        from shapely.vectorized import contains
+        return contains(poly, lon_g, lat_g)
+
+# ── Background cache crop ─────────────────────────────────────────────────────
+def crop_aoi_to_cell(aoi_arr, cell_bbox_obj):
+    """Crop 2D full-AOI array to cell_bbox pixel region."""
+    h_full, w_full = aoi_arr.shape[:2]
+    alon = AOI_BBOX.max_x - AOI_BBOX.min_x
+    alat = AOI_BBOX.max_y - AOI_BBOX.min_y
+    x0 = int((cell_bbox_obj.min_x - AOI_BBOX.min_x) / alon * w_full)
+    x1 = int((cell_bbox_obj.max_x - AOI_BBOX.min_x) / alon * w_full)
+    y0 = int((AOI_BBOX.max_y - cell_bbox_obj.max_y) / alat * h_full)
+    y1 = int((AOI_BBOX.max_y - cell_bbox_obj.min_y) / alat * h_full)
+    x0 = max(0, x0); x1 = min(w_full, x1)
+    y0 = max(0, y0); y1 = min(h_full, y1)
+    if x1 <= x0 or y1 <= y0:
+        return None
+    return aoi_arr[y0:y1, x0:x1].copy()
+
+def load_bg_crop(date_str, orbit, cell_bbox_obj):
+    """Load bg npy cache (full AOI) and crop to cell. Returns None if unavailable."""
+    dt = datetime.strptime(date_str, "%Y-%m-%d")
+    ym = f"{dt.year:04d}-{dt.month:02d}"
+    for fname in [f"bg_o{orbit}_{ym}_w2.npy", f"bg_o{orbit}_{ym}.npy"]:
+        p = BG_CACHE / fname
+        if p.exists():
+            bg_full = np.load(p)
+            cropped = crop_aoi_to_cell(bg_full, cell_bbox_obj)
+            if cropped is not None:
+                return cropped
+    return None
+
+def match_shape(src, target_shape):
+    """Resize src to target_shape using bilinear interpolation."""
+    h_t, w_t = target_shape
+    h_s, w_s = src.shape[:2]
+    if (h_s, w_s) == (h_t, w_t):
+        return src
+    return nd_zoom(src, (h_t/h_s, w_t/w_s), order=1)
 
 # ── Catalog search ────────────────────────────────────────────────────────────
 def scene_datetime(date_str, orbit, bbox):
@@ -144,11 +209,11 @@ def scene_datetime(date_str, orbit, bbox):
     return ""
 
 # ── Image fetch ───────────────────────────────────────────────────────────────
-def fetch_db_crop(dt_str, bbox):
-    """Return dB image for bbox at given datetime. None if fetch fails."""
-    sz = bbox_to_dimensions(bbox, resolution=RESOLUTION)
+def fetch_linear_crop(dt_str, bbox_obj):
+    """Fetch linear VV image at cell bbox. Returns float32 2D array or None."""
+    sz = bbox_to_dimensions(bbox_obj, resolution=RESOLUTION)
     req = SentinelHubRequest(
-        evalscript=EVALSCRIPT_DB,
+        evalscript=EVALSCRIPT_LINEAR,
         input_data=[SentinelHubRequest.input_data(
             data_collection=S1_CDSE,
             time_interval=(dt_str[:19].replace("T"," "), dt_str[:19].replace("T"," ")),
@@ -158,7 +223,7 @@ def fetch_db_crop(dt_str, bbox):
             mosaicking_order=MosaickingOrder.MOST_RECENT,
         )],
         responses=[SentinelHubRequest.output_response("default", MimeType.TIFF)],
-        bbox=bbox, size=sz, config=config,
+        bbox=bbox_obj, size=sz, config=config,
     )
     try:
         data = req.get_data()
@@ -169,9 +234,8 @@ def fetch_db_crop(dt_str, bbox):
         print(f"  fetch failed: {e}")
         return None
 
-# ── Load results CSV ──────────────────────────────────────────────────────────
+# ── Load detection results ────────────────────────────────────────────────────
 def load_results(csv_path):
-    """Returns dict keyed by (date, orbit, berth) → {occupied, max_ratio_dB, ...}."""
     result = {}
     if not csv_path.exists():
         print(f"WARNING: {csv_path} not found")
@@ -186,7 +250,6 @@ def load_results(csv_path):
     return result
 
 def load_reference(csv_path, col_map):
-    """col_map: {berth: col_name_in_csv}. Returns dict (date, orbit, berth) → occupied."""
     ref = {}
     if not csv_path.exists():
         print(f"WARNING: {csv_path} not found")
@@ -199,247 +262,375 @@ def load_reference(csv_path, col_map):
         except: continue
         for berth, col in col_map.items():
             val = str(row.get(col,"")).strip().lower()
-            if val in ("true","1","yes","occupied"): ref[(date, orbit, berth)] = True
-            elif val in ("false","0","no","empty"):  ref[(date, orbit, berth)] = False
+            if val in ("true","1","yes","occupied"):   ref[(date, orbit, berth)] = True
+            elif val in ("false","0","no","empty"):    ref[(date, orbit, berth)] = False
     return ref
 
-# ── ROI rectangle in image coordinates ───────────────────────────────────────
-def corridor_rect_in_cell(pts_lonlat, cell_bbox_obj, img_shape):
-    """Return (x0, y0, width, height) of corridor bbox in image pixel coords."""
-    h, w = img_shape
-    cmin_lon = cell_bbox_obj.min_x; cmax_lon = cell_bbox_obj.max_x
-    cmin_lat = cell_bbox_obj.min_y; cmax_lat = cell_bbox_obj.max_y
-    clon = cmax_lon - cmin_lon; clat = cmax_lat - cmin_lat
+# ── Blob detection ────────────────────────────────────────────────────────────
+struct8 = ndimage.generate_binary_structure(2, 2)
 
-    r_lon_min, r_lat_min, r_lon_max, r_lat_max = build_corridor_bbox(
-        pts_lonlat, CORRIDOR_HALF_M, CORRIDOR_END_M)
+def find_blobs(ratio_arr, corridor_mask, cell_bbox_obj):
+    """
+    Returns:
+      labeled_all:   labeled array of all blobs above RATIO_THR in cell
+      all_contours:  list of (row, col) arrays for each blob boundary
+      largest_roi:   dict with keys area_px, length_m, r0, r1, c0, c1  (or None)
+      max_ratio_roi: float, max ratio in corridor (or nan)
+    """
+    above_all = np.isfinite(ratio_arr) & (ratio_arr > RATIO_THR)
+    labeled_all, _ = ndimage.label(above_all, structure=struct8)
 
-    def to_px(lon, lat):
-        px = (lon - cmin_lon) / clon * w
-        py = (cmax_lat - lat) / clat * h
-        return px, py
+    # contours: boundary pixels of each blob
+    all_contours = []
+    for bid in range(1, labeled_all.max()+1):
+        mask = (labeled_all == bid)
+        # erode and subtract to get border
+        eroded = ndimage.binary_erosion(mask, structure=struct8)
+        border = mask & ~eroded
+        all_contours.append(border)
 
-    x0, y0 = to_px(r_lon_min, r_lat_max)  # top-left
-    x1, y1 = to_px(r_lon_max, r_lat_min)  # bottom-right
-    return x0, y0, x1-x0, y1-y0           # x, y, w, h
+    # largest blob inside ROI
+    above_roi = above_all & corridor_mask
+    labeled_roi, _ = ndimage.label(above_roi, structure=struct8)
+    max_ratio_roi = float(np.nanmax(ratio_arr[corridor_mask])) if corridor_mask.any() else float('nan')
 
-# ── Compute max_ratio in ROI from raw image ───────────────────────────────────
-def compute_max_ratio_in_roi(db_img, pts_lonlat, cell_bbox_obj):
-    """Very rough: max dB in the axis-aligned corridor bbox."""
-    h, w = db_img.shape
-    cmin_lon = cell_bbox_obj.min_x; cmax_lon = cell_bbox_obj.max_x
-    cmin_lat = cell_bbox_obj.min_y; cmax_lat = cell_bbox_obj.max_y
-    clon = cmax_lon - cmin_lon; clat = cmax_lat - cmin_lat
+    largest_roi = None
+    if labeled_roi.max() > 0:
+        h, w = ratio_arr.shape
+        lat_mid = (cell_bbox_obj.min_y + cell_bbox_obj.max_y) / 2
+        mpdlat = metres_per_deg_lat()
+        mpdlon = metres_per_deg_lon(lat_mid)
+        m_per_row = mpdlat * (cell_bbox_obj.max_y - cell_bbox_obj.min_y) / h
+        m_per_col = mpdlon * (cell_bbox_obj.max_x - cell_bbox_obj.min_x) / w
 
-    r_lon_min, r_lat_min, r_lon_max, r_lat_max = build_corridor_bbox(
-        pts_lonlat, CORRIDOR_HALF_M, CORRIDOR_END_M)
+        best_area = 0
+        best_id = 0
+        for bid in range(1, labeled_roi.max()+1):
+            area = int((labeled_roi == bid).sum())
+            if area > best_area:
+                best_area = area
+                best_id = bid
 
-    def to_px_int(lon, lat):
-        px = int((lon - cmin_lon) / clon * w)
-        py = int((cmax_lat - lat) / clat * h)
-        return np.clip(px, 0, w-1), np.clip(py, 0, h-1)
+        if best_id > 0:
+            mask = (labeled_roi == best_id)
+            rows = np.where(mask.any(axis=1))[0]
+            cols = np.where(mask.any(axis=0))[0]
+            r0, r1 = int(rows[0]), int(rows[-1])
+            c0, c1 = int(cols[0]), int(cols[-1])
+            h_m = (r1 - r0) * m_per_row
+            w_m = (c1 - c0) * m_per_col
+            largest_roi = {
+                "area_px": best_area,
+                "length_m": max(h_m, w_m),
+                "r0": r0, "r1": r1, "c0": c0, "c1": c1,
+            }
 
-    x0, y0 = to_px_int(r_lon_min, r_lat_max)
-    x1, y1 = to_px_int(r_lon_max, r_lat_min)
-    xs, xe = min(x0,x1), max(x0,x1)+1
-    ys, ye = min(y0,y1), max(y0,y1)+1
-    roi = db_img[ys:ye, xs:xe]
-    finite = roi[np.isfinite(roi)]
-    if finite.size == 0: return float('nan')
-    return float(np.nanmax(finite))
+    return labeled_all, all_contours, largest_roi, max_ratio_roi
 
-# ── Draw one cell ─────────────────────────────────────────────────────────────
-def draw_cell(ax, db_img, pts_lonlat, cell_bbox_obj,
-              det_occ, ref_occ, max_db, no_bg):
-    """Render SAR image with ROI box and annotation into ax."""
-    if db_img is not None:
-        vmin, vmax = np.nanpercentile(db_img, [2, 98])
-        ax.imshow(db_img, cmap="gray", vmin=vmin, vmax=vmax,
-                  interpolation="nearest", origin="upper")
-    else:
-        ax.set_facecolor("#111")
-        ax.text(0.5, 0.5, "NO IMAGE", color="gray",
-                ha="center", va="center", transform=ax.transAxes, fontsize=5)
-
+# ── Draw panels ───────────────────────────────────────────────────────────────
+def _hide_ticks(ax):
     ax.set_xticks([]); ax.set_yticks([])
 
-    # ROI rectangle
-    if db_img is not None:
-        rx, ry, rw, rh = corridor_rect_in_cell(pts_lonlat, cell_bbox_obj, db_img.shape)
-        roi_rect = mpatches.Rectangle((rx, ry), rw, rh,
-            linewidth=1.0, edgecolor="yellow", facecolor="none", alpha=0.85)
-        ax.add_patch(roi_rect)
+def draw_scene_panel(ax, linear, corridor_poly, bbox_obj,
+                     all_contours, largest_roi, det_occ, ref_occ,
+                     max_ratio_roi, no_bg):
+    """Top panel: SAR dB, ROI polygon, blob contours, largest bbox."""
+    ax.set_facecolor("#111")
+    _hide_ticks(ax)
 
-    # Annotation text
+    if linear is not None and np.isfinite(linear).any():
+        db = np.where(linear > 0, 10*np.log10(linear), np.nan)
+        vmin, vmax = np.nanpercentile(db[np.isfinite(db)], [2, 98])
+        ax.imshow(db, cmap="gray", vmin=vmin, vmax=vmax,
+                  interpolation="nearest", origin="upper")
+
+        # ROI polygon (yellow)
+        try:
+            coords = list(corridor_poly.exterior.coords)
+            xs = [lonlat_to_px(c[0], c[1], bbox_obj, linear.shape)[0] for c in coords]
+            ys = [lonlat_to_px(c[0], c[1], bbox_obj, linear.shape)[1] for c in coords]
+            ax.plot(xs, ys, color='yellow', linewidth=0.9, alpha=0.9, zorder=3)
+        except Exception:
+            pass
+
+        # Red contours of all blobs above threshold
+        for border in all_contours:
+            if border.any():
+                rows, cols = np.where(border)
+                ax.scatter(cols, rows, s=0.3, c='red', marker='.', zorder=4, linewidths=0)
+
+        # Cyan bbox of largest ROI blob
+        if largest_roi is not None:
+            r0, r1 = largest_roi["r0"], largest_roi["r1"]
+            c0, c1 = largest_roi["c0"], largest_roi["c1"]
+            ax.add_patch(mpatches.Rectangle(
+                (c0-0.5, r0-0.5), c1-c0+1, r1-r0+1,
+                linewidth=1.2, edgecolor='cyan', facecolor='none', zorder=5))
+    else:
+        ax.text(0.5, 0.5, "NO IMAGE", color="#888",
+                ha="center", va="center", transform=ax.transAxes, fontsize=5)
+
+    # Annotation
     if no_bg:
-        label = "NO BG"
-        txt_color = "#aaa"
+        label = "NO BG"; tc = "#aaa"
     elif det_occ is None:
-        label = "?"
-        txt_color = "#aaa"
+        label = "NO DATA"; tc = "#aaa"
     else:
-        d_str = "OCC" if det_occ else "EMP"
-        r_str = "OCC" if ref_occ else ("EMP" if ref_occ is not None else "?")
-        db_str = f"{max_db:.0f}dB" if np.isfinite(max_db) else "?"
-        label = f"d:{d_str} r:{r_str}\n{db_str}/thr{RATIO_THR:.0f}"
-        txt_color = "white"
+        d_s = "OCC" if det_occ else "EMP"
+        r_s = "OCC" if ref_occ else ("EMP" if ref_occ is not None else "?")
+        mr  = f"{max_ratio_roi:.0f}" if np.isfinite(max_ratio_roi) else "?"
+        if largest_roi:
+            a   = largest_roi["area_px"]
+            ann_line2 = f"max={mr}dB  a={a}px(≥{MIN_AREA_PX})"
+        else:
+            ann_line2 = f"max={mr}dB  a=0px"
+        label = f"d:{d_s} r:{r_s}\n{ann_line2}"; tc = "white"
 
-    ax.text(0.03, 0.97, label, color=txt_color,
+    ax.text(0.02, 0.98, label, color=tc,
             ha="left", va="top", transform=ax.transAxes,
-            fontsize=4.5, fontweight="bold",
-            bbox=dict(boxstyle="square,pad=0.1", fc="black", alpha=0.55, lw=0))
+            fontsize=4.0, fontweight="bold",
+            bbox=dict(boxstyle="square,pad=0.1", fc="black", alpha=0.6, lw=0))
 
-    # Border colour
+    # Border
     if no_bg or det_occ is None or ref_occ is None:
-        bcolor = "#666"
+        bc = "#666"
     elif det_occ == ref_occ:
-        bcolor = "#2ecc71"   # green
+        bc = "#2ecc71"
     else:
-        bcolor = "#e74c3c"   # red
-
+        bc = "#e74c3c"
     for spine in ax.spines.values():
-        spine.set_edgecolor(bcolor)
-        spine.set_linewidth(2.5)
+        spine.set_edgecolor(bc); spine.set_linewidth(2.0)
+
+
+def draw_bg_panel(ax, bg_linear):
+    """Bottom-left: background image in dB."""
+    ax.set_facecolor("#111")
+    _hide_ticks(ax)
+    if bg_linear is not None and np.isfinite(bg_linear).any():
+        db = np.where(bg_linear > 0, 10*np.log10(bg_linear), np.nan)
+        vmin, vmax = np.nanpercentile(db[np.isfinite(db)], [2, 98])
+        ax.imshow(db, cmap="gray", vmin=vmin, vmax=vmax,
+                  interpolation="nearest", origin="upper")
+        ax.set_xlabel("BG", color="#aaa", fontsize=3.5, labelpad=1)
+    else:
+        ax.text(0.5, 0.5, "NO BG", color="#666",
+                ha="center", va="center", transform=ax.transAxes, fontsize=4)
+
+
+def draw_ratio_panel(ax, ratio_arr, corridor_mask):
+    """Bottom-right: ratio dB map with threshold contour."""
+    ax.set_facecolor("#111")
+    _hide_ticks(ax)
+    if ratio_arr is not None and np.isfinite(ratio_arr).any():
+        # clip for display
+        disp = np.clip(ratio_arr, -10, 30)
+        disp = np.where(np.isfinite(ratio_arr), disp, np.nan)
+        ax.imshow(disp, cmap="RdYlGn", vmin=-10, vmax=30,
+                  interpolation="nearest", origin="upper", alpha=0.95)
+        # threshold contour
+        try:
+            ax.contour(ratio_arr, levels=[RATIO_THR], colors=['white'],
+                       linewidths=0.5, alpha=0.9)
+        except Exception:
+            pass
+        # corridor outline
+        if corridor_mask is not None:
+            try:
+                ax.contour(corridor_mask.astype(float), levels=[0.5],
+                           colors=['yellow'], linewidths=0.5, alpha=0.7)
+            except Exception:
+                pass
+        ax.set_xlabel("ratio dB", color="#aaa", fontsize=3.5, labelpad=1)
+    else:
+        ax.text(0.5, 0.5, "NO RATIO", color="#666",
+                ha="center", va="center", transform=ax.transAxes, fontsize=4)
+
 
 # ── Main ──────────────────────────────────────────────────────────────────────
 def main():
     # Load detection results
-    det_csv   = ROOT / "diagnostics" / "berth_v410" / "results_table.csv"
-    det_data  = load_results(det_csv)
+    det_csv  = ROOT / "diagnostics" / "berth_v410" / "results_table.csv"
+    det_data = load_results(det_csv)
 
     # Load reference labels
-    ref1_csv  = ROOT / "diagnostics" / "berth_v4" / "results_table.csv"
-    ref1      = load_reference(ref1_csv, {
+    ref1_csv = ROOT / "diagnostics" / "berth_v4" / "results_table.csv"
+    ref1     = load_reference(ref1_csv, {
         "sea_island": "occupied", "east_t_head": "occupied"})
-
-    ref2_csv  = ROOT / "diagnostics" / "berth_v3" / "summary.csv"
-    ref2      = load_reference(ref2_csv, {
+    ref2_csv = ROOT / "diagnostics" / "berth_v3" / "summary.csv"
+    ref2     = load_reference(ref2_csv, {
         "sea_island": "sea_island_occ", "east_t_head": "east_t_occ"})
-
-    # Merge references: prefer ref1 if present, else ref2
     ref = {}
     for key in set(list(ref1.keys()) + list(ref2.keys())):
-        if key in ref1: ref[key] = ref1[key]
-        elif key in ref2: ref[key] = ref2[key]
+        ref[key] = ref1[key] if key in ref1 else ref2[key]
 
-    n_rows = len(VALIDATION_DATES_ORBITS)  # 40
-    n_cols = len(BERTHS)                   # 3
-
-    # Pre-compute cell bboxes per berth
+    # Cell bboxes per berth
     cell_bboxes = {}
     for berth, pts in BERTH_SPEC.items():
         clon, clat = berth_center(pts)
         cell_bboxes[berth] = cell_bbox(clon, clat)
 
-    print(f"Building contact sheet: {n_rows} rows × {n_cols} cols")
-    print(f"Fetching {n_rows} scenes × {n_cols} crops ...")
+    # Corridor polygons per berth
+    corridor_polys = {}
+    for berth, pts in BERTH_SPEC.items():
+        corridor_polys[berth] = build_corridor_polygon(pts, CORRIDOR_HALF_M, CORRIDOR_END_M)
 
-    # Collect unique (date, orbit) → datetime string
+    n_rows = len(VALIDATION_DATES_ORBITS)
+    n_cols = len(BERTHS)
+
+    # Pre-fetch scene datetimes (catalog)
+    aoi_full = BBox(bbox=[50.26, 29.17, 50.40, 29.31], crs=CRS.WGS84)
     dt_cache = {}
+    print(f"Catalog search for {n_rows} date-orbits ...")
     for date_str, orbit in VALIDATION_DATES_ORBITS:
         key = (date_str, orbit)
         if key not in dt_cache:
-            # Use any berth's bbox to search (AOI covers all)
-            from sentinelhub import BBox as _BBox
-            aoi = _BBox(bbox=[50.26, 29.17, 50.40, 29.31], crs=CRS.WGS84)
-            dt_cache[key] = scene_datetime(date_str, orbit, aoi)
-            print(f"  {date_str} o{orbit}: {dt_cache[key][:19] if dt_cache[key] else 'NOT FOUND'}")
+            dt_cache[key] = scene_datetime(date_str, orbit, aoi_full)
+            status = dt_cache[key][:19] if dt_cache[key] else "NOT FOUND"
+            print(f"  {date_str} o{orbit}: {status}")
 
-    # Figure
-    cell_px   = 100
-    cell_in   = cell_px / 72.0        # 1 inch = 72 pt; each cell ~1.4"
-    fig_w     = n_cols * cell_in * 1.5
-    fig_h     = n_rows * cell_in * 1.3
-    fig, axes = plt.subplots(n_rows, n_cols,
-                             figsize=(fig_w, fig_h),
-                             gridspec_kw={"hspace": 0.05, "wspace": 0.02})
+    # Figure layout:
+    # outer GridSpec: n_rows × n_cols
+    # each cell: GridSpecFromSubplotSpec 2×2 → top row spans 2 (scene), bottom: bg | ratio
+    SCENE_H = 1.4   # scene panel height (inches)
+    BOTTOM_H = 0.7  # bg/ratio panels height (inches)
+    COL_W   = 1.4   # berth column width (inches)
 
+    fig = plt.figure(figsize=(n_cols * COL_W,
+                               n_rows * (SCENE_H + BOTTOM_H + 0.08)))
     fig.patch.set_facecolor("#1a1a1a")
 
-    # Column headers
-    for ci, berth in enumerate(BERTHS):
-        axes[0, ci].set_title(
-            berth.replace("_"," "),
-            color="white", fontsize=7, pad=3, fontweight="bold")
+    outer_gs = GridSpec(
+        n_rows, n_cols, figure=fig,
+        hspace=0.12, wspace=0.03,
+        top=0.985, bottom=0.005, left=0.07, right=0.995
+    )
+
+    print(f"Rendering {n_rows} × {n_cols} mega-cells ...")
 
     for ri, (date_str, orbit) in enumerate(VALIDATION_DATES_ORBITS):
         dt_str = dt_cache.get((date_str, orbit), "")
-        # Row label
-        axes[ri, 0].set_ylabel(
-            f"{date_str}\no{orbit}",
-            color="#ccc", fontsize=4.5, rotation=0,
-            labelpad=36, va="center")
 
         for ci, berth in enumerate(BERTHS):
-            ax = axes[ri, ci]
-            pts = BERTH_SPEC[berth]
-            bbox_obj = cell_bboxes[berth]
+            bbox_obj  = cell_bboxes[berth]
+            corridor  = corridor_polys[berth]
+            pts       = BERTH_SPEC[berth]
 
-            # Fetch image
-            db_img = None
-            if dt_str:
-                db_img = fetch_db_crop(dt_str, bbox_obj)
+            inner = GridSpecFromSubplotSpec(
+                2, 2,
+                subplot_spec=outer_gs[ri, ci],
+                hspace=0.03, wspace=0.02,
+                height_ratios=[SCENE_H, BOTTOM_H],
+            )
+            ax_scene = fig.add_subplot(inner[0, 0:2])
+            ax_bg    = fig.add_subplot(inner[1, 0])
+            ax_ratio = fig.add_subplot(inner[1, 1])
+
+            # Row / column labels
+            if ci == 0:
+                ax_scene.set_ylabel(
+                    f"{date_str}\no{orbit}",
+                    color="#bbb", fontsize=3.5, rotation=0,
+                    labelpad=30, va="center")
+            if ri == 0:
+                ax_scene.set_title(
+                    berth.replace("_"," "),
+                    color="white", fontsize=5.5, pad=2, fontweight="bold")
 
             # Detection result
             det_key = (date_str, orbit, berth)
             det_row = det_data.get(det_key, {})
-            no_bg = str(det_row.get("no_background","")).strip() == "1"
-            det_occ_str = str(det_row.get("occupied","")).strip().lower()
-            if det_occ_str in ("true","1"): det_occ = True
-            elif det_occ_str in ("false","0"): det_occ = False
-            else: det_occ = None
-
-            # Reference
+            no_bg_flag = str(det_row.get("no_background","")).strip() == "1"
+            det_str    = str(det_row.get("occupied","")).strip().lower()
+            if det_str in ("true","1"):    det_occ = True
+            elif det_str in ("false","0"): det_occ = False
+            else:                          det_occ = None
             ref_occ = ref.get(det_key)
 
-            # max dB in ROI from image
-            max_db = float('nan')
-            if db_img is not None:
-                max_db = compute_max_ratio_in_roi(db_img, pts, bbox_obj)
+            # Fetch scene
+            linear = None
+            if dt_str:
+                linear = fetch_linear_crop(dt_str, bbox_obj)
+                print(f"  {date_str} o{orbit} {berth}: "
+                      f"{'fetched' if linear is not None else 'FAIL'} "
+                      f"shape={linear.shape if linear is not None else '—'}")
 
-            draw_cell(ax, db_img, pts, bbox_obj, det_occ, ref_occ, max_db, no_bg)
+            # Load bg
+            bg = load_bg_crop(date_str, orbit, bbox_obj)
+            if bg is not None and linear is not None:
+                bg = match_shape(bg, linear.shape)
+
+            # Compute ratio
+            ratio = None
+            if linear is not None and bg is not None:
+                ratio = np.where(
+                    (linear > 0) & (bg > 0),
+                    10 * np.log10(linear / bg),
+                    np.nan
+                ).astype(np.float32)
+
+            # Rasterize corridor mask
+            img_shape = linear.shape if linear is not None else (100, 100)
+            corridor_mask = rasterize_poly(corridor, bbox_obj, img_shape)
+
+            # Find blobs
+            all_contours = []; largest_roi = None; max_ratio_roi = float('nan')
+            if ratio is not None:
+                _, all_contours, largest_roi, max_ratio_roi = find_blobs(
+                    ratio, corridor_mask, bbox_obj)
+
+            # Draw
+            draw_scene_panel(ax_scene, linear, corridor, bbox_obj,
+                             all_contours, largest_roi, det_occ, ref_occ,
+                             max_ratio_roi, no_bg_flag)
+            draw_bg_panel(ax_bg, bg)
+            draw_ratio_panel(ax_ratio, ratio, corridor_mask)
 
     # Supertitle
-    fig.suptitle(
-        f"Berth v410 — Validation contact sheet  |  threshold={RATIO_THR} dB  |  "
-        f"Yellow box = ROI  |  Green border = match  |  Red = mismatch",
-        color="white", fontsize=7, y=0.995)
+    fig.text(
+        0.5, 0.998,
+        f"Berth v410 — Contact sheet v2  |  thr={RATIO_THR} dB  |  "
+        f"Yellow=ROI  Red=blobs  Cyan=largest ROI blob  |  "
+        f"Green border=match  Red=mismatch",
+        color="white", fontsize=5, ha="center", va="top")
 
     out_png = OUT_DIR / "contact_sheet.png"
     fig.savefig(out_png, dpi=120, bbox_inches="tight",
                 facecolor=fig.get_facecolor())
     plt.close(fig)
-    print(f"Saved: {out_png}")
+    print(f"Saved: {out_png} ({out_png.stat().st_size//1024} KB)")
 
     # ── Legend PNG ────────────────────────────────────────────────────────────
-    fig_l, ax_l = plt.subplots(figsize=(8, 4))
+    fig_l, ax_l = plt.subplots(figsize=(9, 5))
     fig_l.patch.set_facecolor("#1a1a1a")
-    ax_l.set_facecolor("#1a1a1a")
-    ax_l.axis("off")
+    ax_l.set_facecolor("#1a1a1a"); ax_l.axis("off")
 
     lines = [
-        "BERTH ROI PARAMETERS (berth_detect_v410.py)",
+        "BERTH ROI PARAMETERS (berth_detect_v410.py)   —   contact sheet v2",
         "",
-        f"RATIO_THR      = {RATIO_THR} dB   (10×log10(scene/background) threshold to flag a pixel as ship)",
-        f"MIN_AREA_PX    = {MIN_AREA_PX} px  (minimum blob area in ROI)",
-        f"CORRIDOR_HALF_M = {CORRIDOR_HALF_M} m  (ROI half-width perpendicular to berth axis)",
-        f"CORRIDOR_END_M  = {CORRIDOR_END_M} m   (ROI extension beyond berth endpoints)",
+        f"RATIO_THR        = {RATIO_THR} dB   (10×log10(scene/background))",
+        f"MIN_AREA_PX      = {MIN_AREA_PX} px  (minimum blob area in ROI)",
+        f"CORRIDOR_HALF_M  = {CORRIDOR_HALF_M} m  (ROI half-width perpendicular to berth axis)",
+        f"CORRIDOR_END_M   = {CORRIDOR_END_M} m   (ROI extension beyond berth endpoints)",
         "",
-        "ROI CENTRELINES (lon, lat pairs):",
+        "PANELS per cell:",
+        "  top:          SAR scene (dB, gray)  +  yellow=ROI polygon  +  red=blob contours  +  cyan=largest ROI bbox",
+        "  bottom-left:  background (20th-pct composite, dB, gray)",
+        "  bottom-right: ratio map (scene/bg, dB, RdYlGn)  +  white contour = threshold  +  yellow contour = ROI",
+        "",
+        "ANNOTATION: d:det  r:ref  max_ratio dB  area_px(≥MIN_AREA_PX) of largest ROI blob",
+        "BORDER: green=match  red=mismatch  grey=no reference or no background",
+        "",
+        "ROI CENTRELINES (lon, lat):",
     ]
     for berth, pts in BERTH_SPEC.items():
         exp = " [EXPERIMENTAL]" if berth in EXPERIMENTAL_BERTHS else ""
         lines.append(f"  {berth}{exp}:")
         for p in pts:
             lines.append(f"    ({p[0]:.5f}, {p[1]:.5f})")
-        clon, clat = berth_center(pts)
-        lines.append(f"    → cell centre: ({clon:.5f}, {clat:.5f}), "
-                     f"crop {CELL_KM:.1f}×{CELL_KM:.1f} km at {RESOLUTION} m/px")
 
     ax_l.text(0.03, 0.97, "\n".join(lines),
               color="white", ha="left", va="top",
-              transform=ax_l.transAxes, fontsize=8.5,
-              fontfamily="monospace")
+              transform=ax_l.transAxes, fontsize=8.5, fontfamily="monospace")
 
     leg_png = OUT_DIR / "legend.png"
     fig_l.savefig(leg_png, dpi=120, bbox_inches="tight",
