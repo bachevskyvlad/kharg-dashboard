@@ -56,13 +56,14 @@ BERTH_SPEC = {
     "southeast_pier": [(50.33646, 29.21764), (50.33591, 29.21424), (50.33522, 29.21264)],
 }
 
-CORRIDOR_HALF_M = 150   # outer ROI half-width from axis (m)
-CORRIDOR_END_M  = 100   # extend axis endpoints (m)
-PIER_EXCL_M     = 20    # exclude +-Xm from axis (pier body)
-WATER_INNER_M   = 20    # water band inner edge (m)
-WATER_OUTER_M   = 80    # water band outer edge (m)
-SHIP_MIN_LEN_M  = 150   # min ship length along axis for OCC (m)
-RATIO_THR       = 10.0  # dB threshold
+CORRIDOR_HALF_M  = 150   # outer ROI half-width from axis (m)
+CORRIDOR_END_M   = 250   # extend axis endpoints (m) — +150m to catch ships at pier ends
+PIER_EXCL_M      = 20    # exclude +-Xm from axis (pier body)
+WATER_INNER_M    = 20    # water band inner edge (m)
+WATER_OUTER_M    = 80    # water band outer edge (m)
+SHIP_MIN_LEN_M   = 150   # min ship length along axis for OCC (m)
+SHIP_MIN_ASPECT  = 3.0   # min length/width ratio (filter shadows/oil slicks)
+RATIO_THR        = 10.0  # dB threshold
 CELL_KM         = 1.0
 RESOLUTION      = 10    # m/pixel
 N_BG_SCENES     = 10    # target background scenes
@@ -354,9 +355,13 @@ def find_blobs_water(ratio_arr, water_mask, axis_uvec_img):
     """
     Find blobs within water_mask where ratio > RATIO_THR.
     Returns (blobs, longest) where each blob has:
-      length_m, border (bool mask), bbox (r0,r1,c0,c1)
+      length_m, width_m, aspect, border (bool mask), bbox (r0,r1,c0,c1)
+    Blobs filtered to length>=SHIP_MIN_LEN_M AND aspect>=SHIP_MIN_ASPECT.
     """
     ux, uy = axis_uvec_img
+    # Perpendicular unit vector (90 deg CCW)
+    px, py = -uy, ux
+
     above = np.isfinite(ratio_arr) & (ratio_arr > RATIO_THR) & water_mask
     labeled, n = ndimage.label(above, structure=struct8)
 
@@ -366,23 +371,29 @@ def find_blobs_water(ratio_arr, water_mask, axis_uvec_img):
         rows, cols = np.where(mask)
         if len(rows) == 0:
             continue
-        # Project onto axis unit vector (pixel coords)
-        # ux^2+uy^2=1, pixels are RESOLUTION m each => length in metres
-        proj = cols.astype(float) * ux + rows.astype(float) * uy
-        length_m = float(proj.max() - proj.min()) * RESOLUTION
+        fc = cols.astype(float); fr = rows.astype(float)
+        proj_along = fc * ux + fr * uy
+        proj_perp  = fc * px + fr * py
+        length_m = float(proj_along.max() - proj_along.min()) * RESOLUTION
+        width_m  = max(float(proj_perp.max()  - proj_perp.min())  * RESOLUTION, 1.0)
+        aspect   = length_m / width_m
 
         eroded = ndimage.binary_erosion(mask, structure=struct8)
         border = mask & ~eroded
 
         blobs.append({
             "length_m": length_m,
+            "width_m":  width_m,
+            "aspect":   aspect,
             "border":   border,
             "bbox":     (int(rows.min()), int(rows.max()),
                          int(cols.min()), int(cols.max())),
         })
 
     blobs.sort(key=lambda b: b["length_m"], reverse=True)
-    return blobs, (blobs[0] if blobs else None)
+    # longest = longest blob regardless of filter (for display)
+    longest = blobs[0] if blobs else None
+    return blobs, longest
 
 
 # ── Reference loader ──────────────────────────────────────────────────────────
@@ -476,8 +487,12 @@ def draw_scene_v3(ax, linear, geom, blobs, longest, det_occ, ref_occ, no_bg):
     else:
         d_s = "OCC" if det_occ else "EMP"
         r_s = "OCC" if ref_occ else ("EMP" if ref_occ is not None else "?")
-        len_str = f"{longest['length_m']:.0f}m" if longest else "0m"
-        label = f"d:{d_s} r:{r_s}\nlen={len_str}(>={SHIP_MIN_LEN_M}m)"; tc = "white"
+        if longest:
+            len_str = f"{longest['length_m']:.0f}m"
+            asp_str = f"{longest['aspect']:.1f}"
+        else:
+            len_str, asp_str = "0m", "0"
+        label = f"d:{d_s} r:{r_s}\nlen={len_str} asp={asp_str}(>={SHIP_MIN_ASPECT:.0f})"; tc = "white"
 
     ax.text(0.02, 0.98, label, color=tc,
             ha="left", va="top", transform=ax.transAxes,
@@ -646,10 +661,12 @@ def main():
                 blobs, longest = find_blobs_water(
                     ratio, geom["water_mask"], geom["axis_uvec_img"])
 
-            # Detection decision
+            # Detection decision: length >= threshold AND aspect >= threshold
             if no_bg:
                 det_occ = None
-            elif longest is not None and longest["length_m"] >= SHIP_MIN_LEN_M:
+            elif (longest is not None
+                  and longest["length_m"] >= SHIP_MIN_LEN_M
+                  and longest["aspect"] >= SHIP_MIN_ASPECT):
                 det_occ = True
             else:
                 det_occ = False
