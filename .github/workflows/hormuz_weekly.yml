@@ -1,0 +1,68 @@
+name: Hormuz Queue — Weekly Update
+
+on:
+  schedule:
+    # Every Tuesday at 03:17 UTC (orbit 57 passes by ~02:xx UTC)
+    - cron: "17 3 * * 2"
+  workflow_dispatch:
+    inputs:
+      start:
+        description: "Override start date YYYY-MM-DD (default: auto from DB)"
+        required: false
+        default: ""
+      validate:
+        description: "Run validation pass before writing"
+        required: false
+        default: "false"
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          pip install \
+            pystac-client planetary-computer \
+            rasterio scipy numpy supabase \
+            -q
+
+      - name: Rebuild masks quarterly
+        # Only when month is Jan/Apr/Jul/Oct
+        if: |
+          contains(fromJSON('["01","04","07","10"]'),
+            format('{0}', github.event.schedule && toJSON(fromJSON(format('"{0}"', steps.month.outputs.m))) || '00'))
+        run: echo "Mask rebuild scheduled — implement in separate workflow"
+
+      - name: Run weekly update
+        env:
+          SUPABASE_URL:          ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_KEY:  ${{ secrets.SUPABASE_SERVICE_KEY }}
+          TG_BOT:                ${{ secrets.TG_BOT }}
+          TG_CHAT:               ${{ secrets.TG_CHAT }}
+          PC_SDK_SUBSCRIPTION_KEY: ${{ secrets.PC_SDK_SUBSCRIPTION_KEY }}
+        run: |
+          if [ -n "${{ inputs.start }}" ]; then
+            EXTRA="--start ${{ inputs.start }}"
+          else
+            EXTRA=""
+          fi
+          if [ "${{ inputs.validate }}" = "true" ]; then
+            EXTRA="$EXTRA --validate"
+          fi
+          python scripts/hormuz_queue_backfill.py --weekly --commit $EXTRA
+
+      - name: Upload diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: hormuz-weekly-${{ github.run_id }}
+          path: diagnostics/hormuz/
+          retention-days: 90

@@ -1,0 +1,69 @@
+=== HORMUZ QUEUE VALIDATION REPORT ===
+Run date: 2026-11-10
+Source:   reference_passes.csv (pre-computed, no live SAR)
+Total passes in reference: 240
+Fail passes (n_all<10):    0 (0.0%)
+
+✓ Fail rate 0.0% < 3%
+
+Monthly comparison (reference_passes → aggregate vs reference_monthly.csv):
+Month      ref_large got_large   diff% |  ref_gpd  got_gpd   diff% | pairs
+--------------------------------------------------------------------------------
+2025-08        26.00     26.00    +0.0% |    1.670    1.667    -0.2% |    10    
+2025-09        20.90     20.90    +0.0% |    2.030    2.033    +0.1% |    10    
+2025-10        19.55     19.55    +0.0% |    1.440    1.438    -0.1% |    11    
+2025-11        22.20     22.20    +0.0% |    1.930    1.933    +0.2% |    10    
+2025-12        18.60     18.60    +0.0% |    1.900    1.900    +0.0% |    10    
+2026-01        22.44     22.44    +0.0% |    1.500    1.500    +0.0% |     9    
+2026-02        17.50     17.50    +0.0% |    1.120    1.125    +0.4% |     6    
+2026-03        17.90     17.90    +0.0% |    1.420    1.423    +0.2% |     9    
+2026-04         9.80      9.80    +0.0% |    0.870    0.867    -0.3% |    10    
+2026-05        10.69     10.69    +0.0% |    0.740    0.742    +0.3% |    13    
+2026-06        13.58     13.58    +0.0% |    0.900    0.900    +0.0% |    12    
+2026-07        16.80     16.80    +0.0% |    1.030    1.033    +0.3% |    10    
+2026-08        17.60     17.60    +0.0% |    0.470    0.467    -0.6% |    10    
+2026-09        17.80     17.80    +0.0% |    0.230    0.233    +1.3% |    10    
+2026-10        20.27     20.27    +0.0% |    0.590    0.588    -0.3% |    11    
+
+✓ All checked months within ±10%
+
+v1.0 vs v1.1 — stay_share by month (reference = v1.0; v1.1 effect shown where available):
+Month        v1.0_ss pairs  note
+2024-01        0.000     0  (v1.1 diff computed at backfill time)
+2024-02        0.000     0  (v1.1 diff computed at backfill time)
+2024-03        0.256     3  (v1.1 diff computed at backfill time)
+2024-04        0.094     1  (v1.1 diff computed at backfill time)
+2024-05        0.361     3  (v1.1 diff computed at backfill time)
+2024-06        0.356     2  (v1.1 diff computed at backfill time)
+2024-07        0.348     2  (v1.1 diff computed at backfill time)
+2024-08        0.227     2  (v1.1 diff computed at backfill time)
+2024-09        0.175     1  (v1.1 diff computed at backfill time)
+2024-10        0.328     2  (v1.1 diff computed at backfill time)
+2024-11        0.271     2  (v1.1 diff computed at backfill time)
+2024-12        0.388     3  (v1.1 diff computed at backfill time)
+2025-01        0.301     2  (v1.1 diff computed at backfill time)
+2025-02        0.345     2  (v1.1 diff computed at backfill time)
+2025-03        0.088     1  (v1.1 diff computed at backfill time)
+2025-04        0.423     3  (v1.1 diff computed at backfill time)
+2025-05        0.378     2  (v1.1 diff computed at backfill time)
+2025-06        0.385     2  (v1.1 diff computed at backfill time)
+2025-07        0.372     3  (v1.1 diff computed at backfill time)
+2025-08        0.815    10  (v1.1 diff computed at backfill time)
+2025-09        0.761    10  (v1.1 diff computed at backfill time)
+2025-10        0.777    11  (v1.1 diff computed at backfill time)
+2025-11        0.752    10  (v1.1 diff computed at backfill time)
+2025-12        0.753    10  (v1.1 diff computed at backfill time)
+2026-01        0.713     9  (v1.1 diff computed at backfill time)
+2026-02        0.724     6  (v1.1 diff computed at backfill time)
+2026-03        0.721     9  (v1.1 diff computed at backfill time)
+2026-04        0.745    10  (v1.1 diff computed at backfill time)
+2026-05        0.835    13  (v1.1 diff computed at backfill time)
+2026-06        0.822    12  (v1.1 diff computed at backfill time)
+2026-07        0.768    10  (v1.1 diff computed at backfill time)
+2026-08        0.943    10  (v1.1 diff computed at backfill time)
+2026-09        0.933    10  (v1.1 diff computed at backfill time)
+2026-10        0.897    11  (v1.1 diff computed at backfill time)
+2026-11        0.967     3  (v1.1 diff computed at backfill time)
+
+✅ VALIDATION PASSED — all checks within tolerance
+   Ready to write to hormuz_weekly.
