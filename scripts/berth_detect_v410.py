@@ -933,6 +933,7 @@ def process_date_orbit(date_str, orbit, corridor_masks, water_ring_masks,
     result_rows: list WITHOUT static filter applied yet (placeholder)
     no_scene: True if scene not found
     """
+    global _PU_EXHAUSTED
     print(f"\n[{date_str}  orbit={orbit}]")
 
     if _PU_EXHAUSTED:
@@ -943,7 +944,6 @@ def process_date_orbit(date_str, orbit, corridor_masks, water_ring_masks,
     try:
         scenes = catalog_search(date_str, date_str)
     except PUExhaustedError:
-        global _PU_EXHAUSTED
         _PU_EXHAUSTED = True
         print(f"  PU exhausted on catalog — skipping remaining")
         rows = build_no_bg_rows(date_str, orbit, None, run_id)
