@@ -1,0 +1,542 @@
+<title>Hormuz Queue</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<meta name="description" content="SAR-derived tanker queue at Larak–Hormuz: large ships waiting, departure rate, and dwell time vs AIS vessel counts.">
+<meta name="robots" content="index, follow">
+<link rel="canonical" href="https://oilradar.io/hormuz-queue">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://oilradar.io/hormuz-queue">
+<meta property="og:title" content="Hormuz Queue — SAR Larak Anchorage | OilRadar">
+<meta property="og:description" content="Weekly tanker queue at the Larak–Hormuz staging area from Sentinel-1 SAR. Large ships on-scene, departure rate, and estimated dwell time.">
+<meta property="og:image" content="https://oilradar.io/assets/images/og-image.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:site" content="@IberianLobos">
+<link rel="icon" type="image/x-icon" href="/assets/images/favicon.ico">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@300;400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+<noscript><link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@300;400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"></noscript>
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-TZQ5VH3GPY"></script>
+<script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','G-TZQ5VH3GPY');</script>
+
+<style>
+/* ── layout: fixed nav + main scroll, footer flush bottom ── */
+:root {
+  --bg: #0a0e17; --deep: #0d1320; --panel: #111827;
+  --border: rgba(255,255,255,0.07); --border2: rgba(255,255,255,0.12);
+  --accent: #3b82f6; --amber: #f59e0b; --red: #ef4444; --green: #22c55e;
+  --text: #e2e8f0; --muted: #94a3b8; --dim: #64748b; --white: #f8fafc;
+  --c-large: #f59e0b; --c-gone: #ef4444; --c-ais: #38bdf8; --c-dwell: #a78bfa;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;overflow-x:hidden;min-height:100vh;display:flex;flex-direction:column;}
+
+/* nav */
+nav{position:fixed;top:0;left:0;right:0;z-index:100;display:flex;align-items:center;justify-content:space-between;padding:16px 32px;background:rgba(10,14,23,0.97);backdrop-filter:blur(12px);border-bottom:1px solid var(--border);}
+.logo{font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:4px;color:var(--accent);text-decoration:none;}
+.nav-links{display:flex;align-items:center;gap:24px;}
+.nav-link{font-family:'DM Mono',monospace;font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);text-decoration:none;transition:color .2s;}
+.nav-link:hover,.nav-link.active{color:var(--accent);}
+.nav-cta{font-family:'DM Mono',monospace;font-size:11px;letter-spacing:2px;text-transform:uppercase;background:transparent;border:1px solid var(--accent);color:var(--accent);padding:8px 20px;cursor:pointer;transition:all .2s;text-decoration:none;}
+.nav-cta:hover{background:var(--accent);color:var(--white);}
+.nav-cta-solid{background:var(--accent);color:var(--white)!important;border-color:var(--accent);}
+.nav-cta-solid:hover{opacity:.85;}
+
+main{flex:1;padding:100px max(16px,env(safe-area-inset-left,0px)) 80px;padding-left:max(32px,env(safe-area-inset-left,0px));padding-right:max(32px,env(safe-area-inset-right,0px));}
+
+/* header */
+.section-label{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:4px;text-transform:uppercase;color:var(--accent);margin-bottom:8px;}
+.section-title{font-family:'Bebas Neue',sans-serif;font-size:clamp(36px,4vw,56px);line-height:1;color:var(--text);margin-bottom:6px;}
+.section-sub{font-family:'DM Mono',monospace;font-size:11px;color:var(--dim);margin-bottom:36px;letter-spacing:.5px;}
+
+/* KPI tiles */
+.kpi-row{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:24px;}
+@media(max-width:860px){.kpi-row{grid-template-columns:repeat(2,1fr);}}
+@media(max-width:420px){.kpi-row{grid-template-columns:1fr 1fr;}}
+.kpi-card{background:var(--panel);border:1px solid var(--border);padding:20px 24px;}
+.kpi-label{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:3px;text-transform:uppercase;color:var(--muted);margin-bottom:10px;}
+.kpi-value{font-family:'DM Mono',monospace;font-size:34px;font-weight:500;line-height:1;font-variant-numeric:tabular-nums;margin-bottom:6px;}
+.kpi-sub{font-family:'DM Mono',monospace;font-size:10px;color:var(--dim);}
+.amber{color:var(--amber);}
+.red{color:var(--red);}
+.sky{color:var(--c-ais);}
+.violet{color:var(--c-dwell);}
+
+/* chart panel */
+.chart-panel{background:var(--panel);border:1px solid var(--border);padding:24px 28px;margin-bottom:20px;}
+.chart-header{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:20px;gap:12px;flex-wrap:wrap;}
+.chart-title{font-family:'DM Mono',monospace;font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--accent);}
+.chart-sub{font-family:'DM Mono',monospace;font-size:10px;color:var(--dim);margin-top:4px;}
+.range-btns{display:flex;gap:4px;flex-shrink:0;}
+.range-btn{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:1px;text-transform:uppercase;background:transparent;border:1px solid var(--border);color:var(--muted);padding:5px 12px;cursor:pointer;transition:all .15s;}
+.range-btn:hover{border-color:var(--accent);color:var(--accent);}
+.range-btn.active{background:var(--accent);border-color:var(--accent);color:var(--white);}
+.chart-canvas{width:100%;display:block;}
+.legend-row{display:flex;gap:20px;flex-wrap:wrap;margin-top:14px;}
+.leg{display:flex;align-items:center;gap:7px;font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);}
+.leg-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;}
+.leg-line{width:18px;height:2px;flex-shrink:0;}
+.leg-dash{width:18px;height:0;border-top:2px dashed var(--muted);flex-shrink:0;}
+
+/* note */
+.data-note{font-family:'DM Mono',monospace;font-size:10px;color:var(--dim);line-height:1.9;border-left:2px solid var(--border);padding-left:14px;margin-top:4px;}
+
+/* reliability banner */
+.reliability-bar{background:rgba(59,130,246,.06);border:1px solid rgba(59,130,246,.2);padding:12px 20px;margin-bottom:24px;display:flex;align-items:center;gap:12px;}
+.reliability-icon{font-size:14px;color:var(--accent);}
+.reliability-text{font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);letter-spacing:.5px;}
+
+footer{background:var(--panel);border-top:1px solid var(--border);padding:32px max(48px,env(safe-area-inset-right,0px));padding-left:max(48px,env(safe-area-inset-left,0px));display:flex;align-items:center;justify-content:space-between;margin-top:auto;flex-wrap:wrap;gap:16px;}
+.footer-logo{font-family:'Bebas Neue',sans-serif;font-size:24px;letter-spacing:6px;color:var(--accent);}
+.footer-right{display:flex;align-items:center;gap:32px;flex-wrap:wrap;}
+.footer-link{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);text-decoration:none;}
+.footer-text{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:1px;color:var(--dim);}
+
+@media(max-width:600px){
+  nav{padding:14px 16px;}
+  main{padding-top:84px;padding-bottom:60px;}
+  .chart-panel{padding:16px;}
+  .kpi-card{padding:16px;}
+}
+</style>
+
+<nav>
+  <a href="/" class="logo">OILRADAR</a>
+  <div class="nav-links">
+    <a href="/monitor" class="nav-link">Monitor</a>
+    <a href="/anchorage" class="nav-link">Kharg</a>
+    <a href="https://calendly.com/bachevsky/intro" target="_blank" class="nav-cta">Request Access</a>
+  </div>
+</nav>
+
+<main>
+  <div class="section-label">Sentinel-1 SAR · Larak–Hormuz · Iran</div>
+  <h1 class="section-title">Hormuz Queue</h1>
+  <div class="section-sub" id="hq-sub">Loading — weekly Sentinel-1 passes · orbits 57 &amp; 166</div>
+
+  <div class="reliability-bar">
+    <span class="reliability-icon">ℹ</span>
+    <span class="reliability-text">Reliable series from April 2025 (8–13 passes/month). Pre-2025 passes are sparser (3–6/month); aggregates for those months carry higher uncertainty.</span>
+  </div>
+
+  <div class="kpi-row">
+    <div class="kpi-card">
+      <div class="kpi-label">Large ships (last pass)</div>
+      <div class="kpi-value amber" id="kpi-large">—</div>
+      <div class="kpi-sub">≥ 250 m · at Larak</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">Gone / day (last week)</div>
+      <div class="kpi-value red" id="kpi-gpd">—</div>
+      <div class="kpi-sub">departures between passes</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">AIS tankers / day</div>
+      <div class="kpi-value sky" id="kpi-ais">—</div>
+      <div class="kpi-sub">IMF PortWatch chokepoint 6</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">Est. dwell days</div>
+      <div class="kpi-value violet" id="kpi-dwell">—</div>
+      <div class="kpi-sub">large / gone_per_day</div>
+    </div>
+  </div>
+
+  <!-- Chart A: large ships on scene -->
+  <div class="chart-panel">
+    <div class="chart-header">
+      <div>
+        <div class="chart-title">Large ships at Larak — per pass</div>
+        <div class="chart-sub">Ships ≥ 250 m detected in Larak staging zone per SAR pass</div>
+      </div>
+      <div class="range-btns" id="rbA">
+        <button class="range-btn" data-m="6">6M</button>
+        <button class="range-btn active" data-m="18">18M</button>
+        <button class="range-btn" data-m="0">ALL</button>
+      </div>
+    </div>
+    <canvas class="chart-canvas" id="chartA" height="220"></canvas>
+    <div class="legend-row">
+      <div class="leg"><div class="leg-dot" style="background:var(--amber)"></div>Large (≥250 m)</div>
+      <div class="leg"><div class="leg-dot" style="background:var(--muted);opacity:.4"></div>All detections (n_all, right axis)</div>
+    </div>
+  </div>
+
+  <!-- Chart B: gone/day vs AIS -->
+  <div class="chart-panel">
+    <div class="chart-header">
+      <div>
+        <div class="chart-title">Departures vs AIS tankers</div>
+        <div class="chart-sub">Gone/day (SAR) and AIS tankers/day (IMF PortWatch) — weekly averages</div>
+      </div>
+      <div class="range-btns" id="rbB">
+        <button class="range-btn" data-m="6">6M</button>
+        <button class="range-btn active" data-m="18">18M</button>
+        <button class="range-btn" data-m="0">ALL</button>
+      </div>
+    </div>
+    <canvas class="chart-canvas" id="chartB" height="220"></canvas>
+    <div class="legend-row">
+      <div class="leg"><div class="leg-dot" style="background:var(--red)"></div>SAR gone / day</div>
+      <div class="leg"><div class="leg-dot" style="background:var(--c-ais)"></div>AIS tankers / day (IMF PortWatch)</div>
+    </div>
+  </div>
+
+  <!-- Chart C: dwell time -->
+  <div class="chart-panel">
+    <div class="chart-header">
+      <div>
+        <div class="chart-title">Estimated dwell time</div>
+        <div class="chart-sub">large / gone_per_day — average days a large ship spends at Larak</div>
+      </div>
+      <div class="range-btns" id="rbC">
+        <button class="range-btn" data-m="6">6M</button>
+        <button class="range-btn active" data-m="18">18M</button>
+        <button class="range-btn" data-m="0">ALL</button>
+      </div>
+    </div>
+    <canvas class="chart-canvas" id="chartC" height="200"></canvas>
+    <div class="legend-row">
+      <div class="leg"><div class="leg-dot" style="background:var(--c-dwell)"></div>Dwell days (est.)</div>
+      <div class="leg"><div class="leg-dot" style="background:var(--muted);opacity:.35"></div>Stay share (right axis)</div>
+    </div>
+  </div>
+
+  <div class="data-note">
+    <strong style="color:var(--muted)">Methodology</strong> — SAR Sentinel-1; очередь у Ларака–Хормуза; «ушло» = покинуло зону (не обязательно пролив); суда, прошедшие зону между снимками, не учитываются; надёжный ряд с 04.2025.
+    Large = hull ≥ 250 m (PCA length). Passes on orbits 57 and 166 with ≥90% zone coverage.
+    Passes with &lt;10 detections flagged as fail and excluded. Tracking radius 0.8 km + ±25% length tolerance (v1.1).
+    AIS: IMF PortWatch ArcGIS, portid=chokepoint6, weekly mean n_tanker.
+  </div>
+</main>
+
+<footer>
+  <div class="footer-logo">OILRADAR</div>
+  <div class="footer-right">
+    <a href="/monitor" class="footer-link">Monitor</a>
+    <a href="/anchorage" class="footer-link">Kharg</a>
+    <a href="/bab-el-mandeb" class="footer-link">Bab el-Mandeb</a>
+    <span class="footer-text">© 2025 OilRadar</span>
+  </div>
+</footer>
+
+<script>
+(function(){
+'use strict';
+var SB_URL = 'https://yoekhkczwdeyauwarsyy.supabase.co';
+var SB_KEY  = 'sb_publishable_7j07_zzdqTGM1LXf7-o9Tg_JJRbJQSM';
+var H = { apikey: SB_KEY, Authorization: 'Bearer ' + SB_KEY };
+
+var allRows = [];
+
+// ── range state ───────────────────────────────────────────────────────────
+var rangeA = 18, rangeB = 18, rangeC = 18;
+
+function filterByMonths(rows, months) {
+  if (!months) return rows;
+  var cutoff = new Date();
+  cutoff.setMonth(cutoff.getMonth() - months);
+  var cs = cutoff.toISOString().slice(0,10);
+  return rows.filter(function(r){ return r.week_start >= cs; });
+}
+
+// ── KPI tiles ──────────────────────────────────────────────────────────────
+function updateKPIs(rows) {
+  var last = rows[rows.length - 1];
+  if (!last) return;
+  var el = function(id){ return document.getElementById(id); };
+  el('kpi-large').textContent = last.large != null ? (+last.large).toFixed(1) : '—';
+  el('kpi-gpd').textContent   = last.gone_per_day != null ? (+last.gone_per_day).toFixed(2) : '—';
+  el('kpi-ais').textContent   = last.n_tanker != null ? (+last.n_tanker).toFixed(1) : '—';
+  el('kpi-dwell').textContent = last.dwell_days != null ? (+last.dwell_days).toFixed(1) : '—';
+  var sub = document.getElementById('hq-sub');
+  if (sub) sub.textContent = 'Updated ' + last.week_start + ' — Sentinel-1 orbits 57 & 166';
+}
+
+// ── generic canvas chart helpers ───────────────────────────────────────────
+var PAD = { top: 24, right: 60, bottom: 40, left: 52 };
+
+function setupCanvas(canvas) {
+  var dpr = window.devicePixelRatio || 1;
+  var W = canvas.parentElement.clientWidth - 4;
+  var H = +canvas.getAttribute('height');
+  canvas.style.width  = W + 'px';
+  canvas.style.height = H + 'px';
+  canvas.width  = W * dpr;
+  canvas.height = H * dpr;
+  var ctx = canvas.getContext('2d');
+  ctx.scale(dpr, dpr);
+  return { ctx: ctx, W: W, H: H, dpr: dpr };
+}
+
+function niceMax(v, min) {
+  if (!v || v <= 0) return min || 10;
+  var m = Math.ceil(v * 1.1);
+  return Math.max(m, min || 1);
+}
+
+function drawGrid(ctx, W, H, yMax, steps, label, color) {
+  color = color || 'rgba(255,255,255,0.05)';
+  ctx.strokeStyle = color;
+  ctx.lineWidth = 1;
+  ctx.font = '9px DM Mono, monospace';
+  ctx.fillStyle = 'rgba(148,163,184,0.6)';
+  ctx.textAlign = 'right';
+  for (var i = 0; i <= steps; i++) {
+    var v = yMax * i / steps;
+    var y = H - PAD.bottom - (v / yMax) * (H - PAD.top - PAD.bottom);
+    ctx.beginPath();
+    ctx.moveTo(PAD.left, y);
+    ctx.lineTo(W - PAD.right, y);
+    ctx.stroke();
+    ctx.fillText(label ? label(v) : v.toFixed(0), PAD.left - 4, y + 3);
+  }
+}
+
+function drawXAxis(ctx, W, H, xs, labels) {
+  ctx.font = '9px DM Mono, monospace';
+  ctx.fillStyle = 'rgba(100,116,139,0.8)';
+  ctx.textAlign = 'center';
+  var step = Math.max(1, Math.floor(xs.length / 8));
+  for (var i = 0; i < xs.length; i += step) {
+    ctx.fillText(labels[i] ? labels[i].slice(5) : '', xs[i], H - PAD.bottom + 14);
+  }
+}
+
+function xCoords(n, W) {
+  var inner = W - PAD.left - PAD.right;
+  return Array.from({length: n}, function(_, i) {
+    return PAD.left + (n > 1 ? i / (n - 1) : 0.5) * inner;
+  });
+}
+
+function yCoord(v, yMax, H) {
+  return H - PAD.bottom - (v / yMax) * (H - PAD.top - PAD.bottom);
+}
+
+function drawLine(ctx, xs, ys, color, dash) {
+  ctx.save();
+  ctx.strokeStyle = color;
+  ctx.lineWidth = 2;
+  if (dash) ctx.setLineDash([4, 4]);
+  ctx.beginPath();
+  var started = false;
+  for (var i = 0; i < xs.length; i++) {
+    if (ys[i] == null) { started = false; continue; }
+    if (!started) { ctx.moveTo(xs[i], ys[i]); started = true; }
+    else ctx.lineTo(xs[i], ys[i]);
+  }
+  ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.restore();
+}
+
+function drawArea(ctx, xs, ys, color, W, H) {
+  ctx.save();
+  ctx.fillStyle = color;
+  ctx.beginPath();
+  var first = -1;
+  for (var i = 0; i < xs.length; i++) {
+    if (ys[i] == null) continue;
+    if (first < 0) { ctx.moveTo(xs[i], ys[i]); first = i; }
+    else ctx.lineTo(xs[i], ys[i]);
+  }
+  if (first < 0) { ctx.restore(); return; }
+  var last = xs.length - 1;
+  while (last >= 0 && ys[last] == null) last--;
+  ctx.lineTo(xs[last], H - PAD.bottom);
+  ctx.lineTo(xs[first], H - PAD.bottom);
+  ctx.closePath();
+  ctx.fill();
+  ctx.restore();
+}
+
+function drawDots(ctx, xs, ys, color, r) {
+  r = r || 3;
+  ctx.fillStyle = color;
+  for (var i = 0; i < xs.length; i++) {
+    if (ys[i] == null) continue;
+    ctx.beginPath();
+    ctx.arc(xs[i], ys[i], r, 0, 2*Math.PI);
+    ctx.fill();
+  }
+}
+
+function drawRightAxis(ctx, W, H, yMax, steps, color, label) {
+  ctx.font = '9px DM Mono, monospace';
+  ctx.fillStyle = color || 'rgba(167,139,250,0.7)';
+  ctx.textAlign = 'left';
+  for (var i = 0; i <= steps; i++) {
+    var v = yMax * i / steps;
+    var y = H - PAD.bottom - (v / yMax) * (H - PAD.top - PAD.bottom);
+    ctx.fillText(label ? label(v) : v.toFixed(0), W - PAD.right + 4, y + 3);
+  }
+}
+
+// ── Chart A: large ships ───────────────────────────────────────────────────
+function drawA(rows) {
+  var canvas = document.getElementById('chartA');
+  var c = setupCanvas(canvas);
+  var ctx = c.ctx, W = c.W, H = c.H;
+  ctx.clearRect(0, 0, W, H);
+  if (!rows.length) return;
+
+  var labels = rows.map(function(r){ return r.week_start; });
+  var large  = rows.map(function(r){ return r.large != null ? +r.large : null; });
+  var nall   = rows.map(function(r){ return r.n_all  != null ? +r.n_all  : null; });
+
+  var maxL = Math.max.apply(null, large.filter(function(v){ return v!=null; }).concat([0]));
+  var maxN = Math.max.apply(null, nall.filter(function(v){ return v!=null; }).concat([0]));
+  var yMaxL = niceMax(maxL, 5);
+  var yMaxN = niceMax(maxN, 10);
+
+  var xs = xCoords(rows.length, W);
+  var ysL = large.map(function(v){ return v != null ? yCoord(v, yMaxL, H) : null; });
+  var ysN = nall.map(function(v){ return v != null ? yCoord(v, yMaxN, H) : null; });
+
+  drawGrid(ctx, W, H, yMaxL, 4, function(v){ return v.toFixed(0); });
+  drawRightAxis(ctx, W, H, yMaxN, 4, 'rgba(100,116,139,0.5)', function(v){ return v.toFixed(0); });
+  drawXAxis(ctx, W, H, xs, labels);
+
+  // n_all as faint bar fill
+  ctx.save();
+  ctx.fillStyle = 'rgba(100,116,139,0.1)';
+  for (var i = 0; i < xs.length; i++) {
+    if (ysN[i] == null) continue;
+    var bw = Math.max(2, (W - PAD.left - PAD.right) / rows.length * 0.7);
+    ctx.fillRect(xs[i] - bw/2, ysN[i], bw, H - PAD.bottom - ysN[i]);
+  }
+  ctx.restore();
+
+  drawArea(ctx, xs, ysL, 'rgba(245,158,11,0.12)', W, H);
+  drawLine(ctx, xs, ysL, 'var(--amber)');
+  drawDots(ctx, xs, ysL, '#f59e0b', 3);
+}
+
+// ── Chart B: gone/day vs AIS ───────────────────────────────────────────────
+function drawB(rows) {
+  var canvas = document.getElementById('chartB');
+  var c = setupCanvas(canvas);
+  var ctx = c.ctx, W = c.W, H = c.H;
+  ctx.clearRect(0, 0, W, H);
+  if (!rows.length) return;
+
+  var labels = rows.map(function(r){ return r.week_start; });
+  var gpd    = rows.map(function(r){ return r.gone_per_day != null ? +r.gone_per_day : null; });
+  var ais    = rows.map(function(r){ return r.n_tanker     != null ? +r.n_tanker     : null; });
+
+  var maxGpd = Math.max.apply(null, gpd.filter(function(v){ return v!=null; }).concat([0]));
+  var maxAis = Math.max.apply(null, ais.filter(function(v){ return v!=null; }).concat([0]));
+  var yMaxG  = niceMax(maxGpd, 5);
+  var yMaxA  = niceMax(maxAis, 10);
+
+  var xs  = xCoords(rows.length, W);
+  var ysG = gpd.map(function(v){ return v != null ? yCoord(v, yMaxG, H) : null; });
+  var ysA = ais.map(function(v){ return v != null ? yCoord(v, yMaxA, H) : null; });
+
+  drawGrid(ctx, W, H, yMaxG, 4, function(v){ return v.toFixed(1); });
+  drawRightAxis(ctx, W, H, yMaxA, 4, 'rgba(56,189,248,0.6)', function(v){ return v.toFixed(0); });
+  drawXAxis(ctx, W, H, xs, labels);
+
+  // AIS as dashed line (right axis scale)
+  var ysAscaled = ais.map(function(v){ return v != null ? yCoord(v, yMaxA, H) : null; });
+  drawLine(ctx, xs, ysAscaled, 'rgba(56,189,248,0.6)', true);
+
+  drawArea(ctx, xs, ysG, 'rgba(239,68,68,0.10)', W, H);
+  drawLine(ctx, xs, ysG, 'var(--red)');
+  drawDots(ctx, xs, ysG, '#ef4444', 3);
+}
+
+// ── Chart C: dwell time ────────────────────────────────────────────────────
+function drawC(rows) {
+  var canvas = document.getElementById('chartC');
+  var c = setupCanvas(canvas);
+  var ctx = c.ctx, W = c.W, H = c.H;
+  ctx.clearRect(0, 0, W, H);
+  if (!rows.length) return;
+
+  var labels = rows.map(function(r){ return r.week_start; });
+  var dwell  = rows.map(function(r){ return r.dwell_days  != null ? +r.dwell_days  : null; });
+  var ss     = rows.map(function(r){ return r.stay_share  != null ? +r.stay_share  : null; });
+
+  var maxD = Math.max.apply(null, dwell.filter(function(v){ return v!=null; }).concat([0]));
+  var yMaxD = niceMax(maxD, 10);
+
+  var xs  = xCoords(rows.length, W);
+  var ysD = dwell.map(function(v){ return v != null ? yCoord(v, yMaxD, H) : null; });
+  var ysS = ss.map(function(v){ return v != null ? yCoord(v, 1, H) : null; });
+
+  drawGrid(ctx, W, H, yMaxD, 4, function(v){ return v.toFixed(0); });
+  drawRightAxis(ctx, W, H, 1, 4, 'rgba(100,116,139,0.45)', function(v){ return v.toFixed(2); });
+  drawXAxis(ctx, W, H, xs, labels);
+
+  // stay_share faint bars (right axis)
+  ctx.save();
+  ctx.fillStyle = 'rgba(100,116,139,0.08)';
+  for (var i = 0; i < xs.length; i++) {
+    if (ysS[i] == null) continue;
+    var bw = Math.max(2, (W - PAD.left - PAD.right) / rows.length * 0.7);
+    ctx.fillRect(xs[i] - bw/2, ysS[i], bw, H - PAD.bottom - ysS[i]);
+  }
+  ctx.restore();
+
+  drawArea(ctx, xs, ysD, 'rgba(167,139,250,0.10)', W, H);
+  drawLine(ctx, xs, ysD, 'var(--c-dwell)');
+  drawDots(ctx, xs, ysD, '#a78bfa', 3);
+}
+
+// ── range buttons ──────────────────────────────────────────────────────────
+function setupRange(rbId, getter, setter, drawFn) {
+  var rb = document.getElementById(rbId);
+  if (!rb) return;
+  rb.querySelectorAll('.range-btn').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      rb.querySelectorAll('.range-btn').forEach(function(b){ b.classList.remove('active'); });
+      btn.classList.add('active');
+      setter(+btn.dataset.m);
+      drawFn(filterByMonths(allRows, +btn.dataset.m));
+    });
+  });
+}
+
+// ── load ───────────────────────────────────────────────────────────────────
+async function load() {
+  try {
+    var r = await fetch(
+      SB_URL + '/rest/v1/hormuz_weekly?select=week_start,n_passes,n_pairs,large,n_all,stay_share,gone_per_day,dwell_days,n_tanker,n_total&order=week_start&limit=5000',
+      { headers: H }
+    );
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    allRows = await r.json();
+    if (!Array.isArray(allRows) || !allRows.length) {
+      document.getElementById('hq-sub').textContent = 'Data not yet available — backfill in progress';
+      return;
+    }
+    updateKPIs(allRows);
+    drawA(filterByMonths(allRows, rangeA));
+    drawB(filterByMonths(allRows, rangeB));
+    drawC(filterByMonths(allRows, rangeC));
+
+    setupRange('rbA', function(){ return rangeA; }, function(v){ rangeA = v; }, drawA);
+    setupRange('rbB', function(){ return rangeB; }, function(v){ rangeB = v; }, drawB);
+    setupRange('rbC', function(){ return rangeC; }, function(v){ rangeC = v; }, drawC);
+  } catch(e) {
+    console.error('[hormuz-queue]', e);
+    document.getElementById('hq-sub').textContent = 'Error loading data';
+  }
+}
+
+load();
+
+// resize
+var resizeTimer;
+window.addEventListener('resize', function() {
+  clearTimeout(resizeTimer);
+  resizeTimer = setTimeout(function(){
+    if (!allRows.length) return;
+    drawA(filterByMonths(allRows, rangeA));
+    drawB(filterByMonths(allRows, rangeB));
+    drawC(filterByMonths(allRows, rangeC));
+  }, 150);
+});
+})();
+</script>
