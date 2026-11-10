@@ -160,7 +160,10 @@ def fetch_linear(dt_str):
         bbox=AOI_BBOX, size=SIZE, config=config,
     )
     data = req.get_data()
-    return data[0][:,:,0].astype(np.float32)
+    arr = data[0]
+    if arr.ndim == 3:
+        arr = arr[:, :, 0]
+    return arr.astype(np.float32)
 
 # ── BG cache ──────────────────────────────────────────────────────────────────
 def load_bg(date_str, orbit):
