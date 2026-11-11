@@ -162,7 +162,7 @@ def find_blobs(ratio_arr, water_mask, axis_uvec, merge_gap_m, min_len_m, min_asp
     ux, uy = axis_uvec; px_u, py_u = -uy, ux
     above = np.isfinite(ratio_arr) & (ratio_arr > RATIO_THR) & water_mask
     labeled, n = ndimage.label(above, structure=struct8)
-    if n == 0: return [], None
+    if n == 0: return [], None, False
     raw = []
     for bid in range(1, n+1):
         mask = labeled == bid
