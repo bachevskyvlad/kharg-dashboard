@@ -4,7 +4,7 @@ berth_validate_optics_v4.py — v4 detector validation.
 Changes vs v3:
   1. BG: median of EMP-only 2024-2025 dates per berth+orbit;
          fallback to p10 of ALL 2024-2025 dates if <5 EMP dates
-  2. PIER_EXCL=12m, WATER_INNER=12m, WATER_OUTER=90m
+  2. PIER_EXCL=12m, WATER_INNER=20m, WATER_OUTER=90m
   3. Blob gap-merge: gaps <=40m along axis bridged; SHIP_MIN_LEN=120m
   4. Accuracy split: overall / 2024-2025 / 2026 (out-of-sample)
   5. BG comparison PNG for east_t_head (before/after)
@@ -67,7 +67,7 @@ BERTHS          = ["sea_island", "east_t_head", "southeast_pier"]
 CORRIDOR_HALF_M = 150
 CORRIDOR_END_M  = 250
 PIER_EXCL_M     = 12   # was 20
-WATER_INNER_M   = 12   # was 20
+WATER_INNER_M   = 20   # kept at 20: 12 captured pier pixels → aspect ~1.9 < 3.0
 WATER_OUTER_M   = 90   # was 80
 SHIP_MIN_LEN_M  = 120  # was 150
 SHIP_MIN_ASPECT = 3.0
