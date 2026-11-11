@@ -56,9 +56,9 @@ RATIO_THR       = 10.0
 struct8 = ndimage.generate_binary_structure(2, 2)
 
 BERTHS = {
-    "sea_island":      [(50.33167, 29.26167), (50.34167, 29.24833)],
+    "sea_island":      [(50.28316, 29.23318), (50.28816, 29.22433)],
     "east_t_head":     [(50.33833, 29.23812), (50.34054, 29.22189)],
-    "southeast_pier":  [(50.33056, 29.22444), (50.34306, 29.21500)],
+    "southeast_pier":  [(50.33646, 29.21764), (50.33591, 29.21424), (50.33522, 29.21264)],
 }
 BERTH_COLS = {
     "sea_island": "sea_island_optical_ref",
@@ -67,10 +67,11 @@ BERTH_COLS = {
 }
 
 MODES = {
-    "v3":    dict(pier=20, water_i=20, water_o=80, min_len=150, merge=0,  bg_dir=BG_V3),
-    "bg":    dict(pier=20, water_i=20, water_o=80, min_len=150, merge=0,  bg_dir=BG_V4),
-    "pier":  dict(pier=12, water_i=20, water_o=80, min_len=150, merge=0,  bg_dir=BG_V3),
-    "merge": dict(pier=20, water_i=20, water_o=80, min_len=120, merge=40, bg_dir=BG_V3),
+    "v3":       dict(pier=20, water_i=20, water_o=80, min_len=150, merge=0,  bg_dir=BG_V3),
+    "bg":       dict(pier=20, water_i=20, water_o=80, min_len=150, merge=0,  bg_dir=BG_V4),
+    "pier":     dict(pier=12, water_i=20, water_o=80, min_len=150, merge=0,  bg_dir=BG_V3),
+    "merge":    dict(pier=20, water_i=20, water_o=80, min_len=120, merge=40, bg_dir=BG_V3),
+    "bg+merge": dict(pier=20, water_i=20, water_o=80, min_len=120, merge=40, bg_dir=BG_V4),
 }
 
 EVALSCRIPT_S1 = """
@@ -332,10 +333,11 @@ def run_ablation():
     lines.append("-" * len(hdr))
 
     MODE_DESC = {
-        "v3":    "baseline (pier=20, water=20-80, len≥150, no merge)",
-        "bg":    "v4 BG only      (EMP median, rest=v3)",
-        "pier":  "pier=12m only   (bg=v3, water=20-80, len≥150)",
-        "merge": "merge+120m only (bg=v3, pier=20, water=20-80, merge=40m)",
+        "v3":       "baseline (pier=20, water=20-80, len≥150, no merge)",
+        "bg":       "v4 BG only      (EMP median, rest=v3)",
+        "pier":     "pier=12m only   (bg=v3, water=20-80, len≥150)",
+        "merge":    "merge+120m only (bg=v3, pier=20, water=20-80, merge=40m)",
+        "bg+merge": "bg+merge (v4 BG + merge=40m/len≥120, pier=20)",
     }
 
     per_mode_rows = defaultdict(list)
@@ -343,7 +345,7 @@ def run_ablation():
         per_mode_rows[r["mode"]].append(r)
 
     summary = {}
-    for mode_name in ["v3", "bg", "pier", "merge"]:
+    for mode_name in ["v3", "bg", "pier", "merge", "bg+merge"]:
         summary[mode_name] = {}
         mode_rows = per_mode_rows[mode_name]
         for berth in ["sea_island", "east_t_head", "southeast_pier"]:
@@ -370,7 +372,7 @@ def run_ablation():
     lines.append("=== Recall delta vs v3 baseline ===")
     hdr2 = f"{'Mode':<8}  {'sea_island':>12}  {'east_t_head':>13}  {'southeast_pier':>16}"
     lines.append(hdr2); lines.append("-" * len(hdr2))
-    for mode_name in ["bg", "pier", "merge"]:
+    for mode_name in ["bg", "pier", "merge", "bg+merge"]:
         deltas = []
         for berth in ["sea_island", "east_t_head", "southeast_pier"]:
             rec_v3  = summary["v3"].get(berth,{}).get("rec", float("nan"))
@@ -391,17 +393,19 @@ def run_ablation():
     fig, axes = plt.subplots(1, 3, figsize=(11, 4))
     fig.patch.set_facecolor("#1a1a1a")
     berth_labels = ["sea_island", "east_t_head", "southeast_pier"]
-    mode_colors  = {"v3":"#4a9eff", "bg":"#ff9944", "pier":"#44ff99", "merge":"#ff4499"}
+    mode_colors  = {"v3":"#4a9eff", "bg":"#ff9944", "pier":"#44ff99", "merge":"#ff4499", "bg+merge":"#cc44ff"}
+    mode_order   = ["v3", "bg", "pier", "merge", "bg+merge"]
     for ax, berth in zip(axes, berth_labels):
         ax.set_facecolor("#111")
-        recalls = [summary.get(m,{}).get(berth,{}).get("rec",0) for m in ["v3","bg","pier","merge"]]
-        bars = ax.bar(["v3","bg","pier","merge"], recalls,
-                      color=[mode_colors[m] for m in ["v3","bg","pier","merge"]], width=0.6)
+        recalls = [summary.get(m,{}).get(berth,{}).get("rec",0) for m in mode_order]
+        bars = ax.bar(mode_order, recalls,
+                      color=[mode_colors[m] for m in mode_order], width=0.6)
         ax.set_ylim(0, 110)
         ax.set_title(berth.replace("_"," "), color="white", fontsize=8)
         ax.tick_params(colors="white", labelsize=7)
         ax.spines[:].set_color("#333")
         ax.set_ylabel("Recall (%)", color="white", fontsize=7)
+        ax.tick_params(axis='x', labelrotation=25)
         for bar, v in zip(bars, recalls):
             ax.text(bar.get_x()+bar.get_width()/2, min(v+2, 103),
                     f"{v:.0f}%", ha="center", va="bottom", color="white", fontsize=7)
