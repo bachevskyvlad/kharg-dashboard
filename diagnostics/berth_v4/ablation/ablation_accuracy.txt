@@ -2,25 +2,30 @@ Ablation accuracy — one parameter change at a time vs v3 baseline
 
 Mode      Change                                    Berth                  Acc    Rec   Prec  TP  FN  FP  TN
 ------------------------------------------------------------------------------------------------------------
-v3        baseline (pier=20, water=20-80, len≥150, no merge)  sea_island           56.8%   5.9% 100.0%    1  16   0  20
+v3        baseline (pier=20, water=20-80, len≥150, no merge)  sea_island           81.1%  64.7%  91.7%   11   6   1  19
 v3                                                  east_t_head          51.5%  31.8%  87.5%    7  15   1  10
-v3                                                  southeast_pier       94.1%   0.0%   nan%    0   2   0  32
+v3                                                  southeast_pier       97.1%  50.0% 100.0%    1   1   0  32
 
-bg        v4 BG only      (EMP median, rest=v3)     sea_island           54.1%   0.0%   nan%    0  17   0  20
+bg        v4 BG only      (EMP median, rest=v3)     sea_island           70.3%  41.2%  87.5%    7  10   1  19
 bg                                                  east_t_head          72.7%  63.6%  93.3%   14   8   1  10
-bg                                                  southeast_pier       94.1%   0.0%   nan%    0   2   0  32
+bg                                                  southeast_pier       97.1%  50.0% 100.0%    1   1   0  32
 
-pier      pier=12m only   (bg=v3, water=20-80, len≥150)  sea_island           56.8%   5.9% 100.0%    1  16   0  20
+pier      pier=12m only   (bg=v3, water=20-80, len≥150)  sea_island           81.1%  64.7%  91.7%   11   6   1  19
 pier                                                east_t_head          51.5%  31.8%  87.5%    7  15   1  10
-pier                                                southeast_pier       94.1%   0.0%   nan%    0   2   0  32
+pier                                                southeast_pier       97.1%  50.0% 100.0%    1   1   0  32
 
-merge     merge+120m only (bg=v3, pier=20, water=20-80, merge=40m)  sea_island           51.4%   0.0%   0.0%    0  17   1  19
+merge     merge+120m only (bg=v3, pier=20, water=20-80, merge=40m)  sea_island           78.4%  58.8%  90.9%   10   7   1  19
 merge                                               east_t_head          63.6%  50.0%  91.7%   11  11   1  10
-merge                                               southeast_pier       85.3%  50.0%  20.0%    1   1   4  28
+merge                                               southeast_pier       91.2%   0.0%   0.0%    0   2   1  31
+
+bg+merge  bg+merge (v4 BG + merge=40m/len≥120, pier=20)  sea_island           70.3%  47.1%  80.0%    8   9   2  18
+bg+merge                                            east_t_head          36.4%   4.5% 100.0%    1  21   0  11
+bg+merge                                            southeast_pier       94.1%  50.0%  50.0%    1   1   1  31
 
 === Recall delta vs v3 baseline ===
 Mode        sea_island    east_t_head    southeast_pier
 -------------------------------------------------------
-bg               -5.9%         +31.8%             +0.0%
+bg              -23.5%         +31.8%             +0.0%
 pier             +0.0%          +0.0%             +0.0%
-merge            -5.9%         +18.2%            +50.0%
+merge            -5.9%         +18.2%            -50.0%
+bg+merge        -17.6%         -27.3%             +0.0%
