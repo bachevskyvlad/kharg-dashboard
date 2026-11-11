@@ -159,7 +159,10 @@ def build_geom(pts, bbox_obj, img_shape, pier_excl_m, water_inner_m, water_outer
         "axis_uvec":  (ux, uy),
     }
 
-def find_blobs(ratio_arr, water_mask, axis_uvec, merge_gap_m, min_len_m, min_aspect=3.0):
+MERGE_PERP_TOL_M = 30.0  # max perpendicular centre offset to allow merge
+
+def find_blobs(ratio_arr, water_mask, axis_uvec, merge_gap_m, min_len_m, min_aspect=3.0,
+               debug=False):
     ux, uy = axis_uvec; px_u, py_u = -uy, ux
     above = np.isfinite(ratio_arr) & (ratio_arr > RATIO_THR) & water_mask
     labeled, n = ndimage.label(above, structure=struct8)
@@ -171,20 +174,33 @@ def find_blobs(ratio_arr, water_mask, axis_uvec, merge_gap_m, min_len_m, min_asp
         if len(rows) == 0: continue
         fc=cols.astype(float); fr=rows.astype(float)
         axis_p = fc*ux + fr*uy; perp_p = fc*px_u + fr*py_u
+        a_min=float(axis_p.min()); a_max=float(axis_p.max())
+        p_min=float(perp_p.min()); p_max=float(perp_p.max())
+        len_m = (a_max-a_min)*RESOLUTION
+        wid_m = max((p_max-p_min)*RESOLUTION, 1.0)
         raw.append({
-            "axis_min": float(axis_p.min()), "axis_max": float(axis_p.max()),
-            "perp_min": float(perp_p.min()), "perp_max": float(perp_p.max()),
+            "axis_min": a_min, "axis_max": a_max,
+            "perp_min": p_min, "perp_max": p_max,
+            "perp_ctr": (p_min+p_max)/2,
+            "length_m": len_m, "width_m": wid_m,
+            "aspect": len_m/wid_m,
             "area_px": int(mask.sum()),
         })
     raw.sort(key=lambda b: b["axis_min"])
+    if debug:
+        print(f"    raw blobs ({len(raw)}): " +
+              ", ".join(f"len={b['length_m']:.0f}m asp={b['aspect']:.1f}" for b in raw))
     if merge_gap_m <= 0:
         groups = [[b] for b in raw]
     else:
-        gap_px = merge_gap_m / RESOLUTION
+        gap_px   = merge_gap_m / RESOLUTION
+        perp_tol = MERGE_PERP_TOL_M / RESOLUTION
         groups = []; cur = [raw[0]]
         for b in raw[1:]:
-            cur_max = max(bb["axis_max"] for bb in cur)
-            if b["axis_min"] - cur_max <= gap_px:
+            cur_max      = max(bb["axis_max"] for bb in cur)
+            cur_perp_ctr = float(np.mean([bb["perp_ctr"] for bb in cur]))
+            if (b["axis_min"] - cur_max <= gap_px and
+                    abs(b["perp_ctr"] - cur_perp_ctr) <= perp_tol):
                 cur.append(b)
             else:
                 groups.append(cur); cur = [b]
@@ -192,11 +208,18 @@ def find_blobs(ratio_arr, water_mask, axis_uvec, merge_gap_m, min_len_m, min_asp
     blobs = []
     for grp in groups:
         a_min=min(b["axis_min"] for b in grp); a_max=max(b["axis_max"] for b in grp)
-        p_min=min(b["perp_min"] for b in grp); p_max=max(b["perp_max"] for b in grp)
-        length_m=(a_max-a_min)*RESOLUTION; width_m=max((p_max-p_min)*RESOLUTION, 1.0)
-        aspect=length_m/width_m; area_px=sum(b["area_px"] for b in grp)
-        blobs.append({"length_m":length_m,"width_m":width_m,"aspect":aspect,
+        length_m=(a_max-a_min)*RESOLUTION
+        # Width: median of individual blob widths (not union — avoids noise inflation)
+        width_m=max(float(np.median([b["width_m"] for b in grp])), 1.0)
+        # Aspect: best across individual blobs (not merged bounding box)
+        best_aspect=max(b["aspect"] for b in grp)
+        area_px=sum(b["area_px"] for b in grp)
+        blobs.append({"length_m":length_m,"width_m":width_m,"aspect":best_aspect,
                       "area_px":area_px,"n_merged":len(grp)})
+        if debug and len(grp) > 1:
+            print(f"    merged {len(grp)} blobs → len={length_m:.0f}m best_asp={best_aspect:.1f} "
+                  f"wid={width_m:.0f}m: " +
+                  ", ".join(f"len={b['length_m']:.0f}m asp={b['aspect']:.1f}" for b in grp))
     blobs.sort(key=lambda b: b["length_m"], reverse=True)
     best = blobs[0] if blobs else None
     detected = bool(best and best["length_m"]>=min_len_m and best["aspect"]>=min_aspect)
@@ -301,9 +324,14 @@ def run_ablation():
                                      10*np.log10(linear/bg), np.nan).astype(np.float32)
                     geom = build_geom(pts, bbox_obj, linear.shape,
                                       cfg["pier"], cfg["water_i"], cfg["water_o"])
+                    dbg = (berth=="east_t_head" and date_str=="2025-07-22"
+                           and cfg["merge"] > 0)
+                    if dbg:
+                        print(f"  DEBUG {mode_name} {berth} {date_str}:")
                     _, best, detected = find_blobs(
                         ratio, geom["water_mask"], geom["axis_uvec"],
-                        merge_gap_m=cfg["merge"], min_len_m=cfg["min_len"])
+                        merge_gap_m=cfg["merge"], min_len_m=cfg["min_len"],
+                        debug=dbg)
                     det_bool = detected
                     det_str  = "OCC" if detected else "EMP"
 
@@ -380,6 +408,35 @@ def run_ablation():
             d = rec_m - rec_v3
             deltas.append(f"{d:+.1f}%" if not (d != d) else "   n/a")
         lines.append(f"{mode_name:<8}  {deltas[0]:>12}  {deltas[1]:>13}  {deltas[2]:>16}")
+    lines.append("")
+
+    # 2024-25 vs 2026 split
+    lines.append("=== Recall by period: 2024-25 vs 2026 ===")
+    hdr3 = f"{'Mode':<8}  {'Period':<7}  {'Berth':<18}  {'Acc':>6} {'Rec':>6} {'Prec':>6}  TP  FN  FP  TN"
+    lines.append(hdr3); lines.append("-" * len(hdr3))
+    for mode_name in ["v3", "bg", "merge", "bg+merge"]:
+        mode_rows = per_mode_rows[mode_name]
+        for period, year_fn in [("2024-25", lambda y: y <= 2025),
+                                 ("2026",    lambda y: y >= 2026)]:
+            for berth in ["sea_island", "east_t_head", "southeast_pier"]:
+                br = [r for r in mode_rows
+                      if r["berth"]==berth and r["det"]!="NO_BG"
+                      and year_fn(int(r["date"][:4]))]
+                if not br: continue
+                TP = sum(1 for r in br if r["optical_ref"]=="OCC" and r["det"]=="OCC")
+                FN = sum(1 for r in br if r["optical_ref"]=="OCC" and r["det"]=="EMP")
+                FP = sum(1 for r in br if r["optical_ref"]=="EMP" and r["det"]=="OCC")
+                TN = sum(1 for r in br if r["optical_ref"]=="EMP" and r["det"]=="EMP")
+                n  = TP+FN+FP+TN
+                acc  = (TP+TN)/n*100 if n else 0
+                rec  = TP/(TP+FN)*100 if (TP+FN) else 0
+                prec = TP/(TP+FP)*100 if (TP+FP) else float("nan")
+                lines.append(
+                    f"{mode_name:<8}  {period:<7}  {berth:<18}  "
+                    f"{acc:5.1f}% {rec:5.1f}% {prec:5.1f}%  "
+                    f"{TP:3d} {FN:3d} {FP:3d} {TN:3d}"
+                )
+        lines.append("")
     lines.append("")
 
     txt = "\n".join(lines)
