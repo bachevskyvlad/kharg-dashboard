@@ -1,0 +1,46 @@
+Validation v4 — optical ground truth (optics_ref_sameday.csv)
+BG: EMP-only 2024-2025 median (fallback p10 if <5 EMP dates)
+PIER_EXCL=12m  WATER=12-90m  MIN_LEN=120m  GAP_MERGE=40m
+============================================================
+
+── Before / After ──────────────────────────────────────
+Berth                  v3-Acc  v3-Rec   v4-Acc  v4-Rec   v4-Prec
+------------------------------------------------------------
+sea_island              81.1%   64.7%    64.9%   35.3%     75.0%
+east_t_head             51.5%   31.8%    33.3%    0.0%      nan%
+southeast_pier          97.1%   50.0%    94.1%   50.0%     50.0%
+
+── Per-berth detail ─────────────────────────────────────
+
+sea_island
+  all years (n=37)
+    Accuracy:  64.9%  Precision: 75.0%  Recall: 35.3%
+    CM: TP=6 FN=11 FP=2 TN=18
+  2024-2025 (n=21)
+    Accuracy:  61.9%  Precision: 71.4%  Recall: 45.5%
+    CM: TP=5 FN=6 FP=2 TN=8
+  2026 only (n=16)
+    Accuracy:  68.8%  Precision: 100.0%  Recall: 16.7%
+    CM: TP=1 FN=5 FP=0 TN=10
+
+east_t_head
+  all years (n=33)
+    Accuracy:  33.3%  Precision: nan%  Recall: 0.0%
+    CM: TP=0 FN=22 FP=0 TN=11
+  2024-2025 (n=20)
+    Accuracy:  10.0%  Precision: nan%  Recall: 0.0%
+    CM: TP=0 FN=18 FP=0 TN=2
+  2026 only (n=13)
+    Accuracy:  69.2%  Precision: nan%  Recall: 0.0%
+    CM: TP=0 FN=4 FP=0 TN=9
+
+southeast_pier
+  all years (n=34)
+    Accuracy:  94.1%  Precision: 50.0%  Recall: 50.0%
+    CM: TP=1 FN=1 FP=1 TN=31
+  2024-2025 (n=17)
+    Accuracy:  94.1%  Precision: 100.0%  Recall: 50.0%
+    CM: TP=1 FN=1 FP=0 TN=15
+  2026 only (n=17)
+    Accuracy:  94.1%  Precision: 0.0%  Recall: nan%
+    CM: TP=0 FN=0 FP=1 TN=16
