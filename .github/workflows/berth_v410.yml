@@ -19,6 +19,14 @@ on:
         description: "Run v4 validation (EMP BG, 12-90m water, gap-merge, 2026 split) (yes/no)"
         required: false
         default: "no"
+      debug_east_t:
+        description: "Debug 2025-07-22 o101 east_t_head — scene/bg/ratio/blobs diagnostic (yes/no)"
+        required: false
+        default: "no"
+      ablation:
+        description: "Ablation study — one parameter change at a time vs v3 baseline (yes/no)"
+        required: false
+        default: "no"
 
 jobs:
   berth_v410:
@@ -125,6 +133,38 @@ jobs:
           path: diagnostics/berth_v4/validation_optics_v4/
           retention-days: 90
 
+      - name: Debug east_t_head 2025-07-22 o101
+        if: github.event.inputs.debug_east_t == 'yes'
+        run: python -u scripts/berth_debug_east_t.py
+        env:
+          CLIENT_ID:        ${{ secrets.CLIENT_ID }}
+          CLIENT_SECRET:    ${{ secrets.CLIENT_SECRET }}
+          PYTHONUNBUFFERED: "1"
+
+      - name: Upload debug east_t results
+        if: github.event.inputs.debug_east_t == 'yes'
+        uses: actions/upload-artifact@v4
+        with:
+          name: berth_debug_east_t
+          path: diagnostics/berth_v4/debug_east_t/
+          retention-days: 90
+
+      - name: Run ablation study
+        if: github.event.inputs.ablation == 'yes'
+        run: python -u scripts/berth_ablation.py
+        env:
+          CLIENT_ID:        ${{ secrets.CLIENT_ID }}
+          CLIENT_SECRET:    ${{ secrets.CLIENT_SECRET }}
+          PYTHONUNBUFFERED: "1"
+
+      - name: Upload ablation results
+        if: github.event.inputs.ablation == 'yes'
+        uses: actions/upload-artifact@v4
+        with:
+          name: berth_ablation
+          path: diagnostics/berth_v4/ablation/
+          retention-days: 90
+
       - name: Build optics vs SAR contact sheet
         if: always()
         run: python -u scripts/berth_optics_vs_sar.py
@@ -173,6 +213,8 @@ jobs:
           git add diagnostics/berth_v4/validation_optics/ || true
           git add diagnostics/berth_v4/validation_optics_v4/ || true
           git add diagnostics/berth_v4/bg_v4/ || true
+          git add diagnostics/berth_v4/debug_east_t/ || true
+          git add diagnostics/berth_v4/ablation/ || true
           git diff --staged --quiet && echo "nothing to commit" || git commit -m "data: berth validation results [skip ci]"
           git pull --rebase origin claude/oilradar-dashboard-iran-zchdva
           git push origin claude/oilradar-dashboard-iran-zchdva
