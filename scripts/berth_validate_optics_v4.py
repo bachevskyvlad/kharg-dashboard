@@ -76,10 +76,15 @@ BERTH_ASPECT = {
     "east_t_head":    3.0,
     "southeast_pier": 3.0,
 }
+BERTH_MERGE = {
+    "sea_island":     40,
+    "east_t_head":     0,
+    "southeast_pier":  0,
+}
 RATIO_THR       = 10.0
 RESOLUTION      = 10
 CELL_KM         = 1.0
-GAP_MERGE_M     = 40   # new: merge blobs with axis gap <=40m
+GAP_MERGE_M     = 40   # default (sea_island); overridden per-berth via BERTH_MERGE
 
 # V3 reference numbers for before/after table
 V3_STATS = {
@@ -207,8 +212,8 @@ def build_water_masks(berth_pts, bbox_obj, img_shape):
 
 struct8 = ndimage.generate_binary_structure(2, 2)
 
-def find_blobs_water(ratio_arr, water_mask, axis_uvec_img):
-    """Find blobs, merging axis gaps <=GAP_MERGE_M."""
+def find_blobs_water(ratio_arr, water_mask, axis_uvec_img, gap_merge_m=GAP_MERGE_M):
+    """Find blobs, merging axis gaps <=gap_merge_m."""
     ux, uy = axis_uvec_img
     px_u, py_u = -uy, ux  # perpendicular unit vector
 
@@ -241,8 +246,8 @@ def find_blobs_water(ratio_arr, water_mask, axis_uvec_img):
 
     raw_blobs.sort(key=lambda b: b["axis_min"])
 
-    # Merge blobs with axis gap <= GAP_MERGE_M / RESOLUTION pixels
-    gap_px = GAP_MERGE_M / RESOLUTION
+    # Merge blobs with axis gap <= gap_merge_m / RESOLUTION pixels
+    gap_px = gap_merge_m / RESOLUTION
     groups = []
     cur = [raw_blobs[0]]
     for b in raw_blobs[1:]:
@@ -281,10 +286,10 @@ def find_blobs_water(ratio_arr, water_mask, axis_uvec_img):
     result_blobs.sort(key=lambda b: b["length_m"], reverse=True)
     return result_blobs, result_blobs[0]
 
-def detect(ratio_arr, water_mask, axis_uvec_img, min_aspect=SHIP_MIN_ASPECT):
+def detect(ratio_arr, water_mask, axis_uvec_img, min_aspect=SHIP_MIN_ASPECT, gap_merge_m=GAP_MERGE_M):
     if ratio_arr is None:
         return None, None, None
-    blobs, longest = find_blobs_water(ratio_arr, water_mask, axis_uvec_img)
+    blobs, longest = find_blobs_water(ratio_arr, water_mask, axis_uvec_img, gap_merge_m=gap_merge_m)
     if longest and longest["length_m"] >= SHIP_MIN_LEN_M and longest["aspect"] >= min_aspect:
         return True, longest, blobs
     return False, longest, blobs
@@ -576,7 +581,8 @@ def main():
             else:
                 det_occ, longest, blobs = detect(ratio, geom["water_mask"],
                                                   geom["axis_uvec_img"],
-                                                  min_aspect=BERTH_ASPECT[berth])
+                                                  min_aspect=BERTH_ASPECT[berth],
+                                                  gap_merge_m=BERTH_MERGE[berth])
 
             det_str = "OCC" if det_occ else ("EMP" if det_occ is not None else "NO_BG")
             len_str = f"{longest['length_m']:.0f}" if longest else "0"
@@ -615,7 +621,7 @@ def main():
         "Validation v4 — optical ground truth (optics_ref_sameday.csv)",
         "BG: EMP-only 2024-2025 median (fallback p10 if <5 EMP dates)",
         f"PIER_EXCL={PIER_EXCL_M}m  WATER={WATER_INNER_M}-{WATER_OUTER_M}m  "
-        f"MIN_LEN={SHIP_MIN_LEN_M}m  GAP_MERGE={GAP_MERGE_M}m",
+        f"MIN_LEN={SHIP_MIN_LEN_M}m  GAP_MERGE=per-berth(sea=40,eth=0,sep=0)",
         "="*60,
     ]
 
@@ -692,7 +698,8 @@ def main():
             img_shape = linear.shape if linear is not None else (99, 101)
             geom = build_water_masks(pts, bbox_obj, img_shape)
             _, longest, blobs = detect(ratio, geom["water_mask"], geom["axis_uvec_img"],
-                                       min_aspect=BERTH_ASPECT[berth])
+                                       min_aspect=BERTH_ASPECT[berth],
+                                       gap_merge_m=BERTH_MERGE[berth])
             disc_cells[(date_str, orbit)][berth] = {
                 "optical_ref": matching[0]["optical_ref"],
                 "det": matching[0]["det"],
