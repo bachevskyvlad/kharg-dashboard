@@ -418,6 +418,11 @@ def build_bg_v4(ref_rows, cell_bboxes, aoi_full):
                 use_pct   = 50
                 mode_str  = f"EMP-median ({len(emp_dates)} dates)"
             else:
+                v3_path = BG_V3 / f"bg_o{orbit}_{berth}.npy"
+                if v3_path.exists():
+                    bg[(orbit, berth)] = np.load(v3_path)
+                    print(f"  BG v3 fallback (only {len(emp_dates)} EMP): {v3_path.name}")
+                    continue
                 use_dates = all_dates
                 use_pct   = 10
                 mode_str  = f"ALL-p10 ({len(all_dates)} dates, only {len(emp_dates)} EMP)"
@@ -526,7 +531,7 @@ def accuracy_block(rows_b, year_filter=None, label="", strict=False):
         expanded = []
         for r in rows_b:
             if r["optical_ref"] == "?":
-                key = (r["date"], r["orbit"], r["berth"])
+                key = (r["date"], str(r["orbit"]), r["berth"])
                 nominal = TEMPORAL_GAP_LABELS.get(key)
                 if nominal:
                     r = dict(r, optical_ref=nominal)
