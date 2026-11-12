@@ -138,6 +138,7 @@ jobs:
 
       - name: Upload v4 validation results
         if: github.event.inputs.validate_optics_v4 == 'yes'
+        continue-on-error: true
         uses: actions/upload-artifact@v4
         with:
           name: berth_validate_optics_v4
