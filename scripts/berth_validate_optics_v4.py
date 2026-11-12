@@ -86,6 +86,16 @@ RESOLUTION      = 10
 CELL_KM         = 1.0
 GAP_MERGE_M     = 40   # default (sea_island); overridden per-berth via BERTH_MERGE
 
+# Nominal optical labels for temporal-gap ? dates (rule: |Δt|>4h + confident blob)
+# Used for "strict" (без правила) comparison column
+TEMPORAL_GAP_LABELS = {
+    # (date, orbit, berth): pre-rule optical label
+    ("2025-01-11", "101", "sea_island"): "EMP",  # S2 EMP, Δt=-7h, SAR OCC L=385
+    ("2025-09-28", "35",  "sea_island"): "EMP",  # S2 EMP, Δt=-4.5h, SAR OCC L=353
+    ("2026-03-27", "35",  "sea_island"): "OCC",  # S2 OCC, no ship in SAR
+    ("2026-05-06", "101", "sea_island"): "OCC",  # S2 OCC, clouds, Δt~7h
+}
+
 # V3 reference numbers for before/after table
 V3_STATS = {
     "sea_island":     {"n": 37, "acc": 81.1, "prec": 91.7, "rec": 64.7},
@@ -495,18 +505,40 @@ def save_bg_comparison():
     return out
 
 # ── Accuracy helper ───────────────────────────────────────────────────────────
-def accuracy_block(rows_b, year_filter=None, label=""):
+def _cm_from_rows(rows_b):
+    tp = sum(1 for r in rows_b if r["optical_ref"]=="OCC" and r["det"]=="OCC")
+    tn = sum(1 for r in rows_b if r["optical_ref"]=="EMP" and r["det"]=="EMP")
+    fp = sum(1 for r in rows_b if r["optical_ref"]=="EMP" and r["det"]=="OCC")
+    fn = sum(1 for r in rows_b if r["optical_ref"]=="OCC" and r["det"]=="EMP")
+    return tp, tn, fp, fn
+
+def accuracy_block(rows_b, year_filter=None, label="", strict=False):
+    """
+    strict=False (с правилом): ? rows excluded from evaluation.
+    strict=True  (без правила): ? rows with TEMPORAL_GAP_LABELS get their
+                  nominal pre-rule label and are included.
+    """
     if year_filter:
         rows_b = [r for r in rows_b if int(r["date"][:4]) in year_filter]
+
+    # For strict mode, substitute nominal labels for temporal-gap ? rows
+    if strict:
+        expanded = []
+        for r in rows_b:
+            if r["optical_ref"] == "?":
+                key = (r["date"], r["orbit"], r["berth"])
+                nominal = TEMPORAL_GAP_LABELS.get(key)
+                if nominal:
+                    r = dict(r, optical_ref=nominal)
+            expanded.append(r)
+        rows_b = expanded
+
     rows_b = [r for r in rows_b
               if r["optical_ref"] in ("OCC","EMP") and r["det"] in ("OCC","EMP")]
     n = len(rows_b)
     if n == 0:
         return [f"  {label}: no evaluable rows"], None
-    tp = sum(1 for r in rows_b if r["optical_ref"]=="OCC" and r["det"]=="OCC")
-    tn = sum(1 for r in rows_b if r["optical_ref"]=="EMP" and r["det"]=="EMP")
-    fp = sum(1 for r in rows_b if r["optical_ref"]=="EMP" and r["det"]=="OCC")
-    fn = sum(1 for r in rows_b if r["optical_ref"]=="OCC" and r["det"]=="EMP")
+    tp, tn, fp, fn = _cm_from_rows(rows_b)
     acc  = (tp+tn)/n*100
     prec = tp/(tp+fp)*100 if (tp+fp) > 0 else float("nan")
     rec  = tp/(tp+fn)*100 if (tp+fn) > 0 else float("nan")
@@ -650,16 +682,30 @@ def main():
             f"{v4_acc:>7} {v4_rec:>7}  {v4_prec:>8}"
         )
 
-    # Per-berth detail
+    # Per-berth detail — dual table: с правилом (? excluded) | без правила (? as nominal)
     acc_lines += ["", "── Per-berth detail ─────────────────────────────────────"]
+    acc_lines += [
+        "  Columns: [с правилом — ? excluded] | [без правила — ? as nominal label]",
+        "",
+    ]
     for berth in BERTHS:
         rows_b = [r for r in results if r["berth"] == berth]
         acc_lines.append(f"\n{berth}")
         for label, yf in [("all years",    None),
                            ("2024-2025",    [2024, 2025]),
                            ("2026 only",    [2026])]:
-            lines, _ = accuracy_block(rows_b, year_filter=yf, label=label)
-            acc_lines.extend(lines)
+            lines_r,  stats_r  = accuracy_block(rows_b, year_filter=yf, label=label, strict=False)
+            lines_s,  stats_s  = accuracy_block(rows_b, year_filter=yf, label=label, strict=True)
+            # Merge lines side-by-side
+            if stats_r and stats_s:
+                acc_lines.append(
+                    f"  {label}  |  с правилом (n={stats_r['n']}): "
+                    f"Acc={stats_r['acc']:.1f}% Prec={stats_r['prec']:.1f}% Rec={stats_r['rec']:.1f}%  |  "
+                    f"без правила (n={stats_s['n']}): "
+                    f"Acc={stats_s['acc']:.1f}% Prec={stats_s['prec']:.1f}% Rec={stats_s['rec']:.1f}%"
+                )
+            else:
+                acc_lines.extend(lines_r)
 
     acc_txt = OUT_DIR / "accuracy.txt"
     with open(acc_txt, "w") as f:
