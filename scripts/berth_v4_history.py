@@ -2,9 +2,9 @@
 berth_v4_history.py — v4 detection on all S1 scenes 2024-01-01 → today.
 
 v4 config (fixed per berth):
-  sea_island:     BG_V3  pier=20 water=20-80 len≥150 merge=0
-  east_t_head:    BG_V4  pier=20 water=20-80 len≥150 merge=0  ← EMP background
-  southeast_pier: BG_V3  pier=20 water=20-80 len≥150 merge=0
+  sea_island:     BG_V3  pier=20 water=20-80 len≥120 aspect≥2.0 merge=40
+  east_t_head:    BG_V4  pier=20 water=20-80 len≥150 aspect≥3.0 merge=0   ← EMP background
+  southeast_pier: BG_V3  pier=20 water=20-80 len≥150 aspect≥3.0 merge=0
 
 Output:
   diagnostics/berth_v4/history_v4/berth_v4_history.csv
@@ -60,9 +60,9 @@ BERTHS = {
 }
 
 V4_CONFIG = {
-    "sea_island":     {"pier": 20, "water_i": 20, "water_o": 80, "min_len": 150, "bg_dir": BG_V3},
-    "east_t_head":    {"pier": 20, "water_i": 20, "water_o": 80, "min_len": 150, "bg_dir": BG_V4},
-    "southeast_pier": {"pier": 20, "water_i": 20, "water_o": 80, "min_len": 150, "bg_dir": BG_V3},
+    "sea_island":     {"pier": 20, "water_i": 20, "water_o": 80, "min_len": 120, "aspect_thr": 2.0, "merge_gap": 40, "bg_dir": BG_V3},
+    "east_t_head":    {"pier": 20, "water_i": 20, "water_o": 80, "min_len": 150, "aspect_thr": 3.0, "merge_gap":  0, "bg_dir": BG_V4},
+    "southeast_pier": {"pier": 20, "water_i": 20, "water_o": 80, "min_len": 150, "aspect_thr": 3.0, "merge_gap":  0, "bg_dir": BG_V3},
 }
 
 AOI_BBOX = BBox(bbox=[50.26, 29.17, 50.40, 29.31], crs=CRS.WGS84)
@@ -306,7 +306,9 @@ def run():
                               cfg["pier"], cfg["water_i"], cfg["water_o"])
             _, best, detected = find_blobs(
                 ratio, geom["water_mask"], geom["axis_uvec"],
-                merge_gap_m=0, min_len_m=cfg["min_len"])
+                merge_gap_m=cfg.get("merge_gap", 0),
+                min_len_m=cfg["min_len"],
+                min_aspect=cfg.get("aspect_thr", 3.0))
 
             det_str = "OCC" if detected else "EMP"
             length_m = round(best["length_m"], 1) if (detected and best) else None

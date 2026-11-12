@@ -71,6 +71,11 @@ WATER_INNER_M   = 20   # kept at 20: 12 captured pier pixels → aspect ~1.9 < 3
 WATER_OUTER_M   = 90   # was 80
 SHIP_MIN_LEN_M  = 120  # was 150
 SHIP_MIN_ASPECT = 3.0
+BERTH_ASPECT = {
+    "sea_island":     2.0,
+    "east_t_head":    3.0,
+    "southeast_pier": 3.0,
+}
 RATIO_THR       = 10.0
 RESOLUTION      = 10
 CELL_KM         = 1.0
@@ -276,11 +281,11 @@ def find_blobs_water(ratio_arr, water_mask, axis_uvec_img):
     result_blobs.sort(key=lambda b: b["length_m"], reverse=True)
     return result_blobs, result_blobs[0]
 
-def detect(ratio_arr, water_mask, axis_uvec_img):
+def detect(ratio_arr, water_mask, axis_uvec_img, min_aspect=SHIP_MIN_ASPECT):
     if ratio_arr is None:
         return None, None, None
     blobs, longest = find_blobs_water(ratio_arr, water_mask, axis_uvec_img)
-    if longest and longest["length_m"] >= SHIP_MIN_LEN_M and longest["aspect"] >= SHIP_MIN_ASPECT:
+    if longest and longest["length_m"] >= SHIP_MIN_LEN_M and longest["aspect"] >= min_aspect:
         return True, longest, blobs
     return False, longest, blobs
 
@@ -570,7 +575,8 @@ def main():
                 det_occ = None; longest = None; blobs = []
             else:
                 det_occ, longest, blobs = detect(ratio, geom["water_mask"],
-                                                  geom["axis_uvec_img"])
+                                                  geom["axis_uvec_img"],
+                                                  min_aspect=BERTH_ASPECT[berth])
 
             det_str = "OCC" if det_occ else ("EMP" if det_occ is not None else "NO_BG")
             len_str = f"{longest['length_m']:.0f}" if longest else "0"
@@ -685,7 +691,8 @@ def main():
                                  10*np.log10(linear/bg), np.nan).astype(np.float32)
             img_shape = linear.shape if linear is not None else (99, 101)
             geom = build_water_masks(pts, bbox_obj, img_shape)
-            _, longest, blobs = detect(ratio, geom["water_mask"], geom["axis_uvec_img"])
+            _, longest, blobs = detect(ratio, geom["water_mask"], geom["axis_uvec_img"],
+                                       min_aspect=BERTH_ASPECT[berth])
             disc_cells[(date_str, orbit)][berth] = {
                 "optical_ref": matching[0]["optical_ref"],
                 "det": matching[0]["det"],

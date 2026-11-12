@@ -571,6 +571,8 @@ initMap();
     return '?';
   }
 
+  var MON_NAMES=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
   fetch('/data/berth_occupancy.json')
     .then(function(r){ return r.ok ? r.json() : null; })
     .then(function(data){
@@ -581,25 +583,35 @@ initMap();
         return;
       }
       var rows = data.rows;
-      // Build date list (unique dates sorted)
-      var dateSet={};
-      rows.forEach(function(r){ dateSet[r.date]=1; });
-      var dates = Object.keys(dateSet).sort();
-      // Build lookup
-      var lookup={};
+
+      // Aggregate to monthly: for each (berth, YYYY-MM) → OCC if any OCC, EMP if any EMP, else null
+      var monthBerth = {};
       rows.forEach(function(r){
-        var k=r.date+'|'+r.orbit;
-        lookup[k]=r;
+        var ym = r.date.slice(0,7); // YYYY-MM
+        BERTHS.forEach(function(b){
+          var key = ym+'|'+b;
+          var v = r[b];
+          if(!v || v==='NO_BG' || v==='ERR') return;
+          if(!monthBerth[key]) monthBerth[key]='EMP';
+          if(v==='OCC') monthBerth[key]='OCC';
+        });
       });
-      // Responsive: show last N dates
-      var maxCols = Math.max(10, Math.floor((window.innerWidth||320)/18));
-      var showDates = dates.slice(-maxCols);
+
+      // Collect sorted months
+      var monthSet={};
+      rows.forEach(function(r){ monthSet[r.date.slice(0,7)]=1; });
+      var months = Object.keys(monthSet).sort();
+
+      // Responsive: show last N months
+      var maxCols = Math.max(12, Math.floor((window.innerWidth||320)/22));
+      var showMonths = months.slice(-maxCols);
 
       var html = '<table style="border-collapse:collapse;font-size:10px;font-family:\'DM Mono\',monospace;">';
-      // Header row: dates
+      // Header row: month labels
       html += '<tr><td style="padding:2px 6px 2px 0;color:var(--dim);white-space:nowrap;"></td>';
-      showDates.forEach(function(d){
-        var label=d.slice(5); // MM-DD
+      showMonths.forEach(function(ym){
+        var parts=ym.split('-');
+        var label=MON_NAMES[parseInt(parts[1],10)-1]+' '+parts[0].slice(2);
         html+='<td style="padding:2px 1px;color:var(--dim);writing-mode:vertical-lr;transform:rotate(180deg);text-align:left;height:52px;vertical-align:bottom;font-size:9px;">'+label+'</td>';
       });
       html+='</tr>';
@@ -608,20 +620,11 @@ initMap();
       BERTHS.forEach(function(b){
         html+='<tr>';
         html+='<td style="padding:3px 8px 3px 0;color:var(--muted);white-space:nowrap;font-size:10px;">'+BERTH_LABELS[b]+'</td>';
-        showDates.forEach(function(d){
-          // Try both orbits; prefer OCC
-          var val = null;
-          [35,101].forEach(function(orb){
-            var r=lookup[d+'|'+orb];
-            if(r){
-              var v=r[b];
-              if(val===null) val=v;
-              else if(v==='OCC') val='OCC';
-            }
-          });
+        showMonths.forEach(function(ym){
+          var val = monthBerth[ym+'|'+b] || null;
           var bg=berthColor(val);
           var lbl=berthLabel(val);
-          html+='<td style="padding:1px;"><div title="'+d+' '+b+': '+(val||'–')+'" style="width:14px;height:14px;background:'+bg+';border-radius:2px;display:flex;align-items:center;justify-content:center;font-size:7px;color:#fff;">'+lbl+'</div></td>';
+          html+='<td style="padding:1px;"><div title="'+ym+' '+b+': '+(val||'–')+'" style="width:16px;height:14px;background:'+bg+';border-radius:2px;display:flex;align-items:center;justify-content:center;font-size:7px;color:#fff;">'+lbl+'</div></td>';
         });
         html+='</tr>';
       });
