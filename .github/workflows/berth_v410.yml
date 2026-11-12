@@ -71,6 +71,7 @@ jobs:
 
       - name: Upload validation results
         if: github.event.inputs.contact_sheet_only != 'yes' && github.event.inputs.validate_optics != 'yes'
+        continue-on-error: true
         uses: actions/upload-artifact@v4
         with:
           name: berth_v410_validation
@@ -87,6 +88,7 @@ jobs:
 
       - name: Upload contact sheet
         if: always()
+        continue-on-error: true
         uses: actions/upload-artifact@v4
         with:
           name: berth_contact_sheet
@@ -103,6 +105,7 @@ jobs:
 
       - name: Upload contact sheet v3
         if: always()
+        continue-on-error: true
         uses: actions/upload-artifact@v4
         with:
           name: berth_contact_sheet_v3
@@ -217,6 +220,7 @@ jobs:
 
       - name: Upload optics contact sheet
         if: always()
+        continue-on-error: true
         uses: actions/upload-artifact@v4
         with:
           name: berth_optics_contact_sheet
