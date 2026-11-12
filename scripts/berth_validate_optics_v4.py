@@ -413,7 +413,7 @@ def build_bg_v4(ref_rows, cell_bboxes, aoi_full):
                 if ref_val in ("OCC", "EMP"):
                     all_dates.append(date_str)
 
-            if len(emp_dates) >= 5:
+            if len(emp_dates) >= 3:
                 use_dates = emp_dates
                 use_pct   = 50
                 mode_str  = f"EMP-median ({len(emp_dates)} dates)"
