@@ -20,7 +20,7 @@ date,orbit,berth,optical_ref,det,match,length_m,aspect,no_bg,s1_found
 2024-12-02,35,sea_island,EMP,EMP,True,0,0,False,True
 2024-12-02,35,east_t_head,?,EMP,,99,2.2,False,True
 2024-12-02,35,southeast_pier,?,EMP,,289,1.7,False,True
-2025-01-11,101,sea_island,EMP,OCC,False,385,5.7,False,True
+2025-01-11,101,sea_island,?,OCC,,385,5.7,False,True
 2025-01-11,101,east_t_head,OCC,EMP,False,332,1.8,False,True
 2025-01-11,101,southeast_pier,OCC,EMP,False,0,0,False,True
 2025-01-31,35,sea_island,EMP,EMP,True,0,0,False,True
@@ -50,7 +50,7 @@ date,orbit,berth,optical_ref,det,match,length_m,aspect,no_bg,s1_found
 2025-09-20,101,sea_island,OCC,OCC,True,434,8.7,False,True
 2025-09-20,101,east_t_head,OCC,EMP,False,414,2.4,False,True
 2025-09-20,101,southeast_pier,?,EMP,,41,1.9,False,True
-2025-09-28,35,sea_island,EMP,OCC,False,353,5.2,False,True
+2025-09-28,35,sea_island,?,OCC,,353,5.2,False,True
 2025-09-28,35,east_t_head,OCC,EMP,False,51,1.8,False,True
 2025-09-28,35,southeast_pier,EMP,EMP,True,0,0.0,False,True
 2025-10-08,101,sea_island,OCC,OCC,True,389,2.6,False,True

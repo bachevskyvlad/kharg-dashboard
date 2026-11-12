@@ -6,41 +6,25 @@ PIER_EXCL=12m  WATER=20-90m  MIN_LEN=120m  GAP_MERGE=per-berth(sea=40,eth=0,sep=
 ── Before / After ──────────────────────────────────────
 Berth                  v3-Acc  v3-Rec   v4-Acc  v4-Rec   v4-Prec
 ------------------------------------------------------------
-sea_island              81.1%   64.7%    85.7%   80.0%     85.7%
+sea_island              81.1%   64.7%    90.9%   80.0%    100.0%
 east_t_head             51.5%   31.8%    36.4%    4.5%    100.0%
 southeast_pier          97.1%   50.0%    97.1%   50.0%    100.0%
 
 ── Per-berth detail ─────────────────────────────────────
+  Columns: [с правилом — ? excluded] | [без правила — ? as nominal label]
+
 
 sea_island
-  all years (n=35)
-    Accuracy:  85.7%  Precision: 85.7%  Recall: 80.0%
-    CM: TP=12 FN=3 FP=2 TN=18
-  2024-2025 (n=21)
-    Accuracy:  81.0%  Precision: 81.8%  Recall: 81.8%
-    CM: TP=9 FN=2 FP=2 TN=8
-  2026 only (n=14)
-    Accuracy:  92.9%  Precision: 100.0%  Recall: 75.0%
-    CM: TP=3 FN=1 FP=0 TN=10
+  all years  |  с правилом (n=33): Acc=90.9% Prec=100.0% Rec=80.0%  |  без правила (n=33): Acc=90.9% Prec=100.0% Rec=80.0%
+  2024-2025  |  с правилом (n=19): Acc=89.5% Prec=100.0% Rec=81.8%  |  без правила (n=19): Acc=89.5% Prec=100.0% Rec=81.8%
+  2026 only  |  с правилом (n=14): Acc=92.9% Prec=100.0% Rec=75.0%  |  без правила (n=14): Acc=92.9% Prec=100.0% Rec=75.0%
 
 east_t_head
-  all years (n=33)
-    Accuracy:  36.4%  Precision: 100.0%  Recall: 4.5%
-    CM: TP=1 FN=21 FP=0 TN=11
-  2024-2025 (n=20)
-    Accuracy:  10.0%  Precision: nan%  Recall: 0.0%
-    CM: TP=0 FN=18 FP=0 TN=2
-  2026 only (n=13)
-    Accuracy:  76.9%  Precision: 100.0%  Recall: 25.0%
-    CM: TP=1 FN=3 FP=0 TN=9
+  all years  |  с правилом (n=33): Acc=36.4% Prec=100.0% Rec=4.5%  |  без правила (n=33): Acc=36.4% Prec=100.0% Rec=4.5%
+  2024-2025  |  с правилом (n=20): Acc=10.0% Prec=nan% Rec=0.0%  |  без правила (n=20): Acc=10.0% Prec=nan% Rec=0.0%
+  2026 only  |  с правилом (n=13): Acc=76.9% Prec=100.0% Rec=25.0%  |  без правила (n=13): Acc=76.9% Prec=100.0% Rec=25.0%
 
 southeast_pier
-  all years (n=34)
-    Accuracy:  97.1%  Precision: 100.0%  Recall: 50.0%
-    CM: TP=1 FN=1 FP=0 TN=32
-  2024-2025 (n=17)
-    Accuracy:  94.1%  Precision: 100.0%  Recall: 50.0%
-    CM: TP=1 FN=1 FP=0 TN=15
-  2026 only (n=17)
-    Accuracy:  100.0%  Precision: nan%  Recall: nan%
-    CM: TP=0 FN=0 FP=0 TN=17
+  all years  |  с правилом (n=34): Acc=97.1% Prec=100.0% Rec=50.0%  |  без правила (n=34): Acc=97.1% Prec=100.0% Rec=50.0%
+  2024-2025  |  с правилом (n=17): Acc=94.1% Prec=100.0% Rec=50.0%  |  без правила (n=17): Acc=94.1% Prec=100.0% Rec=50.0%
+  2026 only  |  с правилом (n=17): Acc=100.0% Prec=nan% Rec=nan%  |  без правила (n=17): Acc=100.0% Prec=nan% Rec=nan%
