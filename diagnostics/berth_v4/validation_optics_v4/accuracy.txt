@@ -7,7 +7,7 @@ PIER_EXCL=12m  WATER=20-90m  MIN_LEN=120m  GAP_MERGE=per-berth(sea=40,eth=0,sep=
 Berth                  v3-Acc  v3-Rec   v4-Acc  v4-Rec   v4-Prec
 ------------------------------------------------------------
 sea_island              81.1%   64.7%    90.9%   80.0%    100.0%
-east_t_head             51.5%   31.8%    36.4%    4.5%    100.0%
+east_t_head             51.5%   31.8%    45.5%   18.2%    100.0%
 southeast_pier          97.1%   50.0%    97.1%   50.0%    100.0%
 
 ── Per-berth detail ─────────────────────────────────────
@@ -20,8 +20,8 @@ sea_island
   2026 only  |  с правилом (n=14): Acc=92.9% Prec=100.0% Rec=75.0%  |  без правила (n=16): Acc=81.2% Prec=100.0% Rec=50.0%
 
 east_t_head
-  all years  |  с правилом (n=33): Acc=36.4% Prec=100.0% Rec=4.5%  |  без правила (n=33): Acc=36.4% Prec=100.0% Rec=4.5%
-  2024-2025  |  с правилом (n=20): Acc=10.0% Prec=nan% Rec=0.0%  |  без правила (n=20): Acc=10.0% Prec=nan% Rec=0.0%
+  all years  |  с правилом (n=33): Acc=45.5% Prec=100.0% Rec=18.2%  |  без правила (n=33): Acc=45.5% Prec=100.0% Rec=18.2%
+  2024-2025  |  с правилом (n=20): Acc=25.0% Prec=100.0% Rec=16.7%  |  без правила (n=20): Acc=25.0% Prec=100.0% Rec=16.7%
   2026 only  |  с правилом (n=13): Acc=76.9% Prec=100.0% Rec=25.0%  |  без правила (n=13): Acc=76.9% Prec=100.0% Rec=25.0%
 
 southeast_pier
