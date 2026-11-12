@@ -1,6 +1,6 @@
 Validation v4 — optical ground truth (optics_ref_sameday.csv)
 BG: EMP-only 2024-2025 median (fallback p10 if <5 EMP dates)
-PIER_EXCL=12m  WATER=20-90m  MIN_LEN=120m  GAP_MERGE=40m
+PIER_EXCL=12m  WATER=20-90m  MIN_LEN=120m  GAP_MERGE=per-berth(sea=40,eth=0,sep=0)
 ============================================================
 
 ── Before / After ──────────────────────────────────────
@@ -8,7 +8,7 @@ Berth                  v3-Acc  v3-Rec   v4-Acc  v4-Rec   v4-Prec
 ------------------------------------------------------------
 sea_island              81.1%   64.7%    85.7%   80.0%     85.7%
 east_t_head             51.5%   31.8%    36.4%    4.5%    100.0%
-southeast_pier          97.1%   50.0%    94.1%   50.0%     50.0%
+southeast_pier          97.1%   50.0%    97.1%   50.0%    100.0%
 
 ── Per-berth detail ─────────────────────────────────────
 
@@ -36,11 +36,11 @@ east_t_head
 
 southeast_pier
   all years (n=34)
-    Accuracy:  94.1%  Precision: 50.0%  Recall: 50.0%
-    CM: TP=1 FN=1 FP=1 TN=31
+    Accuracy:  97.1%  Precision: 100.0%  Recall: 50.0%
+    CM: TP=1 FN=1 FP=0 TN=32
   2024-2025 (n=17)
     Accuracy:  94.1%  Precision: 100.0%  Recall: 50.0%
     CM: TP=1 FN=1 FP=0 TN=15
   2026 only (n=17)
-    Accuracy:  94.1%  Precision: 0.0%  Recall: nan%
-    CM: TP=0 FN=0 FP=1 TN=16
+    Accuracy:  100.0%  Precision: nan%  Recall: nan%
+    CM: TP=0 FN=0 FP=0 TN=17
