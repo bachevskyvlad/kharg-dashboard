@@ -1131,6 +1131,20 @@
             </div>
         </div>
 
+        <!-- SAR snapshots -->
+        <div id="bo-snaps" style="display:none;margin-bottom:1.25rem;">
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
+                <div data-snap="prev" style="background:var(--surface);border:1px solid var(--border);padding:12px;">
+                    <div style="font-size:0.65rem;letter-spacing:1px;text-transform:uppercase;color:var(--muted);margin-bottom:8px">Previous pass · <span class="bo-snap-date">—</span></div>
+                    <a id="bo-snap-prev-link" target="_blank" rel="noopener"><img id="bo-snap-prev-img" loading="lazy" style="width:100%;display:block" alt="Previous SAR pass"></a>
+                </div>
+                <div data-snap="latest" style="background:var(--surface);border:1px solid var(--border);padding:12px;">
+                    <div style="font-size:0.65rem;letter-spacing:1px;text-transform:uppercase;color:var(--accent);margin-bottom:8px">Latest pass · <span class="bo-snap-date">—</span></div>
+                    <a id="bo-snap-latest-link" target="_blank" rel="noopener"><img id="bo-snap-latest-img" loading="lazy" style="width:100%;display:block" alt="Latest SAR pass"></a>
+                </div>
+            </div>
+        </div>
+
         <!-- Chart -->
         <div style="background:var(--surface);border:1px solid var(--border);padding:1.25rem 1.5rem 1rem;margin-bottom:1.25rem;">
             <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;flex-wrap:wrap;gap:0.5rem;">
@@ -3504,6 +3518,32 @@ document.addEventListener('DOMContentLoaded', function() {
     });
   }
 
+  // ── snapshots ─────────────────────────────────────────────────────────────
+  function loadSnapshots() {
+    fetch('/data/berth_snapshots.json')
+      .then(r => r.json())
+      .then(snaps => {
+        const wrap = document.getElementById('bo-snaps');
+        if (!wrap) return;
+        let any = false;
+        [['prev', 'bo-snap-prev-link', 'bo-snap-prev-img'],
+         ['latest', 'bo-snap-latest-link', 'bo-snap-latest-img']].forEach(([key, lid, iid]) => {
+          const s = snaps[key];
+          if (!s || !s.url) return;
+          const link = document.getElementById(lid);
+          const img  = document.getElementById(iid);
+          const dateSpan = link && link.closest('[data-snap]')
+            ? link.closest('[data-snap]').querySelector('.bo-snap-date') : null;
+          if (link)  link.href = s.url;
+          if (img)   img.src   = s.url;
+          if (dateSpan) dateSpan.textContent = `${s.date} · o${s.orbit}`;
+          any = true;
+        });
+        if (any) wrap.style.display = '';
+      })
+      .catch(() => {});  // snapshots are optional — silence errors
+  }
+
   // ── load ──────────────────────────────────────────────────────────────────
   function boLoad() {
     fetch('/data/berth_occupancy.json')
@@ -3514,6 +3554,7 @@ document.addEventListener('DOMContentLoaded', function() {
         renderKPI(boWeeks);
         renderWeeklyTable(boCurRange);
         drawBoChart(boCurChartRange);
+        loadSnapshots();
 
         document.querySelectorAll('.bo-rbtn').forEach(btn =>
           btn.addEventListener('click', () => renderWeeklyTable(btn.dataset.r)));
