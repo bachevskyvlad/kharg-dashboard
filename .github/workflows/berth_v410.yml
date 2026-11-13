@@ -2,6 +2,43 @@ name: Berth v410
 
 on:
   workflow_dispatch:
+    inputs:
+      roi_diag:
+        description: "Run ROI diagnostics for 4 missed sea_island dates (yes/no)"
+        required: false
+        default: "no"
+      contact_sheet_only:
+        description: "Skip validation, only build contact sheet (yes/no)"
+        required: false
+        default: "no"
+      validate_optics:
+        description: "Run optical ground-truth validation on 42-date CSV (yes/no)"
+        required: false
+        default: "no"
+      validate_optics_v4:
+        description: "Run v4 validation (EMP BG, 12-90m water, gap-merge, 2026 split) (yes/no)"
+        required: false
+        default: "no"
+      debug_east_t:
+        description: "Debug 2025-07-22 o101 east_t_head — scene/bg/ratio/blobs diagnostic (yes/no)"
+        required: false
+        default: "no"
+      ablation:
+        description: "Ablation study — one parameter change at a time vs v3 baseline (yes/no)"
+        required: false
+        default: "no"
+      build_bg_v4_o35:
+        description: "Build BG_V4 for orbit-35 east_t_head from Sept-Nov 2026 EMP scenes (yes/no)"
+        required: false
+        default: "no"
+      v4_history:
+        description: "Run v4 full history 2024-today, write CSV + occupancy JSON (yes/no)"
+        required: false
+        default: "no"
+      fn_sheet:
+        description: "Build sea_island 2026 false-negative contact sheet (yes/no)"
+        required: false
+        default: "no"
 
 jobs:
   berth_v410:
@@ -16,33 +53,220 @@ jobs:
       - name: Install dependencies
         run: pip install sentinelhub scipy numpy matplotlib shapely -q
 
+      - name: Run ROI diagnostics (sea_island mismatches)
+        if: github.event.inputs.roi_diag == 'yes' && github.event.inputs.contact_sheet_only != 'yes'
+        run: python -u scripts/berth_diag_roi.py
+        env:
+          CLIENT_ID:        ${{ secrets.CLIENT_ID }}
+          CLIENT_SECRET:    ${{ secrets.CLIENT_SECRET }}
+          PYTHONUNBUFFERED: "1"
+
       - name: Run validation (Step 1 — 40 dates)
         id: validation
+        if: github.event.inputs.contact_sheet_only != 'yes' && github.event.inputs.validate_optics != 'yes'
         run: |
-          python scripts/berth_detect_v410.py --step validation
+          python -u scripts/berth_detect_v410.py --step validation
           echo "exit_code=$?" >> $GITHUB_OUTPUT
         continue-on-error: true
         env:
-          CLIENT_ID:     ${{ secrets.CLIENT_ID }}
-          CLIENT_SECRET: ${{ secrets.CLIENT_SECRET }}
+          CLIENT_ID:          ${{ secrets.CLIENT_ID }}
+          CLIENT_SECRET:      ${{ secrets.CLIENT_SECRET }}
+          PYTHONUNBUFFERED:   "1"
 
       - name: Upload validation results
+        if: github.event.inputs.contact_sheet_only != 'yes' && github.event.inputs.validate_optics != 'yes'
+        continue-on-error: true
         uses: actions/upload-artifact@v4
         with:
           name: berth_v410_validation
           path: diagnostics/berth_v410/
           retention-days: 90
 
-      - name: Run history (Step 2 — full 2017→today, both orbits)
-        if: steps.validation.outcome == 'success'
-        run: |
-          python scripts/berth_detect_v410.py --step history
+      - name: Build contact sheet
+        if: always()
+        run: python -u scripts/berth_contact_sheet.py
         env:
-          CLIENT_ID:     ${{ secrets.CLIENT_ID }}
-          CLIENT_SECRET: ${{ secrets.CLIENT_SECRET }}
+          CLIENT_ID:        ${{ secrets.CLIENT_ID }}
+          CLIENT_SECRET:    ${{ secrets.CLIENT_SECRET }}
+          PYTHONUNBUFFERED: "1"
+
+      - name: Upload contact sheet
+        if: always()
+        continue-on-error: true
+        uses: actions/upload-artifact@v4
+        with:
+          name: berth_contact_sheet
+          path: diagnostics/berth_v4/contact_sheet/
+          retention-days: 90
+
+      - name: Build contact sheet v3
+        if: always()
+        run: python -u scripts/berth_contact_sheet_v3.py
+        env:
+          CLIENT_ID:        ${{ secrets.CLIENT_ID }}
+          CLIENT_SECRET:    ${{ secrets.CLIENT_SECRET }}
+          PYTHONUNBUFFERED: "1"
+
+      - name: Upload contact sheet v3
+        if: always()
+        continue-on-error: true
+        uses: actions/upload-artifact@v4
+        with:
+          name: berth_contact_sheet_v3
+          path: diagnostics/berth_v4/contact_sheet_v3/
+          retention-days: 90
+
+      - name: Run optical validation (42-date CSV)
+        if: github.event.inputs.validate_optics == 'yes'
+        run: python -u scripts/berth_validate_optics.py
+        env:
+          CLIENT_ID:        ${{ secrets.CLIENT_ID }}
+          CLIENT_SECRET:    ${{ secrets.CLIENT_SECRET }}
+          PYTHONUNBUFFERED: "1"
+
+      - name: Upload optical validation results
+        if: github.event.inputs.validate_optics == 'yes'
+        uses: actions/upload-artifact@v4
+        with:
+          name: berth_validate_optics
+          path: diagnostics/berth_v4/validation_optics/
+          retention-days: 90
+
+      # Assert gate: v4_history runs only if this step succeeds.
+      # Any change to the detector that breaks the assert targets blocks DB writes.
+      - name: Run v4 validation (EMP BG, gap-merge, 2026 split)
+        id: validate_v4
+        if: github.event.inputs.validate_optics_v4 == 'yes'
+        run: python -u scripts/berth_validate_optics_v4.py
+        env:
+          CLIENT_ID:        ${{ secrets.CLIENT_ID }}
+          CLIENT_SECRET:    ${{ secrets.CLIENT_SECRET }}
+          PYTHONUNBUFFERED: "1"
+
+      - name: Upload v4 validation results
+        if: github.event.inputs.validate_optics_v4 == 'yes'
+        continue-on-error: true
+        uses: actions/upload-artifact@v4
+        with:
+          name: berth_validate_optics_v4
+          path: diagnostics/berth_v4/validation_optics_v4/
+          retention-days: 90
+
+      - name: Debug east_t_head 2025-07-22 o101
+        if: github.event.inputs.debug_east_t == 'yes'
+        run: python -u scripts/berth_debug_east_t.py
+        env:
+          CLIENT_ID:        ${{ secrets.CLIENT_ID }}
+          CLIENT_SECRET:    ${{ secrets.CLIENT_SECRET }}
+          PYTHONUNBUFFERED: "1"
+
+      - name: Upload debug east_t results
+        if: github.event.inputs.debug_east_t == 'yes'
+        uses: actions/upload-artifact@v4
+        with:
+          name: berth_debug_east_t
+          path: diagnostics/berth_v4/debug_east_t/
+          retention-days: 90
+
+      - name: Run ablation study
+        if: github.event.inputs.ablation == 'yes'
+        run: python -u scripts/berth_ablation.py
+        env:
+          CLIENT_ID:        ${{ secrets.CLIENT_ID }}
+          CLIENT_SECRET:    ${{ secrets.CLIENT_SECRET }}
+          PYTHONUNBUFFERED: "1"
+
+      - name: Upload ablation results
+        if: github.event.inputs.ablation == 'yes'
+        uses: actions/upload-artifact@v4
+        with:
+          name: berth_ablation
+          path: diagnostics/berth_v4/ablation/
+          retention-days: 90
+
+      - name: Build BG_V4 orbit-35 east_t_head (Sept-Nov 2026 EMP scenes)
+        if: github.event.inputs.build_bg_v4_o35 == 'yes'
+        run: python -u scripts/build_bg_v4_o35_eth.py
+        env:
+          CLIENT_ID:        ${{ secrets.CLIENT_ID }}
+          CLIENT_SECRET:    ${{ secrets.CLIENT_SECRET }}
+          PYTHONUNBUFFERED: "1"
+
+      # Runs only if:
+      #   - v4_history=yes, AND
+      #   - validate_optics_v4 was NOT requested (no gate), OR
+      #   - validate_optics_v4 was requested AND the assert step passed (gate enforced)
+      - name: Run v4 history detection (2024–today)
+        if: >
+          github.event.inputs.v4_history == 'yes' &&
+          (github.event.inputs.validate_optics_v4 != 'yes' ||
+           steps.validate_v4.outcome == 'success')
+        run: python -u scripts/berth_v4_history.py
+        env:
+          CLIENT_ID:              ${{ secrets.CLIENT_ID }}
+          CLIENT_SECRET:          ${{ secrets.CLIENT_SECRET }}
+          SUPABASE_SERVICE_KEY:   ${{ secrets.SUPABASE_SERVICE_KEY }}
+          SUPABASE_URL:           ${{ secrets.SUPABASE_URL }}
+          PYTHONUNBUFFERED:       "1"
+
+      - name: Upload v4 history results
+        if: >
+          github.event.inputs.v4_history == 'yes' &&
+          (github.event.inputs.validate_optics_v4 != 'yes' ||
+           steps.validate_v4.outcome == 'success')
+        continue-on-error: true
+        uses: actions/upload-artifact@v4
+        with:
+          name: berth_v4_history
+          path: |
+            diagnostics/berth_v4/history_v4/
+            data/berth_occupancy.json
+          retention-days: 90
+
+      - name: Run sea_island FN contact sheet
+        if: github.event.inputs.fn_sheet == 'yes'
+        run: python -u scripts/berth_sea_island_fn_sheet.py
+        env:
+          CLIENT_ID:        ${{ secrets.CLIENT_ID }}
+          CLIENT_SECRET:    ${{ secrets.CLIENT_SECRET }}
+          PYTHONUNBUFFERED: "1"
+
+      - name: Upload FN sheet results
+        if: github.event.inputs.fn_sheet == 'yes'
+        uses: actions/upload-artifact@v4
+        with:
+          name: berth_sea_island_fn_sheet
+          path: diagnostics/berth_v4/sea_island_fn_sheet/
+          retention-days: 90
+
+      - name: Build optics vs SAR contact sheet
+        if: always()
+        run: python -u scripts/berth_optics_vs_sar.py
+        env:
+          CLIENT_ID:        ${{ secrets.CLIENT_ID }}
+          CLIENT_SECRET:    ${{ secrets.CLIENT_SECRET }}
+          PYTHONUNBUFFERED: "1"
+
+      - name: Upload optics contact sheet
+        if: always()
+        continue-on-error: true
+        uses: actions/upload-artifact@v4
+        with:
+          name: berth_optics_contact_sheet
+          path: diagnostics/berth_v4/contact_sheet_optics/
+          retention-days: 90
+
+      - name: Run history (Step 2 — full 2017->today, both orbits)
+        if: steps.validation.outcome == 'success' && github.event.inputs.contact_sheet_only != 'yes' && github.event.inputs.validate_optics != 'yes'
+        run: |
+          python -u scripts/berth_detect_v410.py --step history --resume
+        env:
+          CLIENT_ID:          ${{ secrets.CLIENT_ID }}
+          CLIENT_SECRET:      ${{ secrets.CLIENT_SECRET }}
+          PYTHONUNBUFFERED:   "1"
 
       - name: Upload history results
-        if: steps.validation.outcome == 'success'
+        if: steps.validation.outcome == 'success' && github.event.inputs.contact_sheet_only != 'yes' && github.event.inputs.validate_optics != 'yes'
         uses: actions/upload-artifact@v4
         with:
           name: berth_history
@@ -50,9 +274,25 @@ jobs:
           retention-days: 90
 
       - name: Commit results
+        if: always()
         run: |
           git config user.email "actions@github.com"
           git config user.name "GitHub Actions"
-          git add diagnostics/berth_v410/ diagnostics/berth_history/ || true
-          git commit -m "data: berth_v410 results [skip ci]" || echo "nothing to commit"
+          git add diagnostics/berth_v3/bg_cache/ || true
+          git add diagnostics/berth_v410/ || true
+          git add diagnostics/berth_history/ || true
+          git add diagnostics/berth_v4/contact_sheet/ || true
+          git add diagnostics/berth_v4/bg_v3/ || true
+          git add diagnostics/berth_v4/contact_sheet_v3/ || true
+          git add diagnostics/berth_v4/contact_sheet_optics/ || true
+          git add diagnostics/berth_v4/validation_optics/ || true
+          git add diagnostics/berth_v4/validation_optics_v4/ || true
+          git add diagnostics/berth_v4/bg_v4/ || true
+          git add diagnostics/berth_v4/debug_east_t/ || true
+          git add diagnostics/berth_v4/ablation/ || true
+          git add diagnostics/berth_v4/history_v4/ || true
+          git add diagnostics/berth_v4/sea_island_fn_sheet/ || true
+          git add data/berth_occupancy.json || true
+          git diff --staged --quiet && echo "nothing to commit" || git commit -m "data: berth validation results [skip ci]"
+          git pull --rebase origin claude/oilradar-dashboard-iran-zchdva
           git push origin claude/oilradar-dashboard-iran-zchdva
