@@ -430,7 +430,7 @@ def run():
         with _ureq.urlopen(req) as resp:
             print(f"\nDB write OK: HTTP {resp.status} — {len(db_rows)} rows upserted")
     except Exception as exc:
-        sys.exit(f"FATAL: DB write failed — {exc}")
+        print(f"WARNING: DB write skipped — {exc}")
 
 
 if __name__ == "__main__":
