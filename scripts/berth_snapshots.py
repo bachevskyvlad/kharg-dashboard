@@ -1,1 +1,338 @@
-"""\nberth_snapshots.py — Generate SAR terminal overview PNGs for the two most recent\nberth detection passes, annotate berth corridors with detection results,\nupload to Supabase Storage bucket berth_snapshots.\n\nOutputs:\n  data/berth_snapshots.json  — {prev:{url,date,orbit,dets}, latest:{...}}\n\nEnv vars required:\n  CLIENT_ID, CLIENT_SECRET     — Sentinel Hub CDSE\n  SUPABASE_URL, SUPABASE_SERVICE_KEY\n"""\nimport os, sys, csv, json, io\nfrom pathlib import Path\nfrom datetime import datetime, timezone, timedelta\n\nimport numpy as np\nimport matplotlib\nmatplotlib.use("Agg")\nimport matplotlib.pyplot as plt\nimport matplotlib.patches as mpatches\nimport requests\n\nfrom sentinelhub import (\n    SHConfig, BBox, CRS, DataCollection, SentinelHubRequest,\n    SentinelHubCatalog, MimeType, bbox_to_dimensions, MosaickingOrder,\n)\n\n# ── Env ───────────────────────────────────────────────────────────────────────\ndef _require(name):\n    v = os.environ.get(name)\n    if not v:\n        sys.exit(f"FATAL: {name} not set")\n    return v\n\nCLIENT_ID     = _require("CLIENT_ID")\nCLIENT_SECRET = _require("CLIENT_SECRET")\nSUPABASE_URL  = _require("SUPABASE_URL").rstrip("/")\nSUPABASE_KEY  = _require("SUPABASE_SERVICE_KEY")\n\n# ── Sentinel Hub ──────────────────────────────────────────────────────────────\nconfig = SHConfig()\nconfig.sh_client_id     = CLIENT_ID\nconfig.sh_client_secret = CLIENT_SECRET\nconfig.sh_token_url     = "https://identity.dataspace.copernicus.eu/auth/realms/CDSE/protocol/openid-connect/token"\nconfig.sh_base_url      = "https://sh.dataspace.copernicus.eu"\n\nS1_CDSE = DataCollection.SENTINEL1_IW.define_from(\n    "s1iw_bsnap", service_url="https://sh.dataspace.copernicus.eu"\n)\n\nROOT       = Path(__file__).parent.parent\nJSON_IN    = ROOT / "data" / "berth_occupancy.json"\nCSV_IN     = ROOT / "diagnostics" / "berth_v4" / "history_v4" / "berth_v4_history.csv"\nSNAPS_JSON = ROOT / "data" / "berth_snapshots.json"\nBUCKET     = "berth_snapshots"\n\n# Terminal overview AOI — all 3 berths in one frame\nSNAP_AOI = BBox(bbox=[50.265, 29.198, 50.362, 29.252], crs=CRS.WGS84)\nSNAP_RES = 20  # metres per pixel\n\nEVALSCRIPT = """\n//VERSION=3\nfunction setup() { return { input: [\"VV\"], output: { bands:1, sampleType:\"FLOAT32\" } }; }\nfunction evaluatePixel(s) { return [Math.max(s.VV, 1e-10)]; }\n"""\n\nBERTH_COORDS = {\n    "sea_island":     [(50.28316, 29.23318), (50.28816, 29.22433)],\n    "east_t_head":    [(50.33833, 29.23812), (50.34054, 29.22189)],\n    "southeast_pier": [(50.33646, 29.21764), (50.33591, 29.21424), (50.33522, 29.21264)],\n}\nBERTH_COLORS = {\n    "sea_island":     "#4DD9FF",\n    "east_t_head":    "#FF5050",\n    "southeast_pier": "#A0FF50",\n}\nBERTH_LABELS = {\n    "sea_island":     "Sea Island",\n    "east_t_head":    "East T-Head",\n    "southeast_pier": "SE Pier",\n}\n\n# ── Geometry helpers ──────────────────────────────────────────────────────────\n\ndef geo_to_px(lon, lat, bbox, w, h):\n    col = (lon - bbox.min_x) / (bbox.max_x - bbox.min_x) * w\n    row = (bbox.max_y - lat) / (bbox.max_y - bbox.min_y) * h\n    return col, row\n\ndef corridor_corners(pts, bbox, w, h, half_m=160, end_m=120):\n    lat_mid = sum(p[1] for p in pts) / len(pts)\n    mpd_lat = 111320.0\n    mpd_lon = 111320.0 * np.cos(np.deg2rad(lat_mid))\n    # pixels per metre (isotropic approximation)\n    px_m_lon = w / ((bbox.max_x - bbox.min_x) * mpd_lon)\n    px_m_lat = h / ((bbox.max_y - bbox.min_y) * mpd_lat)\n    px_m = (px_m_lon + px_m_lat) / 2\n\n    px_pts = [geo_to_px(lon, lat, bbox, w, h) for lon, lat in pts]\n    dx = px_pts[-1][0] - px_pts[0][0]\n    dy = px_pts[-1][1] - px_pts[0][1]\n    L = np.hypot(dx, dy)\n    if L < 1e-6:\n        return None\n    ux, uy = dx / L, dy / L   # along-axis unit vector\n    rx, ry = -uy, ux           # perpendicular unit vector\n\n    end_px  = end_m * px_m\n    half_px = half_m * px_m\n    p0 = (px_pts[0][0] - ux * end_px, px_pts[0][1] - uy * end_px)\n    p1 = (px_pts[-1][0] + ux * end_px, px_pts[-1][1] + uy * end_px)\n    return [\n        (p0[0] - rx * half_px, p0[1] - ry * half_px),\n        (p0[0] + rx * half_px, p0[1] + ry * half_px),\n        (p1[0] + rx * half_px, p1[1] + ry * half_px),\n        (p1[0] - rx * half_px, p1[1] - ry * half_px),\n    ]\n\n# ── Sentinel Hub helpers ──────────────────────────────────────────────────────\n\ndef find_scene_dt(date_str, orbit):\n    catalog = SentinelHubCatalog(config=config)\n    for delta in [0, -1, 1]:\n        d = (datetime.strptime(date_str, "%Y-%m-%d") + timedelta(days=delta)).strftime("%Y-%m-%d")\n        try:\n            results = list(catalog.search(\n                S1_CDSE, bbox=SNAP_AOI,\n                time=(d + "T00:00:00Z", d + "T23:59:59Z"),\n                fields={"include": ["properties.datetime", "properties.sat:relative_orbit"]},\n            ))\n        except Exception as e:\n            print(f"  catalog search err ({d}): {e}"); continue\n        for r in results:\n            if r["properties"].get("sat:relative_orbit") == orbit:\n                return r["properties"]["datetime"]\n    return None\n\ndef fetch_scene(scene_dt):\n    sz = bbox_to_dimensions(SNAP_AOI, resolution=SNAP_RES)\n    req = SentinelHubRequest(\n        evalscript=EVALSCRIPT,\n        input_data=[SentinelHubRequest.input_data(\n            data_collection=S1_CDSE,\n            time_interval=(scene_dt[:19].replace("T", " "), scene_dt[:19].replace("T", " ")),\n            other_args={"processing": {\n                "backCoeff": "SIGMA0_ELLIPSOID",\n                "orthorectify": True,\n                "demInstance": "COPERNICUS",\n            }},\n            mosaicking_order=MosaickingOrder.MOST_RECENT,\n        )],\n        responses=[SentinelHubRequest.output_response("default", MimeType.TIFF)],\n        bbox=SNAP_AOI, size=sz, config=config,\n    )\n    try:\n        data = req.get_data()\n        a = data[0]\n        if a.ndim == 3:\n            a = a[:, :, 0]\n        return a.astype(np.float32)\n    except Exception as e:\n        print(f"  S1 fetch err: {e}"); return None\n\n# ── Rendering ─────────────────────────────────────────────────────────────────\n\ndef render_snapshot(scene_linear, dets, lengths, date_str, orbit):\n    h, w = scene_linear.shape\n    eps = 1e-10\n    db = 10 * np.log10(np.where(scene_linear < eps, eps, scene_linear))\n\n    # Percentile stretch\n    valid = db[db > -50]\n    p2, p98 = (np.percentile(valid, [2, 98]) if len(valid) > 100\n               else (-25.0, 5.0))\n    img = np.clip((db - p2) / max(p98 - p2, 1e-6), 0.0, 1.0)\n\n    fig, ax = plt.subplots(figsize=(10, 6), dpi=130)\n    ax.imshow(img, cmap=\"gray\", vmin=0, vmax=1, origin=\"upper\", aspect=\"equal\")\n\n    legend_handles = []\n    for berth, pts in BERTH_COORDS.items():\n        det     = dets.get(berth, \"—\")\n        length  = lengths.get(berth)\n        color   = BERTH_COLORS[berth]\n        lname   = BERTH_LABELS[berth]\n        is_occ  = (det == \"OCC\")\n        is_emp  = (det == \"EMP\")\n\n        corners = corridor_corners(pts, SNAP_AOI, w, h)\n        if corners is None:\n            continue\n\n        edge_color  = color if is_occ else (\"#888888\" if is_emp else \"#444444\")\n        fill_alpha  = 0.22 if is_occ else (0.07 if is_emp else 0.03)\n        edge_lw     = 2.0  if is_occ else (1.0  if is_emp else 0.5)\n\n        poly_fill = mpatches.Polygon(corners, closed=True,\n                                      edgecolor=\"none\", facecolor=edge_color,\n                                      alpha=fill_alpha, zorder=2)\n        ax.add_patch(poly_fill)\n        poly_edge = mpatches.Polygon(corners, closed=True,\n                                      edgecolor=edge_color, facecolor=\"none\",\n                                      linewidth=edge_lw, zorder=3)\n        ax.add_patch(poly_edge)\n\n        cx = sum(c[0] for c in corners) / 4\n        cy = sum(c[1] for c in corners) / 4\n\n        if is_occ:\n            lbl = f\"{lname}\\n{int(length) if length else 'OCC'} m\"\n            txt_color = color\n        elif is_emp:\n            lbl = f\"{lname}\\nempty\"\n            txt_color = \"#aaaaaa\"\n        else:\n            lbl = f\"{lname}\\n—\"\n            txt_color = \"#555555\"\n\n        ax.text(cx, cy, lbl, color=txt_color, fontsize=7,\n                ha=\"center\", va=\"center\",\n                fontweight=\"bold\" if is_occ else \"normal\", zorder=4,\n                bbox=dict(boxstyle=\"round,pad=0.25\", facecolor=\"#000000\",\n                          alpha=0.55, edgecolor=\"none\"))\n\n        legend_handles.append(\n            mpatches.Patch(color=edge_color,\n                            label=f\"{lname}: {'OCC' if is_occ else det}\"))\n\n    if legend_handles:\n        ax.legend(handles=legend_handles, loc=\"lower right\", fontsize=7,\n                   facecolor=\"#111111\", edgecolor=\"#444444\",\n                   labelcolor=\"white\", framealpha=0.85)\n\n    ax.set_title(f\"Kharg Island Terminal · {date_str} · orbit {orbit}\",\n                  fontsize=10, color=\"white\", pad=6)\n    fig.patch.set_facecolor(\"#000000\")\n    ax.set_facecolor(\"#000000\")\n    ax.axis(\"off\")\n    plt.tight_layout(pad=0.5)\n\n    buf = io.BytesIO()\n    plt.savefig(buf, format=\"png\", dpi=130, bbox_inches=\"tight\",\n                facecolor=\"#000000\")\n    plt.close()\n    buf.seek(0)\n    return buf.read()\n\n# ── Supabase upload ───────────────────────────────────────────────────────────\n\ndef upload(png_bytes, filename):\n    url = f\"{SUPABASE_URL}/storage/v1/object/{BUCKET}/{filename}\"\n    headers = {\n        \"Authorization\": f\"Bearer {SUPABASE_KEY}\",\n        \"Content-Type\": \"image/png\",\n        \"x-upsert\": \"true\",\n    }\n    try:\n        resp = requests.put(url, headers=headers, data=png_bytes, timeout=90)\n        if resp.status_code not in (200, 201):\n            print(f\"  upload failed {resp.status_code}: {resp.text[:200]}\")\n            return None\n    except Exception as e:\n        print(f\"  upload error: {e}\"); return None\n    return f\"{SUPABASE_URL}/storage/v1/object/public/{BUCKET}/{filename}\"\n\n# ── Main ──────────────────────────────────────────────────────────────────────\n\ndef main():\n    with open(JSON_IN) as f:\n        occ_data = json.load(f)\n    rows = occ_data.get(\"rows\", [])\n    if not rows:\n        sys.exit(\"No rows in berth_occupancy.json\")\n\n    last2  = rows[-2:] if len(rows) >= 2 else rows * 2\n    passes = [(\"prev\", last2[0]), (\"latest\", last2[-1])]\n\n    lengths_map = {}\n    if CSV_IN.exists():\n        with open(CSV_IN) as f:\n            for r in csv.DictReader(f):\n                try:\n                    lm = float(r[\"length_m\"]) if r.get(\"length_m\") else None\n                except ValueError:\n                    lm = None\n                lengths_map[(r[\"date\"], int(r[\"orbit\"]), r[\"berth\"])] = lm\n\n    snaps = {}\n    for label, row in passes:\n        date_str = row[\"date\"]\n        orbit    = int(row[\"orbit\"])\n        dets     = {b: row.get(b, \"—\") for b in BERTH_COORDS}\n        lengths  = {b: lengths_map.get((date_str, orbit, b)) for b in BERTH_COORDS}\n\n        print(f\"\\n── {label}: {date_str} o{orbit} ──\")\n        print(f\"  dets: { {b: v for b,v in dets.items()} }\")\n\n        scene_dt = find_scene_dt(date_str, orbit)\n        if scene_dt is None:\n            print(f\"  WARN: no scene found, skipping\")\n            snaps[label] = {\"url\": None, \"date\": date_str, \"orbit\": orbit, \"dets\": dets}\n            continue\n        print(f\"  scene_dt: {scene_dt}\")\n\n        scene = fetch_scene(scene_dt)\n        if scene is None:\n            print(f\"  WARN: fetch failed, skipping\")\n            snaps[label] = {\"url\": None, \"date\": date_str, \"orbit\": orbit, \"dets\": dets}\n            continue\n        print(f\"  scene shape: {scene.shape}\")\n\n        png_bytes = render_snapshot(scene, dets, lengths, date_str, orbit)\n        filename  = f\"{date_str}_o{orbit}_terminal.png\"\n        pub_url   = upload(png_bytes, filename)\n        if pub_url:\n            print(f\"  uploaded: {pub_url}\")\n\n        snaps[label] = {\n            \"url\":    pub_url,\n            \"date\":   date_str,\n            \"orbit\":  orbit,\n            \"dets\":   dets,\n        }\n\n    with open(SNAPS_JSON, \"w\") as f:\n        json.dump(snaps, f, indent=2)\n    print(f\"\\nWrote: {SNAPS_JSON}\")\n    print(json.dumps(snaps, indent=2))\n\n\nif __name__ == \"__main__\":\n    main()\n
+"""
+berth_snapshots.py — Generate SAR terminal overview PNGs for the two most recent
+berth detection passes, annotate berth corridors with detection results,
+upload to Supabase Storage bucket berth_snapshots.
+
+Outputs:
+  data/berth_snapshots.json  — {prev:{url,date,orbit,dets}, latest:{...}}
+
+Env vars required:
+  CLIENT_ID, CLIENT_SECRET     — Sentinel Hub CDSE
+  SUPABASE_URL, SUPABASE_SERVICE_KEY
+"""
+import os, sys, csv, json, io
+from pathlib import Path
+from datetime import datetime, timezone, timedelta
+
+import numpy as np
+import matplotlib
+matplotlib.use("Agg")
+import matplotlib.pyplot as plt
+import matplotlib.patches as mpatches
+import requests
+
+from sentinelhub import (
+    SHConfig, BBox, CRS, DataCollection, SentinelHubRequest,
+    SentinelHubCatalog, MimeType, bbox_to_dimensions, MosaickingOrder,
+)
+
+# ── Env ───────────────────────────────────────────────────────────────────────
+def _require(name):
+    v = os.environ.get(name)
+    if not v:
+        sys.exit(f"FATAL: {name} not set")
+    return v
+
+CLIENT_ID     = _require("CLIENT_ID")
+CLIENT_SECRET = _require("CLIENT_SECRET")
+SUPABASE_URL  = _require("SUPABASE_URL").rstrip("/")
+SUPABASE_KEY  = _require("SUPABASE_SERVICE_KEY")
+
+# ── Sentinel Hub ──────────────────────────────────────────────────────────────
+config = SHConfig()
+config.sh_client_id     = CLIENT_ID
+config.sh_client_secret = CLIENT_SECRET
+config.sh_token_url     = "https://identity.dataspace.copernicus.eu/auth/realms/CDSE/protocol/openid-connect/token"
+config.sh_base_url      = "https://sh.dataspace.copernicus.eu"
+
+S1_CDSE = DataCollection.SENTINEL1_IW.define_from(
+    "s1iw_bsnap", service_url="https://sh.dataspace.copernicus.eu"
+)
+
+ROOT       = Path(__file__).parent.parent
+JSON_IN    = ROOT / "data" / "berth_occupancy.json"
+CSV_IN     = ROOT / "diagnostics" / "berth_v4" / "history_v4" / "berth_v4_history.csv"
+SNAPS_JSON = ROOT / "data" / "berth_snapshots.json"
+BUCKET     = "berth_snapshots"
+
+# Terminal overview AOI — all 3 berths in one frame
+SNAP_AOI = BBox(bbox=[50.265, 29.198, 50.362, 29.252], crs=CRS.WGS84)
+SNAP_RES = 20  # metres per pixel
+
+EVALSCRIPT = """
+//VERSION=3
+function setup() { return { input: ["VV"], output: { bands:1, sampleType:"FLOAT32" } }; }
+function evaluatePixel(s) { return [Math.max(s.VV, 1e-10)]; }
+"""
+
+BERTH_COORDS = {
+    "sea_island":     [(50.28316, 29.23318), (50.28816, 29.22433)],
+    "east_t_head":    [(50.33833, 29.23812), (50.34054, 29.22189)],
+    "southeast_pier": [(50.33646, 29.21764), (50.33591, 29.21424), (50.33522, 29.21264)],
+}
+BERTH_COLORS = {
+    "sea_island":     "#4DD9FF",
+    "east_t_head":    "#FF5050",
+    "southeast_pier": "#A0FF50",
+}
+BERTH_LABELS = {
+    "sea_island":     "Sea Island",
+    "east_t_head":    "East T-Head",
+    "southeast_pier": "SE Pier",
+}
+
+# ── Geometry helpers ──────────────────────────────────────────────────────────
+
+def geo_to_px(lon, lat, bbox, w, h):
+    col = (lon - bbox.min_x) / (bbox.max_x - bbox.min_x) * w
+    row = (bbox.max_y - lat) / (bbox.max_y - bbox.min_y) * h
+    return col, row
+
+def corridor_corners(pts, bbox, w, h, half_m=160, end_m=120):
+    lat_mid = sum(p[1] for p in pts) / len(pts)
+    mpd_lat = 111320.0
+    mpd_lon = 111320.0 * np.cos(np.deg2rad(lat_mid))
+    # pixels per metre (isotropic approximation)
+    px_m_lon = w / ((bbox.max_x - bbox.min_x) * mpd_lon)
+    px_m_lat = h / ((bbox.max_y - bbox.min_y) * mpd_lat)
+    px_m = (px_m_lon + px_m_lat) / 2
+
+    px_pts = [geo_to_px(lon, lat, bbox, w, h) for lon, lat in pts]
+    dx = px_pts[-1][0] - px_pts[0][0]
+    dy = px_pts[-1][1] - px_pts[0][1]
+    L = np.hypot(dx, dy)
+    if L < 1e-6:
+        return None
+    ux, uy = dx / L, dy / L   # along-axis unit vector
+    rx, ry = -uy, ux           # perpendicular unit vector
+
+    end_px  = end_m * px_m
+    half_px = half_m * px_m
+    p0 = (px_pts[0][0] - ux * end_px, px_pts[0][1] - uy * end_px)
+    p1 = (px_pts[-1][0] + ux * end_px, px_pts[-1][1] + uy * end_px)
+    return [
+        (p0[0] - rx * half_px, p0[1] - ry * half_px),
+        (p0[0] + rx * half_px, p0[1] + ry * half_px),
+        (p1[0] + rx * half_px, p1[1] + ry * half_px),
+        (p1[0] - rx * half_px, p1[1] - ry * half_px),
+    ]
+
+# ── Sentinel Hub helpers ──────────────────────────────────────────────────────
+
+def find_scene_dt(date_str, orbit):
+    catalog = SentinelHubCatalog(config=config)
+    for delta in [0, -1, 1]:
+        d = (datetime.strptime(date_str, "%Y-%m-%d") + timedelta(days=delta)).strftime("%Y-%m-%d")
+        try:
+            results = list(catalog.search(
+                S1_CDSE, bbox=SNAP_AOI,
+                time=(d + "T00:00:00Z", d + "T23:59:59Z"),
+                fields={"include": ["properties.datetime", "properties.sat:relative_orbit"]},
+            ))
+        except Exception as e:
+            print(f"  catalog search err ({d}): {e}"); continue
+        for r in results:
+            if r["properties"].get("sat:relative_orbit") == orbit:
+                return r["properties"]["datetime"]
+    return None
+
+def fetch_scene(scene_dt):
+    sz = bbox_to_dimensions(SNAP_AOI, resolution=SNAP_RES)
+    req = SentinelHubRequest(
+        evalscript=EVALSCRIPT,
+        input_data=[SentinelHubRequest.input_data(
+            data_collection=S1_CDSE,
+            time_interval=(scene_dt[:19].replace("T", " "), scene_dt[:19].replace("T", " ")),
+            other_args={"processing": {
+                "backCoeff": "SIGMA0_ELLIPSOID",
+                "orthorectify": True,
+                "demInstance": "COPERNICUS",
+            }},
+            mosaicking_order=MosaickingOrder.MOST_RECENT,
+        )],
+        responses=[SentinelHubRequest.output_response("default", MimeType.TIFF)],
+        bbox=SNAP_AOI, size=sz, config=config,
+    )
+    try:
+        data = req.get_data()
+        a = data[0]
+        if a.ndim == 3:
+            a = a[:, :, 0]
+        return a.astype(np.float32)
+    except Exception as e:
+        print(f"  S1 fetch err: {e}"); return None
+
+# ── Rendering ─────────────────────────────────────────────────────────────────
+
+def render_snapshot(scene_linear, dets, lengths, date_str, orbit):
+    h, w = scene_linear.shape
+    eps = 1e-10
+    db = 10 * np.log10(np.where(scene_linear < eps, eps, scene_linear))
+
+    # Percentile stretch
+    valid = db[db > -50]
+    p2, p98 = (np.percentile(valid, [2, 98]) if len(valid) > 100
+               else (-25.0, 5.0))
+    img = np.clip((db - p2) / max(p98 - p2, 1e-6), 0.0, 1.0)
+
+    fig, ax = plt.subplots(figsize=(10, 6), dpi=130)
+    ax.imshow(img, cmap="gray", vmin=0, vmax=1, origin="upper", aspect="equal")
+
+    legend_handles = []
+    for berth, pts in BERTH_COORDS.items():
+        det     = dets.get(berth, "—")
+        length  = lengths.get(berth)
+        color   = BERTH_COLORS[berth]
+        lname   = BERTH_LABELS[berth]
+        is_occ  = (det == "OCC")
+        is_emp  = (det == "EMP")
+
+        corners = corridor_corners(pts, SNAP_AOI, w, h)
+        if corners is None:
+            continue
+
+        edge_color  = color if is_occ else ("#888888" if is_emp else "#444444")
+        fill_alpha  = 0.22 if is_occ else (0.07 if is_emp else 0.03)
+        edge_lw     = 2.0  if is_occ else (1.0  if is_emp else 0.5)
+
+        # Filled corridor
+        poly_fill = mpatches.Polygon(corners, closed=True,
+                                      edgecolor="none", facecolor=edge_color,
+                                      alpha=fill_alpha, zorder=2)
+        ax.add_patch(poly_fill)
+        # Edge outline
+        poly_edge = mpatches.Polygon(corners, closed=True,
+                                      edgecolor=edge_color, facecolor="none",
+                                      linewidth=edge_lw, zorder=3)
+        ax.add_patch(poly_edge)
+
+        # Label at corridor centroid
+        cx = sum(c[0] for c in corners) / 4
+        cy = sum(c[1] for c in corners) / 4
+
+        if is_occ:
+            lbl = f"{lname}\n{int(length) if length else 'OCC'} m"
+            txt_color = color
+        elif is_emp:
+            lbl = f"{lname}\nempty"
+            txt_color = "#aaaaaa"
+        else:
+            lbl = f"{lname}\n—"
+            txt_color = "#555555"
+
+        ax.text(cx, cy, lbl, color=txt_color, fontsize=7,
+                ha="center", va="center",
+                fontweight="bold" if is_occ else "normal", zorder=4,
+                bbox=dict(boxstyle="round,pad=0.25", facecolor="#000000",
+                          alpha=0.55, edgecolor="none"))
+
+        legend_handles.append(
+            mpatches.Patch(color=edge_color,
+                            label=f"{lname}: {'OCC' if is_occ else det}"))
+
+    if legend_handles:
+        ax.legend(handles=legend_handles, loc="lower right", fontsize=7,
+                   facecolor="#111111", edgecolor="#444444",
+                   labelcolor="white", framealpha=0.85)
+
+    ax.set_title(f"Kharg Island Terminal · {date_str} · orbit {orbit}",
+                  fontsize=10, color="white", pad=6)
+    fig.patch.set_facecolor("#000000")
+    ax.set_facecolor("#000000")
+    ax.axis("off")
+    plt.tight_layout(pad=0.5)
+
+    buf = io.BytesIO()
+    plt.savefig(buf, format="png", dpi=130, bbox_inches="tight",
+                facecolor="#000000")
+    plt.close()
+    buf.seek(0)
+    return buf.read()
+
+# ── Supabase upload ───────────────────────────────────────────────────────────
+
+def upload(png_bytes, filename):
+    url = f"{SUPABASE_URL}/storage/v1/object/{BUCKET}/{filename}"
+    headers = {
+        "Authorization": f"Bearer {SUPABASE_KEY}",
+        "Content-Type": "image/png",
+        "x-upsert": "true",
+    }
+    try:
+        resp = requests.put(url, headers=headers, data=png_bytes, timeout=90)
+        if resp.status_code not in (200, 201):
+            print(f"  upload failed {resp.status_code}: {resp.text[:200]}")
+            return None
+    except Exception as e:
+        print(f"  upload error: {e}"); return None
+    return f"{SUPABASE_URL}/storage/v1/object/public/{BUCKET}/{filename}"
+
+# ── Main ──────────────────────────────────────────────────────────────────────
+
+def main():
+    with open(JSON_IN) as f:
+        occ_data = json.load(f)
+    rows = occ_data.get("rows", [])
+    if not rows:
+        sys.exit("No rows in berth_occupancy.json")
+
+    # Last 2 unique (date, orbit) rows
+    last2  = rows[-2:] if len(rows) >= 2 else rows * 2
+    passes = [("prev", last2[0]), ("latest", last2[-1])]
+
+    # Build length_m lookup from CSV
+    lengths_map = {}
+    if CSV_IN.exists():
+        with open(CSV_IN) as f:
+            for r in csv.DictReader(f):
+                try:
+                    lm = float(r["length_m"]) if r.get("length_m") else None
+                except ValueError:
+                    lm = None
+                lengths_map[(r["date"], int(r["orbit"]), r["berth"])] = lm
+
+    snaps = {}
+    for label, row in passes:
+        date_str = row["date"]
+        orbit    = int(row["orbit"])
+        dets     = {b: row.get(b, "—") for b in BERTH_COORDS}
+        lengths  = {b: lengths_map.get((date_str, orbit, b)) for b in BERTH_COORDS}
+
+        print(f"\n── {label}: {date_str} o{orbit} ──")
+        print(f"  dets: { {b: v for b,v in dets.items()} }")
+
+        scene_dt = find_scene_dt(date_str, orbit)
+        if scene_dt is None:
+            print(f"  WARN: no scene found, skipping")
+            snaps[label] = {"url": None, "date": date_str, "orbit": orbit, "dets": dets}
+            continue
+        print(f"  scene_dt: {scene_dt}")
+
+        scene = fetch_scene(scene_dt)
+        if scene is None:
+            print(f"  WARN: fetch failed, skipping")
+            snaps[label] = {"url": None, "date": date_str, "orbit": orbit, "dets": dets}
+            continue
+        print(f"  scene shape: {scene.shape}")
+
+        png_bytes = render_snapshot(scene, dets, lengths, date_str, orbit)
+        filename  = f"{date_str}_o{orbit}_terminal.png"
+        pub_url   = upload(png_bytes, filename)
+        if pub_url:
+            print(f"  uploaded: {pub_url}")
+
+        snaps[label] = {
+            "url":    pub_url,
+            "date":   date_str,
+            "orbit":  orbit,
+            "dets":   dets,
+        }
+
+    with open(SNAPS_JSON, "w") as f:
+        json.dump(snaps, f, indent=2)
+    print(f"\nWrote: {SNAPS_JSON}")
+    print(json.dumps(snaps, indent=2))
+
+
+if __name__ == "__main__":
+    main()
