@@ -55,7 +55,7 @@ jobs:
           ref: claude/oilradar-dashboard-iran-zchdva
 
       - name: Install dependencies
-        run: pip install sentinelhub scipy numpy matplotlib shapely -q
+        run: pip install sentinelhub scipy numpy matplotlib shapely pystac-client planetary-computer rasterio -q
 
       - name: Run ROI diagnostics (sea_island mismatches)
         if: github.event.inputs.roi_diag == 'yes' && github.event.inputs.contact_sheet_only != 'yes'
@@ -209,8 +209,6 @@ jobs:
            steps.validate_v4.outcome == 'success')
         run: python -u scripts/berth_v4_history.py
         env:
-          CLIENT_ID:              ${{ secrets.CLIENT_ID }}
-          CLIENT_SECRET:          ${{ secrets.CLIENT_SECRET }}
           SUPABASE_SERVICE_KEY:   sb_publishable_7j07_zzdqTGM1LXf7-o9Tg_JJRbJQSM
           SUPABASE_URL:           https://yoekhkczwdeyauwarsyy.supabase.co
           PYTHONUNBUFFERED:       "1"
