@@ -88,6 +88,7 @@ jobs:
 
       - name: Build contact sheet
         if: always()
+        continue-on-error: true
         run: python -u scripts/berth_contact_sheet.py
         env:
           CLIENT_ID:        ${{ secrets.CLIENT_ID }}
@@ -105,6 +106,7 @@ jobs:
 
       - name: Build contact sheet v3
         if: always()
+        continue-on-error: true
         run: python -u scripts/berth_contact_sheet_v3.py
         env:
           CLIENT_ID:        ${{ secrets.CLIENT_ID }}
