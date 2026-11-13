@@ -1,13 +1,13 @@
 Validation v4 — optical ground truth (optics_ref_sameday.csv)
 BG: EMP-only 2024-2025 median (fallback p10 if <5 EMP dates)
-PIER_EXCL=12m  WATER=20-90m  MIN_LEN=120m  GAP_MERGE=per-berth(sea=40,eth=0,sep=0)
+PIER_EXCL=per-berth(20m)  WATER=20-80m  MIN_LEN=per-berth(sea=120,eth/sep=150)  GAP_MERGE=per-berth(sea=40,eth=0,sep=0)
 ============================================================
 
 ── Before / After ──────────────────────────────────────
 Berth                  v3-Acc  v3-Rec   v4-Acc  v4-Rec   v4-Prec
 ------------------------------------------------------------
 sea_island              81.1%   64.7%    90.9%   80.0%    100.0%
-east_t_head             51.5%   31.8%    45.5%   18.2%    100.0%
+east_t_head             51.5%   31.8%    72.7%   63.6%     93.3%
 southeast_pier          97.1%   50.0%    97.1%   50.0%    100.0%
 
 ── Per-berth detail ─────────────────────────────────────
@@ -20,9 +20,9 @@ sea_island
   2026 only  |  с правилом (n=14): Acc=92.9% Prec=100.0% Rec=75.0%  |  без правила (n=16): Acc=81.2% Prec=100.0% Rec=50.0%
 
 east_t_head
-  all years  |  с правилом (n=33): Acc=45.5% Prec=100.0% Rec=18.2%  |  без правила (n=33): Acc=45.5% Prec=100.0% Rec=18.2%
-  2024-2025  |  с правилом (n=20): Acc=25.0% Prec=100.0% Rec=16.7%  |  без правила (n=20): Acc=25.0% Prec=100.0% Rec=16.7%
-  2026 only  |  с правилом (n=13): Acc=76.9% Prec=100.0% Rec=25.0%  |  без правила (n=13): Acc=76.9% Prec=100.0% Rec=25.0%
+  all years  |  с правилом (n=33): Acc=72.7% Prec=93.3% Rec=63.6%  |  без правила (n=33): Acc=72.7% Prec=93.3% Rec=63.6%
+  2024-2025  |  с правилом (n=20): Acc=60.0% Prec=100.0% Rec=55.6%  |  без правила (n=20): Acc=60.0% Prec=100.0% Rec=55.6%
+  2026 only  |  с правилом (n=13): Acc=92.3% Prec=80.0% Rec=100.0%  |  без правила (n=13): Acc=92.3% Prec=80.0% Rec=100.0%
 
 southeast_pier
   all years  |  с правилом (n=34): Acc=97.1% Prec=100.0% Rec=50.0%  |  без правила (n=34): Acc=97.1% Prec=100.0% Rec=50.0%
