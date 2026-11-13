@@ -489,6 +489,9 @@
         <div class="nav-item" onclick="showSection('anchorage')">
             <span class="nav-icon">⚓</span> Tanker Queue
         </div>
+        <div class="nav-item" onclick="showSection('berth')">
+            <span class="nav-icon">⛴</span> Berth Occupancy
+        </div>
         <hr class="nav-divider">
         <div class="nav-group-label">Docs</div>
         <div class="nav-item" onclick="showSection('api')">
@@ -515,6 +518,7 @@
         <div class="nav-item" id="mob-nav-map" onclick="showSection('map');closeMobMenu()"><span class="nav-icon">⊞</span> Per-Tank Map</div>
         <div class="nav-item" id="mob-nav-upstream" onclick="showSection('upstream');closeMobMenu()"><span class="nav-icon">⬆</span> Upstream</div>
         <div class="nav-item" id="mob-nav-anchorage" onclick="showSection('anchorage');closeMobMenu()"><span class="nav-icon">⚓</span> Tanker Queue</div>
+        <div class="nav-item" id="mob-nav-berth" onclick="showSection('berth');closeMobMenu()"><span class="nav-icon">⛴</span> Berth Occupancy</div>
         <div class="nav-item" id="mob-nav-api" onclick="showSection('api');closeMobMenu()"><span class="nav-icon">⌥</span> API</div>
         <div class="mob-dropdown-footer">
             <button class="logout-btn" onclick="logout()">Logout</button>
@@ -1081,6 +1085,76 @@
     </div>
 
 
+    <div class="section" id="sec-berth">
+        <div class="sec-title" style="margin-bottom:0.4rem">Berth Occupancy — Kharg Island Terminal</div>
+
+        <!-- KPI cards -->
+        <div style="display:flex;gap:1rem;flex-wrap:wrap;margin-bottom:1.25rem">
+            <div class="card" style="min-width:160px">
+                <div class="card-label">Погрузок за 4 нед.</div>
+                <div class="card-val" id="bo-load4w" style="font-family:'Space Grotesk',sans-serif">—</div>
+                <div class="card-sub" id="bo-load4w-sub"></div>
+                <div class="card-sub" id="bo-load4w-py" style="color:var(--dim)"></div>
+            </div>
+            <div class="card" style="min-width:160px">
+                <div class="card-label">Последнее судно</div>
+                <div class="card-val" id="bo-lastship" style="font-family:'Space Grotesk',sans-serif;font-size:1.3rem">—</div>
+                <div class="card-sub" id="bo-lastship-sub"></div>
+            </div>
+            <div class="card" style="min-width:140px">
+                <div class="card-label">Дней без погрузок</div>
+                <div class="card-val" id="bo-daysnone" style="font-family:'Space Grotesk',sans-serif">—</div>
+                <div class="card-sub" id="bo-daysnone-sub"></div>
+            </div>
+        </div>
+
+        <!-- SAR snapshots -->
+        <div id="bo-snaps" style="display:none;margin-bottom:1.25rem">
+            <div style="display:flex;gap:1rem;flex-wrap:wrap">
+                <div style="flex:1;min-width:220px">
+                    <div style="font-size:0.6rem;letter-spacing:1px;text-transform:uppercase;color:var(--muted);margin-bottom:0.3rem">PREVIOUS SAR PASS · <span id="bo-snap-prev-meta"></span></div>
+                    <a id="bo-snap-prev-link" href="#" target="_blank" style="display:block">
+                        <img id="bo-snap-prev-img" src="" alt="" style="width:100%;border:1px solid var(--border);cursor:zoom-in">
+                    </a>
+                    <div style="font-size:0.65rem;color:var(--muted);margin-top:0.3rem" id="bo-snap-prev-sum"></div>
+                </div>
+                <div style="flex:1;min-width:220px">
+                    <div style="font-size:0.6rem;letter-spacing:1px;text-transform:uppercase;color:var(--muted);margin-bottom:0.3rem">LATEST SAR PASS · <span id="bo-snap-latest-meta"></span></div>
+                    <a id="bo-snap-latest-link" href="#" target="_blank" style="display:block">
+                        <img id="bo-snap-latest-img" src="" alt="" style="width:100%;border:1px solid var(--border);cursor:zoom-in">
+                    </a>
+                    <div style="font-size:0.65rem;color:var(--muted);margin-top:0.3rem" id="bo-snap-latest-sum"></div>
+                </div>
+            </div>
+            <div style="font-size:0.7rem;color:var(--accent);margin-top:0.5rem;font-style:italic" id="bo-snap-change"></div>
+        </div>
+
+        <!-- Heatmap ribbon -->
+        <div style="background:var(--surface);border:1px solid var(--border);padding:1rem 1.25rem;margin-bottom:1.25rem">
+            <div style="font-size:0.65rem;letter-spacing:1px;text-transform:uppercase;color:var(--muted);margin-bottom:0.5rem">12-месячная история (рядов = причал/сторона)</div>
+            <div style="display:flex;gap:0.75rem;align-items:center;margin-bottom:0.5rem;font-size:0.65rem;color:var(--muted)">
+                <span style="display:inline-block;width:10px;height:10px;background:#ef4444;vertical-align:middle"></span> VLCC
+                <span style="display:inline-block;width:10px;height:10px;background:#f97316;vertical-align:middle"></span> Suezmax/Aframax
+                <span style="display:inline-block;width:10px;height:10px;background:#1f2937;border:1px solid #374151;vertical-align:middle"></span> Empty
+            </div>
+            <div id="bo-heatmap-wrap" style="overflow-x:auto">
+                <div id="bo-heatmap"></div>
+            </div>
+        </div>
+
+        <!-- Loading list -->
+        <div style="background:var(--surface);border:1px solid var(--border);padding:1rem 1.25rem;margin-bottom:1.25rem">
+            <div style="font-size:0.65rem;letter-spacing:1px;text-transform:uppercase;color:var(--muted);margin-bottom:0.75rem">Погрузки (новые суда)</div>
+            <div id="bo-loadings-list"></div>
+            <div id="bo-loadings-empty" style="display:none;font-size:0.72rem;color:var(--dim)">Нет данных о погрузках</div>
+        </div>
+
+        <!-- Disclaimer -->
+        <div style="font-size:0.65rem;color:var(--dim);border-top:1px solid var(--border);padding-top:0.75rem">
+            SAR Sentinel-1; класс по длине корпуса (±50 м), 2 класса; погрузки короче интервала между снимками могут быть пропущены — оценка снизу
+        </div>
+    </div>
+
 </div><!-- /main -->
 
 <script>
@@ -1341,6 +1415,7 @@ function showSection(id, callerEl) {
     if (mobNav) mobNav.classList.add('active');
     if (id === 'map' && !window._mapInited) { initTankMap(); window._mapInited = true; }
     if (id === 'anchorage') { initAnchorage(); }
+    if (id === 'berth' && !window._boLoaded && window._boLoad) window._boLoad();
     if (id === 'upstream' && !window._upstreamInited) { window._upstreamInited = true; loadUpstream(); }
 }
 
@@ -2680,6 +2755,199 @@ async function initAnchorage() {
   _aqInited = true;
   aqDraw();
 }
+
+// ── Berth Occupancy v2 ────────────────────────────────────────────────────────
+(function(){
+  const BERTH_LABELS = {
+    'sea_island': 'Sea Island',
+    'east_t_head': 'East T-Head',
+    'southeast_pier': 'SE Pier'
+  };
+  const VLCC_COLOR = '#ef4444';
+  const SUEZ_COLOR = '#f97316';
+  const EMP_COLOR  = '#1f2937';
+
+  var boData = null;
+
+  function renderMetrics(m) {
+    if (!m) return;
+    var $ = function(id){ return document.getElementById(id); };
+    var lw = m.loadings_4w;
+    if ($('bo-load4w')) $('bo-load4w').textContent = lw ? lw.total : '—';
+    if ($('bo-load4w-sub') && lw) {
+      var parts = [];
+      if (lw.VLCC)        parts.push(lw.VLCC + ' VLCC');
+      if (lw.SuezAframax) parts.push(lw.SuezAframax + ' Suezmax/Aframax');
+      $('bo-load4w-sub').textContent = parts.join(' · ');
+    }
+    if ($('bo-load4w-py') && m.loadings_4w_py)
+      $('bo-load4w-py').textContent = 'Год назад: ' + m.loadings_4w_py.total;
+    if ($('bo-lastship') && m.last_ship)
+      $('bo-lastship').textContent = m.last_ship.class || '—';
+    if ($('bo-lastship-sub') && m.last_ship) {
+      var ls = m.last_ship;
+      $('bo-lastship-sub').textContent = ls.date + ' · ' + (BERTH_LABELS[ls.berth] || ls.berth) + ' · ' + ls.len_m + ' м';
+    }
+    if ($('bo-daysnone'))
+      $('bo-daysnone').textContent = (m.days_since_loading !== null && m.days_since_loading !== undefined) ? m.days_since_loading : '—';
+    if ($('bo-daysnone-sub') && m.last_ship)
+      $('bo-daysnone-sub').textContent = 'последняя: ' + m.last_ship.date;
+  }
+
+  function renderHeatmap(passes) {
+    var container = document.getElementById('bo-heatmap');
+    if (!container || !passes || !passes.length) return;
+    var cutoff = new Date();
+    cutoff.setFullYear(cutoff.getFullYear() - 1);
+    var recent = passes.filter(function(p){ return new Date(p.date) >= cutoff; });
+    if (!recent.length) return;
+    var BERTHS = ['sea_island','east_t_head','southeast_pier'];
+    var berth_order = {sea_island:0, east_t_head:1, southeast_pier:2};
+    var rowSet = {};
+    recent.forEach(function(p){
+      BERTHS.forEach(function(b){
+        var bd = p[b];
+        if (!bd) return;
+        (bd.hulls||[]).forEach(function(h){ rowSet[b+':'+h.side] = true; });
+      });
+    });
+    var rowKeys = Object.keys(rowSet).length > 0
+      ? Object.keys(rowSet).sort(function(a,b){
+          var ab=a.split(':')[0], as_=a.split(':')[1], bb=b.split(':')[0], bs=b.split(':')[1];
+          var d = berth_order[ab]-berth_order[bb];
+          return d!==0 ? d : parseInt(as_)-parseInt(bs);
+        })
+      : BERTHS.map(function(b){ return b+':main'; });
+    var rowLabel = function(key){
+      var berth=key.split(':')[0], side=key.split(':')[1];
+      var lbl = BERTH_LABELS[berth]||berth;
+      return side==='main' ? lbl : lbl+' '+(side==='1'?'A':'B');
+    };
+    var CELL_W=10, CELL_H=16, ROW_LABEL_W=92, HEADER_H=20;
+    var nCols=recent.length, nRows=rowKeys.length;
+    var W=ROW_LABEL_W+nCols*CELL_W+2, H=HEADER_H+nRows*CELL_H+2;
+    var NS='http://www.w3.org/2000/svg';
+    var svg=document.createElementNS(NS,'svg');
+    svg.setAttribute('width',W); svg.setAttribute('height',H);
+    svg.style.cssText='font-family:monospace,system-ui;display:block';
+    var lastMon='';
+    recent.forEach(function(p,ci){
+      var mon=p.date.slice(0,7);
+      if(mon!==lastMon){lastMon=mon;
+        var t=document.createElementNS(NS,'text');
+        t.setAttribute('x',ROW_LABEL_W+ci*CELL_W+1); t.setAttribute('y',HEADER_H-4);
+        t.setAttribute('font-size','7'); t.setAttribute('fill','#6b7280');
+        t.textContent=p.date.slice(5,7)+'/'+p.date.slice(2,4); svg.appendChild(t);
+      }
+    });
+    rowKeys.forEach(function(rowKey,ri){
+      var berth=rowKey.split(':')[0], side=rowKey.split(':')[1];
+      var y=HEADER_H+ri*CELL_H;
+      var lbl=document.createElementNS(NS,'text');
+      lbl.setAttribute('x',ROW_LABEL_W-4); lbl.setAttribute('y',y+CELL_H/2+3);
+      lbl.setAttribute('font-size','7.5'); lbl.setAttribute('fill','#9ca3af');
+      lbl.setAttribute('text-anchor','end'); lbl.textContent=rowLabel(rowKey); svg.appendChild(lbl);
+      recent.forEach(function(p,ci){
+        var bd=p[berth]||{}, hulls=bd.hulls||[], det=bd.det||'';
+        var fillColor=EMP_COLOR, tipText=p.date+' o'+p.orbit+' · '+(BERTH_LABELS[berth]||berth);
+        if(side==='main'){
+          var best=hulls.length?hulls.reduce(function(a,b){return a.len_m>b.len_m?a:b;}):null;
+          if(best){fillColor=best.class==='VLCC'?VLCC_COLOR:SUEZ_COLOR;
+            tipText+='\n'+best.class+' · '+best.len_m+'m'+(best.new_load?' · новое':' · то же');}
+          else if(det==='OCC'){fillColor=SUEZ_COLOR;}
+        } else {
+          var h=hulls.find(function(h){return String(h.side)===side;});
+          if(h){fillColor=h.class==='VLCC'?VLCC_COLOR:SUEZ_COLOR;
+            tipText+='\nСторона '+(side==='1'?'A':'B')+' · '+h.class+' · '+h.len_m+'m'+(h.new_load?' · новое':' · то же');}
+        }
+        var rect=document.createElementNS(NS,'rect');
+        rect.setAttribute('x',ROW_LABEL_W+ci*CELL_W+1); rect.setAttribute('y',y+1);
+        rect.setAttribute('width',CELL_W-2); rect.setAttribute('height',CELL_H-2);
+        rect.setAttribute('fill',fillColor); rect.setAttribute('rx','1');
+        var title=document.createElementNS(NS,'title'); title.textContent=tipText;
+        rect.appendChild(title); svg.appendChild(rect);
+      });
+    });
+    container.innerHTML=''; container.appendChild(svg);
+  }
+
+  function renderLoadingList(loadings) {
+    var wrap=document.getElementById('bo-loadings-list');
+    var empty=document.getElementById('bo-loadings-empty');
+    if(!wrap) return;
+    if(!loadings||!loadings.length){if(empty)empty.style.display='';return;}
+    var getWeek=function(dateStr){
+      var d=new Date(dateStr), day=d.getUTCDay()||7;
+      d.setUTCDate(d.getUTCDate()-day+1); return d.toISOString().slice(0,10);
+    };
+    var sorted=loadings.slice().reverse(), weeks={};
+    sorted.forEach(function(l){ var wk=getWeek(l.date); if(!weeks[wk])weeks[wk]=[]; weeks[wk].push(l); });
+    var html=[];
+    Object.keys(weeks).sort().reverse().forEach(function(wk){
+      html.push('<div style="border-top:1px solid rgba(255,255,255,0.05);padding:4px 0 2px">');
+      html.push('<div style="font-size:0.6rem;letter-spacing:1px;text-transform:uppercase;color:var(--dim);padding:2px 0 4px">'+wk+'</div>');
+      weeks[wk].forEach(function(l){
+        var color=l.class==='VLCC'?VLCC_COLOR:SUEZ_COLOR;
+        html.push('<div style="display:flex;gap:0.75rem;align-items:center;padding:3px 0;font-size:0.72rem;color:var(--muted)">');
+        html.push('<span style="color:'+color+';font-weight:700;min-width:70px">'+l.class+'</span>');
+        html.push('<span style="color:var(--text);font-variant-numeric:tabular-nums;min-width:50px">'+l.len_m+' м</span>');
+        html.push('<span>'+(BERTH_LABELS[l.berth]||l.berth)+'</span>');
+        html.push('<span style="color:var(--dim)">'+l.date+' · o'+l.orbit+'</span>');
+        html.push('</div>');
+      });
+      html.push('</div>');
+    });
+    wrap.innerHTML=html.join('');
+  }
+
+  function loadSnapshots() {
+    fetch('/data/berth_snapshots.json').then(function(r){return r.json();}).then(function(snaps){
+      var wrap=document.getElementById('bo-snaps');
+      if(!wrap) return;
+      var any=false;
+      [['prev','bo-snap-prev-link','bo-snap-prev-img','bo-snap-prev-meta','bo-snap-prev-sum'],
+       ['latest','bo-snap-latest-link','bo-snap-latest-img','bo-snap-latest-meta','bo-snap-latest-sum']
+      ].forEach(function(arr){
+        var key=arr[0],lid=arr[1],iid=arr[2],mid=arr[3],sid=arr[4];
+        var s=snaps[key]; if(!s||!s.url) return;
+        var link=document.getElementById(lid), img=document.getElementById(iid);
+        var meta=document.getElementById(mid), sum=document.getElementById(sid);
+        if(link)link.href=s.url; if(img)img.src=s.url;
+        if(meta)meta.textContent=s.date+' · o'+s.orbit;
+        if(sum)sum.textContent=s.summary||''; any=true;
+      });
+      var change=document.getElementById('bo-snap-change');
+      if(change&&snaps.change)change.textContent=snaps.change;
+      if(any)wrap.style.display='';
+    }).catch(function(){});
+  }
+
+  function renderLegacy(d) {
+    var passesMap={};
+    (d.rows||[]).forEach(function(r){
+      var key=r.date+'_'+r.orbit;
+      if(!passesMap[key])passesMap[key]={date:r.date,orbit:r.orbit};
+      ['sea_island','east_t_head','southeast_pier'].forEach(function(b){
+        if(r[b])passesMap[key][b]={det:r[b],hulls:[]};
+      });
+    });
+    var passes=Object.values(passesMap).sort(function(a,b){return a.date>b.date?1:-1;});
+    renderHeatmap(passes);
+  }
+
+  function boLoad() {
+    fetch('/data/berth_occupancy.json').then(function(r){return r.json();}).then(function(d){
+      boData=d; window._boLoaded=true;
+      if(d.version&&d.version.startsWith('v5')){
+        renderMetrics(d.metrics); renderHeatmap(d.passes); renderLoadingList(d.loadings);
+      } else { renderLegacy(d); }
+      loadSnapshots();
+    }).catch(function(){
+      var el=document.getElementById('bo-load4w'); if(el)el.textContent='—';
+    });
+  }
+  window._boLoad = boLoad;
+})();
 </script>
 <div style="text-align:center;padding:12px 16px;font-size:11px;color:#6b7280;font-family:sans-serif;border-top:1px solid #e5e7eb;margin-top:24px">Contains modified Copernicus Sentinel data [2015–2026] · processed by OilRadar</div>
 </body>

@@ -1,10 +1,11 @@
 """
 berth_snapshots.py — Generate SAR terminal overview PNGs for the two most recent
-berth detection passes, annotate berth corridors with detection results,
-upload to Supabase Storage bucket berth_snapshots.
+berth detection passes, annotate with hull detections (v5.0 format), upload to
+Supabase Storage bucket berth_snapshots.
 
 Outputs:
-  data/berth_snapshots.json  — {prev:{url,date,orbit,dets}, latest:{...}}
+  data/berth_snapshots.json  — {prev:{url,date,orbit,summary}, latest:{...}, change:...}
+  Storage: previous.png, latest.png, snapshots.json
 
 Env vars required:
   CLIENT_ID, CLIENT_SECRET     — Sentinel Hub CDSE
@@ -19,6 +20,7 @@ import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
+from matplotlib.patches import Polygon as MplPolygon
 import requests
 
 from sentinelhub import (
@@ -51,13 +53,13 @@ S1_CDSE = DataCollection.SENTINEL1_IW.define_from(
 
 ROOT       = Path(__file__).parent.parent
 JSON_IN    = ROOT / "data" / "berth_occupancy.json"
-CSV_IN     = ROOT / "diagnostics" / "berth_v4" / "history_v4" / "berth_v4_history.csv"
 SNAPS_JSON = ROOT / "data" / "berth_snapshots.json"
 BUCKET     = "berth_snapshots"
 
 # Terminal overview AOI — all 3 berths in one frame
 SNAP_AOI = BBox(bbox=[50.265, 29.198, 50.362, 29.252], crs=CRS.WGS84)
-SNAP_RES = 20  # metres per pixel
+SNAP_RES  = 20   # metres per pixel
+PX_PER_M  = 1.0 / SNAP_RES
 
 EVALSCRIPT = """
 //VERSION=3
@@ -70,16 +72,13 @@ BERTH_COORDS = {
     "east_t_head":    [(50.33833, 29.23812), (50.34054, 29.22189)],
     "southeast_pier": [(50.33646, 29.21764), (50.33591, 29.21424), (50.33522, 29.21264)],
 }
-BERTH_COLORS = {
-    "sea_island":     "#4DD9FF",
-    "east_t_head":    "#FF5050",
-    "southeast_pier": "#A0FF50",
-}
 BERTH_LABELS = {
     "sea_island":     "Sea Island",
     "east_t_head":    "East T-Head",
     "southeast_pier": "SE Pier",
 }
+VLCC_COLOR = "#ef4444"
+SUEZ_COLOR = "#f97316"
 
 # ── Geometry helpers ──────────────────────────────────────────────────────────
 
@@ -88,26 +87,23 @@ def geo_to_px(lon, lat, bbox, w, h):
     row = (bbox.max_y - lat) / (bbox.max_y - bbox.min_y) * h
     return col, row
 
-def corridor_corners(pts, bbox, w, h, half_m=160, end_m=120):
-    lat_mid = sum(p[1] for p in pts) / len(pts)
-    mpd_lat = 111320.0
-    mpd_lon = 111320.0 * np.cos(np.deg2rad(lat_mid))
-    # pixels per metre (isotropic approximation)
-    px_m_lon = w / ((bbox.max_x - bbox.min_x) * mpd_lon)
-    px_m_lat = h / ((bbox.max_y - bbox.min_y) * mpd_lat)
-    px_m = (px_m_lon + px_m_lat) / 2
-
+def berth_axis_uvec(pts, bbox, w, h):
+    """Unit vector along berth axis in pixel space."""
     px_pts = [geo_to_px(lon, lat, bbox, w, h) for lon, lat in pts]
     dx = px_pts[-1][0] - px_pts[0][0]
     dy = px_pts[-1][1] - px_pts[0][1]
-    L = np.hypot(dx, dy)
+    L  = np.hypot(dx, dy)
     if L < 1e-6:
-        return None
-    ux, uy = dx / L, dy / L   # along-axis unit vector
-    rx, ry = -uy, ux           # perpendicular unit vector
+        return (1.0, 0.0)
+    return (dx / L, dy / L)
 
-    end_px  = end_m * px_m
-    half_px = half_m * px_m
+def corridor_corners(pts, bbox, w, h, half_m=160, end_m=120):
+    """Dashed corridor outline corners (4 corners of rect around berth axis)."""
+    px_pts = [geo_to_px(lon, lat, bbox, w, h) for lon, lat in pts]
+    ux, uy = berth_axis_uvec(pts, bbox, w, h)
+    rx, ry = -uy, ux
+    end_px  = end_m * PX_PER_M
+    half_px = half_m * PX_PER_M
     p0 = (px_pts[0][0] - ux * end_px, px_pts[0][1] - uy * end_px)
     p1 = (px_pts[-1][0] + ux * end_px, px_pts[-1][1] + uy * end_px)
     return [
@@ -115,6 +111,27 @@ def corridor_corners(pts, bbox, w, h, half_m=160, end_m=120):
         (p0[0] + rx * half_px, p0[1] + ry * half_px),
         (p1[0] + rx * half_px, p1[1] + ry * half_px),
         (p1[0] - rx * half_px, p1[1] - ry * half_px),
+    ]
+
+def hull_bbox_corners(hull, pts, bbox, w, h):
+    """Rotated bbox corners for a detected hull."""
+    lon, lat = hull["lon"], hull["lat"]
+    len_m    = hull["len_m"]
+    wid_m    = max(hull.get("width_m", 25), 15)
+    cx, cy   = geo_to_px(lon, lat, bbox, w, h)
+    ux, uy   = berth_axis_uvec(pts, bbox, w, h)
+    rx, ry   = -uy, ux
+    half_len_px = (len_m / 2) * PX_PER_M
+    half_wid_px = max((wid_m / 2) * PX_PER_M, 2.5)
+    return [
+        (cx - ux * half_len_px - rx * half_wid_px,
+         cy - uy * half_len_px - ry * half_wid_px),
+        (cx - ux * half_len_px + rx * half_wid_px,
+         cy - uy * half_len_px + ry * half_wid_px),
+        (cx + ux * half_len_px + rx * half_wid_px,
+         cy + uy * half_len_px + ry * half_wid_px),
+        (cx + ux * half_len_px - rx * half_wid_px,
+         cy + uy * half_len_px - ry * half_wid_px),
     ]
 
 # ── Sentinel Hub helpers ──────────────────────────────────────────────────────
@@ -164,76 +181,83 @@ def fetch_scene(scene_dt):
 
 # ── Rendering ─────────────────────────────────────────────────────────────────
 
-def render_snapshot(scene_linear, dets, lengths, date_str, orbit):
+def render_snapshot(scene_linear, pass_data, date_str, orbit):
+    """
+    pass_data: dict {berth: {det, hulls}} from v5.0 passes entry
+    Returns (png_bytes, summary_str, ship_counts_dict)
+    """
     h, w = scene_linear.shape
     eps = 1e-10
-    db = 10 * np.log10(np.where(scene_linear < eps, eps, scene_linear))
+    db  = 10 * np.log10(np.where(scene_linear < eps, eps, scene_linear))
 
-    # Percentile stretch
     valid = db[db > -50]
-    p2, p98 = (np.percentile(valid, [2, 98]) if len(valid) > 100
-               else (-25.0, 5.0))
+    p2, p98 = (np.percentile(valid, [2, 98]) if len(valid) > 100 else (-25.0, 5.0))
     img = np.clip((db - p2) / max(p98 - p2, 1e-6), 0.0, 1.0)
 
     fig, ax = plt.subplots(figsize=(10, 6), dpi=130)
     ax.imshow(img, cmap="gray", vmin=0, vmax=1, origin="upper", aspect="equal")
 
-    legend_handles = []
+    ship_counts = {"total": 0, "VLCC": 0, "SuezAframax": 0}
+
     for berth, pts in BERTH_COORDS.items():
-        det     = dets.get(berth, "—")
-        length  = lengths.get(berth)
-        color   = BERTH_COLORS[berth]
-        lname   = BERTH_LABELS[berth]
-        is_occ  = (det == "OCC")
-        is_emp  = (det == "EMP")
+        bd    = pass_data.get(berth, {})
+        hulls = bd.get("hulls", [])
+        det   = bd.get("det", "—")
+        lname = BERTH_LABELS[berth]
 
-        corners = corridor_corners(pts, SNAP_AOI, w, h)
-        if corners is None:
-            continue
+        # Dashed grey corridor outline
+        corr_corners = corridor_corners(pts, SNAP_AOI, w, h)
+        if corr_corners:
+            poly = MplPolygon(corr_corners, closed=True,
+                              edgecolor="#555555", facecolor="none",
+                              linewidth=0.8, linestyle="--", zorder=2)
+            ax.add_patch(poly)
 
-        edge_color  = color if is_occ else ("#888888" if is_emp else "#444444")
-        fill_alpha  = 0.22 if is_occ else (0.07 if is_emp else 0.03)
-        edge_lw     = 2.0  if is_occ else (1.0  if is_emp else 0.5)
+        # Berth label at top of corridor
+        cx_c = sum(c[0] for c in corr_corners) / 4
+        cy_c = min(c[1] for c in corr_corners) - 6
+        ax.text(cx_c, cy_c, lname, color="#888888", fontsize=6,
+                ha="center", va="bottom", zorder=5)
 
-        # Filled corridor
-        poly_fill = mpatches.Polygon(corners, closed=True,
-                                      edgecolor="none", facecolor=edge_color,
-                                      alpha=fill_alpha, zorder=2)
-        ax.add_patch(poly_fill)
-        # Edge outline
-        poly_edge = mpatches.Polygon(corners, closed=True,
-                                      edgecolor=edge_color, facecolor="none",
-                                      linewidth=edge_lw, zorder=3)
-        ax.add_patch(poly_edge)
+        if hulls:
+            for hull in hulls:
+                cls    = hull.get("class", "SuezAframax")
+                len_m  = hull.get("len_m", 0)
+                is_new = hull.get("new_load", False)
+                color  = VLCC_COLOR if cls == "VLCC" else SUEZ_COLOR
 
-        # Label at corridor centroid
-        cx = sum(c[0] for c in corners) / 4
-        cy = sum(c[1] for c in corners) / 4
+                ship_counts["total"] += 1
+                ship_counts[cls]      = ship_counts.get(cls, 0) + 1
 
-        if is_occ:
-            lbl = f"{lname}\n{int(length) if length else 'OCC'} m"
-            txt_color = color
-        elif is_emp:
-            lbl = f"{lname}\nempty"
-            txt_color = "#aaaaaa"
-        else:
-            lbl = f"{lname}\n—"
-            txt_color = "#555555"
+                corners = hull_bbox_corners(hull, pts, SNAP_AOI, w, h)
+                poly_h = MplPolygon(corners, closed=True,
+                                    edgecolor=color, facecolor=color,
+                                    alpha=0.25, linewidth=1.5, zorder=3)
+                ax.add_patch(poly_h)
+                poly_e = MplPolygon(corners, closed=True,
+                                    edgecolor=color, facecolor="none",
+                                    linewidth=1.5, zorder=4)
+                ax.add_patch(poly_e)
 
-        ax.text(cx, cy, lbl, color=txt_color, fontsize=7,
-                ha="center", va="center",
-                fontweight="bold" if is_occ else "normal", zorder=4,
-                bbox=dict(boxstyle="round,pad=0.25", facecolor="#000000",
-                          alpha=0.55, edgecolor="none"))
+                # Hull label
+                lbl_x = sum(c[0] for c in corners) / 4
+                lbl_y = sum(c[1] for c in corners) / 4
+                lbl   = f"{cls} · {int(len_m)}m · {'новое' if is_new else 'то же'}"
+                ax.text(lbl_x, lbl_y, lbl, color=color, fontsize=6,
+                        ha="center", va="center", fontweight="bold", zorder=6,
+                        bbox=dict(boxstyle="round,pad=0.2", facecolor="#000000",
+                                  alpha=0.6, edgecolor="none"))
+        elif det == "EMP":
+            # Empty label
+            cx = sum(c[0] for c in corr_corners) / 4
+            cy = sum(c[1] for c in corr_corners) / 4
+            ax.text(cx, cy, "empty", color="#666666", fontsize=6.5,
+                    ha="center", va="center", style="italic", zorder=5)
 
-        legend_handles.append(
-            mpatches.Patch(color=edge_color,
-                            label=f"{lname}: {'OCC' if is_occ else det}"))
-
-    if legend_handles:
-        ax.legend(handles=legend_handles, loc="lower right", fontsize=7,
-                   facecolor="#111111", edgecolor="#444444",
-                   labelcolor="white", framealpha=0.85)
+    n   = ship_counts["total"]
+    vlc = ship_counts.get("VLCC", 0)
+    sml = ship_counts.get("SuezAframax", 0)
+    summary = f"У причалов: {n} судов (VLCC {vlc}, меньше {sml})"
 
     ax.set_title(f"Kharg Island Terminal · {date_str} · orbit {orbit}",
                   fontsize=10, color="white", pad=6)
@@ -247,11 +271,11 @@ def render_snapshot(scene_linear, dets, lengths, date_str, orbit):
                 facecolor="#000000")
     plt.close()
     buf.seek(0)
-    return buf.read()
+    return buf.read(), summary, ship_counts
 
 # ── Supabase upload ───────────────────────────────────────────────────────────
 
-def upload(png_bytes, filename):
+def upload_png(png_bytes, filename):
     url = f"{SUPABASE_URL}/storage/v1/object/{BUCKET}/{filename}"
     headers = {
         "Authorization": f"Bearer {SUPABASE_KEY}",
@@ -267,67 +291,122 @@ def upload(png_bytes, filename):
         print(f"  upload error: {e}"); return None
     return f"{SUPABASE_URL}/storage/v1/object/public/{BUCKET}/{filename}"
 
+def upload_json(data, filename):
+    url = f"{SUPABASE_URL}/storage/v1/object/{BUCKET}/{filename}"
+    headers = {
+        "Authorization": f"Bearer {SUPABASE_KEY}",
+        "Content-Type": "application/json",
+        "x-upsert": "true",
+    }
+    payload = json.dumps(data).encode()
+    try:
+        resp = requests.put(url, headers=headers, data=payload, timeout=30)
+        if resp.status_code not in (200, 201):
+            print(f"  json upload failed {resp.status_code}: {resp.text[:200]}")
+            return None
+    except Exception as e:
+        print(f"  json upload error: {e}"); return None
+    return f"{SUPABASE_URL}/storage/v1/object/public/{BUCKET}/{filename}"
+
 # ── Main ──────────────────────────────────────────────────────────────────────
 
 def main():
     with open(JSON_IN) as f:
         occ_data = json.load(f)
-    rows = occ_data.get("rows", [])
-    if not rows:
-        sys.exit("No rows in berth_occupancy.json")
 
-    # Last 2 unique (date, orbit) rows
-    last2  = rows[-2:] if len(rows) >= 2 else rows * 2
-    passes = [("prev", last2[0]), ("latest", last2[-1])]
+    # Support v5.0 (passes) and v4.x (rows) formats
+    if occ_data.get("version", "").startswith("v5"):
+        passes = occ_data.get("passes", [])
+        if not passes:
+            sys.exit("No passes in berth_occupancy.json")
+        last2 = passes[-2:] if len(passes) >= 2 else passes * 2
+        def to_pass_data(p):
+            result = {}
+            for berth in BERTH_COORDS:
+                bd = p.get(berth, {})
+                result[berth] = {"det": bd.get("det", "—"), "hulls": bd.get("hulls", [])}
+            return result
+    else:
+        # Legacy v4: rows are (date, orbit, sea_island, east_t_head, southeast_pier)
+        rows = occ_data.get("rows", [])
+        if not rows:
+            sys.exit("No rows in berth_occupancy.json")
+        last2 = rows[-2:] if len(rows) >= 2 else rows * 2
+        def to_pass_data(p):
+            result = {}
+            for berth in BERTH_COORDS:
+                result[berth] = {"det": p.get(berth, "—"), "hulls": []}
+            return result
 
-    # Build length_m lookup from CSV
-    lengths_map = {}
-    if CSV_IN.exists():
-        with open(CSV_IN) as f:
-            for r in csv.DictReader(f):
-                try:
-                    lm = float(r["length_m"]) if r.get("length_m") else None
-                except ValueError:
-                    lm = None
-                lengths_map[(r["date"], int(r["orbit"]), r["berth"])] = lm
-
+    pairs = [("prev", last2[0]), ("latest", last2[-1])]
     snaps = {}
-    for label, row in passes:
+    counts_by_label = {}
+
+    for label, row in pairs:
         date_str = row["date"]
         orbit    = int(row["orbit"])
-        dets     = {b: row.get(b, "—") for b in BERTH_COORDS}
-        lengths  = {b: lengths_map.get((date_str, orbit, b)) for b in BERTH_COORDS}
+        pass_data = to_pass_data(row)
+        filename  = "previous.png" if label == "prev" else "latest.png"
 
         print(f"\n── {label}: {date_str} o{orbit} ──")
-        print(f"  dets: { {b: v for b,v in dets.items()} }")
 
         scene_dt = find_scene_dt(date_str, orbit)
         if scene_dt is None:
             print(f"  WARN: no scene found, skipping")
-            snaps[label] = {"url": None, "date": date_str, "orbit": orbit, "dets": dets}
+            snaps[label] = {"url": None, "date": date_str, "orbit": orbit, "summary": ""}
+            counts_by_label[label] = {"total": 0}
             continue
         print(f"  scene_dt: {scene_dt}")
 
         scene = fetch_scene(scene_dt)
         if scene is None:
             print(f"  WARN: fetch failed, skipping")
-            snaps[label] = {"url": None, "date": date_str, "orbit": orbit, "dets": dets}
+            snaps[label] = {"url": None, "date": date_str, "orbit": orbit, "summary": ""}
+            counts_by_label[label] = {"total": 0}
             continue
         print(f"  scene shape: {scene.shape}")
 
-        png_bytes = render_snapshot(scene, dets, lengths, date_str, orbit)
-        filename  = f"{date_str}_o{orbit}_terminal.png"
-        pub_url   = upload(png_bytes, filename)
+        png_bytes, summary, counts = render_snapshot(scene, pass_data, date_str, orbit)
+        pub_url = upload_png(png_bytes, filename)
         if pub_url:
             print(f"  uploaded: {pub_url}")
 
         snaps[label] = {
-            "url":    pub_url,
-            "date":   date_str,
-            "orbit":  orbit,
-            "dets":   dets,
+            "url":     pub_url,
+            "date":    date_str,
+            "orbit":   orbit,
+            "summary": summary,
         }
+        counts_by_label[label] = counts
 
+    # Build change summary
+    prev_n   = counts_by_label.get("prev", {}).get("total", 0)
+    latest_n = counts_by_label.get("latest", {}).get("total", 0)
+    delta    = latest_n - prev_n
+
+    # Find berths with new loads in latest pass
+    new_berths = []
+    if occ_data.get("version", "").startswith("v5"):
+        latest_p = last2[-1]
+        for berth in BERTH_COORDS:
+            bd = latest_p.get(berth, {})
+            if any(h.get("new_load") for h in bd.get("hulls", [])):
+                new_berths.append(BERTH_LABELS[berth])
+
+    if delta > 0 and new_berths:
+        change = f"+{delta} новое судно у {', '.join(new_berths)}"
+    elif delta < 0:
+        change = f"{delta} судно покинуло терминал"
+    else:
+        change = "без изменений"
+
+    snaps["change"] = change
+
+    # Upload snapshots.json to Storage
+    upload_json(snaps, "snapshots.json")
+
+    # Write local copy
+    SNAPS_JSON.parent.mkdir(parents=True, exist_ok=True)
     with open(SNAPS_JSON, "w") as f:
         json.dump(snaps, f, indent=2)
     print(f"\nWrote: {SNAPS_JSON}")
