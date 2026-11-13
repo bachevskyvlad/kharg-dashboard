@@ -1,4 +1,4 @@
-"""
+""" 
 berth_detect_core.py — canonical geometry and ship detection.
 
 Shared by berth_ablation.py, berth_v4_history.py, berth_validate_optics_v4.py.
@@ -198,6 +198,7 @@ def find_blobs(ratio_arr, water_mask, axis_uvec, merge_gap_m, min_len_m,
             "length_m": length_m, "width_m": width_m,
             "aspect": best_aspect, "area_px": area_px,
             "n_merged": len(grp),
+            "axis_min": a_min, "axis_max": a_max,
         })
         if debug and len(grp) > 1:
             print(f"    merged {len(grp)} blobs → len={length_m:.0f}m "
