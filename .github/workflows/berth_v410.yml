@@ -128,7 +128,10 @@ jobs:
           path: diagnostics/berth_v4/validation_optics/
           retention-days: 90
 
+      # Assert gate: v4_history runs only if this step succeeds.
+      # Any change to the detector that breaks the assert targets blocks DB writes.
       - name: Run v4 validation (EMP BG, gap-merge, 2026 split)
+        id: validate_v4
         if: github.event.inputs.validate_optics_v4 == 'yes'
         run: python -u scripts/berth_validate_optics_v4.py
         env:
@@ -177,16 +180,29 @@ jobs:
           path: diagnostics/berth_v4/ablation/
           retention-days: 90
 
+      # Runs only if:
+      #   - v4_history=yes, AND
+      #   - validate_optics_v4 was NOT requested (no gate), OR
+      #   - validate_optics_v4 was requested AND the assert step passed (gate enforced)
       - name: Run v4 history detection (2024–today)
-        if: github.event.inputs.v4_history == 'yes'
+        if: >
+          github.event.inputs.v4_history == 'yes' &&
+          (github.event.inputs.validate_optics_v4 != 'yes' ||
+           steps.validate_v4.outcome == 'success')
         run: python -u scripts/berth_v4_history.py
         env:
-          CLIENT_ID:        ${{ secrets.CLIENT_ID }}
-          CLIENT_SECRET:    ${{ secrets.CLIENT_SECRET }}
-          PYTHONUNBUFFERED: "1"
+          CLIENT_ID:              ${{ secrets.CLIENT_ID }}
+          CLIENT_SECRET:          ${{ secrets.CLIENT_SECRET }}
+          SUPABASE_SERVICE_KEY:   ${{ secrets.SUPABASE_SERVICE_KEY }}
+          SUPABASE_URL:           ${{ secrets.SUPABASE_URL }}
+          PYTHONUNBUFFERED:       "1"
 
       - name: Upload v4 history results
-        if: github.event.inputs.v4_history == 'yes'
+        if: >
+          github.event.inputs.v4_history == 'yes' &&
+          (github.event.inputs.validate_optics_v4 != 'yes' ||
+           steps.validate_v4.outcome == 'success')
+        continue-on-error: true
         uses: actions/upload-artifact@v4
         with:
           name: berth_v4_history

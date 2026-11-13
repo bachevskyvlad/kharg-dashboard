@@ -9,6 +9,8 @@ v4 config (fixed per berth):
 Output:
   diagnostics/berth_v4/history_v4/berth_v4_history.csv
   data/berth_occupancy.json  (site widget)
+
+DB write: if SUPABASE_SERVICE_KEY is set, upserts rows into berth_occupancy table.
 """
 
 import os, sys, csv, json
@@ -233,8 +235,8 @@ def run():
     JSON_OUT.write_text(json.dumps(obj, separators=(",",":")))
     print(f"Saved: {JSON_OUT} ({len(rows_sorted)} date-orbit pairs)")
 
-    # ── Dry-run summary ───────────────────────────────────────────────────────
-    print("\n=== Dry-run summary (DB NOT written) ===")
+    # ── Detection summary ────────────────────────────────────────────────────
+    print("\n=== Detection summary ===")
     print(f"Period: {HISTORY_START} → {today}")
     print(f"Scene-berth pairs processed: {total_valid}")
     print(f"Detections (OCC): {occ_total}")
@@ -242,7 +244,39 @@ def run():
         br = [r for r in results if r["berth"]==berth and r["det"] in ("OCC","EMP")]
         occ = sum(1 for r in br if r["det"]=="OCC")
         print(f"  {berth}: {occ}/{len(br)} occupied")
-    print("To write to DB: set WRITE_DB=1 and re-run (not yet implemented — awaiting 'go K').")
+
+    # ── Supabase write ────────────────────────────────────────────────────────
+    svc_key = os.environ.get("SUPABASE_SERVICE_KEY") or ""
+    supa_url = (os.environ.get("SUPABASE_URL") or "").rstrip("/")
+    if not svc_key:
+        print("\nSUPABASE_SERVICE_KEY not set — history saved to CSV only, DB write skipped.")
+        return
+
+    import urllib.request as _ureq
+    db_rows = [
+        {"date": r["date"], "orbit": r["orbit"], "berth": r["berth"],
+         "det": r["det"], "length_m": r["length_m"], "aspect": r["aspect"]}
+        for r in results if r["det"] in ("OCC", "EMP")
+    ]
+    if not supa_url:
+        sys.exit("FATAL: SUPABASE_SERVICE_KEY set but SUPABASE_URL is empty")
+    payload = json.dumps(db_rows).encode()
+    req = _ureq.Request(
+        f"{supa_url}/rest/v1/berth_occupancy",
+        data=payload,
+        headers={
+            "apikey": svc_key,
+            "Authorization": f"Bearer {svc_key}",
+            "Content-Type": "application/json",
+            "Prefer": "resolution=merge-duplicates",
+        },
+        method="POST",
+    )
+    try:
+        with _ureq.urlopen(req) as resp:
+            print(f"\nDB write OK: HTTP {resp.status} — {len(db_rows)} rows upserted to berth_occupancy")
+    except Exception as exc:
+        sys.exit(f"FATAL: DB write failed — {exc}")
 
 
 if __name__ == "__main__":
