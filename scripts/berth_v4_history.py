@@ -145,7 +145,11 @@ def run():
             p = cfg["bg_dir"] / f"bg_o{orbit}_{berth}.npy"
             if p.exists():
                 bg_cache[(berth, orbit)] = np.load(p)
-                bg_source_cache[(berth, orbit)] = cfg["bg_dir"].name  # "bg_v4" or "bg_v3"
+                # Special label for the purpose-built orbit-35 east_t_head bg
+                if berth == "east_t_head" and orbit == 35 and cfg["bg_dir"] == BG_V4:
+                    bg_source_cache[(berth, orbit)] = "bg_v4_o35_2026"
+                else:
+                    bg_source_cache[(berth, orbit)] = cfg["bg_dir"].name  # "bg_v4" or "bg_v3"
             else:
                 # Fallback: try BG_V3
                 p_v3 = BG_V3 / f"bg_o{orbit}_{berth}.npy"

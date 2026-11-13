@@ -27,6 +27,10 @@ on:
         description: "Ablation study — one parameter change at a time vs v3 baseline (yes/no)"
         required: false
         default: "no"
+      build_bg_v4_o35:
+        description: "Build BG_V4 for orbit-35 east_t_head from Sept-Nov 2026 EMP scenes (yes/no)"
+        required: false
+        default: "no"
       v4_history:
         description: "Run v4 full history 2024-today, write CSV + occupancy JSON (yes/no)"
         required: false
@@ -179,6 +183,14 @@ jobs:
           name: berth_ablation
           path: diagnostics/berth_v4/ablation/
           retention-days: 90
+
+      - name: Build BG_V4 orbit-35 east_t_head (Sept-Nov 2026 EMP scenes)
+        if: github.event.inputs.build_bg_v4_o35 == 'yes'
+        run: python -u scripts/build_bg_v4_o35_eth.py
+        env:
+          CLIENT_ID:        ${{ secrets.CLIENT_ID }}
+          CLIENT_SECRET:    ${{ secrets.CLIENT_SECRET }}
+          PYTHONUNBUFFERED: "1"
 
       # Runs only if:
       #   - v4_history=yes, AND
