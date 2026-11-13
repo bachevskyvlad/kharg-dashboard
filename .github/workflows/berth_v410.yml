@@ -206,7 +206,7 @@ jobs:
           CLIENT_ID:              ${{ secrets.CLIENT_ID }}
           CLIENT_SECRET:          ${{ secrets.CLIENT_SECRET }}
           SUPABASE_SERVICE_KEY:   ${{ secrets.SUPABASE_SERVICE_KEY }}
-          SUPABASE_URL:           ${{ secrets.SUPABASE_URL }}
+          SUPABASE_URL:           https://yoekhkczwdeyauwarsyy.supabase.co
           PYTHONUNBUFFERED:       "1"
 
       - name: Upload v4 history results
