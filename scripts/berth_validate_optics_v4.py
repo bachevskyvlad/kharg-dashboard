@@ -15,6 +15,15 @@ Outputs in diagnostics/berth_v4/validation_optics_v4/
 import os, sys, csv
 from pathlib import Path
 
+sys.path.insert(0, str(Path(__file__).parent))
+
+from berth_detect_core import (
+    RESOLUTION, RATIO_THR, MERGE_PERP_TOL_M, struct8,
+    BERTH_COORDS, BERTH_DETECT_PARAMS,
+    metres_per_deg_lat, metres_per_deg_lon, berth_center,
+    cell_bbox_for, build_geom, find_blobs,
+)
+
 import numpy as np
 from scipy import ndimage
 from scipy.ndimage import zoom as nd_zoom
@@ -58,33 +67,9 @@ BG_V4.mkdir(parents=True, exist_ok=True)
 OUT_DIR.mkdir(parents=True, exist_ok=True)
 
 # ── Constants (v4) ────────────────────────────────────────────────────────────
-BERTH_SPEC = {
-    "sea_island":     [(50.28316, 29.23318), (50.28816, 29.22433)],
-    "east_t_head":    [(50.33833, 29.23812), (50.34054, 29.22189)],
-    "southeast_pier": [(50.33646, 29.21764), (50.33591, 29.21424), (50.33522, 29.21264)],
-}
-BERTHS          = ["sea_island", "east_t_head", "southeast_pier"]
-CORRIDOR_HALF_M = 150
-CORRIDOR_END_M  = 250
-PIER_EXCL_M     = 12   # was 20
-WATER_INNER_M   = 20   # kept at 20: 12 captured pier pixels → aspect ~1.9 < 3.0
-WATER_OUTER_M   = 90   # was 80
-SHIP_MIN_LEN_M  = 120  # was 150
-SHIP_MIN_ASPECT = 3.0
-BERTH_ASPECT = {
-    "sea_island":     2.0,
-    "east_t_head":    3.0,
-    "southeast_pier": 3.0,
-}
-BERTH_MERGE = {
-    "sea_island":     40,
-    "east_t_head":     0,
-    "southeast_pier":  0,
-}
-RATIO_THR       = 10.0
-RESOLUTION      = 10
-CELL_KM         = 1.0
-GAP_MERGE_M     = 40   # default (sea_island); overridden per-berth via BERTH_MERGE
+BERTH_SPEC = BERTH_COORDS   # canonical coords from core
+BERTHS     = ["sea_island", "east_t_head", "southeast_pier"]
+CELL_KM    = 1.0
 
 # Nominal optical labels for temporal-gap ? dates (rule: |Δt|>4h + confident blob)
 # Used for "strict" (без правила) comparison column
@@ -120,189 +105,16 @@ function setup() {
 function evaluatePixel(s) { return [s.B04*3.5, s.B03*3.5, s.B02*3.5]; }
 """
 
-# ── Geometry ──────────────────────────────────────────────────────────────────
-def metres_per_deg_lat(): return 111320.0
-def metres_per_deg_lon(lat): return 111320.0 * np.cos(np.deg2rad(lat))
+# geometry, find_blobs imported from berth_detect_core above
 
-def berth_center(pts):
-    return np.mean([p[0] for p in pts]), np.mean([p[1] for p in pts])
-
-def cell_bbox_for(clon, clat, km=CELL_KM):
-    half_lat = (km * 500) / metres_per_deg_lat()
-    half_lon = (km * 500) / metres_per_deg_lon(clat)
-    return BBox(bbox=[clon-half_lon, clat-half_lat,
-                      clon+half_lon, clat+half_lat], crs=CRS.WGS84)
-
-def _extend_line(pts, end_m):
-    lat_mid = np.mean([p[1] for p in pts])
-    mpdlat  = metres_per_deg_lat()
-    mpdlon  = metres_per_deg_lon(lat_mid)
-    def ext(a, b, d):
-        dx = (b[0]-a[0])*mpdlon; dy = (b[1]-a[1])*mpdlat
-        L = np.hypot(dx, dy)
-        if L < 1e-6: return b
-        return (b[0]+dx/L*d/mpdlon, b[1]+dy/L*d/mpdlat)
-    p = list(pts)
-    return [ext(p[1], p[0], end_m)] + p[1:-1] + [ext(p[-2], p[-1], end_m)]
-
-def build_corridor_polygon(pts, half_m, end_m):
-    ext = _extend_line(pts, end_m)
-    line = LineString(ext)
-    lat_mid = np.mean([p[1] for p in pts])
-    buf_deg = ((half_m/metres_per_deg_lat()) + (half_m/metres_per_deg_lon(lat_mid))) / 2
-    return line.buffer(buf_deg)
-
-def lonlat_to_px(lon, lat, bbox_obj, img_shape):
-    h, w = img_shape
-    return ((lon-bbox_obj.min_x)/(bbox_obj.max_x-bbox_obj.min_x)*w,
-            (bbox_obj.max_y-lat)/(bbox_obj.max_y-bbox_obj.min_y)*h)
-
-def rasterize_poly(poly, bbox_obj, img_shape):
-    h, w = img_shape
-    lons = np.linspace(bbox_obj.min_x+0.5*(bbox_obj.max_x-bbox_obj.min_x)/w,
-                       bbox_obj.max_x-0.5*(bbox_obj.max_x-bbox_obj.min_x)/w, w)
-    lats = np.linspace(bbox_obj.max_y-0.5*(bbox_obj.max_y-bbox_obj.min_y)/h,
-                       bbox_obj.min_y+0.5*(bbox_obj.max_y-bbox_obj.min_y)/h, h)
-    lon_g, lat_g = np.meshgrid(lons, lats)
-    try:
-        return shapely.contains_xy(poly, lon_g.ravel(), lat_g.ravel()).reshape(h, w)
-    except AttributeError:
-        from shapely.vectorized import contains
-        return contains(poly, lon_g, lat_g)
-
-def compute_signed_dist_field(px_x, px_y, axis_m_pts):
-    min_dist = np.full(px_x.shape, np.inf)
-    sign = np.ones(px_x.shape)
-    for i in range(len(axis_m_pts) - 1):
-        x1, y1 = axis_m_pts[i]; x2, y2 = axis_m_pts[i+1]
-        dx = x2-x1; dy = y2-y1; L = np.hypot(dx, dy)
-        if L < 1e-6: continue
-        ux = dx/L; uy = dy/L; rx = uy; ry = -ux
-        vx = px_x-x1; vy = px_y-y1
-        t = np.clip((vx*ux+vy*uy)/L, 0, 1)
-        cx = x1+t*dx; cy = y1+t*dy
-        dpx = px_x-cx; dpy = px_y-cy
-        dist = np.hypot(dpx, dpy)
-        sgn = np.where(dpx*rx+dpy*ry >= 0, 1.0, -1.0)
-        update = dist < min_dist
-        min_dist = np.where(update, dist, min_dist)
-        sign = np.where(update, sgn, sign)
-    return min_dist * sign
-
-def build_water_masks(berth_pts, bbox_obj, img_shape):
-    h, w = img_shape
-    lat_mid = (bbox_obj.min_y+bbox_obj.max_y)/2
-    mpdlat = metres_per_deg_lat(); mpdlon = metres_per_deg_lon(lat_mid)
-    clon, clat = berth_center(berth_pts)
-    ext_pts = _extend_line(berth_pts, CORRIDOR_END_M)
-    axis_m = [((lon-clon)*mpdlon, (lat-clat)*mpdlat) for lon, lat in ext_pts]
-    lons = np.linspace(bbox_obj.min_x+0.5*(bbox_obj.max_x-bbox_obj.min_x)/w,
-                       bbox_obj.max_x-0.5*(bbox_obj.max_x-bbox_obj.min_x)/w, w)
-    lats = np.linspace(bbox_obj.max_y-0.5*(bbox_obj.max_y-bbox_obj.min_y)/h,
-                       bbox_obj.min_y+0.5*(bbox_obj.max_y-bbox_obj.min_y)/h, h)
-    lon_g, lat_g = np.meshgrid(lons, lats)
-    px_x = (lon_g-clon)*mpdlon; px_y = (lat_g-clat)*mpdlat
-    dist_arr = compute_signed_dist_field(px_x, px_y, axis_m)
-    corridor_poly = build_corridor_polygon(berth_pts, CORRIDOR_HALF_M, CORRIDOR_END_M)
-    corridor_mask = rasterize_poly(corridor_poly, bbox_obj, img_shape)
-    abs_dist = np.abs(dist_arr)
-    pc_s = lonlat_to_px(ext_pts[0][0], ext_pts[0][1], bbox_obj, img_shape)
-    pc_e = lonlat_to_px(ext_pts[-1][0], ext_pts[-1][1], bbox_obj, img_shape)
-    dcol = pc_e[0]-pc_s[0]; drow = pc_e[1]-pc_s[1]
-    L_px = np.hypot(dcol, drow)
-    ux = dcol/L_px if L_px > 1e-6 else 0.0
-    uy = drow/L_px if L_px > 1e-6 else 1.0
-    return {
-        "corridor_mask": corridor_mask,
-        "pier_mask":     (abs_dist < PIER_EXCL_M) & corridor_mask,
-        "water_mask":    (abs_dist >= WATER_INNER_M) & (abs_dist <= WATER_OUTER_M) & corridor_mask,
-        "axis_uvec_img": (ux, uy),
-        "corridor_poly": corridor_poly,
-    }
-
-struct8 = ndimage.generate_binary_structure(2, 2)
-
-def find_blobs_water(ratio_arr, water_mask, axis_uvec_img, gap_merge_m=GAP_MERGE_M):
-    """Find blobs, merging axis gaps <=gap_merge_m."""
-    ux, uy = axis_uvec_img
-    px_u, py_u = -uy, ux  # perpendicular unit vector
-
-    above = np.isfinite(ratio_arr) & (ratio_arr > RATIO_THR) & water_mask
-    labeled, n = ndimage.label(above, structure=struct8)
-    if n == 0:
-        return [], None
-
-    raw_blobs = []
-    for bid in range(1, n+1):
-        mask = labeled == bid
-        rows, cols = np.where(mask)
-        if len(rows) == 0:
-            continue
-        fc = cols.astype(float); fr = rows.astype(float)
-        axis_p = fc*ux + fr*uy
-        perp_p = fc*px_u + fr*py_u
-        eroded = ndimage.binary_erosion(mask, structure=struct8)
-        raw_blobs.append({
-            "axis_min": float(axis_p.min()), "axis_max": float(axis_p.max()),
-            "perp_min": float(perp_p.min()), "perp_max": float(perp_p.max()),
-            "row_min": int(rows.min()), "row_max": int(rows.max()),
-            "col_min": int(cols.min()), "col_max": int(cols.max()),
-            "area_px": int(mask.sum()),
-            "border": mask & ~eroded,
-        })
-
-    if not raw_blobs:
-        return [], None
-
-    raw_blobs.sort(key=lambda b: b["axis_min"])
-
-    # Merge blobs with axis gap <= gap_merge_m / RESOLUTION pixels
-    gap_px = gap_merge_m / RESOLUTION
-    groups = []
-    cur = [raw_blobs[0]]
-    for b in raw_blobs[1:]:
-        cur_max = max(bb["axis_max"] for bb in cur)
-        if b["axis_min"] - cur_max <= gap_px:
-            cur.append(b)
-        else:
-            groups.append(cur)
-            cur = [b]
-    groups.append(cur)
-
-    result_blobs = []
-    for grp in groups:
-        a_min = min(b["axis_min"] for b in grp)
-        a_max = max(b["axis_max"] for b in grp)
-        p_min = min(b["perp_min"] for b in grp)
-        p_max = max(b["perp_max"] for b in grp)
-        length_m = (a_max - a_min) * RESOLUTION
-        width_m  = max((p_max - p_min) * RESOLUTION, 1.0)
-        aspect   = length_m / width_m
-        area_px  = sum(b["area_px"] for b in grp)
-        r0 = min(b["row_min"] for b in grp)
-        r1 = max(b["row_max"] for b in grp)
-        c0 = min(b["col_min"] for b in grp)
-        c1 = max(b["col_max"] for b in grp)
-        h, w = ratio_arr.shape
-        border = np.zeros((h, w), dtype=bool)
-        for b in grp:
-            border |= b["border"]
-        result_blobs.append({
-            "length_m": length_m, "width_m": width_m, "aspect": aspect,
-            "area_px": area_px, "border": border,
-            "bbox": (r0, r1, c0, c1),
-        })
-
-    result_blobs.sort(key=lambda b: b["length_m"], reverse=True)
-    return result_blobs, result_blobs[0]
-
-def detect(ratio_arr, water_mask, axis_uvec_img, min_aspect=SHIP_MIN_ASPECT, gap_merge_m=GAP_MERGE_M):
-    if ratio_arr is None:
-        return None, None, None
-    blobs, longest = find_blobs_water(ratio_arr, water_mask, axis_uvec_img, gap_merge_m=gap_merge_m)
-    if longest and longest["length_m"] >= SHIP_MIN_LEN_M and longest["aspect"] >= min_aspect:
-        return True, longest, blobs
-    return False, longest, blobs
+# ── Assert targets — confusion matrix for each berth ─────────────────────────
+# east_t_head: ablation run #33 (bg mode, BG_V4 EMP-median, pier=20, water=20-80)
+# sea_island, southeast_pier: validate run #43 (last accepted run, strict=False)
+ASSERT_TARGETS = {
+    "east_t_head":    dict(TP=14, FN=8, FP=1, TN=10),
+    "sea_island":     dict(TP=12, FN=3, FP=0, TN=18),
+    "southeast_pier": dict(TP=1,  FN=1, FP=0, TN=32),
+}
 
 # ── Fetchers ──────────────────────────────────────────────────────────────────
 def scene_datetime_s1(date_str, orbit, bbox):
@@ -611,15 +423,19 @@ def main():
                                  10*np.log10(linear/bg), np.nan).astype(np.float32)
 
             img_shape = linear.shape if linear is not None else (99, 101)
-            geom = build_water_masks(pts, bbox_obj, img_shape)
+            p = BERTH_DETECT_PARAMS[berth]
+            geom = build_geom(pts, bbox_obj, img_shape,
+                              pier_excl_m=p["pier"],
+                              water_inner_m=p["water_i"],
+                              water_outer_m=p["water_o"])
 
-            if no_bg:
+            if no_bg or ratio is None:
                 det_occ = None; longest = None; blobs = []
             else:
-                det_occ, longest, blobs = detect(ratio, geom["water_mask"],
-                                                  geom["axis_uvec_img"],
-                                                  min_aspect=BERTH_ASPECT[berth],
-                                                  gap_merge_m=BERTH_MERGE[berth])
+                blobs, longest, det_occ = find_blobs(
+                    ratio, geom["water_mask"], geom["axis_uvec"],
+                    merge_gap_m=p["merge"], min_len_m=p["min_len"],
+                    min_aspect=p["aspect"])
 
             det_str = "OCC" if det_occ else ("EMP" if det_occ is not None else "NO_BG")
             len_str = f"{longest['length_m']:.0f}" if longest else "0"
@@ -657,8 +473,8 @@ def main():
     acc_lines = [
         "Validation v4 — optical ground truth (optics_ref_sameday.csv)",
         "BG: EMP-only 2024-2025 median (fallback p10 if <5 EMP dates)",
-        f"PIER_EXCL={PIER_EXCL_M}m  WATER={WATER_INNER_M}-{WATER_OUTER_M}m  "
-        f"MIN_LEN={SHIP_MIN_LEN_M}m  GAP_MERGE=per-berth(sea=40,eth=0,sep=0)",
+        "PIER_EXCL=per-berth(20m)  WATER=20-80m  "
+        "MIN_LEN=per-berth(sea=120,eth/sep=150)  GAP_MERGE=per-berth(sea=40,eth=0,sep=0)",
         "="*60,
     ]
 
@@ -719,6 +535,7 @@ def main():
         print(line)
 
     # ── Discrepancy contact sheet ─────────────────────────────────────────────
+    # (runs before assert so we always have the PNG for debugging)
     disc_rows = sorted(discrepancy_dates)
     print(f"\nDiscrepancies: {len(disc_rows)} date-orbits")
     if not disc_rows:
@@ -747,10 +564,15 @@ def main():
                 ratio = np.where((linear>0)&(bg>0),
                                  10*np.log10(linear/bg), np.nan).astype(np.float32)
             img_shape = linear.shape if linear is not None else (99, 101)
-            geom = build_water_masks(pts, bbox_obj, img_shape)
-            _, longest, blobs = detect(ratio, geom["water_mask"], geom["axis_uvec_img"],
-                                       min_aspect=BERTH_ASPECT[berth],
-                                       gap_merge_m=BERTH_MERGE[berth])
+            p = BERTH_DETECT_PARAMS[berth]
+            geom = build_geom(pts, bbox_obj, img_shape,
+                              pier_excl_m=p["pier"],
+                              water_inner_m=p["water_i"],
+                              water_outer_m=p["water_o"])
+            blobs, longest, _ = find_blobs(
+                ratio, geom["water_mask"], geom["axis_uvec"],
+                merge_gap_m=p["merge"], min_len_m=p["min_len"],
+                min_aspect=p["aspect"]) if ratio is not None else ([], None, False)
             disc_cells[(date_str, orbit)][berth] = {
                 "optical_ref": matching[0]["optical_ref"],
                 "det": matching[0]["det"],
@@ -758,6 +580,7 @@ def main():
                 "ratio": ratio, "linear": linear, "rgb": rgb,
                 "water_mask": geom["water_mask"],
                 "bbox_obj": bbox_obj,
+                "axis_uvec": geom["axis_uvec"],
             }
 
     n_rows_disc = len(disc_rows)
@@ -827,14 +650,17 @@ def main():
                     ax_ratio.contour(water_mask.astype(float), levels=[0.5],
                                      colors=["orange"], linewidths=0.7, alpha=0.9)
                 except Exception: pass
-                for b in cell["blobs"]:
-                    rows2, cols2 = np.where(b["border"])
-                    ax_ratio.scatter(cols2, rows2, s=0.3, c="red", marker=".", linewidths=0)
-                if cell["longest"]:
-                    r0,r1,c0,c1 = cell["longest"]["bbox"]
-                    ax_ratio.add_patch(mpatches.Rectangle(
-                        (c0-0.5, r0-0.5), c1-c0+1, r1-r0+1,
-                        lw=1.0, edgecolor="cyan", facecolor="none", zorder=5))
+                # blob outlines via core find_blobs (no border/bbox fields)
+                if cell["longest"] and cell["ratio"] is not None:
+                    # highlight above-threshold pixels in the detected length range
+                    ln = cell["longest"]
+                    above_px = (np.isfinite(cell["ratio"]) &
+                                (cell["ratio"] > RATIO_THR) & cell["water_mask"])
+                    if above_px.any():
+                        rows2, cols2 = np.where(
+                            above_px & ~ndimage.binary_erosion(above_px, structure=struct8))
+                        ax_ratio.scatter(cols2, rows2, s=0.3,
+                                         c="red", marker=".", linewidths=0)
 
             opt = cell["optical_ref"]; det = cell["det"]
             ann = f"ref={opt}\ndet={det}"
@@ -855,6 +681,42 @@ def main():
     fig.savefig(out_png, dpi=120, bbox_inches="tight", facecolor=fig.get_facecolor())
     print(f"\nSaved: {out_png} ({out_png.stat().st_size//1024} KB)")
     plt.close(fig)
+
+    # ── Confmat assert gate — must pass before v4_history and DB write ────────
+    print("\n=== Confmat asserts ===")
+    _assert_confmat(results)
+
+
+def _assert_confmat(results):
+    """
+    Assert confusion matrix for each berth against ASSERT_TARGETS (strict=False, all years).
+    On first failure: prints per-row diff and sys.exit(1).
+    Call after all outputs are saved — blocks v4_history and DB write.
+    """
+    ok = True
+    for berth in BERTHS:
+        rows_b = [r for r in results
+                  if r["berth"] == berth
+                  and r["optical_ref"] in ("OCC", "EMP")
+                  and r["det"] in ("OCC", "EMP")]
+        tp, tn, fp, fn = _cm_from_rows(rows_b)
+        tgt = ASSERT_TARGETS[berth]
+        if tp == tgt["TP"] and fn == tgt["FN"] and fp == tgt["FP"] and tn == tgt["TN"]:
+            print(f"  ASSERT OK  {berth}: TP={tp} FN={fn} FP={fp} TN={tn}")
+        else:
+            ok = False
+            print(f"  ASSERT FAIL {berth}:")
+            print(f"    expected TP={tgt['TP']} FN={tgt['FN']} FP={tgt['FP']} TN={tgt['TN']}")
+            print(f"    got      TP={tp} FN={fn} FP={fp} TN={tn}")
+            print(f"    Per-row mismatches:")
+            for r in rows_b:
+                if r["optical_ref"] != r["det"]:
+                    print(f"      MISMATCH {r['date']} o{r['orbit']} {berth}: "
+                          f"ref={r['optical_ref']} det={r['det']} "
+                          f"len={r['length_m']}m asp={r['aspect']}")
+    if not ok:
+        sys.exit("FATAL: confmat asserts failed — v4_history and DB write blocked")
+    print("=== All 3 berth asserts PASSED — OK to proceed to v4_history and DB ===")
 
 
 if __name__ == "__main__":
