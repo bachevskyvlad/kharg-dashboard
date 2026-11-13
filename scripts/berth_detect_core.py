@@ -132,7 +132,7 @@ def build_geom(pts, bbox_obj, img_shape, pier_excl_m, water_inner_m, water_outer
     }
 
 def find_blobs(ratio_arr, water_mask, axis_uvec, merge_gap_m, min_len_m,
-               min_aspect=3.0, debug=False):
+               min_aspect=3.0, debug=False, return_all=False):
     """
     Canonical ship detection.  Returns (blobs, best_blob, detected: bool).
     - best_aspect per group = max over individual blob aspects (not merged bbox).
