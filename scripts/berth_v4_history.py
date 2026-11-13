@@ -137,14 +137,26 @@ def run():
     today = datetime.utcnow().strftime("%Y-%m-%d")
     entries = discover_dates(HISTORY_START, today)
 
-    # Pre-load BG per (berth, orbit)
+    # Pre-load BG per (berth, orbit); fallback to BG_V3 when primary missing
     bg_cache = {}
+    bg_source_cache = {}
     for berth, cfg in V4_CONFIG.items():
         for orbit in ORBITS:
             p = cfg["bg_dir"] / f"bg_o{orbit}_{berth}.npy"
-            bg_cache[(berth, orbit)] = np.load(p) if p.exists() else None
-            if not p.exists():
-                print(f"  MISSING BG: {berth} o{orbit} ({cfg['bg_dir'].name})")
+            if p.exists():
+                bg_cache[(berth, orbit)] = np.load(p)
+                bg_source_cache[(berth, orbit)] = cfg["bg_dir"].name  # "bg_v4" or "bg_v3"
+            else:
+                # Fallback: try BG_V3
+                p_v3 = BG_V3 / f"bg_o{orbit}_{berth}.npy"
+                if p_v3.exists():
+                    bg_cache[(berth, orbit)] = np.load(p_v3)
+                    bg_source_cache[(berth, orbit)] = "bg_v3_fallback"
+                    print(f"  BG fallback: {berth} o{orbit} → bg_v3 (primary {cfg['bg_dir'].name} missing)")
+                else:
+                    bg_cache[(berth, orbit)] = None
+                    bg_source_cache[(berth, orbit)] = None
+                    print(f"  MISSING BG: {berth} o{orbit} (no v4 or v3)")
 
     cell_bboxes = {b: cell_bbox_for(*berth_center(pts)) for b, pts in BERTHS.items()}
 
@@ -161,15 +173,18 @@ def run():
         for berth, pts in BERTHS.items():
             cfg = V4_CONFIG[berth]
             bg  = bg_cache.get((berth, orbit))
+            bg_src = bg_source_cache.get((berth, orbit))
             if bg is None:
                 results.append({"date": date_str, "orbit": orbit, "berth": berth,
-                                 "det": "NO_BG", "length_m": None, "aspect": None})
+                                 "det": "NO_BG", "length_m": None, "aspect": None,
+                                 "bg_source": None})
                 continue
 
             linear = fetch_s1_linear(scene_dt, cell_bboxes[berth])
             if linear is None:
                 results.append({"date": date_str, "orbit": orbit, "berth": berth,
-                                 "det": "ERR", "length_m": None, "aspect": None})
+                                 "det": "ERR", "length_m": None, "aspect": None,
+                                 "bg_source": bg_src})
                 continue
 
             if bg.shape != linear.shape:
@@ -192,14 +207,15 @@ def run():
             length_m = round(best["length_m"], 1) if (detected and best) else None
             aspect   = round(best["aspect"], 2) if (detected and best) else None
             results.append({"date": date_str, "orbit": orbit, "berth": berth,
-                             "det": det_str, "length_m": length_m, "aspect": aspect})
+                             "det": det_str, "length_m": length_m, "aspect": aspect,
+                             "bg_source": bg_src})
             print(f"  {berth}: {det_str}" +
                   (f"  len={length_m:.0f}m asp={aspect:.1f}" if detected else ""))
 
     # ── CSV output ────────────────────────────────────────────────────────────
     csv_path = OUT_DIR / "berth_v4_history.csv"
     with open(csv_path, "w", newline="") as f:
-        w = csv.DictWriter(f, fieldnames=["date","orbit","berth","det","length_m","aspect"])
+        w = csv.DictWriter(f, fieldnames=["date","orbit","berth","det","length_m","aspect","bg_source"])
         w.writeheader()
         for r in results:
             w.writerow(r)
