@@ -32,24 +32,11 @@ import numpy as np
 from scipy import ndimage
 from scipy.ndimage import zoom as nd_zoom
 
-from sentinelhub import (
-    SHConfig, BBox, CRS, DataCollection, SentinelHubRequest,
-    SentinelHubCatalog, MimeType, bbox_to_dimensions, MosaickingOrder,
-)
+from sentinelhub import BBox, CRS
 from shapely.geometry import LineString
 import shapely
 
-# ── Config ────────────────────────────────────────────────────────────────────
-config = SHConfig()
-config.sh_client_id     = os.environ.get("CLIENT_ID") or ""
-config.sh_client_secret = os.environ.get("CLIENT_SECRET") or ""
-config.sh_token_url = "https://identity.dataspace.copernicus.eu/auth/realms/CDSE/protocol/openid-connect/token"
-config.sh_base_url  = "https://sh.dataspace.copernicus.eu"
-if not config.sh_client_id or not config.sh_client_secret:
-    sys.exit("FATAL: CLIENT_ID / CLIENT_SECRET not set")
-
-S1_CDSE = DataCollection.SENTINEL1_IW.define_from(
-    "s1iw_v4hist", service_url="https://sh.dataspace.copernicus.eu")
+from berth_pc_fetch import discover_dates_pc, find_item_pc, fetch_s1_pc
 
 ROOT    = Path(__file__).parent.parent
 BG_V3   = ROOT / "diagnostics" / "berth_v4" / "bg_v3"
@@ -64,70 +51,32 @@ ORBITS          = [35, 101]
 BERTHS = BERTH_COORDS  # alias for local use
 
 V4_CONFIG = {
-    "sea_island":     {"pier": 20, "water_i": 20, "water_o": 80, "min_len": 120, "aspect_thr": 2.0, "merge_gap": 40, "bg_dir": BG_V3},
+    # all BGs rebuilt from PC and saved in BG_V4
+    "sea_island":     {"pier": 20, "water_i": 20, "water_o": 80, "min_len": 120, "aspect_thr": 2.0, "merge_gap": 40, "bg_dir": BG_V4},
     "east_t_head":    {"pier": 20, "water_i": 20, "water_o": 80, "min_len": 150, "aspect_thr": 3.0, "merge_gap":  0, "bg_dir": BG_V4},
-    "southeast_pier": {"pier": 20, "water_i": 20, "water_o": 80, "min_len": 150, "aspect_thr": 3.0, "merge_gap":  0, "bg_dir": BG_V3},
+    "southeast_pier": {"pier": 20, "water_i": 20, "water_o": 80, "min_len": 150, "aspect_thr": 3.0, "merge_gap":  0, "bg_dir": BG_V4},
 }
 
-AOI_BBOX = BBox(bbox=[50.26, 29.17, 50.40, 29.31], crs=CRS.WGS84)
+AOI_BBOX     = BBox(bbox=[50.26, 29.17, 50.40, 29.31], crs=CRS.WGS84)
+AOI_BBOX_LST = [50.26, 29.17, 50.40, 29.31]
 
-EVALSCRIPT_S1 = """
-//VERSION=3
-function setup() { return { input: ["VV"], output: { bands:1, sampleType:"FLOAT32" } }; }
-function evaluatePixel(s) { return [Math.max(s.VV, 1e-10)]; }
-"""
-
-# ── Catalog & fetch ────────────────────────────────────────────────────────────
+# ── Catalog & fetch (Planetary Computer) ──────────────────────────────────────
 
 def discover_dates(date_from, date_to):
-    catalog = SentinelHubCatalog(config=config)
-    today = date_to
-    print(f"Discovering S1 catalog {date_from} → {today} ...")
-    all_scenes = list(catalog.search(
-        S1_CDSE, bbox=AOI_BBOX,
-        time=(date_from+"T00:00:00Z", today+"T23:59:59Z"),
-        fields={"include":["properties.datetime","properties.sat:relative_orbit"]},
-    ))
-    print(f"  total scenes: {len(all_scenes)}")
-    grouped = {}
-    for s in all_scenes:
-        p = s.get("properties", {})
-        orb = p.get("sat:relative_orbit")
-        if orb not in ORBITS: continue
-        dt_raw = p.get("datetime", "")
-        try:
-            dt = datetime.fromisoformat(dt_raw.replace("Z", "+00:00"))
-        except Exception:
-            dt = datetime.strptime(dt_raw[:19], "%Y-%m-%dT%H:%M:%S").replace(tzinfo=timezone.utc)
-        date_str = dt.strftime("%Y-%m-%d")
-        key = (date_str, orb)
-        if key not in grouped or dt_raw < grouped[key]["dt_raw"]:
-            grouped[key] = {"date_str": date_str, "orbit": orb,
-                            "scene_dt": dt_raw, "dt_raw": dt_raw}
-    result = sorted(grouped.values(), key=lambda x: (x["date_str"], x["orbit"]))
-    print(f"  unique (date, orbit) pairs: {len(result)}")
-    return result
+    print(f"Discovering S1 catalog {date_from} → {date_to} (Planetary Computer) ...")
+    entries = discover_dates_pc(date_from, date_to, AOI_BBOX_LST, orbits=tuple(ORBITS))
+    # rename 'item' → keep as-is; add 'scene_dt' alias for compatibility
+    for e in entries:
+        e["scene_dt"] = e["dt_raw"]
+    print(f"  unique (date, orbit) pairs: {len(entries)}")
+    return entries
 
-def fetch_s1_linear(scene_dt, bbox_obj):
-    sz = bbox_to_dimensions(bbox_obj, resolution=RESOLUTION)
-    req = SentinelHubRequest(
-        evalscript=EVALSCRIPT_S1,
-        input_data=[SentinelHubRequest.input_data(
-            data_collection=S1_CDSE,
-            time_interval=(scene_dt[:19].replace("T"," "), scene_dt[:19].replace("T"," ")),
-            other_args={"processing":{"backCoeff":"SIGMA0_ELLIPSOID","orthorectify":True,
-                                      "demInstance":"COPERNICUS"}},
-            mosaicking_order=MosaickingOrder.MOST_RECENT,
-        )],
-        responses=[SentinelHubRequest.output_response("default", MimeType.TIFF)],
-        bbox=bbox_obj, size=sz, config=config,
-    )
-    try:
-        d = req.get_data(); a = d[0]
-        if a.ndim == 3: a = a[:,:,0]
-        return a.astype(np.float32)
-    except Exception as e:
-        print(f"  S1 fetch err: {e}"); return None
+def fetch_s1_linear(entry_or_dt, bbox_obj):
+    # entry_or_dt is now a dict entry from discover_dates (has 'item')
+    item = entry_or_dt.get("item") if isinstance(entry_or_dt, dict) else None
+    if item is None:
+        print("  fetch_s1_linear: no item"); return None
+    return fetch_s1_pc(item, bbox_obj)
 
 # ── Hull classification ────────────────────────────────────────────────────────
 
@@ -157,9 +106,21 @@ def count_loadings(loadings, start, end):
 
 # ── Main ───────────────────────────────────────────────────────────────────────
 
+def _bbox_dims(bbox_obj, resolution):
+    """Return (width_px, height_px) for a sentinelhub BBox at given resolution."""
+    import math
+    lat_mid  = (bbox_obj.min_y + bbox_obj.max_y) / 2
+    width_m  = (bbox_obj.max_x - bbox_obj.min_x) * 111320 * math.cos(math.radians(lat_mid))
+    height_m = (bbox_obj.max_y - bbox_obj.min_y) * 111320
+    return max(1, round(width_m / resolution)), max(1, round(height_m / resolution))
+
+
 def run():
     today = datetime.utcnow().strftime("%Y-%m-%d")
-    entries = discover_dates(HISTORY_START, today)
+    try:
+        entries = discover_dates(HISTORY_START, today)
+    except Exception as exc:
+        sys.exit(f"FATAL: PC catalog search failed — {exc}")
 
     # Pre-load BG per (berth, orbit)
     bg_cache = {}
@@ -185,7 +146,7 @@ def run():
                     print(f"  MISSING BG: {berth} o{orbit}")
 
     cell_bboxes = {b: cell_bbox_for(*berth_center(pts)) for b, pts in BERTHS.items()}
-    cell_dims   = {b: bbox_to_dimensions(cell_bboxes[b], resolution=RESOLUTION) for b in BERTHS}
+    cell_dims   = {b: _bbox_dims(cell_bboxes[b], resolution=RESOLUTION) for b in BERTHS}
 
     # Pass-level results (for JSON output)
     passes_out = []
@@ -211,7 +172,7 @@ def run():
                 pass_record[berth] = {"det": "NO_BG", "hulls": []}
                 continue
 
-            linear = fetch_s1_linear(scene_dt, cell_bboxes[berth])
+            linear = fetch_s1_linear(entry, cell_bboxes[berth])
             if linear is None:
                 pass_record[berth] = {"det": "ERR", "hulls": []}
                 continue

@@ -41,22 +41,25 @@ from sentinelhub import (
 from shapely.geometry import LineString
 import shapely
 
-# ── Config ────────────────────────────────────────────────────────────────────
-config = SHConfig()
-config.sh_client_id     = os.environ.get("CLIENT_ID") or ""
-config.sh_client_secret = os.environ.get("CLIENT_SECRET") or ""
-config.sh_token_url     = "https://identity.dataspace.copernicus.eu/auth/realms/CDSE/protocol/openid-connect/token"
-config.sh_base_url      = "https://sh.dataspace.copernicus.eu"
+from berth_pc_fetch import find_item_pc, fetch_s1_pc
 
-if not config.sh_client_id or not config.sh_client_secret:
-    sys.exit("FATAL: CLIENT_ID and CLIENT_SECRET env vars must be set")
+# ── S2 config (SH only — for contact-sheet PNGs, graceful failure OK) ────────
+_sh_client_id     = os.environ.get("CLIENT_ID") or ""
+_sh_client_secret = os.environ.get("CLIENT_SECRET") or ""
+_sh_config_ok     = bool(_sh_client_id and _sh_client_secret)
+if _sh_config_ok:
+    config = SHConfig()
+    config.sh_client_id     = _sh_client_id
+    config.sh_client_secret = _sh_client_secret
+    config.sh_token_url     = "https://identity.dataspace.copernicus.eu/auth/realms/CDSE/protocol/openid-connect/token"
+    config.sh_base_url      = "https://sh.dataspace.copernicus.eu"
+    S2_CDSE = DataCollection.SENTINEL2_L2A.define_from(
+        "s2l2a_cdse_v4", service_url="https://sh.dataspace.copernicus.eu"
+    )
+else:
+    config = None; S2_CDSE = None
 
-S1_CDSE = DataCollection.SENTINEL1_IW.define_from(
-    "s1iw_cdse_v4", service_url="https://sh.dataspace.copernicus.eu"
-)
-S2_CDSE = DataCollection.SENTINEL2_L2A.define_from(
-    "s2l2a_cdse_v4", service_url="https://sh.dataspace.copernicus.eu"
-)
+AOI_BBOX_LST = [50.26, 29.17, 50.40, 29.31]
 
 ROOT     = Path(__file__).parent.parent
 BG_V3    = ROOT / "diagnostics" / "berth_v4" / "bg_v3"
@@ -117,23 +120,17 @@ ASSERT_TARGETS = {
 }
 
 # ── Fetchers ──────────────────────────────────────────────────────────────────
+
 def scene_datetime_s1(date_str, orbit, bbox):
-    catalog = SentinelHubCatalog(config=config)
-    try:
-        results = list(catalog.search(
-            S1_CDSE, bbox=bbox,
-            time=(date_str+"T00:00:00Z", date_str+"T23:59:59Z"),
-            fields={"include":["properties.datetime","properties.sat:relative_orbit"]},
-        ))
-    except Exception as e:
-        print(f"  S1 catalog error ({date_str}): {e}"); return ""
-    for r in results:
-        p = r.get("properties", {})
-        if int(p.get("sat:relative_orbit", 0)) == orbit:
-            return p.get("datetime", "")
-    return ""
+    """Return PC item for (date_str, orbit) or None. bbox arg kept for compat."""
+    item = find_item_pc(date_str, orbit, AOI_BBOX_LST)
+    if item is None:
+        return None
+    return item  # callers that used to get a dt string now get an item (or None)
 
 def scene_datetime_s2(date_str, bbox):
+    if not _sh_config_ok:
+        return ""
     catalog = SentinelHubCatalog(config=config)
     try:
         results = list(catalog.search(
@@ -151,28 +148,15 @@ def scene_datetime_s2(date_str, bbox):
             best_cc = cc; best_dt = p.get("datetime", "")
     return best_dt
 
-def fetch_s1_linear(dt_str, bbox_obj):
-    sz = bbox_to_dimensions(bbox_obj, resolution=RESOLUTION)
-    req = SentinelHubRequest(
-        evalscript=EVALSCRIPT_S1,
-        input_data=[SentinelHubRequest.input_data(
-            data_collection=S1_CDSE,
-            time_interval=(dt_str[:19].replace("T"," "), dt_str[:19].replace("T"," ")),
-            other_args={"processing":{"backCoeff":"SIGMA0_ELLIPSOID",
-                                      "orthorectify":True,"demInstance":"COPERNICUS"}},
-            mosaicking_order=MosaickingOrder.MOST_RECENT,
-        )],
-        responses=[SentinelHubRequest.output_response("default", MimeType.TIFF)],
-        bbox=bbox_obj, size=sz, config=config,
-    )
-    try:
-        data = req.get_data(); arr = data[0]
-        if arr.ndim == 3: arr = arr[:,:,0]
-        return arr.astype(np.float32)
-    except Exception as e:
-        print(f"  S1 fetch failed ({dt_str[:10]}): {e}"); return None
+def fetch_s1_linear(item_or_dt, bbox_obj):
+    """Fetch S1 from PC item. item_or_dt is a PC item (or None/str for compat)."""
+    if item_or_dt is None or isinstance(item_or_dt, str):
+        return None
+    return fetch_s1_pc(item_or_dt, bbox_obj)
 
 def fetch_s2_rgb(dt_str, bbox_obj):
+    if not _sh_config_ok or not dt_str:
+        return None
     sz = bbox_to_dimensions(bbox_obj, resolution=RESOLUTION)
     req = SentinelHubRequest(
         evalscript=EVALSCRIPT_S2_RGB,
@@ -202,10 +186,8 @@ def build_bg_v4(ref_rows, cell_bboxes, aoi_full):
         ref_col = f"{berth}_optical_ref"
         for orbit in (35, 101):
             cache_path = BG_V4 / f"bg_o{orbit}_{berth}.npy"
-            if cache_path.exists():
-                bg[(orbit, berth)] = np.load(cache_path)
-                print(f"  BG v4 cached: {cache_path.name}")
-                continue
+            # do NOT load cache — SH-built files have different radiometry (SIGMA0 vs RTC)
+            # always rebuild from PC
 
             emp_dates = []
             all_dates = []
@@ -249,10 +231,10 @@ def build_bg_v4(ref_rows, cell_bboxes, aoi_full):
             bbox_obj = cell_bboxes[berth]
             arrays = []
             for date_str in use_dates:
-                s1_dt = scene_datetime_s1(date_str, orbit, aoi_full)
-                if not s1_dt:
-                    print(f"    {date_str}: no S1"); continue
-                arr = fetch_s1_linear(s1_dt, bbox_obj)
+                item = find_item_pc(date_str, orbit, AOI_BBOX_LST)
+                if item is None:
+                    print(f"    {date_str}: no PC item"); continue
+                arr = fetch_s1_pc(item, bbox_obj)
                 if arr is not None:
                     arrays.append(arr)
                     print(f"    {date_str} OK shape={arr.shape}")
@@ -400,8 +382,8 @@ def main():
             continue
 
         print(f"\n{date_str} o{orbit}")
-        s1_dt = scene_datetime_s1(date_str, orbit, aoi_full)
-        print(f"  S1: {s1_dt[:19] if s1_dt else 'NOT FOUND'}")
+        s1_item = scene_datetime_s1(date_str, orbit, aoi_full)
+        print(f"  S1: {s1_item.id[:30] if s1_item else 'NOT FOUND'}")
 
         for berth in BERTHS:
             ref_col    = f"{berth}_optical_ref"
@@ -409,7 +391,7 @@ def main():
             bbox_obj   = cell_bboxes[berth]
             pts        = BERTH_SPEC[berth]
 
-            linear = fetch_s1_linear(s1_dt, bbox_obj) if s1_dt else None
+            linear = fetch_s1_linear(s1_item, bbox_obj) if s1_item else None
 
             bg     = bg_cache.get((orbit, berth))
             no_bg  = bg is None
@@ -454,7 +436,7 @@ def main():
                 "det": det_str,
                 "match": ("" if match is None else str(match)),
                 "length_m": len_str, "aspect": asp_str,
-                "no_bg": str(no_bg), "s1_found": str(bool(s1_dt)),
+                "no_bg": str(no_bg), "s1_found": str(bool(s1_item)),
             })
             status = "OK" if match else ("MISMATCH" if match is False else "SKIP")
             print(f"  {berth}: ref={optical_ref} det={det_str} "
@@ -544,8 +526,8 @@ def main():
     disc_cells = {k: {} for k in disc_rows}
     for date_str, orbit in disc_rows:
         print(f"\nFetching discrepancy {date_str} o{orbit} ...")
-        s1_dt = scene_datetime_s1(date_str, orbit, aoi_full)
-        s2_dt = scene_datetime_s2(date_str, aoi_full)
+        s1_item = scene_datetime_s1(date_str, orbit, aoi_full)
+        s2_dt   = scene_datetime_s2(date_str, aoi_full)
         for berth in BERTHS:
             matching = [r for r in results
                         if r["date"]==date_str and r["orbit"]==orbit
@@ -553,7 +535,7 @@ def main():
             if not matching: continue
             bbox_obj = cell_bboxes[berth]
             pts      = BERTH_SPEC[berth]
-            linear   = fetch_s1_linear(s1_dt, bbox_obj) if s1_dt else None
+            linear   = fetch_s1_linear(s1_item, bbox_obj) if s1_item else None
             rgb      = fetch_s2_rgb(s2_dt, bbox_obj)    if s2_dt else None
             bg = bg_cache.get((orbit, berth))
             if bg is not None and linear is not None and bg.shape != linear.shape:
@@ -689,11 +671,19 @@ def main():
 
 def _assert_confmat(results):
     """
-    Assert confusion matrix for each berth against ASSERT_TARGETS (strict=False, all years).
-    On first failure: prints per-row diff and sys.exit(1).
-    Call after all outputs are saved — blocks v4_history and DB write.
+    Compare PC-based confusion matrix against SH ASSERT_TARGETS.
+    Prints old (SH) vs new (PC) side-by-side for every berth.
+    Does NOT auto-update targets.
+    Gate: precision >= 90% AND recall not worse than SH targets per berth.
     """
     ok = True
+    print(f"\n{'Berth':<20}  {'':4}  "
+          f"{'OLD (SH)':^28}  {'NEW (PC)':^28}  {'Gate'}")
+    print(f"{'':20}  {'':4}  "
+          f"{'TP':>4} {'FN':>4} {'FP':>4} {'TN':>4}  "
+          f"{'TP':>4} {'FN':>4} {'FP':>4} {'TN':>4}  {'Prec':>7} {'Rec':>7}")
+    print("-" * 90)
+
     for berth in BERTHS:
         rows_b = [r for r in results
                   if r["berth"] == berth
@@ -701,22 +691,38 @@ def _assert_confmat(results):
                   and r["det"] in ("OCC", "EMP")]
         tp, tn, fp, fn = _cm_from_rows(rows_b)
         tgt = ASSERT_TARGETS[berth]
-        if tp == tgt["TP"] and fn == tgt["FN"] and fp == tgt["FP"] and tn == tgt["TN"]:
-            print(f"  ASSERT OK  {berth}: TP={tp} FN={fn} FP={fp} TN={tn}")
-        else:
+
+        prec = tp / (tp + fp) * 100 if (tp + fp) > 0 else float("nan")
+        rec  = tp / (tp + fn) * 100 if (tp + fn) > 0 else float("nan")
+
+        # SH reference recall for gate comparison
+        sh_tp = tgt["TP"]; sh_fn = tgt["FN"]
+        sh_rec = sh_tp / (sh_tp + sh_fn) * 100 if (sh_tp + sh_fn) > 0 else 0.0
+
+        gate_ok = (prec >= 90.0 or tp + fp == 0) and rec >= sh_rec - 0.1
+        gate_str = "OK" if gate_ok else "FAIL"
+        if not gate_ok:
             ok = False
-            print(f"  ASSERT FAIL {berth}:")
-            print(f"    expected TP={tgt['TP']} FN={tgt['FN']} FP={tgt['FP']} TN={tgt['TN']}")
-            print(f"    got      TP={tp} FN={fn} FP={fp} TN={tn}")
-            print(f"    Per-row mismatches:")
+
+        print(f"{berth:<20}  {'':4}  "
+              f"{tgt['TP']:>4} {tgt['FN']:>4} {tgt['FP']:>4} {tgt['TN']:>4}  "
+              f"{tp:>4} {fn:>4} {fp:>4} {tn:>4}  "
+              f"{prec:>6.1f}% {rec:>6.1f}%  {gate_str}")
+
+        if not gate_ok:
+            print(f"  → GATE FAIL: prec={prec:.1f}% (need≥90%)  "
+                  f"rec={rec:.1f}% (need≥{sh_rec:.1f}%)")
+            print(f"  Per-row mismatches:")
             for r in rows_b:
                 if r["optical_ref"] != r["det"]:
-                    print(f"      MISMATCH {r['date']} o{r['orbit']} {berth}: "
+                    print(f"    MISMATCH {r['date']} o{r['orbit']} {berth}: "
                           f"ref={r['optical_ref']} det={r['det']} "
                           f"len={r['length_m']}m asp={r['aspect']}")
+
+    print("-" * 90)
     if not ok:
-        sys.exit("FATAL: confmat asserts failed — v4_history and DB write blocked")
-    print("=== All 3 berth asserts PASSED — OK to proceed to v4_history and DB ===")
+        sys.exit("FATAL: PC assert gate failed — v4_history and DB write blocked")
+    print("=== PC assert gate passed (prec≥90%, rec not worse) — OK to proceed ===")
 
 
 if __name__ == "__main__":
