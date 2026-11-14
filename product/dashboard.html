@@ -1202,6 +1202,8 @@
                                 <th style="text-align:center;padding:0.35rem 0.6rem;color:var(--muted);font-size:0.6rem;letter-spacing:1px;text-transform:uppercase;font-weight:600">Sea Island</th>
                                 <th style="text-align:center;padding:0.35rem 0.6rem;color:var(--muted);font-size:0.6rem;letter-spacing:1px;text-transform:uppercase;font-weight:600">East T-Head</th>
                                 <th style="text-align:center;padding:0.35rem 0.6rem;color:var(--muted);font-size:0.6rem;letter-spacing:1px;text-transform:uppercase;font-weight:600">SE Pier</th>
+                                <th style="text-align:center;padding:0.35rem 0.6rem;color:var(--muted);font-size:0.6rem;letter-spacing:1px;text-transform:uppercase;font-weight:600">Класс</th>
+                                <th style="text-align:center;padding:0.35rem 0.6rem;color:var(--muted);font-size:0.6rem;letter-spacing:1px;text-transform:uppercase;font-weight:600">Новые</th>
                             </tr>
                         </thead>
                         <tbody id="bo-pass-body"></tbody>
@@ -3288,13 +3290,33 @@ document.addEventListener('DOMContentLoaded', function() {
     return d.toISOString().slice(0,10);
   }
 
+  // Normalise a v5.0 pass (berth → {det, hulls[]}) to flat row for legacy code
+  function passToRow(p) {
+    const row = { date: p.date, orbit: p.orbit };
+    BERTHS.forEach(b => {
+      const bd = p[b] || {};
+      row[b] = bd.det || '—';
+      row[b + '_hulls'] = bd.hulls || [];
+    });
+    return row;
+  }
+
+  // Normalise v4.1 rows to same shape as passToRow output
+  function legacyRowNorm(r) {
+    const row = { date: r.date, orbit: r.orbit };
+    BERTHS.forEach(b => {
+      row[b] = r[b] || '—';
+      row[b + '_hulls'] = [];
+    });
+    return row;
+  }
+
   function countOCC(row) {
     return BERTHS.filter(b => row[b] === 'OCC').length;
   }
 
-  // ── build weekly aggregates from rows ────────────────────────────────────
+  // ── build weekly aggregates from normalised rows ───────────────────────────
   function buildWeeks(rows) {
-    // group rows by ISO week
     const map = {};
     rows.forEach(r => {
       const wk = isoWeek(r.date);
@@ -3303,7 +3325,6 @@ document.addEventListener('DOMContentLoaded', function() {
     });
     return Object.keys(map).sort().map(wk => {
       const passes = map[wk].sort((a,b) => a.date > b.date ? 1 : -1);
-      // latest pass in week
       const latest = passes[passes.length - 1];
       const occ = countOCC(latest);
       const maxOcc = Math.max(...passes.map(countOCC));
@@ -3377,10 +3398,14 @@ document.addEventListener('DOMContentLoaded', function() {
       BERTHS.forEach(b => {
         const det = w.latest[b];
         const isOcc = det === 'OCC';
+        const hulls = w.latest[b + '_hulls'] || [];
         const cell = document.createElement('td');
         cell.style.cssText = 'padding:0.4rem 0.6rem;text-align:center;';
         if (isOcc) {
-          cell.innerHTML = '<span style="color:'+OCC_COLOR+';font-size:0.9rem">●</span>';
+          const vlcc = hulls.filter(h => h.class === 'VLCC').length;
+          const count = hulls.length;
+          cell.innerHTML = '<span style="color:'+OCC_COLOR+';font-size:0.9rem">' + (count > 1 ? count + '×' : '●') + '</span>' +
+            (vlcc ? '<span style="color:#f59e0b;font-size:0.6rem;margin-left:3px">V</span>' : '');
         } else if (det === 'EMP') {
           cell.innerHTML = '<span style="color:'+EMP_COLOR+';font-size:0.7rem">·</span>';
         } else {
@@ -3406,7 +3431,7 @@ document.addEventListener('DOMContentLoaded', function() {
     if (!tbody) return;
     if (tbody.dataset.filled) return;
     tbody.dataset.filled = '1';
-    const rows = boData.rows.slice().reverse();
+    const rows = boData._normRows.slice().reverse();
     rows.forEach(r => {
       const tr = document.createElement('tr');
       tr.style.borderBottom = '1px solid rgba(255,255,255,0.03)';
@@ -3418,11 +3443,40 @@ document.addEventListener('DOMContentLoaded', function() {
       };
       tr.appendChild(td(r.date, 'var(--muted)', false));
       tr.appendChild(td('o'+r.orbit, 'var(--dim)', true));
+
+      // aggregate hull info across all berths for this pass
+      let allHulls = [];
       BERTHS.forEach(b => {
         const det = r[b] || '—';
         const c = det === 'OCC' ? OCC_COLOR : det === 'EMP' ? EMP_COLOR : DIM_COLOR;
-        tr.appendChild(td(det === 'OCC' ? 'OCC' : det === 'EMP' ? 'emp' : '—', c, true));
+        const hulls = r[b + '_hulls'] || [];
+        const cell = document.createElement('td');
+        cell.style.cssText = 'padding:0.3rem 0.6rem;text-align:center;';
+        if (det === 'OCC') {
+          const count = hulls.length || 1;
+          const vlcc = hulls.filter(h => h.class === 'VLCC').length;
+          cell.innerHTML = `<span style="color:${OCC_COLOR};font-weight:600">${count > 1 ? count + '×' : '●'}</span>` +
+            (vlcc ? `<span style="color:#f59e0b;font-size:0.6rem;margin-left:3px">V</span>` : '');
+        } else if (det === 'EMP') {
+          cell.innerHTML = `<span style="color:${EMP_COLOR};font-size:0.7rem">·</span>`;
+        } else {
+          cell.innerHTML = `<span style="color:${DIM_COLOR}">—</span>`;
+        }
+        tr.appendChild(cell);
+        allHulls = allHulls.concat(hulls);
       });
+
+      // class summary
+      const vlccCount = allHulls.filter(h => h.class === 'VLCC').length;
+      const otherCount = allHulls.filter(h => h.class && h.class !== 'VLCC').length;
+      const classTxt = vlccCount && otherCount ? `VLCC+SA` : vlccCount ? 'VLCC' : otherCount ? 'SA' : '—';
+      const classColor = vlccCount ? '#f59e0b' : otherCount ? OCC_COLOR : DIM_COLOR;
+      tr.appendChild(td(classTxt, classColor, true));
+
+      // new_load flag
+      const newLoads = allHulls.filter(h => h.new_load === true || h.new_load === 'True').length;
+      tr.appendChild(td(newLoads > 0 ? `+${newLoads}` : '—', newLoads > 0 ? '#34d399' : DIM_COLOR, true));
+
       tbody.appendChild(tr);
     });
   }
@@ -3549,8 +3603,13 @@ document.addEventListener('DOMContentLoaded', function() {
     fetch('/data/berth_occupancy.json')
       .then(r => r.json())
       .then(d => {
+        // support v5.0 (passes[]) and v4.1 (rows[]) formats
+        const normRows = d.passes
+          ? d.passes.map(passToRow)
+          : (d.rows || []).map(legacyRowNorm);
+        d._normRows = normRows;
         boData = d;
-        boWeeks = buildWeeks(d.rows);
+        boWeeks = buildWeeks(normRows);
         renderKPI(boWeeks);
         renderWeeklyTable(boCurRange);
         drawBoChart(boCurChartRange);
