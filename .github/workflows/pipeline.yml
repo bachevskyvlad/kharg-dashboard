@@ -1,0 +1,538 @@
+name: Pipeline
+
+on:
+  schedule:
+    - cron: "0 4 * * *"
+  workflow_dispatch:
+    inputs:
+      jobs:
+        description: "Jobs to run: comma-separated (tanks,terminals,prices,gas,anchorage,berths,hormuz) or 'all'"
+        required: false
+        default: "all"
+
+concurrency:
+  group: pipeline
+  cancel-in-progress: false
+
+jobs:
+
+  # ──────────────────────────────────────────────────────────────
+  # tanks: ingest → compute → export (gate: new SAR scenes only)
+  # ──────────────────────────────────────────────────────────────
+  tanks:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    if: >
+      (inputs.jobs || 'all') == 'all' ||
+      contains(inputs.jobs || 'all', 'tanks')
+    outputs:
+      status: ${{ steps.outcome.outputs.status }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: pip install -r scripts/requirements.txt --quiet
+
+      - name: Ingest
+        id: ingest
+        env:
+          CLIENT_ID:     ${{ secrets.CLIENT_ID }}
+          CLIENT_SECRET: ${{ secrets.CLIENT_SECRET }}
+          SUPABASE_URL:  https://yoekhkczwdeyauwarsyy.supabase.co
+          SUPABASE_KEY:  sb_publishable_7j07_zzdqTGM1LXf7-o9Tg_JJRbJQSM
+        run: python scripts/ingest.py
+
+      - name: Gate — new SAR scenes?
+        id: gate
+        run: |
+          if git diff --quiet data/; then
+            echo "new_data=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "new_data=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Compute
+        if: steps.gate.outputs.new_data == 'true'
+        env:
+          CLIENT_ID:     ${{ secrets.CLIENT_ID }}
+          CLIENT_SECRET: ${{ secrets.CLIENT_SECRET }}
+          SUPABASE_URL:  https://yoekhkczwdeyauwarsyy.supabase.co
+          SUPABASE_KEY:  sb_publishable_7j07_zzdqTGM1LXf7-o9Tg_JJRbJQSM
+        run: python scripts/compute.py
+
+      - name: Export
+        if: steps.gate.outputs.new_data == 'true'
+        env:
+          CLIENT_ID:     ${{ secrets.CLIENT_ID }}
+          CLIENT_SECRET: ${{ secrets.CLIENT_SECRET }}
+          SUPABASE_URL:  https://yoekhkczwdeyauwarsyy.supabase.co
+          SUPABASE_KEY:  sb_publishable_7j07_zzdqTGM1LXf7-o9Tg_JJRbJQSM
+        run: python scripts/export.py
+
+      - name: Upload artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: tanks-out
+          path: |
+            data/
+            public/
+          retention-days: 1
+          if-no-files-found: warn
+
+      - name: Set outcome
+        id: outcome
+        if: always()
+        run: |
+          if [ "${{ steps.ingest.outcome }}" = "failure" ] ||
+             [ "${{ steps.compute.outcome }}" = "failure" ] ||
+             [ "${{ steps.export.outcome }}" = "failure" ]; then
+            echo "status=fail" >> "$GITHUB_OUTPUT"
+          elif [ "${{ steps.gate.outputs.new_data }}" = "false" ]; then
+            echo "status=no_data" >> "$GITHUB_OUTPUT"
+          else
+            echo "status=ok" >> "$GITHUB_OUTPUT"
+          fi
+
+  # ──────────────────────────────────────────────────────────────
+  # terminals: export_terminal_json.py
+  # ──────────────────────────────────────────────────────────────
+  terminals:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    if: >
+      (inputs.jobs || 'all') == 'all' ||
+      contains(inputs.jobs || 'all', 'terminals')
+    outputs:
+      status: ${{ steps.outcome.outputs.status }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: pip install supabase pandas --quiet
+
+      - name: Export terminals
+        id: export
+        env:
+          SUPABASE_URL: https://yoekhkczwdeyauwarsyy.supabase.co
+          SUPABASE_KEY: sb_publishable_7j07_zzdqTGM1LXf7-o9Tg_JJRbJQSM
+        run: python scripts/export_terminal_json.py
+
+      - name: Upload artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: terminals-out
+          path: data/
+          retention-days: 1
+          if-no-files-found: warn
+
+      - name: Set outcome
+        id: outcome
+        if: always()
+        run: |
+          if [ "${{ steps.export.outcome }}" = "failure" ]; then
+            echo "status=fail" >> "$GITHUB_OUTPUT"
+          else
+            echo "status=ok" >> "$GITHUB_OUTPUT"
+          fi
+
+  # ──────────────────────────────────────────────────────────────
+  # prices: fetch_prices.py
+  # ──────────────────────────────────────────────────────────────
+  prices:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    if: >
+      (inputs.jobs || 'all') == 'all' ||
+      contains(inputs.jobs || 'all', 'prices')
+    outputs:
+      status: ${{ steps.outcome.outputs.status }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: pip install yfinance requests --quiet
+
+      - name: Fetch prices
+        id: fetch
+        run: python scripts/fetch_prices.py
+
+      - name: Upload artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: prices-out
+          path: data/
+          retention-days: 1
+          if-no-files-found: warn
+
+      - name: Set outcome
+        id: outcome
+        if: always()
+        run: |
+          if [ "${{ steps.fetch.outcome }}" = "failure" ]; then
+            echo "status=fail" >> "$GITHUB_OUTPUT"
+          else
+            echo "status=ok" >> "$GITHUB_OUTPUT"
+          fi
+
+  # ──────────────────────────────────────────────────────────────
+  # gas: fetch_gas_storage.py
+  # ──────────────────────────────────────────────────────────────
+  gas:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    if: >
+      (inputs.jobs || 'all') == 'all' ||
+      contains(inputs.jobs || 'all', 'gas')
+    outputs:
+      status: ${{ steps.outcome.outputs.status }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: pip install requests --quiet
+
+      - name: Fetch gas storage
+        id: fetch
+        run: python scripts/fetch_gas_storage.py
+
+      - name: Upload artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: gas-out
+          path: data/
+          retention-days: 1
+          if-no-files-found: warn
+
+      - name: Set outcome
+        id: outcome
+        if: always()
+        run: |
+          if [ "${{ steps.fetch.outcome }}" = "failure" ]; then
+            echo "status=fail" >> "$GITHUB_OUTPUT"
+          else
+            echo "status=ok" >> "$GITHUB_OUTPUT"
+          fi
+
+  # ──────────────────────────────────────────────────────────────
+  # anchorage: hist_backfill.py --update  (ship_backfill removed)
+  # ──────────────────────────────────────────────────────────────
+  anchorage:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    if: >
+      (inputs.jobs || 'all') == 'all' ||
+      contains(inputs.jobs || 'all', 'anchorage')
+    outputs:
+      status: ${{ steps.outcome.outputs.status }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          pip install \
+            sentinelhub scipy numpy Pillow matplotlib \
+            rasterio shapely requests supabase \
+            --quiet
+
+      - name: Anchorage update
+        id: update
+        env:
+          CLIENT_ID:          ${{ secrets.CLIENT_ID }}
+          CLIENT_SECRET:      ${{ secrets.CLIENT_SECRET }}
+          SUPABASE_URL:       https://yoekhkczwdeyauwarsyy.supabase.co
+          SUPABASE_WRITE_KEY: ${{ secrets.SUPABASE_WRITE_KEY }}
+          RUN_ID:             gha-${{ github.run_id }}
+        run: python diagnostics/anchorage_hist/hist_backfill.py --update
+
+      - name: Upload artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: anchorage-out
+          path: data/
+          retention-days: 1
+          if-no-files-found: warn
+
+      - name: Set outcome
+        id: outcome
+        if: always()
+        run: |
+          if [ "${{ steps.update.outcome }}" = "failure" ]; then
+            echo "status=fail" >> "$GITHUB_OUTPUT"
+          else
+            echo "status=ok" >> "$GITHUB_OUTPUT"
+          fi
+
+  # ──────────────────────────────────────────────────────────────
+  # berths: v4_history incremental + assert gate + snapshots
+  # ──────────────────────────────────────────────────────────────
+  berths:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    if: >
+      (inputs.jobs || 'all') == 'all' ||
+      contains(inputs.jobs || 'all', 'berths')
+    outputs:
+      status: ${{ steps.outcome.outputs.status }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          pip install \
+            pystac-client planetary-computer \
+            rasterio scipy numpy Pillow matplotlib \
+            shapely requests supabase \
+            --quiet
+
+      - name: v4 history (incremental)
+        id: history
+        env:
+          PC_SDK_SUBSCRIPTION_KEY: ${{ secrets.PC_SDK_SUBSCRIPTION_KEY }}
+          SUPABASE_URL: https://yoekhkczwdeyauwarsyy.supabase.co
+          SUPABASE_KEY: sb_publishable_7j07_zzdqTGM1LXf7-o9Tg_JJRbJQSM
+        run: python scripts/berth_v4_history.py --incremental
+
+      - name: Assert gate
+        id: assert
+        run: python scripts/berth_validate_optics_v4.py
+
+      - name: Berth snapshots
+        id: snapshots
+        env:
+          PC_SDK_SUBSCRIPTION_KEY: ${{ secrets.PC_SDK_SUBSCRIPTION_KEY }}
+          SUPABASE_URL: https://yoekhkczwdeyauwarsyy.supabase.co
+          SUPABASE_KEY: sb_publishable_7j07_zzdqTGM1LXf7-o9Tg_JJRbJQSM
+        run: python scripts/berth_snapshots.py
+
+      - name: Upload artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: berths-out
+          path: |
+            data/
+            public/
+          retention-days: 1
+          if-no-files-found: warn
+
+      - name: Set outcome
+        id: outcome
+        if: always()
+        run: |
+          if [ "${{ steps.history.outcome }}" = "failure" ] ||
+             [ "${{ steps.assert.outcome }}" = "failure" ] ||
+             [ "${{ steps.snapshots.outcome }}" = "failure" ]; then
+            echo "status=fail" >> "$GITHUB_OUTPUT"
+          else
+            echo "status=ok" >> "$GITHUB_OUTPUT"
+          fi
+
+  # ──────────────────────────────────────────────────────────────
+  # hormuz: hormuz_queue_backfill.py --weekly --commit
+  # ──────────────────────────────────────────────────────────────
+  hormuz:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    if: >
+      (inputs.jobs || 'all') == 'all' ||
+      contains(inputs.jobs || 'all', 'hormuz')
+    outputs:
+      status: ${{ steps.outcome.outputs.status }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          pip install \
+            pystac-client planetary-computer \
+            rasterio scipy numpy supabase \
+            --quiet
+
+      - name: Hormuz weekly update
+        id: update
+        env:
+          SUPABASE_URL:            https://yoekhkczwdeyauwarsyy.supabase.co
+          SUPABASE_KEY:            sb_publishable_7j07_zzdqTGM1LXf7-o9Tg_JJRbJQSM
+          PC_SDK_SUBSCRIPTION_KEY: ${{ secrets.PC_SDK_SUBSCRIPTION_KEY }}
+          TG_BOT:                  ${{ secrets.TG_BOT }}
+          TG_CHAT:                 ${{ secrets.TG_CHAT }}
+        run: python scripts/hormuz_queue_backfill.py --weekly --commit
+
+      - name: Upload artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: hormuz-out
+          path: data/
+          retention-days: 1
+          if-no-files-found: warn
+
+      - name: Set outcome
+        id: outcome
+        if: always()
+        run: |
+          if [ "${{ steps.update.outcome }}" = "failure" ]; then
+            echo "status=fail" >> "$GITHUB_OUTPUT"
+          else
+            echo "status=ok" >> "$GITHUB_OUTPUT"
+          fi
+
+  # ──────────────────────────────────────────────────────────────
+  # collect: merge all artifacts → one commit to main
+  # ──────────────────────────────────────────────────────────────
+  collect:
+    needs: [tanks, terminals, prices, gas, anchorage, berths, hormuz]
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    outputs:
+      data_changed: ${{ steps.commit.outputs.data_changed }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: _artifacts/
+        continue-on-error: true
+
+      - name: Merge artifacts into working tree
+        run: |
+          for dir in _artifacts/*/; do
+            [ -d "$dir" ] || continue
+            rsync -av --exclude='*.yml' --exclude='*.yaml' "$dir" . 2>/dev/null || true
+          done
+          rm -rf _artifacts/
+
+      - name: Commit
+        id: commit
+        run: |
+          git config user.name  "bot"
+          git config user.email "bot@github.com"
+          git add data/ public/
+          if git diff --cached --quiet; then
+            echo "data_changed=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          tanks_s="${{ needs.tanks.outputs.status || 'skip' }}"
+          terminals_s="${{ needs.terminals.outputs.status || 'skip' }}"
+          prices_s="${{ needs.prices.outputs.status || 'skip' }}"
+          gas_s="${{ needs.gas.outputs.status || 'skip' }}"
+          anchorage_s="${{ needs.anchorage.outputs.status || 'skip' }}"
+          berths_s="${{ needs.berths.outputs.status || 'skip' }}"
+          hormuz_s="${{ needs.hormuz.outputs.status || 'skip' }}"
+          SUMMARY="tanks $tanks_s, terminals $terminals_s, prices $prices_s, gas $gas_s, anchorage $anchorage_s, berths $berths_s, hormuz $hormuz_s"
+          git commit -m "data: pipeline $(date -u +'%Y-%m-%d') [$SUMMARY]"
+          git pull --rebase --autostash origin main
+          git push
+          echo "data_changed=true" >> "$GITHUB_OUTPUT"
+
+  # ──────────────────────────────────────────────────────────────
+  # deploy: Cloudflare Workers — only when collect succeeded + data changed
+  # ──────────────────────────────────────────────────────────────
+  deploy:
+    needs: collect
+    if: >
+      always() &&
+      needs.collect.result == 'success' &&
+      needs.collect.outputs.data_changed == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken:  ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+
+  # ──────────────────────────────────────────────────────────────
+  # notify: one Telegram message with per-job status
+  # ──────────────────────────────────────────────────────────────
+  notify:
+    needs: [tanks, terminals, prices, gas, anchorage, berths, hormuz]
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Send Telegram
+        env:
+          TG_BOT:  ${{ secrets.TG_BOT }}
+          TG_CHAT: ${{ secrets.TG_CHAT }}
+        run: |
+          icon() {
+            case "$1" in
+              ok)      printf "✅" ;;
+              no_data) printf "⚪" ;;
+              skip)    printf "➖" ;;
+              *)       printf "❌" ;;
+            esac
+          }
+          tanks_s="${{ needs.tanks.outputs.status || 'skip' }}"
+          terminals_s="${{ needs.terminals.outputs.status || 'skip' }}"
+          prices_s="${{ needs.prices.outputs.status || 'skip' }}"
+          gas_s="${{ needs.gas.outputs.status || 'skip' }}"
+          anchorage_s="${{ needs.anchorage.outputs.status || 'skip' }}"
+          berths_s="${{ needs.berths.outputs.status || 'skip' }}"
+          hormuz_s="${{ needs.hormuz.outputs.status || 'skip' }}"
+          TEXT=$(printf '%s tanks  %s terminals  %s prices\n%s gas  %s anchorage  %s berths  %s hormuz\n\n%s\n%s' \
+            "$(icon "$tanks_s")" "$(icon "$terminals_s")" "$(icon "$prices_s")" \
+            "$(icon "$gas_s")" "$(icon "$anchorage_s")" "$(icon "$berths_s")" "$(icon "$hormuz_s")" \
+            "$(date -u +'%Y-%m-%d %H:%M UTC')" \
+            "https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}")
+          curl -s -X POST "$TG_BOT" \
+            -d chat_id="$TG_CHAT" \
+            -d parse_mode="HTML" \
+            --data-urlencode text="$TEXT"
