@@ -137,6 +137,7 @@ def find_blobs(ratio_arr, water_mask, axis_uvec, merge_gap_m, min_len_m,
     Canonical ship detection.  Returns (blobs, best_blob, detected: bool).
     - best_aspect per group = max over individual blob aspects (not merged bbox).
     - width per group       = median of individual blob widths.
+    - each blob includes axis_min, axis_max, perp_ctr for geographic positioning.
     """
     ux, uy = axis_uvec
     px_u, py_u = -uy, ux
@@ -194,10 +195,13 @@ def find_blobs(ratio_arr, water_mask, axis_uvec, merge_gap_m, min_len_m,
         # best aspect across individual blobs (not merged bounding box)
         best_aspect = max(b["aspect"] for b in grp)
         area_px     = sum(b["area_px"] for b in grp)
+        perp_ctr    = float(np.mean([b["perp_ctr"] for b in grp]))
         blobs.append({
             "length_m": length_m, "width_m": width_m,
             "aspect": best_aspect, "area_px": area_px,
             "n_merged": len(grp),
+            "axis_min": a_min, "axis_max": a_max,
+            "perp_ctr": perp_ctr,
         })
         if debug and len(grp) > 1:
             print(f"    merged {len(grp)} blobs → len={length_m:.0f}m "

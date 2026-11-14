@@ -60,7 +60,7 @@ V4_CONFIG = {
 AOI_BBOX     = BBox(bbox=[50.26, 29.17, 50.40, 29.31], crs=CRS.WGS84)
 AOI_BBOX_LST = [50.26, 29.17, 50.40, 29.31]
 
-# ── Catalog & fetch (Planetary Computer) ──────────────────────────────────────
+# ── Catalog & fetch (Planetary Computer) ───────────────────────────────────────────────────────
 
 def discover_dates(date_from, date_to):
     print(f"Discovering S1 catalog {date_from} → {date_to} (Planetary Computer) ...")
@@ -78,14 +78,14 @@ def fetch_s1_linear(entry_or_dt, bbox_obj):
         print("  fetch_s1_linear: no item"); return None
     return fetch_s1_pc(item, bbox_obj)
 
-# ── Hull classification ────────────────────────────────────────────────────────
+# ── Hull classification ─────────────────────────────────────────────────────────────────────────────
 
 def classify_hull(len_m):
     if len_m >= 300:
         return "VLCC"
     return "SuezAframax"
 
-# ── Loading event detection ────────────────────────────────────────────────────
+# ── Loading event detection ─────────────────────────────────────────────────────────────
 
 def is_new_load(pos_m, len_m, prev_hulls):
     """Return True if no hull in prev_hulls matches this position/length."""
@@ -95,7 +95,7 @@ def is_new_load(pos_m, len_m, prev_hulls):
         for ph in prev_hulls
     )
 
-# ── Metric helpers ─────────────────────────────────────────────────────────────
+# ── Metric helpers ───────────────────────────────────────────────────────────────────────────
 
 def count_loadings(loadings, start, end):
     subset = [l for l in loadings if start <= l["date"] <= end]
@@ -104,7 +104,7 @@ def count_loadings(loadings, start, end):
     suez  = sum(1 for l in subset if l["class"] == "SuezAframax")
     return {"total": total, "VLCC": vlcc, "SuezAframax": suez}
 
-# ── Main ───────────────────────────────────────────────────────────────────────
+# ── Main ─────────────────────────────────────────────────────────────────────────────────────
 
 def _bbox_dims(bbox_obj, resolution):
     """Return (width_px, height_px) for a sentinelhub BBox at given resolution."""
@@ -193,7 +193,6 @@ def run():
                 merge_gap_m=cfg.get("merge_gap", 0),
                 min_len_m=cfg["min_len"],
                 min_aspect=cfg.get("aspect_thr", 3.0),
-                return_all=True,
             )
 
             det_str = "OCC" if detected else "EMP"
@@ -276,7 +275,7 @@ def run():
 
         passes_out.append(pass_record)
 
-    # ── CSV output (hull-level) ────────────────────────────────────────────────
+    # ── CSV output (hull-level) ─────────────────────────────────────────────────────────────────
     csv_path = OUT_DIR / "berth_v4_history.csv"
     fieldnames = ["date","orbit","berth","hull_idx","det","side","pos_m",
                   "lon","lat","len_m","width_m","class","new_load","bg_source"]
@@ -287,7 +286,7 @@ def run():
             w.writerow(r)
     print(f"\nSaved: {csv_path} ({len(hull_rows)} hull rows)")
 
-    # ── Metrics ───────────────────────────────────────────────────────────────
+    # ── Metrics ──────────────────────────────────────────────────────────────────────────────────────
     from datetime import date as _date
     today_dt = _date.fromisoformat(today)
     d4w_start  = (today_dt - timedelta(weeks=4)).isoformat()
@@ -321,7 +320,7 @@ def run():
         "days_since_loading": days_since,
     }
 
-    # ── JSON output for site (v5.0) ───────────────────────────────────────────
+    # ── JSON output for site (v5.0) ──────────────────────────────────────────────────────────────
     obj = {
         "generated": today,
         "version":   "v5.0",
@@ -335,7 +334,7 @@ def run():
     JSON_OUT.write_text(json.dumps(obj, separators=(",",":")))
     print(f"Saved: {JSON_OUT} ({len(passes_out)} passes, {len(loadings)} loadings)")
 
-    # ── Detection summary ─────────────────────────────────────────────────────
+    # ── Detection summary ───────────────────────────────────────────────────────────────────────────
     print("\n=== Detection summary ===")
     print(f"Period: {HISTORY_START} → {today}")
     print(f"Loadings detected: {len(loadings)}")
@@ -343,7 +342,7 @@ def run():
     if last_ship:
         print(f"Last ship: {last_ship}")
 
-    # ── Supabase write ────────────────────────────────────────────────────────
+    # ── Supabase write ───────────────────────────────────────────────────────────────────────────────
     svc_key  = os.environ.get("SUPABASE_SERVICE_KEY") or ""
     supa_url = (os.environ.get("SUPABASE_URL") or "").rstrip("/")
     if not svc_key:
