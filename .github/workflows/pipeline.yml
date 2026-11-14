@@ -273,9 +273,9 @@ jobs:
         env:
           CLIENT_ID:          ${{ secrets.CLIENT_ID }}
           CLIENT_SECRET:      ${{ secrets.CLIENT_SECRET }}
-          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
-          SUPABASE_WRITE_KEY: ${{ secrets.SUPABASE_WRITE_KEY }}
-          RUN_ID:             gha-${{ github.run_id }}
+          SUPABASE_URL:         ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+          RUN_ID:               gha-${{ github.run_id }}
         run: python diagnostics/anchorage_hist/hist_backfill.py --update
 
       - name: Upload artifact
@@ -329,8 +329,9 @@ jobs:
         id: history
         env:
           PC_SDK_SUBSCRIPTION_KEY: ${{ secrets.PC_SDK_SUBSCRIPTION_KEY }}
-          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
-          SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+          SUPABASE_URL:            ${{ secrets.SUPABASE_URL }}
+          SUPABASE_KEY:            ${{ secrets.SUPABASE_KEY }}
+          SUPABASE_SERVICE_KEY:    ${{ secrets.SUPABASE_SERVICE_KEY }}
         run: python scripts/berth_v4_history.py --incremental
 
       - name: Assert gate
@@ -341,8 +342,9 @@ jobs:
         id: snapshots
         env:
           PC_SDK_SUBSCRIPTION_KEY: ${{ secrets.PC_SDK_SUBSCRIPTION_KEY }}
-          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
-          SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+          SUPABASE_URL:            ${{ secrets.SUPABASE_URL }}
+          SUPABASE_KEY:            ${{ secrets.SUPABASE_KEY }}
+          SUPABASE_SERVICE_KEY:    ${{ secrets.SUPABASE_SERVICE_KEY }}
         run: python scripts/berth_snapshots.py
 
       - name: Upload artifact
@@ -398,8 +400,9 @@ jobs:
       - name: Hormuz weekly update
         id: update
         env:
-          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
-          SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+          SUPABASE_URL:            ${{ secrets.SUPABASE_URL }}
+          SUPABASE_KEY:            ${{ secrets.SUPABASE_KEY }}
+          SUPABASE_SERVICE_KEY:    ${{ secrets.SUPABASE_SERVICE_KEY }}
           PC_SDK_SUBSCRIPTION_KEY: ${{ secrets.PC_SDK_SUBSCRIPTION_KEY }}
           TG_BOT:                  ${{ secrets.TG_BOT }}
           TG_CHAT:                 ${{ secrets.TG_CHAT }}
@@ -495,8 +498,27 @@ jobs:
 
       - uses: cloudflare/wrangler-action@v3
         with:
-          apiToken:  ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          apiToken:       ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId:      ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          wranglerVersion: "4"
+          secrets: |
+            API_SECRET
+            GOOGLE_CLIENT_ID
+            GOOGLE_CLIENT_SECRET
+            TG_BOT
+            TG_CHAT
+            NOTIFY_SECRET
+            SUPABASE_URL
+            SUPABASE_KEY
+        env:
+          API_SECRET:           ${{ secrets.API_SECRET }}
+          GOOGLE_CLIENT_ID:     ${{ secrets.GOOGLE_CLIENT_ID }}
+          GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
+          TG_BOT:               ${{ secrets.TG_BOT }}
+          TG_CHAT:              ${{ secrets.TG_CHAT }}
+          NOTIFY_SECRET:        ${{ secrets.NOTIFY_SECRET }}
+          SUPABASE_URL:         ${{ secrets.SUPABASE_URL }}
+          SUPABASE_KEY:         ${{ secrets.SUPABASE_KEY }}
 
   # ──────────────────────────────────────────────────────────────
   # notify: one Telegram message with per-job status
@@ -532,7 +554,7 @@ jobs:
             "$(icon "$gas_s")" "$(icon "$anchorage_s")" "$(icon "$berths_s")" "$(icon "$hormuz_s")" \
             "$(date -u +'%Y-%m-%d %H:%M UTC')" \
             "https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}")
-          curl -s -X POST "$TG_BOT" \
+          curl -s -X POST "https://api.telegram.org/bot${TG_BOT}/sendMessage" \
             -d chat_id="$TG_CHAT" \
             -d parse_mode="HTML" \
             --data-urlencode text="$TEXT"
