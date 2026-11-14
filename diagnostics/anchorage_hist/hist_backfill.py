@@ -48,7 +48,7 @@ DAILY_FIELDS = ['date', 'orbit', 'threshold', 'total', 'total_no_small', 'vlcc',
                 'aframax', 'mr', 'small', 'masked_blobs', 'run_id', 'source']
 SHIP_FIELDS = ['date', 'lat', 'lon', 'length_m', 'class']
 SB_URL = os.environ.get('SUPABASE_URL', 'https://yoekhkczwdeyauwarsyy.supabase.co')
-SB_KEY = os.environ.get('SUPABASE_WRITE_KEY', '')
+SB_KEY = os.environ.get('SUPABASE_SERVICE_KEY', '')
 BUCKET = 'anchorage_snapshots'
 
 
@@ -60,7 +60,7 @@ def log(*a):
 class DB:
     def __init__(self):
         self.ok = bool(SB_KEY)
-        self.err = None if self.ok else 'no SUPABASE_WRITE_KEY'
+        self.err = None if self.ok else 'no SUPABASE_SERVICE_KEY'
         self.h = {'apikey': SB_KEY, 'Authorization': f'Bearer {SB_KEY}',
                   'Content-Type': 'application/json'}
         if self.ok:
@@ -307,7 +307,7 @@ def year(y, db, recompute=False):
 
 def sync(db):
     if not db.ok:
-        log(f'SYNC impossible: {db.err}'); sys.exit(2)
+        log(f'SYNC skipped: {db.err}'); return
     ships = {}
     for s in read_csv(SHIPS_CSV):
         ships.setdefault(s['date'], {})[(s['lat'], s['lon'])] = {
@@ -346,7 +346,7 @@ def snapshots(db):
 
 def update(db):
     if not db.ok:
-        log(f'UPDATE impossible: {db.err}'); sys.exit(2)
+        log(f'UPDATE skipped (no write key): {db.err}'); return
     cfg, col, bbox = cfg_all()
     full, meta = t.candidate_dates(cfg, col, bbox)
     have = db.dates()
