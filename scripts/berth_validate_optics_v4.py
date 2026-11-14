@@ -113,9 +113,12 @@ function evaluatePixel(s) { return [s.B04*3.5, s.B03*3.5, s.B02*3.5]; }
 # ── Assert targets — confusion matrix for each berth ─────────────────────────
 # east_t_head: ablation run #33 (bg mode, BG_V4 EMP-median, pier=20, water=20-80)
 # sea_island, southeast_pier: validate run #43 (last accepted run, strict=False)
+# PC baseline (RTC gamma0). SH baseline was: eth TP=14 FN=8, si TP=12 FN=3, sep TP=1 FN=1.
+# New FN sea_island on PC: 2026-01-26 o35 len=90m asp=2.2 and/or 2026-02-25 o35 len=116m asp=1.9
+# (both orbit-35, blobs just below min_len=120m; one is Δ vs SH — recorded for history).
 ASSERT_TARGETS = {
-    "east_t_head":    dict(TP=14, FN=8, FP=1, TN=10),
-    "sea_island":     dict(TP=12, FN=3, FP=0, TN=18),
+    "east_t_head":    dict(TP=15, FN=7, FP=1, TN=10),
+    "sea_island":     dict(TP=11, FN=4, FP=0, TN=18),
     "southeast_pier": dict(TP=1,  FN=1, FP=0, TN=32),
 }
 
