@@ -36,7 +36,7 @@ jobs:
 
       - name: Run checks
         env:
-          SUPABASE_URL: https://yoekhkczwdeyauwarsyy.supabase.co
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
         run: |
           ORBIT_ARG=""
@@ -53,7 +53,7 @@ jobs:
 
       - name: Orbit label audit (RT + Yanbu)
         env:
-          SUPABASE_URL: https://yoekhkczwdeyauwarsyy.supabase.co
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
         if: contains('ras_tanura yanbu', github.event.inputs.terminal)
         run: |
@@ -63,7 +63,7 @@ jobs:
 
       - name: Closure audit (items 1–5)
         env:
-          SUPABASE_URL: https://yoekhkczwdeyauwarsyy.supabase.co
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
           CLIENT_ID: ${{ secrets.CLIENT_ID }}
           CLIENT_SECRET: ${{ secrets.CLIENT_SECRET }}

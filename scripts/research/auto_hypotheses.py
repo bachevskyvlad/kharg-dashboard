@@ -17,18 +17,8 @@ import numpy as np
 REPO_ROOT = Path(__file__).resolve().parents[2]
 
 # ── Env check (P1) ─────────────────────────────────────────────────────────────
-_FALLBACK_URL = "https://yoekhkczwdeyauwarsyy.supabase.co"
-_FALLBACK_KEY = "sb_publishable_7j07_zzdqTGM1LXf7-o9Tg_JJRbJQSM"
-
-SB_URL = (os.environ.get("SUPABASE_URL") or _FALLBACK_URL).rstrip("/")
-SB_KEY = os.environ.get("SUPABASE_KEY") or _FALLBACK_KEY
-
-if not SB_URL or not SB_KEY:
-    print("FATAL: SUPABASE_URL or SUPABASE_KEY not set")
-    sys.exit(1)
-
-print(f"P1: SUPABASE_URL={'env' if os.environ.get('SUPABASE_URL') else 'fallback'} "
-      f"SUPABASE_KEY={'env' if os.environ.get('SUPABASE_KEY') else 'fallback (publishable)'}")
+SB_URL = (os.environ.get("SUPABASE_URL") or sys.exit("FATAL: SUPABASE_URL not set")).rstrip("/")
+SB_KEY = os.environ.get("SUPABASE_KEY") or sys.exit("FATAL: SUPABASE_KEY not set")
 
 from supabase import create_client
 sb = create_client(SB_URL, SB_KEY)

@@ -19,7 +19,7 @@ Writes to analysis/kharg_patterns/:
   cluster_weekly.csv, tank_influence.csv, crosscorr.csv, tank_stats.csv
 Runs in GitHub Actions (Supabase blocked from the dev sandbox).
 """
-import os, math, traceback
+import os, sys, math, traceback
 import numpy as np
 import pandas as pd
 try:
@@ -28,8 +28,8 @@ except Exception:
     create_client = None
 
 OUT = os.path.dirname(os.path.abspath(__file__))
-SUPABASE_URL = "https://yoekhkczwdeyauwarsyy.supabase.co"
-SUPABASE_KEY = "sb_publishable_7j07_zzdqTGM1LXf7-o9Tg_JJRbJQSM"
+SUPABASE_URL = os.environ.get("SUPABASE_URL") or sys.exit("FATAL: SUPABASE_URL not set")
+SUPABASE_KEY = os.environ.get("SUPABASE_KEY") or sys.exit("FATAL: SUPABASE_KEY not set")
 BARREL_PER_M3, TANK_HEIGHT_MIN, PCTL_LO, PCTL_HI = 6.2898, 2.0, 0.05, 0.95
 KNOWN_LOADING = {"t60_2", "t55_17"}; KNOWN_RESERVE = {"t55_31", "t60_1"}; KNOWN_IDLE = {"t55_5", "t55_10"}
 MONTHS = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"]

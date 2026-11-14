@@ -3,9 +3,11 @@
 // Trial users are blocked entirely.
 
 const TRIAL_USERS = [];
-const API_SECRET  = 'oilradar-api-secret-2024-kharg';
 
 export async function verifyApiKey(request, env) {
+  const secret = env?.API_SECRET;
+  if (!secret) return { ok: false, error: 'Server misconfigured' };
+
   const key = request.headers.get('X-API-Key') || new URL(request.url).searchParams.get('api_key');
   if (!key) return { ok: false, error: 'Missing X-API-Key header' };
 
@@ -17,7 +19,7 @@ export async function verifyApiKey(request, env) {
   const email = decoded.slice(0, colonIdx);
   const provided = decoded.slice(colonIdx + 1);
 
-  const expected = await hmacSha256(email, API_SECRET);
+  const expected = await hmacSha256(email, secret);
   if (provided !== expected) return { ok: false, error: 'Invalid API key' };
 
   if (TRIAL_USERS.map(e => e.toLowerCase()).includes(email.toLowerCase()))
@@ -26,8 +28,10 @@ export async function verifyApiKey(request, env) {
   return { ok: true, email };
 }
 
-export async function generateApiKey(email) {
-  const hmac = await hmacSha256(email, API_SECRET);
+export async function generateApiKey(email, env) {
+  const secret = env?.API_SECRET;
+  if (!secret) throw new Error('API_SECRET not set');
+  const hmac = await hmacSha256(email, secret);
   const raw = email + ':' + hmac;
   return btoa(raw).replace(/\+/g,'-').replace(/\//g,'_').replace(/=/g,'.');
 }

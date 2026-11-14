@@ -1,5 +1,5 @@
 export async function onRequest(context) {
-  const clientId = "377241273746-2qhpgcaa0a9nkhjuiihfqqs35rvp5asv.apps.googleusercontent.com";
+  const clientId = context.env.GOOGLE_CLIENT_ID;
   const appUrl = "https://app.oilradar.io";
   const redirectUri = `${appUrl}/auth/callback`;
   const scope = encodeURIComponent('email profile');

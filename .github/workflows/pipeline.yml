@@ -44,8 +44,8 @@ jobs:
         env:
           CLIENT_ID:     ${{ secrets.CLIENT_ID }}
           CLIENT_SECRET: ${{ secrets.CLIENT_SECRET }}
-          SUPABASE_URL:  https://yoekhkczwdeyauwarsyy.supabase.co
-          SUPABASE_KEY:  sb_publishable_7j07_zzdqTGM1LXf7-o9Tg_JJRbJQSM
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
         run: python scripts/ingest.py
 
       - name: Gate — new SAR scenes?
@@ -62,8 +62,8 @@ jobs:
         env:
           CLIENT_ID:     ${{ secrets.CLIENT_ID }}
           CLIENT_SECRET: ${{ secrets.CLIENT_SECRET }}
-          SUPABASE_URL:  https://yoekhkczwdeyauwarsyy.supabase.co
-          SUPABASE_KEY:  sb_publishable_7j07_zzdqTGM1LXf7-o9Tg_JJRbJQSM
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
         run: python scripts/compute.py
 
       - name: Export
@@ -71,8 +71,8 @@ jobs:
         env:
           CLIENT_ID:     ${{ secrets.CLIENT_ID }}
           CLIENT_SECRET: ${{ secrets.CLIENT_SECRET }}
-          SUPABASE_URL:  https://yoekhkczwdeyauwarsyy.supabase.co
-          SUPABASE_KEY:  sb_publishable_7j07_zzdqTGM1LXf7-o9Tg_JJRbJQSM
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
         run: python scripts/export.py
 
       - name: Upload artifact
@@ -126,8 +126,8 @@ jobs:
       - name: Export terminals
         id: export
         env:
-          SUPABASE_URL: https://yoekhkczwdeyauwarsyy.supabase.co
-          SUPABASE_KEY: sb_publishable_7j07_zzdqTGM1LXf7-o9Tg_JJRbJQSM
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
         run: python scripts/export_terminal_json.py
 
       - name: Upload artifact
@@ -273,7 +273,7 @@ jobs:
         env:
           CLIENT_ID:          ${{ secrets.CLIENT_ID }}
           CLIENT_SECRET:      ${{ secrets.CLIENT_SECRET }}
-          SUPABASE_URL:       https://yoekhkczwdeyauwarsyy.supabase.co
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_WRITE_KEY: ${{ secrets.SUPABASE_WRITE_KEY }}
           RUN_ID:             gha-${{ github.run_id }}
         run: python diagnostics/anchorage_hist/hist_backfill.py --update
@@ -329,8 +329,8 @@ jobs:
         id: history
         env:
           PC_SDK_SUBSCRIPTION_KEY: ${{ secrets.PC_SDK_SUBSCRIPTION_KEY }}
-          SUPABASE_URL: https://yoekhkczwdeyauwarsyy.supabase.co
-          SUPABASE_KEY: sb_publishable_7j07_zzdqTGM1LXf7-o9Tg_JJRbJQSM
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
         run: python scripts/berth_v4_history.py --incremental
 
       - name: Assert gate
@@ -341,8 +341,8 @@ jobs:
         id: snapshots
         env:
           PC_SDK_SUBSCRIPTION_KEY: ${{ secrets.PC_SDK_SUBSCRIPTION_KEY }}
-          SUPABASE_URL: https://yoekhkczwdeyauwarsyy.supabase.co
-          SUPABASE_KEY: sb_publishable_7j07_zzdqTGM1LXf7-o9Tg_JJRbJQSM
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
         run: python scripts/berth_snapshots.py
 
       - name: Upload artifact
@@ -398,8 +398,8 @@ jobs:
       - name: Hormuz weekly update
         id: update
         env:
-          SUPABASE_URL:            https://yoekhkczwdeyauwarsyy.supabase.co
-          SUPABASE_KEY:            sb_publishable_7j07_zzdqTGM1LXf7-o9Tg_JJRbJQSM
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
           PC_SDK_SUBSCRIPTION_KEY: ${{ secrets.PC_SDK_SUBSCRIPTION_KEY }}
           TG_BOT:                  ${{ secrets.TG_BOT }}
           TG_CHAT:                 ${{ secrets.TG_CHAT }}

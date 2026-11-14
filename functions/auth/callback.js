@@ -1,8 +1,6 @@
 import { getUserByEmail, upsertUser } from '../lib/sheets.js';
 import { tgNotify, tgTime } from '../lib/telegram.js';
 
-const GOOGLE_CLIENT_ID = "377241273746-2qhpgcaa0a9nkhjuiihfqqs35rvp5asv.apps.googleusercontent.com";
-const GOOGLE_CLIENT_SECRET = "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";
 const APP_URL = "https://app.oilradar.io";
 
 export async function onRequest(context) {
@@ -12,7 +10,7 @@ export async function onRequest(context) {
   const error = url.searchParams.get('error');
 
   if (error || !code) {
-    context.ctx.waitUntil(tgNotify(`❌ Google auth cancelled\n${error || 'no code'}\n${tgTime()}`));
+    context.ctx.waitUntil(tgNotify(`❌ Google auth cancelled\n${error || 'no code'}\n${tgTime()}`, context.env));
     return Response.redirect(`${APP_URL}/?error=auth_failed`, 302);
   }
 
@@ -21,13 +19,13 @@ export async function onRequest(context) {
       method: 'POST',
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
       body: new URLSearchParams({
-        code, client_id: GOOGLE_CLIENT_ID, client_secret: GOOGLE_CLIENT_SECRET,
+        code, client_id: context.env.GOOGLE_CLIENT_ID, client_secret: context.env.GOOGLE_CLIENT_SECRET,
         redirect_uri: `${APP_URL}/auth/callback`, grant_type: 'authorization_code'
       })
     });
     const tokens = await tokenResponse.json();
     if (!tokens.access_token) {
-      context.ctx.waitUntil(tgNotify(`❌ Google token failed\nNo access_token\n${tgTime()}`));
+      context.ctx.waitUntil(tgNotify(`❌ Google token failed\nNo access_token\n${tgTime()}`, context.env));
       return Response.redirect(`${APP_URL}/?error=auth_failed`, 302);
     }
 
@@ -37,7 +35,7 @@ export async function onRequest(context) {
     const user = await userResponse.json();
     const email = user.email?.toLowerCase();
     if (!email) {
-      context.ctx.waitUntil(tgNotify(`❌ Google login failed\nNo email returned\n${tgTime()}`));
+      context.ctx.waitUntil(tgNotify(`❌ Google login failed\nNo email returned\n${tgTime()}`, context.env));
       return Response.redirect(`${APP_URL}/?error=auth_failed`, 302);
     }
 
@@ -47,7 +45,7 @@ export async function onRequest(context) {
       try {
         const existing = await getUserByEmail(env.GOOGLE_SA_KEY, email);
         if (!existing) {
-          context.ctx.waitUntil(tgNotify(`⛔ Google blocked\n${user.name || email} (${email})\nNot in CRM\n${tgTime()}`));
+          context.ctx.waitUntil(tgNotify(`⛔ Google blocked\n${user.name || email} (${email})\nNot in CRM\n${tgTime()}`, context.env));
           return Response.redirect(`${APP_URL}/?error=unauthorized`, 302);
         }
         const nameParts = (user.name || '').split(' ');
@@ -64,7 +62,7 @@ export async function onRequest(context) {
     const sessionData = { email, name: user.name || email, tier, exp: Date.now() + (7 * 24 * 60 * 60 * 1000) };
     const sessionToken = btoa(JSON.stringify(sessionData));
 
-    context.ctx.waitUntil(tgNotify(`✅ Google login\n${user.name || email} (${email})\n${tgTime()}`));
+    context.ctx.waitUntil(tgNotify(`✅ Google login\n${user.name || email} (${email})\n${tgTime()}`, context.env));
 
     return new Response(null, {
       status: 302,
@@ -74,7 +72,7 @@ export async function onRequest(context) {
       }
     });
   } catch (e) {
-    context.ctx.waitUntil(tgNotify(`❌ Google auth error\n${e?.message || 'unknown'}\n${tgTime()}`));
+    context.ctx.waitUntil(tgNotify(`❌ Google auth error\n${e?.message || 'unknown'}\n${tgTime()}`, context.env));
     return Response.redirect(`${APP_URL}/?error=auth_failed`, 302);
   }
 }
