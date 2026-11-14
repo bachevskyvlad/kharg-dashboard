@@ -1,15 +1,6 @@
-const TRIAL_USERS = [];
-const API_SECRET  = 'oilradar-api-secret-2024-kharg';
+import { generateApiKey } from './_auth.js';
 
-async function generateApiKey(email) {
-  const enc = new TextEncoder();
-  const key = await crypto.subtle.importKey(
-    'raw', enc.encode(API_SECRET), { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']
-  );
-  const sig = await crypto.subtle.sign('HMAC', key, enc.encode(email));
-  const hex = Array.from(new Uint8Array(sig)).map(b => b.toString(16).padStart(2,'0')).join('');
-  return btoa(email + ':' + hex).replace(/\+/g,'-').replace(/\//g,'_').replace(/=/g,'.');
-}
+const TRIAL_USERS = [];
 
 function parseCookies(header) {
   const c = {};
@@ -42,6 +33,6 @@ export async function onRequest(context) {
   if (TRIAL_USERS.map(e => e.toLowerCase()).includes(email.toLowerCase()))
     return json({ error: 'API access requires a paid plan' }, 403);
 
-  const apiKey = await generateApiKey(email);
+  const apiKey = await generateApiKey(email, context.env);
   return json({ api_key: apiKey, email });
 }

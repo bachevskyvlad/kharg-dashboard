@@ -22,7 +22,7 @@ jobs:
 
       - name: Backup + delete old jk_* records
         env:
-          SUPABASE_URL: https://yoekhkczwdeyauwarsyy.supabase.co
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
         run: python delete_old_jask.py
 

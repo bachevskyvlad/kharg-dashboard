@@ -209,8 +209,10 @@ jobs:
            steps.validate_v4.outcome == 'success')
         run: python -u scripts/berth_v4_history.py
         env:
-          SUPABASE_SERVICE_KEY:   sb_publishable_7j07_zzdqTGM1LXf7-o9Tg_JJRbJQSM
-          SUPABASE_URL:           https://yoekhkczwdeyauwarsyy.supabase.co
+          CLIENT_ID:              ${{ secrets.CLIENT_ID }}
+          CLIENT_SECRET:          ${{ secrets.CLIENT_SECRET }}
+          SUPABASE_SERVICE_KEY:   ${{ secrets.SUPABASE_SERVICE_KEY }}
+          SUPABASE_URL:           ${{ secrets.SUPABASE_URL }}
           PYTHONUNBUFFERED:       "1"
 
       - name: Upload v4 history results
@@ -237,8 +239,8 @@ jobs:
         env:
           CLIENT_ID:              ${{ secrets.CLIENT_ID }}
           CLIENT_SECRET:          ${{ secrets.CLIENT_SECRET }}
-          SUPABASE_URL:           https://yoekhkczwdeyauwarsyy.supabase.co
-          SUPABASE_SERVICE_KEY:   sb_publishable_7j07_zzdqTGM1LXf7-o9Tg_JJRbJQSM
+          SUPABASE_URL:           ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_KEY:   ${{ secrets.SUPABASE_KEY }}
           PYTHONUNBUFFERED:       "1"
 
       - name: Run sea_island FN contact sheet

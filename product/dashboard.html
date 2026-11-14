@@ -1604,8 +1604,8 @@ async function loadData() {
     destroyCharts();
     try {
         // Pull daily volume directly from Supabase so Overview stays in sync with Gross Flows
-        const SB_URL = 'https://yoekhkczwdeyauwarsyy.supabase.co';
-        const SB_KEY = 'sb_publishable_7j07_zzdqTGM1LXf7-o9Tg_JJRbJQSM';
+        const SB_URL = window.SUPABASE_URL;
+        const SB_KEY = window.SUPABASE_KEY;
         const headers = { 'apikey': SB_KEY, 'Authorization': 'Bearer ' + SB_KEY };
         let rows = [], offset = 0;
         while (true) {
@@ -2442,14 +2442,12 @@ function renderRevenue() {
         : '';
 }
 
-const SUPABASE_URL = 'https://yoekhkczwdeyauwarsyy.supabase.co';
-const SUPABASE_KEY = 'sb_publishable_7j07_zzdqTGM1LXf7-o9Tg_JJRbJQSM';
-
 checkAuth();
 loadData();
-loadFlows();
 
 // ── Per-Tank Map ───────────────────────────────────────────────────────────
+const SUPABASE_URL = window.SUPABASE_URL;
+const SUPABASE_KEY = window.SUPABASE_KEY;
 const H_MIN = 2, BBL = 6.2898;
 
 const TANKS = {

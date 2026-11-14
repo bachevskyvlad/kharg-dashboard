@@ -13,3 +13,21 @@ jobs:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           wranglerVersion: "4"
+          secrets: |
+            SUPABASE_URL
+            SUPABASE_KEY
+            API_SECRET
+            TG_BOT
+            TG_CHAT
+            GOOGLE_CLIENT_ID
+            GOOGLE_CLIENT_SECRET
+            NOTIFY_SECRET
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+          API_SECRET: ${{ secrets.API_SECRET }}
+          TG_BOT: ${{ secrets.TG_BOT }}
+          TG_CHAT: ${{ secrets.TG_CHAT }}
+          GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
+          GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
+          NOTIFY_SECRET: ${{ secrets.NOTIFY_SECRET }}
