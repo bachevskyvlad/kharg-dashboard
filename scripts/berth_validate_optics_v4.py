@@ -962,6 +962,7 @@ def _apply_timedelta_rule(rows):
         s1_dt_str = r.get("s1_dt", "")
         s2_dt_str = r.get("s2_dt", "")
         if (s1_dt_str and s2_dt_str
+                and r.get("optical_ref") == "EMP"
                 and r.get("det") == "OCC"
                 and float(r.get("length_m") or 0) >= 250
                 and float(r.get("aspect") or 0) >= 4.0):
