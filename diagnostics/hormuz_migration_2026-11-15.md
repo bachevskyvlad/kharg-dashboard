@@ -1,6 +1,6 @@
 # hormuz_passes migration 2026-11-15
 
-## Change
+## Change 1
 ALTER TABLE hormuz_passes ADD COLUMN IF NOT EXISTS fail boolean;
 
 ## Result
@@ -12,3 +12,19 @@ Pipeline job `hormuz` was failing with PGRST204:
 
 ## Rollback
 ALTER TABLE hormuz_passes DROP COLUMN fail;
+
+---
+
+## Change 2
+ALTER TABLE hormuz_passes
+  ADD COLUMN IF NOT EXISTS gap_days integer,
+  ADD COLUMN IF NOT EXISTS stay     integer,
+  ADD COLUMN IF NOT EXISTS gone     integer;
+
+## Trigger
+After adding `fail`, pipeline failed with PGRST204 on `gap_days`.
+Full analysis of hormuz_queue_backfill.py confirmed all three columns
+are written by the script but were absent from the schema.
+
+## Rollback
+ALTER TABLE hormuz_passes DROP COLUMN gap_days, DROP COLUMN stay, DROP COLUMN gone;
