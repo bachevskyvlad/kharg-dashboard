@@ -40,12 +40,10 @@ jobs:
           PC_SDK_SUBSCRIPTION_KEY: ${{ secrets.PC_SDK_SUBSCRIPTION_KEY }}
         run: python scripts/berth_validate_optics_v4.py
 
-      - name: Step 2 — v4_history full (only if gate passed)
+      - name: Step 2 — v4_history full (CSV/JSON only, no DB write)
         if: steps.validate.outcome == 'success'
         env:
           PC_SDK_SUBSCRIPTION_KEY: ${{ secrets.PC_SDK_SUBSCRIPTION_KEY }}
-          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
-          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
         run: python scripts/berth_v4_history.py
 
       - name: Upload diagnostics
