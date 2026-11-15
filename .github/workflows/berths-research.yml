@@ -1,0 +1,55 @@
+name: berths-research
+
+on:
+  workflow_dispatch:
+
+jobs:
+  research:
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: claude/oilradar-dashboard-iran-zchdva
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          pip install --upgrade pip
+          pip install \
+            pystac-client \
+            planetary-computer \
+            rasterio \
+            scipy \
+            numpy \
+            Pillow \
+            matplotlib \
+            shapely \
+            requests \
+            sentinelhub
+
+      - name: Step 1 — validate_optics_v4 (assert gate + contact sheet)
+        id: validate
+        env:
+          CLIENT_ID: ${{ secrets.CLIENT_ID }}
+          CLIENT_SECRET: ${{ secrets.CLIENT_SECRET }}
+          PC_SDK_SUBSCRIPTION_KEY: ${{ secrets.PC_SDK_SUBSCRIPTION_KEY }}
+        run: python scripts/berth_validate_optics_v4.py
+
+      - name: Step 2 — v4_history full (CSV/JSON only, no DB write)
+        if: steps.validate.outcome == 'success'
+        env:
+          PC_SDK_SUBSCRIPTION_KEY: ${{ secrets.PC_SDK_SUBSCRIPTION_KEY }}
+        run: python scripts/berth_v4_history.py
+
+      - name: Upload diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: berths-research-${{ github.run_id }}
+          path: diagnostics/berth_v4/
+          retention-days: 30
