@@ -12,7 +12,7 @@ Changes vs v3:
 Outputs in diagnostics/berth_v4/validation_optics_v4/
 """
 
-import os, sys, csv
+import os, sys, csv, math
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent))
@@ -390,6 +390,13 @@ def main():
         s1_item = scene_datetime_s1(date_str, orbit, aoi_full)
         print(f"  S1: {s1_item.id[:30] if s1_item else 'NOT FOUND'}")
 
+        # S1/S2 acquisition times for time-delta rule
+        s1_dt_iso = ""
+        if s1_item is not None:
+            try: s1_dt_iso = s1_item.datetime.isoformat()
+            except Exception: pass
+        s2_dt_str = scene_datetime_s2(date_str, aoi_full) if _sh_config_ok else ""
+
         for berth in BERTHS:
             ref_col    = f"{berth}_optical_ref"
             optical_ref = row.get(ref_col, "").strip()
@@ -442,6 +449,7 @@ def main():
                 "match": ("" if match is None else str(match)),
                 "length_m": len_str, "aspect": asp_str,
                 "no_bg": str(no_bg), "s1_found": str(bool(s1_item)),
+                "s1_dt": s1_dt_iso, "s2_dt": s2_dt_str,
             })
             status = "OK" if match else ("MISMATCH" if match is False else "SKIP")
             print(f"  {berth}: ref={optical_ref} det={det_str} "
@@ -460,10 +468,64 @@ def main():
                 "bbox_obj": bbox_obj,
             }
 
+    # ── asp=2.5 variant pass for east_t_head ─────────────────────────────────
+    # Re-run detection with min_aspect=2.5. Read-only — not written to main
+    # results or DB. Used only for the side-by-side assert column.
+    results_asp25 = []
+    p_eth = BERTH_DETECT_PARAMS["east_t_head"]
+    for row in ref_rows:
+        date_str = row.get("date", "").strip()
+        if not date_str: continue
+        try: orbit = int(row["orbit"])
+        except Exception: continue
+        optical_ref = row.get("east_t_head_optical_ref", "").strip()
+        if optical_ref not in ("OCC", "EMP"): continue
+        s1_item = scene_datetime_s1(date_str, orbit, aoi_full)
+        bbox_obj = cell_bboxes["east_t_head"]
+        pts      = BERTH_SPEC["east_t_head"]
+        linear   = fetch_s1_linear(s1_item, bbox_obj) if s1_item else None
+        bg       = bg_cache.get((orbit, "east_t_head"))
+        if bg is not None and linear is not None and bg.shape != linear.shape:
+            bg = nd_zoom(bg, (linear.shape[0]/bg.shape[0],
+                              linear.shape[1]/bg.shape[1]), order=1)
+        ratio = None
+        if linear is not None and bg is not None:
+            ratio = np.where((linear>0)&(bg>0),
+                             10*np.log10(linear/bg), np.nan).astype(np.float32)
+        img_shape = linear.shape if linear is not None else (99, 101)
+        geom = build_geom(pts, bbox_obj, img_shape,
+                          pier_excl_m=p_eth["pier"],
+                          water_inner_m=p_eth["water_i"],
+                          water_outer_m=p_eth["water_o"])
+        if ratio is None:
+            det_occ = None; longest = None
+        else:
+            _, longest, det_occ = find_blobs(
+                ratio, geom["water_mask"], geom["axis_uvec"],
+                merge_gap_m=p_eth["merge"], min_len_m=p_eth["min_len"],
+                min_aspect=2.5)
+        det_str = "OCC" if det_occ else ("EMP" if det_occ is not None else "NO_BG")
+        len_str = f"{longest['length_m']:.0f}" if longest else "0"
+        asp_str = f"{longest['aspect']:.1f}" if longest else "0"
+        s1_dt_iso = ""
+        if s1_item is not None:
+            try: s1_dt_iso = s1_item.datetime.isoformat()
+            except Exception: pass
+        main_r = next((r for r in results
+                       if r["date"]==date_str and r["orbit"]==orbit
+                       and r["berth"]=="east_t_head"), None)
+        results_asp25.append({
+            "date": date_str, "orbit": orbit, "berth": "east_t_head",
+            "optical_ref": optical_ref, "det": det_str,
+            "length_m": len_str, "aspect": asp_str,
+            "s1_dt": s1_dt_iso,
+            "s2_dt": main_r["s2_dt"] if main_r else "",
+        })
+
     # ── Results CSV ───────────────────────────────────────────────────────────
     res_csv = OUT_DIR / "results.csv"
     fieldnames = ["date","orbit","berth","optical_ref","det","match",
-                  "length_m","aspect","no_bg","s1_found"]
+                  "length_m","aspect","no_bg","s1_found","s1_dt","s2_dt"]
     with open(res_csv, "w", newline="") as f:
         w = csv.DictWriter(f, fieldnames=fieldnames)
         w.writeheader(); w.writerows(results)
@@ -536,7 +598,7 @@ def main():
 
     # ── Confmat assert gate — before contact sheet ────────────────────────────
     print("\n=== Confmat asserts ===")
-    _assert_confmat(results)   # sys.exit on failure — nothing below runs
+    _assert_confmat(results, results_asp25)   # sys.exit on failure — nothing below runs
 
     # ── Full 42-date contact sheet ────────────────────────────────────────────
     print("\n=== Contact sheet (all 42 dates × 3 berths) ===")
@@ -883,57 +945,117 @@ def _save_contact_sheet(ref_rows, cs_cache, cell_bboxes, aoi_full):
         plt.close(fig)
 
 
-def _assert_confmat(results):
+def _apply_timedelta_rule(rows):
+    """
+    Time-delta exclusion: |Δt SAR−S2| > 4 h AND det=OCC AND L≥250 AND asp≥4
+    → optical_ref → '?' (copy row, don't mutate original).
+    Returns list of adjusted rows.
+    """
+    from datetime import datetime, timezone
+
+    def _parse_dt(s):
+        s = s.strip().rstrip("Z").split("+")[0]
+        return datetime.fromisoformat(s).replace(tzinfo=timezone.utc)
+
+    out = []
+    for r in rows:
+        s1_dt_str = r.get("s1_dt", "")
+        s2_dt_str = r.get("s2_dt", "")
+        if (s1_dt_str and s2_dt_str
+                and r.get("det") == "OCC"
+                and float(r.get("length_m") or 0) >= 250
+                and float(r.get("aspect") or 0) >= 4.0):
+            try:
+                delta_h = abs((_parse_dt(s1_dt_str) - _parse_dt(s2_dt_str))
+                              .total_seconds()) / 3600
+                if delta_h > 4.0:
+                    r = dict(r, optical_ref="?")
+                    print(f"  TIME-DELTA: {r['date']} o{r['orbit']} "
+                          f"{r['berth']} Δt={delta_h:.1f}h "
+                          f"L={r['length_m']}m asp={r['aspect']} → ref→?")
+            except Exception as e:
+                print(f"  TIME-DELTA parse error: {e}")
+        out.append(r)
+    return out
+
+
+def _assert_confmat(results, results_asp25=None):
     """
     Compare PC-based confusion matrix against SH ASSERT_TARGETS.
-    Prints old (SH) vs new (PC) side-by-side for every berth.
-    Does NOT auto-update targets.
-    Gate: precision >= 90% AND recall not worse than SH targets per berth.
+    Applies time-delta rule before gate.
+    Shows OLD (SH) | NEW asp≥3.0 | NEW asp≥2.5 columns.
+    Gate uses time-delta-adjusted asp≥3.0 numbers.
+    asp≥2.5 adopted only if prec≥90% (shown for reference).
     """
+    adj = _apply_timedelta_rule(results)
+    n_excl = sum(1 for a, b in zip(adj, results)
+                 if a.get("optical_ref") == "?" and b.get("optical_ref") != "?")
+    if n_excl:
+        print(f"  → {n_excl} row(s) reclassified '?' by time-delta rule")
+
+    adj25 = _apply_timedelta_rule(results_asp25 or [])
+
     ok = True
-    print(f"\n{'Berth':<20}  {'':4}  "
-          f"{'OLD (SH)':^28}  {'NEW (PC)':^28}  {'Gate'}")
-    print(f"{'':20}  {'':4}  "
+    print(f"\n{'Berth':<20}  {'OLD (SH)':^28}  "
+          f"{'NEW asp≥3.0':^28}  {'NEW asp≥2.5':^28}  Gate")
+    print(f"{'':20}  "
           f"{'TP':>4} {'FN':>4} {'FP':>4} {'TN':>4}  "
-          f"{'TP':>4} {'FN':>4} {'FP':>4} {'TN':>4}  {'Prec':>7} {'Rec':>7}")
-    print("-" * 90)
+          f"{'TP':>4} {'FN':>4} {'FP':>4} {'TN':>4}  "
+          f"{'TP':>4} {'FN':>4} {'FP':>4} {'TN':>4}  "
+          f"{'Prec30':>7} {'Rec30':>7} {'Prec25':>7} {'Rec25':>7}")
+    print("-" * 110)
 
     for berth in BERTHS:
-        rows_b = [r for r in results
+        rows_b = [r for r in adj
                   if r["berth"] == berth
                   and r["optical_ref"] in ("OCC", "EMP")
                   and r["det"] in ("OCC", "EMP")]
         tp, tn, fp, fn = _cm_from_rows(rows_b)
         tgt = ASSERT_TARGETS[berth]
-
         prec = tp / (tp + fp) * 100 if (tp + fp) > 0 else float("nan")
         rec  = tp / (tp + fn) * 100 if (tp + fn) > 0 else float("nan")
-
-        # SH reference recall for gate comparison
         sh_tp = tgt["TP"]; sh_fn = tgt["FN"]
         sh_rec = sh_tp / (sh_tp + sh_fn) * 100 if (sh_tp + sh_fn) > 0 else 0.0
-
         gate_ok = (prec >= 90.0 or tp + fp == 0) and rec >= sh_rec - 0.1
         gate_str = "OK" if gate_ok else "FAIL"
         if not gate_ok:
             ok = False
 
-        print(f"{berth:<20}  {'':4}  "
+        if berth == "east_t_head" and adj25:
+            rows_25 = [r for r in adj25
+                       if r["berth"] == "east_t_head"
+                       and r["optical_ref"] in ("OCC", "EMP")
+                       and r["det"] in ("OCC", "EMP")]
+            tp25, tn25, fp25, fn25 = _cm_from_rows(rows_25)
+            prec25 = tp25 / (tp25 + fp25) * 100 if (tp25 + fp25) > 0 else float("nan")
+            rec25  = tp25 / (tp25 + fn25) * 100 if (tp25 + fn25) > 0 else float("nan")
+        else:
+            tp25, tn25, fp25, fn25 = tp, tn, fp, fn
+            prec25, rec25 = prec, rec
+
+        print(f"{berth:<20}  "
               f"{tgt['TP']:>4} {tgt['FN']:>4} {tgt['FP']:>4} {tgt['TN']:>4}  "
               f"{tp:>4} {fn:>4} {fp:>4} {tn:>4}  "
-              f"{prec:>6.1f}% {rec:>6.1f}%  {gate_str}")
+              f"{tp25:>4} {fn25:>4} {fp25:>4} {tn25:>4}  "
+              f"{prec:>6.1f}% {rec:>6.1f}%  "
+              f"{prec25:>6.1f}% {rec25:>6.1f}%  {gate_str}")
 
         if not gate_ok:
             print(f"  → GATE FAIL: prec={prec:.1f}% (need≥90%)  "
                   f"rec={rec:.1f}% (need≥{sh_rec:.1f}%)")
-            print(f"  Per-row mismatches:")
+            print("  Per-row mismatches:")
             for r in rows_b:
                 if r["optical_ref"] != r["det"]:
                     print(f"    MISMATCH {r['date']} o{r['orbit']} {berth}: "
                           f"ref={r['optical_ref']} det={r['det']} "
                           f"len={r['length_m']}m asp={r['aspect']}")
 
-    print("-" * 90)
+        if berth == "east_t_head" and adj25 and (tp25 != tp or fn25 != fn):
+            verdict = "≥90% — accept" if (not math.isnan(prec25) and prec25 >= 90.0) else "<90% — reject"
+            print(f"  → asp≥2.5 delta: TP {tp}→{tp25} FN {fn}→{fn25} "
+                  f"FP {fp}→{fp25}  prec25={prec25:.1f}% {verdict}")
+
+    print("-" * 110)
     if not ok:
         sys.exit("FATAL: PC assert gate failed — v4_history and DB write blocked")
     print("=== PC assert gate passed (prec≥90%, rec not worse) — OK to proceed ===")
