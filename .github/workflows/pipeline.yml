@@ -310,8 +310,6 @@ jobs:
       status: ${{ steps.outcome.outputs.status }}
     steps:
       - uses: actions/checkout@v4
-        with:
-          ref: main
 
       - uses: actions/setup-python@v5
         with:

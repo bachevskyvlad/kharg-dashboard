@@ -55,3 +55,21 @@ Pipeline PGRST204: "Could not find the 'sat' column of 'hormuz_passes' in the sc
 
 ## Rollback
 ALTER TABLE hormuz_passes DROP COLUMN sat;
+
+---
+
+## Change 5 — hormuz_ships table
+ALTER TABLE hormuz_ships
+  ADD COLUMN IF NOT EXISTS pass_date  date,
+  ADD COLUMN IF NOT EXISTS pass_orbit integer,
+  ADD COLUMN IF NOT EXISTS lat        real,
+  ADD COLUMN IF NOT EXISTS lon        real,
+  ADD COLUMN IF NOT EXISTS length_m   integer;
+
+## Trigger
+After hormuz_passes upsert succeeded, pipeline failed with PGRST204:
+"Could not find the 'pass_date' column of 'hormuz_ships' in the schema cache"
+Full audit of hormuz_queue_backfill.py ship_rows dict: pass_date, pass_orbit, lat, lon, length_m.
+
+## Rollback
+ALTER TABLE hormuz_ships DROP COLUMN pass_date, DROP COLUMN pass_orbit, DROP COLUMN lat, DROP COLUMN lon, DROP COLUMN length_m;
