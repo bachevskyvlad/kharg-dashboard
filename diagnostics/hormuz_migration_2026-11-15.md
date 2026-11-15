@@ -44,3 +44,14 @@ Full column audit of hormuz_queue_backfill.py — added all remaining missing co
 
 ## Rollback
 ALTER TABLE hormuz_passes DROP COLUMN n150, DROP COLUMN n250, DROP COLUMN thr_db, DROP COLUMN n_all;
+
+---
+
+## Change 4
+ALTER TABLE hormuz_passes ADD COLUMN IF NOT EXISTS sat text;
+
+## Trigger
+Pipeline PGRST204: "Could not find the 'sat' column of 'hormuz_passes' in the schema cache"
+
+## Rollback
+ALTER TABLE hormuz_passes DROP COLUMN sat;

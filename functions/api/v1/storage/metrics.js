@@ -1,4 +1,4 @@
-import { verifyApiKey, apiError, apiJson, apiCsv } from '../../../_auth.js';
+import { verifyApiKey, apiError, apiJson, apiCsv } from '../../_auth.js';
 
 export async function onRequest(context) {
   const { request } = context;
