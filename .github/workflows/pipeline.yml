@@ -339,6 +339,8 @@ jobs:
       - name: Berth snapshots
         id: snapshots
         env:
+          CLIENT_ID:               ${{ secrets.CLIENT_ID }}
+          CLIENT_SECRET:           ${{ secrets.CLIENT_SECRET }}
           PC_SDK_SUBSCRIPTION_KEY: ${{ secrets.PC_SDK_SUBSCRIPTION_KEY }}
           SUPABASE_URL:            ${{ secrets.SUPABASE_URL }}
           SUPABASE_KEY:            ${{ secrets.SUPABASE_KEY }}
