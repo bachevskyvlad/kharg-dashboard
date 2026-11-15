@@ -115,10 +115,54 @@ def _bbox_dims(bbox_obj, resolution):
     return max(1, round(width_m / resolution)), max(1, round(height_m / resolution))
 
 
-def run():
+def run(incremental=False):
     today = datetime.utcnow().strftime("%Y-%m-%d")
+
+    start_date   = HISTORY_START
+    old_passes   = []
+    old_loadings = []
+    old_hull_rows = []
+
+    if incremental and JSON_OUT.exists():
+        try:
+            old_data     = json.loads(JSON_OUT.read_text())
+            old_passes   = old_data.get("passes", [])
+            old_loadings = old_data.get("loadings", [])
+            if old_passes:
+                last_date  = max(p["date"] for p in old_passes)
+                start_date = (datetime.strptime(last_date, "%Y-%m-%d") + timedelta(days=1)).strftime("%Y-%m-%d")
+                print(f"Incremental: resuming from {start_date} (last processed {last_date})")
+            csv_path_inc = OUT_DIR / "berth_v4_history.csv"
+            if csv_path_inc.exists():
+                with open(csv_path_inc, newline="") as _f:
+                    for _r in csv.DictReader(_f):
+                        old_hull_rows.append(_r)
+        except Exception as _exc:
+            print(f"WARNING: incremental load failed ({_exc}), running full history")
+            start_date = HISTORY_START
+            old_passes = []
+            old_loadings = []
+            old_hull_rows = []
+
+    if start_date > today:
+        print(f"Already up to date (start={start_date} > today={today}). Nothing to do.")
+        return
+
+    # Init prev_hulls from last known pass per (berth, orbit) in old_passes
+    prev_hulls: dict = {}
+    if old_passes:
+        for orbit in ORBITS:
+            orbit_passes = [p for p in old_passes if p.get("orbit") == orbit]
+            if orbit_passes:
+                lp = orbit_passes[-1]
+                for berth in V4_CONFIG:
+                    prev_hulls[(berth, orbit)] = [
+                        {"pos_m": h["pos_m"], "len_m": h["len_m"]}
+                        for h in lp.get(berth, {}).get("hulls", [])
+                    ]
+
     try:
-        entries = discover_dates(HISTORY_START, today)
+        entries = discover_dates(start_date, today)
     except Exception as exc:
         sys.exit(f"FATAL: PC catalog search failed — {exc}")
 
@@ -151,10 +195,7 @@ def run():
     # Pass-level results (for JSON output)
     passes_out = []
     loadings   = []
-    hull_rows  = []  # for CSV
-
-    # Track previous pass hulls per (berth, orbit) for new_load detection
-    prev_hulls: dict = {}  # (berth, orbit) → list of {pos_m, len_m}
+    hull_rows  = []  # for CSV — new rows only; merged with old_hull_rows at write time
 
     for entry in entries:
         date_str = entry["date_str"]
@@ -276,16 +317,17 @@ def run():
 
         passes_out.append(pass_record)
 
-    # ── CSV output (hull-level) ────────────────────────────────────────────────
+    # ── CSV output (hull-level) — merge old + new ─────────────────────────────
     csv_path = OUT_DIR / "berth_v4_history.csv"
     fieldnames = ["date","orbit","berth","hull_idx","det","side","pos_m",
                   "lon","lat","len_m","width_m","class","new_load","bg_source"]
+    all_hull_rows = old_hull_rows + hull_rows
     with open(csv_path, "w", newline="") as f:
         w = csv.DictWriter(f, fieldnames=fieldnames, extrasaction="ignore")
         w.writeheader()
-        for r in hull_rows:
+        for r in all_hull_rows:
             w.writerow(r)
-    print(f"\nSaved: {csv_path} ({len(hull_rows)} hull rows)")
+    print(f"\nSaved: {csv_path} ({len(all_hull_rows)} hull rows)")
 
     # ── Metrics ───────────────────────────────────────────────────────────────
     from datetime import date as _date
@@ -294,13 +336,14 @@ def run():
     d4w_py_end = (today_dt - timedelta(weeks=52)).isoformat()
     d4w_py_start = (today_dt - timedelta(weeks=56)).isoformat()
 
-    l4w    = count_loadings(loadings, d4w_start, today)
-    l4w_py = count_loadings(loadings, d4w_py_start, d4w_py_end)
+    _all_load = old_loadings + loadings
+    l4w    = count_loadings(_all_load, d4w_start, today)
+    l4w_py = count_loadings(_all_load, d4w_py_start, d4w_py_end)
 
     # Last loading event
     last_ship = None
-    if loadings:
-        ls = loadings[-1]
+    if _all_load:
+        ls = _all_load[-1]
         last_ship = {
             "date":   ls["date"],
             "berth":  ls["berth"],
@@ -321,14 +364,15 @@ def run():
         "days_since_loading": days_since,
     }
 
-    # ── JSON output for site (v5.0) ───────────────────────────────────────────
+    # ── JSON output for site (v5.0) — merge old passes + loadings ────────────
+    all_loadings = old_loadings + loadings
     obj = {
         "generated": today,
         "version":   "v5.0",
         "note":      "lower bound — detector misses ~1/3 of ships; precision ~92% when OCC",
         "berths":    ["sea_island", "east_t_head", "southeast_pier"],
-        "passes":    passes_out,
-        "loadings":  loadings,
+        "passes":    old_passes + passes_out,
+        "loadings":  all_loadings,
         "metrics":   metrics,
     }
     JSON_OUT.parent.mkdir(parents=True, exist_ok=True)
@@ -395,4 +439,8 @@ def run():
 
 
 if __name__ == "__main__":
-    run()
+    import argparse as _ap
+    _p = _ap.ArgumentParser()
+    _p.add_argument("--incremental", action="store_true")
+    _args = _p.parse_args()
+    run(incremental=_args.incremental)
