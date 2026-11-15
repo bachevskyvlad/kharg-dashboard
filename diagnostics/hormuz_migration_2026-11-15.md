@@ -28,3 +28,19 @@ are written by the script but were absent from the schema.
 
 ## Rollback
 ALTER TABLE hormuz_passes DROP COLUMN gap_days, DROP COLUMN stay, DROP COLUMN gone;
+
+---
+
+## Change 3
+ALTER TABLE hormuz_passes
+  ADD COLUMN IF NOT EXISTS n150   integer,
+  ADD COLUMN IF NOT EXISTS n250   integer,
+  ADD COLUMN IF NOT EXISTS thr_db real,
+  ADD COLUMN IF NOT EXISTS n_all  integer;
+
+## Trigger
+Pipeline PGRST204: "Could not find the 'n150' column of 'hormuz_passes' in the schema cache"
+Full column audit of hormuz_queue_backfill.py — added all remaining missing columns at once.
+
+## Rollback
+ALTER TABLE hormuz_passes DROP COLUMN n150, DROP COLUMN n250, DROP COLUMN thr_db, DROP COLUMN n_all;
