@@ -16,7 +16,7 @@ CELL_KM          = 1.0
 CORRIDOR_HALF_M  = 150
 CORRIDOR_END_M   = 250
 RATIO_THR        = 10.0
-MERGE_PERP_TOL_M = 30.0
+MERGE_PERP_TOL_M = 40.0
 
 struct8 = ndimage.generate_binary_structure(2, 2)
 
@@ -194,11 +194,15 @@ def find_blobs(ratio_arr, water_mask, axis_uvec, merge_gap_m, min_len_m,
         # best aspect across individual blobs (not merged bounding box)
         best_aspect = max(b["aspect"] for b in grp)
         area_px     = sum(b["area_px"] for b in grp)
+        # area-weighted perp centre of merged group
+        perp_ctr_m  = float(np.average([b["perp_ctr"] for b in grp],
+                                        weights=[max(b["area_px"], 1) for b in grp]))
         blobs.append({
             "length_m": length_m, "width_m": width_m,
             "aspect": best_aspect, "area_px": area_px,
             "n_merged": len(grp),
             "axis_min": a_min, "axis_max": a_max,
+            "perp_ctr": perp_ctr_m,
         })
         if debug and len(grp) > 1:
             print(f"    merged {len(grp)} blobs → len={length_m:.0f}m "

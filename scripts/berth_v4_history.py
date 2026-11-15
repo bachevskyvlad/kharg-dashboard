@@ -52,9 +52,9 @@ BERTHS = BERTH_COORDS  # alias for local use
 
 V4_CONFIG = {
     # all BGs rebuilt from PC and saved in BG_V4
-    "sea_island":     {"pier": 20, "water_i": 20, "water_o": 80, "min_len": 120, "aspect_thr": 2.0, "merge_gap": 40, "bg_dir": BG_V4},
-    "east_t_head":    {"pier": 20, "water_i": 20, "water_o": 80, "min_len": 150, "aspect_thr": 3.0, "merge_gap":  0, "bg_dir": BG_V4},
-    "southeast_pier": {"pier": 20, "water_i": 20, "water_o": 80, "min_len": 150, "aspect_thr": 3.0, "merge_gap":  0, "bg_dir": BG_V4},
+    "sea_island":     {"pier": 20, "water_i": 20, "water_o": 80, "min_len": 120, "aspect_thr": 2.0, "merge_gap": 120, "bg_dir": BG_V4},
+    "east_t_head":    {"pier": 20, "water_i": 20, "water_o": 80, "min_len": 150, "aspect_thr": 3.0, "merge_gap": 120, "bg_dir": BG_V4},
+    "southeast_pier": {"pier": 20, "water_i": 20, "water_o": 80, "min_len": 150, "aspect_thr": 3.0, "merge_gap": 120, "bg_dir": BG_V4},
 }
 
 AOI_BBOX     = BBox(bbox=[50.26, 29.17, 50.40, 29.31], crs=CRS.WGS84)
@@ -87,11 +87,19 @@ def classify_hull(len_m):
 
 # ── Loading event detection ────────────────────────────────────────────────────
 
-def is_new_load(pos_m, len_m, prev_hulls):
-    """Return True if no hull in prev_hulls matches this position/length."""
+def is_new_load(pos_m, len_m, perp_m, prev_hulls):
+    """Return True if no hull in prev_hulls matches position/length/side.
+
+    Tolerances: ±200 m along axis, ±50 m length, same pier side (sign of perp_m).
+    prev_hulls may lack 'perp_m' (old JSON) — falls back to side-agnostic match.
+    """
     return not any(
-        abs(pos_m - ph["pos_m"]) <= 150 and
-        abs(len_m - ph["len_m"]) / max(ph["len_m"], 1) <= 0.20
+        abs(pos_m - ph["pos_m"]) <= 200 and
+        abs(len_m - ph["len_m"]) <= 50 and
+        (
+            ph.get("perp_m") is None or
+            (perp_m >= 0) == (ph["perp_m"] >= 0)
+        )
         for ph in prev_hulls
     )
 
@@ -103,6 +111,99 @@ def count_loadings(loadings, start, end):
     vlcc  = sum(1 for l in subset if l["class"] == "VLCC")
     suez  = sum(1 for l in subset if l["class"] == "SuezAframax")
     return {"total": total, "VLCC": vlcc, "SuezAframax": suez}
+
+# ── Validation report ─────────────────────────────────────────────────────────
+
+def _print_validation_report(all_passes, all_loadings):
+    """Print hull-count and loading-rate sanity table.
+
+    Expected:
+      hulls/pass mean ≤ 1.5, max ≤ 3 per berth
+      loadings/month ≤ passes/month
+      VLCC share 2025 — majority on sea_island and east_t_head
+    """
+    from collections import defaultdict
+    import calendar
+
+    berths = ["sea_island", "east_t_head", "southeast_pier"]
+
+    # hulls per pass per berth
+    hull_counts: dict = defaultdict(list)  # berth → [n_hulls]
+    for p in all_passes:
+        for b in berths:
+            bd = p.get(b, {})
+            if bd.get("det") in ("OCC", "EMP"):
+                hull_counts[b].append(len(bd.get("hulls", [])))
+
+    # passes per calendar month
+    month_passes: dict = defaultdict(lambda: defaultdict(int))  # (year,month) → berth → n
+    for p in all_passes:
+        try:
+            dt = datetime.strptime(p["date"], "%Y-%m-%d")
+        except (KeyError, ValueError):
+            continue
+        for b in berths:
+            if p.get(b, {}).get("det") in ("OCC", "EMP"):
+                month_passes[(dt.year, dt.month)][b] += 1
+
+    # loadings per calendar month
+    month_loads: dict = defaultdict(lambda: defaultdict(int))
+    for l in all_loadings:
+        try:
+            dt = datetime.strptime(l["date"], "%Y-%m-%d")
+        except (KeyError, ValueError):
+            continue
+        month_loads[(dt.year, dt.month)][l["berth"]] += 1
+
+    # VLCC share 2025
+    vlcc_2025: dict = defaultdict(int)
+    total_2025: dict = defaultdict(int)
+    for l in all_loadings:
+        if l["date"].startswith("2025"):
+            total_2025[l["berth"]] += 1
+            if l["class"] == "VLCC":
+                vlcc_2025[l["berth"]] += 1
+
+    print("\n=== Validation report ===")
+    print(f"\n{'Berth':<20} {'Passes':>7} {'Hull/pass mean':>14} {'Hull/pass max':>13} "
+          f"{'Status':>8}")
+    print("-" * 68)
+    for b in berths:
+        hc = hull_counts[b]
+        if not hc:
+            print(f"{b:<20} {'—':>7}")
+            continue
+        mean_h = sum(hc) / len(hc)
+        max_h  = max(hc)
+        ok     = "OK" if mean_h <= 1.5 and max_h <= 3 else "WARN"
+        print(f"{b:<20} {len(hc):>7} {mean_h:>14.2f} {max_h:>13d} {ok:>8}")
+
+    # loadings/month vs passes/month per berth
+    all_months = sorted(set(month_passes) | set(month_loads))
+    months_with_overcount = []
+    for ym in all_months:
+        for b in berths:
+            lm = month_loads[ym].get(b, 0)
+            pm = month_passes[ym].get(b, 0)
+            if lm > pm and pm > 0:
+                months_with_overcount.append((ym, b, lm, pm))
+
+    if months_with_overcount:
+        print("\nWARN loadings > passes in month:")
+        for (yr, mo), b, lm, pm in months_with_overcount[:10]:
+            print(f"  {yr}-{mo:02d} {b}: {lm} loadings vs {pm} passes")
+    else:
+        print("\nOK  loadings/month ≤ passes/month for all berth-months")
+
+    # VLCC share 2025
+    print(f"\n{'Berth':<20} {'Loadings 2025':>13} {'VLCC':>6} {'VLCC%':>7}")
+    print("-" * 50)
+    for b in berths:
+        tot = total_2025[b]
+        vlc = vlcc_2025[b]
+        pct = vlc / tot * 100 if tot else 0.0
+        print(f"{b:<20} {tot:>13} {vlc:>6} {pct:>6.0f}%")
+
 
 # ── Main ───────────────────────────────────────────────────────────────────────
 
@@ -157,7 +258,12 @@ def run(incremental=False):
                 lp = orbit_passes[-1]
                 for berth in V4_CONFIG:
                     prev_hulls[(berth, orbit)] = [
-                        {"pos_m": h["pos_m"], "len_m": h["len_m"]}
+                        {
+                            "pos_m":  h["pos_m"],
+                            "len_m":  h["len_m"],
+                            # perp_m not in old JSON — use side sign as proxy
+                            "perp_m": h.get("perp_m", float(h.get("side", 0))),
+                        }
                         for h in lp.get(berth, {}).get("hulls", [])
                     ]
 
@@ -247,15 +353,36 @@ def run(incremental=False):
             prev = prev_hulls.get((berth, orbit), [])
             hull_list = []
 
-            for blob in (blobs if blobs else []):
+            # Step 1: keep only blobs that meet min_len threshold (after merge)
+            min_len = cfg["min_len"]
+            qualifying = [b for b in (blobs or []) if b["length_m"] >= min_len]
+
+            # Step 2: physical cap — max 2 hulls per pier side (sign of perp_ctr)
+            by_side: dict = {}
+            for b in qualifying:
+                sk = 1 if b.get("perp_ctr", 0) >= 0 else -1
+                by_side.setdefault(sk, []).append(b)
+
+            capped: list = []
+            for sk, side_blobs in by_side.items():
+                side_blobs.sort(key=lambda b: b["length_m"], reverse=True)
+                capped.extend(side_blobs[:2])
+                if len(side_blobs) > 2:
+                    extras = side_blobs[2:]
+                    print(f"  CAP {berth} side={sk:+d}: dropping "
+                          f"{len(extras)} hull(s) "
+                          f"len={[round(b['length_m']) for b in extras]}m")
+
+            for blob in capped:
                 len_m = float(blob["length_m"])
-                wid_m = float(blob.get("width_m", blob.get("length_m", len_m) / max(blob.get("aspect", 3.0), 1)))
+                wid_m = float(blob.get("width_m", len_m / max(blob.get("aspect", 3.0), 1)))
 
                 # Geographic centre of hull
                 axis_mid_px = (blob["axis_min"] + blob["axis_max"]) / 2
                 perp_ctr    = blob.get("perp_ctr", 0)
                 side        = 1 if perp_ctr >= 0 else -1
                 pos_m       = round(float(axis_mid_px) * RESOLUTION, 0)
+                perp_m      = round(float(perp_ctr) * RESOLUTION, 0)
 
                 # pixel position within cell
                 col_c = axis_mid_px * ux + perp_ctr * (-uy)
@@ -264,10 +391,11 @@ def run(incremental=False):
                 lat_c = cbbox.max_y - (row_c / ch) * (cbbox.max_y - cbbox.min_y)
 
                 cls      = classify_hull(len_m)
-                new_load = is_new_load(pos_m, len_m, prev)
+                new_load = is_new_load(pos_m, len_m, perp_m, prev)
 
                 hull = {
                     "side":     side,
+                    "perp_m":   perp_m,
                     "pos_m":    pos_m,
                     "lon":      round(lon_c, 6),
                     "lat":      round(lat_c, 6),
@@ -298,18 +426,24 @@ def run(incremental=False):
                         "class":  cls,
                     })
 
-            prev_hulls[(berth, orbit)] = [{"pos_m": h["pos_m"], "len_m": h["len_m"]}
-                                           for h in hull_list]
+            prev_hulls[(berth, orbit)] = [
+                {"pos_m": h["pos_m"], "len_m": h["len_m"], "perp_m": h["perp_m"]}
+                for h in hull_list
+            ]
 
             if not hull_list and detected and best:
-                # find_blobs didn't return all blobs — add best as fallback
+                # find_blobs returned a best blob but no qualifying hulls — add as fallback
                 len_m = float(best["length_m"])
+                perp_ctr_b = best.get("perp_ctr", 0)
+                perp_m_b   = round(float(perp_ctr_b) * RESOLUTION, 0)
                 hull_list.append({
-                    "side": 0, "pos_m": 0, "lon": 0, "lat": 0,
+                    "side": 1 if perp_ctr_b >= 0 else -1,
+                    "perp_m": perp_m_b,
+                    "pos_m": 0, "lon": 0, "lat": 0,
                     "len_m": round(len_m, 1),
                     "width_m": round(len_m / max(best.get("aspect", 3.0), 1), 1),
                     "class": classify_hull(len_m),
-                    "new_load": is_new_load(0, len_m, prev),
+                    "new_load": is_new_load(0, len_m, perp_m_b, prev),
                 })
 
             pass_record[berth] = {"det": det_str, "hulls": hull_list}
@@ -319,7 +453,7 @@ def run(incremental=False):
 
     # ── CSV output (hull-level) — merge old + new ─────────────────────────────
     csv_path = OUT_DIR / "berth_v4_history.csv"
-    fieldnames = ["date","orbit","berth","hull_idx","det","side","pos_m",
+    fieldnames = ["date","orbit","berth","hull_idx","det","side","perp_m","pos_m",
                   "lon","lat","len_m","width_m","class","new_load","bg_source"]
     all_hull_rows = old_hull_rows + hull_rows
     with open(csv_path, "w", newline="") as f:
@@ -386,6 +520,9 @@ def run(incremental=False):
     print(f"Loadings last 4w: {l4w}")
     if last_ship:
         print(f"Last ship: {last_ship}")
+
+    # ── Validation report (table) ─────────────────────────────────────────────
+    _print_validation_report(old_passes + passes_out, old_loadings + loadings)
 
     # ── Supabase write ────────────────────────────────────────────────────────
     svc_key  = os.environ.get("SUPABASE_SERVICE_KEY") or ""
