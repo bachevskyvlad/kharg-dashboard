@@ -29,9 +29,9 @@ BERTH_COORDS = {
 # Single authoritative detection params — matches ablation bg-mode and v4_history V4_CONFIG.
 # bg_dir is NOT here (script-specific path).
 BERTH_DETECT_PARAMS = {
-    "sea_island":     dict(pier=20, water_i=20, water_o=80, min_len=120, aspect=2.0, merge=40),
-    "east_t_head":    dict(pier=20, water_i=20, water_o=80, min_len=150, aspect=3.0, merge=0),
-    "southeast_pier": dict(pier=20, water_i=20, water_o=80, min_len=150, aspect=3.0, merge=0),
+    "sea_island":     dict(pier=20, water_i=20, water_o=80, min_len=120, aspect=2.0, merge=120),
+    "east_t_head":    dict(pier=20, water_i=20, water_o=80, min_len=150, aspect=3.0, merge=120),
+    "southeast_pier": dict(pier=20, water_i=20, water_o=80, min_len=150, aspect=3.0, merge=120),
 }
 
 
@@ -194,15 +194,19 @@ def find_blobs(ratio_arr, water_mask, axis_uvec, merge_gap_m, min_len_m,
         # best aspect across individual blobs (not merged bounding box)
         best_aspect = max(b["aspect"] for b in grp)
         area_px     = sum(b["area_px"] for b in grp)
-        # area-weighted perp centre of merged group
+        # area-weighted perp centre, and union perp extent, of merged group
         perp_ctr_m  = float(np.average([b["perp_ctr"] for b in grp],
                                         weights=[max(b["area_px"], 1) for b in grp]))
+        perp_min_m  = min(b["perp_min"] for b in grp)
+        perp_max_m  = max(b["perp_max"] for b in grp)
         blobs.append({
             "length_m": length_m, "width_m": width_m,
             "aspect": best_aspect, "area_px": area_px,
             "n_merged": len(grp),
             "axis_min": a_min, "axis_max": a_max,
             "perp_ctr": perp_ctr_m,
+            "perp_min": perp_min_m,
+            "perp_max": perp_max_m,
         })
         if debug and len(grp) > 1:
             print(f"    merged {len(grp)} blobs → len={length_m:.0f}m "

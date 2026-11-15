@@ -375,6 +375,8 @@ def main():
     print("\n=== Validation on 42 dates ===")
     results = []
     discrepancy_dates = set()
+    # cache for contact sheet: (date_str, orbit, berth) → dict
+    cs_cache: dict = {}
 
     for row in ref_rows:
         date_str = row.get("date", "").strip()
@@ -444,6 +446,19 @@ def main():
             status = "OK" if match else ("MISMATCH" if match is False else "SKIP")
             print(f"  {berth}: ref={optical_ref} det={det_str} "
                   f"len={len_str}m asp={asp_str} {status}")
+
+            # cache for contact sheet
+            qualifying_blobs = [b for b in blobs if b["length_m"] >= p["min_len"]]
+            cs_cache[(date_str, orbit, berth)] = {
+                "optical_ref": optical_ref,
+                "det": det_str, "match": match,
+                "ratio": ratio, "linear": linear,
+                "water_mask": geom["water_mask"],
+                "axis_uvec": geom["axis_uvec"],
+                "blobs": qualifying_blobs,
+                "s1_item": s1_item,
+                "bbox_obj": bbox_obj,
+            }
 
     # ── Results CSV ───────────────────────────────────────────────────────────
     res_csv = OUT_DIR / "results.csv"
@@ -519,12 +534,20 @@ def main():
     for line in acc_lines:
         print(line)
 
+    # ── Confmat assert gate — before contact sheet ────────────────────────────
+    print("\n=== Confmat asserts ===")
+    _assert_confmat(results)   # sys.exit on failure — nothing below runs
+
+    # ── Full 42-date contact sheet ────────────────────────────────────────────
+    print("\n=== Contact sheet (all 42 dates × 3 berths) ===")
+    _save_contact_sheet(ref_rows, cs_cache, cell_bboxes, aoi_full)
+
     # ── Discrepancy contact sheet ─────────────────────────────────────────────
-    # (runs before assert so we always have the PNG for debugging)
     disc_rows = sorted(discrepancy_dates)
     print(f"\nDiscrepancies: {len(disc_rows)} date-orbits")
     if not disc_rows:
-        print("No discrepancies — skipping PNG"); return
+        print("No discrepancies — skipping discrepancy PNG")
+        return
 
     disc_cells = {k: {} for k in disc_rows}
     for date_str, orbit in disc_rows:
@@ -667,9 +690,197 @@ def main():
     print(f"\nSaved: {out_png} ({out_png.stat().st_size//1024} KB)")
     plt.close(fig)
 
-    # ── Confmat assert gate — must pass before v4_history and DB write ────────
-    print("\n=== Confmat asserts ===")
-    _assert_confmat(results)
+
+def _classify_hull(len_m):
+    return "VLCC" if len_m >= 300 else "SuezAframax"
+
+
+def _draw_hull_boxes(ax, blobs, ux, uy, min_len, color_ok="#f1c40f", color_cap="#e67e22"):
+    """Draw oriented bounding boxes for qualifying blobs.
+
+    color_ok  = box within physical cap
+    color_cap = extra box beyond 2-per-side cap
+    """
+    px_u, py_u = -uy, ux
+    # group by side, keep ≤2 per side, mark rest as cap extras
+    by_side: dict = {}
+    for b in blobs:
+        sk = 1 if b.get("perp_ctr", 0) >= 0 else -1
+        by_side.setdefault(sk, []).append(b)
+
+    for sk, side_blobs in by_side.items():
+        side_blobs_s = sorted(side_blobs, key=lambda b: b["length_m"], reverse=True)
+        for idx, b in enumerate(side_blobs_s):
+            am, aM = b["axis_min"], b["axis_max"]
+            pm = b.get("perp_min", b.get("perp_ctr", 0) - b.get("width_m", 20) / RESOLUTION / 2)
+            pM = b.get("perp_max", b.get("perp_ctr", 0) + b.get("width_m", 20) / RESOLUTION / 2)
+            # 4 corners in (col, row)
+            cs = [am*ux + pm*px_u, aM*ux + pm*px_u,
+                  aM*ux + pM*px_u, am*ux + pM*px_u, am*ux + pm*px_u]
+            rs = [am*uy + pm*py_u, aM*uy + pm*py_u,
+                  aM*uy + pM*py_u, am*uy + pM*py_u, am*uy + pm*py_u]
+            clr = color_ok if idx < 2 else color_cap
+            ax.plot(cs, rs, "-", color=clr, lw=1.0, alpha=0.9)
+            # class label at centre
+            ctr_c = (am + aM) / 2 * ux + (pm + pM) / 2 * px_u
+            ctr_r = (am + aM) / 2 * uy + (pm + pM) / 2 * py_u
+            cls_lbl = _classify_hull(b["length_m"])[0]  # "V" or "S"
+            ax.text(ctr_c, ctr_r, f"{cls_lbl}\n{b['length_m']:.0f}m",
+                    color=clr, fontsize=3, ha="center", va="center",
+                    fontweight="bold")
+
+
+def _save_contact_sheet(ref_rows, cs_cache, cell_bboxes, aoi_full):
+    """Generate per-berth contact sheet (all 42 dates).
+
+    Layout per berth: tall strip, 42 rows × 2 panels (optical | SAR+hulls).
+    Caption: «корпусов: N, классы: X». Optical=S2 RGB if available else SAR dB.
+    """
+    min_lens = {b: BERTH_DETECT_PARAMS[b]["min_len"] for b in BERTHS}
+
+    for berth in BERTHS:
+        dates_in_order = []
+        for row in ref_rows:
+            d = row.get("date", "").strip()
+            if not d: continue
+            try: orb = int(row["orbit"])
+            except: continue
+            dates_in_order.append((d, orb, row.get(f"{berth}_optical_ref", "").strip()))
+
+        n = len(dates_in_order)
+        PANEL_H = 1.5; PANEL_W = 1.5; LABEL_W = 0.6
+        fig_w = LABEL_W + 2 * PANEL_W
+        fig_h = n * PANEL_H
+        fig = plt.figure(figsize=(fig_w, fig_h))
+        fig.patch.set_facecolor("#111")
+
+        # Fetch S2 once per unique date (expensive call)
+        s2_cache: dict = {}
+        print(f"\nFetching S2 for {berth} ({n} dates)...")
+        for date_str, orbit, _ in dates_in_order:
+            if date_str not in s2_cache:
+                s2_dt = scene_datetime_s2(date_str, aoi_full)
+                rgb   = fetch_s2_rgb(s2_dt, cell_bboxes[berth]) if s2_dt else None
+                s2_cache[date_str] = rgb
+                if rgb is not None:
+                    print(f"  S2 {date_str} OK")
+
+        for ri, (date_str, orbit, optical_ref) in enumerate(dates_in_order):
+            # axes: [label | optical | SAR+hulls]
+            left_opt = LABEL_W / fig_w
+            w_panel  = PANEL_W / fig_w
+            row_b = 1.0 - (ri + 1) * PANEL_H / fig_h
+            row_h = PANEL_H / fig_h
+
+            ax_lbl = fig.add_axes([0, row_b, left_opt * 0.95, row_h])
+            ax_opt = fig.add_axes([left_opt,            row_b, w_panel * 0.97, row_h])
+            ax_sar = fig.add_axes([left_opt + w_panel,  row_b, w_panel * 0.97, row_h])
+
+            for ax in (ax_lbl, ax_opt, ax_sar):
+                ax.set_facecolor("#0d0d0d")
+                ax.set_xticks([]); ax.set_yticks([])
+
+            # Label
+            ax_lbl.text(0.95, 0.5, f"{date_str}\no{orbit}",
+                        color="#ccc", fontsize=4.5, ha="right", va="center",
+                        transform=ax_lbl.transAxes)
+            ax_lbl.axis("off")
+
+            cell = cs_cache.get((date_str, orbit, berth), {})
+            blobs    = cell.get("blobs", [])
+            ratio    = cell.get("ratio")
+            linear   = cell.get("linear")
+            water_m  = cell.get("water_mask")
+            axis_uvec = cell.get("axis_uvec", (1.0, 0.0))
+            det_str  = cell.get("det", "?")
+            match    = cell.get("match")
+            ux, uy   = axis_uvec
+
+            # Qualifying blobs after min_len filter (already applied in cs_cache)
+            qual = [b for b in blobs if b["length_m"] >= min_lens[berth]]
+            n_hulls = len(qual)
+            classes = "/".join(sorted(set(_classify_hull(b["length_m"]) for b in qual))) if qual else "—"
+
+            # optical panel: S2 RGB or SAR dB
+            rgb = s2_cache.get(date_str)
+            if rgb is not None:
+                ax_opt.imshow(rgb, interpolation="nearest", origin="upper")
+                ax_opt.text(0.03, 0.97, "S2", color="white", fontsize=3,
+                            ha="left", va="top", transform=ax_opt.transAxes,
+                            bbox=dict(fc="black", alpha=0.5, lw=0, pad=0.5))
+            elif linear is not None and np.isfinite(linear).any():
+                db = np.where(linear > 0, 10 * np.log10(linear), np.nan)
+                fin = db[np.isfinite(db)]
+                if fin.size > 0:
+                    ax_opt.imshow(db, cmap="gray",
+                                  vmin=np.percentile(fin, 2),
+                                  vmax=np.percentile(fin, 98),
+                                  interpolation="nearest", origin="upper")
+                ax_opt.text(0.03, 0.97, "SAR", color="#aaa", fontsize=3,
+                            ha="left", va="top", transform=ax_opt.transAxes,
+                            bbox=dict(fc="black", alpha=0.5, lw=0, pad=0.5))
+            else:
+                ax_opt.text(0.5, 0.5, "NO DATA", color="#444",
+                            ha="center", va="center", fontsize=4,
+                            transform=ax_opt.transAxes)
+
+            # SAR+hulls panel: ratio image with boxes
+            if ratio is not None and np.isfinite(ratio).any():
+                disp = np.clip(np.where(np.isfinite(ratio), ratio, np.nan), -10, 30)
+                ax_sar.imshow(disp, cmap="gray", vmin=-10, vmax=30,
+                              interpolation="nearest", origin="upper")
+                if water_m is not None:
+                    try:
+                        ax_sar.contour(water_m.astype(float), levels=[0.5],
+                                       colors=["#3498db"], linewidths=0.4, alpha=0.7)
+                    except Exception: pass
+                _draw_hull_boxes(ax_sar, qual, ux, uy, min_lens[berth])
+            elif linear is not None and np.isfinite(linear).any():
+                db = np.where(linear > 0, 10 * np.log10(linear), np.nan)
+                fin = db[np.isfinite(db)]
+                if fin.size > 0:
+                    ax_sar.imshow(db, cmap="gray",
+                                  vmin=np.percentile(fin, 2),
+                                  vmax=np.percentile(fin, 98),
+                                  interpolation="nearest", origin="upper")
+            else:
+                ax_sar.text(0.5, 0.5, "NO SAR", color="#444",
+                            ha="center", va="center", fontsize=4,
+                            transform=ax_sar.transAxes)
+
+            # annotation
+            ref_color = "#2ecc71" if optical_ref == "EMP" else "#e74c3c" if optical_ref == "OCC" else "#888"
+            det_color = "#2ecc71" if det_str == "EMP" else "#f1c40f" if det_str == "OCC" else "#888"
+            ann = f"ref={optical_ref}  det={det_str}\nкорпусов: {n_hulls}  {classes}"
+            border_color = "#e74c3c" if match is False else ("#2ecc71" if match is True else "#555")
+            ax_sar.text(0.02, 0.98, ann, color="white", fontsize=3.0, ha="left", va="top",
+                        transform=ax_sar.transAxes, fontweight="bold",
+                        bbox=dict(boxstyle="square,pad=0.15", fc="black", alpha=0.7, lw=0))
+            for ax in (ax_opt, ax_sar):
+                for sp in ax.spines.values():
+                    sp.set_edgecolor(border_color); sp.set_linewidth(1.0)
+
+        # column headers on first row
+        fig.text(LABEL_W / fig_w + PANEL_W / fig_w / 2,
+                 1.0 - 0.004,
+                 "Optical (S2 RGB)", color="white", fontsize=4.5,
+                 ha="center", va="top")
+        fig.text(LABEL_W / fig_w + 1.5 * PANEL_W / fig_w,
+                 1.0 - 0.004,
+                 "SAR + hull boxes (yellow=ok, orange=cap)", color="white", fontsize=4.5,
+                 ha="center", va="top")
+
+        fig.suptitle(
+            f"Contact sheet — {berth.replace('_', ' ')} "
+            f"(merge_gap=120m MERGE_PERP_TOL=40m min_len={min_lens[berth]}m) "
+            "| green=match red=mismatch",
+            color="white", fontsize=5, y=1.0,
+        )
+        out_png = OUT_DIR / f"contact_sheet_{berth}.png"
+        fig.savefig(out_png, dpi=150, bbox_inches="tight", facecolor=fig.get_facecolor())
+        kb = out_png.stat().st_size // 1024
+        print(f"Saved contact sheet: {out_png.name} ({kb} KB)")
+        plt.close(fig)
 
 
 def _assert_confmat(results):
