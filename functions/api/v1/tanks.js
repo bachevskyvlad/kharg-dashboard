@@ -1,4 +1,4 @@
-import { verifyApiKey, apiError, apiJson, apiCsv } from '../../_auth.js';
+import { verifyApiKey, apiError, apiJson, apiCsv } from '../_auth.js';
 
 const BARREL_PER_M3 = 6.2898;
 const TANK_HEIGHT_MIN = 2;
