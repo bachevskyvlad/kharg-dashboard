@@ -18,7 +18,6 @@ from scipy.ndimage import zoom as nd_zoom
 sys.path.insert(0, str(Path(__file__).parent))
 from berth_detect_core import BERTH_COORDS, berth_center, cell_bbox_for
 from berth_pc_fetch import find_item_pc, fetch_s1_pc
-from sentinelhub import BBox, CRS
 
 ROOT   = Path(__file__).parent.parent
 BG_V4  = ROOT / "diagnostics" / "berth_v4" / "bg_v4"
@@ -37,10 +36,6 @@ EMPTY_DATES = [
 ]
 
 def main():
-    PC_SDK_SUBSCRIPTION_KEY = os.environ.get("PC_SDK_SUBSCRIPTION_KEY", "")
-    if not PC_SDK_SUBSCRIPTION_KEY:
-        sys.exit("FATAL: PC_SDK_SUBSCRIPTION_KEY not set")
-
     pts = BERTH_COORDS[BERTH]
     bbox_obj = cell_bbox_for(*berth_center(pts))
 
