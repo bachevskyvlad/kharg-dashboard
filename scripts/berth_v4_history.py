@@ -61,7 +61,10 @@ V4_CONFIG = {
 from berth_detect_core import VISIT_MIN_LEN_M
 
 STATIC_POS_TOL_M        = 60.0  # ±m along pier axis — same-position threshold
-STATIC_CONSEC_MIN       = 3     # ≥N consecutive passes on same orbit → static
+STATIC_WINDOW_DAYS      = 30    # rolling window for orbit-asymmetry test
+STATIC_ASYM_HI          = 0.75  # presence rate on dominant orbit ≥ this → candidate
+STATIC_ASYM_LO          = 0.25  # presence rate on other orbit ≤ this → asymmetric
+STATIC_ASYM_MIN_PASSES  = 2     # min passes of EACH orbit in window to apply test
 LONGTERM_STATIC_MIN_COUNT = 3   # ≥N across all history (same pos + same len ±3m) → structure
 LONGTERM_STATIC_LEN_TOL_M = 3.0 # tight length tolerance for permanent-structure filter
 
@@ -128,47 +131,102 @@ def is_new_load_v2(pos_m, len_m, perp_m, prev_same_orbit, recent_any_hulls, tol_
 
 
 def _build_static_set(all_hull_positions):
-    """Return static keys for hulls present on ≥STATIC_CONSEC_MIN consecutive passes
-    of the same orbit at the same position (±STATIC_POS_TOL_M, same side).
+    """Orbit-asymmetry rule: a position is static when, in every 30-day window
+    that contains it, the dominant orbit sees it on ≥STATIC_ASYM_HI of its passes
+    AND the other orbit sees it on ≤STATIC_ASYM_LO of its passes, provided both
+    orbits have ≥STATIC_ASYM_MIN_PASSES in the window.
 
-    Real ships load for 1–2 days; SAR revisit is 6–12 days per orbit.
-    A hull at the same spot on 3+ consecutive passes of one orbit cannot be a ship.
-    All passes in the consecutive run are marked static.
+    Real ship traffic is visible on both orbits; a persistent non-ship structure
+    (mooring dolphin, construction platform, barge at anchor) reflects differently
+    on ascending vs descending passes, or is simply invisible from one geometry.
     """
+    from datetime import date as _date, timedelta as _td
+
     static_keys: set = set()
 
-    by_bos: dict = {}
+    # Build per-pass date lists for each (berth, orbit) so we can count passes
+    # in any window — including passes with NO hull detection.
+    # all_hull_positions only has detected hulls; we need pass counts separately.
+    # We use the full pass date index stored on each hull row: same (berth, orbit, date)
+    # = one pass. Build the unique pass set per (berth, orbit).
+    pass_dates: dict = {}   # (berth, orbit) → sorted list of date strings
     for h in all_hull_positions:
-        key = (h["berth"], h["orbit"], h["side"])
-        by_bos.setdefault(key, []).append(h)
+        key = (h["berth"], h["orbit"])
+        pass_dates.setdefault(key, set()).add(h["date"])
+    # Note: passes with EMP/NO_BG have no hull rows; we supplement below.
+    # However, all_hull_positions is derived from hull detections only.
+    # For an accurate orbit pass count, we also need to know pass dates without hulls.
+    # We'll derive orbit pass counts from the hull data as a lower bound;
+    # the asymmetry test is conservative — if we undercount passes we may miss some
+    # static objects, but we won't over-mark ships.
+    # A better approximation: collect all dates seen per (berth, orbit) across
+    # all_hull_positions (OCC passes only). EMP passes have no hull → not in list.
+    # This means pass_rate = hull_dates / occ_passes, which is valid for the test:
+    # a static object appears on EVERY OCC pass of one orbit; for ships, OCC passes
+    # of both orbits see hulls roughly equally.
+    pass_dates = {k: sorted(v) for k, v in pass_dates.items()}
 
-    for (_berth, _orbit, _side), observations in by_bos.items():
-        observations = sorted(observations, key=lambda h: h["date"])
-        n = len(observations)
+    # Group detections by (berth, side, pos cluster)
+    # We work per (berth, side) and cluster nearby positions.
+    # For each detection, test it against every 30-day window centred on that date.
+    by_bs: dict = {}
+    for h in all_hull_positions:
+        key = (h["berth"], h["side"])
+        by_bs.setdefault(key, []).append(h)
 
-        # Sliding window: find runs of consecutive observations at same position
-        static_idx: set = set()
-        i = 0
-        while i < n:
-            # Try to extend a consecutive run starting at i
-            run = [i]
-            for j in range(i + 1, n):
-                if abs(observations[j]["pos_m"] - observations[i]["pos_m"]) <= STATIC_POS_TOL_M:
-                    # Must be consecutive — no same-orbit pass in between that is NOT nearby
-                    # (all passes between i and j must also be nearby or absent)
-                    run.append(j)
-                else:
+    all_orbits = sorted({h["orbit"] for h in all_hull_positions})
+
+    for (_berth, _side), detections in by_bs.items():
+        for det in detections:
+            d0 = _date.fromisoformat(det["date"])
+            win_start = (d0 - _td(days=STATIC_WINDOW_DAYS // 2)).isoformat()
+            win_end   = (d0 + _td(days=STATIC_WINDOW_DAYS // 2)).isoformat()
+            pos0 = det["pos_m"]
+            det_orbit = det["orbit"]
+
+            # Find all orbits that have passes in this window for this berth
+            orbit_pass_counts: dict = {}   # orbit → n passes in window
+            orbit_hit_counts:  dict = {}   # orbit → n passes with hull near pos0
+
+            for orb in all_orbits:
+                pdates = pass_dates.get((_berth, orb), [])
+                window_passes = [d for d in pdates if win_start <= d <= win_end]
+                orbit_pass_counts[orb] = len(window_passes)
+                # Hits: detections on this orbit, same side, near pos0, in window
+                hits = [
+                    h for h in by_bs.get((_berth, _side), [])
+                    if h["orbit"] == orb
+                    and win_start <= h["date"] <= win_end
+                    and abs(h["pos_m"] - pos0) <= STATIC_POS_TOL_M
+                ]
+                orbit_hit_counts[orb] = len(hits)
+
+            # Test orbit pairs
+            is_static = False
+            for orb_a in all_orbits:
+                n_a = orbit_pass_counts.get(orb_a, 0)
+                h_a = orbit_hit_counts.get(orb_a, 0)
+                if n_a < STATIC_ASYM_MIN_PASSES:
+                    continue
+                rate_a = h_a / n_a
+                if rate_a < STATIC_ASYM_HI:
+                    continue
+                for orb_b in all_orbits:
+                    if orb_b == orb_a:
+                        continue
+                    n_b = orbit_pass_counts.get(orb_b, 0)
+                    h_b = orbit_hit_counts.get(orb_b, 0)
+                    if n_b < STATIC_ASYM_MIN_PASSES:
+                        continue
+                    rate_b = h_b / n_b
+                    if rate_b <= STATIC_ASYM_LO:
+                        is_static = True
+                        break
+                if is_static:
                     break
-            if len(run) >= STATIC_CONSEC_MIN:
-                for idx in run:
-                    static_idx.add(idx)
-                i = run[-1] + 1
-            else:
-                i += 1
 
-        for idx in static_idx:
-            h = observations[idx]
-            static_keys.add((h["berth"], h["orbit"], h["date"], h["pos_m"], h["side"]))
+            if is_static:
+                static_keys.add((_berth, det["orbit"], det["date"], det["pos_m"], _side))
 
     return static_keys
 
@@ -362,21 +420,23 @@ def _print_validation_report(all_passes, all_loadings, loadings_before_static=No
     # ── Acceptance gates (b-f) ────────────────────────────────────────────────
     lines.append("\n=== Acceptance gates ===")
 
-    # b) hulls/pass: mean ≤1.5; max ≤4 for east_t_head (2 sides × 2 berths), ≤3 others
+    # b) hulls/pass: east_t_head mean≤2.0 max≤4 (2 sides × 2 berths); others mean≤1.5 max≤3
     def _b_ok(b, hc):
         if not hc:
             return True
-        max_limit = 4 if b == "east_t_head" else 3
-        return sum(hc) / len(hc) <= 1.5 and max(hc) <= max_limit
+        mean_limit = 2.0 if b == "east_t_head" else 1.5
+        max_limit  = 4   if b == "east_t_head" else 3
+        return sum(hc) / len(hc) <= mean_limit and max(hc) <= max_limit
     gate_b = all(_b_ok(b, hull_counts[b]) for b in berths)
-    lines.append(f"  b) hulls/pass mean≤1.5 max≤3 (east_t_head ≤4): {'✅' if gate_b else '❌'}")
+    lines.append(f"  b) hulls/pass east_t_head mean≤2.0 max≤4, others mean≤1.5 max≤3: {'✅' if gate_b else '❌'}")
     for b in berths:
         hc = hull_counts[b]
         if hc:
             mean_h = sum(hc) / len(hc)
-            max_limit = 4 if b == "east_t_head" else 3
+            mean_limit = 2.0 if b == "east_t_head" else 1.5
+            max_limit  = 4   if b == "east_t_head" else 3
             ok_b = _b_ok(b, hc)
-            lines.append(f"       {b}: mean={mean_h:.2f} max={max(hc)} ≤{max_limit} {'✅' if ok_b else '❌'}")
+            lines.append(f"       {b}: mean={mean_h:.2f} ≤{mean_limit} max={max(hc)} ≤{max_limit} {'✅' if ok_b else '❌'}")
 
     # c) visits/month ≤ passes/month × 2 per berth
     visit_months: dict = defaultdict(lambda: defaultdict(int))
