@@ -164,19 +164,20 @@ def _print_validation_report(all_passes, all_loadings):
             if l["class"] == "VLCC":
                 vlcc_2025[l["berth"]] += 1
 
-    print("\n=== Validation report ===")
-    print(f"\n{'Berth':<20} {'Passes':>7} {'Hull/pass mean':>14} {'Hull/pass max':>13} "
+    lines = []
+    lines.append("\n=== Validation report ===")
+    lines.append(f"\n{'Berth':<20} {'Passes':>7} {'Hull/pass mean':>14} {'Hull/pass max':>13} "
           f"{'Status':>8}")
-    print("-" * 68)
+    lines.append("-" * 68)
     for b in berths:
         hc = hull_counts[b]
         if not hc:
-            print(f"{b:<20} {'—':>7}")
+            lines.append(f"{b:<20} {'—':>7}")
             continue
         mean_h = sum(hc) / len(hc)
         max_h  = max(hc)
         ok     = "OK" if mean_h <= 1.5 and max_h <= 3 else "WARN"
-        print(f"{b:<20} {len(hc):>7} {mean_h:>14.2f} {max_h:>13d} {ok:>8}")
+        lines.append(f"{b:<20} {len(hc):>7} {mean_h:>14.2f} {max_h:>13d} {ok:>8}")
 
     # loadings/month vs passes/month per berth
     all_months = sorted(set(month_passes) | set(month_loads))
@@ -189,20 +190,27 @@ def _print_validation_report(all_passes, all_loadings):
                 months_with_overcount.append((ym, b, lm, pm))
 
     if months_with_overcount:
-        print("\nWARN loadings > passes in month:")
+        lines.append("\nWARN loadings > passes in month:")
         for (yr, mo), b, lm, pm in months_with_overcount[:10]:
-            print(f"  {yr}-{mo:02d} {b}: {lm} loadings vs {pm} passes")
+            lines.append(f"  {yr}-{mo:02d} {b}: {lm} loadings vs {pm} passes")
     else:
-        print("\nOK  loadings/month ≤ passes/month for all berth-months")
+        lines.append("\nOK  loadings/month ≤ passes/month for all berth-months")
 
     # VLCC share 2025
-    print(f"\n{'Berth':<20} {'Loadings 2025':>13} {'VLCC':>6} {'VLCC%':>7}")
-    print("-" * 50)
+    lines.append(f"\n{'Berth':<20} {'Loadings 2025':>13} {'VLCC':>6} {'VLCC%':>7}")
+    lines.append("-" * 50)
     for b in berths:
         tot = total_2025[b]
         vlc = vlcc_2025[b]
         pct = vlc / tot * 100 if tot else 0.0
-        print(f"{b:<20} {tot:>13} {vlc:>6} {pct:>6.0f}%")
+        lines.append(f"{b:<20} {tot:>13} {vlc:>6} {pct:>6.0f}%")
+
+    for line in lines:
+        print(line)
+
+    val_txt = OUT_DIR / "validation_report.txt"
+    with open(val_txt, "w") as f:
+        f.write("\n".join(lines) + "\n")
 
 
 # ── Main ───────────────────────────────────────────────────────────────────────

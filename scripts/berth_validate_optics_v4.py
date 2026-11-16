@@ -994,7 +994,7 @@ def _apply_timedelta_rule(rows):
         print(f"  TIME-DELTA reclassified: {len(fp_excl)} FP→?, {len(fn_excl)} FN→?")
         for line in fp_excl + fn_excl:
             print(line)
-    return out
+    return out, fp_excl, fn_excl
 
 
 def _assert_confmat(results, results_asp25=None):
@@ -1004,25 +1004,33 @@ def _assert_confmat(results, results_asp25=None):
     Shows OLD (SH) | NEW asp≥3.0 | NEW asp≥2.5 columns.
     Gate uses time-delta-adjusted asp≥3.0 numbers.
     asp≥2.5 adopted only if prec≥90% (shown for reference).
+    Writes output to OUT_DIR/accuracy.txt (appended after accuracy_block section).
     """
-    adj = _apply_timedelta_rule(results)
+    adj, fp_excl, fn_excl = _apply_timedelta_rule(results)
     n_excl = sum(1 for a, b in zip(adj, results)
                  if a.get("optical_ref") == "?" and b.get("optical_ref") != "?")
+
+    adj25, _, _ = _apply_timedelta_rule(results_asp25 or [])
+
+    lines = []
+    lines.append("\n=== Confmat asserts ===")
     if n_excl:
-        print(f"  → {n_excl} row(s) reclassified '?' by time-delta rule")
+        lines.append(f"  → {n_excl} row(s) reclassified '?' by time-delta rule")
+    if fp_excl or fn_excl:
+        lines.append(f"  TIME-DELTA reclassified: {len(fp_excl)} FP→?, {len(fn_excl)} FN→?")
+        for line in fp_excl + fn_excl:
+            lines.append(line)
 
-    adj25 = _apply_timedelta_rule(results_asp25 or [])
-
-    ok = True
-    print(f"\n{'Berth':<20}  {'OLD (SH)':^28}  "
+    lines.append(f"\n{'Berth':<20}  {'OLD (SH)':^28}  "
           f"{'NEW asp≥3.0':^28}  {'NEW asp≥2.5':^28}  Gate")
-    print(f"{'':20}  "
+    lines.append(f"{'':20}  "
           f"{'TP':>4} {'FN':>4} {'FP':>4} {'TN':>4}  "
           f"{'TP':>4} {'FN':>4} {'FP':>4} {'TN':>4}  "
           f"{'TP':>4} {'FN':>4} {'FP':>4} {'TN':>4}  "
           f"{'Prec30':>7} {'Rec30':>7} {'Prec25':>7} {'Rec25':>7}")
-    print("-" * 110)
+    lines.append("-" * 110)
 
+    ok = True
     for berth in BERTHS:
         rows_b = [r for r in adj
                   if r["berth"] == berth
@@ -1051,7 +1059,7 @@ def _assert_confmat(results, results_asp25=None):
             tp25, tn25, fp25, fn25 = tp, tn, fp, fn
             prec25, rec25 = prec, rec
 
-        print(f"{berth:<20}  "
+        lines.append(f"{berth:<20}  "
               f"{tgt['TP']:>4} {tgt['FN']:>4} {tgt['FP']:>4} {tgt['TN']:>4}  "
               f"{tp:>4} {fn:>4} {fp:>4} {tn:>4}  "
               f"{tp25:>4} {fn25:>4} {fp25:>4} {tn25:>4}  "
@@ -1059,24 +1067,35 @@ def _assert_confmat(results, results_asp25=None):
               f"{prec25:>6.1f}% {rec25:>6.1f}%  {gate_str}")
 
         if not gate_ok:
-            print(f"  → GATE FAIL: prec={prec:.1f}% (need≥90%)  "
+            lines.append(f"  → GATE FAIL: prec={prec:.1f}% (need≥90%)  "
                   f"rec={rec:.1f}% (need≥{sh_rec:.1f}%)")
-            print("  Per-row mismatches:")
+            lines.append("  Per-row mismatches:")
             for r in rows_b:
                 if r["optical_ref"] != r["det"]:
-                    print(f"    MISMATCH {r['date']} o{r['orbit']} {berth}: "
+                    lines.append(f"    MISMATCH {r['date']} o{r['orbit']} {berth}: "
                           f"ref={r['optical_ref']} det={r['det']} "
                           f"len={r['length_m']}m asp={r['aspect']}")
 
         if berth == "east_t_head" and adj25 and (tp25 != tp or fn25 != fn):
             verdict = "≥90% — accept" if (not math.isnan(prec25) and prec25 >= 90.0) else "<90% — reject"
-            print(f"  → asp≥2.5 delta: TP {tp}→{tp25} FN {fn}→{fn25} "
-                  f"FP {fp}→{fp25}  prec25={prec25:.1f}% {verdict}")
+            lines.append(f"  → asp≥2.5 delta: TP {tp}→{tp25} FN {fn}→{fn25} "
+                    f"FP {fp}→{fp25}  prec25={prec25:.1f}% {verdict}")
 
-    print("-" * 110)
+    lines.append("-" * 110)
+    if ok:
+        lines.append("=== PC assert gate passed (prec≥90%, rec not worse) — OK to proceed ===")
+    else:
+        lines.append("=== PC assert gate FAILED ===")
+
+    for line in lines:
+        print(line)
+
+    acc_txt = OUT_DIR / "accuracy.txt"
+    with open(acc_txt, "a") as f:
+        f.write("\n".join(lines) + "\n")
+
     if not ok:
         sys.exit("FATAL: PC assert gate failed — v4_history and DB write blocked")
-    print("=== PC assert gate passed (prec≥90%, rec not worse) — OK to proceed ===")
 
 
 if __name__ == "__main__":
