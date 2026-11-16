@@ -40,6 +40,12 @@ jobs:
           PC_SDK_SUBSCRIPTION_KEY: ${{ secrets.PC_SDK_SUBSCRIPTION_KEY }}
         run: python scripts/berth_validate_optics_v4.py
 
+      - name: Step 1b — build east_t_head o101 2026 background
+        if: steps.validate.outcome == 'success'
+        env:
+          PC_SDK_SUBSCRIPTION_KEY: ${{ secrets.PC_SDK_SUBSCRIPTION_KEY }}
+        run: python scripts/berth_build_bg_2026.py
+
       - name: Step 2 — v4_history full (CSV/JSON only, no DB write)
         if: steps.validate.outcome == 'success'
         id: history
