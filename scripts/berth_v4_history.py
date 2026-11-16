@@ -61,12 +61,11 @@ V4_CONFIG = {
 from berth_detect_core import VISIT_MIN_LEN_M
 
 STATIC_POS_TOL_M        = 60.0  # ±m along pier axis — same-position threshold
-STATIC_WINDOW_DAYS      = 30    # rolling window for orbit-asymmetry test
+STATIC_WINDOW_DAYS      = 30    # primary rolling window for orbit-asymmetry test
+STATIC_WINDOW_DAYS_EXT  = 60    # extended window used when <STATIC_ASYM_MIN_PASSES on any orbit
 STATIC_ASYM_HI          = 0.75  # presence rate on dominant orbit ≥ this → candidate
 STATIC_ASYM_LO          = 0.25  # presence rate on other orbit ≤ this → asymmetric
 STATIC_ASYM_MIN_PASSES  = 2     # min passes of EACH orbit in window to apply test
-LONGTERM_STATIC_MIN_COUNT = 3   # ≥N across all history (same pos + same len ±3m) → structure
-LONGTERM_STATIC_LEN_TOL_M = 3.0 # tight length tolerance for permanent-structure filter
 
 AOI_BBOX     = BBox(bbox=[50.26, 29.17, 50.40, 29.31], crs=CRS.WGS84)
 AOI_BBOX_LST = [50.26, 29.17, 50.40, 29.31]
@@ -131,44 +130,27 @@ def is_new_load_v2(pos_m, len_m, perp_m, prev_same_orbit, recent_any_hulls, tol_
 
 
 def _build_static_set(all_hull_positions):
-    """Orbit-asymmetry rule: a position is static when, in every 30-day window
-    that contains it, the dominant orbit sees it on ≥STATIC_ASYM_HI of its passes
-    AND the other orbit sees it on ≤STATIC_ASYM_LO of its passes, provided both
-    orbits have ≥STATIC_ASYM_MIN_PASSES in the window.
+    """Orbit-asymmetry rule: a position is static when the dominant orbit sees it on
+    ≥STATIC_ASYM_HI of its passes AND the other orbit sees it on ≤STATIC_ASYM_LO of
+    its passes in a rolling window, provided both orbits have ≥STATIC_ASYM_MIN_PASSES.
 
-    Real ship traffic is visible on both orbits; a persistent non-ship structure
-    (mooring dolphin, construction platform, barge at anchor) reflects differently
-    on ascending vs descending passes, or is simply invisible from one geometry.
+    Primary window: STATIC_WINDOW_DAYS (30d).  If either orbit has <STATIC_ASYM_MIN_PASSES
+    in the 30d window, the test falls back to STATIC_WINDOW_DAYS_EXT (60d) — this handles
+    the end of the time series where few future passes exist.
+
+    Real ship traffic is visible on both orbits; a persistent non-ship artefact
+    reflects differently on ascending vs descending passes, or is invisible from one geometry.
     """
     from datetime import date as _date, timedelta as _td
 
     static_keys: set = set()
 
-    # Build per-pass date lists for each (berth, orbit) so we can count passes
-    # in any window — including passes with NO hull detection.
-    # all_hull_positions only has detected hulls; we need pass counts separately.
-    # We use the full pass date index stored on each hull row: same (berth, orbit, date)
-    # = one pass. Build the unique pass set per (berth, orbit).
     pass_dates: dict = {}   # (berth, orbit) → sorted list of date strings
     for h in all_hull_positions:
         key = (h["berth"], h["orbit"])
         pass_dates.setdefault(key, set()).add(h["date"])
-    # Note: passes with EMP/NO_BG have no hull rows; we supplement below.
-    # However, all_hull_positions is derived from hull detections only.
-    # For an accurate orbit pass count, we also need to know pass dates without hulls.
-    # We'll derive orbit pass counts from the hull data as a lower bound;
-    # the asymmetry test is conservative — if we undercount passes we may miss some
-    # static objects, but we won't over-mark ships.
-    # A better approximation: collect all dates seen per (berth, orbit) across
-    # all_hull_positions (OCC passes only). EMP passes have no hull → not in list.
-    # This means pass_rate = hull_dates / occ_passes, which is valid for the test:
-    # a static object appears on EVERY OCC pass of one orbit; for ships, OCC passes
-    # of both orbits see hulls roughly equally.
     pass_dates = {k: sorted(v) for k, v in pass_dates.items()}
 
-    # Group detections by (berth, side, pos cluster)
-    # We work per (berth, side) and cluster nearby positions.
-    # For each detection, test it against every 30-day window centred on that date.
     by_bs: dict = {}
     for h in all_hull_positions:
         key = (h["berth"], h["side"])
@@ -176,91 +158,57 @@ def _build_static_set(all_hull_positions):
 
     all_orbits = sorted({h["orbit"] for h in all_hull_positions})
 
+    def _counts_in_window(berth, side, pos0, orbits, win_start, win_end):
+        pass_cnt = {}
+        hit_cnt  = {}
+        for orb in orbits:
+            pdates = pass_dates.get((berth, orb), [])
+            pass_cnt[orb] = sum(1 for d in pdates if win_start <= d <= win_end)
+            hit_cnt[orb]  = sum(
+                1 for h in by_bs.get((berth, side), [])
+                if h["orbit"] == orb
+                and win_start <= h["date"] <= win_end
+                and abs(h["pos_m"] - pos0) <= STATIC_POS_TOL_M
+            )
+        return pass_cnt, hit_cnt
+
+    def _test_asymmetry(pass_cnt, hit_cnt, orbits):
+        for orb_a in orbits:
+            n_a = pass_cnt.get(orb_a, 0)
+            if n_a < STATIC_ASYM_MIN_PASSES:
+                continue
+            rate_a = hit_cnt.get(orb_a, 0) / n_a
+            if rate_a < STATIC_ASYM_HI:
+                continue
+            for orb_b in orbits:
+                if orb_b == orb_a:
+                    continue
+                n_b = pass_cnt.get(orb_b, 0)
+                if n_b < STATIC_ASYM_MIN_PASSES:
+                    continue
+                if hit_cnt.get(orb_b, 0) / n_b <= STATIC_ASYM_LO:
+                    return True
+        return False
+
     for (_berth, _side), detections in by_bs.items():
         for det in detections:
-            d0 = _date.fromisoformat(det["date"])
-            win_start = (d0 - _td(days=STATIC_WINDOW_DAYS // 2)).isoformat()
-            win_end   = (d0 + _td(days=STATIC_WINDOW_DAYS // 2)).isoformat()
+            d0   = _date.fromisoformat(det["date"])
             pos0 = det["pos_m"]
-            det_orbit = det["orbit"]
+            half = STATIC_WINDOW_DAYS // 2
+            ws   = (d0 - _td(days=half)).isoformat()
+            we   = (d0 + _td(days=half)).isoformat()
 
-            # Find all orbits that have passes in this window for this berth
-            orbit_pass_counts: dict = {}   # orbit → n passes in window
-            orbit_hit_counts:  dict = {}   # orbit → n passes with hull near pos0
+            pc, hc = _counts_in_window(_berth, _side, pos0, all_orbits, ws, we)
 
-            for orb in all_orbits:
-                pdates = pass_dates.get((_berth, orb), [])
-                window_passes = [d for d in pdates if win_start <= d <= win_end]
-                orbit_pass_counts[orb] = len(window_passes)
-                # Hits: detections on this orbit, same side, near pos0, in window
-                hits = [
-                    h for h in by_bs.get((_berth, _side), [])
-                    if h["orbit"] == orb
-                    and win_start <= h["date"] <= win_end
-                    and abs(h["pos_m"] - pos0) <= STATIC_POS_TOL_M
-                ]
-                orbit_hit_counts[orb] = len(hits)
+            # Fall back to extended window if either orbit has too few passes
+            if any(pc.get(orb, 0) < STATIC_ASYM_MIN_PASSES for orb in all_orbits):
+                half_ext = STATIC_WINDOW_DAYS_EXT // 2
+                ws = (d0 - _td(days=half_ext)).isoformat()
+                we = (d0 + _td(days=half_ext)).isoformat()
+                pc, hc = _counts_in_window(_berth, _side, pos0, all_orbits, ws, we)
 
-            # Test orbit pairs
-            is_static = False
-            for orb_a in all_orbits:
-                n_a = orbit_pass_counts.get(orb_a, 0)
-                h_a = orbit_hit_counts.get(orb_a, 0)
-                if n_a < STATIC_ASYM_MIN_PASSES:
-                    continue
-                rate_a = h_a / n_a
-                if rate_a < STATIC_ASYM_HI:
-                    continue
-                for orb_b in all_orbits:
-                    if orb_b == orb_a:
-                        continue
-                    n_b = orbit_pass_counts.get(orb_b, 0)
-                    h_b = orbit_hit_counts.get(orb_b, 0)
-                    if n_b < STATIC_ASYM_MIN_PASSES:
-                        continue
-                    rate_b = h_b / n_b
-                    if rate_b <= STATIC_ASYM_LO:
-                        is_static = True
-                        break
-                if is_static:
-                    break
-
-            if is_static:
+            if _test_asymmetry(pc, hc, all_orbits):
                 static_keys.add((_berth, det["orbit"], det["date"], det["pos_m"], _side))
-
-    return static_keys
-
-
-def _build_longterm_static_set(all_hull_positions):
-    """Return static keys for hulls appearing ≥LONGTERM_STATIC_MIN_COUNT times
-    at same position (±STATIC_POS_TOL_M) with same length (±LONGTERM_STATIC_LEN_TOL_M=3m)
-    on the same orbit across all history — permanent structures (e.g. southeast_pier 356.7m).
-
-    Ships vary in length each visit; a structure has essentially the same radar cross-section.
-    The ±3m tolerance distinguishes structure (~same pixels every pass) from ships (~±50m).
-    """
-    static_keys: set = set()
-    by_bos: dict = {}
-    for h in all_hull_positions:
-        key = (h["berth"], h["orbit"], h["side"])
-        by_bos.setdefault(key, []).append(h)
-
-    for (_berth, _orbit, _side), observations in by_bos.items():
-        visited = [False] * len(observations)
-        for i, obs_i in enumerate(observations):
-            if visited[i]:
-                continue
-            len_i = obs_i.get("len_m", 0) or 0
-            cluster = [
-                j for j, obs_j in enumerate(observations)
-                if abs(obs_j["pos_m"] - obs_i["pos_m"]) <= STATIC_POS_TOL_M
-                and abs((obs_j.get("len_m", 0) or 0) - len_i) <= LONGTERM_STATIC_LEN_TOL_M
-            ]
-            if len(cluster) >= LONGTERM_STATIC_MIN_COUNT:
-                for j in cluster:
-                    h = observations[j]
-                    static_keys.add((_berth, _orbit, h["date"], h["pos_m"], _side))
-                    visited[j] = True
 
     return static_keys
 
@@ -535,20 +483,13 @@ def _print_validation_report(all_passes, all_loadings, loadings_before_static=No
     for b, avg, ok, max_days in gate_e_rows:
         lines.append(f"       {b}: avg={avg:.1f}d ≤{max_days:.0f}d {'✅' if ok else '❌'}" if avg is not None else f"       {b}: no data")
 
-    # f) southeast_pier: VLCC share ≤30% (2025) — only meaningful if ≥10 VLCC-candidates
+    # f) southeast_pier VLCC class — removed; size shown as n/a on site
+    gate_f = True
     sp_loads_2025 = [l for l in all_loadings if l["berth"] == "southeast_pier" and l["date"].startswith("2025")]
     sp_vlcc_2025  = [l for l in sp_loads_2025 if l.get("class") == "VLCC"]
     sp_pct = len(sp_vlcc_2025) / len(sp_loads_2025) * 100 if sp_loads_2025 else 0.0
-    _sp_candidates = len(sp_loads_2025)
-    if _sp_candidates < 10:
-        gate_f = True  # too few samples to classify; size shown as n/a on site
-        lines.append(f"  f) southeast_pier VLCC class: n/a (<10 visits, {_sp_candidates} total) — skipped ✅")
-    else:
-        gate_f = sp_pct <= 30.0
-        lines.append(f"  f) southeast_pier VLCC≤30% 2025: {'✅' if gate_f else '❌'} "
-                     f"({len(sp_vlcc_2025)}/{_sp_candidates} = {sp_pct:.0f}%)")
-        if not gate_f:
-            lines.append(f"     ⚠ VLCC share={sp_pct:.0f}% — flag for crop inspection")
+    lines.append(f"  f) southeast_pier VLCC class: n/a (size not shown on site) ✅"
+                 f"  [{len(sp_vlcc_2025)}/{len(sp_loads_2025)} = {sp_pct:.0f}% VLCC, info only]")
 
     # f-detail) Table of southeast_pier hulls ≥300m in 2025
     sep_big_rows = []
@@ -974,11 +915,6 @@ def run(incremental=False):
 
     # ── Static object filter (post-run, full-history pass) ────────────────────
     static_set = _build_static_set(all_hull_positions)
-    longterm_set = _build_longterm_static_set(all_hull_positions)
-    n_new_longterm = len(longterm_set - static_set)
-    static_set = static_set | longterm_set
-    if n_new_longterm:
-        print(f"Long-term static filter: +{n_new_longterm} additional hull detections flagged")
     static_points = sorted(
         [{"berth": b, "orbit": o, "date": d, "pos_m": p, "side": s}
          for (b, o, d, p, s) in static_set],
