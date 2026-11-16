@@ -16,6 +16,7 @@ DB write: if SUPABASE_SERVICE_KEY is set, upserts rows into berth_occupancy tabl
 import os, sys, csv, json
 from pathlib import Path
 from datetime import datetime, timezone, timedelta
+from collections import defaultdict, deque
 
 import sys
 from pathlib import Path as _Path
@@ -56,6 +57,10 @@ V4_CONFIG = {
     "east_t_head":    {"pier": 20, "water_i": 20, "water_o": 80, "min_len": 150, "aspect_thr": 3.0, "merge_gap": 120, "bg_dir": BG_V4},
     "southeast_pier": {"pier": 20, "water_i": 20, "water_o": 80, "min_len": 150, "aspect_thr": 3.0, "merge_gap": 120, "bg_dir": BG_V4},
 }
+
+STATIC_POS_TOL_M   = 60.0   # ±m along pier axis — same-position threshold
+STATIC_MIN_COUNT   = 4      # ≥N passes same orbit in 30 days → static object
+STATIC_WINDOW_DAYS = 30
 
 AOI_BBOX     = BBox(bbox=[50.26, 29.17, 50.40, 29.31], crs=CRS.WGS84)
 AOI_BBOX_LST = [50.26, 29.17, 50.40, 29.31]
@@ -103,6 +108,59 @@ def is_new_load(pos_m, len_m, perp_m, prev_hulls):
         for ph in prev_hulls
     )
 
+def is_new_load_v2(pos_m, len_m, perp_m, prev_same_orbit, recent_any_hulls, tol_m=200.0):
+    """True if no matching hull in prev_same_orbit (same orbit) or recent_any_hulls (any orbit).
+
+    prev_same_orbit: list of hull dicts from last pass of this orbit
+    recent_any_hulls: flat list of hull dicts from last 2 passes of ANY orbit
+    tol_m: position tolerance along pier axis (default same as original is_new_load)
+    """
+    all_prev = list(prev_same_orbit) + list(recent_any_hulls)
+    return not any(
+        abs(pos_m - ph["pos_m"]) <= tol_m and
+        abs(len_m - ph["len_m"]) <= 50 and
+        (ph.get("perp_m") is None or (perp_m >= 0) == (ph["perp_m"] >= 0))
+        for ph in all_prev
+    )
+
+
+def _build_static_set(all_hull_positions):
+    """Return a set of (berth, orbit, date, pos_m, side) keys for static detections.
+
+    A hull is static if it appears at the same position (±STATIC_POS_TOL_M, same side)
+    on ≥STATIC_MIN_COUNT passes of the same orbit within any STATIC_WINDOW_DAYS window.
+    All occurrences in that cluster are marked static (not just the 4th+).
+    """
+    from datetime import date as _date
+    static_keys: set = set()
+
+    by_bos: dict = {}
+    for h in all_hull_positions:
+        key = (h["berth"], h["orbit"], h["side"])
+        by_bos.setdefault(key, []).append(h)
+
+    for (_berth, _orbit, _side), observations in by_bos.items():
+        observations = sorted(observations, key=lambda h: h["date"])
+        already_static = set()
+
+        for i, obs_i in enumerate(observations):
+            dt_i = _date.fromisoformat(obs_i["date"])
+            matches = [
+                j for j, obs_j in enumerate(observations)
+                if abs((_date.fromisoformat(obs_j["date"]) - dt_i).days) <= STATIC_WINDOW_DAYS
+                and abs(obs_j["pos_m"] - obs_i["pos_m"]) <= STATIC_POS_TOL_M
+            ]
+            if len(matches) >= STATIC_MIN_COUNT:
+                for j in matches:
+                    already_static.add(j)
+
+        for j in already_static:
+            h = observations[j]
+            static_keys.add((h["berth"], h["orbit"], h["date"], h["pos_m"], h["side"]))
+
+    return static_keys
+
+
 # ── Metric helpers ─────────────────────────────────────────────────────────────
 
 def count_loadings(loadings, start, end):
@@ -114,7 +172,7 @@ def count_loadings(loadings, start, end):
 
 # ── Validation report ─────────────────────────────────────────────────────────
 
-def _print_validation_report(all_passes, all_loadings):
+def _print_validation_report(all_passes, all_loadings, loadings_before_static=None, static_points=None):
     """Print hull-count and loading-rate sanity table.
 
     Expected:
@@ -205,6 +263,55 @@ def _print_validation_report(all_passes, all_loadings):
         pct = vlc / tot * 100 if tot else 0.0
         lines.append(f"{b:<20} {tot:>13} {vlc:>6} {pct:>6.0f}%")
 
+    # ── Before/after static filter ─────────────────────────────────────────────
+    if loadings_before_static is not None:
+        lines.append(f"\n=== Before/after static filter ===")
+
+        # loadings/month per berth — 2025 and Sep-Nov 2026
+        def _monthly_table(loadings_list, label):
+            ml: dict = defaultdict(lambda: defaultdict(int))
+            for l in loadings_list:
+                try:
+                    dt = datetime.strptime(l["date"], "%Y-%m-%d")
+                except (KeyError, ValueError):
+                    continue
+                ml[(dt.year, dt.month)][l["berth"]] += 1
+            rows = []
+            # 2025 months
+            for mo in range(1, 13):
+                ym = (2025, mo)
+                total = sum(ml[ym].get(b, 0) for b in berths)
+                if total or any(ml.get(ym2, {}) for ym2 in [ym]):
+                    row = f"  {ym[0]}-{ym[1]:02d}  " + "  ".join(
+                        f"{b[:12]:<12}={ml[ym].get(b,0)}" for b in berths
+                    ) + f"  total={total}"
+                    rows.append(row)
+            # Sep-Nov 2026
+            for mo in [9, 10, 11]:
+                ym = (2026, mo)
+                total = sum(ml[ym].get(b, 0) for b in berths)
+                row = f"  {ym[0]}-{ym[1]:02d}  " + "  ".join(
+                    f"{b[:12]:<12}={ml[ym].get(b,0)}" for b in berths
+                ) + f"  total={total}"
+                rows.append(row)
+            return rows
+
+        lines.append(f"\n  BEFORE filter ({len(loadings_before_static)} loadings):")
+        for r in _monthly_table(loadings_before_static, "before"):
+            lines.append(r)
+        lines.append(f"\n  AFTER filter ({len(all_loadings)} loadings, "
+                     f"-{len(loadings_before_static) - len(all_loadings)} removed):")
+        for r in _monthly_table(all_loadings, "after"):
+            lines.append(r)
+
+    if static_points:
+        lines.append(f"\n=== Static objects ({len(static_points)} detections) ===")
+        lines.append(f"  {'Date':<12} {'Orbit':>5} {'Berth':<20} {'pos_m':>7} {'side':>5}")
+        lines.append("  " + "-" * 55)
+        for sp in static_points:
+            lines.append(f"  {sp['date']:<12} o{sp['orbit']:>3} {sp['berth']:<20} "
+                         f"{sp['pos_m']:>7.0f} {sp['side']:>+5d}")
+
     for line in lines:
         print(line)
 
@@ -259,6 +366,8 @@ def run(incremental=False):
 
     # Init prev_hulls from last known pass per (berth, orbit) in old_passes
     prev_hulls: dict = {}
+    recent_hulls: dict = {berth: deque(maxlen=2) for berth in V4_CONFIG}  # cross-orbit dedup
+    all_hull_positions: list = []  # for post-run static detection
     if old_passes:
         for orbit in ORBITS:
             orbit_passes = [p for p in old_passes if p.get("orbit") == orbit]
@@ -399,7 +508,8 @@ def run(incremental=False):
                 lat_c = cbbox.max_y - (row_c / ch) * (cbbox.max_y - cbbox.min_y)
 
                 cls      = classify_hull(len_m)
-                new_load = is_new_load(pos_m, len_m, perp_m, prev)
+                recent_any = [h for hl in recent_hulls[berth] for h in hl]
+                new_load = is_new_load_v2(pos_m, len_m, perp_m, prev, recent_any)
 
                 hull = {
                     "side":     side,
@@ -434,10 +544,17 @@ def run(incremental=False):
                         "class":  cls,
                     })
 
-            prev_hulls[(berth, orbit)] = [
-                {"pos_m": h["pos_m"], "len_m": h["len_m"], "perp_m": h["perp_m"]}
-                for h in hull_list
-            ]
+            compact = [{"pos_m": h["pos_m"], "len_m": h["len_m"], "perp_m": h["perp_m"]}
+                       for h in hull_list]
+            prev_hulls[(berth, orbit)] = compact
+            # Cross-orbit dedup: keep last 2 passes (any orbit) per berth
+            recent_hulls[berth].append(compact)
+            # Collect positions for static filter (post-run pass)
+            for h in hull_list:
+                all_hull_positions.append({
+                    "berth": berth, "orbit": orbit, "date": date_str,
+                    "pos_m": h["pos_m"], "side": h["side"],
+                })
 
             if not hull_list and detected and best:
                 # find_blobs returned a best blob but no qualifying hulls — add as fallback
@@ -451,7 +568,8 @@ def run(incremental=False):
                     "len_m": round(len_m, 1),
                     "width_m": round(len_m / max(best.get("aspect", 3.0), 1), 1),
                     "class": classify_hull(len_m),
-                    "new_load": is_new_load(0, len_m, perp_m_b, prev),
+                    "new_load": is_new_load_v2(0, len_m, perp_m_b, prev,
+                                               [h for hl in recent_hulls[berth] for h in hl]),
                 })
 
             pass_record[berth] = {"det": det_str, "hulls": hull_list}
@@ -459,10 +577,38 @@ def run(incremental=False):
 
         passes_out.append(pass_record)
 
+    # ── Static object filter (post-run, full-history pass) ────────────────────
+    static_set = _build_static_set(all_hull_positions)
+    static_points = sorted(
+        [{"berth": b, "orbit": o, "date": d, "pos_m": p, "side": s}
+         for (b, o, d, p, s) in static_set],
+        key=lambda x: (x["berth"], x["orbit"], x["date"])
+    )
+    loadings_before_static = loadings[:]
+    loadings = [
+        l for l in loadings
+        if (l["berth"], l["orbit"], l["date"], l["pos_m"], l["side"]) not in static_set
+    ]
+    n_removed = len(loadings_before_static) - len(loadings)
+    print(f"\nStatic filter: {len(static_set)} hull detections flagged, "
+          f"{n_removed} new loadings removed")
+    if static_points:
+        print(f"Static objects ({len(static_points)} detections):")
+        for sp in static_points[:30]:
+            print(f"  {sp['date']} o{sp['orbit']:>3} {sp['berth']:<20} "
+                  f"pos={sp['pos_m']:.0f}m side={sp['side']:+d}")
+        if len(static_points) > 30:
+            print(f"  ... ({len(static_points) - 30} more)")
+
+    # Mark hull_rows with static flag
+    for r in hull_rows:
+        key = (r["berth"], r["orbit"], r["date"], r["pos_m"], r["side"])
+        r["static"] = "1" if key in static_set else "0"
+
     # ── CSV output (hull-level) — merge old + new ─────────────────────────────
     csv_path = OUT_DIR / "berth_v4_history.csv"
     fieldnames = ["date","orbit","berth","hull_idx","det","side","perp_m","pos_m",
-                  "lon","lat","len_m","width_m","class","new_load","bg_source"]
+                  "lon","lat","len_m","width_m","class","new_load","static","bg_source"]
     all_hull_rows = old_hull_rows + hull_rows
     with open(csv_path, "w", newline="") as f:
         w = csv.DictWriter(f, fieldnames=fieldnames, extrasaction="ignore")
@@ -530,7 +676,12 @@ def run(incremental=False):
         print(f"Last ship: {last_ship}")
 
     # ── Validation report (table) ─────────────────────────────────────────────
-    _print_validation_report(old_passes + passes_out, old_loadings + loadings)
+    _print_validation_report(
+        old_passes + passes_out,
+        old_loadings + loadings,
+        loadings_before_static=old_loadings + loadings_before_static,
+        static_points=static_points,
+    )
 
     # ── Supabase write ────────────────────────────────────────────────────────
     svc_key  = os.environ.get("SUPABASE_SERVICE_KEY") or ""
