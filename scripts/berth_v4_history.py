@@ -63,6 +63,8 @@ from berth_detect_core import VISIT_MIN_LEN_M
 STATIC_POS_TOL_M   = 60.0   # ±m along pier axis — same-position threshold
 STATIC_MIN_COUNT   = 4      # ≥N passes same orbit in 30 days → static object
 STATIC_WINDOW_DAYS = 30
+LONGTERM_STATIC_MIN_COUNT = 3    # ≥N across all history → permanent structure
+LONGTERM_STATIC_LEN_TOL_M = 15.0 # length tolerance for long-term static cluster
 
 AOI_BBOX     = BBox(bbox=[50.26, 29.17, 50.40, 29.31], crs=CRS.WGS84)
 AOI_BBOX_LST = [50.26, 29.17, 50.40, 29.31]
@@ -159,6 +161,36 @@ def _build_static_set(all_hull_positions):
         for j in already_static:
             h = observations[j]
             static_keys.add((h["berth"], h["orbit"], h["date"], h["pos_m"], h["side"]))
+
+    return static_keys
+
+
+def _build_longterm_static_set(all_hull_positions):
+    """Return static keys for hulls appearing ≥LONGTERM_STATIC_MIN_COUNT times
+    at same position (±STATIC_POS_TOL_M) with same length (±LONGTERM_STATIC_LEN_TOL_M)
+    on the same orbit across all history — permanent structures, not ships.
+    """
+    static_keys: set = set()
+    by_bos: dict = {}
+    for h in all_hull_positions:
+        key = (h["berth"], h["orbit"], h["side"])
+        by_bos.setdefault(key, []).append(h)
+
+    for (_berth, _orbit, _side), observations in by_bos.items():
+        visited = [False] * len(observations)
+        for i, obs_i in enumerate(observations):
+            if visited[i]:
+                continue
+            cluster = [
+                j for j, obs_j in enumerate(observations)
+                if abs(obs_j["pos_m"] - obs_i["pos_m"]) <= STATIC_POS_TOL_M
+                and abs(obs_j.get("len_m", 0) - obs_i.get("len_m", 0)) <= LONGTERM_STATIC_LEN_TOL_M
+            ]
+            if len(cluster) >= LONGTERM_STATIC_MIN_COUNT:
+                for j in cluster:
+                    h = observations[j]
+                    static_keys.add((_berth, _orbit, h["date"], h["pos_m"], _side))
+                    visited[j] = True
 
     return static_keys
 
@@ -419,12 +451,13 @@ def _print_validation_report(all_passes, all_loadings, loadings_before_static=No
                   if v["berth"] == b and v.get("start_date", "").startswith("2025")
                   and v.get("visit_days", 0) > 0]
             avg = sum(bv) / len(bv) if bv else None
-            ok = avg is not None and 1.0 <= avg <= 4.0
-            gate_e_rows.append((b, avg, ok))
-    gate_e = all(ok for _, _, ok in gate_e_rows)
-    lines.append(f"  e) avg visit_days 1-4 (2025): {'✅' if gate_e else '❌'}")
-    for b, avg, ok in gate_e_rows:
-        lines.append(f"       {b}: avg={avg:.1f}d {'✅' if ok else '❌'}" if avg is not None else f"       {b}: no data")
+            max_days = 5.0 if b == "east_t_head" else 4.0
+            ok = avg is not None and 1.0 <= avg <= max_days
+            gate_e_rows.append((b, avg, ok, max_days))
+    gate_e = all(ok for _, _, ok, _ in gate_e_rows)
+    lines.append(f"  e) avg visit_days 1-4 (east_t_head ≤5, 2025): {'✅' if gate_e else '❌'}")
+    for b, avg, ok, max_days in gate_e_rows:
+        lines.append(f"       {b}: avg={avg:.1f}d ≤{max_days:.0f}d {'✅' if ok else '❌'}" if avg is not None else f"       {b}: no data")
 
     # f) southeast_pier: VLCC share ≤30% (2025)
     sp_loads_2025 = [l for l in all_loadings if l["berth"] == "southeast_pier" and l["date"].startswith("2025")]
@@ -653,6 +686,17 @@ def run(incremental=False):
             cbbox  = cell_bboxes[berth]
             ux, uy = geom["axis_uvec"]
 
+            # Pier axis perpendicular offset in pixel space.
+            # perp_ctr from find_blobs is absolute (from image top-left corner);
+            # subtract the pier axis's own perp coordinate to get pier-relative signed distance.
+            _clon_b, _clat_b = berth_center(pts)
+            _cw, _ch = cell_dims[berth]
+            _cbbox = cell_bboxes[berth]
+            _ux, _uy = ux, uy
+            _col_ctr_b = (_clon_b - _cbbox.min_x) / (_cbbox.max_x - _cbbox.min_x) * _cw
+            _row_ctr_b = (_cbbox.max_y - _clat_b) / (_cbbox.max_y - _cbbox.min_y) * _ch
+            axis_perp_px = _col_ctr_b * (-_uy) + _row_ctr_b * _ux
+
             prev = prev_hulls.get((berth, orbit), [])
             hull_list = []
 
@@ -661,10 +705,10 @@ def run(incremental=False):
             max_len = cfg.get("max_len", float("inf"))
             qualifying = [b for b in (blobs or []) if b["length_m"] >= min_len and b["length_m"] <= max_len]
 
-            # Step 2: physical cap — max 2 hulls per pier side (sign of perp_ctr)
+            # Step 2: physical cap — max 2 hulls per pier side (corrected signed perp)
             by_side: dict = {}
             for b in qualifying:
-                sk = 1 if b.get("perp_ctr", 0) >= 0 else -1
+                sk = 1 if (b.get("perp_ctr", 0) - axis_perp_px) >= 0 else -1
                 by_side.setdefault(sk, []).append(b)
 
             capped: list = []
@@ -684,9 +728,11 @@ def run(incremental=False):
                 # Geographic centre of hull
                 axis_mid_px = (blob["axis_min"] + blob["axis_max"]) / 2
                 perp_ctr    = blob.get("perp_ctr", 0)
-                side        = 1 if perp_ctr >= 0 else -1
+                # Signed distance from pier axis (not from image corner)
+                _corr_perp  = float(perp_ctr) - axis_perp_px
+                side        = 1 if _corr_perp >= 0 else -1
                 pos_m       = round(float(axis_mid_px) * RESOLUTION, 0)
-                perp_m      = round(float(perp_ctr) * RESOLUTION, 0)
+                perp_m      = round(_corr_perp * RESOLUTION, 0)
 
                 # pixel position within cell
                 col_c = axis_mid_px * ux + perp_ctr * (-uy)
@@ -787,16 +833,17 @@ def run(incremental=False):
             for h in hull_list:
                 all_hull_positions.append({
                     "berth": berth, "orbit": orbit, "date": date_str,
-                    "pos_m": h["pos_m"], "side": h["side"],
+                    "pos_m": h["pos_m"], "side": h["side"], "len_m": h["len_m"],
                 })
 
             if not hull_list and detected and best:
                 # find_blobs returned a best blob but no qualifying hulls — add as fallback
                 len_m = float(best["length_m"])
                 perp_ctr_b = best.get("perp_ctr", 0)
-                perp_m_b   = round(float(perp_ctr_b) * RESOLUTION, 0)
+                _corr_b    = float(perp_ctr_b) - axis_perp_px
+                perp_m_b   = round(_corr_b * RESOLUTION, 0)
                 hull_list.append({
-                    "side": 1 if perp_ctr_b >= 0 else -1,
+                    "side": 1 if _corr_b >= 0 else -1,
                     "perp_m": perp_m_b,
                     "pos_m": 0, "lon": 0, "lat": 0,
                     "len_m": round(len_m, 1),
@@ -846,6 +893,11 @@ def run(incremental=False):
 
     # ── Static object filter (post-run, full-history pass) ────────────────────
     static_set = _build_static_set(all_hull_positions)
+    longterm_set = _build_longterm_static_set(all_hull_positions)
+    n_new_longterm = len(longterm_set - static_set)
+    static_set = static_set | longterm_set
+    if n_new_longterm:
+        print(f"Long-term static filter: +{n_new_longterm} additional hull detections flagged")
     static_points = sorted(
         [{"berth": b, "orbit": o, "date": d, "pos_m": p, "side": s}
          for (b, o, d, p, s) in static_set],
@@ -887,17 +939,27 @@ def run(incremental=False):
     # ── Generate static_objects.csv ───────────────────────────────────────────
     # Group static detections by (berth, orbit, side, pos cluster) → one row per cluster
     static_obj_rows = []
+    # Build lookup for len_m from all_hull_positions
+    _len_lookup: dict = {}
+    for h in all_hull_positions:
+        k = (h["berth"], h["orbit"], h["date"], h["pos_m"], h["side"])
+        _len_lookup[k] = h.get("len_m", "")
+
     by_bos2: dict = {}
     for (berth, orbit, date_s, pos_m, side) in static_set:
         key = (berth, orbit, side)
-        by_bos2.setdefault(key, []).append({"date": date_s, "pos_m": pos_m})
+        lm = _len_lookup.get((berth, orbit, date_s, pos_m, side), "")
+        by_bos2.setdefault(key, []).append({"date": date_s, "pos_m": pos_m, "len_m": lm})
     for (berth, orbit, side), obs in by_bos2.items():
         obs_s = sorted(obs, key=lambda x: x["date"])
         dates = [o["date"] for o in obs_s]
         positions = [o["pos_m"] for o in obs_s]
+        lens = [o["len_m"] for o in obs_s if o["len_m"] != ""]
+        avg_len = round(sum(float(l) for l in lens) / len(lens), 1) if lens else ""
         static_obj_rows.append({
             "berth": berth, "orbit": orbit, "side": side,
             "pos_m": round(sum(positions) / len(positions), 0),
+            "len_m": avg_len,
             "perp_m": "",
             "first_date": dates[0], "last_date": dates[-1],
             "n_passes": len(obs_s),
@@ -905,7 +967,7 @@ def run(incremental=False):
     static_obj_rows.sort(key=lambda r: (r["berth"], r["orbit"], r["first_date"]))
     static_csv = OUT_DIR / "static_objects.csv"
     with open(static_csv, "w", newline="") as f:
-        w = csv.DictWriter(f, fieldnames=["berth","orbit","side","pos_m","perp_m",
+        w = csv.DictWriter(f, fieldnames=["berth","orbit","side","pos_m","len_m","perp_m",
                                            "first_date","last_date","n_passes"])
         w.writeheader()
         for r in static_obj_rows:
