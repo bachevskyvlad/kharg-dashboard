@@ -172,7 +172,7 @@ def count_loadings(loadings, start, end):
 
 # ── Validation report ─────────────────────────────────────────────────────────
 
-def _print_validation_report(all_passes, all_loadings, loadings_before_static=None, static_points=None):
+def _print_validation_report(all_passes, all_loadings, loadings_before_static=None, static_points=None, visits=None):
     """Print hull-count and loading-rate sanity table.
 
     Expected:
@@ -312,6 +312,81 @@ def _print_validation_report(all_passes, all_loadings, loadings_before_static=No
             lines.append(f"  {sp['date']:<12} o{sp['orbit']:>3} {sp['berth']:<20} "
                          f"{sp['pos_m']:>7.0f} {sp['side']:>+5d}")
 
+    # ── Acceptance gates (b-f) ────────────────────────────────────────────────
+    lines.append("\n=== Acceptance gates ===")
+
+    # b) hulls/pass: mean ≤1.5, max ≤3 per berth
+    gate_b = all(
+        (not hull_counts[b] or (sum(hull_counts[b]) / len(hull_counts[b]) <= 1.5 and max(hull_counts[b]) <= 3))
+        for b in berths
+    )
+    lines.append(f"  b) hulls/pass mean≤1.5 max≤3: {'✅' if gate_b else '❌'}")
+    for b in berths:
+        hc = hull_counts[b]
+        if hc:
+            mean_h = sum(hc) / len(hc)
+            lines.append(f"       {b}: mean={mean_h:.2f} max={max(hc)}")
+
+    # c) visits/month ≤ passes/month × 2 per berth
+    visit_months: dict = defaultdict(lambda: defaultdict(int))
+    if visits:
+        for v in visits:
+            try:
+                dt = datetime.strptime(v.get("start_date", ""), "%Y-%m-%d")
+                visit_months[(dt.year, dt.month)][v["berth"]] += 1
+            except (KeyError, ValueError):
+                pass
+    gate_c_fails = []
+    for ym in sorted(set(month_passes) | set(visit_months)):
+        for b in berths:
+            vm = visit_months[ym].get(b, 0)
+            pm = month_passes[ym].get(b, 0)
+            if pm > 0 and vm > pm * 2:
+                gate_c_fails.append((ym, b, vm, pm))
+    gate_c = len(gate_c_fails) == 0
+    lines.append(f"  c) visits/month ≤ passes/month×2: {'✅' if gate_c else '❌'}")
+    for (yr, mo), b, vm, pm in gate_c_fails[:5]:
+        lines.append(f"       FAIL {yr}-{mo:02d} {b}: {vm} visits vs {pm} passes")
+
+    # d) Sep-Nov 2026: ≤3 visits per berth over 3 months
+    gate_d_fails = []
+    for b in berths:
+        cnt = sum(visit_months.get((2026, mo), {}).get(b, 0) for mo in [9, 10, 11])
+        if cnt > 3:
+            gate_d_fails.append((b, cnt))
+    gate_d = len(gate_d_fails) == 0
+    lines.append(f"  d) Sep-Nov 2026 ≤3 visits/berth: {'✅' if gate_d else '❌'}")
+    for b, cnt in gate_d_fails:
+        lines.append(f"       FAIL {b}: {cnt} visits")
+
+    # e) avg visit_days 1-4 days (2025)
+    gate_e_rows = []
+    if visits:
+        for b in berths:
+            bv = [v["visit_days"] for v in visits
+                  if v["berth"] == b and v.get("start_date", "").startswith("2025")
+                  and v.get("visit_days", 0) > 0]
+            avg = sum(bv) / len(bv) if bv else None
+            ok = avg is not None and 1.0 <= avg <= 4.0
+            gate_e_rows.append((b, avg, ok))
+    gate_e = all(ok for _, _, ok in gate_e_rows)
+    lines.append(f"  e) avg visit_days 1-4 (2025): {'✅' if gate_e else '❌'}")
+    for b, avg, ok in gate_e_rows:
+        lines.append(f"       {b}: avg={avg:.1f}d {'✅' if ok else '❌'}" if avg is not None else f"       {b}: no data")
+
+    # f) southeast_pier: VLCC share ≤30% (2025)
+    sp_loads_2025 = [l for l in all_loadings if l["berth"] == "southeast_pier" and l["date"].startswith("2025")]
+    sp_vlcc_2025  = [l for l in sp_loads_2025 if l.get("class") == "VLCC"]
+    sp_pct = len(sp_vlcc_2025) / len(sp_loads_2025) * 100 if sp_loads_2025 else 0.0
+    gate_f = sp_pct <= 30.0
+    lines.append(f"  f) southeast_pier VLCC≤30% 2025: {'✅' if gate_f else '❌'} "
+                 f"({len(sp_vlcc_2025)}/{len(sp_loads_2025)} = {sp_pct:.0f}%)")
+    if not gate_f:
+        lines.append(f"     ⚠ VLCC share={sp_pct:.0f}% — flag for crop inspection")
+
+    all_pass = gate_b and gate_c and gate_d and gate_e and gate_f
+    lines.append(f"\n  Overall b-f: {'ALL ✅' if all_pass else 'SOME ❌ — see above'}")
+
     for line in lines:
         print(line)
 
@@ -332,6 +407,7 @@ def _bbox_dims(bbox_obj, resolution):
 
 
 def run(incremental=False):
+    from datetime import date as _date
     today = datetime.utcnow().strftime("%Y-%m-%d")
 
     start_date   = HISTORY_START
@@ -419,6 +495,11 @@ def run(incremental=False):
     passes_out = []
     loadings   = []
     hull_rows  = []  # for CSV — new rows only; merged with old_hull_rows at write time
+
+    # Visit tracking
+    visit_counter: dict = defaultdict(int)  # berth → next int
+    active_visits: dict = {}  # (berth, side) → {visit_id, berth, side, pos_m, len_max, class_max, start_date, last_seen_date}
+    visits: list = []  # completed + ongoing, finalized after main loop
 
     for entry in entries:
         date_str = entry["date_str"]
@@ -511,6 +592,36 @@ def run(incremental=False):
                 recent_any = [h for hl in recent_hulls[berth] for h in hl]
                 new_load = is_new_load_v2(pos_m, len_m, perp_m, prev, recent_any)
 
+                # Visit tracking: assign visit_id and arrived flag
+                arrived = new_load
+                ak = (berth, side)
+                if arrived:
+                    visit_counter[berth] += 1
+                    vid = f"v{visit_counter[berth]:05d}"
+                    active_visits[ak] = {
+                        "visit_id": vid, "berth": berth, "side": side,
+                        "pos_m": pos_m, "len_max": len_m, "class_max": cls,
+                        "start_date": date_str, "last_seen_date": date_str,
+                    }
+                elif ak in active_visits and abs(pos_m - active_visits[ak]["pos_m"]) <= 200:
+                    av = active_visits[ak]
+                    av["last_seen_date"] = date_str
+                    if len_m > av["len_max"]:
+                        av["len_max"] = len_m
+                        av["class_max"] = classify_hull(len_m)
+                    vid = av["visit_id"]
+                else:
+                    # Different position on same side → distinct new arrival
+                    arrived = True
+                    new_load = True
+                    visit_counter[berth] += 1
+                    vid = f"v{visit_counter[berth]:05d}"
+                    active_visits[ak] = {
+                        "visit_id": vid, "berth": berth, "side": side,
+                        "pos_m": pos_m, "len_max": len_m, "class_max": cls,
+                        "start_date": date_str, "last_seen_date": date_str,
+                    }
+
                 hull = {
                     "side":     side,
                     "perp_m":   perp_m,
@@ -521,6 +632,8 @@ def run(incremental=False):
                     "width_m":  round(wid_m, 1),
                     "class":    cls,
                     "new_load": new_load,
+                    "arrived":  arrived,
+                    "visit_id": vid,
                 }
                 hull_list.append(hull)
 
@@ -533,15 +646,16 @@ def run(incremental=False):
 
                 if new_load:
                     loadings.append({
-                        "date":   date_str,
-                        "orbit":  orbit,
-                        "berth":  berth,
-                        "side":   side,
-                        "pos_m":  pos_m,
-                        "lon":    round(lon_c, 6),
-                        "lat":    round(lat_c, 6),
-                        "len_m":  round(len_m, 1),
-                        "class":  cls,
+                        "date":     date_str,
+                        "orbit":    orbit,
+                        "berth":    berth,
+                        "side":     side,
+                        "pos_m":    pos_m,
+                        "lon":      round(lon_c, 6),
+                        "lat":      round(lat_c, 6),
+                        "len_m":    round(len_m, 1),
+                        "class":    cls,
+                        "visit_id": vid,
                     })
 
             compact = [{"pos_m": h["pos_m"], "len_m": h["len_m"], "perp_m": h["perp_m"]}
@@ -572,10 +686,32 @@ def run(incremental=False):
                                                [h for hl in recent_hulls[berth] for h in hl]),
                 })
 
-            pass_record[berth] = {"det": det_str, "hulls": hull_list}
+            # Departed detection: if previous pass had an active visit on a side
+            # and this pass has no hull on that side → departed
+            departed_this_pass = []
+            current_sides = {h["side"] for h in hull_list}
+            for ak2, av2 in list(active_visits.items()):
+                if ak2[0] == berth and ak2[1] not in current_sides:
+                    departed_this_pass.append(av2["visit_id"])
+                    av2["end_date"] = date_str
+                    visits.append({**av2, "visit_days": (
+                        (_date.fromisoformat(date_str) - _date.fromisoformat(av2["start_date"])).days
+                    )})
+                    del active_visits[ak2]
+
+            pass_record[berth] = {"det": det_str, "hulls": hull_list,
+                                  "departed": departed_this_pass}
+            if departed_this_pass:
+                print(f"  {berth}: DEPARTED {departed_this_pass}")
             print(f"  {berth}: {det_str}  hulls={len(hull_list)}")
 
         passes_out.append(pass_record)
+
+    # ── Close any visits still open at end of history ────────────────────────
+    for ak, av in active_visits.items():
+        visits.append({**av, "visit_days": (
+            (_date.fromisoformat(today) - _date.fromisoformat(av["start_date"])).days
+        )})
 
     # ── Static object filter (post-run, full-history pass) ────────────────────
     static_set = _build_static_set(all_hull_positions)
@@ -600,6 +736,51 @@ def run(incremental=False):
         if len(static_points) > 30:
             print(f"  ... ({len(static_points) - 30} more)")
 
+    # Filter visits to only those with at least one valid loading
+    valid_visit_ids = {l["visit_id"] for l in loadings if "visit_id" in l}
+    # Also keep visits from old_loadings
+    valid_visit_ids |= {l["visit_id"] for l in old_loadings if "visit_id" in l}
+    visits = [v for v in visits if v["visit_id"] in valid_visit_ids]
+
+    # Compute visit_days per visit (use max of hull-observed days)
+    for v in visits:
+        if "visit_days" not in v:
+            v["visit_days"] = 0
+
+    # Annotate loadings with class from their visit (use visit's class_max)
+    vid_to_class = {v["visit_id"]: v["class_max"] for v in visits}
+    for l in loadings:
+        if "visit_id" in l and l["visit_id"] in vid_to_class:
+            l["class"] = vid_to_class[l["visit_id"]]
+
+    # ── Generate static_objects.csv ───────────────────────────────────────────
+    # Group static detections by (berth, orbit, side, pos cluster) → one row per cluster
+    static_obj_rows = []
+    by_bos2: dict = {}
+    for (berth, orbit, date_s, pos_m, side) in static_set:
+        key = (berth, orbit, side)
+        by_bos2.setdefault(key, []).append({"date": date_s, "pos_m": pos_m})
+    for (berth, orbit, side), obs in by_bos2.items():
+        obs_s = sorted(obs, key=lambda x: x["date"])
+        dates = [o["date"] for o in obs_s]
+        positions = [o["pos_m"] for o in obs_s]
+        static_obj_rows.append({
+            "berth": berth, "orbit": orbit, "side": side,
+            "pos_m": round(sum(positions) / len(positions), 0),
+            "perp_m": "",
+            "first_date": dates[0], "last_date": dates[-1],
+            "n_passes": len(obs_s),
+        })
+    static_obj_rows.sort(key=lambda r: (r["berth"], r["orbit"], r["first_date"]))
+    static_csv = OUT_DIR / "static_objects.csv"
+    with open(static_csv, "w", newline="") as f:
+        w = csv.DictWriter(f, fieldnames=["berth","orbit","side","pos_m","perp_m",
+                                           "first_date","last_date","n_passes"])
+        w.writeheader()
+        for r in static_obj_rows:
+            w.writerow(r)
+    print(f"Saved: {static_csv} ({len(static_obj_rows)} static objects)")
+
     # Mark hull_rows with static flag
     for r in hull_rows:
         key = (r["berth"], r["orbit"], r["date"], r["pos_m"], r["side"])
@@ -608,7 +789,7 @@ def run(incremental=False):
     # ── CSV output (hull-level) — merge old + new ─────────────────────────────
     csv_path = OUT_DIR / "berth_v4_history.csv"
     fieldnames = ["date","orbit","berth","hull_idx","det","side","perp_m","pos_m",
-                  "lon","lat","len_m","width_m","class","new_load","static","bg_source"]
+                  "lon","lat","len_m","width_m","class","new_load","arrived","visit_id","static","bg_source"]
     all_hull_rows = old_hull_rows + hull_rows
     with open(csv_path, "w", newline="") as f:
         w = csv.DictWriter(f, fieldnames=fieldnames, extrasaction="ignore")
@@ -645,22 +826,32 @@ def run(incremental=False):
         last_dt = _date.fromisoformat(last_ship["date"])
         days_since = (today_dt - last_dt).days
 
+    # avg visit_days 2025 per berth
+    visits_2025 = [v for v in visits if v.get("start_date", "").startswith("2025")]
+    avg_visit_days_2025: dict = {}
+    for b in ["sea_island", "east_t_head", "southeast_pier"]:
+        bv = [v["visit_days"] for v in visits_2025 if v["berth"] == b and v.get("visit_days", 0) > 0]
+        avg_visit_days_2025[b] = round(sum(bv) / len(bv), 1) if bv else None
+
     metrics = {
-        "loadings_4w":     l4w,
-        "loadings_4w_py":  l4w_py,
-        "last_ship":       last_ship,
+        "loadings_4w":        l4w,
+        "loadings_4w_py":     l4w_py,
+        "last_ship":          last_ship,
         "days_since_loading": days_since,
+        "avg_visit_days_2025": avg_visit_days_2025,
     }
 
-    # ── JSON output for site (v5.0) — merge old passes + loadings ────────────
+    # ── JSON output for site (v2) — merge old passes + loadings + visits ────────────
     all_loadings = old_loadings + loadings
+
     obj = {
         "generated": today,
-        "version":   "v5.0",
-        "note":      "lower bound — detector misses ~1/3 of ships; precision ~92% when OCC",
+        "version":   "v2.0",
+        "note":      "lower bound — detector misses ~1/3 of ships; precision ~92% when OCC. Class by hull length (±50 m). Visits shorter than the gap between passes may be missed.",
         "berths":    ["sea_island", "east_t_head", "southeast_pier"],
         "passes":    old_passes + passes_out,
         "loadings":  all_loadings,
+        "visits":    visits,
         "metrics":   metrics,
     }
     JSON_OUT.parent.mkdir(parents=True, exist_ok=True)
@@ -681,6 +872,7 @@ def run(incremental=False):
         old_loadings + loadings,
         loadings_before_static=old_loadings + loadings_before_static,
         static_points=static_points,
+        visits=visits,
     )
 
     # ── Supabase write ────────────────────────────────────────────────────────

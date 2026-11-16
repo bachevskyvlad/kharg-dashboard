@@ -1,10 +1,13 @@
 """
-berth_v4_crops.py — SAR crop images for diagnostic cases.
+berth_v4_crops.py — SAR crop images for acceptance gate g.
 
 Reads diagnostics/berth_v4/history_v4/berth_v4_history.csv and generates
 SAR ratio crops with hull boxes for:
-  1. Last-4-week loadings (all, up to 10)  → crops/last4w_*.png
-  2. southeast_pier VLCC cases (5 most recent from 2025)  → crops/sep_vlcc_*.png
+  1. 5 random 2025 visits (arrived=True, 2025)  → crops/v2025_*.png
+  2. All autumn 2026 visits (Sep-Nov 2026)       → crops/aut2026_*.png
+
+Box colors: VLCC=#f87171, SuezAframax=#fbbf24, smaller=#94a3b8
+Label format: "class · length · arrived/same"
 
 Output: diagnostics/berth_v4/crops/
 """
@@ -50,8 +53,10 @@ BERTHS = BERTH_COORDS
 
 def _classify(len_m):
     if len_m >= 300:   return "VLCC"
-    if len_m >= 160:   return "SuezAframax"
+    if len_m >= 150:   return "SuezAframax"
     return "smaller"
+
+CLASS_COLORS = {"VLCC": "#f87171", "SuezAframax": "#fbbf24", "smaller": "#94a3b8"}
 
 
 def _load_bg(berth, orbit):
@@ -63,7 +68,7 @@ def _load_bg(berth, orbit):
     return None
 
 
-def _draw_boxes(ax, blobs, ux, uy):
+def _draw_boxes(ax, blobs, ux, uy, csv_row=None):
     px_u, py_u = -uy, ux
     by_side: dict = {}
     for b in blobs:
@@ -79,18 +84,22 @@ def _draw_boxes(ax, blobs, ux, uy):
                   aM*ux + pM*px_u, am*ux + pM*px_u, am*ux + pm*px_u]
             rs = [am*uy + pm*py_u, aM*uy + pm*py_u,
                   aM*uy + pM*py_u, am*uy + pM*py_u, am*uy + pm*py_u]
-            clr = "#f1c40f" if idx < 2 else "#e67e22"
+            cls = _classify(b["length_m"])
+            clr = CLASS_COLORS.get(cls, "#94a3b8")
             ax.plot(cs, rs, "-", color=clr, lw=1.5, alpha=0.9)
             ctr_c = (am + aM) / 2 * ux + (pm + pM) / 2 * px_u
             ctr_r = (am + aM) / 2 * uy + (pm + pM) / 2 * py_u
-            lbl = _classify(b["length_m"])[0]
-            ax.text(ctr_c, ctr_r,
-                    f"{lbl}\n{b['length_m']:.0f}m\nasp{b.get('aspect', 0):.1f}",
+            # Label: "class · length · arrived/same"
+            arrived_str = ""
+            if csv_row is not None:
+                arrived_str = " · arrived" if str(csv_row.get("arrived", "")).lower() in ("true", "1") else " · same"
+            lbl = f"{cls} · {b['length_m']:.0f}m{arrived_str}"
+            ax.text(ctr_c, ctr_r, lbl,
                     color=clr, fontsize=5, ha="center", va="center", fontweight="bold",
                     bbox=dict(fc="black", alpha=0.5, lw=0, pad=0.5))
 
 
-def render_crop(date_str, orbit, berth, tag, idx):
+def render_crop(date_str, orbit, berth, tag, idx, csv_row=None):
     cfg = V4_CFG[berth]
     pts = BERTHS[berth]
     cell_bbox = cell_bbox_for(*berth_center(pts))
@@ -148,7 +157,7 @@ def render_crop(date_str, orbit, berth, tag, idx):
             pass
 
     if blobs:
-        _draw_boxes(ax, blobs, ux, uy)
+        _draw_boxes(ax, blobs, ux, uy, csv_row=csv_row)
 
     det_str = "OCC" if detected else "EMP"
     n_hulls = len(blobs) if blobs else 0
@@ -186,56 +195,64 @@ def main():
             rows.append(r)
     print(f"Loaded {len(rows)} hull rows from {HIST.name}")
 
-    today = date.today().isoformat()
-    d4w   = (date.today() - timedelta(weeks=4)).isoformat()
+    import random as _random
+    _random.seed(42)
 
-    # --- Last 4 weeks loadings (new_load=True) ---
-    # Dedup by (date, orbit, berth) — take first hull row per pass
-    l4w_seen: set = set()
-    l4w_cases = []
+    # --- Gate g case 1: 5 random 2025 visits (arrived=True, 2025) ---
+    # Dedup by visit_id (or by date/orbit/berth if no visit_id), arrived=True
+    v2025_seen: set = set()
+    v2025_pool = []
     for r in rows:
-        if r.get("new_load") == "True" and r["date"] >= d4w:
-            key = (r["date"], r["orbit"], r["berth"])
-            if key not in l4w_seen:
-                l4w_seen.add(key)
-                l4w_cases.append(r)
-    l4w_cases = sorted(l4w_cases, key=lambda r: r["date"])
+        is_arrived = str(r.get("arrived", r.get("new_load", ""))).lower() in ("true", "1")
+        is_2025 = r.get("date", "").startswith("2025")
+        is_static = str(r.get("static", "0")) == "1"
+        if is_arrived and is_2025 and not is_static:
+            vid = r.get("visit_id") or f"{r['date']}_{r['orbit']}_{r['berth']}"
+            if vid not in v2025_seen:
+                v2025_seen.add(vid)
+                v2025_pool.append(r)
+    v2025_pool = sorted(v2025_pool, key=lambda r: r["date"])
+    v2025_cases = _random.sample(v2025_pool, min(5, len(v2025_pool)))
+    v2025_cases = sorted(v2025_cases, key=lambda r: r["date"])
 
-    # --- southeast_pier VLCC (5 most recent) ---
-    sep_cases_seen: set = set()
-    sep_cases = []
-    for r in sorted(rows, key=lambda r: r["date"], reverse=True):
-        if r["berth"] == "southeast_pier" and r.get("class") == "VLCC":
-            key = (r["date"], r["orbit"])
-            if key not in sep_cases_seen:
-                sep_cases_seen.add(key)
-                sep_cases.append(r)
-        if len(sep_cases) >= 5:
-            break
+    # --- Gate g case 2: all autumn 2026 visits (Sep-Nov 2026) ---
+    aut2026_seen: set = set()
+    aut2026_cases = []
+    for r in rows:
+        d = r.get("date", "")
+        is_static = str(r.get("static", "0")) == "1"
+        if d >= "2026-09-01" and d <= "2026-11-30" and not is_static:
+            is_arrived = str(r.get("arrived", r.get("new_load", ""))).lower() in ("true", "1")
+            if is_arrived:
+                vid = r.get("visit_id") or f"{r['date']}_{r['orbit']}_{r['berth']}"
+                if vid not in aut2026_seen:
+                    aut2026_seen.add(vid)
+                    aut2026_cases.append(r)
+    aut2026_cases = sorted(aut2026_cases, key=lambda r: r["date"])
 
-    print(f"\nLast-4w loadings: {len(l4w_cases)} (since {d4w})")
-    for r in l4w_cases:
+    print(f"\n2025 visits pool: {len(v2025_pool)}, sampling {len(v2025_cases)}")
+    for r in v2025_cases:
         print(f"  {r['date']} o{r['orbit']} {r['berth']} "
-              f"cls={r.get('class','')} len={r.get('len_m','')}m "
-              f"asp={r.get('aspect', r.get('width_m','?'))}")
+              f"cls={r.get('class','')} len={r.get('len_m','')}m vid={r.get('visit_id','')}")
 
-    print(f"\nsoutheast_pier VLCC (most recent 5):")
-    for r in sep_cases:
-        print(f"  {r['date']} o{r['orbit']} len={r.get('len_m','')}m")
+    print(f"\nAutumn 2026 visits: {len(aut2026_cases)}")
+    for r in aut2026_cases:
+        print(f"  {r['date']} o{r['orbit']} {r['berth']} "
+              f"cls={r.get('class','')} len={r.get('len_m','')}m vid={r.get('visit_id','')}")
 
-    if not l4w_cases and not sep_cases:
+    if not v2025_cases and not aut2026_cases:
         print("Nothing to render — done.")
         return
 
     print("\n=== Rendering crops ===")
 
-    for idx, r in enumerate(l4w_cases):
-        print(f"\nlast4w [{idx+1}/{len(l4w_cases)}]: {r['date']} o{r['orbit']} {r['berth']}")
-        render_crop(r["date"], r["orbit"], r["berth"], "last4w", idx + 1)
+    for idx, r in enumerate(v2025_cases):
+        print(f"\nv2025 [{idx+1}/{len(v2025_cases)}]: {r['date']} o{r['orbit']} {r['berth']}")
+        render_crop(r["date"], r["orbit"], r["berth"], "v2025", idx + 1, csv_row=r)
 
-    for idx, r in enumerate(sep_cases):
-        print(f"\nsep_vlcc [{idx+1}/{len(sep_cases)}]: {r['date']} o{r['orbit']} {r['berth']}")
-        render_crop(r["date"], r["orbit"], r["berth"], "sep_vlcc", idx + 1)
+    for idx, r in enumerate(aut2026_cases):
+        print(f"\naut2026 [{idx+1}/{len(aut2026_cases)}]: {r['date']} o{r['orbit']} {r['berth']}")
+        render_crop(r["date"], r["orbit"], r["berth"], "aut2026", idx + 1, csv_row=r)
 
     pngs = list(OUT.glob("*.png"))
     print(f"\nTotal crops saved: {len(pngs)} in {OUT}")

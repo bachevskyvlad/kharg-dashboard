@@ -47,7 +47,12 @@ jobs:
           PC_SDK_SUBSCRIPTION_KEY: ${{ secrets.PC_SDK_SUBSCRIPTION_KEY }}
         run: python scripts/berth_v4_history.py
 
-      - name: Step 3 — diagnostic SAR crops (last-4w loadings + southeast_pier VLCC)
+      - name: Step 3 — berth occupancy v2 page
+        if: steps.history.outcome == 'success'
+        id: page
+        run: python scripts/berth_v2_page.py
+
+      - name: Step 4 — acceptance gate g SAR crops (5×2025 + all autumn 2026)
         if: steps.history.outcome == 'success'
         env:
           PC_SDK_SUBSCRIPTION_KEY: ${{ secrets.PC_SDK_SUBSCRIPTION_KEY }}
