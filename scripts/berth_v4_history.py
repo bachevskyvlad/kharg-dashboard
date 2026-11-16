@@ -55,7 +55,7 @@ V4_CONFIG = {
     # all BGs rebuilt from PC and saved in BG_V4
     "sea_island":     {"pier": 20, "water_i": 20, "water_o": 80, "min_len": 120, "aspect_thr": 2.0, "merge_gap": 120, "bg_dir": BG_V4},
     "east_t_head":    {"pier": 20, "water_i": 20, "water_o": 80, "min_len": 150, "aspect_thr": 3.0, "merge_gap": 120, "bg_dir": BG_V4},
-    "southeast_pier": {"pier": 20, "water_i": 20, "water_o": 80, "min_len": 150, "aspect_thr": 3.0, "merge_gap": 120, "bg_dir": BG_V4},
+    "southeast_pier": {"pier": 20, "water_i": 20, "water_o": 80, "min_len": 150, "aspect_thr": 3.0, "merge_gap": 0,   "bg_dir": BG_V4},
 }
 
 STATIC_POS_TOL_M   = 60.0   # ±m along pier axis — same-position threshold
@@ -172,7 +172,7 @@ def count_loadings(loadings, start, end):
 
 # ── Validation report ─────────────────────────────────────────────────────────
 
-def _print_validation_report(all_passes, all_loadings, loadings_before_static=None, static_points=None, visits=None):
+def _print_validation_report(all_passes, all_loadings, loadings_before_static=None, static_points=None, visits=None, hull_rows_all=None):
     """Print hull-count and loading-rate sanity table.
 
     Expected:
@@ -181,6 +181,7 @@ def _print_validation_report(all_passes, all_loadings, loadings_before_static=No
       VLCC share 2025 — majority on sea_island and east_t_head
     """
     from collections import defaultdict
+    from datetime import date as _date
     import calendar
 
     berths = ["sea_island", "east_t_head", "southeast_pier"]
@@ -359,6 +360,55 @@ def _print_validation_report(all_passes, all_loadings, loadings_before_static=No
     for b, cnt in gate_d_fails:
         lines.append(f"       FAIL {b}: {cnt} visits")
 
+    # d-detail) Print east_t_head Sep-Nov 2026 visits (always, for optics cross-check)
+    OPTICS_EMPTY_DATES = {"2026-09-28", "2026-10-18", "2026-10-28"}
+    eth_aut_visits = []
+    if visits:
+        for v in visits:
+            if v.get("berth") == "east_t_head":
+                sd = v.get("start_date", "")
+                if "2026-09-01" <= sd <= "2026-11-30":
+                    eth_aut_visits.append(v)
+    if eth_aut_visits:
+        lines.append(f"\n  d-detail) east_t_head Sep-Nov 2026 visits ({len(eth_aut_visits)}):")
+        lines.append(f"    {'date':<12} {'orbit':>5} {'pos_m':>7} {'perp_m':>7} {'len_m':>7} {'aspect':>6} {'vdays':>6}  note")
+        lines.append("    " + "-" * 70)
+        # Build a lookup: visit_id → first loading row for orbit/pos/len/aspect
+        vid_to_load = {}
+        if hull_rows_all:
+            for r in hull_rows_all:
+                vid = r.get("visit_id", "")
+                if vid and vid not in vid_to_load:
+                    vid_to_load[vid] = r
+        for v in sorted(eth_aut_visits, key=lambda x: x["start_date"]):
+            vid = v.get("visit_id", "")
+            lr = vid_to_load.get(vid, {})
+            orbit = lr.get("orbit", v.get("orbit", "?"))
+            pos_m = lr.get("pos_m", v.get("pos_m", "?"))
+            perp_m = lr.get("perp_m", "?")
+            len_m = lr.get("len_m", v.get("len_max", "?"))
+            # aspect: not stored in visit; get from hull_rows_all if available
+            aspect = "?"
+            if hull_rows_all:
+                for r in hull_rows_all:
+                    if r.get("visit_id") == vid:
+                        aspect = r.get("aspect", "?")
+                        break
+            vdays = v.get("visit_days", "?")
+            sd = v["start_date"]
+            optics_note = ""
+            # Check if start_date or nearby dates match optics empty dates
+            for od in OPTICS_EMPTY_DATES:
+                try:
+                    diff = abs((_date.fromisoformat(sd) - _date.fromisoformat(od)).days)
+                    if diff <= 6:
+                        optics_note = f"[OPTICS: EMPTY {od}]"
+                        break
+                except Exception:
+                    pass
+            lines.append(f"    {sd:<12} {str(orbit):>5} {str(pos_m):>7} {str(perp_m):>7} "
+                         f"{str(len_m):>7} {str(aspect):>6} {str(vdays):>6}  {optics_note}")
+
     # e) avg visit_days 1-4 days (2025)
     gate_e_rows = []
     if visits:
@@ -498,7 +548,7 @@ def run(incremental=False):
 
     # Visit tracking
     visit_counter: dict = defaultdict(int)  # berth → next int
-    active_visits: dict = {}  # (berth, side) → {visit_id, berth, side, pos_m, len_max, class_max, start_date, last_seen_date}
+    active_visits: dict = {}  # (berth, side) → {visit_id, berth, side, pos_m, len_max, class_max, start_date, last_seen_date, last_valid_seen_date}
     visits: list = []  # completed + ongoing, finalized after main loop
 
     for entry in entries:
@@ -602,10 +652,12 @@ def run(incremental=False):
                         "visit_id": vid, "berth": berth, "side": side,
                         "pos_m": pos_m, "len_max": len_m, "class_max": cls,
                         "start_date": date_str, "last_seen_date": date_str,
+                        "last_valid_seen_date": date_str,
                     }
                 elif ak in active_visits and abs(pos_m - active_visits[ak]["pos_m"]) <= 200:
                     av = active_visits[ak]
                     av["last_seen_date"] = date_str
+                    av["last_valid_seen_date"] = date_str  # valid pass with hull present
                     if len_m > av["len_max"]:
                         av["len_max"] = len_m
                         av["class_max"] = classify_hull(len_m)
@@ -620,6 +672,7 @@ def run(incremental=False):
                         "visit_id": vid, "berth": berth, "side": side,
                         "pos_m": pos_m, "len_max": len_m, "class_max": cls,
                         "start_date": date_str, "last_seen_date": date_str,
+                        "last_valid_seen_date": date_str,
                     }
 
                 hull = {
@@ -686,17 +739,28 @@ def run(incremental=False):
                                                [h for hl in recent_hulls[berth] for h in hl]),
                 })
 
-            # Departed detection: if previous pass had an active visit on a side
-            # and this pass has no hull on that side → departed
+            # Departed detection: only on valid passes (OCC/EMP), not NO_BG/ERR.
+            # A visit closes if:
+            #   1) valid pass + hull absent on that side (confirmed empty), OR
+            #   2) >6 days gap since last_valid_seen_date (no valid passes for >6d)
             departed_this_pass = []
             current_sides = {h["side"] for h in hull_list}
             for ak2, av2 in list(active_visits.items()):
-                if ak2[0] == berth and ak2[1] not in current_sides:
+                if ak2[0] != berth:
+                    continue
+                lvsd = _date.fromisoformat(av2.get("last_valid_seen_date", av2["start_date"]))
+                cur_dt = _date.fromisoformat(date_str)
+                gap_days = (cur_dt - lvsd).days
+                # Condition 1: valid pass, hull absent on this side
+                close_by_empty = (det_str in ("OCC", "EMP")) and (ak2[1] not in current_sides)
+                # Condition 2: >6 days gap without any valid hull pass
+                close_by_gap = gap_days > 6
+                if close_by_empty or close_by_gap:
                     departed_this_pass.append(av2["visit_id"])
                     av2["end_date"] = date_str
-                    visits.append({**av2, "visit_days": (
-                        (_date.fromisoformat(date_str) - _date.fromisoformat(av2["start_date"])).days
-                    )})
+                    lvsd_str = av2.get("last_valid_seen_date", av2["start_date"])
+                    vdays = (_date.fromisoformat(lvsd_str) - _date.fromisoformat(av2["start_date"])).days + 1
+                    visits.append({**av2, "visit_days": vdays})
                     del active_visits[ak2]
 
             pass_record[berth] = {"det": det_str, "hulls": hull_list,
@@ -709,9 +773,9 @@ def run(incremental=False):
 
     # ── Close any visits still open at end of history ────────────────────────
     for ak, av in active_visits.items():
-        visits.append({**av, "visit_days": (
-            (_date.fromisoformat(today) - _date.fromisoformat(av["start_date"])).days
-        )})
+        lvsd_str = av.get("last_valid_seen_date", av["start_date"])
+        vdays = (_date.fromisoformat(lvsd_str) - _date.fromisoformat(av["start_date"])).days + 1
+        visits.append({**av, "visit_days": vdays})
 
     # ── Static object filter (post-run, full-history pass) ────────────────────
     static_set = _build_static_set(all_hull_positions)
@@ -873,6 +937,7 @@ def run(incremental=False):
         loadings_before_static=old_loadings + loadings_before_static,
         static_points=static_points,
         visits=visits,
+        hull_rows_all=all_hull_rows,
     )
 
     # ── Supabase write ────────────────────────────────────────────────────────

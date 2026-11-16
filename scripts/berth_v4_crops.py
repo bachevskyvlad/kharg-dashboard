@@ -60,8 +60,9 @@ CLASS_COLORS = {"VLCC": "#f87171", "SuezAframax": "#fbbf24", "smaller": "#94a3b8
 
 
 def _load_bg(berth, orbit):
-    p_v4 = BG_V4 / f"bg_{berth}_o{orbit}.npy"
-    p_v3 = ROOT / "diagnostics" / "berth_v4" / "bg_v3" / f"bg_{berth}_o{orbit}.npy"
+    # files are named bg_o{orbit}_{berth}.npy
+    p_v4 = BG_V4 / f"bg_o{orbit}_{berth}.npy"
+    p_v3 = ROOT / "diagnostics" / "berth_v4" / "bg_v3" / f"bg_o{orbit}_{berth}.npy"
     for p in (p_v4, p_v3):
         if p.exists():
             return np.load(p)
@@ -216,6 +217,8 @@ def main():
     v2025_cases = sorted(v2025_cases, key=lambda r: r["date"])
 
     # --- Gate g case 2: all autumn 2026 visits (Sep-Nov 2026) ---
+    # Include ALL east_t_head visits (arrived or not) for gate d optics cross-check;
+    # other berths: arrived=True only.
     aut2026_seen: set = set()
     aut2026_cases = []
     for r in rows:
@@ -223,7 +226,8 @@ def main():
         is_static = str(r.get("static", "0")) == "1"
         if d >= "2026-09-01" and d <= "2026-11-30" and not is_static:
             is_arrived = str(r.get("arrived", r.get("new_load", ""))).lower() in ("true", "1")
-            if is_arrived:
+            is_eth = r.get("berth") == "east_t_head"
+            if is_arrived or is_eth:
                 vid = r.get("visit_id") or f"{r['date']}_{r['orbit']}_{r['berth']}"
                 if vid not in aut2026_seen:
                     aut2026_seen.add(vid)
