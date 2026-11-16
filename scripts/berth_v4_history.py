@@ -54,9 +54,11 @@ BERTHS = BERTH_COORDS  # alias for local use
 V4_CONFIG = {
     # all BGs rebuilt from PC and saved in BG_V4
     "sea_island":     {"pier": 20, "water_i": 20, "water_o": 80, "min_len": 120, "max_len": 420, "aspect_thr": 2.0, "merge_gap": 120, "bg_dir": BG_V4},
-    "east_t_head":    {"pier": 20, "water_i": 20, "water_o": 80, "min_len": 200, "max_len": 420, "aspect_thr": 3.0, "merge_gap": 120, "bg_dir": BG_V4},
+    "east_t_head":    {"pier": 20, "water_i": 20, "water_o": 80, "min_len": 150, "max_len": 420, "aspect_thr": 2.5, "merge_gap": 120, "bg_dir": BG_V4},
     "southeast_pier": {"pier": 20, "water_i": 20, "water_o": 80, "min_len": 150, "max_len": 420, "aspect_thr": 3.0, "merge_gap": 0,   "bg_dir": BG_V4},
 }
+
+from berth_detect_core import VISIT_MIN_LEN_M
 
 STATIC_POS_TOL_M   = 60.0   # ±m along pier axis — same-position threshold
 STATIC_MIN_COUNT   = 4      # ≥N passes same orbit in 30 days → static object
@@ -692,42 +694,51 @@ def run(incremental=False):
                 lon_c = cbbox.min_x + (col_c / cw) * (cbbox.max_x - cbbox.min_x)
                 lat_c = cbbox.max_y - (row_c / ch) * (cbbox.max_y - cbbox.min_y)
 
-                cls      = classify_hull(len_m)
-                recent_any = [h for hl in recent_hulls[berth] for h in hl]
-                new_load = is_new_load_v2(pos_m, len_m, perp_m, prev, recent_any)
+                # Hulls 150–<200m: OCC signal but not tracked as visits/loadings
+                is_sub_visit = len_m < VISIT_MIN_LEN_M
 
-                # Visit tracking: assign visit_id and arrived flag
-                arrived = new_load
-                ak = (berth, side)
-                if arrived:
-                    visit_counter[berth] += 1
-                    vid = f"v{visit_counter[berth]:05d}"
-                    active_visits[ak] = {
-                        "visit_id": vid, "berth": berth, "side": side,
-                        "pos_m": pos_m, "len_max": len_m, "class_max": cls,
-                        "start_date": date_str, "last_seen_date": date_str,
-                        "last_valid_seen_date": date_str,
-                    }
-                elif ak in active_visits and abs(pos_m - active_visits[ak]["pos_m"]) <= 200:
-                    av = active_visits[ak]
-                    av["last_seen_date"] = date_str
-                    av["last_valid_seen_date"] = date_str  # valid pass with hull present
-                    if len_m > av["len_max"]:
-                        av["len_max"] = len_m
-                        av["class_max"] = classify_hull(len_m)
-                    vid = av["visit_id"]
+                if is_sub_visit:
+                    cls      = "hull <200m"
+                    new_load = False
+                    arrived  = False
+                    vid      = ""
                 else:
-                    # Different position on same side → distinct new arrival
-                    arrived = True
-                    new_load = True
-                    visit_counter[berth] += 1
-                    vid = f"v{visit_counter[berth]:05d}"
-                    active_visits[ak] = {
-                        "visit_id": vid, "berth": berth, "side": side,
-                        "pos_m": pos_m, "len_max": len_m, "class_max": cls,
-                        "start_date": date_str, "last_seen_date": date_str,
-                        "last_valid_seen_date": date_str,
-                    }
+                    cls        = classify_hull(len_m)
+                    recent_any = [h for hl in recent_hulls[berth] for h in hl]
+                    new_load   = is_new_load_v2(pos_m, len_m, perp_m, prev, recent_any)
+
+                    # Visit tracking: assign visit_id and arrived flag
+                    arrived = new_load
+                    ak = (berth, side)
+                    if arrived:
+                        visit_counter[berth] += 1
+                        vid = f"v{visit_counter[berth]:05d}"
+                        active_visits[ak] = {
+                            "visit_id": vid, "berth": berth, "side": side,
+                            "pos_m": pos_m, "len_max": len_m, "class_max": cls,
+                            "start_date": date_str, "last_seen_date": date_str,
+                            "last_valid_seen_date": date_str,
+                        }
+                    elif ak in active_visits and abs(pos_m - active_visits[ak]["pos_m"]) <= 200:
+                        av = active_visits[ak]
+                        av["last_seen_date"] = date_str
+                        av["last_valid_seen_date"] = date_str
+                        if len_m > av["len_max"]:
+                            av["len_max"] = len_m
+                            av["class_max"] = classify_hull(len_m)
+                        vid = av["visit_id"]
+                    else:
+                        # Different position on same side → distinct new arrival
+                        arrived  = True
+                        new_load = True
+                        visit_counter[berth] += 1
+                        vid = f"v{visit_counter[berth]:05d}"
+                        active_visits[ak] = {
+                            "visit_id": vid, "berth": berth, "side": side,
+                            "pos_m": pos_m, "len_max": len_m, "class_max": cls,
+                            "start_date": date_str, "last_seen_date": date_str,
+                            "last_valid_seen_date": date_str,
+                        }
 
                 hull = {
                     "side":     side,
@@ -752,7 +763,7 @@ def run(incremental=False):
                     **hull,
                 })
 
-                if new_load:
+                if not is_sub_visit and new_load:
                     loadings.append({
                         "date":     date_str,
                         "orbit":    orbit,
@@ -766,8 +777,9 @@ def run(incremental=False):
                         "visit_id": vid,
                     })
 
+            # Only include visit-qualifying hulls (≥200m) in dedup state
             compact = [{"pos_m": h["pos_m"], "len_m": h["len_m"], "perp_m": h["perp_m"]}
-                       for h in hull_list]
+                       for h in hull_list if h["class"] != "hull <200m"]
             prev_hulls[(berth, orbit)] = compact
             # Cross-orbit dedup: keep last 2 passes (any orbit) per berth
             recent_hulls[berth].append(compact)

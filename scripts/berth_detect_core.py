@@ -30,9 +30,12 @@ BERTH_COORDS = {
 # bg_dir is NOT here (script-specific path).
 BERTH_DETECT_PARAMS = {
     "sea_island":     dict(pier=20, water_i=20, water_o=80, min_len=120, max_len=420, aspect=2.0, merge=120),
-    "east_t_head":    dict(pier=20, water_i=20, water_o=80, min_len=200, max_len=420, aspect=3.0, merge=120),
+    "east_t_head":    dict(pier=20, water_i=20, water_o=80, min_len=150, max_len=420, aspect=2.5, merge=120),
     "southeast_pier": dict(pier=20, water_i=20, water_o=80, min_len=150, max_len=420, aspect=3.0, merge=120),
 }
+
+# Hulls below this length are detected (OCC/EMP) but not tracked as visits/loadings
+VISIT_MIN_LEN_M = 200.0
 
 
 def metres_per_deg_lat():

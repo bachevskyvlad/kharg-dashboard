@@ -43,20 +43,28 @@ V4_CFG = {
     "sea_island":     {"pier": 20, "water_i": 20, "water_o": 80,
                        "min_len": 120, "max_len": 420, "aspect_thr": 2.0, "merge_gap": 120},
     "east_t_head":    {"pier": 20, "water_i": 20, "water_o": 80,
-                       "min_len": 200, "max_len": 420, "aspect_thr": 3.0, "merge_gap": 120},
+                       "min_len": 150, "max_len": 420, "aspect_thr": 2.5, "merge_gap": 120},
     "southeast_pier": {"pier": 20, "water_i": 20, "water_o": 80,
                        "min_len": 150, "max_len": 420, "aspect_thr": 3.0, "merge_gap": 120},
 }
+
+VISIT_MIN_LEN_M = 200.0  # hulls below this shown as grey "hull <200m" on crops
 
 BERTHS = BERTH_COORDS
 
 
 def _classify(len_m):
     if len_m >= 300:   return "VLCC"
-    if len_m >= 150:   return "SuezAframax"
+    if len_m >= 200:   return "SuezAframax"
+    if len_m >= 150:   return "sub_visit"   # detected but not a visit
     return "smaller"
 
-CLASS_COLORS = {"VLCC": "#f87171", "SuezAframax": "#fbbf24", "smaller": "#94a3b8"}
+CLASS_COLORS = {
+    "VLCC":       "#f87171",
+    "SuezAframax":"#fbbf24",
+    "smaller":    "#94a3b8",
+    "sub_visit":  "#64748b",   # grey — hull <200m, not tracked as visit
+}
 
 
 def _load_bg(berth, orbit):
@@ -90,11 +98,14 @@ def _draw_boxes(ax, blobs, ux, uy, csv_row=None):
             ax.plot(cs, rs, "-", color=clr, lw=1.5, alpha=0.9)
             ctr_c = (am + aM) / 2 * ux + (pm + pM) / 2 * px_u
             ctr_r = (am + aM) / 2 * uy + (pm + pM) / 2 * py_u
-            # Label: "class · length · arrived/same"
-            arrived_str = ""
-            if csv_row is not None:
-                arrived_str = " · arrived" if str(csv_row.get("arrived", "")).lower() in ("true", "1") else " · same"
-            lbl = f"{cls} · {b['length_m']:.0f}m{arrived_str}"
+            # Label: sub_visit shows as "hull <200m · Nm"; others show class · length · arrived/same
+            if cls == "sub_visit":
+                lbl = f"hull <200m · {b['length_m']:.0f}m"
+            else:
+                arrived_str = ""
+                if csv_row is not None:
+                    arrived_str = " · arrived" if str(csv_row.get("arrived", "")).lower() in ("true", "1") else " · same"
+                lbl = f"{cls} · {b['length_m']:.0f}m{arrived_str}"
             ax.text(ctr_c, ctr_r, lbl,
                     color=clr, fontsize=5, ha="center", va="center", fontweight="bold",
                     bbox=dict(fc="black", alpha=0.5, lw=0, pad=0.5))
