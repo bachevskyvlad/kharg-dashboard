@@ -41,11 +41,11 @@ AOI_BBOX_LST = [50.26, 29.17, 50.40, 29.31]
 
 V4_CFG = {
     "sea_island":     {"pier": 20, "water_i": 20, "water_o": 80,
-                       "min_len": 120, "aspect_thr": 2.0, "merge_gap": 120},
+                       "min_len": 120, "max_len": 420, "aspect_thr": 2.0, "merge_gap": 120},
     "east_t_head":    {"pier": 20, "water_i": 20, "water_o": 80,
-                       "min_len": 150, "aspect_thr": 3.0, "merge_gap": 120},
+                       "min_len": 200, "max_len": 420, "aspect_thr": 3.0, "merge_gap": 120},
     "southeast_pier": {"pier": 20, "water_i": 20, "water_o": 80,
-                       "min_len": 150, "aspect_thr": 3.0, "merge_gap": 120},
+                       "min_len": 150, "max_len": 420, "aspect_thr": 3.0, "merge_gap": 120},
 }
 
 BERTHS = BERTH_COORDS
@@ -244,9 +244,35 @@ def main():
         print(f"  {r['date']} o{r['orbit']} {r['berth']} "
               f"cls={r.get('class','')} len={r.get('len_m','')}m vid={r.get('visit_id','')}")
 
-    if not v2025_cases and not aut2026_cases:
+    # --- Gate f-detail case 3: 5 random southeast_pier hulls ≥300m in 2025 ---
+    sep_vlcc_seen: set = set()
+    sep_vlcc_pool = []
+    for r in rows:
+        is_sep = r.get("berth") == "southeast_pier"
+        is_2025 = r.get("date", "").startswith("2025")
+        is_static = str(r.get("static", "0")) == "1"
+        if is_sep and is_2025 and not is_static:
+            try:
+                lm = float(r.get("len_m", 0))
+            except (ValueError, TypeError):
+                lm = 0.0
+            if lm >= 300:
+                key = f"{r['date']}_{r['orbit']}"
+                if key not in sep_vlcc_seen:
+                    sep_vlcc_seen.add(key)
+                    sep_vlcc_pool.append(r)
+    sep_vlcc_pool = sorted(sep_vlcc_pool, key=lambda r: r["date"])
+    sep_vlcc_cases = _random.sample(sep_vlcc_pool, min(5, len(sep_vlcc_pool)))
+    sep_vlcc_cases = sorted(sep_vlcc_cases, key=lambda r: r["date"])
+
+    if not v2025_cases and not aut2026_cases and not sep_vlcc_cases:
         print("Nothing to render — done.")
         return
+
+    print(f"\nsoutheast_pier VLCC(≥300m) 2025 pool: {len(sep_vlcc_pool)}, sampling {len(sep_vlcc_cases)}")
+    for r in sep_vlcc_cases:
+        print(f"  {r['date']} o{r['orbit']} {r['berth']} "
+              f"cls={r.get('class','')} len={r.get('len_m','')}m vid={r.get('visit_id','')}")
 
     print("\n=== Rendering crops ===")
 
@@ -257,6 +283,10 @@ def main():
     for idx, r in enumerate(aut2026_cases):
         print(f"\naut2026 [{idx+1}/{len(aut2026_cases)}]: {r['date']} o{r['orbit']} {r['berth']}")
         render_crop(r["date"], r["orbit"], r["berth"], "aut2026", idx + 1, csv_row=r)
+
+    for idx, r in enumerate(sep_vlcc_cases):
+        print(f"\nsep_vlcc [{idx+1}/{len(sep_vlcc_cases)}]: {r['date']} o{r['orbit']} {r['berth']}")
+        render_crop(r["date"], r["orbit"], r["berth"], "sep_vlcc", idx + 1, csv_row=r)
 
     pngs = list(OUT.glob("*.png"))
     print(f"\nTotal crops saved: {len(pngs)} in {OUT}")

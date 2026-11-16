@@ -456,7 +456,8 @@ def main():
                   f"len={len_str}m asp={asp_str} {status}")
 
             # cache for contact sheet
-            qualifying_blobs = [b for b in blobs if b["length_m"] >= p["min_len"]]
+            _max_len = p.get("max_len", float("inf"))
+            qualifying_blobs = [b for b in blobs if b["length_m"] >= p["min_len"] and b["length_m"] <= _max_len]
             cs_cache[(date_str, orbit, berth)] = {
                 "optical_ref": optical_ref,
                 "det": det_str, "match": match,
@@ -1069,6 +1070,13 @@ def _assert_confmat(results, results_asp25=None):
         if not gate_ok:
             lines.append(f"  → GATE FAIL: prec={prec:.1f}% (need≥90%)  "
                   f"rec={rec:.1f}% (need≥{sh_rec:.1f}%)")
+            if berth == "east_t_head" and rec < sh_rec - 0.1:
+                lost_tps = [r for r in rows_b
+                            if r["optical_ref"] == "OCC" and r["det"] != "OCC"]
+                lines.append(f"  → east_t_head recall drop: {len(lost_tps)} TP(s) lost:")
+                for r in lost_tps:
+                    lines.append(f"    LOST TP  {r['date']} o{r['orbit']}: "
+                          f"ref=OCC det={r['det']} len={r['length_m']}m asp={r['aspect']}")
             lines.append("  Per-row mismatches:")
             for r in rows_b:
                 if r["optical_ref"] != r["det"]:

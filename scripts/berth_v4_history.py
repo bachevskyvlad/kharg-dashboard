@@ -53,9 +53,9 @@ BERTHS = BERTH_COORDS  # alias for local use
 
 V4_CONFIG = {
     # all BGs rebuilt from PC and saved in BG_V4
-    "sea_island":     {"pier": 20, "water_i": 20, "water_o": 80, "min_len": 120, "aspect_thr": 2.0, "merge_gap": 120, "bg_dir": BG_V4},
-    "east_t_head":    {"pier": 20, "water_i": 20, "water_o": 80, "min_len": 150, "aspect_thr": 3.0, "merge_gap": 120, "bg_dir": BG_V4},
-    "southeast_pier": {"pier": 20, "water_i": 20, "water_o": 80, "min_len": 150, "aspect_thr": 3.0, "merge_gap": 0,   "bg_dir": BG_V4},
+    "sea_island":     {"pier": 20, "water_i": 20, "water_o": 80, "min_len": 120, "max_len": 420, "aspect_thr": 2.0, "merge_gap": 120, "bg_dir": BG_V4},
+    "east_t_head":    {"pier": 20, "water_i": 20, "water_o": 80, "min_len": 200, "max_len": 420, "aspect_thr": 3.0, "merge_gap": 120, "bg_dir": BG_V4},
+    "southeast_pier": {"pier": 20, "water_i": 20, "water_o": 80, "min_len": 150, "max_len": 420, "aspect_thr": 3.0, "merge_gap": 0,   "bg_dir": BG_V4},
 }
 
 STATIC_POS_TOL_M   = 60.0   # ±m along pier axis — same-position threshold
@@ -434,6 +434,59 @@ def _print_validation_report(all_passes, all_loadings, loadings_before_static=No
     if not gate_f:
         lines.append(f"     ⚠ VLCC share={sp_pct:.0f}% — flag for crop inspection")
 
+    # f-detail) Table of southeast_pier hulls ≥300m in 2025
+    sep_big_rows = []
+    if hull_rows_all:
+        for r in hull_rows_all:
+            if (r.get("berth") == "southeast_pier"
+                    and r.get("date", "").startswith("2025")
+                    and str(r.get("static", "0")) != "1"):
+                try:
+                    lm = float(r.get("len_m", 0))
+                except (ValueError, TypeError):
+                    lm = 0.0
+                if lm >= 300:
+                    sep_big_rows.append(r)
+    sep_big_rows.sort(key=lambda r: r["date"])
+    if sep_big_rows:
+        lines.append(f"\n  f-detail) southeast_pier hulls ≥300m in 2025 ({len(sep_big_rows)} rows):")
+        lines.append(f"    {'date':<12} {'orbit':>5} {'pos_m':>7} {'perp_m':>7} {'len_m':>7} {'aspect':>6}")
+        lines.append("    " + "-" * 50)
+        for r in sep_big_rows:
+            lines.append(f"    {r.get('date',''):<12} {str(r.get('orbit','?')):>5} "
+                         f"{str(r.get('pos_m','?')):>7} {str(r.get('perp_m','?')):>7} "
+                         f"{str(r.get('len_m','?')):>7} {str(r.get('aspect','?')):>6}")
+
+    # perp_m distribution per berth — 2025 non-static hull rows
+    if hull_rows_all:
+        lines.append("\n=== perp_m distribution 2025 (non-static hull rows) ===")
+        lines.append(f"  {'Berth':<20} {'side':>5} {'min':>7} {'median':>8} {'max':>7}  note")
+        lines.append("  " + "-" * 60)
+        import statistics as _stats
+        for b in berths:
+            by_side_perp: dict = {}
+            for r in hull_rows_all:
+                if (r.get("berth") == b
+                        and r.get("date", "").startswith("2025")
+                        and str(r.get("static", "0")) != "1"):
+                    try:
+                        pm = float(r["perp_m"])
+                        s = int(r.get("side", 0))
+                    except (ValueError, TypeError, KeyError):
+                        continue
+                    by_side_perp.setdefault(s, []).append(pm)
+            if not by_side_perp:
+                lines.append(f"  {b:<20}  — no 2025 data")
+                continue
+            for side_k in sorted(by_side_perp):
+                vals = by_side_perp[side_k]
+                mn  = min(vals)
+                mx  = max(vals)
+                med = _stats.median(vals)
+                rng = mx - mn
+                note = "⚠ possibly constant — not pier-relative" if rng < 50 else ""
+                lines.append(f"  {b:<20} {side_k:>+5} {mn:>7.0f} {med:>8.0f} {mx:>7.0f}  {note}")
+
     all_pass = gate_b and gate_c and gate_d and gate_e and gate_f
     lines.append(f"\n  Overall b-f: {'ALL ✅' if all_pass else 'SOME ❌ — see above'}")
 
@@ -601,9 +654,10 @@ def run(incremental=False):
             prev = prev_hulls.get((berth, orbit), [])
             hull_list = []
 
-            # Step 1: keep only blobs that meet min_len threshold (after merge)
+            # Step 1: keep only blobs that meet min_len/max_len thresholds (after merge)
             min_len = cfg["min_len"]
-            qualifying = [b for b in (blobs or []) if b["length_m"] >= min_len]
+            max_len = cfg.get("max_len", float("inf"))
+            qualifying = [b for b in (blobs or []) if b["length_m"] >= min_len and b["length_m"] <= max_len]
 
             # Step 2: physical cap — max 2 hulls per pier side (sign of perp_ctr)
             by_side: dict = {}
@@ -683,6 +737,7 @@ def run(incremental=False):
                     "lat":      round(lat_c, 6),
                     "len_m":    round(len_m, 1),
                     "width_m":  round(wid_m, 1),
+                    "aspect":   round(float(blob.get("aspect", 0)), 2),
                     "class":    cls,
                     "new_load": new_load,
                     "arrived":  arrived,
@@ -853,7 +908,7 @@ def run(incremental=False):
     # ── CSV output (hull-level) — merge old + new ─────────────────────────────
     csv_path = OUT_DIR / "berth_v4_history.csv"
     fieldnames = ["date","orbit","berth","hull_idx","det","side","perp_m","pos_m",
-                  "lon","lat","len_m","width_m","class","new_load","arrived","visit_id","static","bg_source"]
+                  "lon","lat","len_m","width_m","aspect","class","new_load","arrived","visit_id","static","bg_source"]
     all_hull_rows = old_hull_rows + hull_rows
     with open(csv_path, "w", newline="") as f:
         w = csv.DictWriter(f, fieldnames=fieldnames, extrasaction="ignore")

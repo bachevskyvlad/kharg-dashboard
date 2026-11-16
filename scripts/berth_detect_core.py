@@ -29,9 +29,9 @@ BERTH_COORDS = {
 # Single authoritative detection params — matches ablation bg-mode and v4_history V4_CONFIG.
 # bg_dir is NOT here (script-specific path).
 BERTH_DETECT_PARAMS = {
-    "sea_island":     dict(pier=20, water_i=20, water_o=80, min_len=120, aspect=2.0, merge=120),
-    "east_t_head":    dict(pier=20, water_i=20, water_o=80, min_len=150, aspect=3.0, merge=120),
-    "southeast_pier": dict(pier=20, water_i=20, water_o=80, min_len=150, aspect=3.0, merge=120),
+    "sea_island":     dict(pier=20, water_i=20, water_o=80, min_len=120, max_len=420, aspect=2.0, merge=120),
+    "east_t_head":    dict(pier=20, water_i=20, water_o=80, min_len=200, max_len=420, aspect=3.0, merge=120),
+    "southeast_pier": dict(pier=20, water_i=20, water_o=80, min_len=150, max_len=420, aspect=3.0, merge=120),
 }
 
 
