@@ -947,9 +947,12 @@ def _save_contact_sheet(ref_rows, cs_cache, cell_bboxes, aoi_full):
 
 def _apply_timedelta_rule(rows):
     """
-    Time-delta exclusion: |Δt SAR−S2| > 4 h AND det=OCC AND L≥250 AND asp≥4
-    → optical_ref → '?' (copy row, don't mutate original).
-    Returns list of adjusted rows.
+    Time-delta exclusion (both directions):
+      Case A [FP→?]: optical=EMP, det=OCC, L≥250, asp≥4, |Δt|>4h
+        Ship arrived after S2 image was taken → not a real FP.
+      Case B [FN→?]: optical=OCC, det=EMP, L=0 (no signal at all), |Δt|>4h
+        Ship may have departed before SAR pass → not a real FN.
+    Returns list of adjusted rows (copy, no mutation).
     """
     from datetime import datetime, timezone
 
@@ -957,26 +960,40 @@ def _apply_timedelta_rule(rows):
         s = s.strip().rstrip("Z").split("+")[0]
         return datetime.fromisoformat(s).replace(tzinfo=timezone.utc)
 
+    fp_excl, fn_excl = [], []
     out = []
     for r in rows:
         s1_dt_str = r.get("s1_dt", "")
         s2_dt_str = r.get("s2_dt", "")
-        if (s1_dt_str and s2_dt_str
-                and r.get("optical_ref") == "EMP"
-                and r.get("det") == "OCC"
-                and float(r.get("length_m") or 0) >= 250
-                and float(r.get("aspect") or 0) >= 4.0):
+        if s1_dt_str and s2_dt_str:
             try:
                 delta_h = abs((_parse_dt(s1_dt_str) - _parse_dt(s2_dt_str))
                               .total_seconds()) / 3600
                 if delta_h > 4.0:
-                    r = dict(r, optical_ref="?")
-                    print(f"  TIME-DELTA: {r['date']} o{r['orbit']} "
-                          f"{r['berth']} Δt={delta_h:.1f}h "
-                          f"L={r['length_m']}m asp={r['aspect']} → ref→?")
+                    # Case A: FP candidate — ship arrived after optical
+                    if (r.get("optical_ref") == "EMP"
+                            and r.get("det") == "OCC"
+                            and float(r.get("length_m") or 0) >= 250
+                            and float(r.get("aspect") or 0) >= 4.0):
+                        r = dict(r, optical_ref="?")
+                        fp_excl.append(
+                            f"    [FP→?] {r['date']} o{r['orbit']} {r['berth']}"
+                            f" Δt={delta_h:.1f}h L={r['length_m']}m asp={r['aspect']}")
+                    # Case B: FN candidate — ship may have left before SAR
+                    elif (r.get("optical_ref") == "OCC"
+                            and r.get("det") == "EMP"
+                            and float(r.get("length_m") or 0) == 0):
+                        r = dict(r, optical_ref="?")
+                        fn_excl.append(
+                            f"    [FN→?] {r['date']} o{r['orbit']} {r['berth']}"
+                            f" Δt={delta_h:.1f}h L=0")
             except Exception as e:
                 print(f"  TIME-DELTA parse error: {e}")
         out.append(r)
+    if fp_excl or fn_excl:
+        print(f"  TIME-DELTA reclassified: {len(fp_excl)} FP→?, {len(fn_excl)} FN→?")
+        for line in fp_excl + fn_excl:
+            print(line)
     return out
 
 
