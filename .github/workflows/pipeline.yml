@@ -378,6 +378,10 @@ jobs:
           SUPABASE_SERVICE_KEY:    ${{ secrets.SUPABASE_SERVICE_KEY }}
         run: python scripts/berth_snapshots.py
 
+      - name: Berth occupancy v2 page
+        id: v2page
+        run: python scripts/berth_v2_page.py
+
       - name: Upload artifact
         if: always()
         uses: actions/upload-artifact@v4
@@ -396,7 +400,8 @@ jobs:
           if [ "${{ steps.history.outcome }}" = "failure" ] ||
              [ "${{ steps.assert.outcome }}" = "failure" ] ||
              [ "${{ steps.dbwrite.outcome }}" = "failure" ] ||
-             [ "${{ steps.snapshots.outcome }}" = "failure" ]; then
+             [ "${{ steps.snapshots.outcome }}" = "failure" ] ||
+             [ "${{ steps.v2page.outcome }}" = "failure" ]; then
             echo "status=fail" >> "$GITHUB_OUTPUT"
           else
             echo "status=ok" >> "$GITHUB_OUTPUT"
