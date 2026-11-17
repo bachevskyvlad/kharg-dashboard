@@ -17,6 +17,7 @@ CORRIDOR_HALF_M  = 150
 CORRIDOR_END_M   = 250
 RATIO_THR        = 10.0
 MERGE_PERP_TOL_M = 40.0
+ASPECT_MAX       = 15.0  # strips/specular reflections, not hulls
 
 struct8 = ndimage.generate_binary_structure(2, 2)
 
@@ -31,7 +32,7 @@ BERTH_COORDS = {
 BERTH_DETECT_PARAMS = {
     "sea_island":     dict(pier=20, water_i=20, water_o=80, min_len=120, max_len=420, aspect=2.0, merge=120),
     "east_t_head":    dict(pier=20, water_i=20, water_o=80, min_len=150, max_len=420, aspect=2.5, merge=120),
-    "southeast_pier": dict(pier=20, water_i=20, water_o=80, min_len=150, max_len=420, aspect=3.0, merge=120),
+    "southeast_pier": dict(pier=20, water_i=20, water_o=80, min_len=150, max_len=420, aspect=3.0, merge=0),
 }
 
 # Hulls below this length are detected (OCC/EMP) but not tracked as visits/loadings
@@ -159,7 +160,7 @@ def find_blobs(ratio_arr, water_mask, axis_uvec, merge_gap_m, min_len_m,
         a_min = float(axis_p.min()); a_max = float(axis_p.max())
         p_min = float(perp_p.min()); p_max = float(perp_p.max())
         len_m = (a_max - a_min) * RESOLUTION
-        wid_m = max((p_max - p_min) * RESOLUTION, 1.0)
+        wid_m = max((p_max - p_min) * RESOLUTION, 10.0)  # floor=1px=10m
         raw.append({
             "axis_min": a_min, "axis_max": a_max,
             "perp_min": p_min, "perp_max": p_max,
@@ -216,6 +217,7 @@ def find_blobs(ratio_arr, water_mask, axis_uvec, merge_gap_m, min_len_m,
         if debug and len(grp) > 1:
             print(f"    merged {len(grp)} blobs → len={length_m:.0f}m "
                   f"asp={best_aspect:.1f} wid={width_m:.0f}m")
+    blobs = [b for b in blobs if b["aspect"] <= ASPECT_MAX]
     blobs.sort(key=lambda b: b["length_m"], reverse=True)
     best = blobs[0] if blobs else None
     detected = bool(best and best["length_m"] >= min_len_m and best["aspect"] >= min_aspect)
