@@ -138,18 +138,20 @@ def render_snapshot(scene_linear, pass_data, date_str, orbit, vmin, vmax):
 
         corr_corners = corridor_corners(pts, SNAP_BBOX, w, h)
         ax.add_patch(MplPolygon(corr_corners, closed=True,
-                                edgecolor="#555555", facecolor="none",
-                                linewidth=0.8, linestyle="--", zorder=2))
+                                edgecolor="#aaaaaa", facecolor="none",
+                                linewidth=1.2, linestyle="-", zorder=2))
 
         cx_c = sum(c[0] for c in corr_corners) / 4
         cy_c = min(c[1] for c in corr_corners) - 6
-        ax.text(cx_c, cy_c, lname, color="#888888", fontsize=6,
-                ha="center", va="bottom", zorder=5)
+        ax.text(cx_c, cy_c, lname, color="#dddddd", fontsize=7,
+                ha="center", va="bottom", zorder=5,
+                bbox=dict(boxstyle="round,pad=0.15", facecolor="#000000",
+                          alpha=0.55, edgecolor="none"))
 
-        if hulls:
-            for hull in hulls:
+        large_hulls = [h for h in hulls if h.get("class") in ("VLCC", "SuezAframax")]
+        if large_hulls:
+            for hull in large_hulls:
                 cls    = hull.get("class", "SuezAframax")
-                len_m  = hull.get("len_m", 0)
                 is_new = hull.get("new_load", False)
                 color  = VLCC_COLOR if cls == "VLCC" else SUEZ_COLOR
 
@@ -167,14 +169,14 @@ def render_snapshot(scene_linear, pass_data, date_str, orbit, vmin, vmax):
                 lbl_x = sum(c[0] for c in corners) / 4
                 lbl_y = sum(c[1] for c in corners) / 4
                 if berth == "southeast_pier":
-                    lbl = f"{cls} · size n/a · {'arrived' if is_new else 'same'}"
+                    lbl = f"n/a · {'arrived' if is_new else 'same'}"
                 else:
-                    lbl = f"{cls} · {int(len_m)}m · {'arrived' if is_new else 'same'}"
+                    lbl = f"{cls} · {'arrived' if is_new else 'same'}"
                 ax.text(lbl_x, lbl_y, lbl, color=color, fontsize=6,
                         ha="center", va="center", fontweight="bold", zorder=6,
                         bbox=dict(boxstyle="round,pad=0.2", facecolor="#000000",
                                   alpha=0.6, edgecolor="none"))
-        elif det == "EMP":
+        elif det == "EMP" or not large_hulls:
             cx = sum(c[0] for c in corr_corners) / 4
             cy = sum(c[1] for c in corr_corners) / 4
             ax.text(cx, cy, "empty", color="#666666", fontsize=6.5,
@@ -236,6 +238,15 @@ def upload_json(data, filename):
 
 # ── Main ──────────────────────────────────────────────────────────────────────
 
+def has_large_hull(pass_row):
+    """True if pass has any VLCC or SuezAframax hull."""
+    for berth in BERTH_COORDS:
+        for h in pass_row.get(berth, {}).get("hulls", []):
+            if h.get("class") in ("VLCC", "SuezAframax"):
+                return True
+    return False
+
+
 def main():
     with open(JSON_IN) as f:
         occ_data = json.load(f)
@@ -244,7 +255,14 @@ def main():
     if not passes:
         sys.exit("No passes in berth_occupancy.json")
 
-    last2 = passes[-2:] if len(passes) >= 2 else passes * 2
+    passes_sorted = sorted(passes, key=lambda p: p["date"])
+    latest_pass   = passes_sorted[-1]
+
+    large_hull_passes = [p for p in passes_sorted if has_large_hull(p)]
+    last_ship_pass    = large_hull_passes[-1] if large_hull_passes else latest_pass
+
+    same_pass = (last_ship_pass["date"] == latest_pass["date"] and
+                 int(last_ship_pass["orbit"]) == int(latest_pass["orbit"]))
 
     def to_pass_data(p):
         return {
@@ -253,19 +271,25 @@ def main():
             for berth in BERTH_COORDS
         }
 
-    pairs = [("prev", last2[0]), ("latest", last2[-1])]
+    # (label, pass_row, filename)
+    if same_pass:
+        pairs = [("latest", latest_pass, "latest.png")]
+    else:
+        pairs = [("latest", latest_pass, "latest.png"),
+                 ("last_ship", last_ship_pass, "last_ship.png")]
 
-    # Phase 1: fetch both SAR scenes via Planetary Computer
-    scenes = {}
-    for label, row in pairs:
+    # Phase 1: fetch SAR scenes (deduplicated by filename)
+    scenes = {}  # filename -> arr
+    for label, row, filename in pairs:
+        if filename in scenes:
+            continue
         date_str = row["date"]
         orbit    = int(row["orbit"])
-        print(f"\
-── fetch {label}: {date_str} o{orbit} ──")
+        print(f"── fetch {filename}: {date_str} o{orbit} ──")
         item = find_item_pc(date_str, orbit, SNAP_AOI_LIST)
         if item is None:
             print(f"  WARN: no PC item found for {date_str} o{orbit}")
-            scenes[label] = None
+            scenes[filename] = None
             continue
         print(f"  item: {item.id}")
         arr = fetch_s1_pc(item, SNAP_BBOX, resolution=SNAP_RES)
@@ -273,7 +297,7 @@ def main():
             print(f"  WARN: fetch returned None")
         else:
             print(f"  shape: {arr.shape}")
-        scenes[label] = arr
+        scenes[filename] = arr
 
     # Phase 2: shared p2/p98 stretch across both images
     eps = 1e-10
@@ -288,23 +312,23 @@ def main():
                       if len(combined) > 100 else (-25.0, 5.0))
     else:
         vmin, vmax = -25.0, 5.0
-    print(f"\
-Shared stretch: vmin={vmin:.1f} dB  vmax={vmax:.1f} dB")
+    print(f"Shared stretch: vmin={vmin:.1f} dB  vmax={vmax:.1f} dB")
 
-    # Phase 3: render, store, build snapshots JSON
-    snaps = {}
-    counts_by_label = {}
+    # Phase 3: render and store
+    rendered_urls     = {}  # filename -> url
+    rendered_summary  = {}  # filename -> summary
+    rendered_counts   = {}  # filename -> counts
 
-    for label, row in pairs:
+    for label, row, filename in pairs:
         date_str  = row["date"]
         orbit     = int(row["orbit"])
         pass_data = to_pass_data(row)
-        filename  = "previous.png" if label == "prev" else "latest.png"
-        arr = scenes.get(label)
+        arr = scenes.get(filename)
 
         if arr is None:
-            snaps[label] = {"url": None, "date": date_str, "orbit": orbit, "summary": ""}
-            counts_by_label[label] = {"total": 0}
+            rendered_urls[filename]    = None
+            rendered_summary[filename] = ""
+            rendered_counts[filename]  = {"total": 0}
             continue
 
         png_bytes, summary, counts = render_snapshot(
@@ -323,18 +347,34 @@ Shared stretch: vmin={vmin:.1f} dB  vmax={vmax:.1f} dB")
             pub_url = f"/data/berth_snapshots/{filename}"
             print(f"  saved → {local_path}")
 
-        snaps[label] = {"url": pub_url, "date": date_str, "orbit": orbit, "summary": summary}
-        counts_by_label[label] = counts
+        rendered_urls[filename]    = pub_url
+        rendered_summary[filename] = summary
+        rendered_counts[filename]  = counts
 
-    # Build change summary
-    prev_n   = counts_by_label.get("prev",   {}).get("total", 0)
-    latest_n = counts_by_label.get("latest", {}).get("total", 0)
-    delta    = latest_n - prev_n
+    # Resolve last_ship if same pass as latest
+    latest_url = rendered_urls.get("latest.png")
+    latest_sum = rendered_summary.get("latest.png", "")
+    if same_pass:
+        ls_url  = latest_url
+        ls_sum  = latest_sum
+        ls_date = latest_pass["date"]
+        ls_orb  = int(latest_pass["orbit"])
+    else:
+        ls_url  = rendered_urls.get("last_ship.png", latest_url)
+        ls_sum  = rendered_summary.get("last_ship.png", "")
+        ls_date = last_ship_pass["date"]
+        ls_orb  = int(last_ship_pass["orbit"])
+
+    # Build change summary (compare latest vs last_ship pass)
+    latest_n    = rendered_counts.get("latest.png",    {}).get("total", 0)
+    last_ship_n = rendered_counts.get("last_ship.png", rendered_counts.get("latest.png", {})).get("total", 0)
+    delta       = latest_n - last_ship_n
 
     new_berths = []
     for berth in BERTH_COORDS:
-        bd = last2[-1].get(berth, {})
-        if any(h.get("new_load") for h in bd.get("hulls", [])):
+        bd = latest_pass.get(berth, {})
+        if any(h.get("new_load") for h in bd.get("hulls", [])
+               if h.get("class") in ("VLCC", "SuezAframax")):
             new_berths.append(BERTH_LABELS[berth])
 
     if delta > 0 and new_berths:
@@ -344,7 +384,12 @@ Shared stretch: vmin={vmin:.1f} dB  vmax={vmax:.1f} dB")
     else:
         change = "no change"
 
-    snaps["change"] = change
+    snaps = {
+        "latest":    {"url": latest_url, "date": latest_pass["date"],
+                      "orbit": int(latest_pass["orbit"]), "summary": latest_sum},
+        "last_ship": {"url": ls_url, "date": ls_date, "orbit": ls_orb, "summary": ls_sum},
+        "change":    change,
+    }
 
     if SUPABASE_KEY and SUPABASE_URL:
         upload_json(snaps, "snapshots.json")
