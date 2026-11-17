@@ -131,24 +131,40 @@ def scene_datetime_s1(date_str, orbit, bbox):
     return item  # callers that used to get a dt string now get an item (or None)
 
 def scene_datetime_s2(date_str, bbox):
-    if not _sh_config_ok:
-        return ""
-    catalog = SentinelHubCatalog(config=config)
+    """Return ISO datetime string of best S2 acquisition on date_str via PC STAC.
+
+    Uses sentinel-2-l2a on Planetary Computer — no credentials required.
+    bbox: sentinelhub BBox object (has .min_x, .min_y, .max_x, .max_y).
+    Returns "" on failure or no scene found.
+    """
     try:
-        results = list(catalog.search(
-            S2_CDSE, bbox=bbox,
-            time=(date_str+"T00:00:00Z", date_str+"T23:59:59Z"),
-            fields={"include":["properties.datetime","properties.eo:cloud_cover"]},
-        ))
+        import pystac_client
+        import planetary_computer
+        client = pystac_client.Client.open(
+            "https://planetarycomputer.microsoft.com/api/stac/v1",
+            modifier=planetary_computer.sign_inplace,
+        )
+        bbox_lst = [bbox.min_x, bbox.min_y, bbox.max_x, bbox.max_y]
+        results = client.search(
+            collections=["sentinel-2-l2a"],
+            bbox=bbox_lst,
+            datetime=f"{date_str}T00:00:00Z/{date_str}T23:59:59Z",
+        )
+        items = list(results.items())
     except Exception as e:
-        print(f"  S2 catalog error ({date_str}): {e}"); return ""
-    best_dt = ""; best_cc = 999.0
-    for r in results:
-        p = r.get("properties", {})
-        cc = float(p.get("eo:cloud_cover", 100))
-        if cc < best_cc:
-            best_cc = cc; best_dt = p.get("datetime", "")
-    return best_dt
+        print(f"  S2 PC catalog error ({date_str}): {e}"); return ""
+    if not items:
+        return ""
+    best_item = min(
+        items,
+        key=lambda it: float(it.properties.get("eo:cloud_cover", 100)),
+    )
+    dt = best_item.datetime
+    if dt is None:
+        dt_str = best_item.properties.get("datetime", "")
+    else:
+        dt_str = dt.isoformat()
+    return dt_str
 
 def fetch_s1_linear(item_or_dt, bbox_obj):
     """Fetch S1 from PC item. item_or_dt is a PC item (or None/str for compat)."""
@@ -394,7 +410,7 @@ def main():
         if s1_item is not None:
             try: s1_dt_iso = s1_item.datetime.isoformat()
             except Exception: pass
-        s2_dt_str = scene_datetime_s2(date_str, aoi_full) if _sh_config_ok else ""
+        s2_dt_str = scene_datetime_s2(date_str, aoi_full)  # PC STAC, no creds needed
 
         for berth in BERTHS:
             ref_col    = f"{berth}_optical_ref"
