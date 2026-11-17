@@ -682,7 +682,8 @@ def run(incremental=False):
             cfg  = V4_CONFIG[berth]
             # east_t_head o101: switch to 2026 BG for dates ≥ BG_2026_CUTOFF
             if berth == "east_t_head" and orbit == 101 and date_str >= BG_2026_CUTOFF:
-                bg = bg_cache.get(("east_t_head", 101, "2026")) or bg_cache.get((berth, orbit))
+                _bg26 = bg_cache.get(("east_t_head", 101, "2026"))
+                bg = _bg26 if _bg26 is not None else bg_cache.get((berth, orbit))
                 bg_src = "bg_v4_o101_2026" if bg_cache.get(("east_t_head", 101, "2026")) is not None else bg_source_cache.get((berth, orbit))
             else:
                 bg   = bg_cache.get((berth, orbit))
