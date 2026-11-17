@@ -1521,11 +1521,15 @@ function renderOverviewVelocity() {
     if (!el || allDates.length < 2) return;
     if (charts.overviewVelocity) { charts.overviewVelocity.destroy(); charts.overviewVelocity = null; }
 
+    const raw = getSliceRaw();
+    const sliceDates = raw.dates;
+    const sliceValues = raw.values;
+
     const labels = [], expVel = [], infVel = [];
-    for (let i = 1; i < allDates.length; i++) {
-        const days = Math.max(1, (new Date(allDates[i]) - new Date(allDates[i-1])) / 86400000);
-        const delta = allValues[i] - allValues[i-1];
-        labels.push(allDates[i]);
+    for (let i = 1; i < sliceDates.length; i++) {
+        const days = Math.max(1, (new Date(sliceDates[i]) - new Date(sliceDates[i-1])) / 86400000);
+        const delta = sliceValues[i] - sliceValues[i-1];
+        labels.push(sliceDates[i]);
         expVel.push(delta < 0 ? (-delta / days) : 0);
         infVel.push(delta > 0 ? (delta / days) : 0);
     }
