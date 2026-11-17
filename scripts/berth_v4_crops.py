@@ -44,8 +44,9 @@ V4_CFG = {
                        "min_len": 120, "max_len": 420, "aspect_thr": 2.0, "merge_gap": 120},
     "east_t_head":    {"pier": 20, "water_i": 20, "water_o": 80,
                        "min_len": 150, "max_len": 420, "aspect_thr": 2.5, "merge_gap": 120},
+    # merge_gap=0 matches V4_CONFIG in berth_v4_history.py — blobs not merged
     "southeast_pier": {"pier": 20, "water_i": 20, "water_o": 80,
-                       "min_len": 150, "max_len": 420, "aspect_thr": 3.0, "merge_gap": 120},
+                       "min_len": 150, "max_len": 420, "aspect_thr": 3.0, "merge_gap": 0},
 }
 
 VISIT_MIN_LEN_M = 200.0  # hulls below this shown as grey "hull <200m" on crops
@@ -65,6 +66,73 @@ CLASS_COLORS = {
     "smaller":    "#94a3b8",
     "sub_visit":  "#64748b",   # grey — hull <200m, not tracked as visit
 }
+
+
+def _print_2026_monthly_table(rows):
+    """Print loadings (arrived=True, not static) Jan–Nov 2026 by berth."""
+    berths_ord = ["sea_island", "east_t_head", "southeast_pier"]
+    months = [f"2026-{m:02d}" for m in range(1, 12)]
+    counts: dict = {m: {b: 0 for b in berths_ord} for m in months}
+    seen_vid: set = set()
+    for r in rows:
+        d = r.get("date", "")
+        if not (d >= "2026-01-01" and d <= "2026-11-30"):
+            continue
+        if str(r.get("static", "0")) == "1":
+            continue
+        is_arrived = str(r.get("arrived", r.get("new_load", ""))).lower() in ("true", "1")
+        if not is_arrived:
+            continue
+        mo = d[:7]
+        if mo not in counts:
+            continue
+        berth = r.get("berth", "")
+        if berth not in berths_ord:
+            continue
+        vid = r.get("visit_id") or f"{d}_{r.get('orbit')}_{berth}"
+        if vid in seen_vid:
+            continue
+        seen_vid.add(vid)
+        counts[mo][berth] += 1
+    print("\n=== Loadings 2026 (Jan–Nov) by berth (arrived=True, not static) ===")
+    hdr = f"  {'month':<9}  {'sea_island':>10}  {'east_t_head':>11}  {'southeast_pier':>14}  {'total':>5}"
+    print(hdr)
+    print("  " + "-" * (len(hdr) - 2))
+    for mo in months:
+        sea = counts[mo]["sea_island"]
+        eth = counts[mo]["east_t_head"]
+        sep = counts[mo]["southeast_pier"]
+        tot = sea + eth + sep
+        print(f"  {mo:<9}  {sea:>10}  {eth:>11}  {sep:>14}  {tot:>5}")
+    total_sea = sum(counts[m]["sea_island"] for m in months)
+    total_eth = sum(counts[m]["east_t_head"] for m in months)
+    total_sep = sum(counts[m]["southeast_pier"] for m in months)
+    print(f"  {'TOTAL':<9}  {total_sea:>10}  {total_eth:>11}  {total_sep:>14}  {total_sea+total_eth+total_sep:>5}")
+    print()
+
+
+def _print_2025_aspect_sample(rows):
+    """Print aspect values for 20 random 2025 non-static hulls."""
+    import random as _random
+    pool = []
+    for r in rows:
+        if not r.get("date", "").startswith("2025"):
+            continue
+        if str(r.get("static", "0")) == "1":
+            continue
+        asp = r.get("aspect", "")
+        if asp == "" or asp == "?":
+            continue
+        pool.append(r)
+    _random.seed(99)
+    sample = sorted(_random.sample(pool, min(20, len(pool))), key=lambda r: r["date"])
+    print(f"\n=== aspect: 20 random 2025 non-static hull rows (pool={len(pool)}) ===")
+    print(f"  {'date':<12}  {'orbit':>5}  {'berth':<16}  {'len_m':>7}  {'aspect':>7}")
+    print("  " + "-" * 54)
+    for r in sample:
+        print(f"  {r.get('date',''):<12}  {str(r.get('orbit','?')):>5}  "
+              f"{r.get('berth','?'):<16}  {str(r.get('len_m','?')):>7}  {str(r.get('aspect','?')):>7}")
+    print()
 
 
 def _load_bg(berth, orbit):
@@ -206,6 +274,9 @@ def main():
         for r in csv.DictReader(f):
             rows.append(r)
     print(f"Loaded {len(rows)} hull rows from {HIST.name}")
+
+    _print_2026_monthly_table(rows)
+    _print_2025_aspect_sample(rows)
 
     import random as _random
     _random.seed(42)
