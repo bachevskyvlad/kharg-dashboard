@@ -3455,7 +3455,7 @@ document.addEventListener('DOMContentLoaded', function() {
     passes.forEach(function(p) {
       if (cycles.length === 0) { cycles.push([p]); return; }
       var last = cycles[cycles.length - 1];
-      var gapDays = (new Date(last[last.length - 1].date) - new Date(p.date)) / 86400000;
+      var gapDays = (new Date(last[0].date) - new Date(p.date)) / 86400000;
       if (gapDays <= 4) last.push(p);
       else cycles.push([p]);
     });
@@ -3492,7 +3492,9 @@ document.addEventListener('DOMContentLoaded', function() {
       });
 
       var dateStr = cycle[0].date;
-      var orbits = cycle.map(function(p){ return 'o' + p.orbit; }).join('+');
+      var orbitSet = [];
+      cycle.forEach(function(p){ var o = 'o'+p.orbit; if (orbitSet.indexOf(o)<0) orbitSet.push(o); });
+      var orbits = orbitSet.join('+');
 
       var cells = BERTHS.map(function(b) {
         var cls = berthCls[b];
