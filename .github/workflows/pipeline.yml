@@ -390,6 +390,8 @@ jobs:
           path: |
             data/
             public/
+            marketing/berths.html
+            _redirects
           retention-days: 1
           if-no-files-found: warn
 

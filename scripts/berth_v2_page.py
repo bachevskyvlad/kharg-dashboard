@@ -20,7 +20,7 @@ from collections import defaultdict
 ROOT       = Path(__file__).parent.parent
 JSON_IN    = ROOT / "data" / "berth_occupancy.json"
 SNAPS_JSON = ROOT / "data" / "berth_snapshots.json"
-OUT_HTML   = ROOT / "diagnostics" / "berth_v4" / "berth_occupancy_v2.html"
+OUT_HTML   = ROOT / "marketing" / "berths.html"
 
 
 def _cls_color(cls):
