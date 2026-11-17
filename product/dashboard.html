@@ -1516,31 +1516,55 @@ async function loadData() {
     loadStagingSignal().then(s => { window._stagingData = s; render(); });
 }
 
-function renderOverviewVelocity() {
+async function renderOverviewVelocity() {
     const el = document.getElementById('overviewVelocityChart');
-    if (!el || allDates.length < 2) return;
+    if (!el) return;
     if (charts.overviewVelocity) { charts.overviewVelocity.destroy(); charts.overviewVelocity = null; }
 
-    const raw = getSliceRaw();
-    const sliceDates = raw.dates;
-    const sliceValues = raw.values;
-
-    const labels = [], expVel = [], infVel = [];
-    for (let i = 1; i < sliceDates.length; i++) {
-        const days = Math.max(1, (new Date(sliceDates[i]) - new Date(sliceDates[i-1])) / 86400000);
-        const delta = sliceValues[i] - sliceValues[i-1];
-        labels.push(sliceDates[i]);
-        expVel.push(delta < 0 ? (-delta / days) : 0);
-        infVel.push(delta > 0 ? (delta / days) : 0);
+    // Use cached flows data or fetch from kharg_gross_flows_v2
+    let raw = typeof _flowsData !== 'undefined' ? _flowsData : null;
+    if (!Array.isArray(raw) || raw.length === 0) {
+        try {
+            const SB_URL = window.SUPABASE_URL;
+            const SB_KEY = window.SUPABASE_KEY;
+            const headers = { 'apikey': SB_KEY, 'Authorization': 'Bearer ' + SB_KEY };
+            const sel = 'select=date_from,date_to,days,gross_out_mb,gross_in_mb&order=date_to';
+            raw = await fetch(`${SB_URL}/rest/v1/kharg_gross_flows_v2?${sel}`, { headers }).then(r => r.json()).catch(() => null);
+            if (!Array.isArray(raw) || raw.length === 0) {
+                raw = await fetch(`${SB_URL}/rest/v1/kharg_gross_flows?${sel}`, { headers }).then(r => r.json()).catch(() => null);
+            }
+        } catch { return; }
     }
+    if (!Array.isArray(raw) || raw.length === 0) return;
+
+    // Filter by current date range
+    let data = raw;
+    if (currentRange > 0) {
+        const cutoff = new Date();
+        cutoff.setDate(cutoff.getDate() - currentRange);
+        const cutStr = cutoff.toISOString().slice(0, 10);
+        data = raw.filter(r => (r.date_to || r.d1) >= cutStr);
+    }
+    if (data.length === 0) return;
+
+    const buckets = data.map(r => ({
+        d0: r.date_from || r.d0, d1: r.date_to || r.d1,
+        days: r.days || Math.max(1, (new Date(r.date_to || r.d1) - new Date(r.date_from || r.d0)) / 86400000),
+        grossOut: parseFloat(r.gross_out_mb != null ? r.gross_out_mb : (r.grossOut || 0)),
+        grossIn:  parseFloat(r.gross_in_mb  != null ? r.gross_in_mb  : (r.grossIn  || 0))
+    }));
+
+    const labels     = buckets.map(p => p.d1);
+    const expVelData = buckets.map(p => p.days > 0 ? +(p.grossOut / p.days).toFixed(3) : null);
+    const infVelData = buckets.map(p => p.days > 0 ? +(p.grossIn  / p.days).toFixed(3) : null);
 
     const gX = { ticks: { color: '#6b7280', maxRotation: 0, font: { size: 9 } }, grid: { color: 'rgba(255,255,255,0.05)' } };
     const gY = { ticks: { color: '#6b7280', font: { size: 9 } }, grid: { color: 'rgba(255,255,255,0.05)' } };
     charts.overviewVelocity = new Chart(el.getContext('2d'), {
         type: 'bar',
         data: { labels, datasets: [
-            { label: 'Export Velocity', data: expVel, backgroundColor: 'rgba(5,150,105,0.75)', borderWidth: 0, borderRadius: 2 },
-            { label: 'Production Inflow', data: infVel, backgroundColor: 'rgba(220,38,38,0.75)', borderWidth: 0, borderRadius: 2 }
+            { label: 'Export Velocity', data: expVelData, backgroundColor: 'rgba(5,150,105,0.75)', borderWidth: 0, borderRadius: 2 },
+            { label: 'Production Inflow', data: infVelData, backgroundColor: 'rgba(220,38,38,0.75)', borderWidth: 0, borderRadius: 2 }
         ]},
         options: { responsive: true, maintainAspectRatio: false,
             interaction: { intersect: false, mode: 'index' },
@@ -1548,10 +1572,10 @@ function renderOverviewVelocity() {
                 tooltip: { backgroundColor: '#111827', borderColor: 'rgba(255,255,255,0.1)', borderWidth: 1,
                     titleColor: '#e2e8f0', bodyColor: '#94a3b8',
                     callbacks: {
-                        title: ctx => labels[ctx[0].dataIndex] || '',
+                        title: ctx => { const p = buckets[ctx[0].dataIndex]; return p ? `${p.d0} → ${p.d1}` : ''; },
                         label: ctx => ctx.datasetIndex === 0
-                            ? ` Export: ${expVel[ctx.dataIndex].toFixed(3)} Mb/d`
-                            : ` Inflow: ${infVel[ctx.dataIndex].toFixed(3)} Mb/d`
+                            ? ` Export: ${(expVelData[ctx.dataIndex]||0).toFixed(3)} Mb/d`
+                            : ` Inflow: ${(infVelData[ctx.dataIndex]||0).toFixed(3)} Mb/d`
                     }
                 }
             },
