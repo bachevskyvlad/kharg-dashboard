@@ -634,123 +634,6 @@
             </div>
         </div>
 
-        <!-- ── Export Signals (embedded in Overview) ── -->
-        <div style="margin-top:2rem">
-        <div class="sec-title" style="margin-bottom:0.25rem;font-size:0.9rem">Export Signals</div>
-        <div class="signal" style="margin-bottom:1.5rem;line-height:1.6">
-            Four independent research findings. Each describes a storage condition that, historically, precedes a drawdown event on the next SAR pass.
-            Baseline probability of an export drawdown on any given observation: <span class="hl">15%</span>.
-            When a signal is <span style="color:var(--accent);font-weight:600">ACTIVE</span>, the observed probability rises — shown per signal below.
-            When multiple signals are active simultaneously, the composite probability is shown at top.
-        </div>
-
-        <!-- Composite score -->
-        <div style="background:var(--surface);border:1px solid var(--border);padding:1.1rem 1.5rem;margin-bottom:1.25rem;display:flex;align-items:center;gap:1.5rem;flex-wrap:wrap;">
-            <div>
-                <div style="font-size:0.58rem;letter-spacing:0.12em;text-transform:uppercase;color:var(--muted);margin-bottom:0.3rem">Composite P(drawdown)</div>
-                <div style="display:flex;align-items:baseline;gap:0.5rem">
-                    <span id="esPct" class="es-pct">—</span>
-                    <span style="font-size:0.7rem;color:var(--muted)">export probability</span>
-                </div>
-            </div>
-            <div style="flex:1;min-width:200px;font-size:0.72rem;color:var(--muted);line-height:1.5">
-                Composite rises when signals stack. Strongest combination shown.
-                Baseline is 15% with no active signals.
-            </div>
-        </div>
-
-        <!-- How to read -->
-        <div style="background:rgba(255,255,255,0.03);border:1px solid var(--border);border-left:3px solid var(--accent);padding:0.9rem 1.2rem;margin-bottom:1.25rem;font-size:0.74rem;line-height:1.6;color:var(--muted)">
-            <span style="color:var(--text);font-weight:600">How to read: </span>
-            Each card shows a market condition and the historical probability of an export drawdown when that condition is true.
-            ACTIVE means the condition is met right now. It does not guarantee an export — it means odds are elevated based on observed history.
-        </div>
-
-        <!-- 2×2 signal grid -->
-        <div class="es-grid">
-            <!-- Storage Pressure -->
-            <div class="es-row" id="esr-pressure">
-                <div class="es-header">
-                    <div>
-                        <div class="es-label">Storage Pressure</div>
-                        <div style="font-size:0.8rem;color:var(--text);margin-top:0.3rem;line-height:1.4">
-                            When tanks are ≥65% full, Iran faces commercial pressure to export — storage costs rise and production curtailment becomes costly.
-                        </div>
-                    </div>
-                    <div class="es-composite">
-                        <div class="es-state" id="ess-pressure">inactive</div>
-                        <div class="es-pct-sm" id="esp-pressure">—</div>
-                    </div>
-                </div>
-                <div style="display:flex;justify-content:space-between;align-items:center;font-size:0.7rem;padding-top:0.6rem;border-top:1px solid var(--border)">
-                    <span style="color:var(--muted)">Condition</span>
-                    <span id="est-pressure" style="font-family:monospace;color:var(--text)">—</span>
-                </div>
-            </div>
-            <!-- Berth Staging -->
-            <div class="es-row" id="esr-staging">
-                <div class="es-header">
-                    <div>
-                        <div class="es-label">Berth Staging</div>
-                        <div style="font-size:0.8rem;color:var(--text);margin-top:0.3rem;line-height:1.4">
-                            Loading berth tanks (t60_0, t40_22) fill faster than the terminal average — a tanker may be in position and loading is imminent.
-                        </div>
-                    </div>
-                    <div class="es-composite">
-                        <div class="es-state" id="ess-staging">inactive</div>
-                        <div class="es-pct-sm" id="esp-staging">—</div>
-                    </div>
-                </div>
-                <div style="display:flex;justify-content:space-between;align-items:center;font-size:0.7rem;padding-top:0.6rem;border-top:1px solid var(--border)">
-                    <span style="color:var(--muted)">Condition</span>
-                    <span id="est-staging" style="font-family:monospace;color:var(--text)">—</span>
-                </div>
-            </div>
-            <!-- Pendulum Rhythm -->
-            <div class="es-row" id="esr-pendulum">
-                <div class="es-header">
-                    <div>
-                        <div class="es-label">Pendulum Rhythm</div>
-                        <div style="font-size:0.8rem;color:var(--text);margin-top:0.3rem;line-height:1.4">
-                            A sharp build (&gt;+1.5 Mb in 7 days) historically precedes a drawdown of similar magnitude within 6–12 days — the terminal "exhales" after filling.
-                        </div>
-                    </div>
-                    <div class="es-composite">
-                        <div class="es-state" id="ess-pendulum">inactive</div>
-                        <div class="es-pct-sm" id="esp-pendulum">—</div>
-                    </div>
-                </div>
-                <div style="display:flex;justify-content:space-between;align-items:center;font-size:0.7rem;padding-top:0.6rem;border-top:1px solid var(--border)">
-                    <span style="color:var(--muted)">Condition</span>
-                    <span id="est-pendulum" style="font-family:monospace;color:var(--text)">—</span>
-                </div>
-            </div>
-            <!-- Accumulation Streak -->
-            <div class="es-row" id="esr-streak">
-                <div class="es-header">
-                    <div>
-                        <div class="es-label">Accumulation Streak</div>
-                        <div style="font-size:0.8rem;color:var(--text);margin-top:0.3rem;line-height:1.4">
-                            18+ consecutive days of net build historically marks a pressure peak. Exports tend to follow within the next 10–14 days.
-                        </div>
-                    </div>
-                    <div class="es-composite">
-                        <div class="es-state" id="ess-streak">inactive</div>
-                        <div class="es-pct-sm" id="esp-streak">—</div>
-                    </div>
-                </div>
-                <div style="display:flex;justify-content:space-between;align-items:center;font-size:0.7rem;padding-top:0.6rem;border-top:1px solid var(--border)">
-                    <span style="color:var(--muted)">Condition</span>
-                    <span id="est-streak" style="font-family:monospace;color:var(--text)">—</span>
-                </div>
-            </div>
-        </div><!-- /es-grid -->
-
-        <div style="font-size:0.65rem;color:var(--dim);margin-top:1rem;line-height:1.5">
-            Probabilities are derived from satellite observation history 2017–present. Sample size per signal: 40–120 qualifying events.
-            Export Signals are research outputs, not trading signals. Past rates do not guarantee future outcomes.
-        </div>
-        </div><!-- /Export Signals in Overview -->
     </div>
 
     <!-- ── SECTION: GROSS FLOWS ── -->
@@ -1301,6 +1184,7 @@
     </div>
 
 </div><!-- /main -->
+<div style="text-align:center;padding:12px 16px;font-size:11px;color:#6b7280;font-family:sans-serif;border-top:1px solid #e5e7eb;margin-top:0;position:fixed;bottom:0;left:200px;right:0;background:var(--bg,#0f172a);z-index:10">Contains modified Copernicus Sentinel data [2015–2026] · processed by OilRadar</div>
 
 <script>
 // ── Auth ──────────────────────────────────────────────────────────────────
@@ -1882,6 +1766,7 @@ function render() {
     renderFillRateChart(dates, chartFR);
     renderSPIChart(dates, spiSeries);
     renderMonthlyChart(rawSlice.dates, rawSlice.values);
+    renderOverviewVelocity();
 }
 
 // ── EXPORT SETUP ──────────────────────────────────────────────────────────────
@@ -3254,8 +3139,6 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 });
 </script>
-<div style="text-align:center;padding:12px 16px;font-size:11px;color:#6b7280;font-family:sans-serif;border-top:1px solid #e5e7eb;margin-top:24px">Contains modified Copernicus Sentinel data [2015–2026] · processed by OilRadar</div>
-
 <script>
 (function(){
   'use strict';
