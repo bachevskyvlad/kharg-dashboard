@@ -1115,33 +1115,60 @@
             <div style="text-align:center;padding:2rem;color:var(--muted);font-size:0.75rem">Loading…</div>
         </div>
 
-        <!-- 12-month heatmap -->
-        <div id="bo2-hm-wrap" style="display:none;margin-bottom:1.25rem">
-            <div style="font-size:0.65rem;letter-spacing:1px;text-transform:uppercase;color:var(--accent);margin-bottom:0.6rem">12-Month Activity</div>
-            <div id="bo2-hm-legend" style="display:flex;gap:1rem;align-items:center;font-size:0.72rem;margin-bottom:0.4rem;flex-wrap:wrap"></div>
-            <div id="bo2-hm" style="overflow-x:auto;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:0.75rem"></div>
+        <!-- Loadings per Month chart -->
+        <div style="background:var(--surface);border:1px solid var(--border);padding:1.25rem 1.5rem 1rem;margin-bottom:1.25rem;display:none" id="bo2-chart-wrap">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;flex-wrap:wrap;gap:0.5rem">
+                <div>
+                    <div style="font-size:0.7rem;letter-spacing:1px;text-transform:uppercase;color:var(--accent)">Loadings per Month</div>
+                    <div style="font-size:0.65rem;color:var(--muted);margin-top:0.2rem">VLCC and smaller vessels · confirmed loadings only</div>
+                </div>
+                <div style="display:flex;gap:4px" id="bo2-chart-range">
+                    <button class="aq-rbtn" data-r="3m">3M</button>
+                    <button class="aq-rbtn aq-rbtn-active" data-r="6m">6M</button>
+                    <button class="aq-rbtn" data-r="1y">1Y</button>
+                    <button class="aq-rbtn" data-r="all">ALL</button>
+                </div>
+            </div>
+            <canvas id="bo2-chart" style="width:100%;display:block;height:200px"></canvas>
+            <div style="display:flex;gap:16px;flex-wrap:wrap;margin-top:10px">
+                <span style="display:flex;align-items:center;gap:6px;font-size:0.68rem;color:var(--muted)"><span style="width:12px;height:12px;background:#f87171;flex-shrink:0;border-radius:2px"></span>VLCC</span>
+                <span style="display:flex;align-items:center;gap:6px;font-size:0.68rem;color:var(--muted)"><span style="width:12px;height:12px;background:#fbbf24;flex-shrink:0;border-radius:2px"></span>SuezAframax</span>
+                <span style="display:flex;align-items:center;gap:6px;font-size:0.68rem;color:var(--muted)"><span style="width:12px;height:12px;background:#64748b;flex-shrink:0;border-radius:2px"></span>n/a</span>
+            </div>
         </div>
 
-        <!-- Visit list -->
-        <div id="bo2-visits-wrap" style="display:none;margin-bottom:1.25rem">
-            <div style="font-size:0.65rem;letter-spacing:1px;text-transform:uppercase;color:var(--accent);margin-bottom:0.6rem">Visit History</div>
-            <div style="overflow-x:auto;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:0.75rem 1rem">
+        <!-- Pass log -->
+        <div style="background:var(--surface);border:1px solid var(--border);padding:1.25rem 1.5rem 1rem;margin-bottom:1.25rem;display:none" id="bo2-passlog-wrap">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.75rem;flex-wrap:wrap;gap:0.5rem">
+                <div>
+                    <div style="font-size:0.7rem;letter-spacing:1px;text-transform:uppercase;color:var(--accent)">Pass Log</div>
+                    <div style="font-size:0.65rem;color:var(--muted);margin-top:0.2rem">Every Sentinel-1 pass · newest first</div>
+                </div>
+                <div style="display:flex;gap:4px" id="bo2-log-range">
+                    <button class="aq-rbtn" data-r="3m">3M</button>
+                    <button class="aq-rbtn aq-rbtn-active" data-r="6m">6M</button>
+                    <button class="aq-rbtn" data-r="1y">1Y</button>
+                    <button class="aq-rbtn" data-r="all">ALL</button>
+                </div>
+            </div>
+            <div style="overflow-x:auto">
                 <table style="width:100%;border-collapse:collapse;font-size:0.75rem">
                     <thead>
                         <tr style="border-bottom:1px solid var(--border)">
-                            <th style="text-align:left;padding:0.3rem 0.5rem;font-size:0.6rem;letter-spacing:1px;text-transform:uppercase;color:var(--muted);font-weight:600">Arrived</th>
-                            <th style="text-align:left;padding:0.3rem 0.5rem;font-size:0.6rem;letter-spacing:1px;text-transform:uppercase;color:var(--muted);font-weight:600">Berth</th>
-                            <th style="text-align:left;padding:0.3rem 0.5rem;font-size:0.6rem;letter-spacing:1px;text-transform:uppercase;color:var(--muted);font-weight:600">Class</th>
-                            <th style="text-align:right;padding:0.3rem 0.5rem;font-size:0.6rem;letter-spacing:1px;text-transform:uppercase;color:var(--muted);font-weight:600">Length</th>
-                            <th style="text-align:right;padding:0.3rem 0.5rem;font-size:0.6rem;letter-spacing:1px;text-transform:uppercase;color:var(--muted);font-weight:600">Days at berth</th>
+                            <th style="text-align:left;padding:0.3rem 0.5rem;font-size:0.6rem;letter-spacing:1px;text-transform:uppercase;color:var(--muted);font-weight:600">Date</th>
+                            <th style="text-align:center;padding:0.3rem 0.5rem;font-size:0.6rem;letter-spacing:1px;text-transform:uppercase;color:var(--muted);font-weight:600">Orbit</th>
+                            <th style="text-align:center;padding:0.3rem 0.5rem;font-size:0.6rem;letter-spacing:1px;text-transform:uppercase;color:var(--muted);font-weight:600">Sea Island</th>
+                            <th style="text-align:center;padding:0.3rem 0.5rem;font-size:0.6rem;letter-spacing:1px;text-transform:uppercase;color:var(--muted);font-weight:600">East T-Head</th>
+                            <th style="text-align:center;padding:0.3rem 0.5rem;font-size:0.6rem;letter-spacing:1px;text-transform:uppercase;color:var(--muted);font-weight:600">SE Pier</th>
+                            <th style="text-align:center;padding:0.3rem 0.5rem;font-size:0.6rem;letter-spacing:1px;text-transform:uppercase;color:var(--muted);font-weight:600">Ships at berths</th>
                         </tr>
                     </thead>
-                    <tbody id="bo2-visits-body"></tbody>
+                    <tbody id="bo2-pass-body"></tbody>
                 </table>
             </div>
         </div>
 
-        <!-- Snapshots — bottom -->
+        <!-- Snapshots -->
         <div id="bo2-snaps-wrap" style="display:none;margin-bottom:1.25rem">
             <div style="font-size:0.65rem;letter-spacing:1px;text-transform:uppercase;color:var(--accent);margin-bottom:0.6rem">Pass State</div>
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem">
@@ -1150,10 +1177,10 @@
             </div>
         </div>
 
-        <!-- Details (collapsed) -->
+        <!-- Details (collapsed technical log) -->
         <details id="bo2-details" style="margin-bottom:1.25rem">
             <summary style="cursor:pointer;font-size:0.65rem;letter-spacing:1px;text-transform:uppercase;color:var(--muted);padding:0.75rem 0;border-top:1px solid var(--border);list-style:none;display:flex;align-items:center;gap:0.5rem">
-                <span id="bo2-arr" style="font-size:0.6rem">▶</span> Details
+                <span id="bo2-arr" style="font-size:0.6rem">&#9658;</span> Details
             </summary>
             <div style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:1rem;margin-top:0.5rem;overflow-x:auto">
                 <table style="width:100%;border-collapse:collapse;font-size:0.7rem;font-family:monospace">
@@ -1164,18 +1191,19 @@
                             <th style="text-align:center;padding:0.3rem 0.5rem;font-size:0.58rem;letter-spacing:1px;text-transform:uppercase;color:var(--muted);font-weight:600">Sea Island</th>
                             <th style="text-align:center;padding:0.3rem 0.5rem;font-size:0.58rem;letter-spacing:1px;text-transform:uppercase;color:var(--muted);font-weight:600">East T-Head</th>
                             <th style="text-align:center;padding:0.3rem 0.5rem;font-size:0.58rem;letter-spacing:1px;text-transform:uppercase;color:var(--muted);font-weight:600">SE Pier</th>
-                            <th style="text-align:center;padding:0.3rem 0.5rem;font-size:0.58rem;letter-spacing:1px;text-transform:uppercase;color:var(--muted);font-weight:600">New</th>
+                            <th style="text-align:center;padding:0.3rem 0.5rem;font-size:0.58rem;letter-spacing:1px;text-transform:uppercase;color:var(--muted);font-weight:600">New loads</th>
                         </tr>
                     </thead>
-                    <tbody id="bo2-pass-body"></tbody>
+                    <tbody id="bo2-det-body"></tbody>
                 </table>
             </div>
         </details>
 
         <div style="font-size:0.65rem;color:var(--dim);border-top:1px solid var(--border);padding-top:0.75rem;line-height:1.6">
-            Sentinel-1 radar · Planetary Computer. Vessel class by hull length (±50 m). Visits shorter than the gap between passes may be missed — lower bound.
+            Sentinel-1 radar · Planetary Computer · updated every pass. Vessel class estimated from hull size. Visits shorter than the gap between passes may be missed — lower bound.
         </div>
     </div>
+
 
     <!-- ── Hormuz Strait Traffic ──────────────────────────────────────── -->
     <div class="section" id="sec-hormuz">
@@ -3241,6 +3269,15 @@ document.addEventListener('DOMContentLoaded', function() {
     return null;
   }
 
+  function displayClass(h, berth) {
+    if (berth === 'southeast_pier') return 'n/a';
+    var c = h['class'] || '';
+    if (c === 'VLCC') return 'VLCC';
+    if (c === 'SuezAframax') return 'SuezAframax';
+    if (c === 'hull <200m') return 'occupied';
+    return hullClass(h.len_m || 0, berth);
+  }
+
   function clsColor(cls) {
     if (cls === 'VLCC') return '#f87171';
     if (cls === 'SuezAframax') return '#fbbf24';
@@ -3264,13 +3301,21 @@ document.addEventListener('DOMContentLoaded', function() {
 
   function pad2(n) { return String(n).padStart(2,'0'); }
 
-  // ── Block 1: Cards ────────────────────────────────────────────────────────────────────
+  function cutoffDate(range) {
+    var today = new Date();
+    if (range === '3m') { var c = new Date(today); c.setMonth(c.getMonth()-3); return c; }
+    if (range === '6m') { var c = new Date(today); c.setMonth(c.getMonth()-6); return c; }
+    if (range === '1y') { var c = new Date(today); c.setFullYear(c.getFullYear()-1); return c; }
+    return null;
+  }
+
+  // ── Block 1: Cards ─────────────────────────────────────────────────────────
   function renderCards(data) {
     var visits = (data.visits || []).slice().sort(function(a,b){ return a.start_date < b.start_date ? 1 : -1; });
     var today = new Date();
-    var cutoff4w = new Date(today); cutoff4w.setDate(cutoff4w.getDate() - 28);
-    var cutoff4wPY = new Date(today); cutoff4wPY.setDate(cutoff4wPY.getDate() - 28 - 365);
-    var end4wPY = new Date(today); end4wPY.setDate(end4wPY.getDate() - 365);
+    var cutoff4w = new Date(today); cutoff4w.setDate(cutoff4w.getDate()-28);
+    var cutoff4wPY = new Date(today); cutoff4wPY.setDate(cutoff4wPY.getDate()-28-365);
+    var end4wPY = new Date(today); end4wPY.setDate(end4wPY.getDate()-365);
 
     var v4w = visits.filter(function(v){ return new Date(v.start_date) >= cutoff4w; });
     var v4wPY = visits.filter(function(v){ var d = new Date(v.start_date); return d >= cutoff4wPY && d < end4wPY; });
@@ -3292,19 +3337,18 @@ document.addEventListener('DOMContentLoaded', function() {
     var lastV = visits[0];
     var card2Val = '—', card2Sub = '', daysSince = '—';
     if (lastV) {
-      var cls = hullClass(lastV.len_max || 0, lastV.berth);
-      card2Val = cls || '—';
-      var lenStr = lastV.berth === 'southeast_pier' ? 'n/a' : (lastV.len_max ? Math.round(lastV.len_max) + 'm' : '—');
-      card2Sub = lenStr + ' · ' + fmtBerth(lastV.berth) + ' · ' + fmtDate(lastV.start_date);
+      var cls = lastV.berth === 'southeast_pier' ? 'n/a' : (lastV.class_max || '—');
+      card2Val = cls;
+      card2Sub = cls + ' · ' + fmtBerth(lastV.berth) + ' · ' + fmtDate(lastV.start_date);
       daysSince = String(Math.floor((today - new Date(lastV.start_date)) / 86400000));
     }
 
-    var c2clr = lastV && lastV.class_max ? clsColor(lastV.class_max) : '#64748b';
+    var c2clr = lastV ? clsColor(lastV.berth === 'southeast_pier' ? '' : (lastV.class_max || '')) : '#64748b';
     var wrap = document.getElementById('bo2-cards');
     if (!wrap) return;
 
     wrap.innerHTML =
-      '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;margin-bottom:1.25rem">' +
+      '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:1rem">' +
       '<div style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:1rem 1.25rem">' +
         '<div style="font-size:0.6rem;letter-spacing:1px;text-transform:uppercase;color:var(--muted);margin-bottom:0.4rem">Loadings, last 4 weeks</div>' +
         '<div style="font-size:2rem;font-weight:700;color:var(--accent);font-family:\'Space Grotesk\',sans-serif;line-height:1.1">' + total4w + '</div>' +
@@ -3323,95 +3367,99 @@ document.addEventListener('DOMContentLoaded', function() {
       '</div>';
   }
 
-  // ── Block 2: Heatmap ───────────────────────────────────────────────────────────────────
-  function renderHeatmap(data) {
-    var passes = (data.passes || []).slice().sort(function(a,b){ return a.date < b.date ? -1 : 1; });
-    var today = new Date();
-    var c = new Date(today.getFullYear() - 1, today.getMonth(), 1);
-    var cutoffStr = c.getFullYear() + '-' + pad2(c.getMonth()+1) + '-01';
-    var hpasses = passes.filter(function(p){ return p.date >= cutoffStr; });
+  // ── Block 2: Loadings per Month chart ──────────────────────────────────────
+  var _boChart = null;
 
-    var wrap = document.getElementById('bo2-hm');
-    var legendWrap = document.getElementById('bo2-hm-legend');
-    var hmWrap = document.getElementById('bo2-hm-wrap');
-    if (!wrap || !hmWrap) return;
+  function renderChart(data, range) {
+    var visits = (data.visits || []).slice();
+    var co = cutoffDate(range);
+    if (co) visits = visits.filter(function(v){ return new Date(v.start_date) >= co; });
 
-    if (legendWrap) legendWrap.innerHTML =
-      '<span><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#f87171;margin-right:3px;vertical-align:middle"></span>VLCC</span>' +
-      '<span><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#fbbf24;margin-right:3px;vertical-align:middle"></span>SuezAframax</span>' +
-      '<span><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#64748b;margin-right:3px;vertical-align:middle"></span>occupied</span>' +
-      '<span><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#1e293b;border:1px solid #334155;margin-right:3px;vertical-align:middle"></span>empty</span>';
-
-    var berth_sides = [];
-    BERTHS.forEach(function(b){ berth_sides.push([b,1]); berth_sides.push([b,-1]); });
-    var pdates = hpasses.map(function(p){ return p.date; });
-
-    var hmdata = {};
-    hpasses.forEach(function(p) {
-      BERTHS.forEach(function(b) {
-        var bd = p[b] || {};
-        (bd.hulls || []).forEach(function(h) {
-          var key = b + '|' + (h.side !== undefined ? h.side : 1) + '|' + p.date;
-          var cls = hullClass(h.len_m || 0, b);
-          if (cls && cls !== 'n/a') hmdata[key] = { cls: cls, len_m: h.len_m };
-        });
-      });
+    var months = {}, order = [];
+    visits.forEach(function(v) {
+      var m = v.start_date.slice(0,7);
+      if (!months[m]) { months[m] = {vlcc:0, suez:0, na:0}; order.push(m); }
+      if (v.berth === 'southeast_pier') months[m].na++;
+      else if (v.class_max === 'VLCC') months[m].vlcc++;
+      else months[m].suez++;
     });
+    order.sort();
 
-    var cw = 14, ch = 20, lw = 90;
-    var nr = berth_sides.length, nc = Math.max(pdates.length, 1);
-    var sw = lw + nc * cw + 4, sh = nr * ch + 24;
-    var parts = [];
+    var moNames = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    var labels = order.map(function(m){ var p=m.split('-'); return moNames[parseInt(p[1])-1]+' '+p[0].slice(2); });
+    var vlccData = order.map(function(m){ return months[m].vlcc; });
+    var suezData = order.map(function(m){ return months[m].suez; });
+    var naData   = order.map(function(m){ return months[m].na; });
 
-    berth_sides.forEach(function(bs, ri) {
-      var lbl = fmtBerth(bs[0]).slice(0,10) + (bs[1] > 0 ? ' +' : ' −');
-      parts.push('<text x="' + (lw-4) + '" y="' + (ri*ch + ch*0.72) + '" text-anchor="end" font-size="9" fill="rgba(148,163,184,0.8)">' + lbl + '</text>');
-      pdates.forEach(function(pd, ci) {
-        var x = lw + ci*cw, y = ri*ch;
-        var cell = hmdata[bs[0] + '|' + bs[1] + '|' + pd];
-        var fill = cell ? clsColor(cell.cls) : '#1e293b';
-        var tip = cell ? (pd + ' ' + fmtBerth(bs[0]) + ': ' + cell.cls + ' ' + Math.round(cell.len_m) + 'm') : (pd + ' ' + fmtBerth(bs[0]) + ': empty');
-        parts.push('<rect x="' + x + '" y="' + y + '" width="' + (cw-1) + '" height="' + (ch-1) + '" fill="' + fill + '" rx="1"><title>' + tip + '</title></rect>');
-      });
+    var canvas = document.getElementById('bo2-chart');
+    var wrap = document.getElementById('bo2-chart-wrap');
+    if (!canvas || !wrap) return;
+    wrap.style.display = '';
+
+    if (_boChart) { _boChart.destroy(); _boChart = null; }
+    _boChart = new Chart(canvas.getContext('2d'), {
+      type: 'bar',
+      data: {
+        labels: labels,
+        datasets: [
+          { label:'VLCC',        data:vlccData, backgroundColor:'#f87171', stack:'s' },
+          { label:'SuezAframax', data:suezData, backgroundColor:'#fbbf24', stack:'s' },
+          { label:'n/a',         data:naData,   backgroundColor:'#64748b', stack:'s' }
+        ]
+      },
+      options: {
+        responsive:true, maintainAspectRatio:false,
+        plugins:{
+          legend:{display:false},
+          tooltip:{mode:'index',intersect:false}
+        },
+        scales:{
+          x:{ stacked:true, grid:{color:'rgba(148,163,184,0.1)'}, ticks:{color:'rgba(148,163,184,0.7)',font:{size:11}} },
+          y:{ stacked:true, beginAtZero:true, grid:{color:'rgba(148,163,184,0.1)'}, ticks:{color:'rgba(148,163,184,0.7)',font:{size:11},stepSize:1} }
+        }
+      }
     });
-
-    pdates.forEach(function(pd, ci) {
-      if (ci % 4 === 0) parts.push('<text x="' + (lw + ci*cw + cw/2) + '" y="' + (nr*ch+14) + '" text-anchor="middle" font-size="8" fill="rgba(148,163,184,0.5)">' + pd.slice(5) + '</text>');
-    });
-
-    wrap.innerHTML = '<svg viewBox="0 0 ' + sw + ' ' + sh + '" xmlns="http://www.w3.org/2000/svg" style="width:100%;max-width:' + sw + 'px;overflow:visible">' + parts.join('') + '</svg>';
-    hmWrap.style.display = '';
   }
 
-  // ── Block 3: Visit list ────────────────────────────────────────────────────────────────────────
-  function renderVisits(data) {
-    var visits = (data.visits || []).slice().sort(function(a,b){ return a.start_date < b.start_date ? 1 : -1; });
-    var tbody = document.getElementById('bo2-visits-body');
-    var wrap = document.getElementById('bo2-visits-wrap');
-    if (!tbody || !wrap) return;
+  // ── Block 3: Pass log ──────────────────────────────────────────────────────
+  function renderPassLog(data, range) {
+    var passes = (data.passes || []).slice().sort(function(a,b){ return a.date < b.date ? 1 : -1; });
+    var co = cutoffDate(range);
+    if (co) passes = passes.filter(function(p){ return new Date(p.date) >= co; });
 
-    var rows = [], lastDate = null;
-    visits.forEach(function(v) {
-      if (lastDate) {
-        var gap = Math.floor((new Date(lastDate) - new Date(v.start_date)) / 86400000) - (v.visit_days || 0);
-        var wks = Math.floor(gap / 7);
-        if (wks >= 2) rows.push('<tr><td colspan="5" style="padding:0.4rem 0.5rem;font-size:0.68rem;color:var(--dim);font-style:italic;text-align:center;border-bottom:1px solid rgba(255,255,255,0.03)">' + wks + ' weeks without loadings</td></tr>');
-      }
-      var cls = hullClass(v.len_max || 0, v.berth) || '—';
-      var lenStr = v.berth === 'southeast_pier' ? 'n/a' : (v.len_max ? Math.round(v.len_max) + 'm' : '—');
+    var tbody = document.getElementById('bo2-pass-body');
+    var wrap = document.getElementById('bo2-passlog-wrap');
+    if (!tbody || !wrap) return;
+    wrap.style.display = '';
+
+    var rows = [];
+    passes.forEach(function(p) {
+      var cells = BERTHS.map(function(b) {
+        var hulls = (p[b] || {}).hulls || [];
+        if (hulls.length === 0) return '<td style="text-align:center;padding:0.3rem 0.5rem;color:#374151">—</td>';
+        var parts = hulls.map(function(h) {
+          var cls = displayClass(h, b) || '—';
+          var clr = cls === 'VLCC' ? '#f87171' : cls === 'SuezAframax' ? '#fbbf24' : '#64748b';
+          var newBadge = (h.new_load === true || h.new_load === 'True')
+            ? ' <span style="font-size:0.58rem;background:#22c55e22;color:#22c55e;padding:0 3px;border-radius:2px;font-family:monospace">new</span>' : '';
+          return '<span style="color:' + clr + '">' + cls + '</span>' + newBadge;
+        });
+        return '<td style="text-align:center;padding:0.3rem 0.5rem">' + parts.join('<br>') + '</td>';
+      });
+
+      var total = 0;
+      BERTHS.forEach(function(b){ total += (p[b]&&p[b].hulls||[]).length; });
+
       rows.push('<tr style="border-bottom:1px solid rgba(255,255,255,0.03)">' +
-        '<td style="padding:0.3rem 0.5rem;color:var(--muted)">' + fmtDate(v.start_date) + '</td>' +
-        '<td style="padding:0.3rem 0.5rem">' + fmtBerth(v.berth) + '</td>' +
-        '<td style="padding:0.3rem 0.5rem;color:' + clsColor(cls) + '">' + cls + '</td>' +
-        '<td style="padding:0.3rem 0.5rem;text-align:right;font-variant-numeric:tabular-nums">' + lenStr + '</td>' +
-        '<td style="padding:0.3rem 0.5rem;text-align:right;font-variant-numeric:tabular-nums;color:var(--muted)">' + (v.visit_days || '?') + 'd</td></tr>');
-      lastDate = v.start_date;
+        '<td style="padding:0.3rem 0.5rem;color:var(--muted);white-space:nowrap">' + p.date + '</td>' +
+        '<td style="text-align:center;padding:0.3rem 0.5rem;color:var(--dim)">o' + p.orbit + '</td>' +
+        cells.join('') +
+        '<td style="text-align:center;padding:0.3rem 0.5rem;color:var(--muted)">' + (total > 0 ? total : '—') + '</td></tr>');
     });
     tbody.innerHTML = rows.join('');
-    wrap.style.display = '';
   }
 
-  // ── Block 4: Snapshots ───────────────────────────────────────────────────────────────────────
+  // ── Block 4: Snapshots ─────────────────────────────────────────────────────
   function renderSnaps(data, snaps) {
     var wrap = document.getElementById('bo2-snaps-wrap');
     if (!wrap) return;
@@ -3434,14 +3482,10 @@ document.addEventListener('DOMContentLoaded', function() {
         var hulls = (pass[b] || {}).hulls || [];
         if (hulls.length > 0) {
           hulls.forEach(function(h) {
-            var cls = hullClass(h.len_m || 0, b);
-            if (!cls) return;
+            var cls = displayClass(h, b) || 'occupied';
+            var clr = clsColor(cls);
             var arr = (h.arrived === true || h.arrived === 'True') ? 'arrived' : 'same';
-            var lbl, clr;
-            if (b === 'southeast_pier') { lbl = fmtBerth(b) + ': n/a · ' + arr; clr = '#64748b'; }
-            else if (cls === 'VLCC' || cls === 'SuezAframax') { lbl = fmtBerth(b) + ': ' + cls + ' · ' + Math.round(h.len_m) + 'm · ' + arr; clr = clsColor(cls); }
-            else { lbl = fmtBerth(b) + ': occupied · ' + Math.round(h.len_m) + 'm · ' + arr; clr = '#64748b'; }
-            labels.push({ lbl: lbl, clr: clr });
+            labels.push({ lbl: fmtBerth(b) + ': ' + cls + ' · ' + arr, clr: clr });
           });
         } else {
           labels.push({ lbl: fmtBerth(b) + ': empty', clr: '#374151' });
@@ -3451,9 +3495,9 @@ document.addEventListener('DOMContentLoaded', function() {
       var vlcc = 0, sm = 0;
       BERTHS.forEach(function(b) {
         (pass[b] && pass[b].hulls || []).forEach(function(h) {
-          var c = hullClass(h.len_m || 0, b);
+          var c = displayClass(h, b);
           if (c === 'VLCC') vlcc++;
-          else if (c === 'SuezAframax' || c === 'occupied') sm++;
+          else if (c) sm++;
         });
       });
 
@@ -3466,14 +3510,14 @@ document.addEventListener('DOMContentLoaded', function() {
         '<div style="margin-top:0.5rem;font-size:0.65rem;color:var(--muted)">At berths: ' + (vlcc+sm) + ' (VLCC ' + vlcc + ', smaller ' + sm + ')</div>';
     }
 
-    renderPanel('bo2-snap-prev', 'prev', 'Previous pass', 'var(--muted)');
-    renderPanel('bo2-snap-latest', 'latest', 'Latest pass', 'var(--accent)');
+    renderPanel('bo2-snap-prev',    'prev',   'Previous pass', 'var(--muted)');
+    renderPanel('bo2-snap-latest',  'latest', 'Latest pass',   'var(--accent)');
     wrap.style.display = '';
   }
 
-  // ── Block 5: Pass log ─────────────────────────────────────────────────────────────────────────
-  function renderPassLog(data) {
-    var tbody = document.getElementById('bo2-pass-body');
+  // ── Block 5: Details — lazy, collapsed ─────────────────────────────────────
+  function renderDetails(data) {
+    var tbody = document.getElementById('bo2-det-body');
     if (!tbody || tbody.dataset.filled) return;
     tbody.dataset.filled = '1';
 
@@ -3484,7 +3528,7 @@ document.addEventListener('DOMContentLoaded', function() {
         var bd = p[b] || {}, det = bd.det || '—', hulls = bd.hulls || [];
         if (det === 'OCC' && hulls.length > 0) {
           var vc = 0;
-          hulls.forEach(function(h){ if (hullClass(h.len_m||0,b) === 'VLCC') vc++; });
+          hulls.forEach(function(h){ if ((h['class']||'') === 'VLCC') vc++; });
           return '<td style="text-align:center;padding:0.25rem 0.4rem"><span style="color:#3b82f6;font-weight:600">' + (hulls.length > 1 ? hulls.length + '×' : '●') + '</span>' + (vc ? ' <span style="color:#fbbf24;font-size:0.6rem">V</span>' : '') + '</td>';
         }
         if (det === 'EMP') return '<td style="text-align:center;padding:0.25rem 0.4rem;color:#374151">·</td>';
@@ -3504,7 +3548,7 @@ document.addEventListener('DOMContentLoaded', function() {
     tbody.innerHTML = rows.join('');
   }
 
-  // ── Main load ─────────────────────────────────────────────────────────────────────────────────────────────
+  // ── Main load ──────────────────────────────────────────────────────────────
   function boLoad() {
     if (boLoaded) return;
     boLoaded = true;
@@ -3514,15 +3558,34 @@ document.addEventListener('DOMContentLoaded', function() {
     ]).then(function(res) {
       var data = res[0], snaps = res[1];
       renderCards(data);
-      renderHeatmap(data);
-      renderVisits(data);
+      renderChart(data, '6m');
+      renderPassLog(data, '6m');
       renderSnaps(data, snaps);
+
+      var chartBtns = document.getElementById('bo2-chart-range');
+      if (chartBtns) chartBtns.addEventListener('click', function(e) {
+        var btn = e.target.closest('[data-r]');
+        if (!btn) return;
+        chartBtns.querySelectorAll('.aq-rbtn').forEach(function(b){ b.classList.remove('aq-rbtn-active'); });
+        btn.classList.add('aq-rbtn-active');
+        renderChart(data, btn.dataset.r);
+      });
+
+      var logBtns = document.getElementById('bo2-log-range');
+      if (logBtns) logBtns.addEventListener('click', function(e) {
+        var btn = e.target.closest('[data-r]');
+        if (!btn) return;
+        logBtns.querySelectorAll('.aq-rbtn').forEach(function(b){ b.classList.remove('aq-rbtn-active'); });
+        btn.classList.add('aq-rbtn-active');
+        renderPassLog(data, btn.dataset.r);
+      });
+
       var details = document.getElementById('bo2-details');
       var arr = document.getElementById('bo2-arr');
       if (details) {
         details.addEventListener('toggle', function() {
           if (arr) arr.textContent = details.open ? '▼' : '▶';
-          if (details.open) renderPassLog(data);
+          if (details.open) renderDetails(data);
         });
       }
     }).catch(function() {
