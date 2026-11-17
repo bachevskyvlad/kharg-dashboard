@@ -390,7 +390,7 @@ jobs:
           path: |
             data/
             public/
-            marketing/berths.html
+            product/berths.html
             _redirects
           retention-days: 1
           if-no-files-found: warn
@@ -501,7 +501,7 @@ jobs:
         run: |
           git config user.name  "bot"
           git config user.email "bot@github.com"
-          git add data/ public/
+          git add data/ public/ product/berths.html _redirects
           if git diff --cached --quiet; then
             echo "data_changed=false" >> "$GITHUB_OUTPUT"
             exit 0
