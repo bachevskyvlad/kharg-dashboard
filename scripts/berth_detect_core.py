@@ -194,8 +194,10 @@ def find_blobs(ratio_arr, water_mask, axis_uvec, merge_gap_m, min_len_m,
         length_m    = (a_max - a_min) * RESOLUTION
         # median width (not union) to avoid noise inflation
         width_m     = max(float(np.median([b["width_m"] for b in grp])), 1.0)
-        # best aspect across individual blobs (not merged bounding box)
-        best_aspect = max(b["aspect"] for b in grp)
+        # aspect of the MERGED result — length/width of the unified bounding box.
+        # Previously used max(sub_aspect) which leaked sub-blob ratios into merged
+        # hulls, causing identical aspect values across hulls of different sizes.
+        best_aspect = length_m / width_m
         area_px     = sum(b["area_px"] for b in grp)
         # area-weighted perp centre, and union perp extent, of merged group
         perp_ctr_m  = float(np.average([b["perp_ctr"] for b in grp],
@@ -213,7 +215,7 @@ def find_blobs(ratio_arr, water_mask, axis_uvec, merge_gap_m, min_len_m,
         })
         if debug and len(grp) > 1:
             print(f"    merged {len(grp)} blobs → len={length_m:.0f}m "
-                  f"best_asp={best_aspect:.1f} wid={width_m:.0f}m")
+                  f"asp={best_aspect:.1f} wid={width_m:.0f}m")
     blobs.sort(key=lambda b: b["length_m"], reverse=True)
     best = blobs[0] if blobs else None
     detected = bool(best and best["length_m"] >= min_len_m and best["aspect"] >= min_aspect)

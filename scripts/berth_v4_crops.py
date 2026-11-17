@@ -111,27 +111,73 @@ def _print_2026_monthly_table(rows):
     print()
 
 
+# Reference aspect values from run #19 (seed=99 sample) — before aspect fix.
+# Used to show before/after comparison in _print_2025_aspect_before_after.
+_ASPECT_REF_RUN19 = [
+    # (date, orbit_str, berth, len_m, asp_before)
+    ("2025-02-16", "101", "sea_island",    344.4,  4.92),
+    ("2025-03-20",  "35", "east_t_head",   354.6,  6.33),
+    ("2025-04-13", "101", "east_t_head",   213.3,  8.42),
+    ("2025-05-11", "101", "east_t_head",   285.1,  4.87),
+    ("2025-06-04", "101", "east_t_head",   312.6,  8.42),
+    ("2025-06-16", "101", "east_t_head",   293.9,  8.42),
+    ("2025-06-16", "101", "east_t_head",   171.2,  8.42),
+    ("2025-08-27", "101", "east_t_head",   191.0,  8.42),
+    ("2025-09-02", "101", "sea_island",    192.4,  3.63),
+    ("2025-09-04",  "35", "east_t_head",   353.5,  6.39),
+    ("2025-09-10",  "35", "east_t_head",   352.3,  6.50),
+    ("2025-09-26", "101", "east_t_head",   271.7,  1.80),
+    ("2025-10-10",  "35", "sea_island",    344.4,  1.64),
+    ("2025-10-14", "101", "east_t_head",   362.2,  6.10),
+    ("2025-11-07", "101", "sea_island",    375.7,  9.64),
+    ("2025-11-13", "101", "east_t_head",   362.2,  6.10),
+    ("2025-12-01", "101", "east_t_head",   227.9,  2.06),
+    ("2025-12-07", "101", "east_t_head",   288.7,  8.42),
+    ("2025-12-19", "101", "sea_island",    407.0, 10.26),
+    ("2025-12-27",  "35", "southeast_pier",310.3,  4.79),
+]
+
+
 def _print_2025_aspect_sample(rows):
-    """Print aspect values for 20 random 2025 non-static hulls."""
-    import random as _random
-    pool = []
+    """Before/after aspect for 20 reference 2025 hulls (run#19 → current run)."""
+    from collections import defaultdict
+    idx: dict = defaultdict(list)
     for r in rows:
-        if not r.get("date", "").startswith("2025"):
-            continue
         if str(r.get("static", "0")) == "1":
             continue
-        asp = r.get("aspect", "")
-        if asp == "" or asp == "?":
-            continue
-        pool.append(r)
-    _random.seed(99)
-    sample = sorted(_random.sample(pool, min(20, len(pool))), key=lambda r: r["date"])
-    print(f"\n=== aspect: 20 random 2025 non-static hull rows (pool={len(pool)}) ===")
-    print(f"  {'date':<12}  {'orbit':>5}  {'berth':<16}  {'len_m':>7}  {'aspect':>7}")
-    print("  " + "-" * 54)
-    for r in sample:
-        print(f"  {r.get('date',''):<12}  {str(r.get('orbit','?')):>5}  "
-              f"{r.get('berth','?'):<16}  {str(r.get('len_m','?')):>7}  {str(r.get('aspect','?')):>7}")
+        key = (r.get("date", ""), str(r.get("orbit", "")), r.get("berth", ""))
+        idx[key].append(r)
+
+    print(f"\n=== aspect before/after fix — 20 ref 2025 hulls (run#19 → current) ===")
+    print(f"  {'date':<12}  {'orb':>3}  {'berth':<16}  {'len_m':>7}  "
+          f"{'before':>7}  {'after':>7}  {'Δ':>6}")
+    print("  " + "-" * 72)
+    changed = 0
+    for date, orbit, berth, len_ref, asp_before in _ASPECT_REF_RUN19:
+        candidates = idx.get((date, orbit, berth), [])
+        if candidates:
+            best_r = min(candidates,
+                         key=lambda r: abs(float(r.get("len_m", 0) or 0) - len_ref))
+            asp_raw = best_r.get("aspect", "?")
+            try:
+                asp_after = float(asp_raw)
+                delta = asp_after - asp_before
+                delta_s = f"{delta:+.2f}"
+                mark = " ←" if abs(delta) > 0.05 else ""
+                if mark:
+                    changed += 1
+            except (ValueError, TypeError):
+                asp_after = "?"
+                delta_s = "?"
+                mark = ""
+            asp_s = f"{asp_after:.2f}" if isinstance(asp_after, float) else str(asp_after)
+        else:
+            asp_s = "MISSING"
+            delta_s = "?"
+            mark = " !"
+        print(f"  {date:<12}  {orbit:>3}  {berth:<16}  {len_ref:>7.1f}  "
+              f"{asp_before:>7.2f}  {asp_s:>7}  {delta_s:>6}{mark}")
+    print(f"\n  Changed: {changed}/20")
     print()
 
 
