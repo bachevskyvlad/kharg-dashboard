@@ -1829,6 +1829,7 @@ function renderExportSetup(util, fr7d, streak, staging) {
 
     // ── Render composite ──
     const pctEl = document.getElementById('esPct');
+    if (!pctEl) return;
     if (compositeP !== null) {
         pctEl.textContent = compositeP + '%';
         pctEl.className = 'es-pct' + (compositeP >= 40 ? ' hot' : ' active');
@@ -1869,6 +1870,7 @@ function renderExportSetup(util, fr7d, streak, staging) {
 
 function setEsRow(id, active, hot, p, trigger, status) {
     const row = document.getElementById('esr-' + id);
+    if (!row) return;
     row.style.display = active ? '' : 'none';
     row.className = 'es-row' + (hot ? ' hot' : active ? ' on' : '');
     const trigEl = document.getElementById('est-' + id);
