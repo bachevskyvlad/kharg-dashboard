@@ -1183,23 +1183,28 @@ def write_db_from_files():
 
     db_map = {}
     for r in hull_rows:
-        key = (r["date"], r["orbit"], r["berth"])
+        try:
+            orb = int(float(r["orbit"]))
+        except (ValueError, TypeError):
+            orb = r["orbit"]
+        key = (r["date"], orb, r["berth"])
         try:
             len_m = float(r["len_m"]) if r.get("len_m") else None
         except (ValueError, TypeError):
             len_m = None
         if key not in db_map or (len_m or 0) > (db_map[key].get("length_m") or 0):
             db_map[key] = {
-                "date": r["date"], "orbit": r["orbit"], "berth": r["berth"],
+                "date": r["date"], "orbit": orb, "berth": r["berth"],
                 "det": r["det"], "length_m": len_m, "aspect": None,
             }
     for p in passes_out:
         for berth in ["sea_island", "east_t_head", "southeast_pier"]:
             bd = p.get(berth, {})
-            key = (p["date"], p["orbit"], berth)
+            orb = int(p["orbit"]) if p.get("orbit") is not None else None
+            key = (p["date"], orb, berth)
             if key not in db_map and bd.get("det") in ("EMP", "NO_BG", "ERR"):
                 db_map[key] = {
-                    "date": p["date"], "orbit": p["orbit"], "berth": berth,
+                    "date": p["date"], "orbit": orb, "berth": berth,
                     "det": bd["det"], "length_m": None, "aspect": None,
                 }
 
@@ -1220,6 +1225,9 @@ def write_db_from_files():
     try:
         with _ureq.urlopen(req) as resp:
             print(f"\nDB write OK: HTTP {resp.status} — {len(db_rows)} rows upserted")
+    except _ureq.HTTPError as exc:
+        body = exc.read().decode("utf-8", errors="replace")[:2000]
+        sys.exit(f"FATAL: DB write failed — HTTP {exc.code}: {body}")
     except Exception as exc:
         sys.exit(f"FATAL: DB write failed — {exc}")
 
