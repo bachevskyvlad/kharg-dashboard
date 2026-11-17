@@ -1,15 +1,15 @@
 {
   "prev": {
-    "url": null,
-    "date": "2026-11-09",
+    "url": "/data/berth_snapshots/previous.png",
+    "date": "2026-11-15",
     "orbit": 101,
-    "summary": ""
+    "summary": "Berths: 0 ships (VLCC 0, Suez/Aframax 0)"
   },
   "latest": {
-    "url": null,
-    "date": "2026-11-11",
+    "url": "/data/berth_snapshots/latest.png",
+    "date": "2026-11-17",
     "orbit": 35,
-    "summary": ""
+    "summary": "Berths: 0 ships (VLCC 0, Suez/Aframax 0)"
   },
-  "change": "\u0431\u0435\u0437 \u0438\u0437\u043c\u0435\u043d\u0435\u043d\u0438\u0439"
+  "change": "no change"
 }
