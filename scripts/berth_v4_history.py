@@ -1023,6 +1023,11 @@ def run(incremental=False):
             w.writerow(r)
     print(f"\nSaved: {csv_path} ({len(all_hull_rows)} hull rows)")
 
+    # Save passes for separate DB-write step (--write-db mode)
+    passes_path = OUT_DIR / "passes_latest.json"
+    with open(passes_path, "w") as _pf:
+        json.dump(passes_out, _pf)
+
     # ── Metrics ───────────────────────────────────────────────────────────────
     from datetime import date as _date
     today_dt = _date.fromisoformat(today)
@@ -1152,9 +1157,81 @@ def run(incremental=False):
         print(f"WARNING: DB write skipped — {exc}")
 
 
+def write_db_from_files():
+    """Read CSV + passes_latest.json and upsert to Supabase (assert-gate passed)."""
+    svc_key  = os.environ.get("SUPABASE_SERVICE_KEY") or ""
+    supa_url = (os.environ.get("SUPABASE_URL") or "").rstrip("/")
+    if not svc_key:
+        sys.exit("FATAL: SUPABASE_SERVICE_KEY not set")
+    if not supa_url:
+        sys.exit("FATAL: SUPABASE_URL not set")
+
+    csv_path    = OUT_DIR / "berth_v4_history.csv"
+    passes_path = OUT_DIR / "passes_latest.json"
+    if not csv_path.exists():
+        sys.exit(f"FATAL: {csv_path} not found — run history step first")
+    if not passes_path.exists():
+        sys.exit(f"FATAL: {passes_path} not found — run history step first")
+
+    hull_rows = []
+    with open(csv_path, newline="") as f:
+        for r in csv.DictReader(f):
+            hull_rows.append(r)
+
+    with open(passes_path) as f:
+        passes_out = json.load(f)
+
+    db_map = {}
+    for r in hull_rows:
+        key = (r["date"], r["orbit"], r["berth"])
+        try:
+            len_m = float(r["len_m"]) if r.get("len_m") else None
+        except (ValueError, TypeError):
+            len_m = None
+        if key not in db_map or (len_m or 0) > (db_map[key].get("length_m") or 0):
+            db_map[key] = {
+                "date": r["date"], "orbit": r["orbit"], "berth": r["berth"],
+                "det": r["det"], "length_m": len_m, "aspect": None,
+            }
+    for p in passes_out:
+        for berth in ["sea_island", "east_t_head", "southeast_pier"]:
+            bd = p.get(berth, {})
+            key = (p["date"], p["orbit"], berth)
+            if key not in db_map and bd.get("det") in ("EMP", "NO_BG", "ERR"):
+                db_map[key] = {
+                    "date": p["date"], "orbit": p["orbit"], "berth": berth,
+                    "det": bd["det"], "length_m": None, "aspect": None,
+                }
+
+    import urllib.request as _ureq
+    db_rows = list(db_map.values())
+    payload = json.dumps(db_rows).encode()
+    req = _ureq.Request(
+        f"{supa_url}/rest/v1/berth_occupancy",
+        data=payload,
+        headers={
+            "apikey": svc_key,
+            "Authorization": f"Bearer {svc_key}",
+            "Content-Type": "application/json",
+            "Prefer": "resolution=merge-duplicates",
+        },
+        method="POST",
+    )
+    try:
+        with _ureq.urlopen(req) as resp:
+            print(f"\nDB write OK: HTTP {resp.status} — {len(db_rows)} rows upserted")
+    except Exception as exc:
+        sys.exit(f"FATAL: DB write failed — {exc}")
+
+
 if __name__ == "__main__":
     import argparse as _ap
     _p = _ap.ArgumentParser()
     _p.add_argument("--incremental", action="store_true")
+    _p.add_argument("--write-db", action="store_true",
+                    help="Read CSV+passes_latest.json and upsert to DB (assert gate must have passed)")
     _args = _p.parse_args()
-    run(incremental=_args.incremental)
+    if _args.write_db:
+        write_db_from_files()
+    else:
+        run(incremental=_args.incremental)

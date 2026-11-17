@@ -17,9 +17,10 @@ from pathlib import Path
 from datetime import datetime, date, timedelta
 from collections import defaultdict
 
-ROOT     = Path(__file__).parent.parent
-JSON_IN  = ROOT / "data" / "berth_occupancy.json"
-OUT_HTML = ROOT / "diagnostics" / "berth_v4" / "berth_occupancy_v2.html"
+ROOT       = Path(__file__).parent.parent
+JSON_IN    = ROOT / "data" / "berth_occupancy.json"
+SNAPS_JSON = ROOT / "data" / "berth_snapshots.json"
+OUT_HTML   = ROOT / "diagnostics" / "berth_v4" / "berth_occupancy_v2.html"
 
 
 def _cls_color(cls):
@@ -38,6 +39,15 @@ def main():
         sys.exit(f"FATAL: {JSON_IN} not found — run berth_v4_history.py first")
 
     data = json.loads(JSON_IN.read_text())
+
+    # Load snapshots (optional — provides satellite image URLs)
+    snaps_data = {}
+    if SNAPS_JSON.exists():
+        try:
+            snaps_data = json.loads(SNAPS_JSON.read_text())
+        except Exception:
+            pass
+
     berths   = data.get("berths", ["sea_island", "east_t_head", "southeast_pier"])
     passes   = data.get("passes", [])
     loadings = data.get("loadings", [])
@@ -111,19 +121,32 @@ def main():
     prev_rows,   p_tot, p_vlcc, p_sm = _pass_summary(prev_pass)
     latest_rows, l_tot, l_vlcc, l_sm = _pass_summary(latest_pass)
 
-    def _render_pass_panel(pass_obj, rows, tot, vlcc, sm, label):
+    def _hull_label(h, berth_key):
+        cls = h["cls"]
+        arr = h["arrived"]
+        if berth_key == "southeast_pier":
+            return f'{cls} · size n/a · {arr}'
+        lm = h["len_m"]
+        return f'{cls} · {lm:.0f}m · {arr}'
+
+    def _render_pass_panel(pass_obj, rows, tot, vlcc, sm, label, snap_key):
         d = pass_obj.get("date", "?")
         orb = pass_obj.get("orbit", "?")
+        snap = snaps_data.get(snap_key, {})
+        img_url = snap.get("url") if snap else None
         lines = [f'<div class="pass-panel"><div class="pass-header">'
                  f'<span class="pass-label">{label}</span>'
                  f'<span class="pass-date">{_fmt_date(d)} orbit {orb}</span>'
                  f'</div>']
+        if img_url:
+            lines.append(f'<img src="{img_url}" alt="{label} SAR snapshot" class="snap-img">')
         for r in rows:
             b = r["berth"].replace("_", " ")
+            bk = r["berth"]
             if r["hulls"]:
                 boxes = "".join(
                     f'<span class="hull-box" style="border-color:{h["color"]};color:{h["color"]}">'
-                    f'{h["cls"]} · {h["len_m"]:.0f}m · {h["arrived"]}</span>'
+                    f'{_hull_label(h, bk)}</span>'
                     for h in r["hulls"]
                 )
                 lines.append(f'<div class="berth-row"><b>{b}</b>{boxes}</div>')
@@ -135,8 +158,8 @@ def main():
         lines.append('</div>')
         return "\n".join(lines)
 
-    prev_html   = _render_pass_panel(prev_pass,   prev_rows,   p_tot, p_vlcc, p_sm, "Previous pass")
-    latest_html = _render_pass_panel(latest_pass, latest_rows, l_tot, l_vlcc, l_sm, "Latest pass")
+    prev_html   = _render_pass_panel(prev_pass,   prev_rows,   p_tot, p_vlcc, p_sm, "Previous pass",  "prev")
+    latest_html = _render_pass_panel(latest_pass, latest_rows, l_tot, l_vlcc, l_sm, "Latest pass",    "latest")
 
     # ── 12-month heatmap ───────────────────────────────────────────────────────
     today_dt  = date.today()
@@ -300,10 +323,16 @@ tr.month-sep td {{ background: var(--border); color: var(--tx-muted);
 /* Attribution */
 .attribution {{ margin-top: 2rem; font-size: .7rem; color: var(--tx-muted);
                 border-top: 1px solid var(--border); padding-top: .75rem; }}
+/* Snapshot image */
+.snap-img {{ width: 100%; border-radius: 4px; margin-bottom: .5rem; display: block; }}
+/* SE Pier note */
+.se-note {{ font-size: .7rem; color: var(--tx-muted); font-style: italic; margin-top: .3rem; }}
 /* Val report */
 .val-pre {{ background: #111827; border: 1px solid var(--border); border-radius: 6px;
             padding: .75rem; font-size: .65rem; overflow-x: auto; white-space: pre;
             color: var(--tx-muted); max-height: 400px; overflow-y: auto; }}
+details summary {{ cursor: pointer; color: var(--tx-muted); font-size: .8rem;
+                   text-transform: uppercase; letter-spacing: .06em; padding: .3rem 0; }}
 </style>
 </head>
 <body>
@@ -344,7 +373,7 @@ tr.month-sep td {{ background: var(--border); color: var(--tx-muted);
 </div>
 <div class="hm-wrap">{hm_svg}</div>
 
-<h2>Visit list</h2>
+<h2>Visit history</h2>
 <div class="tbl-wrap">
 <table>
 <thead><tr>
@@ -356,8 +385,12 @@ tr.month-sep td {{ background: var(--border); color: var(--tx-muted);
 </table>
 </div>
 
-<h2>Validation report (tail)</h2>
+<p class="se-note">SE Pier detection is a lower bound — vessel orientation makes hull length unreliable.</p>
+
+<details>
+<summary>Detection log</summary>
 <pre class="val-pre">{val_tail}</pre>
+</details>
 
 <div class="attribution">
   SAR Sentinel-1 · Planetary Computer.
