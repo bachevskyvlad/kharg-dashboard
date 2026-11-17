@@ -9,6 +9,10 @@ on:
         description: "Jobs to run: comma-separated (tanks,terminals,prices,gas,anchorage,berths,hormuz) or 'all'"
         required: false
         default: "all"
+      full_recalc:
+        description: "berths: full history recalculation (drop --incremental flag)"
+        required: false
+        default: "false"
 
 concurrency:
   group: pipeline
@@ -320,27 +324,54 @@ jobs:
           pip install \
             pystac-client planetary-computer \
             rasterio scipy numpy Pillow matplotlib \
-            shapely requests supabase sentinelhub \
+            shapely requests supabase \
             --quiet
 
-      - name: v4 history (incremental)
+      - name: Build 2026 BG (east_t_head o101, if missing)
+        id: bg2026
+        env:
+          PC_SDK_SUBSCRIPTION_KEY: ${{ secrets.PC_SDK_SUBSCRIPTION_KEY }}
+        run: |
+          if [ ! -f diagnostics/berth_v4/bg_v4/bg_o101_east_t_head_2026.npy ]; then
+            echo "Building 2026 BG..."
+            python scripts/berth_build_bg_2026.py
+            git config user.email "pipeline@oilradar.io"
+            git config user.name "OilRadar Pipeline"
+            git add diagnostics/berth_v4/bg_v4/bg_o101_east_t_head_2026.npy
+            git commit -m "auto: build bg_o101_east_t_head_2026.npy [skip ci]"
+            git push
+          else
+            echo "2026 BG present — skip build"
+          fi
+
+      - name: v4 history (CSV only, no DB write)
         id: history
         env:
           PC_SDK_SUBSCRIPTION_KEY: ${{ secrets.PC_SDK_SUBSCRIPTION_KEY }}
           SUPABASE_URL:            ${{ secrets.SUPABASE_URL }}
           SUPABASE_KEY:            ${{ secrets.SUPABASE_KEY }}
-          SUPABASE_SERVICE_KEY:    ${{ secrets.SUPABASE_SERVICE_KEY }}
-        run: python scripts/berth_v4_history.py --incremental
+        run: |
+          if [ "${{ inputs.full_recalc }}" = "true" ]; then
+            python scripts/berth_v4_history.py
+          else
+            python scripts/berth_v4_history.py --incremental
+          fi
 
       - name: Assert gate
         id: assert
         run: python scripts/berth_validate_optics_v4.py
 
+      - name: DB write (assert gate passed)
+        id: dbwrite
+        env:
+          SUPABASE_URL:         ${{ secrets.SUPABASE_URL }}
+          SUPABASE_KEY:         ${{ secrets.SUPABASE_KEY }}
+          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+        run: python scripts/berth_v4_history.py --write-db
+
       - name: Berth snapshots
         id: snapshots
         env:
-          CLIENT_ID:               ${{ secrets.CLIENT_ID }}
-          CLIENT_SECRET:           ${{ secrets.CLIENT_SECRET }}
           PC_SDK_SUBSCRIPTION_KEY: ${{ secrets.PC_SDK_SUBSCRIPTION_KEY }}
           SUPABASE_URL:            ${{ secrets.SUPABASE_URL }}
           SUPABASE_KEY:            ${{ secrets.SUPABASE_KEY }}
@@ -364,6 +395,7 @@ jobs:
         run: |
           if [ "${{ steps.history.outcome }}" = "failure" ] ||
              [ "${{ steps.assert.outcome }}" = "failure" ] ||
+             [ "${{ steps.dbwrite.outcome }}" = "failure" ] ||
              [ "${{ steps.snapshots.outcome }}" = "failure" ]; then
             echo "status=fail" >> "$GITHUB_OUTPUT"
           else

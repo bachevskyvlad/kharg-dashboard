@@ -1,4 +1,4 @@
-"""
+""" 
 berth_detect_core.py — canonical geometry and ship detection.
 
 Shared by berth_ablation.py, berth_v4_history.py, berth_validate_optics_v4.py.
@@ -16,7 +16,8 @@ CELL_KM          = 1.0
 CORRIDOR_HALF_M  = 150
 CORRIDOR_END_M   = 250
 RATIO_THR        = 10.0
-MERGE_PERP_TOL_M = 30.0
+MERGE_PERP_TOL_M = 40.0
+ASPECT_MAX       = 15.0  # strips/specular reflections, not hulls
 
 struct8 = ndimage.generate_binary_structure(2, 2)
 
@@ -29,10 +30,13 @@ BERTH_COORDS = {
 # Single authoritative detection params — matches ablation bg-mode and v4_history V4_CONFIG.
 # bg_dir is NOT here (script-specific path).
 BERTH_DETECT_PARAMS = {
-    "sea_island":     dict(pier=20, water_i=20, water_o=80, min_len=120, aspect=2.0, merge=40),
-    "east_t_head":    dict(pier=20, water_i=20, water_o=80, min_len=150, aspect=3.0, merge=0),
-    "southeast_pier": dict(pier=20, water_i=20, water_o=80, min_len=150, aspect=3.0, merge=0),
+    "sea_island":     dict(pier=20, water_i=20, water_o=80, min_len=120, max_len=420, aspect=2.0, merge=120),
+    "east_t_head":    dict(pier=20, water_i=20, water_o=80, min_len=150, max_len=420, aspect=2.5, merge=120),
+    "southeast_pier": dict(pier=20, water_i=20, water_o=80, min_len=150, max_len=420, aspect=3.0, merge=0),
 }
+
+# Hulls below this length are detected (OCC/EMP) but not tracked as visits/loadings
+VISIT_MIN_LEN_M = 200.0
 
 
 def metres_per_deg_lat():
@@ -132,12 +136,11 @@ def build_geom(pts, bbox_obj, img_shape, pier_excl_m, water_inner_m, water_outer
     }
 
 def find_blobs(ratio_arr, water_mask, axis_uvec, merge_gap_m, min_len_m,
-               min_aspect=3.0, debug=False):
+               min_aspect=3.0, debug=False, return_all=False):
     """
     Canonical ship detection.  Returns (blobs, best_blob, detected: bool).
     - best_aspect per group = max over individual blob aspects (not merged bbox).
     - width per group       = median of individual blob widths.
-    - each blob includes axis_min, axis_max, perp_ctr for geographic positioning.
     """
     ux, uy = axis_uvec
     px_u, py_u = -uy, ux
@@ -157,7 +160,7 @@ def find_blobs(ratio_arr, water_mask, axis_uvec, merge_gap_m, min_len_m,
         a_min = float(axis_p.min()); a_max = float(axis_p.max())
         p_min = float(perp_p.min()); p_max = float(perp_p.max())
         len_m = (a_max - a_min) * RESOLUTION
-        wid_m = max((p_max - p_min) * RESOLUTION, 1.0)
+        wid_m = max((p_max - p_min) * RESOLUTION, 10.0)  # floor=1px=10m
         raw.append({
             "axis_min": a_min, "axis_max": a_max,
             "perp_min": p_min, "perp_max": p_max,
@@ -192,20 +195,29 @@ def find_blobs(ratio_arr, water_mask, axis_uvec, merge_gap_m, min_len_m,
         length_m    = (a_max - a_min) * RESOLUTION
         # median width (not union) to avoid noise inflation
         width_m     = max(float(np.median([b["width_m"] for b in grp])), 1.0)
-        # best aspect across individual blobs (not merged bounding box)
-        best_aspect = max(b["aspect"] for b in grp)
+        # aspect of the MERGED result — length/width of the unified bounding box.
+        # Previously used max(sub_aspect) which leaked sub-blob ratios into merged
+        # hulls, causing identical aspect values across hulls of different sizes.
+        best_aspect = length_m / width_m
         area_px     = sum(b["area_px"] for b in grp)
-        perp_ctr    = float(np.mean([b["perp_ctr"] for b in grp]))
+        # area-weighted perp centre, and union perp extent, of merged group
+        perp_ctr_m  = float(np.average([b["perp_ctr"] for b in grp],
+                                        weights=[max(b["area_px"], 1) for b in grp]))
+        perp_min_m  = min(b["perp_min"] for b in grp)
+        perp_max_m  = max(b["perp_max"] for b in grp)
         blobs.append({
             "length_m": length_m, "width_m": width_m,
             "aspect": best_aspect, "area_px": area_px,
             "n_merged": len(grp),
             "axis_min": a_min, "axis_max": a_max,
-            "perp_ctr": perp_ctr,
+            "perp_ctr": perp_ctr_m,
+            "perp_min": perp_min_m,
+            "perp_max": perp_max_m,
         })
         if debug and len(grp) > 1:
             print(f"    merged {len(grp)} blobs → len={length_m:.0f}m "
-                  f"best_asp={best_aspect:.1f} wid={width_m:.0f}m")
+                  f"asp={best_aspect:.1f} wid={width_m:.0f}m")
+    blobs = [b for b in blobs if b["aspect"] <= ASPECT_MAX]
     blobs.sort(key=lambda b: b["length_m"], reverse=True)
     best = blobs[0] if blobs else None
     detected = bool(best and best["length_m"] >= min_len_m and best["aspect"] >= min_aspect)
