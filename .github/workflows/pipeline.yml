@@ -378,10 +378,6 @@ jobs:
           SUPABASE_SERVICE_KEY:    ${{ secrets.SUPABASE_SERVICE_KEY }}
         run: python scripts/berth_snapshots.py
 
-      - name: Berth occupancy v2 page
-        id: v2page
-        run: python scripts/berth_v2_page.py
-
       - name: Upload artifact
         if: always()
         uses: actions/upload-artifact@v4
@@ -390,8 +386,6 @@ jobs:
           path: |
             data/
             public/
-            product/berths.html
-            _redirects
           retention-days: 1
           if-no-files-found: warn
 
@@ -501,7 +495,7 @@ jobs:
         run: |
           git config user.name  "bot"
           git config user.email "bot@github.com"
-          git add data/ public/ product/berths.html _redirects
+          git add data/ public/
           if git diff --cached --quiet; then
             echo "data_changed=false" >> "$GITHUB_OUTPUT"
             exit 0

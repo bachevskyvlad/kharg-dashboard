@@ -1108,112 +1108,72 @@
 
     <!-- ── Berth Occupancy ───────────────────────────────────────────── -->
     <div class="section" id="sec-berth">
-        <div class="sec-title" style="margin-bottom:0.4rem">Berth Occupancy — Kharg Island Terminal · 2024–Present</div>
+        <div class="sec-title" style="margin-bottom:1rem">Berth Occupancy — Kharg Island Terminal · 2024–Present</div>
 
-        <!-- KPI row -->
-        <div style="background:var(--surface);border:1px solid var(--border);padding:1.25rem 1.5rem 1rem;margin-bottom:1.25rem;">
-            <div style="display:flex;gap:2rem;flex-wrap:wrap;">
-                <div>
-                    <div style="font-size:0.65rem;letter-spacing:1px;text-transform:uppercase;color:var(--muted);margin-bottom:0.25rem">Сейчас у причалов</div>
-                    <div style="font-size:2rem;font-weight:700;color:var(--accent);font-family:'Space Grotesk',sans-serif" id="bo-now">—</div>
-                    <div style="font-size:0.7rem;color:var(--muted)" id="bo-now-sub">судов</div>
-                </div>
-                <div>
-                    <div style="font-size:0.65rem;letter-spacing:1px;text-transform:uppercase;color:var(--muted);margin-bottom:0.25rem">Неделю назад</div>
-                    <div style="font-size:2rem;font-weight:700;color:var(--text);font-family:'Space Grotesk',sans-serif" id="bo-prev">—</div>
-                    <div style="font-size:0.7rem;color:var(--muted)">судов</div>
-                </div>
-                <div>
-                    <div style="font-size:0.65rem;letter-spacing:1px;text-transform:uppercase;color:var(--muted);margin-bottom:0.25rem">Среднее 2025</div>
-                    <div style="font-size:2rem;font-weight:700;color:var(--green);font-family:'Space Grotesk',sans-serif" id="bo-avg25">—</div>
-                    <div style="font-size:0.7rem;color:var(--muted)">судов/неделя</div>
-                </div>
-            </div>
+        <!-- Cards -->
+        <div id="bo2-cards" style="margin-bottom:1.25rem">
+            <div style="text-align:center;padding:2rem;color:var(--muted);font-size:0.75rem">Loading…</div>
         </div>
 
-        <!-- SAR snapshots -->
-        <div id="bo-snaps" style="display:none;margin-bottom:1.25rem;">
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
-                <div data-snap="prev" style="background:var(--surface);border:1px solid var(--border);padding:12px;">
-                    <div style="font-size:0.65rem;letter-spacing:1px;text-transform:uppercase;color:var(--muted);margin-bottom:8px">Previous pass · <span class="bo-snap-date">—</span></div>
-                    <a id="bo-snap-prev-link" target="_blank" rel="noopener"><img id="bo-snap-prev-img" loading="lazy" style="width:100%;display:block" alt="Previous SAR pass"></a>
-                </div>
-                <div data-snap="latest" style="background:var(--surface);border:1px solid var(--border);padding:12px;">
-                    <div style="font-size:0.65rem;letter-spacing:1px;text-transform:uppercase;color:var(--accent);margin-bottom:8px">Latest pass · <span class="bo-snap-date">—</span></div>
-                    <a id="bo-snap-latest-link" target="_blank" rel="noopener"><img id="bo-snap-latest-img" loading="lazy" style="width:100%;display:block" alt="Latest SAR pass"></a>
-                </div>
-            </div>
+        <!-- 12-month heatmap -->
+        <div id="bo2-hm-wrap" style="display:none;margin-bottom:1.25rem">
+            <div style="font-size:0.65rem;letter-spacing:1px;text-transform:uppercase;color:var(--accent);margin-bottom:0.6rem">12-Month Activity</div>
+            <div id="bo2-hm-legend" style="display:flex;gap:1rem;align-items:center;font-size:0.72rem;margin-bottom:0.4rem;flex-wrap:wrap"></div>
+            <div id="bo2-hm" style="overflow-x:auto;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:0.75rem"></div>
         </div>
 
-        <!-- Chart -->
-        <div style="background:var(--surface);border:1px solid var(--border);padding:1.25rem 1.5rem 1rem;margin-bottom:1.25rem;">
-            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;flex-wrap:wrap;gap:0.5rem;">
-                <div style="font-size:0.7rem;letter-spacing:1px;text-transform:uppercase;color:var(--accent)">Суда у причалов по неделям</div>
-                <div style="display:flex;gap:4px" id="bo-chart-range-btns">
-                    <button class="aq-rbtn bo-cr-btn" data-r="3m">3M</button>
-                    <button class="aq-cr-active aq-rbtn bo-cr-btn" data-r="1y">1Y</button>
-                    <button class="aq-rbtn bo-cr-btn" data-r="all">ALL</button>
-                </div>
-            </div>
-            <canvas id="boChart" style="width:100%;display:block;height:200px"></canvas>
-        </div>
-
-        <!-- Weekly table -->
-        <div style="background:var(--surface);border:1px solid var(--border);padding:1.25rem 1.5rem 1rem;margin-bottom:1.25rem;">
-            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;flex-wrap:wrap;gap:0.5rem;">
-                <div style="font-size:0.7rem;letter-spacing:1px;text-transform:uppercase;color:var(--accent)">Недельная сводка</div>
-                <div style="display:flex;gap:4px" id="bo-range-btns">
-                    <button class="aq-rbtn bo-rbtn bo-rbtn-active" data-r="3m">3M</button>
-                    <button class="aq-rbtn bo-rbtn" data-r="6m">6M</button>
-                    <button class="aq-rbtn bo-rbtn" data-r="1y">1Y</button>
-                    <button class="aq-rbtn bo-rbtn" data-r="all">All</button>
-                </div>
-            </div>
-            <div style="overflow-x:auto;">
-                <table style="width:100%;border-collapse:collapse;font-size:0.75rem;">
+        <!-- Visit list -->
+        <div id="bo2-visits-wrap" style="display:none;margin-bottom:1.25rem">
+            <div style="font-size:0.65rem;letter-spacing:1px;text-transform:uppercase;color:var(--accent);margin-bottom:0.6rem">Visit History</div>
+            <div style="overflow-x:auto;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:0.75rem 1rem">
+                <table style="width:100%;border-collapse:collapse;font-size:0.75rem">
                     <thead>
                         <tr style="border-bottom:1px solid var(--border)">
-                            <th style="text-align:left;padding:0.4rem 0.6rem;font-size:0.62rem;letter-spacing:1px;text-transform:uppercase;color:var(--muted);font-weight:600">Неделя</th>
-                            <th style="text-align:center;padding:0.4rem 0.6rem;font-size:0.62rem;letter-spacing:1px;text-transform:uppercase;color:var(--muted);font-weight:600">Судов</th>
-                            <th style="text-align:center;padding:0.4rem 0.6rem;font-size:0.62rem;letter-spacing:1px;text-transform:uppercase;color:var(--muted);font-weight:600">Δ</th>
-                            <th style="text-align:center;padding:0.4rem 0.6rem;font-size:0.62rem;letter-spacing:1px;text-transform:uppercase;color:var(--muted);font-weight:600">Sea Island</th>
-                            <th style="text-align:center;padding:0.4rem 0.6rem;font-size:0.62rem;letter-spacing:1px;text-transform:uppercase;color:var(--muted);font-weight:600">East T-Head</th>
-                            <th style="text-align:center;padding:0.4rem 0.6rem;font-size:0.62rem;letter-spacing:1px;text-transform:uppercase;color:var(--muted);font-weight:600">SE Pier</th>
+                            <th style="text-align:left;padding:0.3rem 0.5rem;font-size:0.6rem;letter-spacing:1px;text-transform:uppercase;color:var(--muted);font-weight:600">Arrived</th>
+                            <th style="text-align:left;padding:0.3rem 0.5rem;font-size:0.6rem;letter-spacing:1px;text-transform:uppercase;color:var(--muted);font-weight:600">Berth</th>
+                            <th style="text-align:left;padding:0.3rem 0.5rem;font-size:0.6rem;letter-spacing:1px;text-transform:uppercase;color:var(--muted);font-weight:600">Class</th>
+                            <th style="text-align:right;padding:0.3rem 0.5rem;font-size:0.6rem;letter-spacing:1px;text-transform:uppercase;color:var(--muted);font-weight:600">Length</th>
+                            <th style="text-align:right;padding:0.3rem 0.5rem;font-size:0.6rem;letter-spacing:1px;text-transform:uppercase;color:var(--muted);font-weight:600">Days at berth</th>
                         </tr>
                     </thead>
-                    <tbody id="bo-weekly-body"></tbody>
+                    <tbody id="bo2-visits-body"></tbody>
                 </table>
             </div>
-            <div id="bo-loading" style="text-align:center;padding:2rem;color:var(--muted);font-size:0.75rem">Loading…</div>
+        </div>
+
+        <!-- Snapshots — bottom -->
+        <div id="bo2-snaps-wrap" style="display:none;margin-bottom:1.25rem">
+            <div style="font-size:0.65rem;letter-spacing:1px;text-transform:uppercase;color:var(--accent);margin-bottom:0.6rem">Pass State</div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem">
+                <div id="bo2-snap-prev" style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:0.75rem"></div>
+                <div id="bo2-snap-latest" style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:0.75rem"></div>
+            </div>
         </div>
 
         <!-- Details (collapsed) -->
-        <details style="margin-bottom:1.25rem;">
-            <summary style="cursor:pointer;font-size:0.7rem;letter-spacing:1px;text-transform:uppercase;color:var(--muted);padding:0.75rem 0;border-top:1px solid var(--border);list-style:none;display:flex;align-items:center;gap:0.5rem">
-                <span id="bo-details-arrow" style="font-size:0.65rem">▶</span> Детекции по проходам
+        <details id="bo2-details" style="margin-bottom:1.25rem">
+            <summary style="cursor:pointer;font-size:0.65rem;letter-spacing:1px;text-transform:uppercase;color:var(--muted);padding:0.75rem 0;border-top:1px solid var(--border);list-style:none;display:flex;align-items:center;gap:0.5rem">
+                <span id="bo2-arr" style="font-size:0.6rem">▶</span> Details
             </summary>
-            <div style="background:var(--surface);border:1px solid var(--border);padding:1rem 1.5rem;margin-top:0.5rem;">
-                <div style="overflow-x:auto;">
-                    <table style="width:100%;border-collapse:collapse;font-size:0.72rem;font-family:monospace;">
-                        <thead>
-                            <tr style="border-bottom:1px solid var(--border)">
-                                <th style="text-align:left;padding:0.35rem 0.6rem;color:var(--muted);font-size:0.6rem;letter-spacing:1px;text-transform:uppercase;font-weight:600">Дата</th>
-                                <th style="text-align:center;padding:0.35rem 0.6rem;color:var(--muted);font-size:0.6rem;letter-spacing:1px;text-transform:uppercase;font-weight:600">Орбита</th>
-                                <th style="text-align:center;padding:0.35rem 0.6rem;color:var(--muted);font-size:0.6rem;letter-spacing:1px;text-transform:uppercase;font-weight:600">Sea Island</th>
-                                <th style="text-align:center;padding:0.35rem 0.6rem;color:var(--muted);font-size:0.6rem;letter-spacing:1px;text-transform:uppercase;font-weight:600">East T-Head</th>
-                                <th style="text-align:center;padding:0.35rem 0.6rem;color:var(--muted);font-size:0.6rem;letter-spacing:1px;text-transform:uppercase;font-weight:600">SE Pier</th>
-                                <th style="text-align:center;padding:0.35rem 0.6rem;color:var(--muted);font-size:0.6rem;letter-spacing:1px;text-transform:uppercase;font-weight:600">Класс</th>
-                                <th style="text-align:center;padding:0.35rem 0.6rem;color:var(--muted);font-size:0.6rem;letter-spacing:1px;text-transform:uppercase;font-weight:600">Новые</th>
-                            </tr>
-                        </thead>
-                        <tbody id="bo-pass-body"></tbody>
-                    </table>
-                </div>
+            <div style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:1rem;margin-top:0.5rem;overflow-x:auto">
+                <table style="width:100%;border-collapse:collapse;font-size:0.7rem;font-family:monospace">
+                    <thead>
+                        <tr style="border-bottom:1px solid var(--border)">
+                            <th style="text-align:left;padding:0.3rem 0.5rem;font-size:0.58rem;letter-spacing:1px;text-transform:uppercase;color:var(--muted);font-weight:600">Date</th>
+                            <th style="text-align:center;padding:0.3rem 0.5rem;font-size:0.58rem;letter-spacing:1px;text-transform:uppercase;color:var(--muted);font-weight:600">Orbit</th>
+                            <th style="text-align:center;padding:0.3rem 0.5rem;font-size:0.58rem;letter-spacing:1px;text-transform:uppercase;color:var(--muted);font-weight:600">Sea Island</th>
+                            <th style="text-align:center;padding:0.3rem 0.5rem;font-size:0.58rem;letter-spacing:1px;text-transform:uppercase;color:var(--muted);font-weight:600">East T-Head</th>
+                            <th style="text-align:center;padding:0.3rem 0.5rem;font-size:0.58rem;letter-spacing:1px;text-transform:uppercase;color:var(--muted);font-weight:600">SE Pier</th>
+                            <th style="text-align:center;padding:0.3rem 0.5rem;font-size:0.58rem;letter-spacing:1px;text-transform:uppercase;color:var(--muted);font-weight:600">New</th>
+                        </tr>
+                    </thead>
+                    <tbody id="bo2-pass-body"></tbody>
+                </table>
             </div>
         </details>
 
-        <div style="font-size:0.68rem;color:var(--dim);border-top:1px solid var(--border);padding-top:0.75rem">
-            SAR Sentinel-1; судно видно с точностью ~93%, часть судов не детектируется — число может быть занижено
+        <div style="font-size:0.65rem;color:var(--dim);border-top:1px solid var(--border);padding-top:0.75rem;line-height:1.6">
+            Sentinel-1 radar · Planetary Computer. Vessel class by hull length (±50 m). Visits shorter than the gap between passes may be missed — lower bound.
         </div>
     </div>
 
@@ -3269,375 +3229,313 @@ document.addEventListener('DOMContentLoaded', function() {
 
 <script>
 (function(){
-  const BERTHS = ['sea_island','east_t_head','southeast_pier'];
-  const OCC_COLOR = '#3b82f6';
-  const EMP_COLOR = '#6b7280';
-  const DIM_COLOR = '#374151';
+  'use strict';
+  var BERTHS = ['sea_island','east_t_head','southeast_pier'];
+  var boLoaded = false;
 
-  let boData = null;
-  let boCurRange = '3m';
-  let boCurChartRange = '1y';
-  let boWeeks = [];
-
-  // ── helpers ──────────────────────────────────────────────────────────────
-  function isoWeek(dateStr) {
-    // return ISO week start (Monday) for a date string
-    const d = new Date(dateStr);
-    const day = d.getUTCDay() || 7;
-    d.setUTCDate(d.getUTCDate() - day + 1);
-    return d.toISOString().slice(0,10);
+  function hullClass(len_m, berth) {
+    if (berth === 'southeast_pier') return 'n/a';
+    if (len_m >= 300) return 'VLCC';
+    if (len_m >= 200) return 'SuezAframax';
+    if (len_m >= 150) return 'occupied';
+    return null;
   }
 
-  // Normalise a v5.0 pass (berth → {det, hulls[]}) to flat row for legacy code
-  function passToRow(p) {
-    const row = { date: p.date, orbit: p.orbit };
-    BERTHS.forEach(b => {
-      const bd = p[b] || {};
-      row[b] = bd.det || '—';
-      row[b + '_hulls'] = bd.hulls || [];
-    });
-    return row;
+  function clsColor(cls) {
+    if (cls === 'VLCC') return '#f87171';
+    if (cls === 'SuezAframax') return '#fbbf24';
+    return '#64748b';
   }
 
-  // Normalise v4.1 rows to same shape as passToRow output
-  function legacyRowNorm(r) {
-    const row = { date: r.date, orbit: r.orbit };
-    BERTHS.forEach(b => {
-      row[b] = r[b] || '—';
-      row[b + '_hulls'] = [];
-    });
-    return row;
+  function fmtDate(d) {
+    if (!d) return '—';
+    var p = d.split('-');
+    if (p.length !== 3) return d;
+    var mo = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    return parseInt(p[2]) + ' ' + mo[parseInt(p[1])-1] + ' ' + p[0];
   }
 
-  function countOCC(row) {
-    return BERTHS.filter(b => row[b] === 'OCC').length;
+  function fmtBerth(b) {
+    if (b === 'sea_island') return 'Sea Island';
+    if (b === 'east_t_head') return 'East T-Head';
+    if (b === 'southeast_pier') return 'SE Pier';
+    return b;
   }
 
-  // ── build weekly aggregates from normalised rows ───────────────────────────
-  function buildWeeks(rows) {
-    const map = {};
-    rows.forEach(r => {
-      const wk = isoWeek(r.date);
-      if (!map[wk]) map[wk] = [];
-      map[wk].push(r);
-    });
-    return Object.keys(map).sort().map(wk => {
-      const passes = map[wk].sort((a,b) => a.date > b.date ? 1 : -1);
-      const latest = passes[passes.length - 1];
-      const occ = countOCC(latest);
-      const maxOcc = Math.max(...passes.map(countOCC));
-      return { week: wk, passes, latest, occ, maxOcc };
-    });
-  }
+  function pad2(n) { return String(n).padStart(2,'0'); }
 
-  function filterWeeks(weeks, range) {
-    if (range === 'all') return weeks;
-    const now = new Date();
-    const months = range === '3m' ? 3 : range === '6m' ? 6 : 12;
-    const cutoff = new Date(now.getFullYear(), now.getMonth() - months, now.getDate());
-    return weeks.filter(w => new Date(w.week) >= cutoff);
-  }
+  // ── Block 1: Cards ────────────────────────────────────────────────────────────────────
+  function renderCards(data) {
+    var visits = (data.visits || []).slice().sort(function(a,b){ return a.start_date < b.start_date ? 1 : -1; });
+    var today = new Date();
+    var cutoff4w = new Date(today); cutoff4w.setDate(cutoff4w.getDate() - 28);
+    var cutoff4wPY = new Date(today); cutoff4wPY.setDate(cutoff4wPY.getDate() - 28 - 365);
+    var end4wPY = new Date(today); end4wPY.setDate(end4wPY.getDate() - 365);
 
-  // ── render KPI tiles ──────────────────────────────────────────────────────
-  function renderKPI(weeks) {
-    const el = id => document.getElementById(id);
-    const recent = weeks.slice(-2);
-    const nowOcc = recent.length > 0 ? recent[recent.length-1].occ : '—';
-    const prevOcc = recent.length > 1 ? recent[recent.length-2].occ : '—';
+    var v4w = visits.filter(function(v){ return new Date(v.start_date) >= cutoff4w; });
+    var v4wPY = visits.filter(function(v){ var d = new Date(v.start_date); return d >= cutoff4wPY && d < end4wPY; });
 
-    if (el('bo-now')) el('bo-now').textContent = nowOcc;
-    if (el('bo-prev')) el('bo-prev').textContent = prevOcc;
-    if (el('bo-now-sub')) {
-      const d = typeof nowOcc === 'number' && recent.length > 0
-        ? recent[recent.length-1].latest.date : '';
-      el('bo-now-sub').textContent = d ? `судов · ${d}` : 'судов';
+    var total4w = v4w.length, total4wPY = v4wPY.length;
+    var vlcc4w = v4w.filter(function(v){ return v.class_max === 'VLCC'; }).length;
+    var sm4w = total4w - vlcc4w;
+
+    var deltaTxt = '', deltaClr = 'var(--dim)';
+    if (total4w === 0 && total4wPY === 0) { deltaTxt = '—'; }
+    else if (total4wPY === 0 && total4w > 0) { deltaTxt = ''; }
+    else if (total4w === 0 && total4wPY > 0) { deltaTxt = '▼ 100% vs year ago'; deltaClr = 'var(--red)'; }
+    else if (total4wPY > 0) {
+      var pct = (total4w - total4wPY) / total4wPY * 100;
+      deltaTxt = (pct >= 0 ? '▲ ' : '▼ ') + Math.abs(pct).toFixed(0) + '% vs year ago';
+      deltaClr = pct >= 0 ? 'var(--green)' : 'var(--red)';
     }
 
-    // avg 2025
-    const w2025 = weeks.filter(w => w.week.startsWith('2025'));
-    if (w2025.length > 0 && el('bo-avg25')) {
-      const avg = w2025.reduce((s,w) => s + w.occ, 0) / w2025.length;
-      el('bo-avg25').textContent = avg.toFixed(1);
-    }
-  }
-
-  // ── render weekly table ───────────────────────────────────────────────────
-  function renderWeeklyTable(range) {
-    const weeks = filterWeeks(boWeeks, range).slice().reverse();
-    const tbody = document.getElementById('bo-weekly-body');
-    if (!tbody) return;
-    tbody.innerHTML = '';
-
-    const th = s => `<th style="text-align:${s?'center':'left'};padding:0.4rem 0.6rem;font-size:0.62rem;letter-spacing:1px;text-transform:uppercase;color:var(--muted);font-weight:600">${s}</th>`;
-
-    weeks.forEach((w, i) => {
-      const prevOcc = i < weeks.length - 1 ? weeks[i+1].occ : null;
-      const delta = prevOcc !== null ? w.occ - prevOcc : null;
-      const deltaStr = delta === null ? '' : (delta > 0 ? `+${delta}` : `${delta}`);
-      const deltaColor = delta > 0 ? OCC_COLOR : delta < 0 ? '#ef4444' : 'var(--dim)';
-
-      const maxNote = w.passes.length > 1 && w.maxOcc !== w.occ ? ` (макс ${w.maxOcc})` : '';
-
-      const tr = document.createElement('tr');
-      tr.style.borderBottom = '1px solid rgba(255,255,255,0.04)';
-
-      const td = (txt, color, center, extra) => {
-        const el = document.createElement('td');
-        el.style.cssText = `padding:0.4rem 0.6rem;text-align:${center?'center':'left'};color:${color||'var(--text)'};font-variant-numeric:tabular-nums;${extra||''}`;
-        el.textContent = txt;
-        return el;
-      };
-
-      tr.appendChild(td(w.week, 'var(--muted)', false));
-      const occTd = td(`${w.occ}${maxNote}`, w.occ > 0 ? OCC_COLOR : 'var(--muted)', true, 'font-weight:600;font-family:Space Grotesk,sans-serif;font-size:1rem');
-      tr.appendChild(occTd);
-      tr.appendChild(td(deltaStr, deltaColor, true));
-
-      BERTHS.forEach(b => {
-        const det = w.latest[b];
-        const isOcc = det === 'OCC';
-        const hulls = w.latest[b + '_hulls'] || [];
-        const cell = document.createElement('td');
-        cell.style.cssText = 'padding:0.4rem 0.6rem;text-align:center;';
-        if (isOcc) {
-          const vlcc = hulls.filter(h => h.class === 'VLCC').length;
-          const count = hulls.length;
-          cell.innerHTML = '<span style="color:'+OCC_COLOR+';font-size:0.9rem">' + (count > 1 ? count + '×' : '●') + '</span>' +
-            (vlcc ? '<span style="color:#f59e0b;font-size:0.6rem;margin-left:3px">V</span>' : '');
-        } else if (det === 'EMP') {
-          cell.innerHTML = '<span style="color:'+EMP_COLOR+';font-size:0.7rem">·</span>';
-        } else {
-          cell.innerHTML = '<span style="color:'+DIM_COLOR+'">—</span>';
-        }
-        tr.appendChild(cell);
-      });
-
-      tbody.appendChild(tr);
-    });
-
-    document.getElementById('bo-loading').style.display = 'none';
-    document.querySelectorAll('.bo-rbtn').forEach(btn => {
-      btn.classList.toggle('bo-rbtn-active', btn.dataset.r === range);
-      btn.classList.toggle('aq-rbtn-active', btn.dataset.r === range);
-    });
-    boCurRange = range;
-  }
-
-  // ── render pass log ───────────────────────────────────────────────────────
-  function renderPassLog() {
-    const tbody = document.getElementById('bo-pass-body');
-    if (!tbody) return;
-    if (tbody.dataset.filled) return;
-    tbody.dataset.filled = '1';
-    const rows = boData._normRows.slice().reverse();
-    rows.forEach(r => {
-      const tr = document.createElement('tr');
-      tr.style.borderBottom = '1px solid rgba(255,255,255,0.03)';
-      const td = (txt, color, center) => {
-        const el = document.createElement('td');
-        el.style.cssText = `padding:0.3rem 0.6rem;text-align:${center?'center':'left'};color:${color||'var(--muted)'};font-variant-numeric:tabular-nums`;
-        el.textContent = txt;
-        return el;
-      };
-      tr.appendChild(td(r.date, 'var(--muted)', false));
-      tr.appendChild(td('o'+r.orbit, 'var(--dim)', true));
-
-      // aggregate hull info across all berths for this pass
-      let allHulls = [];
-      BERTHS.forEach(b => {
-        const det = r[b] || '—';
-        const c = det === 'OCC' ? OCC_COLOR : det === 'EMP' ? EMP_COLOR : DIM_COLOR;
-        const hulls = r[b + '_hulls'] || [];
-        const cell = document.createElement('td');
-        cell.style.cssText = 'padding:0.3rem 0.6rem;text-align:center;';
-        if (det === 'OCC') {
-          const count = hulls.length || 1;
-          const vlcc = hulls.filter(h => h.class === 'VLCC').length;
-          cell.innerHTML = `<span style="color:${OCC_COLOR};font-weight:600">${count > 1 ? count + '×' : '●'}</span>` +
-            (vlcc ? `<span style="color:#f59e0b;font-size:0.6rem;margin-left:3px">V</span>` : '');
-        } else if (det === 'EMP') {
-          cell.innerHTML = `<span style="color:${EMP_COLOR};font-size:0.7rem">·</span>`;
-        } else {
-          cell.innerHTML = `<span style="color:${DIM_COLOR}">—</span>`;
-        }
-        tr.appendChild(cell);
-        allHulls = allHulls.concat(hulls);
-      });
-
-      // class summary
-      const vlccCount = allHulls.filter(h => h.class === 'VLCC').length;
-      const otherCount = allHulls.filter(h => h.class && h.class !== 'VLCC').length;
-      const classTxt = vlccCount && otherCount ? `VLCC+SA` : vlccCount ? 'VLCC' : otherCount ? 'SA' : '—';
-      const classColor = vlccCount ? '#f59e0b' : otherCount ? OCC_COLOR : DIM_COLOR;
-      tr.appendChild(td(classTxt, classColor, true));
-
-      // new_load flag
-      const newLoads = allHulls.filter(h => h.new_load === true || h.new_load === 'True').length;
-      tr.appendChild(td(newLoads > 0 ? `+${newLoads}` : '—', newLoads > 0 ? '#34d399' : DIM_COLOR, true));
-
-      tbody.appendChild(tr);
-    });
-  }
-
-  // ── draw chart ────────────────────────────────────────────────────────────
-  function drawBoChart(range) {
-    boCurChartRange = range;
-    const weeks = filterWeeks(boWeeks, range);
-    document.querySelectorAll('.bo-cr-btn').forEach(b => {
-      b.classList.toggle('aq-rbtn-active', b.dataset.r === range);
-      b.classList.toggle('aq-cr-active', b.dataset.r === range);
-    });
-
-    const canvas = document.getElementById('boChart');
-    if (!canvas) return;
-    const dpr = window.devicePixelRatio || 1;
-    canvas.width = canvas.offsetWidth * dpr;
-    canvas.height = canvas.offsetHeight * dpr;
-    const ctx = canvas.getContext('2d');
-    ctx.scale(dpr, dpr);
-    const W = canvas.offsetWidth, H = canvas.offsetHeight;
-    const PAD = { t:12, r:12, b:28, l:28 };
-    const cW = W - PAD.l - PAD.r, cH = H - PAD.t - PAD.b;
-
-    ctx.clearRect(0,0,W,H);
-
-    if (!weeks.length) return;
-    const vals = weeks.map(w => w.occ);
-    const maxV = Math.max(...vals, 3);
-    const step = cW / (weeks.length - 1 || 1);
-
-    // grid lines
-    ctx.strokeStyle = 'rgba(255,255,255,0.06)';
-    ctx.lineWidth = 1;
-    for (let v = 0; v <= maxV; v++) {
-      const y = PAD.t + cH - (v / maxV) * cH;
-      ctx.beginPath(); ctx.moveTo(PAD.l, y); ctx.lineTo(PAD.l + cW, y); ctx.stroke();
-      ctx.fillStyle = 'rgba(255,255,255,0.3)';
-      ctx.font = `${10}px system-ui`;
-      ctx.textAlign = 'right';
-      ctx.fillText(v, PAD.l - 4, y + 3);
+    var lastV = visits[0];
+    var card2Val = '—', card2Sub = '', daysSince = '—';
+    if (lastV) {
+      var cls = hullClass(lastV.len_max || 0, lastV.berth);
+      card2Val = cls || '—';
+      var lenStr = lastV.berth === 'southeast_pier' ? 'n/a' : (lastV.len_max ? Math.round(lastV.len_max) + 'm' : '—');
+      card2Sub = lenStr + ' · ' + fmtBerth(lastV.berth) + ' · ' + fmtDate(lastV.start_date);
+      daysSince = String(Math.floor((today - new Date(lastV.start_date)) / 86400000));
     }
 
-    // area fill
-    ctx.beginPath();
-    weeks.forEach((w, i) => {
-      const x = PAD.l + i * step;
-      const y = PAD.t + cH - (w.occ / maxV) * cH;
-      i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
-    });
-    ctx.lineTo(PAD.l + (weeks.length-1)*step, PAD.t + cH);
-    ctx.lineTo(PAD.l, PAD.t + cH);
-    ctx.closePath();
-    const grad = ctx.createLinearGradient(0, PAD.t, 0, PAD.t + cH);
-    grad.addColorStop(0, 'rgba(59,130,246,0.25)');
-    grad.addColorStop(1, 'rgba(59,130,246,0.02)');
-    ctx.fillStyle = grad;
-    ctx.fill();
+    var c2clr = lastV && lastV.class_max ? clsColor(lastV.class_max) : '#64748b';
+    var wrap = document.getElementById('bo2-cards');
+    if (!wrap) return;
 
-    // line
-    ctx.beginPath();
-    ctx.strokeStyle = OCC_COLOR;
-    ctx.lineWidth = 1.5;
-    weeks.forEach((w, i) => {
-      const x = PAD.l + i * step;
-      const y = PAD.t + cH - (w.occ / maxV) * cH;
-      i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
-    });
-    ctx.stroke();
-
-    // dots
-    weeks.forEach((w, i) => {
-      const x = PAD.l + i * step;
-      const y = PAD.t + cH - (w.occ / maxV) * cH;
-      ctx.beginPath();
-      ctx.arc(x, y, 2.5, 0, Math.PI*2);
-      ctx.fillStyle = OCC_COLOR;
-      ctx.fill();
-    });
-
-    // x-axis labels (monthly)
-    ctx.fillStyle = 'rgba(255,255,255,0.3)';
-    ctx.font = `${9}px system-ui`;
-    ctx.textAlign = 'center';
-    let lastLabel = '';
-    weeks.forEach((w, i) => {
-      const mon = w.week.slice(0,7);
-      if (mon !== lastLabel) {
-        lastLabel = mon;
-        const x = PAD.l + i * step;
-        ctx.fillText(mon.slice(5) + '/' + mon.slice(2,4), x, H - 6);
-      }
-    });
+    wrap.innerHTML =
+      '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;margin-bottom:1.25rem">' +
+      '<div style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:1rem 1.25rem">' +
+        '<div style="font-size:0.6rem;letter-spacing:1px;text-transform:uppercase;color:var(--muted);margin-bottom:0.4rem">Loadings, last 4 weeks</div>' +
+        '<div style="font-size:2rem;font-weight:700;color:var(--accent);font-family:\'Space Grotesk\',sans-serif;line-height:1.1">' + total4w + '</div>' +
+        '<div style="font-size:0.7rem;color:var(--muted);margin-top:0.3rem">' + vlcc4w + ' VLCC &nbsp; ' + sm4w + ' smaller &nbsp; <span style="color:' + deltaClr + '">' + deltaTxt + '</span></div>' +
+      '</div>' +
+      '<div style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:1rem 1.25rem">' +
+        '<div style="font-size:0.6rem;letter-spacing:1px;text-transform:uppercase;color:var(--muted);margin-bottom:0.4rem">Last ship</div>' +
+        '<div style="font-size:2rem;font-weight:700;color:' + c2clr + ';font-family:\'Space Grotesk\',sans-serif;line-height:1.1">' + card2Val + '</div>' +
+        '<div style="font-size:0.7rem;color:var(--muted);margin-top:0.3rem">' + card2Sub + '</div>' +
+      '</div>' +
+      '<div style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:1rem 1.25rem">' +
+        '<div style="font-size:0.6rem;letter-spacing:1px;text-transform:uppercase;color:var(--muted);margin-bottom:0.4rem">Days since last loading</div>' +
+        '<div style="font-size:2rem;font-weight:700;color:var(--text);font-family:\'Space Grotesk\',sans-serif;line-height:1.1">' + daysSince + '</div>' +
+        '<div style="font-size:0.7rem;color:var(--muted);margin-top:0.3rem"></div>' +
+      '</div>' +
+      '</div>';
   }
 
-  // ── snapshots ─────────────────────────────────────────────────────────────
-  function loadSnapshots() {
-    fetch('/data/berth_snapshots.json')
-      .then(r => r.json())
-      .then(snaps => {
-        const wrap = document.getElementById('bo-snaps');
-        if (!wrap) return;
-        let any = false;
-        [['prev', 'bo-snap-prev-link', 'bo-snap-prev-img'],
-         ['latest', 'bo-snap-latest-link', 'bo-snap-latest-img']].forEach(([key, lid, iid]) => {
-          const s = snaps[key];
-          if (!s || !s.url) return;
-          const link = document.getElementById(lid);
-          const img  = document.getElementById(iid);
-          const dateSpan = link && link.closest('[data-snap]')
-            ? link.closest('[data-snap]').querySelector('.bo-snap-date') : null;
-          if (link)  link.href = s.url;
-          if (img)   img.src   = s.url;
-          if (dateSpan) dateSpan.textContent = `${s.date} · o${s.orbit}`;
-          any = true;
+  // ── Block 2: Heatmap ───────────────────────────────────────────────────────────────────
+  function renderHeatmap(data) {
+    var passes = (data.passes || []).slice().sort(function(a,b){ return a.date < b.date ? -1 : 1; });
+    var today = new Date();
+    var c = new Date(today.getFullYear() - 1, today.getMonth(), 1);
+    var cutoffStr = c.getFullYear() + '-' + pad2(c.getMonth()+1) + '-01';
+    var hpasses = passes.filter(function(p){ return p.date >= cutoffStr; });
+
+    var wrap = document.getElementById('bo2-hm');
+    var legendWrap = document.getElementById('bo2-hm-legend');
+    var hmWrap = document.getElementById('bo2-hm-wrap');
+    if (!wrap || !hmWrap) return;
+
+    if (legendWrap) legendWrap.innerHTML =
+      '<span><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#f87171;margin-right:3px;vertical-align:middle"></span>VLCC</span>' +
+      '<span><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#fbbf24;margin-right:3px;vertical-align:middle"></span>SuezAframax</span>' +
+      '<span><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#64748b;margin-right:3px;vertical-align:middle"></span>occupied</span>' +
+      '<span><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#1e293b;border:1px solid #334155;margin-right:3px;vertical-align:middle"></span>empty</span>';
+
+    var berth_sides = [];
+    BERTHS.forEach(function(b){ berth_sides.push([b,1]); berth_sides.push([b,-1]); });
+    var pdates = hpasses.map(function(p){ return p.date; });
+
+    var hmdata = {};
+    hpasses.forEach(function(p) {
+      BERTHS.forEach(function(b) {
+        var bd = p[b] || {};
+        (bd.hulls || []).forEach(function(h) {
+          var key = b + '|' + (h.side !== undefined ? h.side : 1) + '|' + p.date;
+          var cls = hullClass(h.len_m || 0, b);
+          if (cls && cls !== 'n/a') hmdata[key] = { cls: cls, len_m: h.len_m };
         });
-        if (any) wrap.style.display = '';
-      })
-      .catch(() => {});  // snapshots are optional — silence errors
-  }
-
-  // ── load ──────────────────────────────────────────────────────────────────
-  function boLoad() {
-    fetch('/data/berth_occupancy.json')
-      .then(r => r.json())
-      .then(d => {
-        // support v5.0 (passes[]) and v4.1 (rows[]) formats
-        const normRows = d.passes
-          ? d.passes.map(passToRow)
-          : (d.rows || []).map(legacyRowNorm);
-        d._normRows = normRows;
-        boData = d;
-        boWeeks = buildWeeks(normRows);
-        renderKPI(boWeeks);
-        renderWeeklyTable(boCurRange);
-        drawBoChart(boCurChartRange);
-        loadSnapshots();
-
-        document.querySelectorAll('.bo-rbtn').forEach(btn =>
-          btn.addEventListener('click', () => renderWeeklyTable(btn.dataset.r)));
-        document.querySelectorAll('.bo-cr-btn').forEach(btn =>
-          btn.addEventListener('click', () => drawBoChart(btn.dataset.r)));
-
-        const details = document.querySelector('#sec-berth details');
-        const arrow = document.getElementById('bo-details-arrow');
-        if (details) {
-          details.addEventListener('toggle', () => {
-            if (arrow) arrow.textContent = details.open ? '▼' : '▶';
-            if (details.open) renderPassLog();
-          });
-        }
-      })
-      .catch(() => {
-        const el = document.getElementById('bo-loading');
-        if (el) el.textContent = 'Не удалось загрузить данные.';
       });
+    });
+
+    var cw = 14, ch = 20, lw = 90;
+    var nr = berth_sides.length, nc = Math.max(pdates.length, 1);
+    var sw = lw + nc * cw + 4, sh = nr * ch + 24;
+    var parts = [];
+
+    berth_sides.forEach(function(bs, ri) {
+      var lbl = fmtBerth(bs[0]).slice(0,10) + (bs[1] > 0 ? ' +' : ' −');
+      parts.push('<text x="' + (lw-4) + '" y="' + (ri*ch + ch*0.72) + '" text-anchor="end" font-size="9" fill="rgba(148,163,184,0.8)">' + lbl + '</text>');
+      pdates.forEach(function(pd, ci) {
+        var x = lw + ci*cw, y = ri*ch;
+        var cell = hmdata[bs[0] + '|' + bs[1] + '|' + pd];
+        var fill = cell ? clsColor(cell.cls) : '#1e293b';
+        var tip = cell ? (pd + ' ' + fmtBerth(bs[0]) + ': ' + cell.cls + ' ' + Math.round(cell.len_m) + 'm') : (pd + ' ' + fmtBerth(bs[0]) + ': empty');
+        parts.push('<rect x="' + x + '" y="' + y + '" width="' + (cw-1) + '" height="' + (ch-1) + '" fill="' + fill + '" rx="1"><title>' + tip + '</title></rect>');
+      });
+    });
+
+    pdates.forEach(function(pd, ci) {
+      if (ci % 4 === 0) parts.push('<text x="' + (lw + ci*cw + cw/2) + '" y="' + (nr*ch+14) + '" text-anchor="middle" font-size="8" fill="rgba(148,163,184,0.5)">' + pd.slice(5) + '</text>');
+    });
+
+    wrap.innerHTML = '<svg viewBox="0 0 ' + sw + ' ' + sh + '" xmlns="http://www.w3.org/2000/svg" style="width:100%;max-width:' + sw + 'px;overflow:visible">' + parts.join('') + '</svg>';
+    hmWrap.style.display = '';
   }
 
-  document.addEventListener('DOMContentLoaded', () => {
-    const origShow = window.showSection;
+  // ── Block 3: Visit list ────────────────────────────────────────────────────────────────────────
+  function renderVisits(data) {
+    var visits = (data.visits || []).slice().sort(function(a,b){ return a.start_date < b.start_date ? 1 : -1; });
+    var tbody = document.getElementById('bo2-visits-body');
+    var wrap = document.getElementById('bo2-visits-wrap');
+    if (!tbody || !wrap) return;
+
+    var rows = [], lastDate = null;
+    visits.forEach(function(v) {
+      if (lastDate) {
+        var gap = Math.floor((new Date(lastDate) - new Date(v.start_date)) / 86400000) - (v.visit_days || 0);
+        var wks = Math.floor(gap / 7);
+        if (wks >= 2) rows.push('<tr><td colspan="5" style="padding:0.4rem 0.5rem;font-size:0.68rem;color:var(--dim);font-style:italic;text-align:center;border-bottom:1px solid rgba(255,255,255,0.03)">' + wks + ' weeks without loadings</td></tr>');
+      }
+      var cls = hullClass(v.len_max || 0, v.berth) || '—';
+      var lenStr = v.berth === 'southeast_pier' ? 'n/a' : (v.len_max ? Math.round(v.len_max) + 'm' : '—');
+      rows.push('<tr style="border-bottom:1px solid rgba(255,255,255,0.03)">' +
+        '<td style="padding:0.3rem 0.5rem;color:var(--muted)">' + fmtDate(v.start_date) + '</td>' +
+        '<td style="padding:0.3rem 0.5rem">' + fmtBerth(v.berth) + '</td>' +
+        '<td style="padding:0.3rem 0.5rem;color:' + clsColor(cls) + '">' + cls + '</td>' +
+        '<td style="padding:0.3rem 0.5rem;text-align:right;font-variant-numeric:tabular-nums">' + lenStr + '</td>' +
+        '<td style="padding:0.3rem 0.5rem;text-align:right;font-variant-numeric:tabular-nums;color:var(--muted)">' + (v.visit_days || '?') + 'd</td></tr>');
+      lastDate = v.start_date;
+    });
+    tbody.innerHTML = rows.join('');
+    wrap.style.display = '';
+  }
+
+  // ── Block 4: Snapshots ───────────────────────────────────────────────────────────────────────
+  function renderSnaps(data, snaps) {
+    var wrap = document.getElementById('bo2-snaps-wrap');
+    if (!wrap) return;
+    var passes = data.passes || [];
+
+    function renderPanel(panelId, snapKey, labelTxt, accent) {
+      var panel = document.getElementById(panelId);
+      if (!panel) return;
+      var snap = snaps[snapKey];
+      if (!snap || !snap.url) return;
+
+      var pass = null;
+      for (var i = 0; i < passes.length; i++) {
+        if (passes[i].date === snap.date && passes[i].orbit === snap.orbit) { pass = passes[i]; break; }
+      }
+      if (!pass) pass = {};
+
+      var labels = [];
+      BERTHS.forEach(function(b) {
+        var hulls = (pass[b] || {}).hulls || [];
+        if (hulls.length > 0) {
+          hulls.forEach(function(h) {
+            var cls = hullClass(h.len_m || 0, b);
+            if (!cls) return;
+            var arr = (h.arrived === true || h.arrived === 'True') ? 'arrived' : 'same';
+            var lbl, clr;
+            if (b === 'southeast_pier') { lbl = fmtBerth(b) + ': n/a · ' + arr; clr = '#64748b'; }
+            else if (cls === 'VLCC' || cls === 'SuezAframax') { lbl = fmtBerth(b) + ': ' + cls + ' · ' + Math.round(h.len_m) + 'm · ' + arr; clr = clsColor(cls); }
+            else { lbl = fmtBerth(b) + ': occupied · ' + Math.round(h.len_m) + 'm · ' + arr; clr = '#64748b'; }
+            labels.push({ lbl: lbl, clr: clr });
+          });
+        } else {
+          labels.push({ lbl: fmtBerth(b) + ': empty', clr: '#374151' });
+        }
+      });
+
+      var vlcc = 0, sm = 0;
+      BERTHS.forEach(function(b) {
+        (pass[b] && pass[b].hulls || []).forEach(function(h) {
+          var c = hullClass(h.len_m || 0, b);
+          if (c === 'VLCC') vlcc++;
+          else if (c === 'SuezAframax' || c === 'occupied') sm++;
+        });
+      });
+
+      panel.innerHTML =
+        '<div style="font-size:0.6rem;letter-spacing:1px;text-transform:uppercase;color:' + accent + ';margin-bottom:0.5rem">' + labelTxt + ' · ' + snap.date + ' · o' + snap.orbit + '</div>' +
+        '<img src="' + snap.url + '" alt="' + snapKey + ' SAR pass" style="width:100%;border-radius:4px;display:block;margin-bottom:0.5rem" loading="lazy">' +
+        '<div style="display:flex;flex-direction:column;gap:0.2rem;font-size:0.68rem">' +
+        labels.map(function(l){ return '<span style="color:' + l.clr + '">' + l.lbl + '</span>'; }).join('') +
+        '</div>' +
+        '<div style="margin-top:0.5rem;font-size:0.65rem;color:var(--muted)">At berths: ' + (vlcc+sm) + ' (VLCC ' + vlcc + ', smaller ' + sm + ')</div>';
+    }
+
+    renderPanel('bo2-snap-prev', 'prev', 'Previous pass', 'var(--muted)');
+    renderPanel('bo2-snap-latest', 'latest', 'Latest pass', 'var(--accent)');
+    wrap.style.display = '';
+  }
+
+  // ── Block 5: Pass log ─────────────────────────────────────────────────────────────────────────
+  function renderPassLog(data) {
+    var tbody = document.getElementById('bo2-pass-body');
+    if (!tbody || tbody.dataset.filled) return;
+    tbody.dataset.filled = '1';
+
+    var passes = (data.passes || []).slice().sort(function(a,b){ return a.date < b.date ? 1 : -1; });
+    var rows = [];
+    passes.forEach(function(p) {
+      var cellHtml = BERTHS.map(function(b) {
+        var bd = p[b] || {}, det = bd.det || '—', hulls = bd.hulls || [];
+        if (det === 'OCC' && hulls.length > 0) {
+          var vc = 0;
+          hulls.forEach(function(h){ if (hullClass(h.len_m||0,b) === 'VLCC') vc++; });
+          return '<td style="text-align:center;padding:0.25rem 0.4rem"><span style="color:#3b82f6;font-weight:600">' + (hulls.length > 1 ? hulls.length + '×' : '●') + '</span>' + (vc ? ' <span style="color:#fbbf24;font-size:0.6rem">V</span>' : '') + '</td>';
+        }
+        if (det === 'EMP') return '<td style="text-align:center;padding:0.25rem 0.4rem;color:#374151">·</td>';
+        return '<td style="text-align:center;padding:0.25rem 0.4rem;color:#374151">—</td>';
+      }).join('');
+
+      var allH = [];
+      BERTHS.forEach(function(b){ allH = allH.concat((p[b]||{}).hulls||[]); });
+      var nl = allH.filter(function(h){ return h.new_load === true || h.new_load === 'True'; }).length;
+
+      rows.push('<tr style="border-bottom:1px solid rgba(255,255,255,0.02)">' +
+        '<td style="padding:0.25rem 0.4rem;color:var(--muted)">' + p.date + '</td>' +
+        '<td style="text-align:center;padding:0.25rem 0.4rem;color:var(--dim)">o' + p.orbit + '</td>' +
+        cellHtml +
+        '<td style="text-align:center;padding:0.25rem 0.4rem;color:' + (nl > 0 ? '#34d399' : '#374151') + '">' + (nl > 0 ? '+'+nl : '—') + '</td></tr>');
+    });
+    tbody.innerHTML = rows.join('');
+  }
+
+  // ── Main load ─────────────────────────────────────────────────────────────────────────────────────────────
+  function boLoad() {
+    if (boLoaded) return;
+    boLoaded = true;
+    Promise.all([
+      fetch('/data/berth_occupancy.json').then(function(r){ return r.json(); }),
+      fetch('/data/berth_snapshots.json').then(function(r){ return r.json(); }).catch(function(){ return {}; })
+    ]).then(function(res) {
+      var data = res[0], snaps = res[1];
+      renderCards(data);
+      renderHeatmap(data);
+      renderVisits(data);
+      renderSnaps(data, snaps);
+      var details = document.getElementById('bo2-details');
+      var arr = document.getElementById('bo2-arr');
+      if (details) {
+        details.addEventListener('toggle', function() {
+          if (arr) arr.textContent = details.open ? '▼' : '▶';
+          if (details.open) renderPassLog(data);
+        });
+      }
+    }).catch(function() {
+      var w = document.getElementById('bo2-cards');
+      if (w) w.innerHTML = '<div style="color:var(--red);padding:2rem;text-align:center">Failed to load data.</div>';
+    });
+  }
+
+  document.addEventListener('DOMContentLoaded', function() {
+    var origShow = window.showSection;
     window.showSection = function(id, callerEl) {
       origShow && origShow(id, callerEl);
-      if (id === 'berth' && !boData) boLoad();
+      if (id === 'berth') boLoad();
     };
   });
 })();
