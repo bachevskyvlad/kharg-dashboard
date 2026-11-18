@@ -1544,7 +1544,7 @@ async function renderOverviewVelocity() {
             const days = Math.max(1, (new Date(slice.dates[i]) - new Date(slice.dates[i-1])) / 86400000);
             const delta = slice.values[i] - slice.values[i-1];
             labels.push(slice.dates[i]);
-            expVelData.push(delta < 0 ? +(-delta / days).toFixed(3) : 0);
+            expVelData.push(delta < 0 ? +(delta / days).toFixed(3) : 0);
             infVelData.push(delta > 0 ? +(delta / days).toFixed(3) : 0);
         }
         const gXf = { ticks: { color: '#6b7280', maxRotation: 0, font: { size: 9 } }, grid: { color: 'rgba(255,255,255,0.05)' } };
@@ -1580,7 +1580,7 @@ async function renderOverviewVelocity() {
     }));
 
     const labels     = buckets.map(p => p.d1);
-    const expVelData = buckets.map(p => p.days > 0 ? +(p.grossOut / p.days).toFixed(3) : null);
+    const expVelData = buckets.map(p => p.days > 0 ? +(-p.grossOut / p.days).toFixed(3) : null);
     const infVelData = buckets.map(p => p.days > 0 ? +(p.grossIn  / p.days).toFixed(3) : null);
 
     const gX = { ticks: { color: '#6b7280', maxRotation: 0, font: { size: 9 } }, grid: { color: 'rgba(255,255,255,0.05)' } };
@@ -1599,12 +1599,12 @@ async function renderOverviewVelocity() {
                     callbacks: {
                         title: ctx => { const p = buckets[ctx[0].dataIndex]; return p ? `${p.d0} → ${p.d1}` : ''; },
                         label: ctx => ctx.datasetIndex === 0
-                            ? ` Export: ${(expVelData[ctx.dataIndex]||0).toFixed(3)} Mb/d`
+                            ? ` Export: ${Math.abs(expVelData[ctx.dataIndex]||0).toFixed(3)} Mb/d`
                             : ` Inflow: ${(infVelData[ctx.dataIndex]||0).toFixed(3)} Mb/d`
                     }
                 }
             },
-            scales: { x: gX, y: { ...gY, ticks: { ...gY.ticks, callback: v => v.toFixed(2) + ' Mb/d' } } }
+            scales: { x: gX, y: { ...gY, ticks: { ...gY.ticks, callback: v => Math.abs(v).toFixed(2) + ' Mb/d' } } }
         }
     });
 }
