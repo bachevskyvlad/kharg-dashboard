@@ -572,11 +572,8 @@
             <div class="ctrl-group">
                 <span class="ctrl-label">Country</span>
                 <div class="btn-group">
-                    <button class="tbtn tbtn-country active" data-terminal="kharg"      onclick="setTerminal('kharg')">🇮🇷 Iran</button>
-                    <button class="tbtn tbtn-country"        data-terminal="ras_tanura" onclick="setTerminal('ras_tanura')">🇸🇦 Saudi</button>
-                    <button class="tbtn tbtn-country"        data-terminal="lavan"      onclick="setTerminal('lavan')">🇮🇷 Lavan</button>
-                    <button class="tbtn tbtn-country"        data-terminal="siri"       onclick="setTerminal('siri')">🇮🇷 Siri</button>
-                    <button class="tbtn tbtn-country"        data-terminal="jask"       onclick="setTerminal('jask')">🇮🇷 Jask</button>
+                    <button class="tbtn tbtn-country active" data-terminal="kharg" onclick="setTerminal('kharg')">🇮🇷 Iran</button>
+                    <button class="tbtn tbtn-country"        data-terminal="jask"  onclick="setTerminal('jask')">🇮🇷 Jask</button>
                 </div>
             </div>
         </div>
@@ -791,7 +788,6 @@
                 <span class="ctrl-label">Terminal</span>
                 <div class="btn-group" id="upstreamTerminalBtns">
                     <button class="tbtn active" data-upterm="goreh_omid" onclick="setUpstreamTerminal('goreh_omid')">🇮🇷 Goreh-Omid</button>
-                    <button class="tbtn" data-upterm="jask"       onclick="setUpstreamTerminal('jask')">🇮🇷 Jask</button>
                     <button class="tbtn" data-upterm="bahregan"   onclick="setUpstreamTerminal('bahregan')">🇮🇷 Bahregan</button>
                 </div>
             </div>
@@ -1207,11 +1203,8 @@ async function checkAuth() {
 
 // ── Country filter (admin-only extras) ───────────────────────────────────────
 const COUNTRY_TERMINALS = [
-    { id: 'kharg',      label: 'Iran (Kharg)',  file: null },
-    { id: 'ras_tanura', label: 'Ras Tanura',    file: '/data/terminals/ras_tanura_daily.json' },
-    { id: 'lavan',      label: 'Lavan',         file: '/data/terminals/lavan_daily.json' },
-    { id: 'siri',       label: 'Siri',          file: '/data/terminals/siri_daily.json' },
-    { id: 'jask',       label: 'Jask',          file: '/data/terminals/jask_daily.json' },
+    { id: 'kharg', label: 'Iran (Kharg)', file: null },
+    { id: 'jask',  label: 'Jask',        file: '/data/terminals/jask_daily.json' },
 ];
 let _activeTerminal = 'kharg';
 let _khargDates = [], _khargValues = [];
@@ -1283,7 +1276,6 @@ function logout() { window.location.href = '/auth/logout'; }
 // ── Upstream section ──────────────────────────────────────────────────────
 const UPSTREAM_TERMINALS = [
     { id: 'goreh_omid', label: 'Goreh-Omid', file: '/data/terminals/goreh_omid_daily.json', max_cap: 9.0 },
-    { id: 'jask',       label: 'Jask',        file: '/data/terminals/jask_daily.json',       max_cap: 9.8 },
     { id: 'bahregan',   label: 'Bahregan',    file: '/data/terminals/bahregan_daily.json',   max_cap: 5.5 },
 ];
 let _upTerminal   = 'goreh_omid';
