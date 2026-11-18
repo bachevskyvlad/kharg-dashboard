@@ -75,6 +75,7 @@ def _pc_client():
     )
 
 def _fetch_scene(date_str):
+    import time
     client = _pc_client()
     search = client.search(
         collections=["sentinel-1-rtc"],
@@ -82,7 +83,21 @@ def _fetch_scene(date_str):
         datetime=f"{date_str}/{date_str}",
         query={"sat:relative_orbit": {"eq": ORBIT}},
     )
-    items = list(search.items())
+    items = None
+    for attempt in range(4):
+        try:
+            items = list(search.items())
+            break
+        except Exception as e:
+            if attempt < 3:
+                wait = 30 * (2 ** attempt)
+                print(f"  PC API error ({e}), retry in {wait}s…")
+                time.sleep(wait)
+            else:
+                print(f"  PC API failed after 4 attempts: {e}")
+                return None, None
+    if items is None:
+        return None, None
     if not items:
         return None, None
     items.sort(key=lambda x: x.datetime or "", reverse=True)
@@ -316,7 +331,8 @@ def discover_dates(date_from, date_to):
 # ── Main ───────────────────────────────────────────────────────────────────
 
 def run(dates_to_process, write_db=False):
-    CSV_PATH.parent.mkdir(parents=True, exist_ok=True)
+    import csv as _csv
+    fieldnames = ["date","orbit","zone","vlcc","mid","small","stationary","scene_id"]
 
     rows_csv   = []
     prev_ships = []
@@ -334,6 +350,7 @@ def run(dates_to_process, write_db=False):
         prev_ships = ships
 
         scene_id = item.id if item else ""
+        date_rows = []
 
         # aggregate per subzone
         for zone in SUBZONES:
@@ -343,7 +360,7 @@ def run(dates_to_process, write_db=False):
             small     = sum(1 for s in zships if s["cls"] == "small")
             stationary= sum(1 for s in zships if s.get("is_stationary"))
             print(f"  {zone}: vlcc={vlcc} mid={mid} small={small} stationary={stationary}")
-            rows_csv.append({
+            date_rows.append({
                 "date": date_str,
                 "orbit": ORBIT,
                 "zone": zone,
@@ -354,18 +371,21 @@ def run(dates_to_process, write_db=False):
                 "scene_id": scene_id,
             })
 
+        rows_csv.extend(date_rows)
+
+        # write incrementally so partial runs are not lost
+        CSV_PATH.parent.mkdir(parents=True, exist_ok=True)
+        write_header = not CSV_PATH.exists()
+        with open(CSV_PATH, "a", newline="") as f:
+            wtr = _csv.DictWriter(f, fieldnames=fieldnames)
+            if write_header:
+                wtr.writeheader()
+            wtr.writerows(date_rows)
+
     if not rows_csv:
         print("no rows produced")
         return
 
-    import csv as _csv
-    fieldnames = ["date","orbit","zone","vlcc","mid","small","stationary","scene_id"]
-    write_header = not CSV_PATH.exists()
-    with open(CSV_PATH, "a", newline="") as f:
-        wtr = _csv.DictWriter(f, fieldnames=fieldnames)
-        if write_header:
-            wtr.writeheader()
-        wtr.writerows(rows_csv)
     print(f"\nCSV written: {CSV_PATH} ({len(rows_csv)} rows)")
 
     if write_db:

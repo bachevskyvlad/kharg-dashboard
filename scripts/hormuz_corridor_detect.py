@@ -70,6 +70,7 @@ def _pc_client():
 
 def _fetch_scene(date_str):
     """Return (arr_linear, item) or (None, None) for the first orbit-93 scene on date_str."""
+    import time
     client = _pc_client()
     search = client.search(
         collections=["sentinel-1-rtc"],
@@ -77,7 +78,21 @@ def _fetch_scene(date_str):
         datetime=f"{date_str}/{date_str}",
         query={"sat:relative_orbit": {"eq": ORBIT}},
     )
-    items = list(search.items())
+    items = None
+    for attempt in range(4):
+        try:
+            items = list(search.items())
+            break
+        except Exception as e:
+            if attempt < 3:
+                wait = 30 * (2 ** attempt)
+                print(f"  PC API error ({e}), retry in {wait}s…")
+                time.sleep(wait)
+            else:
+                print(f"  PC API failed after 4 attempts: {e}")
+                return None, None
+    if items is None:
+        return None, None
     if not items:
         return None, None
     items.sort(key=lambda x: x.datetime or "", reverse=True)
@@ -323,6 +338,9 @@ def discover_dates(date_from, date_to):
 def run(dates_to_process, write_db=False):
     CSV_PATH.parent.mkdir(parents=True, exist_ok=True)
 
+    import csv as _csv
+    fieldnames = ["date","orbit","vlcc","mid","small","stationary_vlcc","stationary_mid","scene_id"]
+
     rows_csv  = []
     prev_ships = []
 
@@ -348,7 +366,7 @@ def run(dates_to_process, write_db=False):
         print(f"  vlcc={vlcc} mid={mid} small={small}  "
               f"stationary vlcc={stat_vlcc} mid={stat_mid}  scene={scene_id}")
 
-        rows_csv.append({
+        row = {
             "date": date_str,
             "orbit": ORBIT,
             "vlcc": vlcc,
@@ -357,24 +375,27 @@ def run(dates_to_process, write_db=False):
             "stationary_vlcc": stat_vlcc,
             "stationary_mid": stat_mid,
             "scene_id": scene_id,
-        })
+        }
+        rows_csv.append(row)
+
+        # write incrementally so partial runs are not lost
+        CSV_PATH.parent.mkdir(parents=True, exist_ok=True)
+        write_header = not CSV_PATH.exists()
+        with open(CSV_PATH, "a", newline="") as f:
+            wtr = _csv.DictWriter(f, fieldnames=fieldnames)
+            if write_header:
+                wtr.writeheader()
+            wtr.writerow(row)
 
     if not rows_csv:
         print("no rows produced")
         return
 
-    import csv as _csv
-    fieldnames = ["date","orbit","vlcc","mid","small","stationary_vlcc","stationary_mid","scene_id"]
-    write_header = not CSV_PATH.exists()
-    with open(CSV_PATH, "a", newline="") as f:
-        w = _csv.DictWriter(f, fieldnames=fieldnames)
-        if write_header:
-            w.writeheader()
-        w.writerows(rows_csv)
     print(f"\nCSV written: {CSV_PATH} ({len(rows_csv)} rows)")
 
     if write_db:
         _upsert_rows(rows_csv)
+
 
 
 def main():
