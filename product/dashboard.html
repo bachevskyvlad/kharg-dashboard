@@ -1220,6 +1220,14 @@ async function setTerminal(id) {
     document.querySelectorAll('.tbtn-country').forEach(b =>
         b.classList.toggle('active', b.dataset.terminal === id));
 
+    if (id === 'jask') {
+        // Jask uses the Upstream rendering pipeline
+        _upTerminal = ''; // force reload even if already set
+        showSection('upstream');
+        setUpstreamTerminal('jask');
+        return;
+    }
+
     const t = COUNTRY_TERMINALS.find(x => x.id === id);
     if (!t || !t.file) {
         // restore Kharg — allDates/allValues already hold it
@@ -1277,6 +1285,7 @@ function logout() { window.location.href = '/auth/logout'; }
 const UPSTREAM_TERMINALS = [
     { id: 'goreh_omid', label: 'Goreh-Omid', file: '/data/terminals/goreh_omid_daily.json', max_cap: 9.0 },
     { id: 'bahregan',   label: 'Bahregan',    file: '/data/terminals/bahregan_daily.json',   max_cap: 5.5 },
+    { id: 'jask',       label: 'Jask',        file: '/data/terminals/jask_daily.json',        max_cap: 6.3 },
 ];
 let _upTerminal   = 'goreh_omid';
 let _upRange      = 90;
