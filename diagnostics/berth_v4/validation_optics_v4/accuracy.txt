@@ -6,8 +6,8 @@ PIER_EXCL=per-berth(20m)  WATER=20-80m  MIN_LEN=per-berth(sea=120,eth/sep=150)  
 ── Before / After ──────────────────────────────────────
 Berth                  v3-Acc  v3-Rec   v4-Acc  v4-Rec   v4-Prec
 ------------------------------------------------------------
-sea_island              81.1%   64.7%    87.9%   73.3%    100.0%
-east_t_head             51.5%   31.8%    75.8%   68.2%     93.8%
+sea_island              81.1%   64.7%    81.8%   60.0%    100.0%
+east_t_head             51.5%   31.8%    88.6%   86.4%     95.0%
 southeast_pier          97.1%   50.0%    97.1%   50.0%    100.0%
 
 ── Per-berth detail ─────────────────────────────────────
@@ -15,16 +15,36 @@ southeast_pier          97.1%   50.0%    97.1%   50.0%    100.0%
 
 
 sea_island
-  all years  |  с правилом (n=33): Acc=87.9% Prec=100.0% Rec=73.3%  |  без правила (n=37): Acc=78.4% Prec=84.6% Rec=64.7%
-  2024-2025  |  с правилом (n=19): Acc=89.5% Prec=100.0% Rec=81.8%  |  без правила (n=21): Acc=81.0% Prec=81.8% Rec=81.8%
-  2026 only  |  с правилом (n=14): Acc=85.7% Prec=100.0% Rec=50.0%  |  без правила (n=16): Acc=75.0% Prec=100.0% Rec=33.3%
+  all years  |  с правилом (n=33): Acc=81.8% Prec=100.0% Rec=60.0%  |  без правила (n=37): Acc=75.7% Prec=90.0% Rec=52.9%
+  2024-2025  |  с правилом (n=19): Acc=73.7% Prec=100.0% Rec=54.5%  |  без правила (n=21): Acc=71.4% Prec=85.7% Rec=54.5%
+  2026 only  |  с правилом (n=14): Acc=92.9% Prec=100.0% Rec=75.0%  |  без правила (n=16): Acc=81.2% Prec=100.0% Rec=50.0%
 
 east_t_head
-  all years  |  с правилом (n=33): Acc=75.8% Prec=93.8% Rec=68.2%  |  без правила (n=33): Acc=75.8% Prec=93.8% Rec=68.2%
-  2024-2025  |  с правилом (n=20): Acc=65.0% Prec=100.0% Rec=61.1%  |  без правила (n=20): Acc=65.0% Prec=100.0% Rec=61.1%
-  2026 only  |  с правилом (n=13): Acc=92.3% Prec=80.0% Rec=100.0%  |  без правила (n=13): Acc=92.3% Prec=80.0% Rec=100.0%
+  all years  |  с правилом (n=35): Acc=88.6% Prec=95.0% Rec=86.4%  |  без правила (n=35): Acc=88.6% Prec=95.0% Rec=86.4%
+  2024-2025  |  с правилом (n=20): Acc=85.0% Prec=100.0% Rec=83.3%  |  без правила (n=20): Acc=85.0% Prec=100.0% Rec=83.3%
+  2026 only  |  с правилом (n=15): Acc=93.3% Prec=80.0% Rec=100.0%  |  без правила (n=15): Acc=93.3% Prec=80.0% Rec=100.0%
 
 southeast_pier
   all years  |  с правилом (n=34): Acc=97.1% Prec=100.0% Rec=50.0%  |  без правила (n=34): Acc=97.1% Prec=100.0% Rec=50.0%
   2024-2025  |  с правилом (n=17): Acc=94.1% Prec=100.0% Rec=50.0%  |  без правила (n=17): Acc=94.1% Prec=100.0% Rec=50.0%
   2026 only  |  с правилом (n=17): Acc=100.0% Prec=nan% Rec=nan%  |  без правила (n=17): Acc=100.0% Prec=nan% Rec=nan%
+
+=== Confmat asserts ===
+  → 7 row(s) reclassified '?' by time-delta rule
+  TIME-DELTA reclassified: 0 FP→?, 7 FN→?
+    [FN→?] 2024-07-15 o101 sea_island Δt=7.2h L=0
+    [FN→?] 2025-01-11 o101 southeast_pier Δt=7.2h L=0
+    [FN→?] 2025-05-11 o101 sea_island Δt=7.2h L=0
+    [FN→?] 2025-08-29 o35 sea_island Δt=4.9h L=0
+    [FN→?] 2025-09-20 o101 sea_island Δt=7.2h L=0
+    [FN→?] 2025-10-08 o101 sea_island Δt=7.2h L=0
+    [FN→?] 2026-03-07 o101 sea_island Δt=7.2h L=0
+
+Berth                           OLD (SH)                    NEW asp≥3.0                   NEW asp≥2.5           Gate
+                        TP   FN   FP   TN    TP   FN   FP   TN    TP   FN   FP   TN   Prec30   Rec30  Prec25   Rec25
+--------------------------------------------------------------------------------------------------------------
+sea_island               9    0    0   18     9    0    0   18     9    0    0   18   100.0%  100.0%   100.0%  100.0%  OK
+east_t_head             15    5    0   12    19    3    1   12    19    3    1   12    95.0%   86.4%    95.0%   86.4%  OK
+southeast_pier           1    0    0   32     1    0    0   32     1    0    0   32   100.0%  100.0%   100.0%  100.0%  OK
+--------------------------------------------------------------------------------------------------------------
+=== PC assert gate passed (prec≥90%, rec not worse) — OK to proceed ===
