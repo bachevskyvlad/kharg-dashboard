@@ -44,8 +44,9 @@ BG_V3   = ROOT / "diagnostics" / "berth_v4" / "bg_v3"
 BG_V4   = ROOT / "diagnostics" / "berth_v4" / "bg_v4"
 # east_t_head o101 2026 background: median of optically-empty 2026 scenes.
 # Used for east_t_head o101 passes from BG_2026_CUTOFF onward.
-BG_2026_CUTOFF = "2026-08-15"
-BG_2026_PATH   = BG_V4 / "bg_o101_east_t_head_2026.npy"
+BG_2026_CUTOFF      = "2026-08-15"
+BG_2026_PATH        = BG_V4 / "bg_o101_east_t_head_2026.npy"
+BG_O35_2026_PATH    = BG_V4 / "bg_o35_east_t_head_2026.npy"
 OUT_DIR = ROOT / "diagnostics" / "berth_v4" / "history_v4"
 JSON_OUT = ROOT / "data" / "berth_occupancy.json"
 OUT_DIR.mkdir(parents=True, exist_ok=True)
@@ -657,6 +658,14 @@ def run(incremental=False):
         bg_cache[("east_t_head", 101, "2026")] = None
         print(f"  MISSING 2026 BG: {BG_2026_PATH.name} — will fall back to standard BG")
 
+    # 2026 BG for east_t_head o35 (median of Oct-Nov 2026 confirmed-empty o35 scenes)
+    if BG_O35_2026_PATH.exists():
+        bg_cache[("east_t_head", 35, "2026")] = np.load(BG_O35_2026_PATH)
+        print(f"  Loaded 2026 BG: {BG_O35_2026_PATH.name}")
+    else:
+        bg_cache[("east_t_head", 35, "2026")] = None
+        print(f"  MISSING 2026 BG: {BG_O35_2026_PATH.name} — will fall back to standard BG")
+
     cell_bboxes = {b: cell_bbox_for(*berth_center(pts)) for b, pts in BERTHS.items()}
     cell_dims   = {b: _bbox_dims(cell_bboxes[b], resolution=RESOLUTION) for b in BERTHS}
 
@@ -684,7 +693,12 @@ def run(incremental=False):
             if berth == "east_t_head" and orbit == 101 and date_str >= BG_2026_CUTOFF:
                 _bg26 = bg_cache.get(("east_t_head", 101, "2026"))
                 bg = _bg26 if _bg26 is not None else bg_cache.get((berth, orbit))
-                bg_src = "bg_v4_o101_2026" if bg_cache.get(("east_t_head", 101, "2026")) is not None else bg_source_cache.get((berth, orbit))
+                bg_src = "bg_v4_o101_2026" if _bg26 is not None else bg_source_cache.get((berth, orbit))
+            # east_t_head o35: switch to 2026 BG for dates ≥ BG_2026_CUTOFF
+            elif berth == "east_t_head" and orbit == 35 and date_str >= BG_2026_CUTOFF:
+                _bg26 = bg_cache.get(("east_t_head", 35, "2026"))
+                bg = _bg26 if _bg26 is not None else bg_cache.get((berth, orbit))
+                bg_src = "bg_v4_o35_2026" if _bg26 is not None else bg_source_cache.get((berth, orbit))
             else:
                 bg   = bg_cache.get((berth, orbit))
                 bg_src = bg_source_cache.get((berth, orbit))

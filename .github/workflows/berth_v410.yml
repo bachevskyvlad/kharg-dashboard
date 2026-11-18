@@ -28,7 +28,11 @@ on:
         required: false
         default: "no"
       build_bg_v4_o35:
-        description: "Build BG_V4 for orbit-35 east_t_head from Sept-Nov 2026 EMP scenes (yes/no)"
+        description: "Build BG_V4 for orbit-35 east_t_head from Oct-Nov 2026 EMP scenes (yes/no)"
+        required: false
+        default: "no"
+      build_bg_o101_2026:
+        description: "Rebuild east_t_head o101 2026 BG from Oct-Nov 2026 EMP scenes (yes/no)"
         required: false
         default: "no"
       v4_history:
@@ -188,12 +192,16 @@ jobs:
           path: diagnostics/berth_v4/ablation/
           retention-days: 90
 
-      - name: Build BG_V4 orbit-35 east_t_head (Sept-Nov 2026 EMP scenes)
+      - name: Build BG_V4 orbit-35 east_t_head (Oct-Nov 2026 EMP scenes)
         if: github.event.inputs.build_bg_v4_o35 == 'yes'
         run: python -u scripts/build_bg_v4_o35_eth.py
         env:
-          CLIENT_ID:        ${{ secrets.CLIENT_ID }}
-          CLIENT_SECRET:    ${{ secrets.CLIENT_SECRET }}
+          PYTHONUNBUFFERED: "1"
+
+      - name: Rebuild east_t_head o101 2026 BG (Oct-Nov 2026 EMP scenes)
+        if: github.event.inputs.build_bg_o101_2026 == 'yes'
+        run: python -u scripts/berth_build_bg_2026.py
+        env:
           PYTHONUNBUFFERED: "1"
 
       # Runs only if:

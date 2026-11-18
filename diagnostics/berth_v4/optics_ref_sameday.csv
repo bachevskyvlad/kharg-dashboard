@@ -38,6 +38,8 @@ date,orbit,s2_cloud_pct,sea_island_optical_ref,east_t_head_optical_ref,southeast
 2026-07-30,101,4.8,?,EMP,EMP
 2026-08-19,35,2.0,EMP,EMP,EMP
 2026-08-29,101,0.2,EMP,?,EMP
+2026-09-06,35,0.0,?,EMP,?
 2026-09-28,101,0.0,EMP,EMP,EMP
+2026-09-30,35,0.0,?,EMP,?
 2026-10-18,35,0.2,EMP,EMP,EMP
 2026-10-28,101,18.8,EMP,EMP,EMP

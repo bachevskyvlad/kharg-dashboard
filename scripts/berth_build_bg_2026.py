@@ -1,9 +1,10 @@
 """
 berth_build_bg_2026.py — build east_t_head o101 2026 background.
 
-Uses o101 scenes where east_t_head is optically EMPTY:
-  2026-09-28, 2026-10-18, 2026-10-28  (confirmed empty by optics)
-plus o35 EMP dates as a cross-check: pier is structurally empty on those dates.
+Uses o101 scenes where east_t_head is optically/logically EMPTY:
+  2026-09-28  (optics confirmed EMP)
+  2026-10-28  (optics confirmed EMP)
+  all o101 candidate passes Oct–Nov 2026 (Oct-Nov 2026 = 0 visits confirmed)
 Median of linear-scale patches → bg_o101_east_t_head_2026.npy
 
 This BG is used for east_t_head o101 passes from 2026-08-15 onward, absorbing
@@ -28,11 +29,23 @@ BERTH        = "east_t_head"
 ORBIT        = 101
 OUT_PATH     = BG_V4 / "bg_o101_east_t_head_2026.npy"
 
-# o101 dates where east_t_head is optically empty (2026)
+# o101 candidate dates where east_t_head is empty.
+# 2026-09-28 and 2026-10-28 confirmed by optics; all Oct-Nov 2026 o101 passes
+# are empty (0 visits confirmed for Oct-Nov 2026).
+# Sentinel-1 orbit-101 revisit ~6 days; list all candidates, fetch will skip
+# dates where no scene exists.
 EMPTY_DATES = [
-    "2026-09-28",   # optics empty
-    "2026-10-18",   # optics empty
-    "2026-10-28",   # optics: EMPTY confirmed
+    "2026-09-28",   # optics confirmed EMP
+    "2026-10-04",
+    "2026-10-10",
+    "2026-10-16",
+    "2026-10-22",
+    "2026-10-28",   # optics confirmed EMP
+    "2026-11-03",
+    "2026-11-09",
+    "2026-11-15",
+    "2026-11-21",
+    "2026-11-27",
 ]
 
 def main():
