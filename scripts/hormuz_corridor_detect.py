@@ -26,7 +26,9 @@ import argparse
 import io
 import os
 import sys
+import time
 import zipfile
+from concurrent.futures import ThreadPoolExecutor, TimeoutError as FuturesTimeout
 from datetime import date, datetime, timedelta
 from pathlib import Path
 
@@ -68,9 +70,13 @@ def _pc_client():
         modifier=planetary_computer.sign_inplace,
     )
 
-def _fetch_scene(date_str):
-    """Return (arr_linear, item) or (None, None) for the first orbit-93 scene on date_str."""
-    import time
+def _fetch_scene_inner(date_str):
+    """Fetches scene without timeout — called inside a thread with hard timeout."""
+    import rasterio
+    from rasterio.warp import reproject, Resampling
+    from rasterio.transform import from_bounds
+    from rasterio.crs import CRS as RioCRS
+
     client = _pc_client()
     search = client.search(
         collections=["sentinel-1-rtc"],
@@ -78,30 +84,11 @@ def _fetch_scene(date_str):
         datetime=f"{date_str}/{date_str}",
         query={"sat:relative_orbit": {"eq": ORBIT}},
     )
-    items = None
-    for attempt in range(4):
-        try:
-            items = list(search.items())
-            break
-        except Exception as e:
-            if attempt < 3:
-                wait = 30 * (2 ** attempt)
-                print(f"  PC API error ({e}), retry in {wait}s…")
-                time.sleep(wait)
-            else:
-                print(f"  PC API failed after 4 attempts: {e}")
-                return None, None
-    if items is None:
-        return None, None
+    items = list(search.items())
     if not items:
         return None, None
     items.sort(key=lambda x: x.datetime or "", reverse=True)
     item = items[0]
-
-    import rasterio
-    from rasterio.warp import reproject, Resampling
-    from rasterio.transform import from_bounds
-    from rasterio.crs import CRS as RioCRS
 
     lat_mid  = (BBOX_WGS84[1] + BBOX_WGS84[3]) / 2
     width_m  = (BBOX_WGS84[2] - BBOX_WGS84[0]) * 111320 * np.cos(np.deg2rad(lat_mid))
@@ -116,23 +103,40 @@ def _fetch_scene(date_str):
 
     dst_crs       = RioCRS.from_epsg(4326)
     dst_transform = from_bounds(*BBOX_WGS84, tw, th)
-    try:
-        with rasterio.open(asset.href) as src:
-            out = np.zeros((th, tw), dtype=np.float32)
-            reproject(
-                source=rasterio.band(src, 1),
-                destination=out,
-                src_transform=src.transform,
-                src_crs=src.crs,
-                dst_transform=dst_transform,
-                dst_crs=dst_crs,
-                resampling=Resampling.bilinear,
-            )
-        out = np.where(out <= 0, np.float32(1e-10), out)
-        return out, item
-    except Exception as e:
-        print(f"  rasterio error: {e}")
-        return None, item
+    with rasterio.open(asset.href) as src:
+        out = np.zeros((th, tw), dtype=np.float32)
+        reproject(
+            source=rasterio.band(src, 1),
+            destination=out,
+            src_transform=src.transform,
+            src_crs=src.crs,
+            dst_transform=dst_transform,
+            dst_crs=dst_crs,
+            resampling=Resampling.bilinear,
+        )
+    out = np.where(out <= 0, np.float32(1e-10), out)
+    return out, item
+
+
+def _fetch_scene(date_str, _timeout=120):
+    """Return (arr_linear, item) or (None, None) for the first orbit-93 scene on date_str."""
+    for attempt in range(4):
+        with ThreadPoolExecutor(max_workers=1) as ex:
+            fut = ex.submit(_fetch_scene_inner, date_str)
+            try:
+                return fut.result(timeout=_timeout)
+            except FuturesTimeout:
+                msg = f"PC API timed out after {_timeout}s"
+            except Exception as e:
+                msg = str(e)
+        if attempt < 3:
+            wait = 30 * (2 ** attempt)
+            print(f"  {msg}, retry in {wait}s…")
+            time.sleep(wait)
+        else:
+            print(f"  PC API failed after 4 attempts: {msg}")
+            return None, None
+    return None, None
 
 # ── Land mask (Natural Earth 10m) ─────────────────────────────────────────
 
