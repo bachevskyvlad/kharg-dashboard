@@ -1,4 +1,4 @@
-import { verifyApiKey, apiError, apiJson, apiCsv } from '../../_auth.js';
+import { verifyApiKey, apiError, apiJson, apiCsv } from '../_auth.js';
 
 const BARREL_PER_M3 = 6.2898;
 const TANK_HEIGHT_MIN = 2;
@@ -43,5 +43,5 @@ export async function onRequest(context) {
   });
   const cols = ["date","tank_id","vol_mn_bbl"];
   if (fmt === "csv") return apiCsv(records, cols);
-  return apiJson({ count: records.length, records });
+  return apiJson({ count: records.length, records: records });
 }

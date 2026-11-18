@@ -1,4 +1,4 @@
-import { verifyApiKey, apiError, apiJson, apiCsv } from '../../_auth.js';
+import { verifyApiKey, apiError, apiJson, apiCsv } from '../_auth.js';
 
 const COLS = ['date','vlcc','suezmax','aframax','mr','total'];
 
