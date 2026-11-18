@@ -1,1 +1,29 @@
-aW1wb3J0IHsgdmVyaWZ5QXBpS2V5LCBhcGlFcnJvciwgYXBpSnNvbiwgYXBpQ3N2IH0gZnJvbSAnLi4vX2F1dGguanMnOwoKY29uc3QgQ09MUyA9IFsnZGF0ZScsJ3ZsY2MnLCdzdWV6bWF4JywnYWZyYW1heCcsJ21yJywndG90YWwnXTsKCmV4cG9ydCBhc3luYyBmdW5jdGlvbiBvblJlcXVlc3QoY29udGV4dCkgewogIGNvbnN0IHsgcmVxdWVzdCB9ID0gY29udGV4dDsKICBpZiAocmVxdWVzdC5tZXRob2QgPT09ICdPUFRJT05TJykgcmV0dXJuIG5ldyBSZXNwb25zZShudWxsLCB7IHN0YXR1czogMjA0LCBoZWFkZXJzOiB7ICdBY2Nlc3MtQ29udHJvbC1BbGxvdy1PcmlnaW4nOiAnKicgfSB9KTsKCiAgY29uc3QgYXV0aCA9IGF3YWl0IHZlcmlmeUFwaUtleShyZXF1ZXN0LCBjb250ZXh0LmVudik7CiAgaWYgKCFhdXRoLm9rKSByZXR1cm4gYXBpRXJyb3IoYXV0aC5lcnJvcik7CgogIGNvbnN0IHVybCA9IG5ldyBVUkwocmVxdWVzdC51cmwpOwogIGNvbnN0IGZyb20gPSB1cmwuc2VhcmNoUGFyYW1zLmdldCgnZnJvbScpOwogIGNvbnN0IHRvICAgPSB1cmwuc2VhcmNoUGFyYW1zLmdldCgndG8nKTsKICBjb25zdCBmbXQgID0gdXJsLnNlYXJjaFBhcmFtcy5nZXQoJ2Zvcm1hdCcpIHx8ICdqc29uJzsKCiAgbGV0IGpzb247CiAgdHJ5IHsKICAgIGNvbnN0IGFzc2V0VXJsID0gYCR7dXJsLnByb3RvY29sfS8vJHt1cmwuaG9zdH0vZGF0YS9hbmNob3JhZ2UuanNvbmA7CiAgICBqc29uID0gYXdhaXQgKGF3YWl0IGNvbnRleHQuZW52LkFTU0VUUy5mZXRjaChuZXcgUmVxdWVzdChhc3NldFVybCkpKS5qc29uKCk7CiAgfSBjYXRjaCB7IHJldHVybiBhcGlFcnJvcignRGF0YSB1bmF2YWlsYWJsZScsIDUwMyk7IH0KCiAgbGV0IHJvd3MgPSAoanNvbi5yZWNvcmRzIHx8IFtdKS5tYXAociA9PiAoeyBkYXRlOnIuZGF0ZSwgdmxjYzpyLnZsY2MsIHN1ZXptYXg6ci5zdWV6bWF4LCBhZnJhbWF4OnIuYWZyYW1heCwgbXI6ci5tciwgdG90YWw6ci50b3RhbCB9KSk7CiAgaWYgKGZyb20pIHJvd3MgPSByb3dzLmZpbHRlcihyID0+IHIuZGF0ZSA+PSBmcm9tKTsKICBpZiAodG8pICAgcm93cyA9IHJvd3MuZmlsdGVyKHIgPT4gci5kYXRlIDw9IHRvKTsKCiAgaWYgKGZtdCA9PT0gJ2NzdicpIHJldHVybiBhcGlDc3Yocm93cywgQ09MUyk7CiAgcmV0dXJuIGFwaUpzb24oeyB1cGRhdGVkOiBqc29uLnVwZGF0ZWQsIGNvdW50OiByb3dzLmxlbmd0aCwgcmVjb3Jkczogcm93cyB9KTsKfQo=
+import { verifyApiKey, apiError, apiJson, apiCsv } from '../_auth.js';
+
+const COLS = ['date','vlcc','suezmax','aframax','mr','total'];
+
+export async function onRequest(context) {
+  const { request } = context;
+  if (request.method === 'OPTIONS') return new Response(null, { status: 204, headers: { 'Access-Control-Allow-Origin': '*' } });
+
+  const auth = await verifyApiKey(request, context.env);
+  if (!auth.ok) return apiError(auth.error);
+
+  const url = new URL(request.url);
+  const from = url.searchParams.get('from');
+  const to   = url.searchParams.get('to');
+  const fmt  = url.searchParams.get('format') || 'json';
+
+  let json;
+  try {
+    const assetUrl = `${url.protocol}//${url.host}/data/anchorage.json`;
+    json = await (await context.env.ASSETS.fetch(new Request(assetUrl))).json();
+  } catch { return apiError('Data unavailable', 503); }
+
+  let rows = (json.records || []).map(r => ({ date:r.date, vlcc:r.vlcc, suezmax:r.suezmax, aframax:r.aframax, mr:r.mr, total:r.total }));
+  if (from) rows = rows.filter(r => r.date >= from);
+  if (to)   rows = rows.filter(r => r.date <= to);
+
+  if (fmt === 'csv') return apiCsv(rows, COLS);
+  return apiJson({ updated: json.updated, count: rows.length, records: rows });
+}
