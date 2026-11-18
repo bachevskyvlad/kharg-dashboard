@@ -2010,9 +2010,11 @@ function renderSPIChart(dates, spi) {
 }
 
 function renderMonthlyChart(dates, values) {
+    const _mcEl = document.getElementById('monthlyChart');
+    if (!_mcEl) return;
     const monthly = computeMonthly(dates, values);
     const data = monthly.map(m => parseFloat(m.change.toFixed(2)));
-    charts.monthly = new Chart(document.getElementById('monthlyChart').getContext('2d'), {
+    charts.monthly = new Chart(_mcEl.getContext('2d'), {
         type: 'bar',
         data: { labels: monthly.map(m => m.month), datasets: [{ label: 'Monthly Balance (Mb)', data,
             backgroundColor: data.map(v => v >= 0 ? 'rgba(220,38,38,0.6)' : 'rgba(5,150,105,0.6)'), borderWidth: 0, borderRadius: 3 }]},
