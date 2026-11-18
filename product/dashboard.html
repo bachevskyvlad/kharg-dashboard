@@ -585,7 +585,7 @@
             <div class="card" id="cVol">
                 <div class="card-label">Current Storage</div>
                 <div class="card-val" id="mVol">--<span class="cu"> Mb</span></div>
-                <div class="card-sub">of 31.78 Mb capacity</div>
+                <div class="card-sub" id="cVolSub">of 31.78 Mb capacity</div>
             </div>
             <div class="card" id="cEV">
                 <div class="card-label">Export Velocity</div>
@@ -1220,19 +1220,13 @@ async function setTerminal(id) {
     document.querySelectorAll('.tbtn-country').forEach(b =>
         b.classList.toggle('active', b.dataset.terminal === id));
 
-    if (id === 'jask') {
-        // Jask uses the Upstream rendering pipeline
-        _upTerminal = ''; // force reload even if already set
-        showSection('upstream');
-        setUpstreamTerminal('jask');
-        return;
-    }
-
     const t = COUNTRY_TERMINALS.find(x => x.id === id);
     if (!t || !t.file) {
-        // restore Kharg — allDates/allValues already hold it
+        // restore Kharg
         allDates = _khargDates.slice();
         allValues = _khargValues.slice();
+        MAX_CAP = 33.2;
+        document.getElementById('cVolSub').textContent = 'of 31.78 Mb capacity';
         render();
         return;
     }
@@ -1241,6 +1235,10 @@ async function setTerminal(id) {
         const d = await r.json();
         allDates  = d.dates  || [];
         allValues = d.values || [];
+        if (d.max_capacity_mb) {
+            MAX_CAP = d.max_capacity_mb;
+            document.getElementById('cVolSub').textContent = 'of ' + d.max_capacity_mb.toFixed(1) + ' Mb capacity';
+        }
         render();
     } catch (e) { console.error('setTerminal fetch failed', e); }
 }
