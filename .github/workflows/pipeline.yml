@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
     inputs:
       jobs:
-        description: "Jobs to run: comma-separated (tanks,terminals,prices,gas,anchorage,berths,hormuz) or 'all'"
+        description: "Jobs to run: comma-separated (tanks,terminals,prices,gas,anchorage,berths,hormuz,hormuz_corridor,jask_monitor) or 'all'"
         required: false
         default: "all"
       full_recalc:
@@ -460,10 +460,120 @@ jobs:
           fi
 
   # ──────────────────────────────────────────────────────────────
+  # hormuz_corridor: orbit-93 exit-corridor ship detection
+  # ──────────────────────────────────────────────────────────────
+  hormuz_corridor:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    if: >
+      (inputs.jobs || 'all') == 'all' ||
+      contains(inputs.jobs || 'all', 'hormuz_corridor')
+    outputs:
+      status: ${{ steps.outcome.outputs.status }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          pip install \
+            pystac-client planetary-computer \
+            rasterio scipy numpy shapely fiona \
+            requests supabase \
+            --quiet
+
+      - name: Backfill / incremental detect
+        id: detect
+        env:
+          SUPABASE_URL:            ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_KEY:    ${{ secrets.SUPABASE_SERVICE_KEY }}
+          PC_SDK_SUBSCRIPTION_KEY: ${{ secrets.PC_SDK_SUBSCRIPTION_KEY }}
+        run: python scripts/hormuz_corridor_detect.py --incremental
+
+      - name: Upload artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: hormuz-corridor-out
+          path: data/hormuz_corridor_ships.csv
+          retention-days: 7
+          if-no-files-found: warn
+
+      - name: Set outcome
+        id: outcome
+        if: always()
+        run: |
+          if [ "${{ steps.detect.outcome }}" = "failure" ]; then
+            echo "status=fail" >> "$GITHUB_OUTPUT"
+          else
+            echo "status=ok" >> "$GITHUB_OUTPUT"
+          fi
+
+  # ──────────────────────────────────────────────────────────────
+  # jask_monitor: orbit-57 Jask terminal + anchorage ship detection
+  # ──────────────────────────────────────────────────────────────
+  jask_monitor:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    if: >
+      (inputs.jobs || 'all') == 'all' ||
+      contains(inputs.jobs || 'all', 'jask_monitor')
+    outputs:
+      status: ${{ steps.outcome.outputs.status }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          pip install \
+            pystac-client planetary-computer \
+            rasterio scipy numpy shapely fiona \
+            requests supabase \
+            --quiet
+
+      - name: Backfill / incremental detect
+        id: detect
+        env:
+          SUPABASE_URL:            ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_KEY:    ${{ secrets.SUPABASE_SERVICE_KEY }}
+          PC_SDK_SUBSCRIPTION_KEY: ${{ secrets.PC_SDK_SUBSCRIPTION_KEY }}
+        run: python scripts/jask_ship_detect.py --incremental
+
+      - name: Upload artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: jask-monitor-out
+          path: data/jask_ship_obs.csv
+          retention-days: 7
+          if-no-files-found: warn
+
+      - name: Set outcome
+        id: outcome
+        if: always()
+        run: |
+          if [ "${{ steps.detect.outcome }}" = "failure" ]; then
+            echo "status=fail" >> "$GITHUB_OUTPUT"
+          else
+            echo "status=ok" >> "$GITHUB_OUTPUT"
+          fi
+
+  # ──────────────────────────────────────────────────────────────
   # collect: merge all artifacts → one commit to main
   # ──────────────────────────────────────────────────────────────
   collect:
-    needs: [tanks, terminals, prices, gas, anchorage, berths, hormuz]
+    needs: [tanks, terminals, prices, gas, anchorage, berths, hormuz, hormuz_corridor, jask_monitor]
     if: always()
     runs-on: ubuntu-latest
     timeout-minutes: 15
@@ -506,7 +616,9 @@ jobs:
           anchorage_s="${{ needs.anchorage.outputs.status || 'skip' }}"
           berths_s="${{ needs.berths.outputs.status || 'skip' }}"
           hormuz_s="${{ needs.hormuz.outputs.status || 'skip' }}"
-          SUMMARY="tanks $tanks_s, terminals $terminals_s, prices $prices_s, gas $gas_s, anchorage $anchorage_s, berths $berths_s, hormuz $hormuz_s"
+          hormuz_corridor_s="${{ needs.hormuz_corridor.outputs.status || 'skip' }}"
+          jask_monitor_s="${{ needs.jask_monitor.outputs.status || 'skip' }}"
+          SUMMARY="tanks $tanks_s, terminals $terminals_s, prices $prices_s, gas $gas_s, anchorage $anchorage_s, berths $berths_s, hormuz $hormuz_s, hormuz_corridor $hormuz_corridor_s, jask_monitor $jask_monitor_s"
           git commit -m "data: pipeline $(date -u +'%Y-%m-%d') [$SUMMARY]"
           git pull --rebase --autostash origin main
           git push
@@ -556,7 +668,7 @@ jobs:
   # notify: one Telegram message with per-job status
   # ──────────────────────────────────────────────────────────────
   notify:
-    needs: [tanks, terminals, prices, gas, anchorage, berths, hormuz]
+    needs: [tanks, terminals, prices, gas, anchorage, berths, hormuz, hormuz_corridor, jask_monitor]
     if: always()
     runs-on: ubuntu-latest
     timeout-minutes: 5
@@ -581,9 +693,12 @@ jobs:
           anchorage_s="${{ needs.anchorage.outputs.status || 'skip' }}"
           berths_s="${{ needs.berths.outputs.status || 'skip' }}"
           hormuz_s="${{ needs.hormuz.outputs.status || 'skip' }}"
-          TEXT=$(printf '%s tanks  %s terminals  %s prices\n%s gas  %s anchorage  %s berths  %s hormuz\n\n%s\n%s' \
+          hormuz_corridor_s="${{ needs.hormuz_corridor.outputs.status || 'skip' }}"
+          jask_monitor_s="${{ needs.jask_monitor.outputs.status || 'skip' }}"
+          TEXT=$(printf '%s tanks  %s terminals  %s prices\n%s gas  %s anchorage  %s berths  %s hormuz\n%s hormuz_corridor  %s jask_monitor\n\n%s\n%s' \
             "$(icon "$tanks_s")" "$(icon "$terminals_s")" "$(icon "$prices_s")" \
             "$(icon "$gas_s")" "$(icon "$anchorage_s")" "$(icon "$berths_s")" "$(icon "$hormuz_s")" \
+            "$(icon "$hormuz_corridor_s")" "$(icon "$jask_monitor_s")" \
             "$(date -u +'%Y-%m-%d %H:%M UTC')" \
             "https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}")
           curl -s -X POST "https://api.telegram.org/bot${TG_BOT}/sendMessage" \
