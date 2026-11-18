@@ -1,0 +1,62 @@
+name: Migrate — Hormuz corridor + Jask monitor tables
+
+on:
+  workflow_dispatch: {}
+
+jobs:
+  migrate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Create hormuz_corridor_ships and jask_ship_obs
+        env:
+          SUPABASE_URL:         ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+        run: |
+          set -euo pipefail
+          if [ -z "$SUPABASE_URL" ]; then echo "FATAL: SUPABASE_URL missing"; exit 1; fi
+          if [ -z "$SUPABASE_SERVICE_KEY" ]; then echo "FATAL: SUPABASE_SERVICE_KEY missing"; exit 1; fi
+
+          DB_URL="${SUPABASE_URL%/}/rest/v1/rpc/exec_sql"
+
+          run_sql() {
+            local sql="$1"
+            local label="$2"
+            echo "--- $label ---"
+            resp=$(curl -sf -X POST "$DB_URL" \
+              -H "apikey: $SUPABASE_SERVICE_KEY" \
+              -H "Authorization: Bearer $SUPABASE_SERVICE_KEY" \
+              -H "Content-Type: application/json" \
+              -d "{\"query\": $(printf '%s' "$sql" | python3 -c 'import json,sys; print(json.dumps(sys.stdin.read()))')}" \
+              2>&1) && echo "OK: $resp" || echo "WARN (may already exist): $resp"
+          }
+
+          run_sql "
+          CREATE TABLE IF NOT EXISTS hormuz_corridor_ships (
+            date             date        NOT NULL,
+            orbit            smallint    NOT NULL DEFAULT 93,
+            vlcc             smallint    NOT NULL DEFAULT 0,
+            mid              smallint    NOT NULL DEFAULT 0,
+            small            smallint    NOT NULL DEFAULT 0,
+            stationary_vlcc  smallint    NOT NULL DEFAULT 0,
+            stationary_mid   smallint    NOT NULL DEFAULT 0,
+            scene_id         text        NOT NULL DEFAULT '',
+            created_at       timestamptz NOT NULL DEFAULT now(),
+            PRIMARY KEY (date, orbit)
+          );" "hormuz_corridor_ships"
+
+          run_sql "
+          CREATE TABLE IF NOT EXISTS jask_ship_obs (
+            date       date        NOT NULL,
+            orbit      smallint    NOT NULL DEFAULT 57,
+            zone       text        NOT NULL,
+            vlcc       smallint    NOT NULL DEFAULT 0,
+            mid        smallint    NOT NULL DEFAULT 0,
+            small      smallint    NOT NULL DEFAULT 0,
+            stationary smallint    NOT NULL DEFAULT 0,
+            scene_id   text        NOT NULL DEFAULT '',
+            created_at timestamptz NOT NULL DEFAULT now(),
+            PRIMARY KEY (date, orbit, zone)
+          );" "jask_ship_obs"
+
+          echo "Migration done."
