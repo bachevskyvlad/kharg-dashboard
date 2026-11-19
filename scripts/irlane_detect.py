@@ -234,11 +234,15 @@ def _detect_ships(arr, valid_mask):
     db[land_mask] = np.nan
     db[~valid_mask] = np.nan
 
-    sea_px = db[np.isfinite(db)]
-    if sea_px.size < 100:
+    sea_db = db[np.isfinite(db)]
+    if sea_db.size < 100:
         return []
 
-    threshold = float(np.median(sea_px)) + max(10.0, 5.0 * float(sea_px.std()))
+    median_db = float(np.median(sea_db))
+    # robust background sigma: pixels below median+6dB only (excludes ships)
+    bg_px = sea_db[sea_db < median_db + 6.0]
+    sigma_db = float(bg_px.std()) if bg_px.size > 10 else 1.0
+    threshold = median_db + max(10.0, 5.0 * sigma_db)
 
     lon_range = BBOX[2] - BBOX[0]
     lat_range = BBOX[3] - BBOX[1]
@@ -247,6 +251,7 @@ def _detect_ships(arr, valid_mask):
     m_per_lat = 111320
 
     bright  = np.where(np.isfinite(db), db > threshold, False)
+    # Note: land_mask already zeroed in db above, so bright never fires on masked pixels
     labeled, n = ndlabel(bright)
 
     ships = []
