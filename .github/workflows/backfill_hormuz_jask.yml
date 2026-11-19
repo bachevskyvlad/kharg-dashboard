@@ -116,7 +116,7 @@ jobs:
           python-version: "3.11"
 
       - name: Install dependencies
-        run: pip install requests numpy --quiet
+        run: pip install requests numpy scipy --quiet
 
       - name: Delete Jask rows from DB
         env:
