@@ -8,7 +8,7 @@ on:
         required: false
         default: "2025-01-01"
       job:
-        description: "Which job: hormuz_corridor | jask_monitor | both"
+        description: "Which job: hormuz_corridor | jask_monitor | both | cleanup_jask"
         required: false
         default: "both"
 
@@ -41,13 +41,6 @@ jobs:
         env:
           PC_SDK_SUBSCRIPTION_KEY: ${{ secrets.PC_SDK_SUBSCRIPTION_KEY }}
         run: python scripts/hormuz_corridor_detect.py --backfill ${{ inputs.from_date || '2025-01-01' }}
-
-      - name: Write to DB
-        if: always()
-        env:
-          SUPABASE_URL:         ${{ secrets.SUPABASE_URL }}
-          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
-        run: python scripts/hormuz_corridor_detect.py --write-db
 
       - name: Upload CSV
         if: always()
@@ -93,13 +86,6 @@ jobs:
           PC_SDK_SUBSCRIPTION_KEY: ${{ secrets.PC_SDK_SUBSCRIPTION_KEY }}
         run: python scripts/jask_ship_detect.py --backfill ${{ inputs.from_date || '2025-01-01' }}
 
-      - name: Write to DB
-        if: always()
-        env:
-          SUPABASE_URL:         ${{ secrets.SUPABASE_URL }}
-          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
-        run: python scripts/jask_ship_detect.py --write-db
-
       - name: Upload CSV
         if: always()
         uses: actions/upload-artifact@v4
@@ -115,3 +101,25 @@ jobs:
           name: jask-monitor-jsonl
           path: diagnostics/jask_ship_obs.jsonl
           retention-days: 30
+
+  jask_cleanup:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    if: (inputs.job || 'both') == 'cleanup_jask'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: claude/oilradar-dashboard-iran-zchdva
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install requests
+        run: pip install requests --quiet
+
+      - name: Delete Jask rows from DB
+        env:
+          SUPABASE_URL:         ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+        run: python scripts/jask_ship_detect.py --delete-db

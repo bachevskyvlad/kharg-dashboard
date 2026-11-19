@@ -126,7 +126,8 @@ def _read_scene(href):
             resampling=Resampling.average,
         ) as vrt:
             arr = vrt.read(1).astype(np.float32)
-    return np.where(arr <= 0, np.float32(1e-10), arr)
+    valid_mask = arr > 0
+    return np.where(arr <= 0, np.float32(1e-10), arr), valid_mask
 
 # ── Detection ──────────────────────────────────────────────────────────────────
 
@@ -207,7 +208,7 @@ def _mark_stationary(ships_now, ships_prev):
 
 # ── STAC discovery ─────────────────────────────────────────────────────────────
 
-def _discover_dates(date_from, date_to, max_items=200):
+def _discover_dates(date_from, date_to, max_items=2000):
     import pystac_client
     import planetary_computer
     cat = pystac_client.Client.open(
@@ -242,18 +243,35 @@ def _process_date(date_str):
             bbox=BBOX,
             datetime=f"{date_str}/{date_str}",
             query={"sat:relative_orbit": {"eq": ORBIT}},
-            max_items=5,
+            max_items=10,
         )
-        items = sorted(search.items(), key=lambda x: x.datetime or "", reverse=True)
+        items = list(search.items())
         if not items:
             return date_str, [], ""
-        item = items[0]
-        asset = item.assets.get("vv") or item.assets.get("VV")
-        if asset is None:
-            return date_str, [], item.id
-        arr   = _read_scene(asset.href)
-        ships = _detect_ships(arr)
-        return date_str, ships, item.id
+
+        land_mask = _get_land_mask()
+        sea_total = int((~land_mask).sum())
+
+        best_item = None
+        best_arr  = None
+        best_cov  = -1.0
+
+        for item in items:
+            asset = item.assets.get("vv") or item.assets.get("VV")
+            if asset is None:
+                continue
+            arr, valid_mask = _read_scene(asset.href)
+            cov = int((valid_mask & ~land_mask).sum()) / sea_total if sea_total > 0 else 0.0
+            if cov > best_cov:
+                best_cov  = cov
+                best_arr  = arr
+                best_item = item
+
+        if best_cov < 0.9:
+            return date_str, None, f"coverage={best_cov:.2f}<0.9"
+
+        ships = _detect_ships(best_arr)
+        return date_str, ships, best_item.id
     except Exception as e:
         return date_str, None, str(e)
 
@@ -379,9 +397,24 @@ def main():
     mode.add_argument("--backfill",    metavar="DATE")
     mode.add_argument("--incremental", action="store_true")
     mode.add_argument("--write-db",    action="store_true")
+    mode.add_argument("--delete-db",   action="store_true")
     args = ap.parse_args()
 
     today = date.today().isoformat()
+
+    if args.delete_db:
+        if not SUPABASE_URL or not SUPABASE_SERVICE_KEY:
+            sys.exit("FATAL: SUPABASE_URL or SUPABASE_SERVICE_KEY empty")
+        r = requests.delete(
+            f"{SUPABASE_URL}/rest/v1/{TABLE}?orbit=eq.{ORBIT}",
+            headers={
+                "apikey": SUPABASE_SERVICE_KEY,
+                "Authorization": f"Bearer {SUPABASE_SERVICE_KEY}",
+            },
+            timeout=30,
+        )
+        print(f"DELETE {r.status_code}: {r.text[:300]}")
+        return
 
     if args.write_db:
         import csv as _csv
