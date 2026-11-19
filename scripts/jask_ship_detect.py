@@ -131,10 +131,11 @@ def _read_scene(href):
 
 # ── Detection ──────────────────────────────────────────────────────────────────
 
-def _detect_ships(arr):
+def _detect_ships(arr, valid_mask):
     land_mask = _get_land_mask()
     db = 10.0 * np.log10(arr)
     db[land_mask] = np.nan
+    db[~valid_mask] = np.nan  # nodata pixels must not enter sea statistics
 
     sea_px = db[np.isfinite(db)]
     if sea_px.size < 100:
@@ -187,10 +188,11 @@ def _detect_ships(arr):
         if zone is None:
             continue
 
+        aspect = length_m / width_m
         cls = "vlcc" if length_m >= VLCC_MIN_M else ("mid" if length_m >= MID_MIN_M else "small")
         ships.append({
             "cx_lon": cx_lon, "cy_lat": cy_lat,
-            "length_m": length_m, "cls": cls, "zone": zone,
+            "length_m": length_m, "aspect": aspect, "cls": cls, "zone": zone,
         })
     return ships
 
@@ -272,9 +274,10 @@ def _process_date(date_str):
         land_mask = _get_land_mask()
         sea_total = int((~land_mask).sum())
 
-        best_item = None
-        best_arr  = None
-        best_cov  = -1.0
+        best_item  = None
+        best_arr   = None
+        best_valid = None
+        best_cov   = -1.0
 
         for item in items:
             asset = item.assets.get("vv") or item.assets.get("VV")
@@ -283,14 +286,15 @@ def _process_date(date_str):
             arr, valid_mask = _read_scene(asset.href)
             cov = int((valid_mask & ~land_mask).sum()) / sea_total if sea_total > 0 else 0.0
             if cov > best_cov:
-                best_cov  = cov
-                best_arr  = arr
-                best_item = item
+                best_cov   = cov
+                best_arr   = arr
+                best_valid = valid_mask
+                best_item  = item
 
         if best_cov < 0.9:
             return date_str, None, f"coverage={best_cov:.2f}<0.9"
 
-        ships = _detect_ships(best_arr)
+        ships = _detect_ships(best_arr, best_valid)
         return date_str, ships, best_item.id
     except Exception as e:
         return date_str, None, str(e)
@@ -413,6 +417,73 @@ def _jsonl_to_csv():
         w.writeheader()
         w.writerows(rows)
 
+# ── Debug: single-date ship list ──────────────────────────────────────────────
+
+def run_debug_date(date_str):
+    """Print per-ship table (lat, lon, length_m, aspect, zone, cls) + coverage stats."""
+    import pystac_client
+    import planetary_computer
+
+    print(f"\n=== DEBUG {date_str} orbit-{ORBIT} ===")
+    cat = pystac_client.Client.open(
+        "https://planetarycomputer.microsoft.com/api/stac/v1",
+        modifier=planetary_computer.sign_inplace,
+    )
+    search = cat.search(
+        collections=["sentinel-1-rtc"],
+        bbox=BBOX,
+        datetime=f"{date_str}/{date_str}",
+        query={"sat:relative_orbit": {"eq": ORBIT}},
+        max_items=10,
+    )
+    items = list(search.items())
+    if not items:
+        print("  No items found")
+        return
+
+    land_mask = _get_land_mask()
+    sea_total = int((~land_mask).sum())
+
+    print(f"  Items found: {len(items)}")
+    for item in items:
+        asset = item.assets.get("vv") or item.assets.get("VV")
+        if asset is None:
+            continue
+        arr, valid_mask = _read_scene(asset.href)
+        cov = int((valid_mask & ~land_mask).sum()) / sea_total if sea_total > 0 else 0.0
+
+        # Per-subzone coverage
+        from rasterio.transform import from_bounds
+        transform_full = from_bounds(*BBOX, W, H)
+        for zname, zb in SUBZONES.items():
+            # Build pixel mask for subzone
+            lons = np.linspace(BBOX[0] + 0.5*(BBOX[2]-BBOX[0])/W,
+                               BBOX[2] - 0.5*(BBOX[2]-BBOX[0])/W, W)
+            lats = np.linspace(BBOX[3] - 0.5*(BBOX[3]-BBOX[1])/H,
+                               BBOX[1] + 0.5*(BBOX[3]-BBOX[1])/H, H)
+            lon_grid, lat_grid = np.meshgrid(lons, lats)
+            zone_px = ((lon_grid >= zb[0]) & (lon_grid <= zb[2]) &
+                       (lat_grid >= zb[1]) & (lat_grid <= zb[3]))
+            z_sea   = int((zone_px & ~land_mask).sum())
+            z_valid = int((zone_px & ~land_mask & valid_mask).sum())
+            z_cov   = z_valid / z_sea if z_sea > 0 else 0.0
+            print(f"    subzone {zname}: sea_px={z_sea}, valid_sea_px={z_valid}, cov={z_cov:.3f}")
+
+        print(f"  scene={item.id}  overall_cov={cov:.3f}")
+
+        if cov < 0.9:
+            print(f"  SKIP: coverage {cov:.3f} < 0.9")
+            continue
+
+        ships = _detect_ships(arr, valid_mask)
+        print(f"  Ships detected: {len(ships)}")
+        if ships:
+            print(f"  {'lat':>9} {'lon':>9} {'length_m':>9} {'aspect':>7} {'zone':>12} {'cls':>6}")
+            for s in sorted(ships, key=lambda x: (x["zone"], x["cy_lat"])):
+                print(f"  {s['cy_lat']:>9.5f} {s['cx_lon']:>9.5f} {s['length_m']:>9.1f}"
+                      f" {s['aspect']:>7.2f} {s['zone']:>12} {s['cls']:>6}")
+
+
 # ── Supabase ───────────────────────────────────────────────────────────────────
 
 def _sb_headers():
@@ -446,9 +517,14 @@ def main():
     mode.add_argument("--incremental", action="store_true")
     mode.add_argument("--write-db",    action="store_true")
     mode.add_argument("--delete-db",   action="store_true")
+    mode.add_argument("--debug-date",  metavar="DATE")
     args = ap.parse_args()
 
     today = date.today().isoformat()
+
+    if args.debug_date:
+        run_debug_date(args.debug_date)
+        return
 
     if args.delete_db:
         if not SUPABASE_URL or not SUPABASE_SERVICE_KEY:

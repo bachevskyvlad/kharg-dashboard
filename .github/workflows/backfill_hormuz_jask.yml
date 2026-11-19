@@ -8,9 +8,13 @@ on:
         required: false
         default: "2025-01-01"
       job:
-        description: "Which job: hormuz_corridor | jask_monitor | both | cleanup_jask"
+        description: "Which job: hormuz_corridor | jask_monitor | both | cleanup_jask | debug_dates"
         required: false
         default: "both"
+      debug_date:
+        description: "Date for debug_dates job (YYYY-MM-DD)"
+        required: false
+        default: ""
 
 jobs:
 
@@ -113,6 +117,39 @@ jobs:
           name: jask-monitor-jsonl
           path: diagnostics/jask_ship_obs.jsonl
           retention-days: 30
+
+  debug_dates:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    if: (inputs.job || 'both') == 'debug_dates'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: claude/oilradar-dashboard-iran-zchdva
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          pip install \
+            pystac-client planetary-computer \
+            rasterio scipy numpy shapely fiona \
+            requests \
+            --quiet
+
+      - name: Debug corridor
+        env:
+          PC_SDK_SUBSCRIPTION_KEY: ${{ secrets.PC_SDK_SUBSCRIPTION_KEY }}
+        run: |
+          python scripts/hormuz_corridor_detect.py --debug-date ${{ inputs.debug_date }}
+
+      - name: Debug jask
+        env:
+          PC_SDK_SUBSCRIPTION_KEY: ${{ secrets.PC_SDK_SUBSCRIPTION_KEY }}
+        run: |
+          python scripts/jask_ship_detect.py --debug-date ${{ inputs.debug_date }}
 
   jask_cleanup:
     runs-on: ubuntu-latest
