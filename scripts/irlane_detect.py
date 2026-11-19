@@ -29,9 +29,11 @@ ORBIT      = 93
 BBOX       = [56.55, 26.50, 57.10, 27.00]
 RESOLUTION = 25  # metres
 
-HULL_MIN_M    = 150
+HULL_MIN_M    = 150   # minimum detectable hull
 HULL_MAX_M    = 450
-VLCC_MIN_M    = 220
+SMALL_MAX_M   = 220   # small: 150–220 m
+LARGE_MIN_M   = 220   # large: ≥220 m (also used for moving/stay check)
+VLCC_MIN_M    = 300   # vlcc: ≥300 m
 ASPECT_MIN    = 2.0
 PREV_PASS_KM  = 1.5   # radius for moving/stay comparison
 SCENE_TIMEOUT = 120
@@ -289,7 +291,7 @@ def _detect_ships(arr, valid_mask):
 
 def _count_moving(ships_now, prev_positions):
     """
-    moving: ship in ships_now where no prev ship with length >= VLCC_MIN_M
+    moving: ship in ships_now where no prev ship with length >= LARGE_MIN_M
     is within PREV_PASS_KM.
     Returns (moving_count, stay_count).
     """
@@ -302,7 +304,7 @@ def _count_moving(ships_now, prev_positions):
     for s in ships_now:
         found_large_nearby = False
         for p in prev_positions:
-            if p["length_m"] < VLCC_MIN_M:
+            if p["length_m"] < LARGE_MIN_M:
                 continue
             dlat_m = (s["cy_lat"] - p["cy_lat"]) * m_per_lat
             dlon_m = (s["cx_lon"] - p["cx_lon"]) * m_per_lon
@@ -465,8 +467,9 @@ def run_backfill(dates):
                 prev_pos = results_by_date.get(prev_key, [])
 
                 moving, stay = _count_moving(ships, prev_pos)
-                large = len(ships)
-                vlcc  = sum(1 for s in ships if s["length_m"] >= VLCC_MIN_M)
+                small  = sum(1 for s in ships if s["length_m"] < LARGE_MIN_M)
+                large  = sum(1 for s in ships if s["length_m"] >= LARGE_MIN_M)
+                vlcc   = sum(1 for s in ships if s["length_m"] >= VLCC_MIN_M)
                 n_ok += 1
 
                 positions = [{"cx_lon": s["cx_lon"], "cy_lat": s["cy_lat"],
@@ -475,14 +478,14 @@ def run_backfill(dates):
 
                 row = {
                     "date": d, "orbit": ORBIT,
-                    "large": large, "vlcc": vlcc,
+                    "small": small, "large": large, "vlcc": vlcc,
                     "moving": moving, "stay": stay,
                     "scene_id": scene_id,
                     "positions": positions,
                 }
                 jf.write(json.dumps(row) + "\n")
                 jf.flush()
-                print(f"  {d}: ok {large} ships  (vlcc={vlcc} moving={moving} stay={stay})")
+                print(f"  {d}: ok  small={small} large={large} vlcc={vlcc} moving={moving} stay={stay}")
 
     print(f"\ntotal={len(todo)} ok={n_ok} skip={n_skip} err={n_err}")
     _jsonl_to_csv()
@@ -502,7 +505,7 @@ def _jsonl_to_csv():
         return
     rows.sort(key=lambda r: r["date"])
     with open(CSV_PATH, "w", newline="") as f:
-        w = csv.DictWriter(f, fieldnames=["date", "large", "vlcc", "moving", "stay", "scene_id"],
+        w = csv.DictWriter(f, fieldnames=["date", "large", "vlcc", "small", "moving", "stay", "scene_id"],
                            extrasaction="ignore")
         w.writeheader()
         w.writerows(rows)
