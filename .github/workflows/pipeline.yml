@@ -13,6 +13,10 @@ on:
         description: "berths: full history recalculation (drop --incremental flag)"
         required: false
         default: "false"
+      gulf_exit_backfill:
+        description: "gulf_exit: run --backfill instead of --incremental"
+        required: false
+        default: "false"
 
 concurrency:
   group: pipeline
@@ -591,7 +595,12 @@ jobs:
         env:
           SUPABASE_URL:         ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
-        run: python scripts/gulf_exit_pipeline.py --incremental
+        run: |
+          if [ "${{ inputs.gulf_exit_backfill }}" = "true" ]; then
+            python scripts/gulf_exit_pipeline.py --backfill
+          else
+            python scripts/gulf_exit_pipeline.py --incremental
+          fi
 
       - name: Set outcome
         id: outcome
