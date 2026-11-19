@@ -193,24 +193,44 @@ def _mark_stationary(ships_now, ships_prev):
 
 # ── STAC discovery ─────────────────────────────────────────────────────────────
 
-def _discover_dates(date_from, date_to, max_items=2000):
+def _discover_dates(date_from, date_to):
+    """Search month-by-month (max_items=100 per month) to avoid duplicate frames eating the global limit."""
     import pystac_client
     import planetary_computer
+    from calendar import monthrange
+
     cat = pystac_client.Client.open(
         "https://planetarycomputer.microsoft.com/api/stac/v1",
         modifier=planetary_computer.sign_inplace,
     )
-    search = cat.search(
-        collections=["sentinel-1-rtc"],
-        bbox=BBOX,
-        datetime=f"{date_from}/{date_to}",
-        query={"sat:relative_orbit": {"eq": ORBIT}},
-        max_items=max_items,
-    )
+
     seen = set()
-    for item in search.items():
-        d = (item.datetime or datetime.utcnow()).strftime("%Y-%m-%d")
-        seen.add(d)
+    cur = date.fromisoformat(date_from)
+    end = date.fromisoformat(date_to)
+
+    while cur <= end:
+        y, m = cur.year, cur.month
+        last_day = monthrange(y, m)[1]
+        mo_start = date(y, m, 1).isoformat()
+        mo_end   = min(date(y, m, last_day), end).isoformat()
+
+        search = cat.search(
+            collections=["sentinel-1-rtc"],
+            bbox=BBOX,
+            datetime=f"{mo_start}/{mo_end}",
+            query={"sat:relative_orbit": {"eq": ORBIT}},
+            max_items=100,
+        )
+        for item in search.items():
+            d = (item.datetime or datetime.utcnow()).strftime("%Y-%m-%d")
+            seen.add(d)
+
+        # advance to next month
+        if m == 12:
+            cur = date(y + 1, 1, 1)
+        else:
+            cur = date(y, m + 1, 1)
+
     return sorted(seen)
 
 # ── Per-date worker ────────────────────────────────────────────────────────────
@@ -417,7 +437,7 @@ def main():
 
     elif args.incremental:
         date_from = (date.today() - timedelta(days=14)).isoformat()
-        dates = _discover_dates(date_from, today, max_items=20)
+        dates = _discover_dates(date_from, today)
         existing = _fetch_existing_dates()
         new_dates = [d for d in dates if d not in existing]
         print(f"Incremental: {len(new_dates)} new dates")
@@ -434,7 +454,7 @@ def main():
             _upsert_rows(rows)
     else:
         date_from = (date.today() - timedelta(days=14)).isoformat()
-        dates = _discover_dates(date_from, today, max_items=20)
+        dates = _discover_dates(date_from, today)
         run_backfill(dates)
 
 

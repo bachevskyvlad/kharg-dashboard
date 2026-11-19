@@ -208,24 +208,44 @@ def _mark_stationary(ships_now, ships_prev):
 
 # ── STAC discovery ─────────────────────────────────────────────────────────────
 
-def _discover_dates(date_from, date_to, max_items=2000):
+def _discover_dates(date_from, date_to):
+    """Search month-by-month (max_items=100 per month) to avoid duplicate frames eating the global limit."""
     import pystac_client
     import planetary_computer
+    from calendar import monthrange
+
     cat = pystac_client.Client.open(
         "https://planetarycomputer.microsoft.com/api/stac/v1",
         modifier=planetary_computer.sign_inplace,
     )
-    search = cat.search(
-        collections=["sentinel-1-rtc"],
-        bbox=BBOX,
-        datetime=f"{date_from}/{date_to}",
-        query={"sat:relative_orbit": {"eq": ORBIT}},
-        max_items=max_items,
-    )
+
     seen = set()
-    for item in search.items():
-        d = (item.datetime or datetime.utcnow()).strftime("%Y-%m-%d")
-        seen.add(d)
+    cur = date.fromisoformat(date_from)
+    end = date.fromisoformat(date_to)
+
+    while cur <= end:
+        y, m = cur.year, cur.month
+        last_day = monthrange(y, m)[1]
+        mo_start = date(y, m, 1).isoformat()
+        mo_end   = min(date(y, m, last_day), end).isoformat()
+
+        search = cat.search(
+            collections=["sentinel-1-rtc"],
+            bbox=BBOX,
+            datetime=f"{mo_start}/{mo_end}",
+            query={"sat:relative_orbit": {"eq": ORBIT}},
+            max_items=100,
+        )
+        for item in search.items():
+            d = (item.datetime or datetime.utcnow()).strftime("%Y-%m-%d")
+            seen.add(d)
+
+        # advance to next month
+        if m == 12:
+            cur = date(y + 1, 1, 1)
+        else:
+            cur = date(y, m + 1, 1)
+
     return sorted(seen)
 
 # ── Per-date worker (multiprocessing) ─────────────────────────────────────────
@@ -348,20 +368,48 @@ def run_backfill(dates):
     print(f"\nCSV: {CSV_PATH}")
 
 def _jsonl_to_csv():
+    """Write pivoted CSV: one row per date with terminal_ and anchorage_ columns."""
     import csv
-    rows = []
+    from collections import defaultdict
+
+    raw = []
     if JSONL_PATH.exists():
         with open(JSONL_PATH) as f:
             for line in f:
                 try:
-                    rows.append(json.loads(line))
+                    raw.append(json.loads(line))
                 except Exception:
                     pass
-    if not rows:
+    if not raw:
         return
-    rows.sort(key=lambda r: (r["date"], r["zone"]))
+
+    # pivot: keyed by (date, scene_id)
+    pivoted = {}
+    for r in raw:
+        key = r["date"]
+        if key not in pivoted:
+            pivoted[key] = {
+                "date": r["date"],
+                "terminal_n": 0, "terminal_vlcc": 0,
+                "anchorage_n": 0, "anchorage_vlcc": 0,
+                "scene_id": r.get("scene_id", ""),
+            }
+        z = r.get("zone", "")
+        n = r.get("vlcc", 0) + r.get("mid", 0) + r.get("small", 0)
+        v = r.get("vlcc", 0)
+        if z == "terminal":
+            pivoted[key]["terminal_n"]    += n
+            pivoted[key]["terminal_vlcc"] += v
+        elif z == "anchorage":
+            pivoted[key]["anchorage_n"]    += n
+            pivoted[key]["anchorage_vlcc"] += v
+
+    rows = sorted(pivoted.values(), key=lambda r: r["date"])
     with open(CSV_PATH, "w", newline="") as f:
-        w = csv.DictWriter(f, fieldnames=["date","orbit","zone","vlcc","mid","small","stationary","scene_id"])
+        w = csv.DictWriter(f, fieldnames=[
+            "date", "terminal_n", "terminal_vlcc",
+            "anchorage_n", "anchorage_vlcc", "scene_id",
+        ])
         w.writeheader()
         w.writerows(rows)
 
@@ -446,7 +494,7 @@ def main():
 
     elif args.incremental:
         date_from = (date.today() - timedelta(days=14)).isoformat()
-        dates = _discover_dates(date_from, today, max_items=20)
+        dates = _discover_dates(date_from, today)
         done = set()
         if JSONL_PATH.exists():
             with open(JSONL_PATH) as f:
@@ -470,7 +518,7 @@ def main():
             _upsert_rows(rows)
     else:
         date_from = (date.today() - timedelta(days=14)).isoformat()
-        dates = _discover_dates(date_from, today, max_items=20)
+        dates = _discover_dates(date_from, today)
         run_backfill(dates)
 
 
