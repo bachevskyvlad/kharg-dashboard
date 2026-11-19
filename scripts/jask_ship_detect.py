@@ -171,8 +171,8 @@ def _detect_ships(arr, valid_mask):
         _, ev = np.linalg.eigh(np.cov(q.T))
         proj_long  = q @ ev[:, -1]
         proj_short = q @ ev[:, 0]
-        length_m = float(proj_long.ptp()  + RESOLUTION)
-        width_m  = max(float(proj_short.ptp() + RESOLUTION), RESOLUTION)
+        length_m = float((proj_long.max() - proj_long.min())   + RESOLUTION)
+        width_m  = max(float((proj_short.max() - proj_short.min()) + RESOLUTION), RESOLUTION)
 
         if length_m < HULL_MIN_M or length_m > HULL_MAX_M:
             continue
