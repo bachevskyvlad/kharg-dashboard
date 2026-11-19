@@ -4,7 +4,10 @@ Supabase table gulf_exit_passes.
 
 Columns: date, zone, large, vlcc, moving, stay
   zone: 'corridor' | 'irlane' | 'jask'
-  jask uses: large=terminal_n, vlcc=terminal_vlcc, moving=0, stay=anchorage_n
+  corridor: large=vlcc+mid, vlcc=vlcc, moving=large-stationary, stay=stationary
+  irlane:   direct column mapping
+  jask:     large=terminal_n+anchorage_n, vlcc=terminal_vlcc+anchorage_vlcc,
+            moving=terminal_n, stay=anchorage_n
 
 Usage:
   python gulf_exit_pipeline.py --incremental   # last 14 days
@@ -30,13 +33,12 @@ if not SUPABASE_SERVICE_KEY:
     print("FATAL: SUPABASE_SERVICE_KEY not set", file=sys.stderr); sys.exit(1)
 
 REPO_ROOT = Path(__file__).parent.parent
-DATA_DIR  = REPO_ROOT / "data"
 DIAG_DIR  = REPO_ROOT / "diagnostics"
 
 # CSV sources (produced by existing pipeline jobs)
-CORRIDOR_CSV = DATA_DIR / "hormuz_corridor_ships.csv"
-JASK_CSV     = DATA_DIR / "jask_ship_obs.csv"
+CORRIDOR_CSV = DIAG_DIR / "hormuz_corridor_ships.csv"
 IRLANE_CSV   = DIAG_DIR / "irlane_ships.csv"
+JASK_CSV     = DIAG_DIR / "jask_ship_obs.csv"
 
 
 def _sb_headers():
@@ -86,13 +88,15 @@ def _load_corridor_csv(path, since=None):
             d = row["date"]
             if since and d < since:
                 continue
+            large = int(row.get("vlcc", 0)) + int(row.get("mid", 0))
+            stay  = int(row.get("stationary", 0))
             rows.append({
                 "date":   d,
                 "zone":   "corridor",
-                "large":  int(row.get("vlcc", 0)) + int(row.get("mid", 0)),
+                "large":  large,
                 "vlcc":   int(row.get("vlcc", 0)),
-                "moving": 0,
-                "stay":   0,
+                "moving": large - stay,
+                "stay":   stay,
             })
     return rows
 
@@ -129,9 +133,9 @@ def _load_jask_csv(path, since=None):
             rows.append({
                 "date":   d,
                 "zone":   "jask",
-                "large":  int(row.get("terminal_n", 0)),
-                "vlcc":   int(row.get("terminal_vlcc", 0)),
-                "moving": 0,
+                "large":  int(row.get("terminal_n", 0)) + int(row.get("anchorage_n", 0)),
+                "vlcc":   int(row.get("terminal_vlcc", 0)) + int(row.get("anchorage_vlcc", 0)),
+                "moving": int(row.get("terminal_n", 0)),
                 "stay":   int(row.get("anchorage_n", 0)),
             })
     return rows
