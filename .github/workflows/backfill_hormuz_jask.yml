@@ -16,7 +16,7 @@ jobs:
 
   hormuz_corridor_backfill:
     runs-on: ubuntu-latest
-    timeout-minutes: 180
+    timeout-minutes: 60
     if: >
       (inputs.job || 'both') == 'both' ||
       (inputs.job || 'both') == 'hormuz_corridor'
@@ -34,13 +34,11 @@ jobs:
           pip install \
             pystac-client planetary-computer \
             rasterio scipy numpy shapely fiona \
-            requests supabase \
+            requests \
             --quiet
 
       - name: Backfill
         env:
-          SUPABASE_URL:            ${{ secrets.SUPABASE_URL }}
-          SUPABASE_SERVICE_KEY:    ${{ secrets.SUPABASE_SERVICE_KEY }}
           PC_SDK_SUBSCRIPTION_KEY: ${{ secrets.PC_SDK_SUBSCRIPTION_KEY }}
         run: python scripts/hormuz_corridor_detect.py --backfill ${{ inputs.from_date || '2025-01-01' }}
 
@@ -56,12 +54,20 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: hormuz-corridor-backfill
-          path: data/hormuz_corridor_ships.csv
+          path: diagnostics/hormuz_corridor_ships.csv
+          retention-days: 30
+
+      - name: Upload JSONL checkpoint
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: hormuz-corridor-jsonl
+          path: diagnostics/hormuz_corridor_ships.jsonl
           retention-days: 30
 
   jask_monitor_backfill:
     runs-on: ubuntu-latest
-    timeout-minutes: 180
+    timeout-minutes: 60
     if: >
       (inputs.job || 'both') == 'both' ||
       (inputs.job || 'both') == 'jask_monitor'
@@ -79,13 +85,11 @@ jobs:
           pip install \
             pystac-client planetary-computer \
             rasterio scipy numpy shapely fiona \
-            requests supabase \
+            requests \
             --quiet
 
       - name: Backfill
         env:
-          SUPABASE_URL:            ${{ secrets.SUPABASE_URL }}
-          SUPABASE_SERVICE_KEY:    ${{ secrets.SUPABASE_SERVICE_KEY }}
           PC_SDK_SUBSCRIPTION_KEY: ${{ secrets.PC_SDK_SUBSCRIPTION_KEY }}
         run: python scripts/jask_ship_detect.py --backfill ${{ inputs.from_date || '2025-01-01' }}
 
@@ -101,5 +105,13 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: jask-monitor-backfill
-          path: data/jask_ship_obs.csv
+          path: diagnostics/jask_ship_obs.csv
+          retention-days: 30
+
+      - name: Upload JSONL checkpoint
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: jask-monitor-jsonl
+          path: diagnostics/jask_ship_obs.jsonl
           retention-days: 30
