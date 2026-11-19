@@ -8,7 +8,7 @@ on:
         required: false
         default: "2025-01-01"
       job:
-        description: "Which job: hormuz_corridor | jask_monitor | both | cleanup_jask | debug_dates | test5"
+        description: "Which job: hormuz_corridor | jask_monitor | both | cleanup_jask | debug_dates | test5 | irlane_test5 | irlane"
         required: false
         default: "both"
       debug_date:
@@ -234,6 +234,131 @@ jobs:
           name: test5-jask-csv
           path: diagnostics/jask_ship_obs.csv
           retention-days: 7
+
+  irlane_test5:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    if: (inputs.job || 'both') == 'irlane_test5'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: claude/oilradar-dashboard-iran-zchdva
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          pip install \
+            pystac-client planetary-computer \
+            rasterio scipy numpy \
+            requests \
+            --quiet
+
+      - name: Build radar land mask
+        env:
+          PC_SDK_SUBSCRIPTION_KEY: ${{ secrets.PC_SDK_SUBSCRIPTION_KEY }}
+        run: |
+          mkdir -p diagnostics
+          python -u scripts/irlane_detect.py --build-mask
+
+      - name: Upload mask
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: irlane-mask
+          path: |
+            diagnostics/irlane_land_mask.npy
+            diagnostics/irlane_land_mask_meta.json
+          retention-days: 30
+
+      - name: Test 5 dates — irlane
+        env:
+          PC_SDK_SUBSCRIPTION_KEY: ${{ secrets.PC_SDK_SUBSCRIPTION_KEY }}
+        run: |
+          python -u scripts/irlane_detect.py \
+            --dates 2025-05-11,2025-08-03,2026-01-24,2026-08-23,2026-11-15
+
+      - name: Print CSV
+        if: always()
+        run: |
+          echo "=== IRLANE TEST5 CSV ==="
+          cat diagnostics/irlane_ships.csv 2>/dev/null || echo "(no CSV)"
+
+      - name: Upload CSV
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: irlane-test5-csv
+          path: diagnostics/irlane_ships.csv
+          retention-days: 7
+
+  irlane_backfill:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    if: (inputs.job || 'both') == 'irlane'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: claude/oilradar-dashboard-iran-zchdva
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          pip install \
+            pystac-client planetary-computer \
+            rasterio scipy numpy \
+            requests \
+            --quiet
+
+      - name: Build radar land mask
+        env:
+          PC_SDK_SUBSCRIPTION_KEY: ${{ secrets.PC_SDK_SUBSCRIPTION_KEY }}
+        run: |
+          mkdir -p diagnostics
+          python -u scripts/irlane_detect.py --build-mask
+
+      - name: Upload mask
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: irlane-mask
+          path: |
+            diagnostics/irlane_land_mask.npy
+            diagnostics/irlane_land_mask_meta.json
+          retention-days: 90
+
+      - name: Backfill irlane
+        env:
+          PC_SDK_SUBSCRIPTION_KEY: ${{ secrets.PC_SDK_SUBSCRIPTION_KEY }}
+        run: |
+          python -u scripts/irlane_detect.py --backfill ${{ inputs.from_date || '2025-01-01' }}
+
+      - name: Print CSV
+        if: always()
+        run: |
+          echo "=== IRLANE BACKFILL CSV ==="
+          cat diagnostics/irlane_ships.csv 2>/dev/null || echo "(no CSV)"
+
+      - name: Upload CSV
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: irlane-backfill-csv
+          path: diagnostics/irlane_ships.csv
+          retention-days: 90
+
+      - name: Upload JSONL checkpoint
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: irlane-backfill-jsonl
+          path: diagnostics/irlane_ships.jsonl
+          retention-days: 90
 
   jask_cleanup:
     runs-on: ubuntu-latest
