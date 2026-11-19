@@ -176,8 +176,8 @@ jobs:
         env:
           PC_SDK_SUBSCRIPTION_KEY: ${{ secrets.PC_SDK_SUBSCRIPTION_KEY }}
         run: |
-          python scripts/hormuz_corridor_detect.py \
-            --dates 2025-08-03,2026-01-24,2026-10-13,2026-10-25,2026-11-06
+          python -u scripts/hormuz_corridor_detect.py \
+            --dates 2025-08-03,2026-01-24,2026-10-04,2026-11-09,2026-11-15
 
       - name: Print CSV
         if: always()
