@@ -8,7 +8,7 @@ on:
         required: false
         default: "2025-01-01"
       job:
-        description: "Which job: hormuz_corridor | jask_monitor | both | cleanup_jask | debug_dates"
+        description: "Which job: hormuz_corridor | jask_monitor | both | cleanup_jask | debug_dates | test5"
         required: false
         default: "both"
       debug_date:
@@ -150,6 +150,90 @@ jobs:
           PC_SDK_SUBSCRIPTION_KEY: ${{ secrets.PC_SDK_SUBSCRIPTION_KEY }}
         run: |
           python scripts/jask_ship_detect.py --debug-date ${{ inputs.debug_date }}
+
+  test5_corridor:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    if: (inputs.job || 'both') == 'test5'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: claude/oilradar-dashboard-iran-zchdva
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          pip install \
+            pystac-client planetary-computer \
+            rasterio scipy numpy shapely fiona \
+            requests \
+            --quiet
+
+      - name: Test 5 dates — Corridor
+        env:
+          PC_SDK_SUBSCRIPTION_KEY: ${{ secrets.PC_SDK_SUBSCRIPTION_KEY }}
+        run: |
+          python scripts/hormuz_corridor_detect.py \
+            --dates 2025-08-03,2026-01-24,2026-10-13,2026-10-25,2026-11-06
+
+      - name: Print CSV
+        if: always()
+        run: |
+          echo "=== CORRIDOR TEST5 CSV ==="
+          cat diagnostics/hormuz_corridor_ships.csv 2>/dev/null || echo "(no CSV)"
+
+      - name: Upload CSV
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test5-corridor-csv
+          path: diagnostics/hormuz_corridor_ships.csv
+          retention-days: 7
+
+  test5_jask:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    if: (inputs.job || 'both') == 'test5'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: claude/oilradar-dashboard-iran-zchdva
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          pip install \
+            pystac-client planetary-computer \
+            rasterio scipy numpy shapely fiona \
+            requests \
+            --quiet
+
+      - name: Test 5 dates — Jask
+        env:
+          PC_SDK_SUBSCRIPTION_KEY: ${{ secrets.PC_SDK_SUBSCRIPTION_KEY }}
+        run: |
+          python scripts/jask_ship_detect.py \
+            --dates 2026-09-25,2026-10-07,2026-10-13,2026-10-19,2026-11-12
+
+      - name: Print CSV
+        if: always()
+        run: |
+          echo "=== JASK TEST5 CSV ==="
+          cat diagnostics/jask_ship_obs.csv 2>/dev/null || echo "(no CSV)"
+
+      - name: Upload CSV
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test5-jask-csv
+          path: diagnostics/jask_ship_obs.csv
+          retention-days: 7
 
   jask_cleanup:
     runs-on: ubuntu-latest

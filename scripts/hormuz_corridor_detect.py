@@ -305,6 +305,7 @@ def run_backfill(dates):
         return
 
     results_by_date = {}
+    n_ok = n_skip = n_err = 0
 
     with open(JSONL_PATH, "a") as jf:
         with Pool(6) as pool:
@@ -313,14 +314,22 @@ def run_backfill(dates):
                 try:
                     date_str, ships, scene_id = futures[d].get(timeout=SCENE_TIMEOUT)
                 except MPTimeout:
-                    print(f"  {d}: timeout, skip")
+                    print(f"  {d}: err timeout")
+                    n_err += 1
                     continue
                 except Exception as e:
-                    print(f"  {d}: pool error {e}, skip")
+                    print(f"  {d}: err {e}")
+                    n_err += 1
                     continue
 
                 if ships is None:
-                    print(f"  {d}: error — {scene_id}")
+                    if scene_id.startswith("coverage="):
+                        cov_val = scene_id.split("=")[1].split("<")[0]
+                        print(f"  {d}: skip cov={cov_val}")
+                        n_skip += 1
+                    else:
+                        print(f"  {d}: err {scene_id}")
+                        n_err += 1
                     continue
 
                 prev_key = None
@@ -334,6 +343,7 @@ def run_backfill(dates):
                 mid   = sum(1 for s in ships if s["cls"] == "mid")
                 small = sum(1 for s in ships if s["cls"] == "small")
                 stat  = sum(1 for s in ships if s.get("is_stationary"))
+                n_ok += 1
                 row = {
                     "date": d, "orbit": ORBIT,
                     "vlcc": vlcc, "mid": mid, "small": small,
@@ -341,10 +351,11 @@ def run_backfill(dates):
                 }
                 jf.write(json.dumps(row) + "\n")
                 jf.flush()
-                print(f"  {d}: vlcc={vlcc} mid={mid} small={small}  scene={scene_id}")
+                print(f"  {d}: ok {vlcc+mid+small} ships  (vlcc={vlcc} mid={mid} small={small})")
 
+    print(f"\ntotal={len(todo)} ok={n_ok} skip={n_skip} err={n_err}")
     _jsonl_to_csv()
-    print(f"\nCSV: {CSV_PATH}")
+    print(f"CSV: {CSV_PATH}")
 
 def _jsonl_to_csv():
     import csv
@@ -453,6 +464,7 @@ def main():
     ap = argparse.ArgumentParser()
     mode = ap.add_mutually_exclusive_group()
     mode.add_argument("--backfill",    metavar="DATE")
+    mode.add_argument("--dates",       metavar="D1,D2,...", help="comma-separated list of dates to process")
     mode.add_argument("--incremental", action="store_true")
     mode.add_argument("--write-db",    action="store_true")
     mode.add_argument("--debug-date",  metavar="DATE")
@@ -477,6 +489,12 @@ def main():
                 rows.append(row)
         _upsert_rows(rows)
         return
+
+    if args.dates:
+        dates = [d.strip() for d in args.dates.split(",") if d.strip()]
+        print(f"Explicit date list: {len(dates)} dates")
+        run_backfill(dates)
+        os._exit(0)
 
     if args.backfill:
         date_from = args.backfill

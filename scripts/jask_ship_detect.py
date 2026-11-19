@@ -320,9 +320,8 @@ def run_backfill(dates):
         _jsonl_to_csv()
         return
 
-    # Sequential prev_ships tracking within the pool results
-    # We process in date order and collect results, then apply stationary marking
     results_by_date = {}
+    n_ok = n_skip = n_err = 0
 
     with open(JSONL_PATH, "a") as jf:
         with Pool(6) as pool:
@@ -331,17 +330,24 @@ def run_backfill(dates):
                 try:
                     date_str, ships, scene_id = futures[d].get(timeout=SCENE_TIMEOUT)
                 except MPTimeout:
-                    print(f"  {d}: timeout, skip")
+                    print(f"  {d}: err timeout")
+                    n_err += 1
                     continue
                 except Exception as e:
-                    print(f"  {d}: pool error {e}, skip")
+                    print(f"  {d}: err {e}")
+                    n_err += 1
                     continue
 
                 if ships is None:
-                    print(f"  {d}: error — {scene_id}")
+                    if scene_id.startswith("coverage="):
+                        cov_val = scene_id.split("=")[1].split("<")[0]
+                        print(f"  {d}: skip cov={cov_val}")
+                        n_skip += 1
+                    else:
+                        print(f"  {d}: err {scene_id}")
+                        n_err += 1
                     continue
 
-                # Stationary: compare with previous date ships (best-effort sequential)
                 prev_key = None
                 for k in sorted(results_by_date):
                     if k < d:
@@ -364,11 +370,12 @@ def run_backfill(dates):
                     jf.write(json.dumps(row) + "\n")
                     jf.flush()
 
-                total = len(ships)
-                print(f"  {d}: {total} ships  scene={scene_id}")
+                n_ok += 1
+                print(f"  {d}: ok {len(ships)} ships")
 
+    print(f"\ntotal={len(todo)} ok={n_ok} skip={n_skip} err={n_err}")
     _jsonl_to_csv()
-    print(f"\nCSV: {CSV_PATH}")
+    print(f"CSV: {CSV_PATH}")
 
 def _jsonl_to_csv():
     """Write pivoted CSV: one row per date with terminal_ and anchorage_ columns."""
@@ -513,6 +520,7 @@ def main():
     ap = argparse.ArgumentParser()
     mode = ap.add_mutually_exclusive_group()
     mode.add_argument("--backfill",    metavar="DATE")
+    mode.add_argument("--dates",       metavar="D1,D2,...", help="comma-separated list of dates to process")
     mode.add_argument("--incremental", action="store_true")
     mode.add_argument("--write-db",    action="store_true")
     mode.add_argument("--delete-db",   action="store_true")
@@ -552,6 +560,12 @@ def main():
                 rows.append(row)
         _upsert_rows(rows)
         return
+
+    if args.dates:
+        dates = [d.strip() for d in args.dates.split(",") if d.strip()]
+        print(f"Explicit date list: {len(dates)} dates")
+        run_backfill(dates)
+        os._exit(0)
 
     if args.backfill:
         date_from = args.backfill
