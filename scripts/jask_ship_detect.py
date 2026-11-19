@@ -434,6 +434,7 @@ def main():
         all_dates = discover_dates(date_from, today)
         print(f"discovered {len(all_dates)} orbit-{ORBIT} scenes {date_from} → {today}")
         run(all_dates, write_db=False)
+        os._exit(0)  # force-exit: abandoned ThreadPoolExecutor threads are non-daemon
     elif args.incremental:
         existing  = _fetch_existing()
         all_dates = discover_dates("2025-01-01", today)
