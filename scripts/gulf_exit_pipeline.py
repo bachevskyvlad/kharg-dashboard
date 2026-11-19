@@ -2,12 +2,12 @@
 gulf_exit_pipeline.py — Aggregate corridor + irlane + jask results into
 Supabase table gulf_exit_passes.
 
-Columns: date, zone, large, vlcc, moving, stay
-  zone: 'corridor' | 'irlane' | 'jask'
-  corridor: large=vlcc+mid, vlcc=vlcc, moving=large-stationary, stay=stationary
-  irlane:   direct column mapping
-  jask:     large=terminal_n+anchorage_n, vlcc=terminal_vlcc+anchorage_vlcc,
-            moving=terminal_n, stay=anchorage_n
+Schema:
+  date, zone, large, vlcc, moving, stay
+    — corridor: large=vlcc+mid; moving=large-stationary; stay=stationary
+    — irlane:   large from CSV; moving/stay clamped so moving+stay=large
+    — jask:     large=NULL, vlcc=NULL, moving=NULL, stay=NULL;
+                terminal_n, terminal_vlcc, anchorage_n, anchorage_vlcc populated
 
 Usage:
   python gulf_exit_pipeline.py --incremental   # last 14 days
@@ -15,7 +15,6 @@ Usage:
 """
 
 import csv
-import json
 import os
 import sys
 from datetime import date, timedelta
@@ -35,7 +34,6 @@ if not SUPABASE_SERVICE_KEY:
 REPO_ROOT = Path(__file__).parent.parent
 DIAG_DIR  = REPO_ROOT / "diagnostics"
 
-# CSV sources (produced by existing pipeline jobs)
 CORRIDOR_CSV = DIAG_DIR / "hormuz_corridor_ships.csv"
 IRLANE_CSV   = DIAG_DIR / "irlane_ships.csv"
 JASK_CSV     = DIAG_DIR / "jask_ship_obs.csv"
@@ -68,7 +66,6 @@ def _upsert_rows(rows):
 
 
 def _fetch_existing(zone):
-    """Return set of dates already in DB for given zone."""
     r = requests.get(
         f"{SUPABASE_URL}/rest/v1/{TABLE}?select=date&zone=eq.{zone}&order=date.asc",
         headers={**_sb_headers(), "Prefer": ""},
@@ -91,17 +88,27 @@ def _load_corridor_csv(path, since=None):
             large = int(row.get("vlcc", 0)) + int(row.get("mid", 0))
             stay  = int(row.get("stationary", 0))
             rows.append({
-                "date":   d,
-                "zone":   "corridor",
-                "large":  large,
-                "vlcc":   int(row.get("vlcc", 0)),
-                "moving": large - stay,
-                "stay":   stay,
+                "date":           d,
+                "zone":           "corridor",
+                "large":          large,
+                "vlcc":           int(row.get("vlcc", 0)),
+                "moving":         large - stay,
+                "stay":           stay,
+                "terminal_n":     None,
+                "terminal_vlcc":  None,
+                "anchorage_n":    None,
+                "anchorage_vlcc": None,
             })
     return rows
 
 
 def _load_irlane_csv(path, since=None):
+    """
+    irlane_detect.py outputs moving for ALL ship sizes, not just large (≥220m).
+    Clamp so that moving + stay = large:
+      stay_clamped   = min(raw_stay, large)
+      moving_clamped = large - stay_clamped
+    """
     rows = []
     if not path.exists():
         print(f"  missing {path}"); return rows
@@ -110,13 +117,21 @@ def _load_irlane_csv(path, since=None):
             d = row["date"]
             if since and d < since:
                 continue
+            large     = int(row.get("large", 0))
+            stay_raw  = int(row.get("stay", 0))
+            stay      = min(stay_raw, large)
+            moving    = large - stay
             rows.append({
-                "date":   d,
-                "zone":   "irlane",
-                "large":  int(row.get("large", 0)),
-                "vlcc":   int(row.get("vlcc", 0)),
-                "moving": int(row.get("moving", 0)),
-                "stay":   int(row.get("stay", 0)),
+                "date":           d,
+                "zone":           "irlane",
+                "large":          large,
+                "vlcc":           int(row.get("vlcc", 0)),
+                "moving":         moving,
+                "stay":           stay,
+                "terminal_n":     None,
+                "terminal_vlcc":  None,
+                "anchorage_n":    None,
+                "anchorage_vlcc": None,
             })
     return rows
 
@@ -131,18 +146,21 @@ def _load_jask_csv(path, since=None):
             if since and d < since:
                 continue
             rows.append({
-                "date":   d,
-                "zone":   "jask",
-                "large":  int(row.get("terminal_n", 0)) + int(row.get("anchorage_n", 0)),
-                "vlcc":   int(row.get("terminal_vlcc", 0)) + int(row.get("anchorage_vlcc", 0)),
-                "moving": int(row.get("terminal_n", 0)),
-                "stay":   int(row.get("anchorage_n", 0)),
+                "date":           d,
+                "zone":           "jask",
+                "large":          None,
+                "vlcc":           None,
+                "moving":         None,
+                "stay":           None,
+                "terminal_n":     int(row.get("terminal_n", 0)),
+                "terminal_vlcc":  int(row.get("terminal_vlcc", 0)),
+                "anchorage_n":    int(row.get("anchorage_n", 0)),
+                "anchorage_vlcc": int(row.get("anchorage_vlcc", 0)),
             })
     return rows
 
 
 def run_backfill():
-    """Load all three CSVs and upsert everything from 2025-01-01."""
     since = "2025-01-01"
     rows = (
         _load_corridor_csv(CORRIDOR_CSV, since) +
@@ -154,17 +172,15 @@ def run_backfill():
 
 
 def run_incremental():
-    """Load from CSVs only dates not already in DB (last 14 days window)."""
     since = (date.today() - timedelta(days=14)).isoformat()
-
     for zone, loader, path in [
         ("corridor", _load_corridor_csv, CORRIDOR_CSV),
         ("irlane",   _load_irlane_csv,   IRLANE_CSV),
         ("jask",     _load_jask_csv,      JASK_CSV),
     ]:
-        existing = _fetch_existing(zone)
+        existing   = _fetch_existing(zone)
         candidates = loader(path, since)
-        new_rows = [r for r in candidates if r["date"] not in existing]
+        new_rows   = [r for r in candidates if r["date"] not in existing]
         print(f"{zone}: {len(new_rows)} new rows (of {len(candidates)} in window)")
         _upsert_rows(new_rows)
 
@@ -176,7 +192,6 @@ if __name__ == "__main__":
     g.add_argument("--incremental", action="store_true")
     g.add_argument("--backfill",    action="store_true")
     args = p.parse_args()
-
     if args.backfill:
         run_backfill()
     else:
