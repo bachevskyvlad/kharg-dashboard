@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
     inputs:
       jobs:
-        description: "Jobs to run: comma-separated (tanks,terminals,prices,gas,anchorage,berths,hormuz,hormuz_corridor,jask_monitor) or 'all'"
+        description: "Jobs to run: comma-separated (tanks,terminals,prices,gas,anchorage,berths,hormuz,hormuz_corridor,jask_monitor,gulf_exit) or 'all'"
         required: false
         default: "all"
       full_recalc:
@@ -566,10 +566,48 @@ jobs:
           fi
 
   # ──────────────────────────────────────────────────────────────
+  # gulf_exit: aggregate corridor + irlane + jask → gulf_exit_passes
+  # ──────────────────────────────────────────────────────────────
+  gulf_exit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    if: >
+      (inputs.jobs || 'all') == 'all' ||
+      contains(inputs.jobs || 'all', 'gulf_exit')
+    outputs:
+      status: ${{ steps.outcome.outputs.status }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: pip install requests --quiet
+
+      - name: Run gulf_exit pipeline
+        id: run
+        env:
+          SUPABASE_URL:         ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+        run: python scripts/gulf_exit_pipeline.py --incremental
+
+      - name: Set outcome
+        id: outcome
+        if: always()
+        run: |
+          if [ "${{ steps.run.outcome }}" = "failure" ]; then
+            echo "status=fail" >> "$GITHUB_OUTPUT"
+          else
+            echo "status=ok" >> "$GITHUB_OUTPUT"
+          fi
+
+  # ──────────────────────────────────────────────────────────────
   # collect: merge all artifacts → one commit to main
   # ──────────────────────────────────────────────────────────────
   collect:
-    needs: [tanks, terminals, prices, gas, anchorage, berths, hormuz, hormuz_corridor, jask_monitor]
+    needs: [tanks, terminals, prices, gas, anchorage, berths, hormuz, hormuz_corridor, jask_monitor, gulf_exit]
     if: always()
     runs-on: ubuntu-latest
     timeout-minutes: 15
@@ -614,7 +652,8 @@ jobs:
           hormuz_s="${{ needs.hormuz.outputs.status || 'skip' }}"
           hormuz_corridor_s="${{ needs.hormuz_corridor.outputs.status || 'skip' }}"
           jask_monitor_s="${{ needs.jask_monitor.outputs.status || 'skip' }}"
-          SUMMARY="tanks $tanks_s, terminals $terminals_s, prices $prices_s, gas $gas_s, anchorage $anchorage_s, berths $berths_s, hormuz $hormuz_s, hormuz_corridor $hormuz_corridor_s, jask_monitor $jask_monitor_s"
+          gulf_exit_s="${{ needs.gulf_exit.outputs.status || 'skip' }}"
+          SUMMARY="tanks $tanks_s, terminals $terminals_s, prices $prices_s, gas $gas_s, anchorage $anchorage_s, berths $berths_s, hormuz $hormuz_s, hormuz_corridor $hormuz_corridor_s, jask_monitor $jask_monitor_s, gulf_exit $gulf_exit_s"
           git commit -m "data: pipeline $(date -u +'%Y-%m-%d') [$SUMMARY]"
           git pull --rebase --autostash origin main
           git push
