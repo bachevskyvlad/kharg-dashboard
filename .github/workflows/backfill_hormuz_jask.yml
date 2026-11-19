@@ -42,6 +42,12 @@ jobs:
           PC_SDK_SUBSCRIPTION_KEY: ${{ secrets.PC_SDK_SUBSCRIPTION_KEY }}
         run: python scripts/hormuz_corridor_detect.py --backfill ${{ inputs.from_date || '2025-01-01' }}
 
+      - name: Print CSV
+        if: always()
+        run: |
+          echo "=== CORRIDOR CSV ==="
+          cat diagnostics/hormuz_corridor_ships.csv 2>/dev/null || echo "(no CSV)"
+
       - name: Upload CSV
         if: always()
         uses: actions/upload-artifact@v4
@@ -85,6 +91,12 @@ jobs:
         env:
           PC_SDK_SUBSCRIPTION_KEY: ${{ secrets.PC_SDK_SUBSCRIPTION_KEY }}
         run: python scripts/jask_ship_detect.py --backfill ${{ inputs.from_date || '2025-01-01' }}
+
+      - name: Print CSV
+        if: always()
+        run: |
+          echo "=== JASK CSV ==="
+          cat diagnostics/jask_ship_obs.csv 2>/dev/null || echo "(no CSV)"
 
       - name: Upload CSV
         if: always()
