@@ -58,7 +58,7 @@ LAND_P20_DB   = -16.0   # 20th-pctile > -16 dB → persistent land
 STATIC_DB     = -8.0    # scene > -8 dB in ≥40% scenes → static bright (buildings, rocks)
 STATIC_FRAC   = 0.40
 MIN_COMP_PX   = 50      # discard components smaller than this
-DILATION_M    = 400     # dilate combined mask by this many metres
+DILATION_M    = 1500    # dilate combined mask by this many metres (covers mangrove channels near Khuhaistaq)
 
 # ── Grid dimensions ────────────────────────────────────────────────────────────
 
