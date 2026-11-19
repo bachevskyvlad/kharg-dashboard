@@ -325,7 +325,7 @@ def _upsert_rows(rows):
 
 # ── Discover scenes ────────────────────────────────────────────────────────
 
-def discover_dates(date_from, date_to):
+def _discover_dates_inner(date_from, date_to):
     client = _pc_client()
     search = client.search(
         collections=["sentinel-1-rtc"],
@@ -338,6 +338,30 @@ def discover_dates(date_from, date_to):
         d = (item.datetime or datetime.utcnow()).strftime("%Y-%m-%d")
         seen.add(d)
     return sorted(seen)
+
+
+def discover_dates(date_from, date_to):
+    """Discover pass dates via PC STAC with hard timeout to prevent indefinite hang."""
+    for attempt in range(4):
+        ex = ThreadPoolExecutor(max_workers=1)
+        fut = ex.submit(_discover_dates_inner, date_from, date_to)
+        try:
+            result = fut.result(timeout=180)
+            ex.shutdown(wait=False, cancel_futures=True)
+            return result
+        except FuturesTimeout:
+            msg = "PC STAC discovery timed out after 180s"
+        except Exception as e:
+            msg = str(e)
+        ex.shutdown(wait=False, cancel_futures=True)
+        if attempt < 3:
+            wait = 30 * (2 ** attempt)
+            print(f"discover_dates: {msg}, retry in {wait}s…")
+            time.sleep(wait)
+        else:
+            print(f"discover_dates: failed after 4 attempts: {msg}")
+            os._exit(1)
+    return []
 
 
 # ── Main ───────────────────────────────────────────────────────────────────
