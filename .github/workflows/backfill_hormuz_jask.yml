@@ -45,6 +45,7 @@ jobs:
         run: python scripts/hormuz_corridor_detect.py --backfill ${{ inputs.from_date || '2025-01-01' }}
 
       - name: Write to DB
+        if: always()
         env:
           SUPABASE_URL:         ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
@@ -89,6 +90,7 @@ jobs:
         run: python scripts/jask_ship_detect.py --backfill ${{ inputs.from_date || '2025-01-01' }}
 
       - name: Write to DB
+        if: always()
         env:
           SUPABASE_URL:         ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}

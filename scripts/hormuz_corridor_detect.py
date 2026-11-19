@@ -119,16 +119,23 @@ def _fetch_scene_inner(date_str):
 
 
 def _fetch_scene(date_str, _timeout=120):
-    """Return (arr_linear, item) or (None, None) for the first orbit-93 scene on date_str."""
+    """Return (arr_linear, item) or (None, None) for the first orbit-93 scene on date_str.
+
+    Uses shutdown(wait=False) to avoid blocking on the with-block __exit__
+    when the underlying thread hangs on a network call.
+    """
     for attempt in range(4):
-        with ThreadPoolExecutor(max_workers=1) as ex:
-            fut = ex.submit(_fetch_scene_inner, date_str)
-            try:
-                return fut.result(timeout=_timeout)
-            except FuturesTimeout:
-                msg = f"PC API timed out after {_timeout}s"
-            except Exception as e:
-                msg = str(e)
+        ex = ThreadPoolExecutor(max_workers=1)
+        fut = ex.submit(_fetch_scene_inner, date_str)
+        try:
+            result = fut.result(timeout=_timeout)
+            ex.shutdown(wait=False, cancel_futures=True)
+            return result
+        except FuturesTimeout:
+            msg = f"PC API timed out after {_timeout}s"
+        except Exception as e:
+            msg = str(e)
+        ex.shutdown(wait=False, cancel_futures=True)
         if attempt < 3:
             wait = 30 * (2 ** attempt)
             print(f"  {msg}, retry in {wait}s…")
