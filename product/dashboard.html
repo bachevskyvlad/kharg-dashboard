@@ -3258,7 +3258,7 @@ function hzRedraw(k, r) {
         const dpr = window.devicePixelRatio || 1;
         c.width = c.offsetWidth * dpr; c.height = c.offsetHeight * dpr;
         ctx.scale(dpr, dpr);
-        const dwRows = rows.filter(r => r.pairs >= 4);
+        const dwRows = rows.filter(r => r.pairs >= 2);
         const dwLabels = dwRows.map(r => r.week);
         hzDrawLine(ctx, c.offsetWidth, c.offsetHeight, PAD, dwLabels, [
             {vals: dwRows.map(r => r.dwell_days != null ? Math.min(+r.dwell_days, 60) : null), color:'#a78bfa', fill:true, step:5},
@@ -3280,14 +3280,14 @@ async function initHormuz() {
             document.getElementById('hz-updated').textContent = 'No data loaded';
             return;
         }
-        // KPIs: last row for large/gpd/stay; last 4 weeks with ≥4 pairs for dwell
+        // KPIs: last row for large/gpd/stay; last 4 weeks with ≥2 pairs for dwell
         const last = _hzRows[_hzRows.length - 1];
         document.getElementById('hz-large').textContent  = last.large_avg  != null ? (+last.large_avg).toFixed(1) : '—';
         document.getElementById('hz-gpd').textContent    = last.gone_per_day != null ? (+last.gone_per_day).toFixed(2) : '—';
         document.getElementById('hz-stay').textContent   = last.stay_share != null ? (+last.stay_share * 100).toFixed(0) + '%' : '—';
         document.getElementById('hz-updated').textContent = 'Updated ' + last.week + ' · orbits 57 & 166';
         // dwell KPI: avg of last 4 weeks with ≥4 pairs
-        const dwellRows = _hzRows.filter(r => r.pairs >= 4 && r.dwell_days != null).slice(-4);
+        const dwellRows = _hzRows.filter(r => r.pairs >= 2 && r.dwell_days != null).slice(-4);
         if (dwellRows.length) {
             const dwellAvg = dwellRows.reduce((s,r)=>s+(+r.dwell_days),0)/dwellRows.length;
             document.getElementById('hz-dwell').textContent = dwellAvg > 60 ? '60+' : dwellAvg.toFixed(1);
