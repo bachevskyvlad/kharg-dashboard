@@ -37,7 +37,7 @@ import numpy as np
 # ── credentials ───────────────────────────────────────────────────────────────
 SB_URL  = os.environ.get("SUPABASE_URL", "https://yoekhkczwdeyauwarsyy.supabase.co")
 # Project uses SUPABASE_KEY for service-role writes (same convention as all other scripts)
-SB_SERVICE_KEY = os.environ.get("SUPABASE_KEY") or os.environ.get("SUPABASE_SERVICE_KEY") or ""
+SB_SERVICE_KEY = os.environ.get("SUPABASE_SERVICE_KEY") or os.environ.get("SUPABASE_KEY") or ""
 TG_BOT          = os.environ.get("TG_BOT", "")
 TG_CHAT         = os.environ.get("TG_CHAT", "")
 
