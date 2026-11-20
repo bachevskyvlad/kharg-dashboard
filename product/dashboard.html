@@ -1551,7 +1551,7 @@ function showSection(id, callerEl) {
     if (mobNav) mobNav.classList.add('active');
     if (id === 'map' && !window._mapInited) { initTankMap(); window._mapInited = true; }
     if (id === 'anchorage') { initAnchorage(); }
-    if (id === 'hormuz') { initHormuz(); initGulfExit(); }
+    if (id === 'hormuz') { initHormuz().then(() => initGulfExit()); }
     if (id === 'upstream' && !window._upstreamInited) { window._upstreamInited = true; loadUpstream(); }
 }
 
