@@ -3127,6 +3127,7 @@ function hzDrawLine(ctx, w, h, pad, labels, series) {
     // series: [{vals, color, dashed}]
     if (!labels.length) return;
     const allVals = series.flatMap(s => s.vals.filter(v => v != null));
+    if (!allVals.length) return;
     const yMax = hzNiceMax(Math.max(...allVals, 0), series[0].step || 1);
     const x0 = pad.l, x1 = w - pad.r, y0 = pad.t, y1 = h - pad.b;
     const xw = x1 - x0, yh = y1 - y0;
@@ -3275,6 +3276,7 @@ async function initHormuz() {
         );
         if (!resp.ok) throw new Error(resp.status);
         _hzRows = await resp.json();
+        console.log('[hz] rows:', _hzRows.length, 'dwell non-null:', _hzRows.filter(r=>r.dwell_days!=null).length, 'sample:', JSON.stringify(_hzRows.slice(-3)));
         if (!Array.isArray(_hzRows) || !_hzRows.length) {
             document.getElementById('hz-updated').textContent = 'No data loaded';
             return;
