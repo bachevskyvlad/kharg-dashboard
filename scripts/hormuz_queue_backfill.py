@@ -409,7 +409,7 @@ def aggregate_weekly(passes, ais_daily):
         we = (datetime.strptime(ws, "%Y-%m-%d") + timedelta(days=6)).strftime("%Y-%m-%d")
         n_tanker_avg, n_total_avg = weekly_ais_avg(ais_daily, ws, we)
 
-        rows.append(dict(
+        row = dict(
             week=ws,
             passes=len(ps),
             pairs=len(paired),
@@ -418,8 +418,11 @@ def aggregate_weekly(passes, ais_daily):
             stay_share=stay_share,
             gone_per_day=gone_per_day,
             dwell_days=dwell_days,
-            n_tanker=n_tanker_avg,
-        ))
+        )
+        # n_tanker written only if column exists in DB (added separately)
+        if n_tanker_avg is not None:
+            row["n_tanker"] = n_tanker_avg
+        rows.append(row)
     return rows
 
 
