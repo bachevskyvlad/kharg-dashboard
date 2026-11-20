@@ -1,8 +1,6 @@
 name: Hormuz Queue — Weekly Update
 
 on:
-  schedule:
-    - cron: "17 3 * * 2"
   workflow_dispatch:
     inputs:
       start:
