@@ -163,7 +163,10 @@ def aggregate_weekly(passes, ais_daily):
         dwell_days   = (round(large_mean / gone_per_day, 2)
                         if large_mean and gone_per_day and gone_per_day > 0 else None)
 
-        rows.append(dict(
+        we = (datetime.strptime(ws, "%Y-%m-%d").date() + timedelta(days=6)).isoformat()
+        n_tanker, _ = weekly_ais(ais_daily, ws, we)
+
+        row = dict(
             week=ws,
             passes=len(ps),
             pairs=len(paired),
@@ -172,7 +175,10 @@ def aggregate_weekly(passes, ais_daily):
             stay_share=stay_share,
             gone_per_day=gone_per_day,
             dwell_days=dwell_days,
-        ))
+        )
+        if n_tanker is not None:
+            row["n_tanker"] = n_tanker
+        rows.append(row)
     return rows
 
 
