@@ -83,7 +83,7 @@ def _sb_headers():
 _ON_CONFLICT = {
     "hormuz_passes":  "date,orbit",
     "hormuz_weekly":  "week",
-    "hormuz_ships":   "pass_date,orbit,ship_id",
+    "hormuz_ships":   "pass_date,pass_orbit,lat,lon",
 }
 
 
