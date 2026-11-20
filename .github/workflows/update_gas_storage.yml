@@ -2,8 +2,6 @@ name: Update EU Gas Storage
 
 on:
   workflow_dispatch:
-  schedule:
-    - cron: "0 8 * * *"   # daily 08:00 UTC
 
 jobs:
   update:
