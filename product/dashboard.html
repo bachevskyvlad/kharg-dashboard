@@ -1177,6 +1177,110 @@
         <div style="font-size:0.65rem;color:var(--dim);font-family:monospace;padding:0.5rem 0">
             Source: Sentinel-1 SAR · Microsoft Planetary Computer · orbits 57 &amp; 166 · AOI: 56.30–56.60°E, 26.84–27.03°N
         </div>
+
+        <!-- ── Gulf Exit (beta) ──────────────────────────────────────────── -->
+        <div style="margin-top:2rem;">
+            <div style="display:flex;align-items:center;gap:0.6rem;margin-bottom:0.75rem;">
+                <div style="font-size:0.75rem;letter-spacing:1px;text-transform:uppercase;color:var(--accent)">Gulf Exit</div>
+                <span style="font-size:0.6rem;font-family:monospace;background:#92400e;color:#fde68a;padding:1px 6px;border-radius:2px;letter-spacing:1px">BETA</span>
+            </div>
+
+            <!-- Gulf Exit KPI row -->
+            <div style="display:flex;gap:1rem;flex-wrap:wrap;margin-bottom:1.25rem;">
+                <div style="background:var(--surface);border:1px solid var(--border);padding:0.9rem 1.1rem;min-width:140px;">
+                    <div style="font-size:0.6rem;letter-spacing:1px;text-transform:uppercase;color:var(--muted);margin-bottom:0.2rem">Corridor — Latest</div>
+                    <div style="font-size:1.6rem;font-weight:700;color:#3b82f6;font-family:'Space Grotesk',sans-serif" id="ge-corr-large">—</div>
+                    <div style="font-size:0.65rem;color:var(--muted)">large ships (≥ 220 m)</div>
+                </div>
+                <div style="background:var(--surface);border:1px solid var(--border);padding:0.9rem 1.1rem;min-width:140px;">
+                    <div style="font-size:0.6rem;letter-spacing:1px;text-transform:uppercase;color:var(--muted);margin-bottom:0.2rem">Corridor VLCC</div>
+                    <div style="font-size:1.6rem;font-weight:700;color:#ef4444;font-family:'Space Grotesk',sans-serif" id="ge-corr-vlcc">—</div>
+                    <div style="font-size:0.65rem;color:var(--muted)">≥ 300 m, latest pass</div>
+                </div>
+                <div style="background:var(--surface);border:1px solid var(--border);padding:0.9rem 1.1rem;min-width:140px;">
+                    <div style="font-size:0.6rem;letter-spacing:1px;text-transform:uppercase;color:var(--muted);margin-bottom:0.2rem">IR Lane — Latest</div>
+                    <div style="font-size:1.6rem;font-weight:700;color:#22c55e;font-family:'Space Grotesk',sans-serif" id="ge-ir-large">—</div>
+                    <div style="font-size:0.65rem;color:var(--muted)">large ships (≥ 220 m)</div>
+                </div>
+            </div>
+
+            <!-- Gulf Exit chart -->
+            <div style="background:var(--surface);border:1px solid var(--border);padding:1.25rem 1.5rem 1rem;margin-bottom:1.25rem;">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;flex-wrap:wrap;gap:0.5rem;">
+                    <div>
+                        <div style="font-size:0.65rem;color:var(--muted);margin-top:0.2rem">Large ships (≥ 220 m) per satellite pass · corridor + IR lane · orbit 93</div>
+                    </div>
+                    <div style="display:flex;gap:4px" id="ge-range">
+                        <button class="aq-rbtn" data-r="3m">3M</button>
+                        <button class="aq-rbtn" data-r="6m">6M</button>
+                        <button class="aq-rbtn aq-rbtn-active" data-r="1y">1Y</button>
+                        <button class="aq-rbtn" data-r="all">ALL</button>
+                    </div>
+                </div>
+                <canvas id="geChart" style="width:100%;display:block;height:200px"></canvas>
+                <div style="display:flex;gap:16px;flex-wrap:wrap;margin-top:10px;">
+                    <span style="display:flex;align-items:center;gap:6px;font-size:0.68rem;color:var(--muted);font-family:monospace"><span style="width:12px;height:12px;background:#3b82f6;flex-shrink:0"></span>Corridor</span>
+                    <span style="display:flex;align-items:center;gap:6px;font-size:0.68rem;color:var(--muted);font-family:monospace"><span style="width:12px;height:12px;background:#22c55e;flex-shrink:0"></span>IR Lane</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- ── Jask Terminal ──────────────────────────────────────────────── -->
+        <div style="margin-top:1.5rem;">
+            <div style="font-size:0.75rem;letter-spacing:1px;text-transform:uppercase;color:var(--accent);margin-bottom:0.75rem;">Jask Terminal</div>
+
+            <!-- Jask KPI row -->
+            <div style="display:flex;gap:1rem;flex-wrap:wrap;margin-bottom:1.25rem;">
+                <div style="background:var(--surface);border:1px solid var(--border);padding:0.9rem 1.1rem;min-width:130px;">
+                    <div style="font-size:0.6rem;letter-spacing:1px;text-transform:uppercase;color:var(--muted);margin-bottom:0.2rem">Terminal Ships</div>
+                    <div style="font-size:1.6rem;font-weight:700;color:#f59e0b;font-family:'Space Grotesk',sans-serif" id="jk-term-n">—</div>
+                    <div style="font-size:0.65rem;color:var(--muted)">latest pass</div>
+                </div>
+                <div style="background:var(--surface);border:1px solid var(--border);padding:0.9rem 1.1rem;min-width:130px;">
+                    <div style="font-size:0.6rem;letter-spacing:1px;text-transform:uppercase;color:var(--muted);margin-bottom:0.2rem">Terminal VLCC</div>
+                    <div style="font-size:1.6rem;font-weight:700;color:#ef4444;font-family:'Space Grotesk',sans-serif" id="jk-term-vlcc">—</div>
+                    <div style="font-size:0.65rem;color:var(--muted)">≥ 300 m, latest pass</div>
+                </div>
+                <div style="background:var(--surface);border:1px solid var(--border);padding:0.9rem 1.1rem;min-width:130px;">
+                    <div style="font-size:0.6rem;letter-spacing:1px;text-transform:uppercase;color:var(--muted);margin-bottom:0.2rem">Anchorage Ships</div>
+                    <div style="font-size:1.6rem;font-weight:700;color:#a78bfa;font-family:'Space Grotesk',sans-serif" id="jk-anch-n">—</div>
+                    <div style="font-size:0.65rem;color:var(--muted)">latest pass</div>
+                </div>
+                <div style="background:var(--surface);border:1px solid var(--border);padding:0.9rem 1.1rem;min-width:130px;">
+                    <div style="font-size:0.6rem;letter-spacing:1px;text-transform:uppercase;color:var(--muted);margin-bottom:0.2rem">Anchorage VLCC</div>
+                    <div style="font-size:1.6rem;font-weight:700;color:#38bdf8;font-family:'Space Grotesk',sans-serif" id="jk-anch-vlcc">—</div>
+                    <div style="font-size:0.65rem;color:var(--muted)">≥ 300 m, latest pass</div>
+                </div>
+            </div>
+
+            <!-- Jask chart -->
+            <div style="background:var(--surface);border:1px solid var(--border);padding:1.25rem 1.5rem 1rem;margin-bottom:1.25rem;">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;flex-wrap:wrap;gap:0.5rem;">
+                    <div>
+                        <div style="font-size:0.65rem;color:var(--muted);margin-top:0.2rem">Monthly avg ships per pass · terminal + anchorage · orbit 57</div>
+                    </div>
+                    <div style="display:flex;gap:4px" id="jk-range">
+                        <button class="aq-rbtn" data-r="3m">3M</button>
+                        <button class="aq-rbtn" data-r="6m">6M</button>
+                        <button class="aq-rbtn aq-rbtn-active" data-r="1y">1Y</button>
+                        <button class="aq-rbtn" data-r="all">ALL</button>
+                    </div>
+                </div>
+                <canvas id="jkChart" style="width:100%;display:block;height:200px"></canvas>
+                <div style="display:flex;gap:16px;flex-wrap:wrap;margin-top:10px;">
+                    <span style="display:flex;align-items:center;gap:6px;font-size:0.68rem;color:var(--muted);font-family:monospace"><span style="width:12px;height:12px;background:#f59e0b;flex-shrink:0"></span>Terminal</span>
+                    <span style="display:flex;align-items:center;gap:6px;font-size:0.68rem;color:var(--muted);font-family:monospace"><span style="width:12px;height:12px;background:#a78bfa;flex-shrink:0"></span>Anchorage</span>
+                </div>
+            </div>
+
+            <div style="font-size:0.65rem;color:var(--dim);font-family:monospace;padding:0.25rem 0">
+                Sentinel-1 radar · all flags · ships ≥ 220 m. Radar cannot see flag or cargo. Counts per satellite pass — trends, not exact volumes.
+            </div>
+        </div>
+
+        <div style="font-size:0.65rem;color:var(--dim);font-family:monospace;padding:0.5rem 0">
+            Source: Sentinel-1 SAR · Microsoft Planetary Computer · orbits 57 &amp; 166 · AOI: 56.30–56.60°E, 26.84–27.03°N
+        </div>
     </div>
 
 </div><!-- /main -->
@@ -1443,7 +1547,7 @@ function showSection(id, callerEl) {
     if (mobNav) mobNav.classList.add('active');
     if (id === 'map' && !window._mapInited) { initTankMap(); window._mapInited = true; }
     if (id === 'anchorage') { initAnchorage(); }
-    if (id === 'hormuz') { initHormuz(); }
+    if (id === 'hormuz') { initHormuz(); initGulfExit(); }
     if (id === 'upstream' && !window._upstreamInited) { window._upstreamInited = true; loadUpstream(); }
 }
 
@@ -3191,6 +3295,150 @@ document.addEventListener('DOMContentLoaded', function() {
         if (!wrap) return;
         wrap.querySelectorAll('.aq-rbtn').forEach(btn => {
             btn.addEventListener('click', () => hzRedraw(k, btn.dataset.r));
+        });
+    });
+});
+
+// ── Gulf Exit + Jask (gulf_exit_passes) ───────────────────────────────────
+let _geRows = [], _jkRows = [], _geInited = false;
+let _geChart = null, _jkChart = null;
+const _geRange = {ge:'1y', jk:'1y'};
+
+function geMonths(r) { return r==='all'?null : r==='1y'?12 : r==='6m'?6 : 3; }
+
+function geFilter(rows, months) {
+    if (!months) return rows;
+    const cut = new Date(); cut.setMonth(cut.getMonth() - months);
+    const cs = cut.toISOString().slice(0,10);
+    return rows.filter(r => r.date >= cs);
+}
+
+function geGroupMonthly(rows, field) {
+    const map = {};
+    rows.forEach(r => {
+        const m = r.date.slice(0,7);
+        if (r[field] == null) return;
+        if (!map[m]) map[m] = {sum:0, n:0};
+        map[m].sum += +r[field]; map[m].n++;
+    });
+    const months = Object.keys(map).sort();
+    return { labels: months, vals: months.map(m => map[m].sum / map[m].n) };
+}
+
+function geRedraw(key, r) {
+    _geRange[key] = r;
+    document.querySelectorAll(`#${key}-range .aq-rbtn`).forEach(b =>
+        b.classList.toggle('aq-rbtn-active', b.dataset.r === r));
+    const months = geMonths(r);
+
+    if (key === 'ge') {
+        const corrRows = geFilter(_geRows, months);
+        const irRows   = geFilter(_jkRows.filter(x => x.zone === 'irlane'), months);
+        const corr = geGroupMonthly(corrRows, 'large');
+        const ir   = geGroupMonthly(irRows, 'large');
+        const allM = [...new Set([...corr.labels, ...ir.labels])].sort();
+        const corrVals = allM.map(m => { const i = corr.labels.indexOf(m); return i>=0 ? corr.vals[i] : null; });
+        const irVals   = allM.map(m => { const i = ir.labels.indexOf(m);   return i>=0 ? ir.vals[i]   : null; });
+
+        const c = document.getElementById('geChart');
+        if (!c) return;
+        const dpr = window.devicePixelRatio||1;
+        c.width = c.offsetWidth*dpr; c.height = c.offsetHeight*dpr;
+        if (_geChart) { _geChart.destroy(); _geChart = null; }
+        _geChart = new Chart(c, {
+            type: 'bar',
+            data: {
+                labels: allM,
+                datasets: [
+                    { label:'Corridor', data: corrVals, backgroundColor:'rgba(59,130,246,0.75)', borderRadius:3, barPercentage:0.6 },
+                    { label:'IR Lane',  data: irVals,   backgroundColor:'rgba(34,197,94,0.75)',  borderRadius:3, barPercentage:0.6 }
+                ]
+            },
+            options: {
+                responsive:false, maintainAspectRatio:false,
+                plugins:{ legend:{display:false}, tooltip:{callbacks:{label: ctx=>`${ctx.dataset.label}: ${ctx.parsed.y!=null?ctx.parsed.y.toFixed(1):'—'}`}} },
+                scales:{
+                    x:{ ticks:{color:'rgba(100,116,139,0.8)',font:{size:10},maxRotation:0}, grid:{color:'rgba(255,255,255,0.05)'} },
+                    y:{ ticks:{color:'rgba(100,116,139,0.8)',font:{size:10}}, grid:{color:'rgba(255,255,255,0.05)'}, beginAtZero:true }
+                }
+            }
+        });
+    } else {
+        const jk = geFilter(_jkRows.filter(x => x.zone==='jask'), months);
+        const term = geGroupMonthly(jk, 'terminal_n');
+        const anch = geGroupMonthly(jk, 'anchorage_n');
+        const allM = [...new Set([...term.labels, ...anch.labels])].sort();
+        const termVals = allM.map(m => { const i=term.labels.indexOf(m); return i>=0?term.vals[i]:null; });
+        const anchVals = allM.map(m => { const i=anch.labels.indexOf(m); return i>=0?anch.vals[i]:null; });
+
+        const c = document.getElementById('jkChart');
+        if (!c) return;
+        const dpr = window.devicePixelRatio||1;
+        c.width = c.offsetWidth*dpr; c.height = c.offsetHeight*dpr;
+        if (_jkChart) { _jkChart.destroy(); _jkChart = null; }
+        _jkChart = new Chart(c, {
+            type: 'bar',
+            data: {
+                labels: allM,
+                datasets: [
+                    { label:'Terminal',  data: termVals, backgroundColor:'rgba(245,158,11,0.75)', borderRadius:3, barPercentage:0.6 },
+                    { label:'Anchorage', data: anchVals, backgroundColor:'rgba(167,139,250,0.75)',borderRadius:3, barPercentage:0.6 }
+                ]
+            },
+            options: {
+                responsive:false, maintainAspectRatio:false,
+                plugins:{ legend:{display:false}, tooltip:{callbacks:{label: ctx=>`${ctx.dataset.label}: ${ctx.parsed.y!=null?ctx.parsed.y.toFixed(1):'—'}`}} },
+                scales:{
+                    x:{ ticks:{color:'rgba(100,116,139,0.8)',font:{size:10},maxRotation:0}, grid:{color:'rgba(255,255,255,0.05)'} },
+                    y:{ ticks:{color:'rgba(100,116,139,0.8)',font:{size:10}}, grid:{color:'rgba(255,255,255,0.05)'}, beginAtZero:true }
+                }
+            }
+        });
+    }
+}
+
+async function initGulfExit() {
+    if (_geInited) { geRedraw('ge', _geRange.ge); geRedraw('jk', _geRange.jk); return; }
+    try {
+        const resp = await fetch(
+            SB_URL_HZ + '/rest/v1/gulf_exit_passes?select=date,zone,large,vlcc,moving,stay,terminal_n,terminal_vlcc,anchorage_n,anchorage_vlcc&order=date&limit=5000',
+            { headers: { apikey: SB_KEY_HZ, Authorization: 'Bearer ' + SB_KEY_HZ } }
+        );
+        if (!resp.ok) throw new Error(resp.status);
+        const all = await resp.json();
+        if (!Array.isArray(all)) return;
+
+        _geRows = all.filter(r => r.zone === 'corridor');
+        _jkRows = all.filter(r => r.zone === 'irlane' || r.zone === 'jask');
+
+        // KPIs: latest date per zone
+        const latest = (zone, field) => {
+            const rows = all.filter(r => r.zone===zone && r[field]!=null);
+            if (!rows.length) return '—';
+            return rows[rows.length-1][field];
+        };
+        document.getElementById('ge-corr-large').textContent = latest('corridor','large') !== '—' ? latest('corridor','large') : '—';
+        document.getElementById('ge-corr-vlcc').textContent  = latest('corridor','vlcc')  !== '—' ? latest('corridor','vlcc')  : '—';
+        document.getElementById('ge-ir-large').textContent   = latest('irlane','large')   !== '—' ? latest('irlane','large')   : '—';
+        const jkLast = all.filter(r => r.zone==='jask').slice(-1)[0];
+        if (jkLast) {
+            document.getElementById('jk-term-n').textContent    = jkLast.terminal_n    ?? '—';
+            document.getElementById('jk-term-vlcc').textContent = jkLast.terminal_vlcc ?? '—';
+            document.getElementById('jk-anch-n').textContent    = jkLast.anchorage_n   ?? '—';
+            document.getElementById('jk-anch-vlcc').textContent = jkLast.anchorage_vlcc ?? '—';
+        }
+        _geInited = true;
+        geRedraw('ge', _geRange.ge);
+        geRedraw('jk', _geRange.jk);
+    } catch(e) { console.error('gulf_exit_passes:', e); }
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    ['ge','jk'].forEach(key => {
+        const wrap = document.getElementById(key + '-range');
+        if (!wrap) return;
+        wrap.querySelectorAll('.aq-rbtn').forEach(btn => {
+            btn.addEventListener('click', () => geRedraw(key, btn.dataset.r));
         });
     });
 });
