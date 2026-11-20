@@ -80,6 +80,13 @@ def _sb_headers():
     }
 
 
+_ON_CONFLICT = {
+    "hormuz_passes":  "date,orbit",
+    "hormuz_weekly":  "week",
+    "hormuz_ships":   "pass_date,orbit,ship_id",
+}
+
+
 def sb_upsert(table, rows, dry_run=False):
     if dry_run:
         print(f"[DRY] upsert {len(rows)} rows → {table}")
@@ -88,7 +95,8 @@ def sb_upsert(table, rows, dry_run=False):
         tg_alert("⚠️ Hormuz: SUPABASE_SERVICE_KEY not set — skipping write")
         print("SKIP: no SUPABASE_SERVICE_KEY")
         return
-    url = f"{SB_URL}/rest/v1/{table}"
+    conflict = _ON_CONFLICT.get(table, "")
+    url = f"{SB_URL}/rest/v1/{table}" + (f"?on_conflict={conflict}" if conflict else "")
     payload = json.dumps(rows).encode()
     req = urllib.request.Request(url, data=payload, headers=_sb_headers(), method="POST")
     for attempt in range(4):
