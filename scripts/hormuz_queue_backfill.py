@@ -83,7 +83,7 @@ def _sb_headers():
 _ON_CONFLICT = {
     "hormuz_passes":  "date,orbit",
     "hormuz_weekly":  "week",
-    "hormuz_ships":   "pass_date,pass_orbit,lat,lon",
+    # hormuz_ships has no unique constraint — use delete+insert pattern
 }
 
 
@@ -669,7 +669,18 @@ def main():
     if pass_rows:
         sb_upsert("hormuz_passes", pass_rows)
     if ship_rows:
-        # batch by 500
+        # hormuz_ships has no unique constraint: delete existing rows for
+        # these pass_dates, then insert fresh
+        ship_dates = list({r["pass_date"] for r in ship_rows})
+        for d in ship_dates:
+            del_url = (f"{SB_URL}/rest/v1/hormuz_ships"
+                       f"?pass_date=eq.{d}")
+            req = urllib.request.Request(
+                del_url, headers=_sb_headers(), method="DELETE")
+            try:
+                urllib.request.urlopen(req, timeout=30)
+            except Exception as e:
+                print(f"  del ships {d}: {e}")
         for i in range(0, len(ship_rows), 500):
             sb_upsert("hormuz_ships", ship_rows[i:i+500])
     if weekly_rows:
