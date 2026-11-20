@@ -45,11 +45,17 @@ def tg(text):
         pass
 
 
+_ON_CONFLICT = {
+    "hormuz_passes":  "date,orbit",
+    "hormuz_weekly":  "week",
+}
+
 def sb_upsert(table, rows):
     if not SB_KEY:
         print("ABORT: SUPABASE_KEY not set")
         sys.exit(1)
-    url = f"{SB_URL}/rest/v1/{table}"
+    conflict = _ON_CONFLICT.get(table, "")
+    url = f"{SB_URL}/rest/v1/{table}" + (f"?on_conflict={conflict}" if conflict else "")
     headers = {
         "apikey": SB_KEY, "Authorization": f"Bearer {SB_KEY}",
         "Content-Type": "application/json",
