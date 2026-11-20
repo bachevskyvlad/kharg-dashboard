@@ -17,6 +17,10 @@ on:
         description: "gulf_exit: run --backfill instead of --incremental"
         required: false
         default: "false"
+      hormuz_backfill_since:
+        description: "hormuz: if set (e.g. 2026-11-03), run --commit --start <date> to catch up missed weeks"
+        required: false
+        default: ""
 
 concurrency:
   group: pipeline
@@ -442,7 +446,12 @@ jobs:
           PC_SDK_SUBSCRIPTION_KEY: ${{ secrets.PC_SDK_SUBSCRIPTION_KEY }}
           TG_BOT:                  ${{ secrets.TG_BOT }}
           TG_CHAT:                 ${{ secrets.TG_CHAT }}
-        run: python scripts/hormuz_queue_backfill.py --weekly --commit
+        run: |
+          if [ -n "${{ inputs.hormuz_backfill_since }}" ]; then
+            python scripts/hormuz_queue_backfill.py --commit --start "${{ inputs.hormuz_backfill_since }}"
+          else
+            python scripts/hormuz_queue_backfill.py --weekly --commit
+          fi
 
       - name: Upload artifact
         if: always()

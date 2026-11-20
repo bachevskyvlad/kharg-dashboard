@@ -402,16 +402,15 @@ def aggregate_weekly(passes, ais_daily):
         n_tanker_avg, n_total_avg = weekly_ais_avg(ais_daily, ws, we)
 
         rows.append(dict(
-            week_start=ws,
-            n_passes=len(ps),
-            n_pairs=len(paired),
-            large=large_mean,
-            n_all=n_all_mean,
+            week=ws,
+            passes=len(ps),
+            pairs=len(paired),
+            large_avg=large_mean,
+            all_avg=n_all_mean,
             stay_share=stay_share,
             gone_per_day=gone_per_day,
             dwell_days=dwell_days,
             n_tanker=n_tanker_avg,
-            n_total=n_total_avg,
         ))
     return rows
 

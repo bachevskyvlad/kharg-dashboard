@@ -1187,20 +1187,20 @@
 
             <!-- Gulf Exit KPI row -->
             <div style="display:flex;gap:1rem;flex-wrap:wrap;margin-bottom:1.25rem;">
-                <div style="background:var(--surface);border:1px solid var(--border);padding:0.9rem 1.1rem;min-width:140px;">
-                    <div style="font-size:0.6rem;letter-spacing:1px;text-transform:uppercase;color:var(--muted);margin-bottom:0.2rem">Corridor — Latest</div>
-                    <div style="font-size:1.6rem;font-weight:700;color:#3b82f6;font-family:'Space Grotesk',sans-serif" id="ge-corr-large">—</div>
-                    <div style="font-size:0.65rem;color:var(--muted)">large ships (≥ 220 m)</div>
+                <div style="background:var(--surface);border:1px solid var(--border);padding:0.9rem 1.1rem;min-width:160px;">
+                    <div style="font-size:0.6rem;letter-spacing:1px;text-transform:uppercase;color:var(--muted);margin-bottom:0.2rem">Large ships exiting, radar</div>
+                    <div style="font-size:1.6rem;font-weight:700;color:#3b82f6;font-family:'Space Grotesk',sans-serif" id="ge-kpi-radar">—</div>
+                    <div style="font-size:0.65rem;color:var(--muted)" id="ge-kpi-radar-sub">last 4 wks vs 2025 avg</div>
                 </div>
-                <div style="background:var(--surface);border:1px solid var(--border);padding:0.9rem 1.1rem;min-width:140px;">
-                    <div style="font-size:0.6rem;letter-spacing:1px;text-transform:uppercase;color:var(--muted);margin-bottom:0.2rem">Corridor VLCC</div>
-                    <div style="font-size:1.6rem;font-weight:700;color:#ef4444;font-family:'Space Grotesk',sans-serif" id="ge-corr-vlcc">—</div>
-                    <div style="font-size:0.65rem;color:var(--muted)">≥ 300 m, latest pass</div>
+                <div style="background:var(--surface);border:1px solid var(--border);padding:0.9rem 1.1rem;min-width:160px;">
+                    <div style="font-size:0.6rem;letter-spacing:1px;text-transform:uppercase;color:var(--muted);margin-bottom:0.2rem">AIS tankers / day</div>
+                    <div style="font-size:1.6rem;font-weight:700;color:#94a3b8;font-family:'Space Grotesk',sans-serif" id="ge-kpi-ais">—</div>
+                    <div style="font-size:0.65rem;color:var(--muted)" id="ge-kpi-ais-sub">last 4 wks vs 2025 avg</div>
                 </div>
-                <div style="background:var(--surface);border:1px solid var(--border);padding:0.9rem 1.1rem;min-width:140px;">
-                    <div style="font-size:0.6rem;letter-spacing:1px;text-transform:uppercase;color:var(--muted);margin-bottom:0.2rem">IR Lane — Latest</div>
-                    <div style="font-size:1.6rem;font-weight:700;color:#22c55e;font-family:'Space Grotesk',sans-serif" id="ge-ir-large">—</div>
-                    <div style="font-size:0.65rem;color:var(--muted)">large ships (≥ 220 m)</div>
+                <div style="background:var(--surface);border:1px solid var(--border);padding:0.9rem 1.1rem;min-width:160px;">
+                    <div style="font-size:0.6rem;letter-spacing:1px;text-transform:uppercase;color:var(--muted);margin-bottom:0.2rem">Iranian-lane share</div>
+                    <div style="font-size:1.6rem;font-weight:700;color:#22c55e;font-family:'Space Grotesk',sans-serif" id="ge-kpi-ir">—</div>
+                    <div style="font-size:0.65rem;color:var(--muted)" id="ge-kpi-ir-sub">irlane / (corr+ir) · 4 wks vs 2025</div>
                 </div>
             </div>
 
@@ -1221,7 +1221,11 @@
                 <div style="display:flex;gap:16px;flex-wrap:wrap;margin-top:10px;">
                     <span style="display:flex;align-items:center;gap:6px;font-size:0.68rem;color:var(--muted);font-family:monospace"><span style="width:12px;height:12px;background:#3b82f6;flex-shrink:0"></span>Corridor</span>
                     <span style="display:flex;align-items:center;gap:6px;font-size:0.68rem;color:var(--muted);font-family:monospace"><span style="width:12px;height:12px;background:#22c55e;flex-shrink:0"></span>IR Lane</span>
+                    <span style="display:flex;align-items:center;gap:6px;font-size:0.68rem;color:var(--muted);font-family:monospace"><span style="width:14px;height:2px;background:#94a3b8;flex-shrink:0;border-top:2px dashed #94a3b8"></span>AIS tankers/day</span>
                 </div>
+            </div>
+            <div style="font-size:0.65rem;color:var(--dim);font-family:monospace;padding:0.25rem 0;margin-top:0.25rem">
+                Sentinel-1 radar · all flags · ships ≥220 m. Radar cannot see flag or cargo. Counts per satellite pass — trends, not exact volumes.
             </div>
         </div>
 
@@ -3254,9 +3258,11 @@ function hzRedraw(k, r) {
         const dpr = window.devicePixelRatio || 1;
         c.width = c.offsetWidth * dpr; c.height = c.offsetHeight * dpr;
         ctx.scale(dpr, dpr);
-        hzDrawLine(ctx, c.offsetWidth, c.offsetHeight, PAD, labels, [
-            {vals: rows.map(r => r.dwell_days != null ? +r.dwell_days : null), color:'#a78bfa', fill:true, step:5},
-            {vals: rows.map(r => r.stay_share != null ? +r.stay_share * 100 : null), color:'#38bdf8', dashed:true, step:10}
+        const dwRows = rows.filter(r => r.pairs >= 4);
+        const dwLabels = dwRows.map(r => r.week);
+        hzDrawLine(ctx, c.offsetWidth, c.offsetHeight, PAD, dwLabels, [
+            {vals: dwRows.map(r => r.dwell_days != null ? Math.min(+r.dwell_days, 60) : null), color:'#a78bfa', fill:true, step:5},
+            {vals: dwRows.map(r => r.stay_share != null ? +r.stay_share * 100 : null), color:'#38bdf8', dashed:true, step:10}
         ]);
     }
 }
@@ -3265,7 +3271,7 @@ async function initHormuz() {
     if (_hzInited && _hzRows.length) { hzRedrawAll(); return; }
     try {
         const resp = await fetch(
-            SB_URL_HZ + '/rest/v1/hormuz_weekly?select=week,passes,pairs,large_avg,all_avg,stay_share,gone_per_day,dwell_days&order=week&limit=5000',
+            SB_URL_HZ + '/rest/v1/hormuz_weekly?select=week,passes,pairs,large_avg,all_avg,stay_share,gone_per_day,dwell_days,n_tanker&order=week&limit=5000',
             { headers: { apikey: SB_KEY_HZ, Authorization: 'Bearer ' + SB_KEY_HZ } }
         );
         if (!resp.ok) throw new Error(resp.status);
@@ -3274,13 +3280,20 @@ async function initHormuz() {
             document.getElementById('hz-updated').textContent = 'No data loaded';
             return;
         }
-        // KPIs from last week
+        // KPIs: last row for large/gpd/stay; last 4 weeks with ≥4 pairs for dwell
         const last = _hzRows[_hzRows.length - 1];
         document.getElementById('hz-large').textContent  = last.large_avg  != null ? (+last.large_avg).toFixed(1) : '—';
         document.getElementById('hz-gpd').textContent    = last.gone_per_day != null ? (+last.gone_per_day).toFixed(2) : '—';
-        document.getElementById('hz-dwell').textContent  = last.dwell_days != null ? (+last.dwell_days).toFixed(1) : '—';
         document.getElementById('hz-stay').textContent   = last.stay_share != null ? (+last.stay_share * 100).toFixed(0) + '%' : '—';
         document.getElementById('hz-updated').textContent = 'Updated ' + last.week + ' · orbits 57 & 166';
+        // dwell KPI: avg of last 4 weeks with ≥4 pairs
+        const dwellRows = _hzRows.filter(r => r.pairs >= 4 && r.dwell_days != null).slice(-4);
+        if (dwellRows.length) {
+            const dwellAvg = dwellRows.reduce((s,r)=>s+(+r.dwell_days),0)/dwellRows.length;
+            document.getElementById('hz-dwell').textContent = dwellAvg > 60 ? '60+' : dwellAvg.toFixed(1);
+        } else {
+            document.getElementById('hz-dwell').textContent = '—';
+        }
         _hzInited = true;
         hzRedrawAll();
     } catch(e) {
@@ -3340,26 +3353,46 @@ function geRedraw(key, r) {
         const corrVals = allM.map(m => { const i = corr.labels.indexOf(m); return i>=0 ? corr.vals[i] : null; });
         const irVals   = allM.map(m => { const i = ir.labels.indexOf(m);   return i>=0 ? ir.vals[i]   : null; });
 
+        // AIS line from hormuz_weekly.n_tanker (monthly avg)
+        let aisVals = null;
+        if (_hzRows && _hzRows.length) {
+            const aisMonths = {};
+            const cutIso = months ? (() => { const d=new Date(); d.setMonth(d.getMonth()-months); return d.toISOString().slice(0,7); })() : null;
+            _hzRows.forEach(r => {
+                if (!r.n_tanker) return;
+                const m = r.week.slice(0,7);
+                if (cutIso && m < cutIso) return;
+                if (!aisMonths[m]) aisMonths[m] = {sum:0,n:0};
+                aisMonths[m].sum += +r.n_tanker; aisMonths[m].n++;
+            });
+            aisVals = allM.map(m => aisMonths[m] ? aisMonths[m].sum/aisMonths[m].n : null);
+        }
+
         const c = document.getElementById('geChart');
         if (!c) return;
         const dpr = window.devicePixelRatio||1;
         c.width = c.offsetWidth*dpr; c.height = c.offsetHeight*dpr;
         if (_geChart) { _geChart.destroy(); _geChart = null; }
+        const datasets = [
+            { label:'Corridor', data: corrVals, backgroundColor:'rgba(59,130,246,0.75)', borderRadius:3, barPercentage:0.6, yAxisID:'y' },
+            { label:'IR Lane',  data: irVals,   backgroundColor:'rgba(34,197,94,0.75)',  borderRadius:3, barPercentage:0.6, yAxisID:'y' }
+        ];
+        if (aisVals) datasets.push({
+            label:'AIS tankers/day', data: aisVals, type:'line',
+            borderColor:'rgba(148,163,184,0.85)', backgroundColor:'transparent',
+            borderWidth:1.5, borderDash:[4,3], pointRadius:2, pointBackgroundColor:'rgba(148,163,184,0.85)',
+            yAxisID:'y2', tension:0.3
+        });
         _geChart = new Chart(c, {
             type: 'bar',
-            data: {
-                labels: allM,
-                datasets: [
-                    { label:'Corridor', data: corrVals, backgroundColor:'rgba(59,130,246,0.75)', borderRadius:3, barPercentage:0.6 },
-                    { label:'IR Lane',  data: irVals,   backgroundColor:'rgba(34,197,94,0.75)',  borderRadius:3, barPercentage:0.6 }
-                ]
-            },
+            data: { labels: allM, datasets },
             options: {
                 responsive:false, maintainAspectRatio:false,
                 plugins:{ legend:{display:false}, tooltip:{callbacks:{label: ctx=>`${ctx.dataset.label}: ${ctx.parsed.y!=null?ctx.parsed.y.toFixed(1):'—'}`}} },
                 scales:{
                     x:{ ticks:{color:'rgba(100,116,139,0.8)',font:{size:10},maxRotation:0}, grid:{color:'rgba(255,255,255,0.05)'} },
-                    y:{ ticks:{color:'rgba(100,116,139,0.8)',font:{size:10}}, grid:{color:'rgba(255,255,255,0.05)'}, beginAtZero:true }
+                    y:{ ticks:{color:'rgba(100,116,139,0.8)',font:{size:10}}, grid:{color:'rgba(255,255,255,0.05)'}, beginAtZero:true },
+                    y2:{ position:'right', ticks:{color:'rgba(148,163,184,0.6)',font:{size:9}}, grid:{display:false}, beginAtZero:true, display: !!aisVals }
                 }
             }
         });
@@ -3397,6 +3430,21 @@ function geRedraw(key, r) {
     }
 }
 
+function geWeeklyAvg(rows, field, startIso, endIso) {
+    const vals = rows.filter(r => r.date >= startIso && r.date <= endIso && r[field] != null).map(r => +r[field]);
+    return vals.length ? vals.reduce((a,b)=>a+b,0)/vals.length : null;
+}
+
+function geKpiPct(curr, base) {
+    if (curr == null || base == null || base === 0) return null;
+    return ((curr - base) / base * 100);
+}
+
+function geKpiText(val, suffix) {
+    if (val == null) return '—';
+    return (val >= 0 ? '+' : '') + val.toFixed(0) + (suffix||'%');
+}
+
 async function initGulfExit() {
     if (_geInited) { geRedraw('ge', _geRange.ge); geRedraw('jk', _geRange.jk); return; }
     try {
@@ -3409,17 +3457,62 @@ async function initGulfExit() {
         if (!Array.isArray(all)) return;
 
         _geRows = all.filter(r => r.zone === 'corridor');
+        const irRows = all.filter(r => r.zone === 'irlane');
         _jkRows = all.filter(r => r.zone === 'irlane' || r.zone === 'jask');
 
-        // KPIs: latest date per zone
-        const latest = (zone, field) => {
-            const rows = all.filter(r => r.zone===zone && r[field]!=null);
-            if (!rows.length) return '—';
-            return rows[rows.length-1][field];
-        };
-        document.getElementById('ge-corr-large').textContent = latest('corridor','large') !== '—' ? latest('corridor','large') : '—';
-        document.getElementById('ge-corr-vlcc').textContent  = latest('corridor','vlcc')  !== '—' ? latest('corridor','vlcc')  : '—';
-        document.getElementById('ge-ir-large').textContent   = latest('irlane','large')   !== '—' ? latest('irlane','large')   : '—';
+        // KPI: last 4 weeks
+        const now = new Date();
+        const w4ago = new Date(now); w4ago.setDate(w4ago.getDate() - 28);
+        const w4s = w4ago.toISOString().slice(0,10);
+        const w4e = now.toISOString().slice(0,10);
+        // 2025 baseline: 2025-01-01 → 2025-12-31
+        const y25s = '2025-01-01', y25e = '2025-12-31';
+
+        // Radar KPI: (corridor.large + irlane.large) avg last 4 wks vs 2025
+        const radarCurr = (() => {
+            const c = geWeeklyAvg(_geRows, 'large', w4s, w4e);
+            const i = geWeeklyAvg(irRows, 'large', w4s, w4e);
+            return (c != null && i != null) ? (c+i)/2 : (c ?? i);
+        })();
+        const radarBase = (() => {
+            const c = geWeeklyAvg(_geRows, 'large', y25s, y25e);
+            const i = geWeeklyAvg(irRows, 'large', y25s, y25e);
+            return (c != null && i != null) ? (c+i)/2 : (c ?? i);
+        })();
+        const radarPct = geKpiPct(radarCurr, radarBase);
+        document.getElementById('ge-kpi-radar').textContent = geKpiText(radarPct);
+        document.getElementById('ge-kpi-radar-sub').textContent =
+            radarCurr != null ? `${radarCurr.toFixed(1)} ships/pass · vs 2025 avg` : 'last 4 wks vs 2025 avg';
+
+        // AIS KPI: from _hzRows (hormuz_weekly.n_tanker)
+        if (_hzRows && _hzRows.length) {
+            const aisRows4w = _hzRows.filter(r => r.week >= w4s && r.n_tanker != null);
+            const aisRows25 = _hzRows.filter(r => r.week >= y25s && r.week <= y25e && r.n_tanker != null);
+            const aisCurr = aisRows4w.length ? aisRows4w.reduce((s,r)=>s+(+r.n_tanker),0)/aisRows4w.length : null;
+            const aisBase = aisRows25.length ? aisRows25.reduce((s,r)=>s+(+r.n_tanker),0)/aisRows25.length : null;
+            const aisPct = geKpiPct(aisCurr, aisBase);
+            document.getElementById('ge-kpi-ais').textContent = geKpiText(aisPct);
+            document.getElementById('ge-kpi-ais-sub').textContent =
+                aisCurr != null ? `${aisCurr.toFixed(1)} t/day · vs 2025 avg` : 'last 4 wks vs 2025 avg';
+        }
+
+        // IR share KPI
+        const irCurr4 = geWeeklyAvg(irRows, 'large', w4s, w4e);
+        const corrCurr4 = geWeeklyAvg(_geRows, 'large', w4s, w4e);
+        const irShare4 = (irCurr4 != null && corrCurr4 != null && (irCurr4+corrCurr4) > 0)
+            ? irCurr4/(irCurr4+corrCurr4)*100 : null;
+        const irCurr25 = geWeeklyAvg(irRows, 'large', y25s, y25e);
+        const corrCurr25 = geWeeklyAvg(_geRows, 'large', y25s, y25e);
+        const irShare25 = (irCurr25 != null && corrCurr25 != null && (irCurr25+corrCurr25) > 0)
+            ? irCurr25/(irCurr25+corrCurr25)*100 : null;
+        document.getElementById('ge-kpi-ir').textContent =
+            irShare4 != null ? irShare4.toFixed(0)+'%' : '—';
+        document.getElementById('ge-kpi-ir-sub').textContent =
+            (irShare4 != null && irShare25 != null)
+                ? `${irShare4.toFixed(0)}% now vs ${irShare25.toFixed(0)}% (2025)`
+                : 'irlane / (corr+ir) · 4 wks vs 2025';
+
+        // Jask KPIs
         const jkLast = all.filter(r => r.zone==='jask').slice(-1)[0];
         if (jkLast) {
             document.getElementById('jk-term-n').textContent    = jkLast.terminal_n    ?? '—';
