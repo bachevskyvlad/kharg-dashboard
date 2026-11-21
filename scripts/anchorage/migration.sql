@@ -25,7 +25,7 @@ CREATE TABLE IF NOT EXISTS anchorage_queue (
   suezaframax INTEGER NOT NULL,
   small       INTEGER NOT NULL,
   arrived     INTEGER NOT NULL,
-  left        INTEGER NOT NULL
+  departed    INTEGER NOT NULL
 );
 
 -- anchorage_daily: DO NOT CHANGE

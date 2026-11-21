@@ -260,7 +260,7 @@ def build_queue(tracks, all_dates):
             "suezaframax": suez,
             "small":       small,
             "arrived":     arrived,
-            "left":        left,
+            "departed":    left,
         })
         prev_active = cur_active
 

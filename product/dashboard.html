@@ -1068,7 +1068,7 @@
                                 <th style="padding:0.4rem 0.6rem;font-weight:500">SuezAframax</th>
                                 <th style="padding:0.4rem 0.6rem;font-weight:500">Small</th>
                                 <th style="padding:0.4rem 0.6rem;font-weight:500">Arrived</th>
-                                <th style="padding:0.4rem 0.6rem;font-weight:500">Left</th>
+                                <th style="padding:0.4rem 0.6rem;font-weight:500">Departed</th>
                                 <th style="padding:0.4rem 0.6rem;font-weight:500">Total</th>
                             </tr>
                         </thead>
@@ -2681,7 +2681,7 @@ function aqDraw() {
         <div style="display:flex;align-items:center;gap:6px;margin-bottom:2px"><span style="width:8px;height:8px;background:#f97316;display:inline-block"></span>SuezAframax: <b>${r.suezaframax??'—'}</b></div>
         <div style="display:flex;align-items:center;gap:6px;margin-bottom:2px"><span style="width:8px;height:8px;background:#94a3b8;display:inline-block"></span>Small: <b>${r.small??'—'}</b></div>
         <div style="display:flex;align-items:center;gap:6px;margin-bottom:2px"><span style="width:8px;height:8px;background:#22c55e;display:inline-block"></span>Arrived: <b>${r.arrived??'—'}</b></div>
-        <div style="display:flex;align-items:center;gap:6px;margin-bottom:2px"><span style="width:8px;height:8px;background:#f43f5e;display:inline-block"></span>Left: <b>${r.left??'—'}</b></div>
+        <div style="display:flex;align-items:center;gap:6px;margin-bottom:2px"><span style="width:8px;height:8px;background:#f43f5e;display:inline-block"></span>Left: <b>${r.departed??'—'}</b></div>
         <div style="border-top:1px solid rgba(255,255,255,0.08);margin-top:4px;padding-top:4px">Total: <b>${r.total}</b></div>`;
       const ctx2 = canvas.getContext('2d');
       const dpr2 = window.devicePixelRatio || 1;
@@ -2733,7 +2733,7 @@ async function initAnchorage() {
         <td style="padding:0.35rem 0.6rem;text-align:right;color:#f97316">${r.suezaframax ?? '—'}</td>
         <td style="padding:0.35rem 0.6rem;text-align:right;color:#94a3b8">${r.small ?? '—'}</td>
         <td style="padding:0.35rem 0.6rem;text-align:right;color:#22c55e">${r.arrived ?? '—'}</td>
-        <td style="padding:0.35rem 0.6rem;text-align:right;color:#f43f5e">${r.left ?? '—'}</td>
+        <td style="padding:0.35rem 0.6rem;text-align:right;color:#f43f5e">${r.departed ?? '—'}</td>
         <td style="padding:0.35rem 0.6rem;text-align:right;font-weight:600">${r.total}</td>
       </tr>`).join('');
     }
