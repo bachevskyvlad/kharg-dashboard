@@ -206,8 +206,13 @@ def build_bg_v4(ref_rows, cell_bboxes, aoi_full):
         ref_col = f"{berth}_optical_ref"
         for orbit in (35, 101):
             cache_path = BG_V4 / f"bg_o{orbit}_{berth}.npy"
-            # do NOT load cache — SH-built files have different radiometry (SIGMA0 vs RTC)
-            # always rebuild from PC
+            # Frozen background: if file exists on disk, load and use as-is.
+            # Backgrounds are built once from optically-confirmed empty passes
+            # and must never be rebuilt or overwritten by the pipeline.
+            if cache_path.exists():
+                bg[(orbit, berth)] = np.load(cache_path)
+                print(f"  BG v4 {berth} o{orbit}: loaded frozen {cache_path.name}")
+                continue
 
             emp_dates = []
             all_dates = []
@@ -278,9 +283,8 @@ def build_bg_v4(ref_rows, cell_bboxes, aoi_full):
             else:
                 bg_arr = np.percentile(stack, 10, axis=0).astype(np.float32)
 
-            np.save(cache_path, bg_arr)
             bg[(orbit, berth)] = bg_arr
-            print(f"    saved {cache_path.name} shape={bg_arr.shape}")
+            print(f"    built {cache_path.name} shape={bg_arr.shape} (NOT saved — frozen-bg rule)")
 
     return bg
 

@@ -50,9 +50,8 @@ AOI_BBOX = BBox(bbox=[50.26, 29.17, 50.40, 29.31], crs=CRS.WGS84)
 # Cross-validated from berth_v4_history run #45 (orbit-101 column Sept–Nov 2026
 # shows continuous EMP for east_t_head).
 KNOWN_EMP_DATES = [
-    "2026-09-06", "2026-09-12", "2026-09-18", "2026-09-24", "2026-09-30",
     "2026-10-06", "2026-10-12", "2026-10-18", "2026-10-24", "2026-10-30",
-    "2026-11-05", "2026-11-11",
+    "2026-11-05", "2026-11-11", "2026-11-17",
 ]
 
 EVALSCRIPT_S1 = """
@@ -154,7 +153,7 @@ def main():
     out_path = BG_V4 / f"bg_o{TARGET_ORBIT}_{TARGET_BERTH}.npy"
     np.save(out_path, bg)
     print(f"\nSaved: {out_path}")
-    print(f"bg_source label: bg_v4_o35_2026 ({len(aligned)} EMP scenes, orbit-35, Sept–Nov 2026)")
+    print(f"bg_source label: bg_v4_o35_2026 ({len(aligned)} EMP scenes, orbit-35, Oct–Nov 2026, optically confirmed)")
 
 if __name__ == "__main__":
     main()

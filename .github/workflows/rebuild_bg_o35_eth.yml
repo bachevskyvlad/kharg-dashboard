@@ -1,0 +1,56 @@
+name: Rebuild BG o35 east_t_head
+
+on:
+  workflow_dispatch:
+
+jobs:
+  rebuild:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          pip install sentinelhub scipy numpy Pillow pystac-client planetary-computer --quiet
+
+      - name: Build bg_o35_east_t_head
+        env:
+          CLIENT_ID:     ${{ secrets.CLIENT_ID }}
+          CLIENT_SECRET: ${{ secrets.CLIENT_SECRET }}
+        run: python scripts/build_bg_v4_o35_eth.py
+
+      - name: Show delta vs previous
+        run: |
+          python3 - <<'EOF'
+          import numpy as np, os
+          p = "diagnostics/berth_v4/bg_v4/bg_o35_east_t_head.npy"
+          if os.path.exists(p):
+              arr = np.load(p)
+              db = 10 * np.log10(np.maximum(arr, 1e-10))
+              print(f"NEW: shape={arr.shape}  mean_dB={db.mean():.2f}  min_dB={db.min():.2f}  max_dB={db.max():.2f}")
+          EOF
+
+      - name: Commit bg_o35_east_t_head.npy
+        run: |
+          git config user.name  "pipeline"
+          git config user.email "pipeline@oilradar.io"
+          git add diagnostics/berth_v4/bg_v4/bg_o35_east_t_head.npy
+          git diff --cached --quiet && echo "No change" || \
+            git commit -m "bg: rebuild bg_o35_east_t_head from 8 confirmed-empty Oct-Nov 2026 passes
+
+Dates: 2026-10-06, 10-12, 10-18, 10-24, 10-30, 11-05, 11-11, 11-17 (orbit-35, median).
+Removes false positives on 2026-09-06 and 2026-09-30.
+
+Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01VBJUxpJfFNw5i6YD1SXibt"
+          git pull --rebase --autostash origin main
+          git push
