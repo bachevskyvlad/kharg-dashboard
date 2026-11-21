@@ -43,5 +43,5 @@ export async function onRequest(context) {
   });
   const cols = ["date","tank_id","vol_mn_bbl"];
   if (fmt === "csv") return apiCsv(records, cols);
-  return apiJson({ count: records.length, records });
+  return apiJson({ count: records.length, records: records });
 }

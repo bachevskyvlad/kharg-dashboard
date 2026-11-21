@@ -260,6 +260,17 @@
     <div class="legend-ticks"><span>0%</span><span>25%</span><span>50%</span><span>75%</span><span>100%</span></div>
   </div>
 
+  <!-- Berth occupancy (beta) -->
+  <div id="berth-occupancy" style="margin-top:32px;padding:24px 28px;border:1px solid var(--border);background:var(--deep);">
+    <div style="display:flex;align-items:baseline;gap:16px;margin-bottom:4px;">
+      <div style="font-family:'DM Mono',monospace;font-size:9px;letter-spacing:3px;text-transform:uppercase;color:var(--dim);">Berth Occupancy (beta)</div>
+      <div style="font-size:11px;color:var(--dim);">нижняя оценка, детектор пропускает ~1/3 судов; точность сигнала «занято» ~92%</div>
+    </div>
+    <div id="berth-grid" style="margin-top:16px;overflow-x:auto;">
+      <div style="font-size:12px;color:var(--dim);">Loading…</div>
+    </div>
+  </div>
+
   <div class="explanation-grid" style="margin-top:32px;grid-template-columns:1fr 1fr;">
     <div class="explain-card"><h4>🛰️ How The Radar Works</h4><p>Oil storage tanks on Kharg Island use <strong>floating roofs</strong> that lower as oil is pumped out and rise as tanks fill. Sentinel-1 SAR signals bounce off the internal walls. A low roof returns a brighter radar reflection. We invert this radiometric signal to calculate the physical volume in millions of barrels.</p><p class="muted">On average, the satellite passes over the region every ~6 days.</p></div>
     <div class="explain-card" style="border-color:rgba(59,130,246,0.2);display:flex;flex-direction:column;justify-content:center;align-items:flex-start;gap:16px;">
@@ -539,6 +550,94 @@ async function loadCharts(){
 
 loadCharts();
 initMap();
+
+// ── Berth occupancy widget ────────────────────────────────────────────────────
+(function(){
+  var BERTH_LABELS = {
+    sea_island:     'Sea Island',
+    east_t_head:    'East T-Head',
+    southeast_pier: 'SE Pier',
+  };
+  var BERTHS = ['sea_island','east_t_head','southeast_pier'];
+
+  function berthColor(val){
+    if(val==='OCC') return '#22c55e';
+    if(val==='EMP') return '#374151';
+    return '#1f2937';
+  }
+  function berthLabel(val){
+    if(val==='OCC') return 'OCC';
+    if(val==='EMP') return '';
+    return '?';
+  }
+
+  var MON_NAMES=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
+  fetch('/data/berth_occupancy.json')
+    .then(function(r){ return r.ok ? r.json() : null; })
+    .then(function(data){
+      var el = document.getElementById('berth-grid');
+      if(!el) return;
+      if(!data || !data.rows || !data.rows.length){
+        el.innerHTML='<div style="font-size:12px;color:var(--dim);">No data yet — history run pending.</div>';
+        return;
+      }
+      var rows = data.rows;
+
+      // Aggregate to monthly: for each (berth, YYYY-MM) → OCC if any OCC, EMP if any EMP, else null
+      var monthBerth = {};
+      rows.forEach(function(r){
+        var ym = r.date.slice(0,7); // YYYY-MM
+        BERTHS.forEach(function(b){
+          var key = ym+'|'+b;
+          var v = r[b];
+          if(!v || v==='NO_BG' || v==='ERR') return;
+          if(!monthBerth[key]) monthBerth[key]='EMP';
+          if(v==='OCC') monthBerth[key]='OCC';
+        });
+      });
+
+      // Collect sorted months
+      var monthSet={};
+      rows.forEach(function(r){ monthSet[r.date.slice(0,7)]=1; });
+      var months = Object.keys(monthSet).sort();
+
+      // Responsive: show last N months
+      var maxCols = Math.max(12, Math.floor((window.innerWidth||320)/22));
+      var showMonths = months.slice(-maxCols);
+
+      var html = '<table style="border-collapse:collapse;font-size:10px;font-family:\'DM Mono\',monospace;">';
+      // Header row: month labels
+      html += '<tr><td style="padding:2px 6px 2px 0;color:var(--dim);white-space:nowrap;"></td>';
+      showMonths.forEach(function(ym){
+        var parts=ym.split('-');
+        var label=MON_NAMES[parseInt(parts[1],10)-1]+' '+parts[0].slice(2);
+        html+='<td style="padding:2px 1px;color:var(--dim);writing-mode:vertical-lr;transform:rotate(180deg);text-align:left;height:52px;vertical-align:bottom;font-size:9px;">'+label+'</td>';
+      });
+      html+='</tr>';
+
+      // One row per berth
+      BERTHS.forEach(function(b){
+        html+='<tr>';
+        html+='<td style="padding:3px 8px 3px 0;color:var(--muted);white-space:nowrap;font-size:10px;">'+BERTH_LABELS[b]+'</td>';
+        showMonths.forEach(function(ym){
+          var val = monthBerth[ym+'|'+b] || null;
+          var bg=berthColor(val);
+          var lbl=berthLabel(val);
+          html+='<td style="padding:1px;"><div title="'+ym+' '+b+': '+(val||'–')+'" style="width:16px;height:14px;background:'+bg+';border-radius:2px;display:flex;align-items:center;justify-content:center;font-size:7px;color:#fff;">'+lbl+'</div></td>';
+        });
+        html+='</tr>';
+      });
+      html+='</table>';
+      html+='<div style="margin-top:8px;font-size:10px;color:var(--dim);display:flex;gap:16px;">';
+      html+='<span><span style="display:inline-block;width:10px;height:10px;background:#22c55e;border-radius:1px;vertical-align:middle;margin-right:4px;"></span>OCC</span>';
+      html+='<span><span style="display:inline-block;width:10px;height:10px;background:#374151;border-radius:1px;vertical-align:middle;margin-right:4px;"></span>EMP</span>';
+      if(data.generated) html+='<span style="margin-left:auto;">generated '+data.generated+'</span>';
+      html+='</div>';
+      el.innerHTML=html;
+    })
+    .catch(function(){ });
+})();
 </script>
 <script>
 // Dashboard CTA: route logged-in users (valid session on app.oilradar.io) to the

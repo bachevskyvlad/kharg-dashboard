@@ -83,6 +83,7 @@ BG_PCT             = 20
 BG_WINDOW_DAYS_1   = 365 * 2    # ±24 months (Change 1)
 BG_WINDOW_DAYS_2   = 365 * 4    # ±48 months fallback
 BG_MIN_DATES       = 10
+BG_MAX_SCENES      = 25         # cap stack; evenly subsample if more
 STATIC_MIN_DATES   = 8          # Change 2: static if seen ≥8 dates
 STATIC_ROUND_M     = 50         # group by round-to-50m center
 
@@ -242,16 +243,26 @@ def wind_normalise(ratio_db, corridor_masks, water_ring_masks):
 # SentinelHub fetch
 # ═══════════════════════════════════════════════════════════════════════════════
 
+class PUExhaustedError(Exception):
+    """Raised when Sentinel Hub returns 403 ACCESS_INSUFFICIENT_PROCESSING_UNITS."""
+
 def catalog_search(date_from, date_to):
     catalog = SentinelHubCatalog(config=config)
-    results = list(catalog.search(
-        S1_CDSE, bbox=AOI_BBOX,
-        time=(date_from + "T00:00:00Z", date_to + "T23:59:59Z"),
-        fields={"include": ["id", "properties.datetime",
-                            "properties.sat:relative_orbit",
-                            "properties.sat:orbit_state",
-                            "properties.platform"]},
-    ))
+    try:
+        results = list(catalog.search(
+            S1_CDSE, bbox=AOI_BBOX,
+            time=(date_from + "T00:00:00Z", date_to + "T23:59:59Z"),
+            fields={"include": ["id", "properties.datetime",
+                                "properties.sat:relative_orbit",
+                                "properties.sat:orbit_state",
+                                "properties.platform"]},
+        ))
+    except Exception as e:
+        msg = str(e)
+        if "ACCESS_INSUFFICIENT_PROCESSING_UNITS" in msg or (
+                "403" in msg and "Insufficient" in msg):
+            raise PUExhaustedError("Processing units exhausted") from e
+        raise
     out = []
     for r in results:
         p = r.get("properties", {})
@@ -285,7 +296,14 @@ def fetch_linear(scene_datetime):
     try:
         data = req.get_data()
     except Exception as e:
-        print(f"    fetch error: {e}")
+        msg = str(e)
+        if "ACCESS_INSUFFICIENT_PROCESSING_UNITS" in msg or (
+                "403" in msg and "Insufficient" in msg):
+            global _PU_EXHAUSTED
+            _PU_EXHAUSTED = True
+            print(f"    fetch error: PU exhausted")
+        else:
+            print(f"    fetch error: {e}")
         return None
     if not data or data[0] is None:
         return None
@@ -303,22 +321,73 @@ def _bg_cache_path(date_str, orbit, window):
     return (BG_CACHE / f"bg_o{orbit}_{ym}_{tag}.npy",
             BG_CACHE / f"bg_o{orbit}_{ym}_{tag}_meta.json")
 
+def _v3_cache_path(date_str, orbit):
+    """v3 cache uses bg_o{orbit}_{YYYY-MM}.npy (no window suffix)."""
+    ym = date_str[:7]
+    return BG_CACHE / f"bg_o{orbit}_{ym}.npy"
+
+_PU_EXHAUSTED = False  # set True on first 403; skip all further API calls
+
+
+def _git_commit_cache(npy_path, meta_path):
+    """In CI: commit and push a newly built bg cache so it survives runner eviction."""
+    if not os.environ.get("GITHUB_ACTIONS"):
+        return
+    import subprocess
+    try:
+        subprocess.run(["git", "config", "user.email", "actions@github.com"],
+                       check=True, capture_output=True)
+        subprocess.run(["git", "config", "user.name", "GitHub Actions"],
+                       check=True, capture_output=True)
+        subprocess.run(["git", "add", str(npy_path), str(meta_path)],
+                       check=True, capture_output=True)
+        r = subprocess.run(["git", "diff", "--cached", "--quiet"], capture_output=True)
+        if r.returncode == 0:
+            return  # nothing staged
+        subprocess.run(["git", "commit", "-m",
+                        f"data: bg cache {npy_path.name} [skip ci]"],
+                       check=True, capture_output=True)
+        subprocess.run(["git", "push"], check=True, capture_output=True)
+        print(f"    git: committed {npy_path.name}")
+    except Exception as e:
+        print(f"    WARNING: git commit cache failed: {e}")
+
+
 def load_or_build_bg(date_str, orbit):
     """
     Try ±24 months; if < BG_MIN_DATES scenes → try ±48 months.
     Returns (bg_array, window_used) or (None, None) if still < BG_MIN_DATES.
     Never returns zero or False — returns None to signal no_background.
+    Also checks v3 cache format (no _w2 suffix) before building.
+    On PUExhaustedError: logs warning, marks global flag, returns (None, None).
     """
+    global _PU_EXHAUSTED
     target = datetime.strptime(date_str, "%Y-%m-%d")
     for window_days in [BG_WINDOW_DAYS_1, BG_WINDOW_DAYS_2]:
         npy, meta_p = _bg_cache_path(date_str, orbit, window_days)
         if npy.exists():
             print(f"    bg cache hit: {npy.name}")
             return np.load(npy), window_days
+        # fallback: v3 cache (no window suffix)
+        v3 = _v3_cache_path(date_str, orbit)
+        if v3.exists():
+            print(f"    bg cache hit (v3): {v3.name}")
+            return np.load(v3), window_days
+        if _PU_EXHAUSTED:
+            print(f"    skipping bg build (PU exhausted): {date_str} orbit {orbit}")
+            return None, None
         d0 = (target - timedelta(days=window_days)).strftime("%Y-%m-%d")
         d1 = (target + timedelta(days=window_days)).strftime("%Y-%m-%d")
-        scenes = catalog_search(d0, d1)
+        try:
+            scenes = catalog_search(d0, d1)
+        except PUExhaustedError:
+            print(f"    WARNING: Processing units exhausted on catalog_search — marking all remaining as no_background")
+            _PU_EXHAUSTED = True
+            return None, None
         orbit_sc = [s for s in scenes if s["rel_orbit"] == orbit]
+        if len(orbit_sc) > BG_MAX_SCENES:
+            step = len(orbit_sc) / BG_MAX_SCENES
+            orbit_sc = [orbit_sc[int(i * step)] for i in range(BG_MAX_SCENES)]
         print(f"    bg build orbit {orbit} ±{window_days//365}yr: {len(orbit_sc)} scenes")
         if len(orbit_sc) < BG_MIN_DATES:
             print(f"    insufficient scenes ({len(orbit_sc)} < {BG_MIN_DATES}) — trying wider window")
@@ -338,6 +407,7 @@ def load_or_build_bg(date_str, orbit):
             json.dump({"orbit": orbit, "date": date_str, "n": len(stack),
                        "d0": d0, "d1": d1, "pct": BG_PCT, "window_days": window_days}, f)
         print(f"    bg saved: {npy.name}  ({len(stack)} scenes)")
+        _git_commit_cache(npy, meta_p)
         return bg, window_days
     # Both windows failed
     print(f"    no_background: cannot build bg for {date_str} orbit {orbit}")
@@ -863,9 +933,21 @@ def process_date_orbit(date_str, orbit, corridor_masks, water_ring_masks,
     result_rows: list WITHOUT static filter applied yet (placeholder)
     no_scene: True if scene not found
     """
+    global _PU_EXHAUSTED
     print(f"\n[{date_str}  orbit={orbit}]")
 
-    scenes = catalog_search(date_str, date_str)
+    if _PU_EXHAUSTED:
+        print(f"  PU exhausted — skipping")
+        rows = build_no_bg_rows(date_str, orbit, None, run_id)
+        return [], rows, False
+
+    try:
+        scenes = catalog_search(date_str, date_str)
+    except PUExhaustedError:
+        _PU_EXHAUSTED = True
+        print(f"  PU exhausted on catalog — skipping remaining")
+        rows = build_no_bg_rows(date_str, orbit, None, run_id)
+        return [], rows, False
     orbit_sc = [s for s in scenes if s["rel_orbit"] == orbit]
     if not orbit_sc:
         print(f"  no scene for orbit {orbit} on {date_str}")

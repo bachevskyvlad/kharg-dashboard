@@ -40,6 +40,10 @@ jobs:
           PC_SDK_SUBSCRIPTION_KEY: ${{ secrets.PC_SDK_SUBSCRIPTION_KEY }}
         run: python scripts/berth_validate_optics_v4.py
 
+      - name: Step 1b — build east_t_head o101 2026 background
+        if: steps.validate.outcome == 'success'
+        run: python scripts/berth_build_bg_2026.py
+
       - name: Step 2 — v4_history full (CSV/JSON only, no DB write)
         if: steps.validate.outcome == 'success'
         id: history
@@ -47,7 +51,21 @@ jobs:
           PC_SDK_SUBSCRIPTION_KEY: ${{ secrets.PC_SDK_SUBSCRIPTION_KEY }}
         run: python scripts/berth_v4_history.py
 
-      - name: Step 3 — diagnostic SAR crops (last-4w loadings + southeast_pier VLCC)
+      - name: Step 2b — assert + gates summary (tail of log)
+        if: always()
+        run: |
+          echo "=== accuracy.txt (assert gate) ==="
+          cat diagnostics/berth_v4/validation_optics_v4/accuracy.txt 2>/dev/null || echo "(not found)"
+          echo ""
+          echo "=== validation_report.txt (gates b-f) ==="
+          cat diagnostics/berth_v4/history_v4/validation_report.txt 2>/dev/null || echo "(not found)"
+
+      - name: Step 3 — berth occupancy v2 page
+        if: steps.history.outcome == 'success'
+        id: page
+        run: python scripts/berth_v2_page.py
+
+      - name: Step 4 — acceptance gate g SAR crops (5×2025 + all autumn 2026)
         if: steps.history.outcome == 'success'
         env:
           PC_SDK_SUBSCRIPTION_KEY: ${{ secrets.PC_SDK_SUBSCRIPTION_KEY }}

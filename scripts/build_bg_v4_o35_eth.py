@@ -1,13 +1,10 @@
 """
-build_bg_v4_o35_eth.py — build BG_V4 for orbit-35 east_t_head via Planetary Computer.
+build_bg_v4_o35_eth.py — build 2026 BG for orbit-35 east_t_head.
 
-Uses 8 optically-confirmed empty passes (orbit-35, Oct–Nov 2026): adjacent orbit-101
-passes all show EMP, confirmed by optical imagery.
+Uses ONLY orbit-35 scenes where optics confirm east_t_head = EMP:
+  2026-10-06, 10-12, 10-18, 10-24, 10-30, 11-05, 11-11, 11-17
 
-Fetches S1-RTC from Planetary Computer (same source as berth_v4_history.py)
-to guarantee radiometric consistency.
-
-Output: diagnostics/berth_v4/bg_v4/bg_o35_east_t_head.npy
+Output: diagnostics/berth_v4/bg_v4/bg_o35_east_t_head_2026.npy
 """
 
 import sys
@@ -16,73 +13,67 @@ from pathlib import Path
 from scipy.ndimage import zoom as nd_zoom
 
 sys.path.insert(0, str(Path(__file__).parent))
-
-from berth_detect_core import RESOLUTION, BERTH_COORDS, berth_center, cell_bbox_for
+from berth_detect_core import BERTH_COORDS, berth_center, cell_bbox_for
 from berth_pc_fetch import find_item_pc, fetch_s1_pc
 
 ROOT   = Path(__file__).parent.parent
 BG_V4  = ROOT / "diagnostics" / "berth_v4" / "bg_v4"
 BG_V4.mkdir(parents=True, exist_ok=True)
 
-TARGET_ORBIT = 35
-TARGET_BERTH = "east_t_head"
-MIN_SCENES   = 5
-
 AOI_BBOX_LST = [50.26, 29.17, 50.40, 29.31]
+BERTH        = "east_t_head"
+ORBIT        = 35
+OUT_PATH     = BG_V4 / "bg_o35_east_t_head_2026.npy"
+MIN_SCENES   = 4
 
-# Orbit-35 dates where adjacent orbit-101 passes show east_t_head = EMP.
-# Cross-validated from berth_v4_history run #45 (Oct–Nov 2026).
+# o35 dates where optics confirm east_t_head = EMP (Oct-Nov 2026 only).
+# Excludes 2026-09-06 and 2026-09-30 — confirmed false-positive dates.
 KNOWN_EMP_DATES = [
-    "2026-10-06", "2026-10-12", "2026-10-18", "2026-10-24", "2026-10-30",
-    "2026-11-05", "2026-11-11", "2026-11-17",
+    "2026-10-06",
+    "2026-10-12",
+    "2026-10-18",
+    "2026-10-24",
+    "2026-10-30",
+    "2026-11-05",
+    "2026-11-11",
+    "2026-11-17",
 ]
 
 
 def main():
-    pts      = BERTH_COORDS[TARGET_BERTH]
+    pts = BERTH_COORDS[BERTH]
     bbox_obj = cell_bbox_for(*berth_center(pts))
-
-    print(f"Fetching {len(KNOWN_EMP_DATES)} orbit-{TARGET_ORBIT} EMP scenes "
-          f"for {TARGET_BERTH} via Planetary Computer ...")
 
     arrays = []
     for date_str in KNOWN_EMP_DATES:
-        item = find_item_pc(date_str, TARGET_ORBIT, AOI_BBOX_LST)
+        item = find_item_pc(date_str, ORBIT, AOI_BBOX_LST)
         if item is None:
-            print(f"  {date_str}  SKIP (no PC item)")
+            print(f"  {date_str}: no PC item — skipped")
             continue
         arr = fetch_s1_pc(item, bbox_obj)
         if arr is None:
-            print(f"  {date_str}  SKIP (fetch error)")
+            print(f"  {date_str}: fetch returned None — skipped")
             continue
+        print(f"  {date_str} OK shape={arr.shape} mean={arr.mean():.4f}")
         arrays.append(arr)
-        print(f"  {date_str}  shape={arr.shape}  mean={arr.mean():.4f}")
 
     if len(arrays) < MIN_SCENES:
-        sys.exit(f"FATAL: only {len(arrays)} arrays fetched, need ≥{MIN_SCENES}")
+        sys.exit(f"FATAL: only {len(arrays)} arrays fetched — need ≥{MIN_SCENES}")
 
-    target_shape = arrays[len(arrays) // 2].shape
+    # Align to most common shape
+    shapes = [a.shape for a in arrays]
+    target = max(set(shapes), key=shapes.count)
     aligned = []
     for a in arrays:
-        if a.shape == target_shape:
-            aligned.append(a)
-        else:
-            aligned.append(nd_zoom(a,
-                (target_shape[0] / a.shape[0], target_shape[1] / a.shape[1]), order=1))
+        if a.shape != target:
+            a = nd_zoom(a, (target[0]/a.shape[0], target[1]/a.shape[1]), order=1)
+        aligned.append(a)
 
-    stack = np.stack(aligned, axis=0)
-    bg    = np.nanmedian(stack, axis=0).astype(np.float32)
-
-    db = 10 * np.log10(np.maximum(bg, 1e-10))
-    print(f"\nBackground shape={bg.shape}  scenes={len(aligned)}")
-    print(f"BG stats: min={bg.min():.4f} mean={bg.mean():.4f} max={bg.max():.4f}")
-    print(f"BG dB:    min={db.min():.2f}  mean={db.mean():.2f}  max={db.max():.2f}")
-
-    out_path = BG_V4 / f"bg_o{TARGET_ORBIT}_{TARGET_BERTH}.npy"
-    np.save(out_path, bg)
-    print(f"\nSaved: {out_path}")
-    print(f"bg_source label: bg_v4_o35_2026 "
-          f"({len(aligned)} EMP scenes, orbit-35, Oct–Nov 2026, optically confirmed, PC)")
+    stack  = np.stack(aligned, axis=0)
+    bg_arr = np.nanmedian(stack, axis=0).astype(np.float32)
+    np.save(OUT_PATH, bg_arr)
+    print(f"\nSaved {OUT_PATH.name}  shape={bg_arr.shape}  "
+          f"from {len(arrays)} scenes: {', '.join(KNOWN_EMP_DATES[:len(arrays)])}")
 
 
 if __name__ == "__main__":

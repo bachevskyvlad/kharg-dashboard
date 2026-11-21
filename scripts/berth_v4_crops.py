@@ -1,0 +1,424 @@
+"""
+berth_v4_crops.py — SAR crop images for acceptance gate g.
+
+Reads diagnostics/berth_v4/history_v4/berth_v4_history.csv and generates
+SAR ratio crops with hull boxes for:
+  1. 5 random 2025 visits (arrived=True, 2025)  → crops/v2025_*.png
+  2. All autumn 2026 visits (Sep-Nov 2026)       → crops/aut2026_*.png
+
+Box colors: VLCC=#f87171, SuezAframax=#fbbf24, smaller=#94a3b8
+Label format: "class · length · arrived/same"
+
+Output: diagnostics/berth_v4/crops/
+"""
+
+import os, sys, csv
+from pathlib import Path
+from datetime import date, timedelta
+
+import numpy as np
+import matplotlib
+matplotlib.use("Agg")
+import matplotlib.pyplot as plt
+
+ROOT   = Path(__file__).parent.parent
+HIST   = ROOT / "diagnostics" / "berth_v4" / "history_v4" / "berth_v4_history.csv"
+BG_V4  = ROOT / "diagnostics" / "berth_v4" / "bg_v4"
+OUT    = ROOT / "diagnostics" / "berth_v4" / "crops"
+OUT.mkdir(parents=True, exist_ok=True)
+
+sys.path.insert(0, str(Path(__file__).parent))
+
+from berth_detect_core import (
+    RESOLUTION, BERTH_COORDS,
+    build_geom, find_blobs, cell_bbox_for, berth_center,
+)
+from berth_pc_fetch import find_item_pc, fetch_s1_pc
+from scipy.ndimage import zoom as nd_zoom
+from sentinelhub import BBox, CRS
+
+AOI_BBOX_LST = [50.26, 29.17, 50.40, 29.31]
+
+V4_CFG = {
+    "sea_island":     {"pier": 20, "water_i": 20, "water_o": 80,
+                       "min_len": 120, "max_len": 420, "aspect_thr": 2.0, "merge_gap": 120},
+    "east_t_head":    {"pier": 20, "water_i": 20, "water_o": 80,
+                       "min_len": 150, "max_len": 420, "aspect_thr": 2.5, "merge_gap": 120},
+    # merge_gap=0 matches V4_CONFIG in berth_v4_history.py — blobs not merged
+    "southeast_pier": {"pier": 20, "water_i": 20, "water_o": 80,
+                       "min_len": 150, "max_len": 420, "aspect_thr": 3.0, "merge_gap": 0},
+}
+
+VISIT_MIN_LEN_M = 200.0  # hulls below this shown as grey "hull <200m" on crops
+
+BERTHS = BERTH_COORDS
+
+
+def _classify(len_m):
+    if len_m >= 300:   return "VLCC"
+    if len_m >= 200:   return "SuezAframax"
+    if len_m >= 150:   return "sub_visit"   # detected but not a visit
+    return "smaller"
+
+CLASS_COLORS = {
+    "VLCC":       "#f87171",
+    "SuezAframax":"#fbbf24",
+    "smaller":    "#94a3b8",
+    "sub_visit":  "#64748b",   # grey — hull <200m, not tracked as visit
+}
+
+
+def _print_2026_monthly_table(rows):
+    """Print loadings (arrived=True, not static) Jan–Nov 2026 by berth."""
+    berths_ord = ["sea_island", "east_t_head", "southeast_pier"]
+    months = [f"2026-{m:02d}" for m in range(1, 12)]
+    counts: dict = {m: {b: 0 for b in berths_ord} for m in months}
+    seen_vid: set = set()
+    for r in rows:
+        d = r.get("date", "")
+        if not (d >= "2026-01-01" and d <= "2026-11-30"):
+            continue
+        if str(r.get("static", "0")) == "1":
+            continue
+        is_arrived = str(r.get("arrived", r.get("new_load", ""))).lower() in ("true", "1")
+        if not is_arrived:
+            continue
+        mo = d[:7]
+        if mo not in counts:
+            continue
+        berth = r.get("berth", "")
+        if berth not in berths_ord:
+            continue
+        vid = r.get("visit_id") or f"{d}_{r.get('orbit')}_{berth}"
+        if vid in seen_vid:
+            continue
+        seen_vid.add(vid)
+        counts[mo][berth] += 1
+    print("\n=== Loadings 2026 (Jan–Nov) by berth (arrived=True, not static) ===")
+    hdr = f"  {'month':<9}  {'sea_island':>10}  {'east_t_head':>11}  {'southeast_pier':>14}  {'total':>5}"
+    print(hdr)
+    print("  " + "-" * (len(hdr) - 2))
+    for mo in months:
+        sea = counts[mo]["sea_island"]
+        eth = counts[mo]["east_t_head"]
+        sep = counts[mo]["southeast_pier"]
+        tot = sea + eth + sep
+        print(f"  {mo:<9}  {sea:>10}  {eth:>11}  {sep:>14}  {tot:>5}")
+    total_sea = sum(counts[m]["sea_island"] for m in months)
+    total_eth = sum(counts[m]["east_t_head"] for m in months)
+    total_sep = sum(counts[m]["southeast_pier"] for m in months)
+    print(f"  {'TOTAL':<9}  {total_sea:>10}  {total_eth:>11}  {total_sep:>14}  {total_sea+total_eth+total_sep:>5}")
+    print()
+
+
+# Reference aspect values from run #19 (seed=99 sample) — before aspect fix.
+# Used to show before/after comparison in _print_2025_aspect_before_after.
+_ASPECT_REF_RUN19 = [
+    # (date, orbit_str, berth, len_m, asp_before)
+    ("2025-02-16", "101", "sea_island",    344.4,  4.92),
+    ("2025-03-20",  "35", "east_t_head",   354.6,  6.33),
+    ("2025-04-13", "101", "east_t_head",   213.3,  8.42),
+    ("2025-05-11", "101", "east_t_head",   285.1,  4.87),
+    ("2025-06-04", "101", "east_t_head",   312.6,  8.42),
+    ("2025-06-16", "101", "east_t_head",   293.9,  8.42),
+    ("2025-06-16", "101", "east_t_head",   171.2,  8.42),
+    ("2025-08-27", "101", "east_t_head",   191.0,  8.42),
+    ("2025-09-02", "101", "sea_island",    192.4,  3.63),
+    ("2025-09-04",  "35", "east_t_head",   353.5,  6.39),
+    ("2025-09-10",  "35", "east_t_head",   352.3,  6.50),
+    ("2025-09-26", "101", "east_t_head",   271.7,  1.80),
+    ("2025-10-10",  "35", "sea_island",    344.4,  1.64),
+    ("2025-10-14", "101", "east_t_head",   362.2,  6.10),
+    ("2025-11-07", "101", "sea_island",    375.7,  9.64),
+    ("2025-11-13", "101", "east_t_head",   362.2,  6.10),
+    ("2025-12-01", "101", "east_t_head",   227.9,  2.06),
+    ("2025-12-07", "101", "east_t_head",   288.7,  8.42),
+    ("2025-12-19", "101", "sea_island",    407.0, 10.26),
+    ("2025-12-27",  "35", "southeast_pier",310.3,  4.79),
+]
+
+
+def _print_2025_aspect_sample(rows):
+    """Before/after aspect for 20 reference 2025 hulls (run#19 → current run)."""
+    from collections import defaultdict
+    idx: dict = defaultdict(list)
+    for r in rows:
+        if str(r.get("static", "0")) == "1":
+            continue
+        key = (r.get("date", ""), str(r.get("orbit", "")), r.get("berth", ""))
+        idx[key].append(r)
+
+    print(f"\n=== aspect before/after fix — 20 ref 2025 hulls (run#19 → current) ===")
+    print(f"  {'date':<12}  {'orb':>3}  {'berth':<16}  {'len_m':>7}  "
+          f"{'before':>7}  {'after':>7}  {'Δ':>6}")
+    print("  " + "-" * 72)
+    changed = 0
+    for date, orbit, berth, len_ref, asp_before in _ASPECT_REF_RUN19:
+        candidates = idx.get((date, orbit, berth), [])
+        if candidates:
+            best_r = min(candidates,
+                         key=lambda r: abs(float(r.get("len_m", 0) or 0) - len_ref))
+            asp_raw = best_r.get("aspect", "?")
+            try:
+                asp_after = float(asp_raw)
+                delta = asp_after - asp_before
+                delta_s = f"{delta:+.2f}"
+                mark = " ←" if abs(delta) > 0.05 else ""
+                if mark:
+                    changed += 1
+            except (ValueError, TypeError):
+                asp_after = "?"
+                delta_s = "?"
+                mark = ""
+            asp_s = f"{asp_after:.2f}" if isinstance(asp_after, float) else str(asp_after)
+        else:
+            asp_s = "MISSING"
+            delta_s = "?"
+            mark = " !"
+        print(f"  {date:<12}  {orbit:>3}  {berth:<16}  {len_ref:>7.1f}  "
+              f"{asp_before:>7.2f}  {asp_s:>7}  {delta_s:>6}{mark}")
+    print(f"\n  Changed: {changed}/20")
+    print()
+
+
+def _load_bg(berth, orbit):
+    # files are named bg_o{orbit}_{berth}.npy
+    p_v4 = BG_V4 / f"bg_o{orbit}_{berth}.npy"
+    p_v3 = ROOT / "diagnostics" / "berth_v4" / "bg_v3" / f"bg_o{orbit}_{berth}.npy"
+    for p in (p_v4, p_v3):
+        if p.exists():
+            return np.load(p)
+    return None
+
+
+def _draw_boxes(ax, blobs, ux, uy, csv_row=None):
+    px_u, py_u = -uy, ux
+    by_side: dict = {}
+    for b in blobs:
+        sk = 1 if b.get("perp_ctr", 0) >= 0 else -1
+        by_side.setdefault(sk, []).append(b)
+    for sk, side_blobs in by_side.items():
+        side_blobs_s = sorted(side_blobs, key=lambda b: b["length_m"], reverse=True)
+        for idx, b in enumerate(side_blobs_s):
+            am, aM = b["axis_min"], b["axis_max"]
+            pm = b.get("perp_min", b.get("perp_ctr", 0) - b.get("width_m", 20) / RESOLUTION / 2)
+            pM = b.get("perp_max", b.get("perp_ctr", 0) + b.get("width_m", 20) / RESOLUTION / 2)
+            cs = [am*ux + pm*px_u, aM*ux + pm*px_u,
+                  aM*ux + pM*px_u, am*ux + pM*px_u, am*ux + pm*px_u]
+            rs = [am*uy + pm*py_u, aM*uy + pm*py_u,
+                  aM*uy + pM*py_u, am*uy + pM*py_u, am*uy + pm*py_u]
+            cls = _classify(b["length_m"])
+            clr = CLASS_COLORS.get(cls, "#94a3b8")
+            ax.plot(cs, rs, "-", color=clr, lw=1.5, alpha=0.9)
+            ctr_c = (am + aM) / 2 * ux + (pm + pM) / 2 * px_u
+            ctr_r = (am + aM) / 2 * uy + (pm + pM) / 2 * py_u
+            # Label: sub_visit shows as "hull <200m · Nm"; others show class · length · arrived/same
+            if cls == "sub_visit":
+                lbl = f"hull <200m · {b['length_m']:.0f}m"
+            else:
+                arrived_str = ""
+                if csv_row is not None:
+                    arrived_str = " · arrived" if str(csv_row.get("arrived", "")).lower() in ("true", "1") else " · same"
+                lbl = f"{cls} · {b['length_m']:.0f}m{arrived_str}"
+            ax.text(ctr_c, ctr_r, lbl,
+                    color=clr, fontsize=5, ha="center", va="center", fontweight="bold",
+                    bbox=dict(fc="black", alpha=0.5, lw=0, pad=0.5))
+
+
+def render_crop(date_str, orbit, berth, tag, idx, csv_row=None):
+    cfg = V4_CFG[berth]
+    pts = BERTHS[berth]
+    cell_bbox = cell_bbox_for(*berth_center(pts))
+
+    item = find_item_pc(date_str, int(orbit), AOI_BBOX_LST)
+    if item is None:
+        print(f"  No item — skip")
+        return False
+
+    linear = fetch_s1_pc(item, cell_bbox)
+    if linear is None:
+        print(f"  Fetch failed — skip")
+        return False
+
+    bg = _load_bg(berth, int(orbit))
+    if bg is None:
+        print(f"  No BG — skip")
+        return False
+
+    if bg.shape != linear.shape:
+        bg = nd_zoom(bg, (linear.shape[0] / bg.shape[0],
+                          linear.shape[1] / bg.shape[1]), order=1)
+
+    ratio = np.where((linear > 0) & (bg > 0),
+                     10 * np.log10(linear / bg), np.nan).astype(np.float32)
+
+    geom = build_geom(pts, cell_bbox, linear.shape,
+                      cfg["pier"], cfg["water_i"], cfg["water_o"])
+
+    blobs, best, detected = find_blobs(
+        ratio, geom["water_mask"], geom["axis_uvec"],
+        merge_gap_m=cfg.get("merge_gap", 0),
+        min_len_m=cfg["min_len"],
+        min_aspect=cfg.get("aspect_thr", 3.0),
+        return_all=True,
+    )
+
+    ux, uy = geom["axis_uvec"]
+
+    fig, ax = plt.subplots(1, 1, figsize=(4, 3), facecolor="#111")
+    ax.set_facecolor("#111")
+
+    fin = ratio[np.isfinite(ratio)]
+    vmin = np.percentile(fin, 2) if fin.size > 0 else -10
+    vmax = np.percentile(fin, 98) if fin.size > 0 else 10
+    ax.imshow(ratio, cmap="gray", vmin=vmin, vmax=vmax,
+              interpolation="nearest", origin="upper")
+
+    # water contour
+    if geom.get("water_mask") is not None:
+        try:
+            ax.contour(geom["water_mask"].astype(float), levels=[0.5],
+                       colors=["#3498db"], linewidths=0.5, alpha=0.6)
+        except Exception:
+            pass
+
+    if blobs:
+        _draw_boxes(ax, blobs, ux, uy, csv_row=csv_row)
+
+    det_str = "OCC" if detected else "EMP"
+    n_hulls = len(blobs) if blobs else 0
+    hull_summary = ""
+    if blobs:
+        top = sorted(blobs, key=lambda b: b["length_m"], reverse=True)[:2]
+        hull_summary = "  ".join(
+            f"{_classify(b['length_m'])} {b['length_m']:.0f}m asp{b.get('aspect', 0):.1f}"
+            for b in top)
+
+    ann = f"{date_str} o{orbit}\n{berth}\ndet={det_str}  hulls={n_hulls}\n{hull_summary}"
+    ax.text(0.02, 0.98, ann, color="white", fontsize=5, ha="left", va="top",
+            transform=ax.transAxes, fontweight="bold",
+            bbox=dict(boxstyle="square,pad=0.2", fc="black", alpha=0.75, lw=0))
+
+    ax.set_title(f"[{tag}] {date_str} o{orbit} — {berth}",
+                 color="white", fontsize=6, pad=2)
+    ax.axis("off")
+
+    fname = OUT / f"{tag}_{idx:02d}_{date_str}_o{orbit}_{berth}.png"
+    fig.savefig(fname, dpi=150, bbox_inches="tight", facecolor=fig.get_facecolor())
+    plt.close(fig)
+    kb = fname.stat().st_size // 1024
+    print(f"  Saved: {fname.name} ({kb} KB)  det={det_str} hulls={n_hulls}")
+    return True
+
+
+def main():
+    if not HIST.exists():
+        sys.exit(f"FATAL: {HIST} not found — run berth_v4_history.py first (step 2)")
+
+    rows = []
+    with open(HIST) as f:
+        for r in csv.DictReader(f):
+            rows.append(r)
+    print(f"Loaded {len(rows)} hull rows from {HIST.name}")
+
+    _print_2026_monthly_table(rows)
+    _print_2025_aspect_sample(rows)
+
+    import random as _random
+    _random.seed(42)
+
+    # --- Gate g case 1: 5 random 2025 visits (arrived=True, 2025) ---
+    # Dedup by visit_id (or by date/orbit/berth if no visit_id), arrived=True
+    v2025_seen: set = set()
+    v2025_pool = []
+    for r in rows:
+        is_arrived = str(r.get("arrived", r.get("new_load", ""))).lower() in ("true", "1")
+        is_2025 = r.get("date", "").startswith("2025")
+        is_static = str(r.get("static", "0")) == "1"
+        if is_arrived and is_2025 and not is_static:
+            vid = r.get("visit_id") or f"{r['date']}_{r['orbit']}_{r['berth']}"
+            if vid not in v2025_seen:
+                v2025_seen.add(vid)
+                v2025_pool.append(r)
+    v2025_pool = sorted(v2025_pool, key=lambda r: r["date"])
+    v2025_cases = _random.sample(v2025_pool, min(5, len(v2025_pool)))
+    v2025_cases = sorted(v2025_cases, key=lambda r: r["date"])
+
+    # --- Gate g case 2: all autumn 2026 visits (Sep-Nov 2026) ---
+    # Include ALL east_t_head visits (arrived or not) for gate d optics cross-check;
+    # other berths: arrived=True only.
+    aut2026_seen: set = set()
+    aut2026_cases = []
+    for r in rows:
+        d = r.get("date", "")
+        is_static = str(r.get("static", "0")) == "1"
+        if d >= "2026-09-01" and d <= "2026-11-30" and not is_static:
+            is_arrived = str(r.get("arrived", r.get("new_load", ""))).lower() in ("true", "1")
+            is_eth = r.get("berth") == "east_t_head"
+            if is_arrived or is_eth:
+                vid = r.get("visit_id") or f"{r['date']}_{r['orbit']}_{r['berth']}"
+                if vid not in aut2026_seen:
+                    aut2026_seen.add(vid)
+                    aut2026_cases.append(r)
+    aut2026_cases = sorted(aut2026_cases, key=lambda r: r["date"])
+
+    print(f"\n2025 visits pool: {len(v2025_pool)}, sampling {len(v2025_cases)}")
+    for r in v2025_cases:
+        print(f"  {r['date']} o{r['orbit']} {r['berth']} "
+              f"cls={r.get('class','')} len={r.get('len_m','')}m vid={r.get('visit_id','')}")
+
+    print(f"\nAutumn 2026 visits: {len(aut2026_cases)}")
+    for r in aut2026_cases:
+        print(f"  {r['date']} o{r['orbit']} {r['berth']} "
+              f"cls={r.get('class','')} len={r.get('len_m','')}m vid={r.get('visit_id','')}")
+
+    # --- Gate f-detail case 3: 5 random southeast_pier hulls ≥300m in 2025 ---
+    sep_vlcc_seen: set = set()
+    sep_vlcc_pool = []
+    for r in rows:
+        is_sep = r.get("berth") == "southeast_pier"
+        is_2025 = r.get("date", "").startswith("2025")
+        is_static = str(r.get("static", "0")) == "1"
+        if is_sep and is_2025 and not is_static:
+            try:
+                lm = float(r.get("len_m", 0))
+            except (ValueError, TypeError):
+                lm = 0.0
+            if lm >= 300:
+                key = f"{r['date']}_{r['orbit']}"
+                if key not in sep_vlcc_seen:
+                    sep_vlcc_seen.add(key)
+                    sep_vlcc_pool.append(r)
+    sep_vlcc_pool = sorted(sep_vlcc_pool, key=lambda r: r["date"])
+    sep_vlcc_cases = _random.sample(sep_vlcc_pool, min(5, len(sep_vlcc_pool)))
+    sep_vlcc_cases = sorted(sep_vlcc_cases, key=lambda r: r["date"])
+
+    if not v2025_cases and not aut2026_cases and not sep_vlcc_cases:
+        print("Nothing to render — done.")
+        return
+
+    print(f"\nsoutheast_pier VLCC(≥300m) 2025 pool: {len(sep_vlcc_pool)}, sampling {len(sep_vlcc_cases)}")
+    for r in sep_vlcc_cases:
+        print(f"  {r['date']} o{r['orbit']} {r['berth']} "
+              f"cls={r.get('class','')} len={r.get('len_m','')}m vid={r.get('visit_id','')}")
+
+    print("\n=== Rendering crops ===")
+
+    for idx, r in enumerate(v2025_cases):
+        print(f"\nv2025 [{idx+1}/{len(v2025_cases)}]: {r['date']} o{r['orbit']} {r['berth']}")
+        render_crop(r["date"], r["orbit"], r["berth"], "v2025", idx + 1, csv_row=r)
+
+    for idx, r in enumerate(aut2026_cases):
+        print(f"\naut2026 [{idx+1}/{len(aut2026_cases)}]: {r['date']} o{r['orbit']} {r['berth']}")
+        render_crop(r["date"], r["orbit"], r["berth"], "aut2026", idx + 1, csv_row=r)
+
+    for idx, r in enumerate(sep_vlcc_cases):
+        print(f"\nsep_vlcc [{idx+1}/{len(sep_vlcc_cases)}]: {r['date']} o{r['orbit']} {r['berth']}")
+        render_crop(r["date"], r["orbit"], r["berth"], "sep_vlcc", idx + 1, csv_row=r)
+
+    pngs = list(OUT.glob("*.png"))
+    print(f"\nTotal crops saved: {len(pngs)} in {OUT}")
+
+
+if __name__ == "__main__":
+    main()

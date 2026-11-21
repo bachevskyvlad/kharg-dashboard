@@ -14,7 +14,7 @@
 | Недельные сглаженные | `data/data.json` | Из `export_from_supabase.py` |
 | Объёмы терминалов | `data/terminal_*.json` | Из `export_terminal_json.py` |
 | Сырые SAR наблюдения | Supabase `raw_observations` | Пишет `main_script.py` |
-| Gross Flows | Supabase `kharg_gross_flows_v2` | Пишет `scripts/gross_flows.py` (калибровка = `volume.py`). Старая matview `kharg_gross_flows` + RPC `refresh_gross_flows` — DEPRECATED, drop после 2026-11-20 |
+| Gross Flows | Supabase `kharg_gross_flows` | dbt mart |
 
 **НЕ источники правды:**
 - `scripts/locations.py` — только адаптер поверх `tank_registry.py`

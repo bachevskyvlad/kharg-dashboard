@@ -9,7 +9,7 @@ Execution order:
   5. Save updated raw cache + upsert to Supabase raw_observations
   6. Compute volumes, aggregate daily + weekly
   7. Write data_daily.json and data.json (frontend data files)
-  8. Upsert volume_timeseries + update kharg_gross_flows_v2 (gross_flows.py)
+  8. Upsert volume_timeseries + refresh kharg_gross_flows in Supabase
   9. Send SAR alert emails (only if new dates were found)
   10. Generate volume chart PNG
 
@@ -43,7 +43,7 @@ from sar_fetch import load_cache, get_all_scene_dates, build_crescent_masks, fet
 from volume import compute_volumes, aggregate_daily, aggregate_weekly
 from export_data import (
     save_raw_cache, upsert_raw_observations,
-    save_daily_json, save_weekly_json, update_gross_flows,
+    save_daily_json, save_weekly_json, refresh_gross_flows,
 )
 from notify import send_sar_alert
 from locations import TERMINALS
@@ -92,7 +92,7 @@ weekly_total = aggregate_weekly(df)
 # ── 7–8. Export data files + Supabase ────────────────────────────────────────
 save_daily_json(daily_total,  DAILY_PATH,  sb)
 save_weekly_json(weekly_total, WEEKLY_PATH, sb)
-update_gross_flows(sb)
+refresh_gross_flows(sb)
 
 print("\nKharg pipeline complete!")
 

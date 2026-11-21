@@ -1,0 +1,63 @@
+Ablation accuracy — one parameter change at a time vs v3 baseline
+
+Mode      Change                                    Berth                  Acc    Rec   Prec  TP  FN  FP  TN
+------------------------------------------------------------------------------------------------------------
+v3        baseline (pier=20, water=20-80, len≥150, no merge)  sea_island           81.1%  64.7%  91.7%   11   6   1  19
+v3                                                  east_t_head          51.5%  31.8%  87.5%    7  15   1  10
+v3                                                  southeast_pier       97.1%  50.0% 100.0%    1   1   0  32
+
+bg        v4 BG only      (EMP median, rest=v3)     sea_island           70.3%  41.2%  87.5%    7  10   1  19
+bg                                                  east_t_head          72.7%  63.6%  93.3%   14   8   1  10
+bg                                                  southeast_pier       97.1%  50.0% 100.0%    1   1   0  32
+
+pier      pier=12m only   (bg=v3, water=20-80, len≥150)  sea_island           81.1%  64.7%  91.7%   11   6   1  19
+pier                                                east_t_head          51.5%  31.8%  87.5%    7  15   1  10
+pier                                                southeast_pier       97.1%  50.0% 100.0%    1   1   0  32
+
+merge     merge+120m only (bg=v3, pier=20, water=20-80, merge=40m)  sea_island           81.1%  64.7%  91.7%   11   6   1  19
+merge                                               east_t_head          60.6%  45.5%  90.9%   10  12   1  10
+merge                                               southeast_pier       97.1%  50.0% 100.0%    1   1   0  32
+
+bg+merge  bg+merge (v4 BG + merge=40m/len≥120, pier=20)  sea_island           75.7%  52.9%  90.0%    9   8   1  19
+bg+merge                                            east_t_head          72.7%  63.6%  93.3%   14   8   1  10
+bg+merge                                            southeast_pier       97.1%  50.0% 100.0%    1   1   0  32
+
+=== Recall delta vs v3 baseline ===
+Mode        sea_island    east_t_head    southeast_pier
+-------------------------------------------------------
+bg              -23.5%         +31.8%             +0.0%
+pier             +0.0%          +0.0%             +0.0%
+merge            +0.0%         +13.6%             +0.0%
+bg+merge        -11.8%         +31.8%             +0.0%
+
+=== Recall by period: 2024-25 vs 2026 ===
+Mode      Period   Berth                  Acc    Rec   Prec  TP  FN  FP  TN
+---------------------------------------------------------------------------
+v3        2024-25  sea_island           85.7%  81.8%  90.0%    9   2   1   9
+v3        2024-25  east_t_head          35.0%  27.8% 100.0%    5  13   0   2
+v3        2024-25  southeast_pier       94.1%  50.0% 100.0%    1   1   0  15
+v3        2026     sea_island           75.0%  33.3% 100.0%    2   4   0  10
+v3        2026     east_t_head          76.9%  50.0%  66.7%    2   2   1   8
+v3        2026     southeast_pier      100.0%   0.0%   nan%    0   0   0  17
+
+bg        2024-25  sea_island           71.4%  54.5%  85.7%    6   5   1   9
+bg        2024-25  east_t_head          60.0%  55.6% 100.0%   10   8   0   2
+bg        2024-25  southeast_pier       94.1%  50.0% 100.0%    1   1   0  15
+bg        2026     sea_island           68.8%  16.7% 100.0%    1   5   0  10
+bg        2026     east_t_head          92.3% 100.0%  80.0%    4   0   1   8
+bg        2026     southeast_pier      100.0%   0.0%   nan%    0   0   0  17
+
+merge     2024-25  sea_island           85.7%  81.8%  90.0%    9   2   1   9
+merge     2024-25  east_t_head          50.0%  44.4% 100.0%    8  10   0   2
+merge     2024-25  southeast_pier       94.1%  50.0% 100.0%    1   1   0  15
+merge     2026     sea_island           75.0%  33.3% 100.0%    2   4   0  10
+merge     2026     east_t_head          76.9%  50.0%  66.7%    2   2   1   8
+merge     2026     southeast_pier      100.0%   0.0%   nan%    0   0   0  17
+
+bg+merge  2024-25  sea_island           81.0%  72.7%  88.9%    8   3   1   9
+bg+merge  2024-25  east_t_head          60.0%  55.6% 100.0%   10   8   0   2
+bg+merge  2024-25  southeast_pier       94.1%  50.0% 100.0%    1   1   0  15
+bg+merge  2026     sea_island           68.8%  16.7% 100.0%    1   5   0  10
+bg+merge  2026     east_t_head          92.3% 100.0%  80.0%    4   0   1   8
+bg+merge  2026     southeast_pier      100.0%   0.0%   nan%    0   0   0  17
+

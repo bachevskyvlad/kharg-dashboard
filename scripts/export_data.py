@@ -8,11 +8,9 @@ Output files (committed to repo, served directly to frontend):
 Supabase tables written:
   raw_observations       — per-tank dB records (upsert on date, tank_id)
   volume_timeseries      — aggregated volumes (upsert on date, aggregation, smoothed)
-  kharg_gross_flows_v2   — gross in/out flows per pass, computed in Python by
-                           scripts/gross_flows.py (calibration = volume.py),
-                           upsert on date_to. See update_gross_flows().
-  kharg_gross_flows      — DEPRECATED matview (old per-tank calibration),
-                           no longer refreshed; drop after 2026-11-20.
+  kharg_gross_flows      — refreshed via RPC after new volume data is written;
+                           this is a Supabase function / materialised view, not
+                           a raw table — do not upsert into it directly.
 
 All Supabase writes are non-fatal: the pipeline continues and commits the
 JSON files even if Supabase is unreachable. GitHub is the source of truth
@@ -120,26 +118,15 @@ def save_weekly_json(weekly_total, weekly_path, sb):
     return result
 
 
-def update_gross_flows(sb):
-    """
-    Recomputes Kharg gross flows in Python (scripts/gross_flows.py) and upserts
-    them into kharg_gross_flows_v2. Calibration is volume.compute_volumes —
-    the same as volume_timeseries. Non-fatal on error.
-    """
-    try:
-        from gross_flows import run as _run_gross_flows
-        _run_gross_flows(sb)
-    except Exception as e:
-        print(f"  [!] kharg_gross_flows_v2 update failed: {e}")
-
-
 def refresh_gross_flows(sb):
     """
-    DEPRECATED (2026-11-06) — do not call. Kept only for the 2-week transition.
-
-    Called the Supabase RPC refresh_gross_flows(), which recomputed the matview
-    kharg_gross_flows inside the database with a per-tank p5/p95 calibration
-    (different from volume.py). Replaced by update_gross_flows().
-    The RPC and the matview are dropped after 2026-11-20 (see README.md).
+    Calls the Supabase RPC to refresh kharg_gross_flows.
+    This is a server-side function (not a table) — it recomputes derived
+    inflow/outflow metrics from the freshly upserted volume_timeseries rows.
+    Must be called after save_daily_json, not before.
     """
-    raise RuntimeError("refresh_gross_flows() is deprecated — use update_gross_flows()")
+    try:
+        sb.rpc("refresh_gross_flows", {}).execute()
+        print("  Supabase kharg_gross_flows: refreshed")
+    except Exception as e:
+        print(f"  [!] kharg_gross_flows refresh failed: {e}")

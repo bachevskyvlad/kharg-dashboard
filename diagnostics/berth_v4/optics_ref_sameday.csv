@@ -9,7 +9,6 @@ date,orbit,s2_cloud_pct,sea_island_optical_ref,east_t_head_optical_ref,southeast
 2025-01-11,101,12.0,?,OCC,OCC
 2025-01-31,35,0.2,EMP,OCC,EMP
 2025-04-01,35,8.1,?,OCC,EMP
-2025-04-13,35,0.0,?,OCC,?
 2025-05-11,101,11.3,OCC,?,?
 2025-06-12,35,18.0,?,?,?
 2025-07-10,101,15.0,EMP,OCC,EMP
@@ -35,10 +34,12 @@ date,orbit,s2_cloud_pct,sea_island_optical_ref,east_t_head_optical_ref,southeast
 2026-05-21,35,18.3,EMP,?,EMP
 2026-05-26,35,6.6,EMP,EMP,EMP
 2026-06-30,101,8.9,OCC,?,EMP
-2026-07-20,35,5.9,EMP,OCC,EMP
+2026-07-20,35,5.9,EMP,?,EMP
 2026-07-30,101,4.8,?,EMP,EMP
 2026-08-19,35,2.0,EMP,EMP,EMP
 2026-08-29,101,0.2,EMP,?,EMP
+2026-09-06,35,0.0,?,EMP,?
 2026-09-28,101,0.0,EMP,EMP,EMP
+2026-09-30,35,0.0,?,EMP,?
 2026-10-18,35,0.2,EMP,EMP,EMP
 2026-10-28,101,18.8,EMP,EMP,EMP

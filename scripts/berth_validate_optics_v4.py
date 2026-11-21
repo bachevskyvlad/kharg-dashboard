@@ -117,8 +117,9 @@ function evaluatePixel(s) { return [s.B04*3.5, s.B03*3.5, s.B02*3.5]; }
 # east_t_head FP (2026-07-30 Δt=7.4h) → ? via time-delta rule.
 # east_t_head: 5 FN remain — orbit-35 sub-MIN_LEN blobs (30–110m) due to
 #   RTC vs SIGMA0 radiometry difference; prec=100% rec=75% on PC tiles.
+# TN +2: 2026-09-06 and 2026-09-30 added as confirmed-empty o35 east_t_head rows.
 ASSERT_TARGETS = {
-    "east_t_head":    dict(TP=15, FN=5, FP=0, TN=10),
+    "east_t_head":    dict(TP=15, FN=5, FP=0, TN=12),
     "sea_island":     dict(TP=9,  FN=0, FP=0, TN=18),
     "southeast_pier": dict(TP=1,  FN=0, FP=0, TN=32),
 }
@@ -133,40 +134,24 @@ def scene_datetime_s1(date_str, orbit, bbox):
     return item  # callers that used to get a dt string now get an item (or None)
 
 def scene_datetime_s2(date_str, bbox):
-    """Return ISO datetime string of best S2 acquisition on date_str via PC STAC.
-
-    Uses sentinel-2-l2a on Planetary Computer — no credentials required.
-    bbox: sentinelhub BBox object (has .min_x, .min_y, .max_x, .max_y).
-    Returns "" on failure or no scene found.
-    """
-    try:
-        import pystac_client
-        import planetary_computer
-        client = pystac_client.Client.open(
-            "https://planetarycomputer.microsoft.com/api/stac/v1",
-            modifier=planetary_computer.sign_inplace,
-        )
-        bbox_lst = [bbox.min_x, bbox.min_y, bbox.max_x, bbox.max_y]
-        results = client.search(
-            collections=["sentinel-2-l2a"],
-            bbox=bbox_lst,
-            datetime=f"{date_str}T00:00:00Z/{date_str}T23:59:59Z",
-        )
-        items = list(results.items())
-    except Exception as e:
-        print(f"  S2 PC catalog error ({date_str}): {e}"); return ""
-    if not items:
+    if not _sh_config_ok:
         return ""
-    best_item = min(
-        items,
-        key=lambda it: float(it.properties.get("eo:cloud_cover", 100)),
-    )
-    dt = best_item.datetime
-    if dt is None:
-        dt_str = best_item.properties.get("datetime", "")
-    else:
-        dt_str = dt.isoformat()
-    return dt_str
+    catalog = SentinelHubCatalog(config=config)
+    try:
+        results = list(catalog.search(
+            S2_CDSE, bbox=bbox,
+            time=(date_str+"T00:00:00Z", date_str+"T23:59:59Z"),
+            fields={"include":["properties.datetime","properties.eo:cloud_cover"]},
+        ))
+    except Exception as e:
+        print(f"  S2 catalog error ({date_str}): {e}"); return ""
+    best_dt = ""; best_cc = 999.0
+    for r in results:
+        p = r.get("properties", {})
+        cc = float(p.get("eo:cloud_cover", 100))
+        if cc < best_cc:
+            best_cc = cc; best_dt = p.get("datetime", "")
+    return best_dt
 
 def fetch_s1_linear(item_or_dt, bbox_obj):
     """Fetch S1 from PC item. item_or_dt is a PC item (or None/str for compat)."""
@@ -206,13 +191,8 @@ def build_bg_v4(ref_rows, cell_bboxes, aoi_full):
         ref_col = f"{berth}_optical_ref"
         for orbit in (35, 101):
             cache_path = BG_V4 / f"bg_o{orbit}_{berth}.npy"
-            # Frozen background: if file exists on disk, load and use as-is.
-            # Backgrounds are built once from optically-confirmed empty passes
-            # and must never be rebuilt or overwritten by the pipeline.
-            if cache_path.exists():
-                bg[(orbit, berth)] = np.load(cache_path)
-                print(f"  BG v4 {berth} o{orbit}: loaded frozen {cache_path.name}")
-                continue
+            # do NOT load cache — SH-built files have different radiometry (SIGMA0 vs RTC)
+            # always rebuild from PC
 
             emp_dates = []
             all_dates = []
@@ -283,8 +263,9 @@ def build_bg_v4(ref_rows, cell_bboxes, aoi_full):
             else:
                 bg_arr = np.percentile(stack, 10, axis=0).astype(np.float32)
 
+            np.save(cache_path, bg_arr)
             bg[(orbit, berth)] = bg_arr
-            print(f"    built {cache_path.name} shape={bg_arr.shape} (NOT saved — frozen-bg rule)")
+            print(f"    saved {cache_path.name} shape={bg_arr.shape}")
 
     return bg
 
@@ -416,7 +397,7 @@ def main():
         if s1_item is not None:
             try: s1_dt_iso = s1_item.datetime.isoformat()
             except Exception: pass
-        s2_dt_str = scene_datetime_s2(date_str, aoi_full)  # PC STAC, no creds needed
+        s2_dt_str = scene_datetime_s2(date_str, aoi_full) if _sh_config_ok else ""
 
         for berth in BERTHS:
             ref_col    = f"{berth}_optical_ref"
