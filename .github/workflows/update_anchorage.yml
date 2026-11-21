@@ -1,1 +1,53 @@
-WORKFLOW_PLACEHOLDER
+name: Update Tanker Queue (Anchorage)
+
+# ТЗ-12.3: new dates -> Supabase anchorage_daily/anchorage_ships -> tracks -> anchorage.json
+
+on:
+  workflow_dispatch:
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: pip install --quiet sentinelhub scipy numpy Pillow matplotlib rasterio shapely requests supabase
+
+      - name: New dates -> Supabase + snapshots
+        env:
+          CLIENT_ID:          ${{ secrets.CLIENT_ID }}
+          CLIENT_SECRET:      ${{ secrets.CLIENT_SECRET }}
+          SUPABASE_URL:       ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_KEY }}
+          RUN_ID:             gha-${{ github.run_id }}
+        run: python diagnostics/anchorage_hist/hist_backfill.py --update
+
+      - name: Update tracks (incremental)
+        env:
+          SUPABASE_URL:        ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_KEY }}
+        run: python scripts/anchorage/tracks.py --update
+
+      - name: Export anchorage.json
+        env:
+          SUPABASE_URL:        ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_KEY }}
+        run: python scripts/anchorage/tracks.py --export
+
+      - name: Commit updated anchorage.json
+        run: |
+          git config user.email "actions@github.com"
+          git config user.name "GitHub Actions"
+          git add data/anchorage.json
+          git diff --cached --quiet && echo "No changes" || git commit -m "data: update anchorage.json [skip ci]"
+          git pull --rebase origin main
+          git push origin main || true
