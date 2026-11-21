@@ -5,9 +5,8 @@ Usage:
   python scripts/anchorage/diagnose.py
 
 Prints:
-  1. Two closest post-dedup detections on 2026-11-11 (extra ship analysis)
-  2. Tracks last seen 2026-11-11 (departed on 2026-11-17): history + nearest 11-17 detection
-  3. Histogram of track length_median (sightings≥3) by 10m bins
+  1. Cross-check with reviewer's 15 ships on 2026-11-11
+  2. Histogram of track length_median (sightings≥3) by 10m bins
 """
 
 import os, sys, math
@@ -17,7 +16,11 @@ from supabase import create_client
 
 SUPABASE_URL         = os.environ.get("SUPABASE_URL")        or sys.exit("FATAL: no SUPABASE_URL")
 SUPABASE_SERVICE_KEY = os.environ.get("SUPABASE_SERVICE_KEY") or sys.exit("FATAL: no SUPABASE_SERVICE_KEY")
-DEDUP_RADIUS_M = 250
+
+SMALL_MIN = 100
+MAX_LEN_M = 420
+VLCC_MIN      = 330
+SUEZ_AFRA_MIN = 250
 
 sb = create_client(SUPABASE_URL, SUPABASE_SERVICE_KEY)
 
@@ -25,118 +28,164 @@ sb = create_client(SUPABASE_URL, SUPABASE_SERVICE_KEY)
 def haversine_m(lat1, lon1, lat2, lon2):
     R = 6_371_000
     phi1, phi2 = math.radians(lat1), math.radians(lat2)
-    dphi   = math.radians(lat2 - lat1)
+    dphi    = math.radians(lat2 - lat1)
     dlambda = math.radians(lon2 - lon1)
     a = math.sin(dphi/2)**2 + math.cos(phi1)*math.cos(phi2)*math.sin(dlambda/2)**2
     return R * 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
 
 
-def dedup_pass(dets):
-    remaining = [dict(d) for d in dets]
-    merged = True
-    while merged:
-        merged = False
-        out, used = [], set()
-        for i, a in enumerate(remaining):
-            if i in used:
-                continue
-            group = [a]
-            for j, b in enumerate(remaining):
-                if j <= i or j in used:
-                    continue
-                if haversine_m(a["lat"], a["lon"], b["lat"], b["lon"]) <= DEDUP_RADIUS_M:
-                    group.append(b)
-                    used.add(j)
-            if len(group) > 1:
-                merged = True
-            lat = sum(g["lat"] for g in group) / len(group)
-            lon = sum(g["lon"] for g in group) / len(group)
-            lm  = max(g["length_m"] for g in group)
-            out.append({"lat": lat, "lon": lon, "length_m": lm})
-            used.add(i)
-        remaining = out
-    return remaining
+# reviewer's 15 ships on 2026-11-11
+REVIEWER_11 = [
+    (29.3204, 50.4678, 303, "SuezAframax"),
+    (29.2435, 50.4371, 362, "VLCC"),
+    (29.3065, 50.4016, 360, "VLCC"),
+    (29.2352, 50.4051, 360, "VLCC"),
+    (29.3039, 50.4572, 301, "SuezAframax"),
+    (29.2254, 50.4717, 364, "VLCC"),
+    (29.3024, 50.3847, 208, "small"),
+    (29.2078, 50.4201, 350, "VLCC"),
+    (29.3009, 50.4858, 305, "SuezAframax"),
+    (29.1719, 50.4043, 140, "small"),
+    (29.2805, 50.3973, 278, "SuezAframax"),
+    (29.1649, 50.3733, 355, "VLCC"),
+    (29.2758, 50.4589, 350, "VLCC"),
+    (29.1040, 50.3128, 360, "VLCC"),
+    (29.0871, 50.4854, 274, "SuezAframax"),
+]
 
 
-# ── 1. Closest pair on 2026-11-11 ────────────────────────────────────────────
-print("=" * 60)
-print("1. Closest pair on 2026-11-11")
-print("=" * 60)
+# ── 1. Cross-check on 2026-11-11 ─────────────────────────────────────────────
+print("=" * 70)
+print("1. Cross-check with reviewer's 15 ships on 2026-11-11")
+print("=" * 70)
 
-raw11 = sb.table("anchorage_ships").select("lat,lon,length_m").eq("date", "2026-11-11").execute().data
-ded11 = dedup_pass(raw11)
-print(f"Raw: {len(raw11)}  After dedup: {len(ded11)}")
+# fetch all tracks
+tracks = {}
+p, ps = 0, 1000
+while True:
+    chunk = sb.table("anchorage_tracks").select(
+        "track_id,first_date,last_date,sightings,length_median,class"
+    ).range(p, p+ps-1).execute()
+    for t in chunk.data:
+        tracks[t["track_id"]] = t
+    if len(chunk.data) < ps:
+        break
+    p += ps
+print(f"Total tracks in DB: {len(tracks)}\n")
 
-min_dist, pair = float("inf"), None
-for i, a in enumerate(ded11):
-    for j, b in enumerate(ded11):
-        if j <= i:
-            continue
-        d = haversine_m(a["lat"], a["lon"], b["lat"], b["lon"])
-        if d < min_dist:
-            min_dist, pair = d, (a, b)
+# active on 11-11: spanning tracks (approximation; track_id not on anchorage_ships)
+active_11 = [t for t in tracks.values()
+             if t["first_date"] <= "2026-11-11" <= t["last_date"]
+             and t["length_median"] >= SMALL_MIN]
 
-if pair:
-    a, b = pair
-    print(f"\nClosest pair (dist={min_dist:.0f}m):")
-    print(f"  A: lat={a['lat']:.6f}  lon={a['lon']:.6f}  length={a['length_m']:.0f}m")
-    print(f"  B: lat={b['lat']:.6f}  lon={b['lon']:.6f}  length={b['length_m']:.0f}m")
+print(f"Tracks spanning 2026-11-11 with len_median>=100m: {len(active_11)}")
+for cls in ["VLCC", "SuezAframax", "small"]:
+    n = sum(1 for t in active_11 if t["class"] == cls)
+    print(f"  {cls}: {n}")
 
-# also show all pairs <700m
-print("\nAll pairs <700m:")
-found_any = False
-for i, a in enumerate(ded11):
-    for j, b in enumerate(ded11):
-        if j <= i:
-            continue
-        d = haversine_m(a["lat"], a["lon"], b["lat"], b["lon"])
-        if d < 700:
-            found_any = True
-            print(f"  {d:5.0f}m  A({a['lat']:.5f},{a['lon']:.5f},{a['length_m']:.0f}m)"
-                  f"  B({b['lat']:.5f},{b['lon']:.5f},{b['length_m']:.0f}m)")
-if not found_any:
-    print("  none")
+print()
+print(f"{'rev_lat':>9} {'rev_lon':>9}  {'rev_len':>7} {'rev_cls':>12}  "
+      f"{'nearest_tid':>11} {'dist_m':>7} {'sights':>6} {'our_med':>7} {'our_cls':>12}  match")
+print("-" * 100)
+
+mismatches = []
+for (rlat, rlon, rlen, rcls) in REVIEWER_11:
+    best = None
+    best_d = float("inf")
+    for t in active_11:
+        d = haversine_m(rlat, rlon, t["lat"] if "lat" in t else 0,
+                        t["lon"] if "lon" in t else 0)
+        if d < best_d:
+            best_d, best = d, t
+
+    # tracks don't have lat/lon stored per-date; use last-known from anchorage_tracks
+    # re-query with lat/lon
+    best = None
+    best_d = float("inf")
+    for t in active_11:
+        # anchorage_tracks has lat, lon (mean of all sightings) — need to re-fetch
+        pass
+
+    # fetch with lat/lon
+    break  # will redo below after fetching lat/lon
+
+# fetch with lat/lon
+tracks_ll = {}
+p = 0
+while True:
+    chunk = sb.table("anchorage_tracks").select(
+        "track_id,first_date,last_date,sightings,length_median,class,lat,lon"
+    ).range(p, p+ps-1).execute()
+    for t in chunk.data:
+        tracks_ll[t["track_id"]] = t
+    if len(chunk.data) < ps:
+        break
+    p += ps
+
+active_11_ll = [t for t in tracks_ll.values()
+                if t["first_date"] <= "2026-11-11" <= t["last_date"]
+                and t["length_median"] >= SMALL_MIN]
+
+print(f"\n(Re-check with lat/lon) Spanning 2026-11-11, len>=100m: {len(active_11_ll)}")
+for cls in ["VLCC", "SuezAframax", "small"]:
+    n = sum(1 for t in active_11_ll if t["class"] == cls)
+    print(f"  {cls}: {n}")
+
+print()
+print(f"{'rev_lat':>9} {'rev_lon':>9}  {'rev_len':>7} {'rev_cls':>12}  "
+      f"{'tid':>6} {'dist_m':>7} {'sights':>6} {'our_med':>7} {'our_cls':>12}  match")
+print("-" * 100)
+
+for (rlat, rlon, rlen, rcls) in REVIEWER_11:
+    best = None
+    best_d = float("inf")
+    for t in active_11_ll:
+        d = haversine_m(rlat, rlon, t["lat"], t["lon"])
+        if d < best_d:
+            best_d, best = d, t
+
+    if best is None:
+        print(f"  {rlat:.4f} {rlon:.4f}  {rlen:7}m {rcls:>12}  NO MATCH")
+        continue
+
+    match = "OK" if best["class"] == rcls else "MISMATCH"
+    print(f"  {rlat:.4f} {rlon:.4f}  {rlen:7}m {rcls:>12}  "
+          f"{best['track_id']:6d} {best_d:7.0f}m {best['sightings']:6d} "
+          f"{best['length_median']:7.0f}m {best['class']:>12}  {match}")
+    if match == "MISMATCH":
+        mismatches.append((rlat, rlon, rlen, rcls, best))
+
+# detail on mismatches
+if mismatches:
+    print(f"\n── Mismatch details ─────────────────────────────────────────────────")
+    for (rlat, rlon, rlen, rcls, t) in mismatches:
+        tid = t["track_id"]
+        print(f"\ntrack_id={tid}  sightings={t['sightings']}  "
+              f"first={t['first_date']}  last={t['last_date']}")
+        print(f"  our class={t['class']}  our len_median={t['length_median']:.0f}m")
+        print(f"  reviewer: lat={rlat} lon={rlon} len={rlen}m class={rcls}")
+        # fetch sighting lengths from anchorage_ships
+        hist = sb.table("anchorage_ships").select("date,length_m") \
+            .eq("track_id", tid).order("date").execute().data
+        if hist:
+            lens = [h["length_m"] for h in hist]
+            print(f"  sighting lengths: {[int(l) for l in lens]}")
+        else:
+            print(f"  (track_id not written to anchorage_ships — cannot fetch lengths)")
+else:
+    print("\nAll 15 reviewer positions match our classification.")
 
 
-# ── 2. Departed tracks on 2026-11-17 ─────────────────────────────────────────
-print("\n" + "=" * 60)
-print("2. Tracks last seen 2026-11-11 (departed on 2026-11-17)")
-print("=" * 60)
+# ── 2. Histogram of track length_median (sightings≥3) ────────────────────────
+print("\n" + "=" * 70)
+print("2. Histogram of track length_median (sightings≥3), bins 10m")
+print("=" * 70)
 
-dep_tracks = sb.table("anchorage_tracks").select("*").eq("last_date", "2026-11-11").execute().data
-print(f"Tracks with last_date=2026-11-11: {len(dep_tracks)}")
-
-raw17 = sb.table("anchorage_ships").select("lat,lon,length_m").eq("date", "2026-11-17").execute().data
-ded17 = dedup_pass(raw17)
-print(f"2026-11-17 post-dedup: {len(ded17)} detections\n")
-
-for t in dep_tracks:
-    nearest = min(haversine_m(t["lat"], t["lon"], d["lat"], d["lon"]) for d in ded17)
-    print(f"Track {t['track_id']}: class={t['class']}  sightings={t['sightings']}"
-          f"  first={t['first_date']}  last={t['last_date']}")
-    print(f"  last_pos: lat={t['lat']:.6f}  lon={t['lon']:.6f}  len_median={t['length_median']:.0f}m")
-    print(f"  nearest 11-17 detection: {nearest:.0f}m")
-
-    # sightings history
-    hist = sb.table("anchorage_ships").select("date,lat,lon,length_m") \
-        .eq("track_id", t["track_id"]).order("date").execute().data
-    if hist:
-        print(f"  history ({len(hist)} sightings):")
-        for h in hist[-6:]:  # last 6
-            print(f"    {h['date']}: lat={h['lat']:.5f} lon={h['lon']:.5f} len={h['length_m']:.0f}m")
-    print()
-
-
-# ── 3. Histogram of track length_median (sightings≥3) ────────────────────────
-print("=" * 60)
-print("3. Histogram of track length_median (sightings≥3), bins 10m")
-print("=" * 60)
-
-tracks = sb.table("anchorage_tracks").select("length_median,sightings,class") \
+hist_tracks = sb.table("anchorage_tracks").select("length_median,sightings,class") \
     .gte("sightings", 3).execute().data
 
 bins: dict[int, int] = defaultdict(int)
-for t in tracks:
+for t in hist_tracks:
     b = int(t["length_median"] // 10) * 10
     bins[b] += 1
 
@@ -146,11 +195,11 @@ print(f"{'bin':>7}  {'n':>4}  bar")
 for b in sorted(bins):
     bar = "█" * min(bins[b], 60)
     label = ""
-    if b >= 330:
+    if b >= VLCC_MIN:
         label = " ← VLCC"
-    elif b >= 250:
+    elif b >= SUEZ_AFRA_MIN:
         label = " ← SuezAframax"
-    elif b >= 100:
+    elif b >= SMALL_MIN:
         label = " ← small"
     print(f"  {b:3d}-{b+9:3d}: {bins[b]:3d}  {bar}{label}")
 

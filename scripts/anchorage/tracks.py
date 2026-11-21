@@ -53,7 +53,6 @@ DEDUP_RADIUS_M   = 250    # merge detections within this radius
 MAX_LEN_M        = 420    # hard cap on ship length
 ASSOC_RADIUS_M   = 700    # max distance to link track across passes
 MAX_GAP_PASSES   = 2      # max consecutive passes a track may be absent
-MIN_FIX_SIGHTINGS = 3     # class is fixed after this many sightings
 
 VLCC_MIN         = 330    # metres (reviewer calibration: gap at 320-340m)
 SUEZ_AFRA_MIN    = 250    # metres (reviewer calibration: gap at 240-260m)
@@ -141,7 +140,7 @@ def build_tracks(passes_by_date):
 
     Returns:
       tracks: {track_id: {first_date, last_date, sightings: [(date, lat, lon, length_m)],
-                          class, class_fixed, lengths}}
+                          class, lengths}}
       ship_to_track: {source_id: track_id}
     """
     tracks = {}           # track_id -> track dict
@@ -187,11 +186,7 @@ def build_tracks(passes_by_date):
                 track["sightings"].append((date_str, det["lat"], det["lon"], det["length_m"]))
                 track["last_date"] = date_str
                 track["lengths"].append(det["length_m"])
-                # Update class if not yet fixed
-                if not track["class_fixed"]:
-                    track["class"] = assign_class(track["lengths"])
-                    if len(track["sightings"]) >= MIN_FIX_SIGHTINGS:
-                        track["class_fixed"] = True
+                track["class"] = assign_class(track["lengths"])
                 active[best_tid] = {"lat": det["lat"], "lon": det["lon"],
                                      "last_date": date_str, "gap_count": 0}
                 matched_tids.add(best_tid)
@@ -210,7 +205,6 @@ def build_tracks(passes_by_date):
                 "sightings": [(date_str, det["lat"], det["lon"], det["length_m"])],
                 "lengths": [det["length_m"]],
                 "class": assign_class([det["length_m"]]),
-                "class_fixed": False,
             }
             active[tid] = {"lat": det["lat"], "lon": det["lon"],
                            "last_date": date_str, "gap_count": 0}
