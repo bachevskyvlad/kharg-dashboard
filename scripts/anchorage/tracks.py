@@ -81,7 +81,7 @@ def dedup_pass(detections):
     Merged length = min(MAX_LEN_M, max(len_a, dist + (len_a+len_b)/2)).
     Returns list of dicts: {lat, lon, length_m, source_ids}.
     """
-    remaining = [dict(d, source_ids=[d["id"]]) for d in detections]
+    remaining = [dict(d, source_ids=[d["_key"]]) for d in detections]
     merged = True
     while merged:
         merged = False
@@ -282,7 +282,7 @@ def fetch_all_ships(sb, since_date=None):
     page_size = 1000
     start = 0
     while True:
-        q = sb.table("anchorage_ships").select("id,date,lat,lon,length_m")
+        q = sb.table("anchorage_ships").select("date,lat,lon,length_m")
         if since_date:
             q = q.gte("date", since_date)
         chunk = q.range(start, start + page_size - 1).execute()
@@ -291,6 +291,9 @@ def fetch_all_ships(sb, since_date=None):
         if len(data) < page_size:
             break
         start += page_size
+    # assign composite key since table has no id column
+    for r in rows:
+        r["_key"] = (r["date"], r["lat"], r["lon"])
     return rows
 
 def write_tracks(sb, tracks):
@@ -314,12 +317,14 @@ def write_tracks(sb, tracks):
     print(f"  Wrote {len(rows)} tracks to anchorage_tracks")
 
 def write_track_ids_to_ships(sb, ship_to_track):
-    batch = 500
     items = list(ship_to_track.items())
-    for i in range(0, len(items), batch):
-        for ship_id, track_id in items[i:i+batch]:
-            sb.table("anchorage_ships").update({"track_id": track_id}).eq("id", ship_id).execute()
-    print(f"  Updated track_id on {len(ship_to_track)} anchorage_ships rows")
+    count = 0
+    for key, track_id in items:
+        date, lat, lon = key
+        sb.table("anchorage_ships").update({"track_id": track_id}) \
+            .eq("date", date).eq("lat", lat).eq("lon", lon).execute()
+        count += 1
+    print(f"  Updated track_id on {count} anchorage_ships rows")
 
 def write_queue(sb, queue_rows):
     batch = 500
