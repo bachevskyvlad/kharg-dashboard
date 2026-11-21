@@ -241,17 +241,26 @@ def build_queue(tracks, all_dates):
         for sig_date, _, _, _ in track["sightings"]:
             active_set[sig_date].add(tid)
 
+    def _countable(tid):
+        """Track counts toward queue only if len_median ≥ SMALL_MIN."""
+        t = tracks[tid]
+        valid = [l for l in t["lengths"] if SMALL_MIN <= l <= MAX_LEN_M]
+        m = float(np.median(valid)) if valid else float(np.median(t["lengths"]))
+        return m >= SMALL_MIN
+
     rows = []
     prev_active = set()
     for i, d in enumerate(sorted_dates):
         cur_active = active_set[d]
-        arrived = len(cur_active - prev_active)
-        left    = len(prev_active - cur_active)
+        cur_counted = {tid for tid in cur_active if _countable(tid)}
+        prev_counted = {tid for tid in prev_active if _countable(tid)}
+        arrived = len(cur_counted - prev_counted)
+        left    = len(prev_counted - cur_counted)
 
-        vlcc = sum(1 for tid in cur_active if tracks[tid]["class"] == "VLCC")
-        suez = sum(1 for tid in cur_active if tracks[tid]["class"] == "SuezAframax")
-        small = sum(1 for tid in cur_active if tracks[tid]["class"] == "small")
-        total = len(cur_active)
+        vlcc = sum(1 for tid in cur_counted if tracks[tid]["class"] == "VLCC")
+        suez = sum(1 for tid in cur_counted if tracks[tid]["class"] == "SuezAframax")
+        small = sum(1 for tid in cur_counted if tracks[tid]["class"] == "small")
+        total = len(cur_counted)
 
         rows.append({
             "date":        d,
@@ -262,7 +271,7 @@ def build_queue(tracks, all_dates):
             "arrived":     arrived,
             "departed":    left,
         })
-        prev_active = cur_active
+        prev_active = cur_active  # track all active (not just counted) for gap logic
 
     return rows
 
@@ -486,12 +495,19 @@ def main():
         print(f"  Merged duplicates: {total_before - total_after}")
         print(f"  Ships >30 days   : {len(long_tracks)}")
         print(f"\n  Last {len(last6)} passes:")
+        def _rep_countable(tid):
+            t = tracks[tid]
+            valid = [l for l in t["lengths"] if SMALL_MIN <= l <= MAX_LEN_M]
+            m = float(np.median(valid)) if valid else float(np.median(t["lengths"]))
+            return m >= SMALL_MIN
+
         for d in last6:
             cur = active_set[d]
-            v = sum(1 for t in cur if tracks[t]["class"] == "VLCC")
-            s = sum(1 for t in cur if tracks[t]["class"] == "SuezAframax")
-            sm = sum(1 for t in cur if tracks[t]["class"] == "small")
-            print(f"    {d}: total={len(cur)}  VLCC={v}  SA={s}  sm={sm}")
+            counted = [t for t in cur if _rep_countable(t)]
+            v = sum(1 for t in counted if tracks[t]["class"] == "VLCC")
+            s = sum(1 for t in counted if tracks[t]["class"] == "SuezAframax")
+            sm = sum(1 for t in counted if tracks[t]["class"] == "small")
+            print(f"    {d}: total={len(counted)}  VLCC={v}  SA={s}  sm={sm}")
         print("────────────────────────────────────────────────────────────────")
 
     if args.report:
@@ -503,7 +519,7 @@ def main():
     # ── write to DB ───────────────────────────────────────────────────────────
     print("\nWriting to Supabase…")
     write_tracks(sb, tracks)
-    write_track_ids_to_ships(sb, ship_to_track)
+    # write_track_ids_to_ships skipped in backfill (4247 individual UPDATEs → timeout)
     write_queue(sb, queue_rows)
 
     # export anchorage.json after full rebuild
