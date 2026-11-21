@@ -20,79 +20,28 @@ jobs:
       - name: Install dependencies
         run: pip install supabase numpy -q
 
-      - name: Class breakdown on 2026-11-11 and 2026-11-17
+      - name: Cross-check reviewer positions on 2026-11-11
         env:
           SUPABASE_URL:         ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_KEY }}
+        run: python scripts/anchorage/diagnose.py
+
+      - name: Full backfill (class not fixed)
+        env:
+          SUPABASE_URL:         ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_KEY }}
+        run: python scripts/anchorage/tracks.py
+
+      - name: Export anchorage.json
+        env:
+          SUPABASE_URL:         ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_KEY }}
+        run: python scripts/anchorage/tracks.py --export
+
+      - name: Commit anchorage.json
         run: |
-          python - <<'EOF'
-          import os, sys
-          from supabase import create_client
-          from collections import defaultdict
-
-          sb = create_client(
-              os.environ["SUPABASE_URL"],
-              os.environ["SUPABASE_SERVICE_KEY"]
-          )
-
-          SMALL_MIN = 100
-          MAX_LEN_M = 420
-
-          # fetch all tracks
-          tracks = {}
-          p, ps = 0, 1000
-          while True:
-              chunk = sb.table("anchorage_tracks").select(
-                  "track_id,first_date,last_date,sightings,length_median,class"
-              ).range(p, p+ps-1).execute()
-              for t in chunk.data:
-                  tracks[t["track_id"]] = t
-              if len(chunk.data) < ps:
-                  break
-              p += ps
-          print(f"Total tracks: {len(tracks)}")
-
-          # fetch sightings per date to get exact active sets
-          for date_str in ["2026-11-11", "2026-11-17"]:
-              ships = sb.table("anchorage_ships").select("lat,lon,length_m,track_id").eq("date", date_str).execute().data
-              print(f"\n=== {date_str} ===")
-              print(f"  Raw ships: {len(ships)}")
-              with_tid = [s for s in ships if s.get("track_id")]
-              print(f"  With track_id: {len(with_tid)}")
-
-          # use anchorage_queue directly
-          q = sb.table("anchorage_queue").select("*").in_("date",["2026-11-11","2026-11-17"]).execute()
-          print("\n=== anchorage_queue ===")
-          for r in sorted(q.data, key=lambda x: x["date"]):
-              print(f"  {r['date']}: total={r['total']} vlcc={r['vlcc']} sa={r['suezaframax']} sm={r['small']} arr={r['arrived']} dep={r['departed']}")
-
-          # rebuild active sets from anchorage_tracks sightings
-          # (track present on date = sighting exists; we approximate via first_date..last_date + sightings count)
-          # Better: query anchorage_ships grouping by date, check track_ids
-          # But track_id not written → use queue numbers above.
-
-          # Instead: show class distribution of tracks spanning each date
-          # (approximation: gap tracks may be wrongly included)
-          import numpy as np
-          for date_str in ["2026-11-11", "2026-11-17"]:
-              active = [t for t in tracks.values()
-                        if t["first_date"] <= date_str <= t["last_date"]]
-              # filter countable (len_median >= 100)
-              counted = [t for t in active if t["length_median"] >= SMALL_MIN]
-              print(f"\n=== Approx active on {date_str} (first<=date<=last, len>=100) ===")
-              print(f"  Spanning: {len(active)}  Countable (>=100m): {len(counted)}")
-              for cls in ["VLCC","SuezAframax","small"]:
-                  n = sum(1 for t in counted if t["class"]==cls)
-                  print(f"  {cls}: {n}")
-              # length distribution 20m bins
-              bins = defaultdict(list)
-              for t in counted:
-                  b = int(t["length_median"]//20)*20
-                  bins[b].append(t["track_id"])
-              print("  Length bins (20m):")
-              for b in sorted(bins):
-                  label = "VLCC" if b>=330 else ("SA" if b>=250 else "small")
-                  print(f"    {b:3d}-{b+19:3d}: {len(bins[b]):2d}  {label}  tids={bins[b][:5]}")
-
-          print("\nDone.")
-          EOF
+          git config user.email "actions@github.com"
+          git config user.name "GitHub Actions"
+          git add data/anchorage.json
+          git diff --cached --quiet && echo "No changes" || git commit -m "data: anchorage tracks (no class fixation)"
+          git push origin claude/oilradar-dashboard-iran-zchdva || true
