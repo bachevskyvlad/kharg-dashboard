@@ -20,22 +20,28 @@ jobs:
           python-version: "3.11"
 
       - name: Install dependencies
-        run: pip install sentinelhub scipy numpy -q
+        run: pip install sentinelhub scipy numpy supabase -q
 
       - name: New dates -> Supabase + snapshots
         env:
-          CLIENT_ID:          ${{ secrets.CLIENT_ID }}
-          CLIENT_SECRET:      ${{ secrets.CLIENT_SECRET }}
-          SUPABASE_URL:       ${{ secrets.SUPABASE_URL }}
+          CLIENT_ID:            ${{ secrets.CLIENT_ID }}
+          CLIENT_SECRET:        ${{ secrets.CLIENT_SECRET }}
+          SUPABASE_URL:         ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_KEY }}
-          RUN_ID:             gha-${{ github.run_id }}
+          RUN_ID:               gha-${{ github.run_id }}
         run: python diagnostics/anchorage_hist/hist_backfill.py --update
 
-      - name: Update anchorage.json (resume backfill)
+      - name: Build tracks and queue (incremental)
         env:
-          CLIENT_ID:     ${{ secrets.CLIENT_ID }}
-          CLIENT_SECRET: ${{ secrets.CLIENT_SECRET }}
-        run: python scripts/ship_backfill.py --resume
+          SUPABASE_URL:         ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_KEY }}
+        run: python scripts/anchorage/tracks.py --update
+
+      - name: Export anchorage.json from queue
+        env:
+          SUPABASE_URL:         ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_KEY }}
+        run: python scripts/anchorage/tracks.py --export
 
       - name: Commit updated anchorage.json
         run: |

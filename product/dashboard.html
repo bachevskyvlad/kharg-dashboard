@@ -1065,9 +1065,10 @@
                             <tr style="color:var(--dim);text-align:right;border-bottom:1px solid var(--border);">
                                 <th style="text-align:left;padding:0.4rem 0.6rem;font-weight:500">Date</th>
                                 <th style="padding:0.4rem 0.6rem;font-weight:500">VLCC</th>
-                                <th style="padding:0.4rem 0.6rem;font-weight:500">Suezmax</th>
-                                <th style="padding:0.4rem 0.6rem;font-weight:500">Aframax</th>
-                                <th style="padding:0.4rem 0.6rem;font-weight:500">MR</th>
+                                <th style="padding:0.4rem 0.6rem;font-weight:500">SuezAframax</th>
+                                <th style="padding:0.4rem 0.6rem;font-weight:500">Small</th>
+                                <th style="padding:0.4rem 0.6rem;font-weight:500">Arrived</th>
+                                <th style="padding:0.4rem 0.6rem;font-weight:500">Left</th>
                                 <th style="padding:0.4rem 0.6rem;font-weight:500">Total</th>
                             </tr>
                         </thead>
@@ -2572,12 +2573,12 @@ function aqFilter(records, range) {
   return records.filter(r => r.date >= cutStr);
 }
 
-const AQ_COLORS = { vlcc:'#ef4444', suezmax:'#f97316', aframax:'#eab308', mr:'#22c55e' };
-const AQ_LAYERS = ['mr','aframax','suezmax','vlcc'];
+const AQ_COLORS = { vlcc:'#ef4444', suezaframax:'#f97316', small:'#94a3b8' };
+const AQ_LAYERS = ['small','suezaframax','vlcc'];
 
 function aqCumulative(r, upTo) {
   let s = 0;
-  for (const k of AQ_LAYERS) { if (k === upTo) { s += r[k]; break; } s += r[k]; }
+  for (const k of AQ_LAYERS) { if (k === upTo) { s += (r[k]||0); break; } s += (r[k]||0); }
   return s;
 }
 
@@ -2677,9 +2678,10 @@ function aqDraw() {
       tip.style.top  = (e.clientY - 10) + 'px';
       tip.innerHTML = `<div style="color:#94a3b8;margin-bottom:4px">${r.date}</div>
         <div style="display:flex;align-items:center;gap:6px;margin-bottom:2px"><span style="width:8px;height:8px;background:#ef4444;display:inline-block"></span>VLCC: <b>${r.vlcc}</b></div>
-        <div style="display:flex;align-items:center;gap:6px;margin-bottom:2px"><span style="width:8px;height:8px;background:#f97316;display:inline-block"></span>Suezmax: <b>${r.suezmax}</b></div>
-        <div style="display:flex;align-items:center;gap:6px;margin-bottom:2px"><span style="width:8px;height:8px;background:#eab308;display:inline-block"></span>Aframax: <b>${r.aframax}</b></div>
-        <div style="display:flex;align-items:center;gap:6px;margin-bottom:2px"><span style="width:8px;height:8px;background:#22c55e;display:inline-block"></span>MR: <b>${r.mr}</b></div>
+        <div style="display:flex;align-items:center;gap:6px;margin-bottom:2px"><span style="width:8px;height:8px;background:#f97316;display:inline-block"></span>SuezAframax: <b>${r.suezaframax??'—'}</b></div>
+        <div style="display:flex;align-items:center;gap:6px;margin-bottom:2px"><span style="width:8px;height:8px;background:#94a3b8;display:inline-block"></span>Small: <b>${r.small??'—'}</b></div>
+        <div style="display:flex;align-items:center;gap:6px;margin-bottom:2px"><span style="width:8px;height:8px;background:#22c55e;display:inline-block"></span>Arrived: <b>${r.arrived??'—'}</b></div>
+        <div style="display:flex;align-items:center;gap:6px;margin-bottom:2px"><span style="width:8px;height:8px;background:#f43f5e;display:inline-block"></span>Left: <b>${r.left??'—'}</b></div>
         <div style="border-top:1px solid rgba(255,255,255,0.08);margin-top:4px;padding-top:4px">Total: <b>${r.total}</b></div>`;
       const ctx2 = canvas.getContext('2d');
       const dpr2 = window.devicePixelRatio || 1;
@@ -2727,10 +2729,11 @@ async function initAnchorage() {
       const rows = [..._aqRecords].reverse().slice(0, 52);
       tbody.innerHTML = rows.map(r => `<tr style="border-bottom:1px solid rgba(255,255,255,0.04);">
         <td style="padding:0.35rem 0.6rem;color:var(--muted)">${r.date}</td>
-        <td style="padding:0.35rem 0.6rem;text-align:right;color:#ef4444">${r.vlcc}</td>
-        <td style="padding:0.35rem 0.6rem;text-align:right;color:#f97316">${r.suezmax}</td>
-        <td style="padding:0.35rem 0.6rem;text-align:right;color:#eab308">${r.aframax}</td>
-        <td style="padding:0.35rem 0.6rem;text-align:right;color:#22c55e">${r.mr}</td>
+        <td style="padding:0.35rem 0.6rem;text-align:right;color:#ef4444">${r.vlcc ?? r.vlcc ?? '—'}</td>
+        <td style="padding:0.35rem 0.6rem;text-align:right;color:#f97316">${r.suezaframax ?? '—'}</td>
+        <td style="padding:0.35rem 0.6rem;text-align:right;color:#94a3b8">${r.small ?? '—'}</td>
+        <td style="padding:0.35rem 0.6rem;text-align:right;color:#22c55e">${r.arrived ?? '—'}</td>
+        <td style="padding:0.35rem 0.6rem;text-align:right;color:#f43f5e">${r.left ?? '—'}</td>
         <td style="padding:0.35rem 0.6rem;text-align:right;font-weight:600">${r.total}</td>
       </tr>`).join('');
     }
