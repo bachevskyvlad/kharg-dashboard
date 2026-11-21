@@ -55,8 +55,8 @@ ASSOC_RADIUS_M   = 700    # max distance to link track across passes
 MAX_GAP_PASSES   = 2      # max consecutive passes a track may be absent
 MIN_FIX_SIGHTINGS = 3     # class is fixed after this many sightings
 
-VLCC_MIN         = 300    # metres
-SUEZ_AFRA_MIN    = 200    # metres
+VLCC_MIN         = 330    # metres (reviewer calibration: gap at 320-340m)
+SUEZ_AFRA_MIN    = 250    # metres (reviewer calibration: gap at 240-260m)
 SMALL_MIN        = 100    # metres
 
 # ── classification ────────────────────────────────────────────────────────────
@@ -414,6 +414,12 @@ def main():
         print("Exporting anchorage_queue to data/anchorage.json…")
         export_json(sb)
         return
+
+    # ── truncate on full backfill ────────────────────────────────────────────
+    if not args.update and not args.dry_run:
+        print("Truncating anchorage_tracks and anchorage_queue…")
+        sb.table("anchorage_tracks").delete().neq("track_id", -999999).execute()
+        sb.table("anchorage_queue").delete().neq("date", "1900-01-01").execute()
 
     # ── fetch ships ──────────────────────────────────────────────────────────
     since = None
