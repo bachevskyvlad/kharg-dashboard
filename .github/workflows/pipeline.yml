@@ -139,12 +139,20 @@ jobs:
         timeout-minutes: 30
         env:
           PC_SDK_SUBSCRIPTION_KEY: ${{ secrets.PC_SDK_SUBSCRIPTION_KEY }}
+          CLIENT_ID:               ${{ secrets.CLIENT_ID }}
+          CLIENT_SECRET:           ${{ secrets.CLIENT_SECRET }}
         run: |
           if [ ! -f diagnostics/berth_v4/bg_v4/bg_o101_east_t_head_2026.npy ]; then
-            echo "Building 2026 BG..."
+            echo "Building o101 2026 BG..."
             python scripts/berth_build_bg_2026.py
           else
-            echo "2026 BG present — skip build"
+            echo "o101 2026 BG present — skip"
+          fi
+          if [ ! -f diagnostics/berth_v4/bg_v4/bg_o35_east_t_head.npy ]; then
+            echo "Building o35 east_t_head BG (8 confirmed-empty Oct-Nov 2026 passes)..."
+            python scripts/build_bg_v4_o35_eth.py
+          else
+            echo "o35 east_t_head BG present — skip"
           fi
 
       - name: berths — history (full recalc)
@@ -258,6 +266,8 @@ jobs:
           git config user.name  "pipeline"
           git config user.email "pipeline@oilradar.io"
           git add data/ 2>/dev/null || true
+          # Stage new (untracked) frozen-bg .npy files only on their first build — no-op once committed
+          git ls-files --others --exclude-standard diagnostics/berth_v4/bg_v4/*.npy 2>/dev/null | xargs -r git add
           if git diff --cached --quiet; then
             echo "data_changed=false" >> "$GITHUB_OUTPUT"
             echo "No changes to commit."
