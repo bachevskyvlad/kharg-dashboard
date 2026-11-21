@@ -1,0 +1,41 @@
+name: Backfill Anchorage Tracks (one-shot)
+
+on:
+  workflow_dispatch:
+
+jobs:
+  backfill:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: claude/oilradar-dashboard-iran-zchdva
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: pip install supabase numpy -q
+
+      - name: Full tracks backfill
+        env:
+          SUPABASE_URL:         ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_KEY }}
+        run: python scripts/anchorage/tracks.py
+
+      - name: Export anchorage.json
+        env:
+          SUPABASE_URL:         ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_KEY }}
+        run: python scripts/anchorage/tracks.py --export
+
+      - name: Commit anchorage.json
+        run: |
+          git config user.email "actions@github.com"
+          git config user.name "GitHub Actions"
+          git add data/anchorage.json
+          git diff --cached --quiet && echo "No changes" || git commit -m "data: anchorage tracks backfill"
+          git push origin claude/oilradar-dashboard-iran-zchdva || true
