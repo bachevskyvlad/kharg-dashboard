@@ -965,11 +965,12 @@
                         <thead>
                             <tr style="color:var(--dim);text-align:right;border-bottom:1px solid var(--border);">
                                 <th style="text-align:left;padding:0.4rem 0.6rem;font-weight:500">Date</th>
-                                <th style="padding:0.4rem 0.6rem;font-weight:500">VLCC</th>
-                                <th style="padding:0.4rem 0.6rem;font-weight:500">Suezmax</th>
-                                <th style="padding:0.4rem 0.6rem;font-weight:500">Aframax</th>
-                                <th style="padding:0.4rem 0.6rem;font-weight:500">MR</th>
                                 <th style="padding:0.4rem 0.6rem;font-weight:500">Total</th>
+                                <th style="padding:0.4rem 0.6rem;font-weight:500">VLCC</th>
+                                <th style="padding:0.4rem 0.6rem;font-weight:500">SuezAframax</th>
+                                <th style="padding:0.4rem 0.6rem;font-weight:500">Small</th>
+                                <th style="padding:0.4rem 0.6rem;font-weight:500">Arrived</th>
+                                <th style="padding:0.4rem 0.6rem;font-weight:500">Left</th>
                             </tr>
                         </thead>
                         <tbody id="aq-table-body"></tbody>
@@ -2833,71 +2834,10 @@ function aqFilter(records, range) {
 }
 
 const AQ_TQI_LABEL = t => t >= 85 ? 'HIGH PRESSURE' : t >= 70 ? 'Elevated' : 'Normal';
-const AQ_COLORS = { vlcc:'#ef4444', suezmax:'#f97316', aframax:'#eab308', mr:'#22c55e', small:'#a855f7' };
-const AQ_LABELS = { vlcc:'VLCC', suezmax:'Suezmax', aframax:'Aframax', mr:'MR', small:'Small' };
-// Typical full cargo per class, million barrels (crude): VLCC ~2.0, Suezmax ~1.0,
-// Aframax ~0.7, MR/Panamax ~0.35, small (<100 m) ~0.05.
-const AQ_CAP_MBBL = { vlcc:2.0, suezmax:1.0, aframax:0.7, mr:0.35, small:0.05 };
-// Departed cargo: sum_k max(0, n_k(t-1) - n_k(t)) * cap_k.
-// Only ships that left since the previous pass count; arrivals and stable counts contribute 0.
-function aqDeltaMbbl(r) {
-  const i = _aqRecords.indexOf(r);
-  if (i <= 0) return null;
-  const p = _aqRecords[i - 1];
-  return aqLayers().reduce((s, k) => s + Math.max(0, (p[k] || 0) - (r[k] || 0)) * AQ_CAP_MBBL[k], 0);
-}
-// Money: Δ cargo (Mbbl) × (Dubai + spread) $/bbl = $M. Spread shares the "vs Dubai"
-// slider of the revenue card (−15…+15 $/bbl) when present on the page.
-let _aqDubai = null;
-fetch('/data/prices.json?v=' + Date.now()).then(r => r.ok ? r.json() : null).then(d => {
-  if (d && d.dubai_usd) { _aqDubai = +d.dubai_usd; if (_aqRecords.length) aqRenderKpisAndTable(); }
-}).catch(() => {});
-function aqSpread() {
-  const el = document.getElementById('aq-discount') || document.getElementById('discountSlider');
-  const v = el ? parseFloat(el.value) : -5;
-  return isNaN(v) ? -5 : v;
-}
-function aqNetPrice() { return _aqDubai === null ? null : _aqDubai + aqSpread(); }
-function aqFmtUsd(mbbl) {
-  const p = aqNetPrice();
-  if (mbbl === null || p === null) return '—';
-  const v = mbbl * p;                                  // $ million, always ≥ 0
-  const c = v > 0 ? '#60a5fa' : 'var(--muted)';
-  const a = v, t = a >= 1000 ? '$' + (a / 1000).toFixed(2) + 'B' : '+$' + a.toFixed(0) + 'M';
-  return `<span style="color:${c}">${v > 0 ? t : '$0M'}</span>`;
-}
-function aqSpreadLabel(v) { return (v >= 0 ? '+$' + v : '-$' + Math.abs(v)) + '/bbl'; }
-function aqOnSpread(v) {
-  ['aq-discount', 'discountSlider'].forEach(id => { const e = document.getElementById(id); if (e && +e.value !== v) e.value = v; });
-  ['aq-discount-label', 'discountLabel'].forEach(id => { const e = document.getElementById(id); if (e) e.textContent = aqSpreadLabel(v); });
-  if (typeof renderRevenue === 'function') renderRevenue();
-  aqRenderKpisAndTable();
-}
-function aqPriceControls(table) {
-  if (document.getElementById('aq-price-ctl')) {
-    document.getElementById('aq-dubai').textContent = _aqDubai === null ? '$--' : '$' + _aqDubai.toFixed(2);
-    return;
-  }
-  const box = document.createElement('div');
-  box.id = 'aq-price-ctl';
-  box.style.cssText = 'display:flex;gap:1rem;align-items:center;justify-content:flex-end;flex-wrap:wrap;font-size:0.72rem;color:var(--muted);margin:-0.5rem 0 0.75rem';
-  const v = aqSpread();
-  box.innerHTML = `<span>Dubai <span id="aq-dubai" style="color:var(--text)">${_aqDubai === null ? '$--' : '$' + _aqDubai.toFixed(2)}</span></span>
-    <label style="display:flex;align-items:center;gap:0.4rem">vs Dubai
-      <input type="range" id="aq-discount" min="-15" max="15" step="1" value="${v}" style="width:90px;accent-color:#60a5fa">
-      <span id="aq-discount-label" style="color:#60a5fa">${aqSpreadLabel(v)}</span></label>`;
-  table.parentElement.parentElement.insertBefore(box, table.parentElement);
-  document.getElementById('aq-discount').addEventListener('input', e => aqOnSpread(+e.target.value));
-  const other = document.getElementById('discountSlider');
-  if (other) other.addEventListener('input', e => aqOnSpread(+e.target.value));
-}
-function aqFmtDelta(v) {
-  if (v === null) return '—';
-  const c = v > 0 ? '#60a5fa' : 'var(--muted)';
-  return `<span style="color:${c}">${v > 0 ? '+' + v.toFixed(2) : '0'}</span>`;
-}
-const AQ_ALL    = ['small','mr','aframax','suezmax','vlcc'];          // stack order bottom -> top
-const AQ_DEFAULT = { vlcc:true, suezmax:true, aframax:true, mr:true, small:false };
+const AQ_COLORS = { vlcc:'#f87171', suezaframax:'#fbbf24', small:'#64748b' };
+const AQ_LABELS = { vlcc:'VLCC', suezaframax:'SuezAframax', small:'Small' };
+const AQ_ALL    = ['small','suezaframax','vlcc'];
+const AQ_DEFAULT = { vlcc:true, suezaframax:true, small:true };
 // Class filter: hidden classes are removed from the chart, the table and every sum (KPIs too).
 let _aqCls = (() => { try { return Object.assign({}, AQ_DEFAULT, JSON.parse(localStorage.getItem('aqCls') || '{}')); } catch(e) { return Object.assign({}, AQ_DEFAULT); } })();
 function aqLayers() { return AQ_ALL.filter(k => _aqCls[k]); }
@@ -2998,9 +2938,9 @@ function aqDraw() {
       tip.style.top  = (e.clientY - 10) + 'px';
       tip.innerHTML = `<div style="color:#94a3b8;margin-bottom:4px">${r.date}</div>` +
         [...aqLayers()].reverse().map(k => `<div style="display:flex;align-items:center;gap:6px;margin-bottom:2px"><span style="width:8px;height:8px;background:${AQ_COLORS[k]};display:inline-block"></span>${AQ_LABELS[k]}: <b>${r[k] ?? 0}</b></div>`).join('') +
-        `<div style="border-top:1px solid rgba(255,255,255,0.08);margin-top:4px;padding-top:4px">Total${aqIsDefault() ? '' : ' (selected)'}: <b>${aqSum(r)}</b></div>` +
-        `<div>Departed cargo: <b>${aqFmtDelta(aqDeltaMbbl(r))}</b> Mbbl</div>` +
-        `<div>Departed value: <b>${aqFmtUsd(aqDeltaMbbl(r))}</b>${aqNetPrice() === null ? '' : ' @ $' + aqNetPrice().toFixed(1) + '/bbl'}</div>`;
+        `<div style="border-top:1px solid rgba(255,255,255,0.08);margin-top:4px;padding-top:4px">Total: <b>${aqSum(r)}</b></div>` +
+        `<div>Arrived: <b>${r.arrived ?? 0}</b></div>` +
+        `<div>Left: <b>${r.departed ?? 0}</b></div>`;
       const ctx2 = canvas.getContext('2d');
       const dpr2 = window.devicePixelRatio || 1;
       ctx2.setTransform(dpr2, 0, 0, dpr2, 0, 0);
@@ -3035,37 +2975,29 @@ function aqRenderKpisAndTable() {
 
   const table = document.getElementById('aq-table');
   if (table) {
-    const ths = table.querySelectorAll('thead th');
-    const dateLbl = ths[0] ? ths[0].textContent : 'Date';
-    const totLbl  = ths[ths.length - 1] ? ths[ths.length - 1].textContent.replace(/ \(selected\)$/, '') : 'Total';
-    table._aqLbl = table._aqLbl || { dateLbl, totLbl };
-    const cols = ['vlcc','suezmax','aframax','mr','small'].filter(k => _aqCls[k]);
+    const cols = ['vlcc','suezaframax','small'].filter(k => _aqCls[k]);
     const th = 'padding:0.4rem 0.6rem;font-weight:500';
     table.querySelector('thead').innerHTML = `<tr style="color:var(--dim);text-align:right;border-bottom:1px solid var(--border);">
-      <th style="text-align:left;${th}">${table._aqLbl.dateLbl}</th>` +
+      <th style="text-align:left;${th}">Date</th>
+      <th style="${th}">Total</th>` +
       cols.map(k => `<th style="${th}">${AQ_LABELS[k]}</th>`).join('') +
-      `<th style="${th}">${table._aqLbl.totLbl}${aqIsDefault() ? '' : ' (selected)'}</th>` +
-      `<th style="${th}" title="Cargo of ships that departed since the previous SAR pass, million barrels. Only departures count — arrivals and unchanged counts contribute 0. Per-ship capacity: VLCC 2.0, Suezmax 1.0, Aframax 0.7, MR 0.35, Small 0.05 Mbbl. Not a measured export volume.">Departed cargo, Mbbl ⓘ</th>` +
-      `<th style="${th}" title="Δ cargo × (Dubai price + spread from the 'vs Dubai' slider). Rough value estimate; actual deal terms are unknown.">Δ value ⓘ</th></tr>`;
+      `<th style="${th}">Arrived</th><th style="${th}">Left</th></tr>`;
     const tbody = document.getElementById('aq-table-body');
     const rows = [..._aqRecords].reverse().slice(0, 52);
     tbody.innerHTML = rows.map(r => `<tr style="border-bottom:1px solid rgba(255,255,255,0.04);">
-        <td style="padding:0.35rem 0.6rem;color:var(--muted);white-space:nowrap">${r.date}</td>` +
+        <td style="padding:0.35rem 0.6rem;color:var(--muted);white-space:nowrap">${r.date}</td>
+        <td style="padding:0.35rem 0.6rem;text-align:right;font-weight:600">${aqSum(r)}</td>` +
       cols.map(k => `<td style="padding:0.35rem 0.6rem;text-align:right;color:${AQ_COLORS[k]}">${r[k] ?? 0}</td>`).join('') +
-      `<td style="padding:0.35rem 0.6rem;text-align:right;font-weight:600">${aqSum(r)}</td>` +
-      `<td style="padding:0.35rem 0.6rem;text-align:right">${aqFmtDelta(aqDeltaMbbl(r))}</td>` +
-      `<td style="padding:0.35rem 0.6rem;text-align:right;white-space:nowrap">${aqFmtUsd(aqDeltaMbbl(r))}</td></tr>`).join('');
-    aqPriceControls(table);
+      `<td style="padding:0.35rem 0.6rem;text-align:right">${r.arrived ?? 0}</td>` +
+      `<td style="padding:0.35rem 0.6rem;text-align:right">${r.departed ?? 0}</td></tr>`).join('');
   }
 }
 
 function aqRenderClassChips() {
   const box = document.getElementById('aq-cls-btns');
   if (!box) return;
-  const hasSmall = _aqRecords.some(r => r.small !== undefined);
-  box.innerHTML = ['vlcc','suezmax','aframax','mr','small'].map(k => {
-    const dis = k === 'small' && !hasSmall;
-    return `<button class="aq-cbtn${_aqCls[k] ? '' : ' aq-cbtn-off'}" data-c="${k}" ${dis ? 'disabled title="no data"' : ''}>
+  box.innerHTML = ['vlcc','suezaframax','small'].map(k => {
+    return `<button class="aq-cbtn${_aqCls[k] ? '' : ' aq-cbtn-off'}" data-c="${k}">
       <span style="display:inline-block;width:8px;height:8px;background:${AQ_COLORS[k]};margin-right:6px"></span>${AQ_LABELS[k]}</button>`;
   }).join('');
   box.querySelectorAll('.aq-cbtn').forEach(b => b.addEventListener('click', () => {
