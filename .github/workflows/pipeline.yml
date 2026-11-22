@@ -278,6 +278,7 @@ jobs:
           pip install \
             sentinelhub scipy numpy Pillow matplotlib \
             rasterio shapely requests supabase \
+            pystac-client planetary-computer pyproj \
             --quiet
 
       - name: Anchorage update
@@ -289,6 +290,21 @@ jobs:
           SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
           RUN_ID:               gha-${{ github.run_id }}
         run: python diagnostics/anchorage_hist/hist_backfill.py --update
+
+      - name: Anchorage tracks + snapshots
+        id: tracks
+        env:
+          SUPABASE_URL:            ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_KEY:    ${{ secrets.SUPABASE_SERVICE_KEY }}
+          PC_SDK_SUBSCRIPTION_KEY: ${{ secrets.PC_SDK_SUBSCRIPTION_KEY }}
+        run: python scripts/anchorage/tracks.py --incremental
+
+      - name: Export anchorage.json from anchorage_queue
+        id: export_static
+        env:
+          SUPABASE_URL:         ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+        run: python scripts/anchorage/export_static.py
 
       - name: Upload artifact
         if: always()
@@ -303,7 +319,8 @@ jobs:
         id: outcome
         if: always()
         run: |
-          if [ "${{ steps.update.outcome }}" = "failure" ]; then
+          if [ "${{ steps.update.outcome }}" = "failure" ] ||
+             [ "${{ steps.export_static.outcome }}" = "failure" ]; then
             echo "status=fail" >> "$GITHUB_OUTPUT"
           else
             echo "status=ok" >> "$GITHUB_OUTPUT"

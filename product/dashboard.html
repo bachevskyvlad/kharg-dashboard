@@ -2839,7 +2839,8 @@ const AQ_LABELS = { vlcc:'VLCC', suezaframax:'SuezAframax', small:'Small' };
 const AQ_ALL    = ['small','suezaframax','vlcc'];
 const AQ_DEFAULT = { vlcc:true, suezaframax:true, small:true };
 // Class filter: hidden classes are removed from the chart, the table and every sum (KPIs too).
-let _aqCls = (() => { try { return Object.assign({}, AQ_DEFAULT, JSON.parse(localStorage.getItem('aqCls') || '{}')); } catch(e) { return Object.assign({}, AQ_DEFAULT); } })();
+const AQ_CLS_VER = 3;
+let _aqCls = (() => { try { const raw = JSON.parse(localStorage.getItem('aqCls') || '{}'); if (raw._v !== AQ_CLS_VER) return Object.assign({}, AQ_DEFAULT); const c = Object.assign({}, AQ_DEFAULT); for (const k of AQ_ALL) if (k in raw) c[k] = !!raw[k]; return c; } catch(e) { return Object.assign({}, AQ_DEFAULT); } })();
 function aqLayers() { return AQ_ALL.filter(k => _aqCls[k]); }
 function aqIsDefault() { return AQ_ALL.every(k => !!_aqCls[k] === AQ_DEFAULT[k]); }
 // Sum of the selected classes. With the default selection (no small) the series' own total is used.
@@ -3004,7 +3005,7 @@ function aqRenderClassChips() {
     const k = b.dataset.c;
     _aqCls[k] = !_aqCls[k];
     if (!aqLayers().length) _aqCls[k] = true;        // at least one class stays on
-    try { localStorage.setItem('aqCls', JSON.stringify(_aqCls)); } catch(e) {}
+    try { localStorage.setItem('aqCls', JSON.stringify(Object.assign({_v: AQ_CLS_VER}, _aqCls))); } catch(e) {}
     aqRenderClassChips(); aqRenderKpisAndTable(); aqDraw();
   }));
 }
