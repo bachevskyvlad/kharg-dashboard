@@ -180,90 +180,89 @@ def match_ships(prev_ships, latest_ships):
 
 
 # ── Planetary Computer SAR fetch ──────────────────────────────────────────────
+# Uses sentinel-1-rtc (openly accessible, no API key needed).
+# Orbit filter applied client-side (sat:relative_orbit in item properties).
+
+REL_ORBIT = 35          # Kharg anchorage: orbit-35 descending
+BBOX = [BBOX_LON_MIN, BBOX_LAT_MIN, BBOX_LON_MAX, BBOX_LAT_MAX]
+PC_STAC_URL  = 'https://planetarycomputer.microsoft.com/api/stac/v1'
+S1_COLLECTION = 'sentinel-1-rtc'
+_RESOLUTION   = 10      # metres per pixel
+
+
+def _make_pc_client():
+    import pystac_client
+    import planetary_computer
+    return pystac_client.Client.open(PC_STAC_URL, modifier=planetary_computer.sign_inplace)
+
+
+def _find_rtc_item(target_date, search_days=12):
+    """Find S1-RTC item for target_date ±search_days, orbit-35, covering Kharg anchorage."""
+    client = _make_pc_client()
+    d = date_t.fromisoformat(target_date)
+    d0 = date_t.fromordinal(d.toordinal() - search_days).isoformat()
+    d1 = date_t.fromordinal(d.toordinal() + search_days).isoformat()
+
+    search = client.search(
+        collections=[S1_COLLECTION],
+        bbox=BBOX,
+        datetime=f'{d0}/{d1}',
+    )
+    target_dt = datetime.strptime(target_date, '%Y-%m-%d')
+    best_item, best_delta = None, 999
+    for item in search.items():
+        orb = item.properties.get('sat:relative_orbit')
+        if orb != REL_ORBIT:
+            continue
+        item_date = item.datetime.strftime('%Y-%m-%d')
+        delta = abs((datetime.strptime(item_date, '%Y-%m-%d') - target_dt).days)
+        if delta < best_delta:
+            best_delta, best_item = delta, item
+    return best_item
+
 
 def fetch_sar(target_date):
-    """Fetch Sentinel-1 GRD VV band for Kharg anchorage closest to target_date.
-    Returns numpy float32 array normalised to [0,1] and (lon_min, lat_min, lon_max, lat_max) of actual extent.
-    """
-    import pystac_client, planetary_computer, rasterio
+    """Fetch S1-RTC VV for Kharg anchorage, return float32 [0,1] 2-D array."""
+    import rasterio
+    from rasterio.warp import reproject, Resampling
     from rasterio.transform import from_bounds
-    from rasterio.enums import Resampling
-    import rasterio.warp
+    from rasterio.crs import CRS as RioCRS
 
-    pc_key = os.environ.get('PC_SDK_SUBSCRIPTION_KEY', '')
-    catalog = pystac_client.Client.open(
-        'https://planetarycomputer.microsoft.com/api/stac/v1',
-        modifier=planetary_computer.sign_inplace,
-        headers={'Ocp-Apim-Subscription-Key': pc_key} if pc_key else {}
-    )
-
-    # Search ±12 days around target date
-    d = date_t.fromisoformat(target_date)
-    d0 = (d.replace(day=1) if False else d).__class__.fromordinal(d.toordinal() - 12).isoformat()
-    d1 = date_t.fromordinal(d.toordinal() + 12).isoformat()
-
-    bbox = [BBOX_LON_MIN, BBOX_LAT_MIN, BBOX_LON_MAX, BBOX_LAT_MAX]
-    items = list(catalog.search(
-        collections=['sentinel-1-grd'],
-        bbox=bbox,
-        datetime=f'{d0}/{d1}',
-        query={'s1:orbit_state': {'eq': 'descending'}, 's1:relative_orbit': {'eq': 35}},
-    ).items())
-
-    if not items:
-        # Retry without relative orbit filter
-        items = list(catalog.search(
-            collections=['sentinel-1-grd'],
-            bbox=bbox,
-            datetime=f'{d0}/{d1}',
-            query={'s1:orbit_state': {'eq': 'descending'}},
-        ).items())
-
-    if not items:
-        fatal(f'No Sentinel-1 scene found near {target_date}')
-
-    # Pick closest to target date
-    target_dt = datetime.strptime(target_date, '%Y-%m-%d')
-    items.sort(key=lambda x: abs((datetime.strptime(x.datetime.strftime('%Y-%m-%d'), '%Y-%m-%d') - target_dt).days))
-    item = items[0]
+    item = _find_rtc_item(target_date)
+    if item is None:
+        fatal(f'No S1-RTC scene found for orbit-{REL_ORBIT} near {target_date}')
     log(f'  SAR scene: {item.id}  date={item.datetime.strftime("%Y-%m-%d")}')
 
-    # Find VV asset
-    asset_key = None
-    for k in ('vv', 'VV', 'vh', 'VH'):
-        if k in item.assets:
-            asset_key = k; break
-    if not asset_key:
-        for k in item.assets:
-            if 'vv' in k.lower():
-                asset_key = k; break
-    if not asset_key:
-        asset_key = list(item.assets.keys())[0]
+    asset = item.assets.get('vv') or item.assets.get('VV')
+    if asset is None:
+        fatal(f'No VV asset in {item.id}')
 
-    href = item.assets[asset_key].href
-    with rasterio.open(href) as src:
-        win = rasterio.windows.from_bounds(
-            BBOX_LON_MIN, BBOX_LAT_MIN, BBOX_LON_MAX, BBOX_LAT_MAX,
-            transform=src.transform
-        ) if src.crs.to_epsg() == 4326 else None
+    lat_mid  = (BBOX_LAT_MIN + BBOX_LAT_MAX) / 2
+    width_m  = (BBOX_LON_MAX - BBOX_LON_MIN) * 111320 * math.cos(math.radians(lat_mid))
+    height_m = (BBOX_LAT_MAX - BBOX_LAT_MIN) * 111320
+    target_w = max(1, round(width_m  / _RESOLUTION))
+    target_h = max(1, round(height_m / _RESOLUTION))
 
-        if win is None:
-            # Reproject bbox to source CRS
-            import pyproj
-            from pyproj import Transformer
-            tr = Transformer.from_crs('EPSG:4326', src.crs.to_epsg(), always_xy=True)
-            x0, y0 = tr.transform(BBOX_LON_MIN, BBOX_LAT_MIN)
-            x1, y1 = tr.transform(BBOX_LON_MAX, BBOX_LAT_MAX)
-            win = rasterio.windows.from_bounds(x0, y0, x1, y1, transform=src.transform)
+    dst_crs       = RioCRS.from_epsg(4326)
+    dst_transform = from_bounds(*BBOX, target_w, target_h)
+    out = np.zeros((target_h, target_w), dtype=np.float32)
 
-        # Read at reduced resolution for fast processing
-        out_shape = (1, 2048, int(2048 * (BBOX_LON_MAX - BBOX_LON_MIN) / (BBOX_LAT_MAX - BBOX_LAT_MIN) * 0.9))
-        arr = src.read(1, window=win, out_shape=out_shape[1:], resampling=Resampling.bilinear).astype(np.float32)
+    with rasterio.open(asset.href) as src:
+        reproject(
+            source=rasterio.band(src, 1),
+            destination=out,
+            src_transform=src.transform,
+            src_crs=src.crs,
+            dst_transform=dst_transform,
+            dst_crs=dst_crs,
+            resampling=Resampling.bilinear,
+        )
+    out = np.where(out <= 0, np.float32(1e-10), out)
 
-    # Convert linear to dB, then normalise
-    arr = np.where(arr > 0, 10 * np.log10(arr + 1e-10), -30.0)
-    p2, p98 = np.percentile(arr, 2), np.percentile(arr, 98)
-    arr = np.clip((arr - p2) / max(p98 - p2, 1e-6), 0, 1)
+    # linear power → dB → normalise to [0,1]
+    db  = 10 * np.log10(out)
+    p2, p98 = np.percentile(db[db > -30], 2), np.percentile(db[db > -30], 98)
+    arr = np.clip((db - p2) / max(p98 - p2, 1e-6), 0, 1)
     return arr
 
 
