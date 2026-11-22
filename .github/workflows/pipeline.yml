@@ -297,7 +297,7 @@ jobs:
           SUPABASE_URL:            ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_KEY:    ${{ secrets.SUPABASE_SERVICE_KEY }}
           PC_SDK_SUBSCRIPTION_KEY: ${{ secrets.PC_SDK_SUBSCRIPTION_KEY }}
-        run: python scripts/anchorage/tracks.py --incremental
+        run: python scripts/anchorage/tracks.py
 
       - name: Export anchorage.json from anchorage_queue
         id: export_static
