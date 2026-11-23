@@ -1,0 +1,28 @@
+name: Oil Digest — Test Run
+
+on:
+  workflow_dispatch:
+    inputs:
+      no_schedule:
+        description: "0 = schedule, 1 = all sources"
+        default: "1"
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      TG_BOT:  ${{ secrets.TG_BOT }}
+      TG_CHAT: ${{ secrets.TG_CHAT }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: claude/oilradar-dashboard-iran-zchdva
+
+      - name: Install deps
+        run: pip install --quiet requests beautifulsoup4 pandas pdfplumber
+
+      - name: Run digest (no-schedule)
+        env:
+          OD_USE_SCHEDULE: "0"
+        run: python scripts/oil_digest_job.py
