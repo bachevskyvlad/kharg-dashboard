@@ -1,0 +1,51 @@
+name: Oil Digest
+
+# Runs every day at 09:00 Europe/Berlin.
+# Winter (CET = UTC+1): 08:00 UTC. Summer (CEST = UTC+2): 07:00 UTC.
+# To cover both seasons without DST logic we schedule at 07:00 and 08:00 UTC;
+# only one of the two will fall inside the Berlin 09:00 window on any given day
+# because the duplicate key in oil_digest_state.sqlite prevents double-sending.
+on:
+  schedule:
+    - cron: "0 7 * * *"
+    - cron: "0 8 * * *"
+  workflow_dispatch:
+    inputs:
+      no_schedule:
+        description: "Check all sources regardless of release schedule (1 = yes)"
+        default: "0"
+
+jobs:
+  digest:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      TG_BOT:  ${{ secrets.TG_BOT }}
+      TG_CHAT: ${{ secrets.TG_CHAT }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Restore digest state
+        uses: actions/cache@v4
+        with:
+          path: ~/.oil_digest
+          key: oil-digest-state-${{ github.run_id }}
+          restore-keys: |
+            oil-digest-state-
+
+      - name: Install dependencies
+        run: pip install --quiet requests beautifulsoup4 pandas pdfplumber
+
+      - name: Run digest
+        env:
+          OD_USE_SCHEDULE: ${{ github.event.inputs.no_schedule == '1' && '0' || '1' }}
+        run: python scripts/oil_digest_job.py
+
+      - name: Save digest state
+        if: always()
+        uses: actions/cache/save@v4
+        with:
+          path: ~/.oil_digest
+          key: oil-digest-state-${{ github.run_id }}

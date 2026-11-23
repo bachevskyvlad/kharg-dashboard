@@ -103,3 +103,8 @@ data/*.png
 # JODI bulk CSV — 271MB, cached in GHA actions/cache, not committed to git
 data/external/jodi/
 diagnostics/esri_crops.zip
+
+# oil_digest state
+.oil_digest/
+oil_digest_state.sqlite
+oil_digest_inbox/
