@@ -1955,7 +1955,7 @@ function setEsRow(id, active, hot, p, trigger, status) {
 
 function destroyCharts() {
     Object.entries(charts).forEach(([k, c]) => {
-        if (k === 'flowsDivergent' || k === 'flowsECR' || k === 'flowsTurnover') return;
+        if (k === 'flowsDivergent' || k === 'flowsECR' || k === 'flowsTurnover' || k === 'overviewVelocity') return;
         c?.destroy();
         delete charts[k];
     });
