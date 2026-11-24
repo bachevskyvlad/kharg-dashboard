@@ -93,7 +93,9 @@ jobs:
         with:
           name: tanks-out
           path: |
-            data/
+            data/data.json
+            data/data_daily.json
+            data/terminals/
             public/
           retention-days: 1
           if-no-files-found: warn
@@ -147,7 +149,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: terminals-out
-          path: data/
+          path: data/terminals/
           retention-days: 1
           if-no-files-found: warn
 
@@ -193,7 +195,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: prices-out
-          path: data/
+          path: data/prices.json
           retention-days: 1
           if-no-files-found: warn
 
@@ -239,7 +241,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: gas-out
-          path: data/
+          path: data/gas_storage.json
           retention-days: 1
           if-no-files-found: warn
 
@@ -311,7 +313,9 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: anchorage-out
-          path: data/
+          path: |
+            data/anchorage.json
+            data/bab_anchorage.json
           retention-days: 1
           if-no-files-found: warn
 
@@ -410,7 +414,9 @@ jobs:
         with:
           name: berths-out
           path: |
-            data/
+            data/berth_occupancy.json
+            data/berth_snapshots.json
+            data/berth_snapshots/
             public/
           retention-days: 1
           if-no-files-found: warn
@@ -476,7 +482,13 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: hormuz-out
-          path: data/
+          path: |
+            data/hormuz_latest.jpg
+            data/hormuz_scene1.jpg
+            data/hormuz_scene2.jpg
+            data/hormuz_scene3.jpg
+            data/hormuz_timeseries.csv
+            data/hormuz_timeseries.jpg
           retention-days: 1
           if-no-files-found: warn
 
