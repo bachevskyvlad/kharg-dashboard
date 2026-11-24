@@ -1057,36 +1057,13 @@
             </div>
         </div>
 
-        <!-- Snapshots -->
+        <!-- Snapshot — latest pass only -->
         <div id="bo2-snaps-wrap" style="display:none;margin-bottom:1.25rem">
-            <div style="font-size:0.65rem;letter-spacing:1px;text-transform:uppercase;color:var(--accent);margin-bottom:0.6rem">Pass State — SAR Snapshots</div>
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem">
-                <div id="bo2-snap-prev" style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:0.75rem"></div>
+            <div style="font-size:0.65rem;letter-spacing:1px;text-transform:uppercase;color:var(--accent);margin-bottom:0.6rem">Pass State — SAR Snapshot</div>
+            <div>
                 <div id="bo2-snap-latest" style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:0.75rem"></div>
             </div>
         </div>
-
-        <!-- Details (collapsed technical log) -->
-        <details id="bo2-details" style="margin-bottom:1.25rem">
-            <summary style="cursor:pointer;font-size:0.65rem;letter-spacing:1px;text-transform:uppercase;color:var(--muted);padding:0.75rem 0;border-top:1px solid var(--border);list-style:none;display:flex;align-items:center;gap:0.5rem">
-                <span id="bo2-arr" style="font-size:0.6rem">&#9658;</span> Details
-            </summary>
-            <div style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:1rem;margin-top:0.5rem;overflow-x:auto">
-                <table style="width:100%;border-collapse:collapse;font-size:0.7rem;font-family:monospace">
-                    <thead>
-                        <tr style="border-bottom:1px solid var(--border)">
-                            <th style="text-align:left;padding:0.3rem 0.5rem;font-size:0.58rem;letter-spacing:1px;text-transform:uppercase;color:var(--muted);font-weight:600">Date</th>
-                            <th style="text-align:center;padding:0.3rem 0.5rem;font-size:0.58rem;letter-spacing:1px;text-transform:uppercase;color:var(--muted);font-weight:600">Orbit</th>
-                            <th style="text-align:center;padding:0.3rem 0.5rem;font-size:0.58rem;letter-spacing:1px;text-transform:uppercase;color:var(--muted);font-weight:600">Sea Island</th>
-                            <th style="text-align:center;padding:0.3rem 0.5rem;font-size:0.58rem;letter-spacing:1px;text-transform:uppercase;color:var(--muted);font-weight:600">East T-Head</th>
-                            <th style="text-align:center;padding:0.3rem 0.5rem;font-size:0.58rem;letter-spacing:1px;text-transform:uppercase;color:var(--muted);font-weight:600">SE Pier</th>
-                            <th style="text-align:center;padding:0.3rem 0.5rem;font-size:0.58rem;letter-spacing:1px;text-transform:uppercase;color:var(--muted);font-weight:600">New loads</th>
-                        </tr>
-                    </thead>
-                    <tbody id="bo2-det-body"></tbody>
-                </table>
-            </div>
-        </details>
 
         <div style="font-size:0.65rem;color:var(--dim);border-top:1px solid var(--border);padding-top:0.75rem;line-height:1.6">
             Sentinel-1 radar · Planetary Computer · updated every pass. Vessel class estimated from hull size. Visits shorter than the gap between passes may be missed — lower bound.
@@ -3409,27 +3386,26 @@ document.addEventListener('DOMContentLoaded', function() {
     return null;
   }
 
-  // ── Block 1: Cards ─────────────────────────────────────────────────────────
+  // ── Block 1: Cards — computed from data.loadings ───────────────────────────
   function renderCards(data) {
-    var visits = (data.visits || [])
-      .filter(function(v){ return v.class_max === 'VLCC' || v.class_max === 'SuezAframax'; })
-      .slice().sort(function(a,b){ return a.start_date < b.start_date ? 1 : -1; });
+    var loadings = (data.loadings || [])
+      .slice().sort(function(a,b){ return a.date < b.date ? 1 : -1; });
     var today = new Date();
     var cutoff4w = new Date(today); cutoff4w.setDate(cutoff4w.getDate()-28);
     var cutoff4wPY = new Date(today); cutoff4wPY.setDate(cutoff4wPY.getDate()-28-365);
     var end4wPY = new Date(today); end4wPY.setDate(end4wPY.getDate()-365);
 
-    var v4w = visits.filter(function(v){ return new Date(v.start_date) >= cutoff4w; });
-    var v4wPY = visits.filter(function(v){ var d = new Date(v.start_date); return d >= cutoff4wPY && d < end4wPY; });
+    var l4w = loadings.filter(function(l){ return new Date(l.date) >= cutoff4w; });
+    var l4wPY = loadings.filter(function(l){ var d = new Date(l.date); return d >= cutoff4wPY && d < end4wPY; });
 
-    var total4w = v4w.length, total4wPY = v4wPY.length;
-    var vlcc4w = v4w.filter(function(v){ return v.class_max === 'VLCC'; }).length;
+    var total4w = l4w.length, total4wPY = l4wPY.length;
+    var vlcc4w = l4w.filter(function(l){ return l['class'] === 'VLCC'; }).length;
     var sm4w = total4w - vlcc4w;
 
     var oil4w = 0;
-    v4w.forEach(function(v) {
-      if (v.berth === 'southeast_pier') oil4w += 0.7;
-      else if (v.class_max === 'VLCC') oil4w += 2.0;
+    l4w.forEach(function(l) {
+      if (l.berth === 'southeast_pier') oil4w += 0.7;
+      else if (l['class'] === 'VLCC') oil4w += 2.0;
       else oil4w += 0.85;
     });
 
@@ -3443,16 +3419,16 @@ document.addEventListener('DOMContentLoaded', function() {
       deltaClr = pct >= 0 ? 'var(--green)' : 'var(--red)';
     }
 
-    var lastV = visits[0];
+    var lastL = loadings[0];
     var card2Val = '—', card2Sub = '', daysSince = '—';
-    if (lastV) {
-      var cls = lastV.berth === 'southeast_pier' ? 'n/a' : (lastV.class_max || '—');
+    if (lastL) {
+      var cls = lastL.berth === 'southeast_pier' ? 'n/a' : (lastL['class'] || '—');
       card2Val = cls;
-      card2Sub = cls + ' · ' + fmtBerth(lastV.berth) + ' · ' + fmtDate(lastV.start_date);
-      daysSince = String(Math.floor((today - new Date(lastV.start_date)) / 86400000));
+      card2Sub = cls + ' · ' + fmtBerth(lastL.berth) + ' · ' + fmtDate(lastL.date);
+      daysSince = String(Math.floor((today - new Date(lastL.date)) / 86400000));
     }
 
-    var c2clr = lastV ? clsColor(lastV.berth === 'southeast_pier' ? '' : (lastV.class_max || '')) : '#64748b';
+    var c2clr = lastL ? clsColor(lastL.berth === 'southeast_pier' ? '' : (lastL['class'] || '')) : '#64748b';
     var wrap = document.getElementById('bo2-cards');
     if (!wrap) return;
 
@@ -3472,7 +3448,7 @@ document.addEventListener('DOMContentLoaded', function() {
       '<div style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:1rem 1.25rem">' +
         '<div style="font-size:0.6rem;letter-spacing:1px;text-transform:uppercase;color:var(--muted);margin-bottom:0.4rem">Last ship</div>' +
         '<div style="font-size:2rem;font-weight:700;color:' + c2clr + ';font-family:\'Space Grotesk\',sans-serif;line-height:1.1">' + card2Val + '</div>' +
-        (lastV ? '<div style="font-size:0.7rem;color:var(--muted);margin-top:0.15rem">' + fmtBerth(lastV.berth) + '</div><div style="font-size:0.68rem;color:var(--dim);margin-top:0.1rem">' + fmtDate(lastV.start_date) + '</div>' : '<div style="font-size:0.7rem;color:var(--muted);margin-top:0.3rem">—</div>') +
+        (lastL ? '<div style="font-size:0.7rem;color:var(--muted);margin-top:0.15rem">' + fmtBerth(lastL.berth) + '</div><div style="font-size:0.68rem;color:var(--dim);margin-top:0.1rem">' + fmtDate(lastL.date) + '</div>' : '<div style="font-size:0.7rem;color:var(--muted);margin-top:0.3rem">—</div>') +
       '</div>' +
       '<div style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:1rem 1.25rem">' +
         '<div style="font-size:0.6rem;letter-spacing:1px;text-transform:uppercase;color:var(--muted);margin-bottom:0.4rem">Days since last loading</div>' +
@@ -3537,7 +3513,7 @@ document.addEventListener('DOMContentLoaded', function() {
     });
   }
 
-  // ── Block 3: Pass log (grouped by ~6-day Sentinel-1 cycle) ────────────────
+  // ── Block 3: Pass log — one row per orbit-35 pass ─────────────────────────
   function renderPassLog(data, range) {
     var passes = (data.passes || []).slice().sort(function(a,b){ return a.date < b.date ? 1 : -1; });
     var co = cutoffDate(range);
@@ -3548,67 +3524,52 @@ document.addEventListener('DOMContentLoaded', function() {
     if (!tbody || !wrap) return;
     wrap.style.display = '';
 
-    // Group consecutive passes within 4 days into one cycle row
-    var cycles = [];
-    passes.forEach(function(p) {
-      if (cycles.length === 0) { cycles.push([p]); return; }
-      var last = cycles[cycles.length - 1];
-      var gapDays = (new Date(last[0].date) - new Date(p.date)) / 86400000;
-      if (gapDays <= 4) last.push(p);
-      else cycles.push([p]);
+    // Load oil estimate from loadings array for each pass date
+    var loadingsByDate = {};
+    (data.loadings || []).forEach(function(l) {
+      if (!loadingsByDate[l.date]) loadingsByDate[l.date] = [];
+      loadingsByDate[l.date].push(l);
     });
 
     var rows = [];
-    cycles.forEach(function(cycle) {
-      // Aggregate per berth: best class + new flag across all passes in cycle
-      var berthCls = {}, berthNew = {};
-      BERTHS.forEach(function(b){ berthCls[b] = null; berthNew[b] = false; });
+    passes.forEach(function(p) {
+      var berthCls = {};
+      BERTHS.forEach(function(b){ berthCls[b] = null; });
 
-      cycle.forEach(function(p) {
-        BERTHS.forEach(function(b) {
-          (p[b] || {}).hulls && p[b].hulls.forEach(function(h) {
-            var cls = displayClass(h, b);
-            if (!cls) return;
-            if (!berthCls[b] || cls === 'VLCC') berthCls[b] = cls;
-            else if (cls === 'SuezAframax' && berthCls[b] !== 'VLCC') berthCls[b] = cls;
-            else if (cls === 'n/a' && !berthCls[b]) berthCls[b] = cls;
-            if (h.new_load === true || h.new_load === 'True') berthNew[b] = true;
-          });
+      BERTHS.forEach(function(b) {
+        ((p[b] || {}).hulls || []).forEach(function(h) {
+          var cls = displayClass(h, b);
+          if (!cls) return;
+          if (!berthCls[b] || cls === 'VLCC') berthCls[b] = cls;
+          else if (cls === 'SuezAframax' && berthCls[b] !== 'VLCC') berthCls[b] = cls;
+          else if (cls === 'n/a' && !berthCls[b]) berthCls[b] = cls;
         });
       });
 
       var shipCount = 0;
       BERTHS.forEach(function(b){ if (berthCls[b]) shipCount++; });
 
-      // Oil estimate: sum new loadings this cycle
-      var oilCycle = 0;
-      BERTHS.forEach(function(b) {
-        if (!berthNew[b] || !berthCls[b]) return;
-        if (b === 'southeast_pier') oilCycle += 0.7;
-        else if (berthCls[b] === 'VLCC') oilCycle += 2.0;
-        else oilCycle += 0.85;
+      // Oil estimate from confirmed loadings on this date
+      var oilPass = 0;
+      (loadingsByDate[p.date] || []).forEach(function(l) {
+        if (l.berth === 'southeast_pier') oilPass += 0.7;
+        else if (l['class'] === 'VLCC') oilPass += 2.0;
+        else oilPass += 0.85;
       });
-
-      var dateStr = cycle[0].date;
-      var orbitSet = [];
-      cycle.forEach(function(p){ var o = 'o'+p.orbit; if (orbitSet.indexOf(o)<0) orbitSet.push(o); });
-      var orbits = orbitSet.join('+');
 
       var cells = BERTHS.map(function(b) {
         var cls = berthCls[b];
         if (!cls) return '<td style="text-align:center;padding:0.3rem 0.5rem;color:#374151">—</td>';
         var clr = cls === 'VLCC' ? '#f87171' : cls === 'SuezAframax' ? '#fbbf24' : '#64748b';
-        var newBadge = berthNew[b]
-          ? ' <span style="font-size:0.58rem;background:#22c55e22;color:#22c55e;padding:0 3px;border-radius:2px;font-family:monospace">new</span>' : '';
-        return '<td style="text-align:center;padding:0.3rem 0.5rem"><span style="color:' + clr + '">' + cls + '</span>' + newBadge + '</td>';
+        return '<td style="text-align:center;padding:0.3rem 0.5rem"><span style="color:' + clr + '">' + cls + '</span></td>';
       });
 
-      var oilCell = oilCycle > 0
-        ? '<td style="text-align:center;padding:0.3rem 0.5rem;color:#38bdf8;font-variant-numeric:tabular-nums">' + oilCycle.toFixed(2) + '</td>'
+      var oilCell = oilPass > 0
+        ? '<td style="text-align:center;padding:0.3rem 0.5rem;color:#38bdf8;font-variant-numeric:tabular-nums">' + oilPass.toFixed(2) + '</td>'
         : '<td style="text-align:center;padding:0.3rem 0.5rem;color:#374151">—</td>';
 
       rows.push('<tr style="border-bottom:1px solid rgba(255,255,255,0.03)">' +
-        '<td style="padding:0.3rem 0.5rem;color:var(--muted);white-space:nowrap">' + fmtDate(dateStr) + '</td>' +
+        '<td style="padding:0.3rem 0.5rem;color:var(--muted);white-space:nowrap">' + fmtDate(p.date) + '</td>' +
         cells.join('') +
         '<td style="text-align:center;padding:0.3rem 0.5rem;color:var(--muted)">' + (shipCount > 0 ? shipCount : '—') + '</td>' +
         oilCell + '</tr>');
@@ -3677,49 +3638,8 @@ document.addEventListener('DOMContentLoaded', function() {
         '<div style="margin-top:0.5rem;font-size:0.65rem;color:var(--muted)">At berths: ' + (vlcc+sm) + ' (VLCC ' + vlcc + ', smaller ' + sm + ')</div>';
     }
 
-    renderPanel('bo2-snap-prev',   'last_ship', 'Last ship seen', 'var(--accent)');
-    renderPanel('bo2-snap-latest', 'latest',    'Latest pass',    'var(--accent)');
-    // If only one panel is visible, switch to 1-column grid
-    var grid = wrap.querySelector('[style*="grid-template-columns"]');
-    var latestPanel = document.getElementById('bo2-snap-latest');
-    if (grid && latestPanel && latestPanel.style.display === 'none') {
-      grid.style.gridTemplateColumns = '1fr';
-    }
+    renderPanel('bo2-snap-latest', 'latest', 'Latest pass', 'var(--accent)');
     wrap.style.display = '';
-  }
-
-  // ── Block 5: Details — lazy, collapsed ─────────────────────────────────────
-  function renderDetails(data) {
-    var tbody = document.getElementById('bo2-det-body');
-    if (!tbody || tbody.dataset.filled) return;
-    tbody.dataset.filled = '1';
-
-    var passes = (data.passes || []).slice().sort(function(a,b){ return a.date < b.date ? 1 : -1; });
-    var rows = [];
-    passes.forEach(function(p) {
-      var cellHtml = BERTHS.map(function(b) {
-        var bd = p[b] || {}, det = bd.det || '—', hulls = bd.hulls || [];
-        if (det === 'OCC' && hulls.length > 0) {
-          var large = hulls.filter(function(h){ return h['class'] === 'VLCC' || h['class'] === 'SuezAframax'; });
-          var vc = large.filter(function(h){ return h['class'] === 'VLCC'; }).length;
-          if (!large.length) return '<td style="text-align:center;padding:0.25rem 0.4rem;color:#374151">·</td>';
-          return '<td style="text-align:center;padding:0.25rem 0.4rem"><span style="color:#3b82f6;font-weight:600">' + (large.length > 1 ? large.length + '×' : '●') + '</span>' + (vc ? ' <span style="color:#fbbf24;font-size:0.6rem">V</span>' : '') + '</td>';
-        }
-        if (det === 'EMP') return '<td style="text-align:center;padding:0.25rem 0.4rem;color:#374151">·</td>';
-        return '<td style="text-align:center;padding:0.25rem 0.4rem;color:#374151">—</td>';
-      }).join('');
-
-      var allH = [];
-      BERTHS.forEach(function(b){ allH = allH.concat((p[b]||{}).hulls||[]); });
-      var nl = allH.filter(function(h){ return h.new_load === true || h.new_load === 'True'; }).length;
-
-      rows.push('<tr style="border-bottom:1px solid rgba(255,255,255,0.02)">' +
-        '<td style="padding:0.25rem 0.4rem;color:var(--muted)">' + p.date + '</td>' +
-        '<td style="text-align:center;padding:0.25rem 0.4rem;color:var(--dim)">o' + p.orbit + '</td>' +
-        cellHtml +
-        '<td style="text-align:center;padding:0.25rem 0.4rem;color:' + (nl > 0 ? '#34d399' : '#374151') + '">' + (nl > 0 ? '+'+nl : '—') + '</td></tr>');
-    });
-    tbody.innerHTML = rows.join('');
   }
 
   // ── Main load ──────────────────────────────────────────────────────────────
@@ -3754,14 +3674,6 @@ document.addEventListener('DOMContentLoaded', function() {
         renderPassLog(data, btn.dataset.r);
       });
 
-      var details = document.getElementById('bo2-details');
-      var arr = document.getElementById('bo2-arr');
-      if (details) {
-        details.addEventListener('toggle', function() {
-          if (arr) arr.textContent = details.open ? '▼' : '▶';
-          if (details.open) renderDetails(data);
-        });
-      }
     }).catch(function() {
       var w = document.getElementById('bo2-cards');
       if (w) w.innerHTML = '<div style="color:var(--red);padding:2rem;text-align:center">Failed to load data.</div>';
