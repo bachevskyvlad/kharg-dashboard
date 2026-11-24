@@ -712,6 +712,9 @@ jobs:
         with:
           ref: main
 
+      - name: Check dashboard integrity
+        run: python3 scripts/check_site.py
+
       - uses: cloudflare/wrangler-action@v3
         with:
           apiToken:       ${{ secrets.CLOUDFLARE_API_TOKEN }}
