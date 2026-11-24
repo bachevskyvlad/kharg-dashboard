@@ -13,6 +13,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-TZQ5VH3GPY"></script>
     <script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','G-TZQ5VH3GPY');</script>
+<script src="/assets/js/config.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css">
     <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -289,6 +290,10 @@
         /* Anchorage range buttons */
         .aq-rbtn { font-family: monospace; font-size: 0.68rem; letter-spacing: 1px; text-transform: uppercase; background: transparent; border: 1px solid var(--border); color: var(--muted); padding: 4px 10px; cursor: pointer; transition: all .15s; }
         .aq-rbtn:hover { border-color: var(--accent); color: var(--accent); }
+        .aq-cbtn { font-family: monospace; font-size: 0.68rem; letter-spacing: 1px; text-transform: uppercase; background: transparent; border: 1px solid var(--border); color: var(--text); padding: 4px 10px; cursor: pointer; display: inline-flex; align-items: center; }
+        .aq-cbtn:hover { border-color: var(--accent); }
+        .aq-cbtn-off { opacity: 0.35; text-decoration: line-through; }
+        .aq-cbtn:disabled { opacity: 0.2; cursor: not-allowed; }
         .aq-rbtn-active { background: var(--accent) !important; border-color: var(--accent) !important; color: #fff !important; }
 
         /* Hide mobile-only elements on desktop */
@@ -464,6 +469,7 @@
         .ob-next.finish { background: #34d399; }
         .ob-next.finish:hover { background: #047857; }
     </style>
+<script src="/assets/js/anchorage_source.js"></script>
 </head>
 <body>
 
@@ -490,7 +496,10 @@
             <span class="nav-icon">⚓</span> Tanker Queue
         </div>
         <div class="nav-item" onclick="showSection('berth')">
-            <span class="nav-icon">⛴</span> Berth Occupancy
+            <span class="nav-icon">🛳</span> Berth Occupancy
+        </div>
+        <div class="nav-item" onclick="showSection('hormuz')">
+            <span class="nav-icon">🛰</span> Hormuz Strait
         </div>
         <hr class="nav-divider">
         <div class="nav-group-label">Docs</div>
@@ -518,7 +527,8 @@
         <div class="nav-item" id="mob-nav-map" onclick="showSection('map');closeMobMenu()"><span class="nav-icon">⊞</span> Per-Tank Map</div>
         <div class="nav-item" id="mob-nav-upstream" onclick="showSection('upstream');closeMobMenu()"><span class="nav-icon">⬆</span> Upstream</div>
         <div class="nav-item" id="mob-nav-anchorage" onclick="showSection('anchorage');closeMobMenu()"><span class="nav-icon">⚓</span> Tanker Queue</div>
-        <div class="nav-item" id="mob-nav-berth" onclick="showSection('berth');closeMobMenu()"><span class="nav-icon">⛴</span> Berth Occupancy</div>
+        <div class="nav-item" id="mob-nav-berth" onclick="showSection('berth');closeMobMenu()"><span class="nav-icon">🛳</span> Berth Occupancy</div>
+        <div class="nav-item" id="mob-nav-hormuz" onclick="showSection('hormuz');closeMobMenu()"><span class="nav-icon">🛰</span> Hormuz Strait</div>
         <div class="nav-item" id="mob-nav-api" onclick="showSection('api');closeMobMenu()"><span class="nav-icon">⌥</span> API</div>
         <div class="mob-dropdown-footer">
             <button class="logout-btn" onclick="logout()">Logout</button>
@@ -563,11 +573,8 @@
             <div class="ctrl-group">
                 <span class="ctrl-label">Country</span>
                 <div class="btn-group">
-                    <button class="tbtn tbtn-country active" data-terminal="kharg"      onclick="setTerminal('kharg')">🇮🇷 Iran</button>
-                    <button class="tbtn tbtn-country"        data-terminal="ras_tanura" onclick="setTerminal('ras_tanura')">🇸🇦 Saudi</button>
-                    <button class="tbtn tbtn-country"        data-terminal="lavan"      onclick="setTerminal('lavan')">🇮🇷 Lavan</button>
-                    <button class="tbtn tbtn-country"        data-terminal="siri"       onclick="setTerminal('siri')">🇮🇷 Siri</button>
-                    <button class="tbtn tbtn-country"        data-terminal="jask"       onclick="setTerminal('jask')">🇮🇷 Jask</button>
+                    <button class="tbtn tbtn-country active" data-terminal="kharg" onclick="setTerminal('kharg')">🇮🇷 Iran</button>
+                    <button class="tbtn tbtn-country"        data-terminal="jask"  onclick="setTerminal('jask')">🇮🇷 Jask</button>
                 </div>
             </div>
         </div>
@@ -579,7 +586,7 @@
             <div class="card" id="cVol">
                 <div class="card-label">Current Storage</div>
                 <div class="card-val" id="mVol">--<span class="cu"> Mb</span></div>
-                <div class="card-sub">of 31.78 Mb capacity</div>
+                <div class="card-sub" id="cVolSub">of 31.78 Mb capacity</div>
             </div>
             <div class="card" id="cEV">
                 <div class="card-label">Export Velocity</div>
@@ -625,123 +632,6 @@
             </div>
         </div>
 
-        <!-- ── Export Signals (embedded in Overview) ── -->
-        <div style="margin-top:2rem">
-        <div class="sec-title" style="margin-bottom:0.25rem;font-size:0.9rem">Export Signals</div>
-        <div class="signal" style="margin-bottom:1.5rem;line-height:1.6">
-            Four independent research findings. Each describes a storage condition that, historically, precedes a drawdown event on the next SAR pass.
-            Baseline probability of an export drawdown on any given observation: <span class="hl">15%</span>.
-            When a signal is <span style="color:var(--accent);font-weight:600">ACTIVE</span>, the observed probability rises — shown per signal below.
-            When multiple signals are active simultaneously, the composite probability is shown at top.
-        </div>
-
-        <!-- Composite score -->
-        <div style="background:var(--surface);border:1px solid var(--border);padding:1.1rem 1.5rem;margin-bottom:1.25rem;display:flex;align-items:center;gap:1.5rem;flex-wrap:wrap;">
-            <div>
-                <div style="font-size:0.58rem;letter-spacing:0.12em;text-transform:uppercase;color:var(--muted);margin-bottom:0.3rem">Composite P(drawdown)</div>
-                <div style="display:flex;align-items:baseline;gap:0.5rem">
-                    <span id="esPct" class="es-pct">—</span>
-                    <span style="font-size:0.7rem;color:var(--muted)">export probability</span>
-                </div>
-            </div>
-            <div style="flex:1;min-width:200px;font-size:0.72rem;color:var(--muted);line-height:1.5">
-                Composite rises when signals stack. Strongest combination shown.
-                Baseline is 15% with no active signals.
-            </div>
-        </div>
-
-        <!-- How to read -->
-        <div style="background:rgba(255,255,255,0.03);border:1px solid var(--border);border-left:3px solid var(--accent);padding:0.9rem 1.2rem;margin-bottom:1.25rem;font-size:0.74rem;line-height:1.6;color:var(--muted)">
-            <span style="color:var(--text);font-weight:600">How to read: </span>
-            Each card shows a market condition and the historical probability of an export drawdown when that condition is true.
-            ACTIVE means the condition is met right now. It does not guarantee an export — it means odds are elevated based on observed history.
-        </div>
-
-        <!-- 2×2 signal grid -->
-        <div class="es-grid">
-            <!-- Storage Pressure -->
-            <div class="es-row" id="esr-pressure">
-                <div class="es-header">
-                    <div>
-                        <div class="es-label">Storage Pressure</div>
-                        <div style="font-size:0.8rem;color:var(--text);margin-top:0.3rem;line-height:1.4">
-                            When tanks are ≥65% full, Iran faces commercial pressure to export — storage costs rise and production curtailment becomes costly.
-                        </div>
-                    </div>
-                    <div class="es-composite">
-                        <div class="es-state" id="ess-pressure">inactive</div>
-                        <div class="es-pct-sm" id="esp-pressure">—</div>
-                    </div>
-                </div>
-                <div style="display:flex;justify-content:space-between;align-items:center;font-size:0.7rem;padding-top:0.6rem;border-top:1px solid var(--border)">
-                    <span style="color:var(--muted)">Condition</span>
-                    <span id="est-pressure" style="font-family:monospace;color:var(--text)">—</span>
-                </div>
-            </div>
-            <!-- Berth Staging -->
-            <div class="es-row" id="esr-staging">
-                <div class="es-header">
-                    <div>
-                        <div class="es-label">Berth Staging</div>
-                        <div style="font-size:0.8rem;color:var(--text);margin-top:0.3rem;line-height:1.4">
-                            Loading berth tanks (t60_0, t40_22) fill faster than the terminal average — a tanker may be in position and loading is imminent.
-                        </div>
-                    </div>
-                    <div class="es-composite">
-                        <div class="es-state" id="ess-staging">inactive</div>
-                        <div class="es-pct-sm" id="esp-staging">—</div>
-                    </div>
-                </div>
-                <div style="display:flex;justify-content:space-between;align-items:center;font-size:0.7rem;padding-top:0.6rem;border-top:1px solid var(--border)">
-                    <span style="color:var(--muted)">Condition</span>
-                    <span id="est-staging" style="font-family:monospace;color:var(--text)">—</span>
-                </div>
-            </div>
-            <!-- Pendulum Rhythm -->
-            <div class="es-row" id="esr-pendulum">
-                <div class="es-header">
-                    <div>
-                        <div class="es-label">Pendulum Rhythm</div>
-                        <div style="font-size:0.8rem;color:var(--text);margin-top:0.3rem;line-height:1.4">
-                            A sharp build (&gt;+1.5 Mb in 7 days) historically precedes a drawdown of similar magnitude within 6–12 days — the terminal "exhales" after filling.
-                        </div>
-                    </div>
-                    <div class="es-composite">
-                        <div class="es-state" id="ess-pendulum">inactive</div>
-                        <div class="es-pct-sm" id="esp-pendulum">—</div>
-                    </div>
-                </div>
-                <div style="display:flex;justify-content:space-between;align-items:center;font-size:0.7rem;padding-top:0.6rem;border-top:1px solid var(--border)">
-                    <span style="color:var(--muted)">Condition</span>
-                    <span id="est-pendulum" style="font-family:monospace;color:var(--text)">—</span>
-                </div>
-            </div>
-            <!-- Accumulation Streak -->
-            <div class="es-row" id="esr-streak">
-                <div class="es-header">
-                    <div>
-                        <div class="es-label">Accumulation Streak</div>
-                        <div style="font-size:0.8rem;color:var(--text);margin-top:0.3rem;line-height:1.4">
-                            18+ consecutive days of net build historically marks a pressure peak. Exports tend to follow within the next 10–14 days.
-                        </div>
-                    </div>
-                    <div class="es-composite">
-                        <div class="es-state" id="ess-streak">inactive</div>
-                        <div class="es-pct-sm" id="esp-streak">—</div>
-                    </div>
-                </div>
-                <div style="display:flex;justify-content:space-between;align-items:center;font-size:0.7rem;padding-top:0.6rem;border-top:1px solid var(--border)">
-                    <span style="color:var(--muted)">Condition</span>
-                    <span id="est-streak" style="font-family:monospace;color:var(--text)">—</span>
-                </div>
-            </div>
-        </div><!-- /es-grid -->
-
-        <div style="font-size:0.65rem;color:var(--dim);margin-top:1rem;line-height:1.5">
-            Probabilities are derived from satellite observation history 2017–present. Sample size per signal: 40–120 qualifying events.
-            Export Signals are research outputs, not trading signals. Past rates do not guarantee future outcomes.
-        </div>
-        </div><!-- /Export Signals in Overview -->
     </div>
 
     <!-- ── SECTION: GROSS FLOWS ── -->
@@ -899,7 +789,6 @@
                 <span class="ctrl-label">Terminal</span>
                 <div class="btn-group" id="upstreamTerminalBtns">
                     <button class="tbtn active" data-upterm="goreh_omid" onclick="setUpstreamTerminal('goreh_omid')">🇮🇷 Goreh-Omid</button>
-                    <button class="tbtn" data-upterm="jask"       onclick="setUpstreamTerminal('jask')">🇮🇷 Jask</button>
                     <button class="tbtn" data-upterm="bahregan"   onclick="setUpstreamTerminal('bahregan')">🇮🇷 Bahregan</button>
                 </div>
             </div>
@@ -1084,81 +973,311 @@
             </div>
         </div>
     </div>
-
-
     <div class="section" id="sec-berth">
-        <div class="sec-title" style="margin-bottom:0.4rem">Berth Occupancy — Kharg Island Terminal</div>
+        <div class="sec-title" style="margin-bottom:1rem">Berth Occupancy — Kharg Island Terminal · 2024–Present</div>
 
-        <!-- KPI cards -->
-        <div style="display:flex;gap:1rem;flex-wrap:wrap;margin-bottom:1.25rem">
-            <div class="card" style="min-width:160px">
-                <div class="card-label">Погрузок за 4 нед.</div>
-                <div class="card-val" id="bo-load4w" style="font-family:'Space Grotesk',sans-serif">—</div>
-                <div class="card-sub" id="bo-load4w-sub"></div>
-                <div class="card-sub" id="bo-load4w-py" style="color:var(--dim)"></div>
-            </div>
-            <div class="card" style="min-width:160px">
-                <div class="card-label">Последнее судно</div>
-                <div class="card-val" id="bo-lastship" style="font-family:'Space Grotesk',sans-serif;font-size:1.3rem">—</div>
-                <div class="card-sub" id="bo-lastship-sub"></div>
-            </div>
-            <div class="card" style="min-width:140px">
-                <div class="card-label">Дней без погрузок</div>
-                <div class="card-val" id="bo-daysnone" style="font-family:'Space Grotesk',sans-serif">—</div>
-                <div class="card-sub" id="bo-daysnone-sub"></div>
-            </div>
+        <!-- Cards -->
+        <div id="bo2-cards" style="margin-bottom:1.25rem">
+            <div style="text-align:center;padding:2rem;color:var(--muted);font-size:0.75rem">Loading…</div>
         </div>
 
-        <!-- SAR snapshots -->
-        <div id="bo-snaps" style="display:none;margin-bottom:1.25rem">
-            <div style="display:flex;gap:1rem;flex-wrap:wrap">
-                <div style="flex:1;min-width:220px">
-                    <div style="font-size:0.6rem;letter-spacing:1px;text-transform:uppercase;color:var(--muted);margin-bottom:0.3rem">PREVIOUS SAR PASS · <span id="bo-snap-prev-meta"></span></div>
-                    <a id="bo-snap-prev-link" href="#" target="_blank" style="display:block">
-                        <img id="bo-snap-prev-img" src="" alt="" style="width:100%;border:1px solid var(--border);cursor:zoom-in">
-                    </a>
-                    <div style="font-size:0.65rem;color:var(--muted);margin-top:0.3rem" id="bo-snap-prev-sum"></div>
+        <!-- Loadings per Month chart -->
+        <div style="background:var(--surface);border:1px solid var(--border);padding:1.25rem 1.5rem 1rem;margin-bottom:1.25rem;display:none" id="bo2-chart-wrap">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;flex-wrap:wrap;gap:0.5rem">
+                <div>
+                    <div style="font-size:0.7rem;letter-spacing:1px;text-transform:uppercase;color:var(--accent)">Loadings per Month</div>
+                    <div style="font-size:0.65rem;color:var(--muted);margin-top:0.2rem">VLCC and smaller vessels · confirmed loadings only</div>
                 </div>
-                <div style="flex:1;min-width:220px">
-                    <div style="font-size:0.6rem;letter-spacing:1px;text-transform:uppercase;color:var(--muted);margin-bottom:0.3rem">LATEST SAR PASS · <span id="bo-snap-latest-meta"></span></div>
-                    <a id="bo-snap-latest-link" href="#" target="_blank" style="display:block">
-                        <img id="bo-snap-latest-img" src="" alt="" style="width:100%;border:1px solid var(--border);cursor:zoom-in">
-                    </a>
-                    <div style="font-size:0.65rem;color:var(--muted);margin-top:0.3rem" id="bo-snap-latest-sum"></div>
+                <div style="display:flex;gap:4px" id="bo2-chart-range">
+                    <button class="aq-rbtn" data-r="3m">3M</button>
+                    <button class="aq-rbtn aq-rbtn-active" data-r="6m">6M</button>
+                    <button class="aq-rbtn" data-r="1y">1Y</button>
+                    <button class="aq-rbtn" data-r="all">ALL</button>
                 </div>
             </div>
-            <div style="font-size:0.7rem;color:var(--accent);margin-top:0.5rem;font-style:italic" id="bo-snap-change"></div>
-        </div>
-
-        <!-- Heatmap ribbon -->
-        <div style="background:var(--surface);border:1px solid var(--border);padding:1rem 1.25rem;margin-bottom:1.25rem">
-            <div style="font-size:0.65rem;letter-spacing:1px;text-transform:uppercase;color:var(--muted);margin-bottom:0.5rem">12-месячная история (рядов = причал/сторона)</div>
-            <div style="display:flex;gap:0.75rem;align-items:center;margin-bottom:0.5rem;font-size:0.65rem;color:var(--muted)">
-                <span style="display:inline-block;width:10px;height:10px;background:#ef4444;vertical-align:middle"></span> VLCC
-                <span style="display:inline-block;width:10px;height:10px;background:#f97316;vertical-align:middle"></span> Suezmax/Aframax
-                <span style="display:inline-block;width:10px;height:10px;background:#1f2937;border:1px solid #374151;vertical-align:middle"></span> Empty
-            </div>
-            <div id="bo-heatmap-wrap" style="overflow-x:auto">
-                <div id="bo-heatmap"></div>
+            <div style="position:relative;height:200px"><canvas id="bo2-chart" style="width:100%;height:100%;display:block"></canvas></div>
+            <div style="display:flex;gap:16px;flex-wrap:wrap;margin-top:10px">
+                <span style="display:flex;align-items:center;gap:6px;font-size:0.68rem;color:var(--muted)"><span style="width:12px;height:12px;background:#f87171;flex-shrink:0;border-radius:2px"></span>VLCC</span>
+                <span style="display:flex;align-items:center;gap:6px;font-size:0.68rem;color:var(--muted)"><span style="width:12px;height:12px;background:#fbbf24;flex-shrink:0;border-radius:2px"></span>SuezAframax</span>
+                <span style="display:flex;align-items:center;gap:6px;font-size:0.68rem;color:var(--muted)"><span style="width:12px;height:12px;background:#64748b;flex-shrink:0;border-radius:2px"></span>n/a</span>
             </div>
         </div>
 
-        <!-- Loading list -->
-        <div style="background:var(--surface);border:1px solid var(--border);padding:1rem 1.25rem;margin-bottom:1.25rem">
-            <div style="font-size:0.65rem;letter-spacing:1px;text-transform:uppercase;color:var(--muted);margin-bottom:0.75rem">Погрузки (новые суда)</div>
-            <div id="bo-loadings-list"></div>
-            <div id="bo-loadings-empty" style="display:none;font-size:0.72rem;color:var(--dim)">Нет данных о погрузках</div>
+        <!-- Pass log -->
+        <div style="background:var(--surface);border:1px solid var(--border);padding:1.25rem 1.5rem 1rem;margin-bottom:1.25rem;display:none" id="bo2-passlog-wrap">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.75rem;flex-wrap:wrap;gap:0.5rem">
+                <div>
+                    <div style="font-size:0.7rem;letter-spacing:1px;text-transform:uppercase;color:var(--accent)">Pass Log</div>
+                    <div style="font-size:0.65rem;color:var(--muted);margin-top:0.2rem">Every Sentinel-1 pass · newest first</div>
+                </div>
+                <div style="display:flex;gap:4px" id="bo2-log-range">
+                    <button class="aq-rbtn" data-r="3m">3M</button>
+                    <button class="aq-rbtn aq-rbtn-active" data-r="6m">6M</button>
+                    <button class="aq-rbtn" data-r="1y">1Y</button>
+                    <button class="aq-rbtn" data-r="all">ALL</button>
+                </div>
+            </div>
+            <div style="overflow-x:auto">
+                <table style="width:100%;border-collapse:collapse;font-size:0.75rem">
+                    <thead>
+                        <tr style="border-bottom:1px solid var(--border)">
+                            <th style="text-align:left;padding:0.3rem 0.5rem;font-size:0.6rem;letter-spacing:1px;text-transform:uppercase;color:var(--muted);font-weight:600">Date</th>
+                            <th style="text-align:center;padding:0.3rem 0.5rem;font-size:0.6rem;letter-spacing:1px;text-transform:uppercase;color:var(--muted);font-weight:600">Orbit</th>
+                            <th style="text-align:center;padding:0.3rem 0.5rem;font-size:0.6rem;letter-spacing:1px;text-transform:uppercase;color:var(--muted);font-weight:600">Sea Island</th>
+                            <th style="text-align:center;padding:0.3rem 0.5rem;font-size:0.6rem;letter-spacing:1px;text-transform:uppercase;color:var(--muted);font-weight:600">East T-Head</th>
+                            <th style="text-align:center;padding:0.3rem 0.5rem;font-size:0.6rem;letter-spacing:1px;text-transform:uppercase;color:var(--muted);font-weight:600">SE Pier</th>
+                            <th style="text-align:center;padding:0.3rem 0.5rem;font-size:0.6rem;letter-spacing:1px;text-transform:uppercase;color:var(--muted);font-weight:600">Ships at berths</th>
+                            <th style="text-align:center;padding:0.3rem 0.5rem;font-size:0.6rem;letter-spacing:1px;text-transform:uppercase;color:var(--muted);font-weight:600">Est. oil loaded, Mb</th>
+                        </tr>
+                    </thead>
+                    <tbody id="bo2-pass-body"></tbody>
+                </table>
+            </div>
         </div>
 
-        <!-- Disclaimer -->
-        <div style="font-size:0.65rem;color:var(--dim);border-top:1px solid var(--border);padding-top:0.75rem">
-            SAR Sentinel-1; класс по длине корпуса (±50 м), 2 класса; погрузки короче интервала между снимками могут быть пропущены — оценка снизу
+        <!-- Snapshots -->
+        <div id="bo2-snaps-wrap" style="display:none;margin-bottom:1.25rem">
+            <div style="font-size:0.65rem;letter-spacing:1px;text-transform:uppercase;color:var(--accent);margin-bottom:0.6rem">Pass State</div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem">
+                <div id="bo2-snap-prev" style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:0.75rem"></div>
+                <div id="bo2-snap-latest" style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:0.75rem"></div>
+            </div>
+        </div>
+
+        <!-- Details (collapsed technical log) -->
+        <details id="bo2-details" style="margin-bottom:1.25rem">
+            <summary style="cursor:pointer;font-size:0.65rem;letter-spacing:1px;text-transform:uppercase;color:var(--muted);padding:0.75rem 0;border-top:1px solid var(--border);list-style:none;display:flex;align-items:center;gap:0.5rem">
+                <span id="bo2-arr" style="font-size:0.6rem">&#9658;</span> Details
+            </summary>
+            <div style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:1rem;margin-top:0.5rem;overflow-x:auto">
+                <table style="width:100%;border-collapse:collapse;font-size:0.7rem;font-family:monospace">
+                    <thead>
+                        <tr style="border-bottom:1px solid var(--border)">
+                            <th style="text-align:left;padding:0.3rem 0.5rem;font-size:0.58rem;letter-spacing:1px;text-transform:uppercase;color:var(--muted);font-weight:600">Date</th>
+                            <th style="text-align:center;padding:0.3rem 0.5rem;font-size:0.58rem;letter-spacing:1px;text-transform:uppercase;color:var(--muted);font-weight:600">Orbit</th>
+                            <th style="text-align:center;padding:0.3rem 0.5rem;font-size:0.58rem;letter-spacing:1px;text-transform:uppercase;color:var(--muted);font-weight:600">Sea Island</th>
+                            <th style="text-align:center;padding:0.3rem 0.5rem;font-size:0.58rem;letter-spacing:1px;text-transform:uppercase;color:var(--muted);font-weight:600">East T-Head</th>
+                            <th style="text-align:center;padding:0.3rem 0.5rem;font-size:0.58rem;letter-spacing:1px;text-transform:uppercase;color:var(--muted);font-weight:600">SE Pier</th>
+                            <th style="text-align:center;padding:0.3rem 0.5rem;font-size:0.58rem;letter-spacing:1px;text-transform:uppercase;color:var(--muted);font-weight:600">New loads</th>
+                        </tr>
+                    </thead>
+                    <tbody id="bo2-det-body"></tbody>
+                </table>
+            </div>
+        </details>
+
+        <div style="font-size:0.65rem;color:var(--dim);border-top:1px solid var(--border);padding-top:0.75rem;line-height:1.6">
+            Sentinel-1 radar · Planetary Computer · updated every pass. Vessel class estimated from hull size. Visits shorter than the gap between passes may be missed — lower bound.
+        </div>
+    </div>
+
+
+    <!-- ── Hormuz Strait Traffic ──────────────────────────────────────── -->
+    <div class="section" id="sec-hormuz">
+        <div class="sec-title" style="margin-bottom:0.4rem">Hormuz Strait Traffic — SAR Larak Anchorage · 2024–Present</div>
+
+        <!-- KPI row -->
+        <div style="background:var(--surface);border:1px solid var(--border);padding:1.25rem 1.5rem 1rem;margin-bottom:1.25rem;">
+            <div style="display:flex;gap:2rem;flex-wrap:wrap;">
+                <div>
+                    <div style="font-size:0.65rem;letter-spacing:1px;text-transform:uppercase;color:var(--muted);margin-bottom:0.25rem">Large Ships On-Scene</div>
+                    <div style="font-size:2rem;font-weight:700;color:#f59e0b;font-family:'Space Grotesk',sans-serif" id="hz-large">—</div>
+                    <div style="font-size:0.7rem;color:var(--muted)">avg last week (≥250 m)</div>
+                </div>
+                <div>
+                    <div style="font-size:0.65rem;letter-spacing:1px;text-transform:uppercase;color:var(--muted);margin-bottom:0.25rem">Departure Rate</div>
+                    <div style="font-size:2rem;font-weight:700;color:#ef4444;font-family:'Space Grotesk',sans-serif" id="hz-gpd">—</div>
+                    <div style="font-size:0.7rem;color:var(--muted)">ships/day leaving</div>
+                </div>
+                <div>
+                    <div style="font-size:0.65rem;letter-spacing:1px;text-transform:uppercase;color:var(--muted);margin-bottom:0.25rem">Est. Dwell Time</div>
+                    <div style="font-size:2rem;font-weight:700;color:#a78bfa;font-family:'Space Grotesk',sans-serif" id="hz-dwell">—</div>
+                    <div style="font-size:0.7rem;color:var(--muted)">days on-scene</div>
+                </div>
+                <div>
+                    <div style="font-size:0.65rem;letter-spacing:1px;text-transform:uppercase;color:var(--muted);margin-bottom:0.25rem">Stay-Rate</div>
+                    <div style="font-size:2rem;font-weight:700;color:#38bdf8;font-family:'Space Grotesk',sans-serif" id="hz-stay">—</div>
+                    <div style="font-size:0.7rem;color:var(--muted)" id="hz-updated">% large ships persisting</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Chart A: Large ships on-scene -->
+        <div style="background:var(--surface);border:1px solid var(--border);padding:1.25rem 1.5rem 1rem;margin-bottom:1.25rem;">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;flex-wrap:wrap;gap:0.5rem;">
+                <div>
+                    <div style="font-size:0.7rem;letter-spacing:1px;text-transform:uppercase;color:var(--accent)">Ships On-Scene</div>
+                    <div style="font-size:0.65rem;color:var(--muted);margin-top:0.2rem">Large (≥250 m) vs all detected · weekly avg</div>
+                </div>
+                <div style="display:flex;gap:4px" id="hz-range-a">
+                    <button class="aq-rbtn" data-r="3m">3M</button>
+                    <button class="aq-rbtn aq-rbtn-active" data-r="6m">6M</button>
+                    <button class="aq-rbtn" data-r="1y">1Y</button>
+                    <button class="aq-rbtn" data-r="all">ALL</button>
+                </div>
+            </div>
+            <canvas id="hzChartA" style="width:100%;display:block;height:240px"></canvas>
+            <div style="display:flex;gap:16px;flex-wrap:wrap;margin-top:10px;">
+                <span style="display:flex;align-items:center;gap:6px;font-size:0.68rem;color:var(--muted);font-family:monospace"><span style="width:12px;height:12px;border-radius:50%;background:#f59e0b;flex-shrink:0"></span>Large ships (≥250 m)</span>
+                <span style="display:flex;align-items:center;gap:6px;font-size:0.68rem;color:var(--muted);font-family:monospace"><span style="width:18px;height:2px;background:rgba(148,163,184,0.4);flex-shrink:0"></span>All ships</span>
+            </div>
+        </div>
+
+        <!-- Chart B: Departure rate -->
+        <div style="background:var(--surface);border:1px solid var(--border);padding:1.25rem 1.5rem 1rem;margin-bottom:1.25rem;">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;flex-wrap:wrap;gap:0.5rem;">
+                <div>
+                    <div style="font-size:0.7rem;letter-spacing:1px;text-transform:uppercase;color:var(--accent)">Departure Rate</div>
+                    <div style="font-size:0.65rem;color:var(--muted);margin-top:0.2rem">Ships/day leaving Larak staging area · SAR tracking v1.1</div>
+                </div>
+                <div style="display:flex;gap:4px" id="hz-range-b">
+                    <button class="aq-rbtn" data-r="3m">3M</button>
+                    <button class="aq-rbtn aq-rbtn-active" data-r="6m">6M</button>
+                    <button class="aq-rbtn" data-r="1y">1Y</button>
+                    <button class="aq-rbtn" data-r="all">ALL</button>
+                </div>
+            </div>
+            <canvas id="hzChartB" style="width:100%;display:block;height:200px"></canvas>
+        </div>
+
+        <!-- Chart C: Dwell time -->
+        <div style="background:var(--surface);border:1px solid var(--border);padding:1.25rem 1.5rem 1rem;margin-bottom:1.25rem;">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;flex-wrap:wrap;gap:0.5rem;">
+                <div>
+                    <div style="font-size:0.7rem;letter-spacing:1px;text-transform:uppercase;color:var(--accent)">Dwell Time & Stay Rate</div>
+                    <div style="font-size:0.65rem;color:var(--muted);margin-top:0.2rem">Estimated days on-scene + fraction of large ships persisting week-on-week</div>
+                </div>
+                <div style="display:flex;gap:4px" id="hz-range-c">
+                    <button class="aq-rbtn" data-r="3m">3M</button>
+                    <button class="aq-rbtn aq-rbtn-active" data-r="6m">6M</button>
+                    <button class="aq-rbtn" data-r="1y">1Y</button>
+                    <button class="aq-rbtn" data-r="all">ALL</button>
+                </div>
+            </div>
+            <canvas id="hzChartC" style="width:100%;display:block;height:200px"></canvas>
+            <div style="display:flex;gap:16px;flex-wrap:wrap;margin-top:10px;">
+                <span style="display:flex;align-items:center;gap:6px;font-size:0.68rem;color:var(--muted);font-family:monospace"><span style="width:12px;height:12px;border-radius:50%;background:#a78bfa;flex-shrink:0"></span>Dwell days</span>
+                <span style="display:flex;align-items:center;gap:6px;font-size:0.68rem;color:var(--muted);font-family:monospace"><span style="width:18px;height:0;border-top:2px dashed #38bdf8;flex-shrink:0"></span>Stay rate</span>
+            </div>
+        </div>
+
+        <div style="font-size:0.65rem;color:var(--dim);font-family:monospace;padding:0.5rem 0">
+            Source: Sentinel-1 SAR · Microsoft Planetary Computer · orbits 57 &amp; 166 · AOI: 56.30–56.60°E, 26.84–27.03°N
+        </div>
+
+        <!-- ── Gulf Exit (beta) ──────────────────────────────────────────── -->
+        <div style="margin-top:2rem;">
+            <div style="display:flex;align-items:center;gap:0.6rem;margin-bottom:0.75rem;">
+                <div style="font-size:0.75rem;letter-spacing:1px;text-transform:uppercase;color:var(--accent)">Gulf Exit</div>
+                <span style="font-size:0.6rem;font-family:monospace;background:#92400e;color:#fde68a;padding:1px 6px;border-radius:2px;letter-spacing:1px">BETA</span>
+            </div>
+
+            <!-- Gulf Exit KPI row -->
+            <div style="display:flex;gap:1rem;flex-wrap:wrap;margin-bottom:1.25rem;">
+                <div style="background:var(--surface);border:1px solid var(--border);padding:0.9rem 1.1rem;min-width:160px;">
+                    <div style="font-size:0.6rem;letter-spacing:1px;text-transform:uppercase;color:var(--muted);margin-bottom:0.2rem">Large ships exiting, radar</div>
+                    <div style="font-size:1.6rem;font-weight:700;color:#3b82f6;font-family:'Space Grotesk',sans-serif" id="ge-kpi-radar">—</div>
+                    <div style="font-size:0.65rem;color:var(--muted)" id="ge-kpi-radar-sub">last 4 wks vs 2025 avg</div>
+                </div>
+                <div style="background:var(--surface);border:1px solid var(--border);padding:0.9rem 1.1rem;min-width:160px;">
+                    <div style="font-size:0.6rem;letter-spacing:1px;text-transform:uppercase;color:var(--muted);margin-bottom:0.2rem">AIS tankers / day</div>
+                    <div style="font-size:1.6rem;font-weight:700;color:#94a3b8;font-family:'Space Grotesk',sans-serif" id="ge-kpi-ais">—</div>
+                    <div style="font-size:0.65rem;color:var(--muted)" id="ge-kpi-ais-sub">last 4 wks vs 2025 avg</div>
+                </div>
+                <div style="background:var(--surface);border:1px solid var(--border);padding:0.9rem 1.1rem;min-width:160px;">
+                    <div style="font-size:0.6rem;letter-spacing:1px;text-transform:uppercase;color:var(--muted);margin-bottom:0.2rem">Iranian-lane share</div>
+                    <div style="font-size:1.6rem;font-weight:700;color:#22c55e;font-family:'Space Grotesk',sans-serif" id="ge-kpi-ir">—</div>
+                    <div style="font-size:0.65rem;color:var(--muted)" id="ge-kpi-ir-sub">irlane / (corr+ir) · 4 wks vs 2025</div>
+                </div>
+            </div>
+
+            <!-- Gulf Exit chart -->
+            <div style="background:var(--surface);border:1px solid var(--border);padding:1.25rem 1.5rem 1rem;margin-bottom:1.25rem;">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;flex-wrap:wrap;gap:0.5rem;">
+                    <div>
+                        <div style="font-size:0.65rem;color:var(--muted);margin-top:0.2rem">Large ships (≥ 220 m) per satellite pass · corridor + IR lane · orbit 93</div>
+                    </div>
+                    <div style="display:flex;gap:4px" id="ge-range">
+                        <button class="aq-rbtn" data-r="3m">3M</button>
+                        <button class="aq-rbtn" data-r="6m">6M</button>
+                        <button class="aq-rbtn aq-rbtn-active" data-r="1y">1Y</button>
+                        <button class="aq-rbtn" data-r="all">ALL</button>
+                    </div>
+                </div>
+                <canvas id="geChart" style="width:100%;display:block;height:200px"></canvas>
+                <div style="display:flex;gap:16px;flex-wrap:wrap;margin-top:10px;">
+                    <span style="display:flex;align-items:center;gap:6px;font-size:0.68rem;color:var(--muted);font-family:monospace"><span style="width:12px;height:12px;background:#3b82f6;flex-shrink:0"></span>Corridor</span>
+                    <span style="display:flex;align-items:center;gap:6px;font-size:0.68rem;color:var(--muted);font-family:monospace"><span style="width:12px;height:12px;background:#22c55e;flex-shrink:0"></span>IR Lane</span>
+                    <span style="display:flex;align-items:center;gap:6px;font-size:0.68rem;color:var(--muted);font-family:monospace"><span style="width:14px;height:2px;background:#94a3b8;flex-shrink:0;border-top:2px dashed #94a3b8"></span>AIS tankers/day</span>
+                </div>
+            </div>
+            <div style="font-size:0.65rem;color:var(--dim);font-family:monospace;padding:0.25rem 0;margin-top:0.25rem">
+                Sentinel-1 radar · all flags · ships ≥220 m. Radar cannot see flag or cargo. Counts per satellite pass — trends, not exact volumes.
+            </div>
+        </div>
+
+        <!-- ── Jask Terminal ──────────────────────────────────────────────── -->
+        <div style="margin-top:1.5rem;">
+            <div style="font-size:0.75rem;letter-spacing:1px;text-transform:uppercase;color:var(--accent);margin-bottom:0.75rem;">Jask Terminal</div>
+
+            <!-- Jask KPI row -->
+            <div style="display:flex;gap:1rem;flex-wrap:wrap;margin-bottom:1.25rem;">
+                <div style="background:var(--surface);border:1px solid var(--border);padding:0.9rem 1.1rem;min-width:130px;">
+                    <div style="font-size:0.6rem;letter-spacing:1px;text-transform:uppercase;color:var(--muted);margin-bottom:0.2rem">Terminal Ships</div>
+                    <div style="font-size:1.6rem;font-weight:700;color:#f59e0b;font-family:'Space Grotesk',sans-serif" id="jk-term-n">—</div>
+                    <div style="font-size:0.65rem;color:var(--muted)">latest pass</div>
+                </div>
+                <div style="background:var(--surface);border:1px solid var(--border);padding:0.9rem 1.1rem;min-width:130px;">
+                    <div style="font-size:0.6rem;letter-spacing:1px;text-transform:uppercase;color:var(--muted);margin-bottom:0.2rem">Terminal VLCC</div>
+                    <div style="font-size:1.6rem;font-weight:700;color:#ef4444;font-family:'Space Grotesk',sans-serif" id="jk-term-vlcc">—</div>
+                    <div style="font-size:0.65rem;color:var(--muted)">≥ 300 m, latest pass</div>
+                </div>
+                <div style="background:var(--surface);border:1px solid var(--border);padding:0.9rem 1.1rem;min-width:130px;">
+                    <div style="font-size:0.6rem;letter-spacing:1px;text-transform:uppercase;color:var(--muted);margin-bottom:0.2rem">Anchorage Ships</div>
+                    <div style="font-size:1.6rem;font-weight:700;color:#a78bfa;font-family:'Space Grotesk',sans-serif" id="jk-anch-n">—</div>
+                    <div style="font-size:0.65rem;color:var(--muted)">latest pass</div>
+                </div>
+                <div style="background:var(--surface);border:1px solid var(--border);padding:0.9rem 1.1rem;min-width:130px;">
+                    <div style="font-size:0.6rem;letter-spacing:1px;text-transform:uppercase;color:var(--muted);margin-bottom:0.2rem">Anchorage VLCC</div>
+                    <div style="font-size:1.6rem;font-weight:700;color:#38bdf8;font-family:'Space Grotesk',sans-serif" id="jk-anch-vlcc">—</div>
+                    <div style="font-size:0.65rem;color:var(--muted)">≥ 300 m, latest pass</div>
+                </div>
+            </div>
+
+            <!-- Jask chart -->
+            <div style="background:var(--surface);border:1px solid var(--border);padding:1.25rem 1.5rem 1rem;margin-bottom:1.25rem;">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;flex-wrap:wrap;gap:0.5rem;">
+                    <div>
+                        <div style="font-size:0.65rem;color:var(--muted);margin-top:0.2rem">Monthly avg ships per pass · terminal + anchorage · orbit 57</div>
+                    </div>
+                    <div style="display:flex;gap:4px" id="jk-range">
+                        <button class="aq-rbtn" data-r="3m">3M</button>
+                        <button class="aq-rbtn" data-r="6m">6M</button>
+                        <button class="aq-rbtn aq-rbtn-active" data-r="1y">1Y</button>
+                        <button class="aq-rbtn" data-r="all">ALL</button>
+                    </div>
+                </div>
+                <canvas id="jkChart" style="width:100%;display:block;height:200px"></canvas>
+                <div style="display:flex;gap:16px;flex-wrap:wrap;margin-top:10px;">
+                    <span style="display:flex;align-items:center;gap:6px;font-size:0.68rem;color:var(--muted);font-family:monospace"><span style="width:12px;height:12px;background:#f59e0b;flex-shrink:0"></span>Terminal</span>
+                    <span style="display:flex;align-items:center;gap:6px;font-size:0.68rem;color:var(--muted);font-family:monospace"><span style="width:12px;height:12px;background:#a78bfa;flex-shrink:0"></span>Anchorage</span>
+                </div>
+            </div>
+
+            <div style="font-size:0.65rem;color:var(--dim);font-family:monospace;padding:0.25rem 0">
+                Sentinel-1 radar · all flags · ships ≥ 220 m. Radar cannot see flag or cargo. Counts per satellite pass — trends, not exact volumes.
+            </div>
+        </div>
+
+        <div style="font-size:0.65rem;color:var(--dim);font-family:monospace;padding:0.5rem 0">
+            Source: Sentinel-1 SAR · Microsoft Planetary Computer · orbits 57 &amp; 166 · AOI: 56.30–56.60°E, 26.84–27.03°N
         </div>
     </div>
 
 <div style="padding:12px 0 4px;font-size:11px;color:var(--dim);border-top:1px solid var(--border);margin-top:24px">Contains modified Copernicus Sentinel data [2015–2026] · processed by OilRadar</div>
 
 </div><!-- /main -->
+<div style="text-align:center;padding:12px 16px;font-size:11px;color:#6b7280;font-family:sans-serif;border-top:1px solid #e5e7eb;margin-top:0;position:fixed;bottom:0;left:200px;right:0;background:var(--bg,#0f172a);z-index:10">Contains modified Copernicus Sentinel data [2015–2026] · processed by OilRadar</div>
 
 <script>
 // ── Auth ──────────────────────────────────────────────────────────────────
@@ -1181,11 +1300,8 @@ async function checkAuth() {
 
 // ── Country filter (admin-only extras) ───────────────────────────────────────
 const COUNTRY_TERMINALS = [
-    { id: 'kharg',      label: 'Iran (Kharg)',  file: null },
-    { id: 'ras_tanura', label: 'Ras Tanura',    file: '/data/terminals/ras_tanura_daily.json' },
-    { id: 'lavan',      label: 'Lavan',         file: '/data/terminals/lavan_daily.json' },
-    { id: 'siri',       label: 'Siri',          file: '/data/terminals/siri_daily.json' },
-    { id: 'jask',       label: 'Jask',          file: '/data/terminals/jask_daily.json' },
+    { id: 'kharg', label: 'Iran (Kharg)', file: null },
+    { id: 'jask',  label: 'Jask',        file: '/data/terminals/jask_daily.json' },
 ];
 let _activeTerminal = 'kharg';
 let _khargDates = [], _khargValues = [];
@@ -1203,9 +1319,11 @@ async function setTerminal(id) {
 
     const t = COUNTRY_TERMINALS.find(x => x.id === id);
     if (!t || !t.file) {
-        // restore Kharg — allDates/allValues already hold it
+        // restore Kharg
         allDates = _khargDates.slice();
         allValues = _khargValues.slice();
+        MAX_CAP = 33.2;
+        document.getElementById('cVolSub').textContent = 'of 31.78 Mb capacity';
         render();
         return;
     }
@@ -1214,6 +1332,10 @@ async function setTerminal(id) {
         const d = await r.json();
         allDates  = d.dates  || [];
         allValues = d.values || [];
+        if (d.max_capacity_mb) {
+            MAX_CAP = d.max_capacity_mb;
+            document.getElementById('cVolSub').textContent = 'of ' + d.max_capacity_mb.toFixed(1) + ' Mb capacity';
+        }
         render();
     } catch (e) { console.error('setTerminal fetch failed', e); }
 }
@@ -1257,8 +1379,8 @@ function logout() { window.location.href = '/auth/logout'; }
 // ── Upstream section ──────────────────────────────────────────────────────
 const UPSTREAM_TERMINALS = [
     { id: 'goreh_omid', label: 'Goreh-Omid', file: '/data/terminals/goreh_omid_daily.json', max_cap: 9.0 },
-    { id: 'jask',       label: 'Jask',        file: '/data/terminals/jask_daily.json',       max_cap: 9.8 },
     { id: 'bahregan',   label: 'Bahregan',    file: '/data/terminals/bahregan_daily.json',   max_cap: 5.5 },
+    { id: 'jask',       label: 'Jask',        file: '/data/terminals/jask_daily.json',        max_cap: 6.3 },
 ];
 let _upTerminal   = 'goreh_omid';
 let _upRange      = 90;
@@ -1418,7 +1540,7 @@ function showSection(id, callerEl) {
     if (mobNav) mobNav.classList.add('active');
     if (id === 'map' && !window._mapInited) { initTankMap(); window._mapInited = true; }
     if (id === 'anchorage') { initAnchorage(); }
-    if (id === 'berth' && !window._boLoaded && window._boLoad) window._boLoad();
+    if (id === 'hormuz') { initHormuz().then(() => initGulfExit()); }
     if (id === 'upstream' && !window._upstreamInited) { window._upstreamInited = true; loadUpstream(); }
 }
 
@@ -1488,7 +1610,6 @@ async function loadData() {
     render();
     loadStagingSignal().then(s => { window._stagingData = s; render(); });
 }
-
 
 // ── Aggregation ────────────────────────────────────────────────────────────
 function aggregateWeekly(dates, values) {
@@ -1761,6 +1882,7 @@ function renderExportSetup(util, fr7d, streak, staging) {
 
     // ── Render composite ──
     const pctEl = document.getElementById('esPct');
+    if (!pctEl) return;
     if (compositeP !== null) {
         pctEl.textContent = compositeP + '%';
         pctEl.className = 'es-pct' + (compositeP >= 40 ? ' hot' : ' active');
@@ -1801,6 +1923,7 @@ function renderExportSetup(util, fr7d, streak, staging) {
 
 function setEsRow(id, active, hot, p, trigger, status) {
     const row = document.getElementById('esr-' + id);
+    if (!row) return;
     row.style.display = active ? '' : 'none';
     row.className = 'es-row' + (hot ? ' hot' : active ? ' on' : '');
     const trigEl = document.getElementById('est-' + id);
@@ -1869,6 +1992,7 @@ function renderFillRateChart(dates, rates) {
 }
 
 function renderSPIChart(dates, spi) {
+    if (!document.getElementById('spiChart')) return;
     const validSpi = spi.filter(v => v != null);
     const spiMin = Math.max(0, Math.floor(Math.min(...validSpi) - 3));
     const spiMax = Math.min(100, Math.ceil(Math.max(...validSpi) + 3));
@@ -1886,9 +2010,11 @@ function renderSPIChart(dates, spi) {
 }
 
 function renderMonthlyChart(dates, values) {
+    const _mcEl = document.getElementById('monthlyChart');
+    if (!_mcEl) return;
     const monthly = computeMonthly(dates, values);
     const data = monthly.map(m => parseFloat(m.change.toFixed(2)));
-    charts.monthly = new Chart(document.getElementById('monthlyChart').getContext('2d'), {
+    charts.monthly = new Chart(_mcEl.getContext('2d'), {
         type: 'bar',
         data: { labels: monthly.map(m => m.month), datasets: [{ label: 'Monthly Balance (Mb)', data,
             backgroundColor: data.map(v => v >= 0 ? 'rgba(220,38,38,0.6)' : 'rgba(5,150,105,0.6)'), borderWidth: 0, borderRadius: 3 }]},
@@ -1917,7 +2043,7 @@ function exportCSV() {
 let _flowsData = null;
 let _flowsRange = 90;
 let _flowsGran = 'pass';
-const FLOWS_CACHE_KEY = 'oilradar_flows_v3';
+const FLOWS_CACHE_KEY = 'oilradar_flows_v4';
 const FLOWS_CACHE_TTL = 6 * 3600 * 1000; // 6 hours
 
 function setFlowsRange(days) {
@@ -1945,15 +2071,21 @@ async function loadFlows() {
         }
     } catch {}
 
-    document.getElementById('sigFlows').textContent = 'Loading gross flow data…';
+    const _sigFlowsEl = document.getElementById('sigFlows');
+    if (_sigFlowsEl) _sigFlowsEl.textContent = 'Loading gross flow data…';
     const headers = { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` };
 
     try {
-        const res = await fetch(
-            `${SUPABASE_URL}/rest/v1/kharg_gross_flows?select=date_from,date_to,days,gross_out_mb,gross_in_mb,net_mb,tanks_draining,tanks_filling&order=date_to`,
-            { headers }
-        );
-        const all = await res.json();
+        // kharg_gross_flows_v2: computed by scripts/gross_flows.py with the same
+        // calibration as the main volume series (volume.py). The legacy matview
+        // kharg_gross_flows is DEPRECATED — read only as a fallback until v2 is
+        // populated (transition period, remove after 2026-11-20).
+        const FLOWS_SELECT = 'select=date_from,date_to,days,gross_out_mb,gross_in_mb,net_mb,tanks_draining,tanks_filling&order=date_to';
+        let all = await fetch(`${SUPABASE_URL}/rest/v1/kharg_gross_flows_v2?${FLOWS_SELECT}`, { headers }).then(r => r.json()).catch(() => null);
+        if (!Array.isArray(all) || all.length === 0) {
+            console.warn('kharg_gross_flows_v2 unavailable — falling back to deprecated kharg_gross_flows');
+            all = await fetch(`${SUPABASE_URL}/rest/v1/kharg_gross_flows?${FLOWS_SELECT}`, { headers }).then(r => r.json());
+        }
         _flowsData = all;
         try { localStorage.setItem(FLOWS_CACHE_KEY, JSON.stringify({ ts: Date.now(), data: all })); } catch {}
         renderFlows(all);
@@ -1974,7 +2106,7 @@ function renderFlows(raw) {
         data = raw.filter(r => r.date_from >= '2017-01-01');
     }
 
-    // Normalise to passes array (field names from kharg_gross_flows)
+    // Normalise to passes array (field names from kharg_gross_flows_v2)
     const passes = data.map(r => ({
         d0: r.date_from, d1: r.date_to,
         days: r.days,
@@ -2050,6 +2182,7 @@ function renderFlows(raw) {
         document.getElementById('fECRSub').textContent = e > 1.2 ? '▲ Reserve drawdown regime' : e < 0.85 ? '▼ Accumulation regime' : '≈ Pass-through / balanced';
     }
     charts.flowsECR && charts.flowsECR.destroy();
+    if (document.getElementById('flowsECRChart'))
     charts.flowsECR = new Chart(document.getElementById('flowsECRChart').getContext('2d'), {
         type: 'bar',
         data: { labels: buckets.map(p => p.d1), datasets: [{ label: 'ECR', data: ecrData,
@@ -2064,6 +2197,7 @@ function renderFlows(raw) {
     });
 
     // Storage Turnover per bucket
+
     const currentVol = allValues.length ? allValues[allValues.length - 1] : null;
     const turnoverData = buckets.map(p => {
         const throughput = p.days > 0 ? (p.grossOut + p.grossIn) / p.days : null;
@@ -2075,6 +2209,7 @@ function renderFlows(raw) {
         document.getElementById('fTurnoverSub').textContent = lastTurnover < 40 ? 'Fast drain — active loading' : lastTurnover > 90 ? 'Slow drain — exports below average' : 'at current export rate · how long until storage is drained';
     }
     charts.flowsTurnover && charts.flowsTurnover.destroy();
+    if (document.getElementById('flowsTurnoverChart'))
     charts.flowsTurnover = new Chart(document.getElementById('flowsTurnoverChart').getContext('2d'), {
         type: 'bar',
         data: { labels: buckets.map(p => p.d1), datasets: [{ label: 'Turnover (days)', data: turnoverData,
@@ -2092,6 +2227,7 @@ function renderFlows(raw) {
     charts.flowsDivergent && charts.flowsDivergent.destroy();
     const expVelData = buckets.map(p => p.days > 0 ? +(-p.grossOut / p.days).toFixed(2) : null);
     const infVelData = buckets.map(p => p.days > 0 ? +(p.grossIn  / p.days).toFixed(2) : null);
+    if (document.getElementById('flowsDivergentChart'))
     charts.flowsDivergent = new Chart(document.getElementById('flowsDivergentChart').getContext('2d'), {
         type: 'bar',
         data: {
@@ -2133,17 +2269,31 @@ function renderFlows(raw) {
     if (charts.overviewVelocity) { charts.overviewVelocity.destroy(); charts.overviewVelocity = null; }
     const _ovEl = document.getElementById('overviewVelocityChart');
     if (_ovEl) {
-        const _ovCfg = JSON.parse(JSON.stringify({
+        charts.overviewVelocity = new Chart(_ovEl.getContext('2d'), {
             type: 'bar',
             data: { labels: buckets.map(p => p.d1), datasets: [
                 { label: 'Export Velocity', data: expVelData, backgroundColor: 'rgba(5,150,105,0.75)', borderWidth: 0, borderRadius: 2 },
                 { label: 'Production Inflow', data: infVelData, backgroundColor: 'rgba(220,38,38,0.75)', borderWidth: 0, borderRadius: 2 }
             ]},
             options: { responsive: true, maintainAspectRatio: false,
-                plugins: { legend: { labels: { color: '#6b7280', boxWidth: 10, font: { size: 10 } } } },
-                scales: { x: gX, y: { ...gY, ticks: { ...gY.ticks, callback: v => v.toFixed(2) + ' Mb/d' } } } }
-        }));
-        charts.overviewVelocity = new Chart(_ovEl.getContext('2d'), _ovCfg);
+                interaction: { intersect: false, mode: 'index' },
+                plugins: { legend: { labels: { color: '#6b7280', boxWidth: 10, font: { size: 10 } } },
+                    tooltip: { backgroundColor: '#111827', borderColor: 'rgba(255,255,255,0.1)', borderWidth: 1, titleColor: '#e2e8f0', bodyColor: '#94a3b8',
+                        callbacks: {
+                            title: ctx => { const p = buckets[ctx[0].dataIndex]; return p ? `${p.d0} → ${p.d1}` : ''; },
+                            label: ctx => {
+                                const p = buckets[ctx.dataIndex];
+                                if (!p) return '';
+                                if (ctx.datasetIndex === 0) return ` Export: ${Math.abs(p.grossOut).toFixed(2)} Mb · ${(p.grossOut/p.days).toFixed(2)} Mb/d · ${p.tanksOut} tanks`;
+                                return ` Inflow: ${p.grossIn.toFixed(2)} Mb · ${(p.grossIn/p.days).toFixed(2)} Mb/d · ${p.tanksIn} tanks`;
+                            }
+                        }
+                    }
+                },
+                scales: { x: gX, y: { ...gY, ticks: { ...gY.ticks, callback: v => v.toFixed(2) + ' Mb/d' },
+                    grid: { ...gY.grid, color: ctx => ctx.tick.value === 0 ? 'rgba(255,255,255,0.15)' : 'rgba(255,255,255,0.05)' }
+                } } }
+        });
     }
 
     // Export Velocity KPI card
@@ -2211,7 +2361,7 @@ fetch('/data/prices.json?v=' + Date.now())
 
 function renderRevenue() {
     if (!_flowsBuckets.length) return;
-    const spread = parseFloat(document.getElementById('discountSlider').value) || -5;
+    const _sv = parseFloat(document.getElementById('discountSlider').value); const spread = isNaN(_sv) ? -5 : _sv;
     const netPrice = _dubaiPrice + spread;  // spread is negative for discount, positive for premium
     const lastP = _flowsBuckets[_flowsBuckets.length - 1];
     const lastRev = lastP ? +(lastP.grossOut * 1e6 * netPrice / 1e9).toFixed(3) : 0;
@@ -2591,7 +2741,7 @@ function aqSum(r) { return aqIsDefault() ? r.total : aqLayers().reduce((s, k) =>
 
 function aqCumulative(r, upTo) {
   let s = 0;
-  for (const k of AQ_LAYERS) { if (k === upTo) { s += (r[k]||0); break; } s += (r[k]||0); }
+  for (const k of AQ_ALL) { if (k === upTo) { s += (r[k]||0); break; } s += (r[k]||0); }
   return s;
 }
 
@@ -2614,8 +2764,8 @@ function aqDrawFrame(ctx, data, W, H, hoverIdx) {
   });
 
   // stacked area layers
-  for (let li = 0; li < AQ_LAYERS.length; li++) {
-    const key = AQ_LAYERS[li];
+  for (let li = 0; li < AQ_ALL.length; li++) {
+    const key = AQ_ALL[li];
     ctx.beginPath();
     data.forEach((r, i) => {
       if (i === 0) ctx.moveTo(xScale(i), yScale(aqCumulative(r, key)));
@@ -2821,197 +2971,847 @@ async function initAnchorage() {
   aqDraw();
 }
 
-// ── Berth Occupancy v2 ────────────────────────────────────────────────────────
+// ── Hormuz Strait Traffic ─────────────────────────────────────────────────
+const SB_URL_HZ = 'https://yoekhkczwdeyauwarsyy.supabase.co';
+const SB_KEY_HZ = 'sb_publishable_7j07_zzdqTGM1LXf7-o9Tg_JJRbJQSM';
+let _hzRows = [], _hzInited = false;
+
+function hzFilter(months) {
+    if (!months) return _hzRows;
+    const cut = new Date(); cut.setMonth(cut.getMonth() - months);
+    const cs = cut.toISOString().slice(0,10);
+    return _hzRows.filter(r => r.week >= cs);
+}
+
+function hzNiceMax(v, step) {
+    if (!v || v <= 0) return step;
+    return Math.ceil(v / step) * step;
+}
+
+function hzDrawLine(ctx, w, h, pad, labels, series) {
+    // series: [{vals, color, dashed}]
+    if (!labels.length) return;
+    const allVals = series.flatMap(s => s.vals.filter(v => v != null));
+    if (!allVals.length) return;
+    const yMax = hzNiceMax(Math.max(...allVals, 0), series[0].step || 1);
+    const x0 = pad.l, x1 = w - pad.r, y0 = pad.t, y1 = h - pad.b;
+    const xw = x1 - x0, yh = y1 - y0;
+    const xStep = xw / Math.max(labels.length - 1, 1);
+
+    ctx.clearRect(0, 0, w, h);
+
+    // grid
+    ctx.strokeStyle = 'rgba(255,255,255,0.05)'; ctx.lineWidth = 1;
+    for (let i = 0; i <= 4; i++) {
+        const y = y1 - (i / 4) * yh;
+        ctx.beginPath(); ctx.moveTo(x0, y); ctx.lineTo(x1, y); ctx.stroke();
+        ctx.fillStyle = 'rgba(100,116,139,0.8)';
+        ctx.font = '10px monospace'; ctx.textAlign = 'right';
+        ctx.fillText((yMax * i / 4).toFixed(yMax < 2 ? 2 : 1), x0 - 4, y + 3);
+    }
+
+    // x labels — show ~6
+    const step = Math.max(1, Math.round(labels.length / 6));
+    ctx.fillStyle = 'rgba(100,116,139,0.8)'; ctx.font = '10px monospace'; ctx.textAlign = 'center';
+    labels.forEach((lbl, i) => {
+        if (i % step !== 0 && i !== labels.length - 1) return;
+        const x = x0 + i * xStep;
+        ctx.fillText(lbl.slice(2, 7), x, y1 + 14);
+    });
+
+    // lines
+    series.forEach(s => {
+        ctx.save();
+        ctx.strokeStyle = s.color; ctx.lineWidth = s.dashed ? 1.5 : 2;
+        if (s.dashed) ctx.setLineDash([4, 3]);
+        ctx.beginPath();
+        let started = false;
+        s.vals.forEach((v, i) => {
+            if (v == null) { started = false; return; }
+            const x = x0 + i * xStep;
+            const y = y1 - (v / yMax) * yh;
+            if (!started) { ctx.moveTo(x, y); started = true; } else ctx.lineTo(x, y);
+        });
+        ctx.stroke(); ctx.restore();
+
+        // fill under first series
+        if (s.fill) {
+            ctx.save(); ctx.globalAlpha = 0.08;
+            ctx.fillStyle = s.color;
+            ctx.beginPath();
+            let fx0 = x0, lastY = y1;
+            s.vals.forEach((v, i) => {
+                const x = x0 + i * xStep;
+                const y = v != null ? y1 - (v / yMax) * yh : y1;
+                if (i === 0) { ctx.moveTo(x, y); fx0 = x; }
+                else ctx.lineTo(x, y);
+                lastY = y;
+            });
+            ctx.lineTo(x0 + (s.vals.length - 1) * xStep, y1);
+            ctx.lineTo(fx0, y1); ctx.closePath(); ctx.fill(); ctx.restore();
+        }
+    });
+}
+
+function hzDrawBar(ctx, w, h, pad, labels, vals, color) {
+    if (!labels.length) return;
+    const yMax = hzNiceMax(Math.max(...vals.filter(v => v != null), 0), 0.5);
+    const x0 = pad.l, x1 = w - pad.r, y0 = pad.t, y1 = h - pad.b;
+    const xw = x1 - x0, yh = y1 - y0;
+    const barW = Math.max(2, xw / labels.length - 2);
+
+    ctx.clearRect(0, 0, w, h);
+    ctx.strokeStyle = 'rgba(255,255,255,0.05)'; ctx.lineWidth = 1;
+    for (let i = 0; i <= 4; i++) {
+        const y = y1 - (i / 4) * yh;
+        ctx.beginPath(); ctx.moveTo(x0, y); ctx.lineTo(x1, y); ctx.stroke();
+        ctx.fillStyle = 'rgba(100,116,139,0.8)'; ctx.font = '10px monospace'; ctx.textAlign = 'right';
+        ctx.fillText((yMax * i / 4).toFixed(2), x0 - 4, y + 3);
+    }
+    const step = Math.max(1, Math.round(labels.length / 6));
+    ctx.fillStyle = 'rgba(100,116,139,0.8)'; ctx.font = '10px monospace'; ctx.textAlign = 'center';
+    labels.forEach((lbl, i) => {
+        if (i % step !== 0 && i !== labels.length - 1) return;
+        ctx.fillText(lbl.slice(2,7), x0 + i * (xw / labels.length) + barW / 2, y1 + 14);
+    });
+    vals.forEach((v, i) => {
+        if (v == null) return;
+        const x = x0 + i * (xw / labels.length);
+        const bh = (v / yMax) * yh;
+        ctx.fillStyle = color + 'cc';
+        ctx.fillRect(x, y1 - bh, barW, bh);
+    });
+}
+
+function hzRedrawAll() {
+    ['a','b','c'].forEach(k => hzRedraw(k, hzCurrentRange(k)));
+}
+
+const _hzRange = {a:'6m', b:'6m', c:'6m'};
+function hzCurrentRange(k) { return _hzRange[k]; }
+
+function hzRedraw(k, r) {
+    _hzRange[k] = r;
+    document.querySelectorAll(`#hz-range-${k} .aq-rbtn`).forEach(b => {
+        b.classList.toggle('aq-rbtn-active', b.dataset.r === r);
+    });
+    const months = r === 'all' ? null : r === '1y' ? 12 : r === '6m' ? 6 : 3;
+    const rows = hzFilter(months);
+    const labels = rows.map(r => r.week);
+    const PAD = {l:42, r:16, t:12, b:22};
+
+    if (k === 'a') {
+        const c = document.getElementById('hzChartA');
+        const ctx = c.getContext('2d');
+        const dpr = window.devicePixelRatio || 1;
+        c.width = c.offsetWidth * dpr; c.height = c.offsetHeight * dpr;
+        ctx.scale(dpr, dpr);
+        hzDrawLine(ctx, c.offsetWidth, c.offsetHeight, PAD, labels, [
+            {vals: rows.map(r => r.large_avg != null ? +r.large_avg : null), color:'#f59e0b', fill:true, step:2},
+            {vals: rows.map(r => r.all_avg   != null ? +r.all_avg   : null), color:'rgba(148,163,184,0.5)', dashed:true, step:5}
+        ]);
+    } else if (k === 'b') {
+        const c = document.getElementById('hzChartB');
+        const ctx = c.getContext('2d');
+        const dpr = window.devicePixelRatio || 1;
+        c.width = c.offsetWidth * dpr; c.height = c.offsetHeight * dpr;
+        ctx.scale(dpr, dpr);
+        hzDrawBar(ctx, c.offsetWidth, c.offsetHeight, PAD, labels,
+            rows.map(r => r.gone_per_day != null ? +r.gone_per_day : null), '#ef4444');
+    } else {
+        const c = document.getElementById('hzChartC');
+        const ctx = c.getContext('2d');
+        const dpr = window.devicePixelRatio || 1;
+        c.width = c.offsetWidth * dpr; c.height = c.offsetHeight * dpr;
+        ctx.scale(dpr, dpr);
+        const dwLabels = rows.map(r => r.week);
+        hzDrawLine(ctx, c.offsetWidth, c.offsetHeight, PAD, dwLabels, [
+            {vals: rows.map(r => r.dwell_days != null ? Math.min(+r.dwell_days, 60) : null), color:'#a78bfa', fill:true, step:5},
+            {vals: rows.map(r => r.stay_share != null ? +r.stay_share * 100 : null), color:'#38bdf8', dashed:true, step:10}
+        ]);
+    }
+}
+
+async function initHormuz() {
+    if (_hzInited && _hzRows.length) { hzRedrawAll(); return; }
+    try {
+        const resp = await fetch(
+            SB_URL_HZ + '/rest/v1/hormuz_weekly?select=week,passes,pairs,large_avg,all_avg,stay_share,gone_per_day,dwell_days,n_tanker&order=week&limit=5000',
+            { headers: { apikey: SB_KEY_HZ, Authorization: 'Bearer ' + SB_KEY_HZ } }
+        );
+        if (!resp.ok) throw new Error(resp.status);
+        _hzRows = await resp.json();
+        console.log('[hz] rows:', _hzRows.length, 'dwell non-null:', _hzRows.filter(r=>r.dwell_days!=null).length, 'sample:', JSON.stringify(_hzRows.slice(-3)));
+        if (!Array.isArray(_hzRows) || !_hzRows.length) {
+            document.getElementById('hz-updated').textContent = 'No data loaded';
+            return;
+        }
+        // KPIs: last row for large/gpd/stay; last 4 weeks with dwell_days != null for dwell
+        const last = _hzRows[_hzRows.length - 1];
+        document.getElementById('hz-large').textContent  = last.large_avg  != null ? (+last.large_avg).toFixed(1) : '—';
+        document.getElementById('hz-gpd').textContent    = last.gone_per_day != null ? (+last.gone_per_day).toFixed(2) : '—';
+        document.getElementById('hz-stay').textContent   = last.stay_share != null ? (+last.stay_share * 100).toFixed(0) + '%' : '—';
+        document.getElementById('hz-updated').textContent = 'Updated ' + last.week + ' · orbits 57 & 166';
+        // dwell KPI: avg of last 4 weeks with ≥4 pairs
+        const dwellRows = _hzRows.filter(r => r.dwell_days != null).slice(-4);
+        if (dwellRows.length) {
+            const dwellAvg = dwellRows.reduce((s,r)=>s+(+r.dwell_days),0)/dwellRows.length;
+            document.getElementById('hz-dwell').textContent = dwellAvg > 60 ? '60+' : dwellAvg.toFixed(1);
+        } else {
+            document.getElementById('hz-dwell').textContent = '—';
+        }
+        _hzInited = true;
+        hzRedrawAll();
+    } catch(e) {
+        document.getElementById('hz-updated').textContent = 'Error loading data';
+    }
+}
+
+// range button wiring
+document.addEventListener('DOMContentLoaded', function() {
+    ['a','b','c'].forEach(k => {
+        const wrap = document.getElementById('hz-range-' + k);
+        if (!wrap) return;
+        wrap.querySelectorAll('.aq-rbtn').forEach(btn => {
+            btn.addEventListener('click', () => hzRedraw(k, btn.dataset.r));
+        });
+    });
+});
+
+// ── Gulf Exit + Jask (gulf_exit_passes) ───────────────────────────────────
+let _geRows = [], _jkRows = [], _geInited = false;
+let _geChart = null, _jkChart = null;
+const _geRange = {ge:'1y', jk:'1y'};
+
+function geMonths(r) { return r==='all'?null : r==='1y'?12 : r==='6m'?6 : 3; }
+
+function geFilter(rows, months) {
+    if (!months) return rows;
+    const cut = new Date(); cut.setMonth(cut.getMonth() - months);
+    const cs = cut.toISOString().slice(0,10);
+    return rows.filter(r => r.date >= cs);
+}
+
+function geGroupMonthly(rows, field) {
+    const map = {};
+    rows.forEach(r => {
+        const m = r.date.slice(0,7);
+        if (r[field] == null) return;
+        if (!map[m]) map[m] = {sum:0, n:0};
+        map[m].sum += +r[field]; map[m].n++;
+    });
+    const months = Object.keys(map).sort();
+    return { labels: months, vals: months.map(m => map[m].sum / map[m].n) };
+}
+
+function geRedraw(key, r) {
+    _geRange[key] = r;
+    document.querySelectorAll(`#${key}-range .aq-rbtn`).forEach(b =>
+        b.classList.toggle('aq-rbtn-active', b.dataset.r === r));
+    const months = geMonths(r);
+
+    if (key === 'ge') {
+        const corrRows = geFilter(_geRows, months);
+        const irRows   = geFilter(_jkRows.filter(x => x.zone === 'irlane'), months);
+        const corr = geGroupMonthly(corrRows, 'large');
+        const ir   = geGroupMonthly(irRows, 'large');
+        const allM = [...new Set([...corr.labels, ...ir.labels])].sort();
+        const corrVals = allM.map(m => { const i = corr.labels.indexOf(m); return i>=0 ? corr.vals[i] : null; });
+        const irVals   = allM.map(m => { const i = ir.labels.indexOf(m);   return i>=0 ? ir.vals[i]   : null; });
+
+        // AIS line from hormuz_weekly.n_tanker (monthly avg)
+        let aisVals = null;
+        if (_hzRows && _hzRows.length) {
+            const aisMonths = {};
+            const cutIso = months ? (() => { const d=new Date(); d.setMonth(d.getMonth()-months); return d.toISOString().slice(0,7); })() : null;
+            _hzRows.forEach(r => {
+                if (!r.n_tanker) return;
+                const m = r.week.slice(0,7);
+                if (cutIso && m < cutIso) return;
+                if (!aisMonths[m]) aisMonths[m] = {sum:0,n:0};
+                aisMonths[m].sum += +r.n_tanker; aisMonths[m].n++;
+            });
+            aisVals = allM.map(m => aisMonths[m] ? aisMonths[m].sum/aisMonths[m].n : null);
+        }
+
+        const c = document.getElementById('geChart');
+        if (!c) return;
+        const dpr = window.devicePixelRatio||1;
+        c.width = c.offsetWidth*dpr; c.height = c.offsetHeight*dpr;
+        if (_geChart) { _geChart.destroy(); _geChart = null; }
+        const datasets = [
+            { label:'Corridor', data: corrVals, backgroundColor:'rgba(59,130,246,0.75)', borderRadius:3, barPercentage:0.6, yAxisID:'y' },
+            { label:'IR Lane',  data: irVals,   backgroundColor:'rgba(34,197,94,0.75)',  borderRadius:3, barPercentage:0.6, yAxisID:'y' }
+        ];
+        if (aisVals) datasets.push({
+            label:'AIS tankers/day', data: aisVals, type:'line',
+            borderColor:'rgba(148,163,184,0.85)', backgroundColor:'transparent',
+            borderWidth:1.5, borderDash:[4,3], pointRadius:2, pointBackgroundColor:'rgba(148,163,184,0.85)',
+            yAxisID:'y2', tension:0.3
+        });
+        _geChart = new Chart(c, {
+            type: 'bar',
+            data: { labels: allM, datasets },
+            options: {
+                responsive:false, maintainAspectRatio:false,
+                plugins:{ legend:{display:false}, tooltip:{callbacks:{label: ctx=>`${ctx.dataset.label}: ${ctx.parsed.y!=null?ctx.parsed.y.toFixed(1):'—'}`}} },
+                scales:{
+                    x:{ ticks:{color:'rgba(100,116,139,0.8)',font:{size:10},maxRotation:0}, grid:{color:'rgba(255,255,255,0.05)'} },
+                    y:{ ticks:{color:'rgba(100,116,139,0.8)',font:{size:10}}, grid:{color:'rgba(255,255,255,0.05)'}, beginAtZero:true },
+                    y2:{ position:'right', ticks:{color:'rgba(148,163,184,0.6)',font:{size:9}}, grid:{display:false}, beginAtZero:true, display: !!aisVals }
+                }
+            }
+        });
+    } else {
+        const jk = geFilter(_jkRows.filter(x => x.zone==='jask'), months);
+        const term = geGroupMonthly(jk, 'terminal_n');
+        const anch = geGroupMonthly(jk, 'anchorage_n');
+        const allM = [...new Set([...term.labels, ...anch.labels])].sort();
+        const termVals = allM.map(m => { const i=term.labels.indexOf(m); return i>=0?term.vals[i]:null; });
+        const anchVals = allM.map(m => { const i=anch.labels.indexOf(m); return i>=0?anch.vals[i]:null; });
+
+        const c = document.getElementById('jkChart');
+        if (!c) return;
+        const dpr = window.devicePixelRatio||1;
+        c.width = c.offsetWidth*dpr; c.height = c.offsetHeight*dpr;
+        if (_jkChart) { _jkChart.destroy(); _jkChart = null; }
+        _jkChart = new Chart(c, {
+            type: 'bar',
+            data: {
+                labels: allM,
+                datasets: [
+                    { label:'Terminal',  data: termVals, backgroundColor:'rgba(245,158,11,0.75)', borderRadius:3, barPercentage:0.6 },
+                    { label:'Anchorage', data: anchVals, backgroundColor:'rgba(167,139,250,0.75)',borderRadius:3, barPercentage:0.6 }
+                ]
+            },
+            options: {
+                responsive:false, maintainAspectRatio:false,
+                plugins:{ legend:{display:false}, tooltip:{callbacks:{label: ctx=>`${ctx.dataset.label}: ${ctx.parsed.y!=null?ctx.parsed.y.toFixed(1):'—'}`}} },
+                scales:{
+                    x:{ ticks:{color:'rgba(100,116,139,0.8)',font:{size:10},maxRotation:0}, grid:{color:'rgba(255,255,255,0.05)'} },
+                    y:{ ticks:{color:'rgba(100,116,139,0.8)',font:{size:10}}, grid:{color:'rgba(255,255,255,0.05)'}, beginAtZero:true }
+                }
+            }
+        });
+    }
+}
+
+function geWeeklyAvg(rows, field, startIso, endIso) {
+    const vals = rows.filter(r => r.date >= startIso && r.date <= endIso && r[field] != null).map(r => +r[field]);
+    return vals.length ? vals.reduce((a,b)=>a+b,0)/vals.length : null;
+}
+
+function geKpiPct(curr, base) {
+    if (curr == null || base == null || base === 0) return null;
+    return ((curr - base) / base * 100);
+}
+
+function geKpiText(val, suffix) {
+    if (val == null) return '—';
+    return (val >= 0 ? '+' : '') + val.toFixed(0) + (suffix||'%');
+}
+
+async function initGulfExit() {
+    if (_geInited) { geRedraw('ge', _geRange.ge); geRedraw('jk', _geRange.jk); return; }
+    try {
+        const resp = await fetch(
+            SB_URL_HZ + '/rest/v1/gulf_exit_passes?select=date,zone,large,vlcc,moving,stay,terminal_n,terminal_vlcc,anchorage_n,anchorage_vlcc&order=date&limit=5000',
+            { headers: { apikey: SB_KEY_HZ, Authorization: 'Bearer ' + SB_KEY_HZ } }
+        );
+        if (!resp.ok) throw new Error(resp.status);
+        const all = await resp.json();
+        if (!Array.isArray(all)) return;
+
+        _geRows = all.filter(r => r.zone === 'corridor');
+        const irRows = all.filter(r => r.zone === 'irlane');
+        _jkRows = all.filter(r => r.zone === 'irlane' || r.zone === 'jask');
+
+        // KPI: last 4 weeks
+        const now = new Date();
+        const w4ago = new Date(now); w4ago.setDate(w4ago.getDate() - 28);
+        const w4s = w4ago.toISOString().slice(0,10);
+        const w4e = now.toISOString().slice(0,10);
+        // 2025 baseline: 2025-01-01 → 2025-12-31
+        const y25s = '2025-01-01', y25e = '2025-12-31';
+
+        // Radar KPI: (corridor.large + irlane.large) avg last 4 wks vs 2025
+        const radarCurr = (() => {
+            const c = geWeeklyAvg(_geRows, 'large', w4s, w4e);
+            const i = geWeeklyAvg(irRows, 'large', w4s, w4e);
+            return (c != null && i != null) ? (c+i)/2 : (c ?? i);
+        })();
+        const radarBase = (() => {
+            const c = geWeeklyAvg(_geRows, 'large', y25s, y25e);
+            const i = geWeeklyAvg(irRows, 'large', y25s, y25e);
+            return (c != null && i != null) ? (c+i)/2 : (c ?? i);
+        })();
+        const radarPct = geKpiPct(radarCurr, radarBase);
+        document.getElementById('ge-kpi-radar').textContent = geKpiText(radarPct);
+        document.getElementById('ge-kpi-radar-sub').textContent =
+            radarCurr != null ? `${radarCurr.toFixed(1)} ships/pass · vs 2025 avg` : 'last 4 wks vs 2025 avg';
+
+        // AIS KPI: from _hzRows (hormuz_weekly.n_tanker)
+        if (_hzRows && _hzRows.length) {
+            const aisRows4w = _hzRows.filter(r => r.week >= w4s && r.n_tanker != null);
+            const aisRows25 = _hzRows.filter(r => r.week >= y25s && r.week <= y25e && r.n_tanker != null);
+            const aisCurr = aisRows4w.length ? aisRows4w.reduce((s,r)=>s+(+r.n_tanker),0)/aisRows4w.length : null;
+            const aisBase = aisRows25.length ? aisRows25.reduce((s,r)=>s+(+r.n_tanker),0)/aisRows25.length : null;
+            const aisPct = geKpiPct(aisCurr, aisBase);
+            document.getElementById('ge-kpi-ais').textContent = geKpiText(aisPct);
+            document.getElementById('ge-kpi-ais-sub').textContent =
+                aisCurr != null ? `${aisCurr.toFixed(1)} t/day · vs 2025 avg` : 'last 4 wks vs 2025 avg';
+        }
+
+        // IR share KPI
+        const irCurr4 = geWeeklyAvg(irRows, 'large', w4s, w4e);
+        const corrCurr4 = geWeeklyAvg(_geRows, 'large', w4s, w4e);
+        const irShare4 = (irCurr4 != null && corrCurr4 != null && (irCurr4+corrCurr4) > 0)
+            ? irCurr4/(irCurr4+corrCurr4)*100 : null;
+        const irCurr25 = geWeeklyAvg(irRows, 'large', y25s, y25e);
+        const corrCurr25 = geWeeklyAvg(_geRows, 'large', y25s, y25e);
+        const irShare25 = (irCurr25 != null && corrCurr25 != null && (irCurr25+corrCurr25) > 0)
+            ? irCurr25/(irCurr25+corrCurr25)*100 : null;
+        document.getElementById('ge-kpi-ir').textContent =
+            irShare4 != null ? irShare4.toFixed(0)+'%' : '—';
+        document.getElementById('ge-kpi-ir-sub').textContent =
+            (irShare4 != null && irShare25 != null)
+                ? `${irShare4.toFixed(0)}% now vs ${irShare25.toFixed(0)}% (2025)`
+                : 'irlane / (corr+ir) · 4 wks vs 2025';
+
+        // Jask KPIs
+        const jkLast = all.filter(r => r.zone==='jask').slice(-1)[0];
+        if (jkLast) {
+            document.getElementById('jk-term-n').textContent    = jkLast.terminal_n    ?? '—';
+            document.getElementById('jk-term-vlcc').textContent = jkLast.terminal_vlcc ?? '—';
+            document.getElementById('jk-anch-n').textContent    = jkLast.anchorage_n   ?? '—';
+            document.getElementById('jk-anch-vlcc').textContent = jkLast.anchorage_vlcc ?? '—';
+        }
+        _geInited = true;
+        geRedraw('ge', _geRange.ge);
+        geRedraw('jk', _geRange.jk);
+    } catch(e) { console.error('gulf_exit_passes:', e); }
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    ['ge','jk'].forEach(key => {
+        const wrap = document.getElementById(key + '-range');
+        if (!wrap) return;
+        wrap.querySelectorAll('.aq-rbtn').forEach(btn => {
+            btn.addEventListener('click', () => geRedraw(key, btn.dataset.r));
+        });
+    });
+});
+</script>
+<script>
 (function(){
-  const BERTH_LABELS = {
-    'sea_island': 'Sea Island',
-    'east_t_head': 'East T-Head',
-    'southeast_pier': 'SE Pier'
-  };
-  const VLCC_COLOR = '#ef4444';
-  const SUEZ_COLOR = '#f97316';
-  const EMP_COLOR  = '#1f2937';
+  'use strict';
+  var BERTHS = ['sea_island','east_t_head','southeast_pier'];
+  var boLoaded = false;
 
-  var boData = null;
+  // Oil cargo estimates (full load, Mb)
+  var OIL_EST = { VLCC: 2.0, SuezAframax: 0.85, 'n/a': 0.7 };
 
-  function renderMetrics(m) {
-    if (!m) return;
-    var $ = function(id){ return document.getElementById(id); };
-    var lw = m.loadings_4w;
-    if ($('bo-load4w')) $('bo-load4w').textContent = lw ? lw.total : '—';
-    if ($('bo-load4w-sub') && lw) {
-      var parts = [];
-      if (lw.VLCC)        parts.push(lw.VLCC + ' VLCC');
-      if (lw.SuezAframax) parts.push(lw.SuezAframax + ' Suezmax/Aframax');
-      $('bo-load4w-sub').textContent = parts.join(' · ');
-    }
-    if ($('bo-load4w-py') && m.loadings_4w_py)
-      $('bo-load4w-py').textContent = 'Год назад: ' + m.loadings_4w_py.total;
-    if ($('bo-lastship') && m.last_ship)
-      $('bo-lastship').textContent = m.last_ship.class || '—';
-    if ($('bo-lastship-sub') && m.last_ship) {
-      var ls = m.last_ship;
-      $('bo-lastship-sub').textContent = ls.date + ' · ' + (BERTH_LABELS[ls.berth] || ls.berth) + ' · ' + ls.len_m + ' м';
-    }
-    if ($('bo-daysnone'))
-      $('bo-daysnone').textContent = (m.days_since_loading !== null && m.days_since_loading !== undefined) ? m.days_since_loading : '—';
-    if ($('bo-daysnone-sub') && m.last_ship)
-      $('bo-daysnone-sub').textContent = 'последняя: ' + m.last_ship.date;
+  function hullClass(len_m, berth) {
+    if (berth === 'southeast_pier') return 'n/a';
+    if (len_m >= 300) return 'VLCC';
+    if (len_m >= 200) return 'SuezAframax';
+    return null;  // 150-200m not shown
   }
 
-  function renderHeatmap(passes) {
-    var container = document.getElementById('bo-heatmap');
-    if (!container || !passes || !passes.length) return;
-    var cutoff = new Date();
-    cutoff.setFullYear(cutoff.getFullYear() - 1);
-    var recent = passes.filter(function(p){ return new Date(p.date) >= cutoff; });
-    if (!recent.length) return;
-    var BERTHS = ['sea_island','east_t_head','southeast_pier'];
-    var berth_order = {sea_island:0, east_t_head:1, southeast_pier:2};
-    var rowSet = {};
-    recent.forEach(function(p){
-      BERTHS.forEach(function(b){
-        var bd = p[b];
-        if (!bd) return;
-        (bd.hulls||[]).forEach(function(h){ rowSet[b+':'+h.side] = true; });
-      });
+  function displayClass(h, berth) {
+    if (berth === 'southeast_pier') return 'n/a';
+    var c = h['class'] || '';
+    if (c === 'VLCC') return 'VLCC';
+    if (c === 'SuezAframax') return 'SuezAframax';
+    if (c === 'hull <200m') return null;  // hide occupied
+    return hullClass(h.len_m || 0, berth);
+  }
+
+  function clsColor(cls) {
+    if (cls === 'VLCC') return '#f87171';
+    if (cls === 'SuezAframax') return '#fbbf24';
+    return '#64748b';
+  }
+
+  function fmtDate(d) {
+    if (!d) return '—';
+    var p = d.split('-');
+    if (p.length !== 3) return d;
+    var mo = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    return parseInt(p[2]) + ' ' + mo[parseInt(p[1])-1] + ' ' + p[0];
+  }
+
+  function fmtBerth(b) {
+    if (b === 'sea_island') return 'Sea Island';
+    if (b === 'east_t_head') return 'East T-Head';
+    if (b === 'southeast_pier') return 'SE Pier';
+    return b;
+  }
+
+  function pad2(n) { return String(n).padStart(2,'0'); }
+
+  function cutoffDate(range) {
+    var today = new Date();
+    if (range === '3m') { var c = new Date(today); c.setMonth(c.getMonth()-3); return c; }
+    if (range === '6m') { var c = new Date(today); c.setMonth(c.getMonth()-6); return c; }
+    if (range === '1y') { var c = new Date(today); c.setFullYear(c.getFullYear()-1); return c; }
+    return null;
+  }
+
+  // ── Block 1: Cards ─────────────────────────────────────────────────────────
+  function renderCards(data) {
+    var visits = (data.visits || [])
+      .filter(function(v){ return v.class_max === 'VLCC' || v.class_max === 'SuezAframax'; })
+      .slice().sort(function(a,b){ return a.start_date < b.start_date ? 1 : -1; });
+    var today = new Date();
+    var cutoff4w = new Date(today); cutoff4w.setDate(cutoff4w.getDate()-28);
+    var cutoff4wPY = new Date(today); cutoff4wPY.setDate(cutoff4wPY.getDate()-28-365);
+    var end4wPY = new Date(today); end4wPY.setDate(end4wPY.getDate()-365);
+
+    var v4w = visits.filter(function(v){ return new Date(v.start_date) >= cutoff4w; });
+    var v4wPY = visits.filter(function(v){ var d = new Date(v.start_date); return d >= cutoff4wPY && d < end4wPY; });
+
+    var total4w = v4w.length, total4wPY = v4wPY.length;
+    var vlcc4w = v4w.filter(function(v){ return v.class_max === 'VLCC'; }).length;
+    var sm4w = total4w - vlcc4w;
+
+    var oil4w = 0;
+    v4w.forEach(function(v) {
+      if (v.berth === 'southeast_pier') oil4w += 0.7;
+      else if (v.class_max === 'VLCC') oil4w += 2.0;
+      else oil4w += 0.85;
     });
-    var rowKeys = Object.keys(rowSet).length > 0
-      ? Object.keys(rowSet).sort(function(a,b){
-          var ab=a.split(':')[0], as_=a.split(':')[1], bb=b.split(':')[0], bs=b.split(':')[1];
-          var d = berth_order[ab]-berth_order[bb];
-          return d!==0 ? d : parseInt(as_)-parseInt(bs);
-        })
-      : BERTHS.map(function(b){ return b+':main'; });
-    var rowLabel = function(key){
-      var berth=key.split(':')[0], side=key.split(':')[1];
-      var lbl = BERTH_LABELS[berth]||berth;
-      return side==='main' ? lbl : lbl+' '+(side==='1'?'A':'B');
-    };
-    var CELL_W=10, CELL_H=16, ROW_LABEL_W=92, HEADER_H=20;
-    var nCols=recent.length, nRows=rowKeys.length;
-    var W=ROW_LABEL_W+nCols*CELL_W+2, H=HEADER_H+nRows*CELL_H+2;
-    var NS='http://www.w3.org/2000/svg';
-    var svg=document.createElementNS(NS,'svg');
-    svg.setAttribute('width',W); svg.setAttribute('height',H);
-    svg.style.cssText='font-family:monospace,system-ui;display:block';
-    var lastMon='';
-    recent.forEach(function(p,ci){
-      var mon=p.date.slice(0,7);
-      if(mon!==lastMon){lastMon=mon;
-        var t=document.createElementNS(NS,'text');
-        t.setAttribute('x',ROW_LABEL_W+ci*CELL_W+1); t.setAttribute('y',HEADER_H-4);
-        t.setAttribute('font-size','7'); t.setAttribute('fill','#6b7280');
-        t.textContent=p.date.slice(5,7)+'/'+p.date.slice(2,4); svg.appendChild(t);
+
+    var deltaTxt = '', deltaClr = 'var(--dim)';
+    if (total4w === 0 && total4wPY === 0) { deltaTxt = '—'; }
+    else if (total4wPY === 0 && total4w > 0) { deltaTxt = ''; }
+    else if (total4w === 0 && total4wPY > 0) { deltaTxt = '▼ 100% vs year ago'; deltaClr = 'var(--red)'; }
+    else if (total4wPY > 0) {
+      var pct = (total4w - total4wPY) / total4wPY * 100;
+      deltaTxt = (pct >= 0 ? '▲ ' : '▼ ') + Math.abs(pct).toFixed(0) + '% vs year ago';
+      deltaClr = pct >= 0 ? 'var(--green)' : 'var(--red)';
+    }
+
+    var lastV = visits[0];
+    var card2Val = '—', card2Sub = '', daysSince = '—';
+    if (lastV) {
+      var cls = lastV.berth === 'southeast_pier' ? 'n/a' : (lastV.class_max || '—');
+      card2Val = cls;
+      card2Sub = cls + ' · ' + fmtBerth(lastV.berth) + ' · ' + fmtDate(lastV.start_date);
+      daysSince = String(Math.floor((today - new Date(lastV.start_date)) / 86400000));
+    }
+
+    var c2clr = lastV ? clsColor(lastV.berth === 'southeast_pier' ? '' : (lastV.class_max || '')) : '#64748b';
+    var wrap = document.getElementById('bo2-cards');
+    if (!wrap) return;
+
+    var oilStr = oil4w > 0 ? oil4w.toFixed(2) : '—';
+    wrap.innerHTML =
+      '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:1rem">' +
+      '<div style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:1rem 1.25rem">' +
+        '<div style="font-size:0.6rem;letter-spacing:1px;text-transform:uppercase;color:var(--muted);margin-bottom:0.4rem">Loadings, last 4 weeks</div>' +
+        '<div style="font-size:2rem;font-weight:700;color:var(--accent);font-family:\'Space Grotesk\',sans-serif;line-height:1.1">' + total4w + '</div>' +
+        '<div style="font-size:0.7rem;color:var(--muted);margin-top:0.3rem">' + vlcc4w + ' VLCC &nbsp; ' + sm4w + ' smaller &nbsp; <span style="color:' + deltaClr + '">' + deltaTxt + '</span></div>' +
+      '</div>' +
+      '<div style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:1rem 1.25rem">' +
+        '<div style="font-size:0.6rem;letter-spacing:1px;text-transform:uppercase;color:var(--muted);margin-bottom:0.4rem">Oil loaded, last 4 weeks</div>' +
+        '<div style="font-size:2rem;font-weight:700;color:#38bdf8;font-family:\'Space Grotesk\',sans-serif;line-height:1.1">' + oilStr + '</div>' +
+        '<div style="font-size:0.7rem;color:var(--dim);margin-top:0.3rem">Mb estimate · assumes full cargo</div>' +
+      '</div>' +
+      '<div style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:1rem 1.25rem">' +
+        '<div style="font-size:0.6rem;letter-spacing:1px;text-transform:uppercase;color:var(--muted);margin-bottom:0.4rem">Last ship</div>' +
+        '<div style="font-size:2rem;font-weight:700;color:' + c2clr + ';font-family:\'Space Grotesk\',sans-serif;line-height:1.1">' + card2Val + '</div>' +
+        (lastV ? '<div style="font-size:0.7rem;color:var(--muted);margin-top:0.15rem">' + fmtBerth(lastV.berth) + '</div><div style="font-size:0.68rem;color:var(--dim);margin-top:0.1rem">' + fmtDate(lastV.start_date) + '</div>' : '<div style="font-size:0.7rem;color:var(--muted);margin-top:0.3rem">—</div>') +
+      '</div>' +
+      '<div style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:1rem 1.25rem">' +
+        '<div style="font-size:0.6rem;letter-spacing:1px;text-transform:uppercase;color:var(--muted);margin-bottom:0.4rem">Days since last loading</div>' +
+        '<div style="font-size:2rem;font-weight:700;color:var(--text);font-family:\'Space Grotesk\',sans-serif;line-height:1.1">' + daysSince + '</div>' +
+        '<div style="font-size:0.7rem;color:var(--muted);margin-top:0.3rem"></div>' +
+      '</div>' +
+      '</div>';
+  }
+
+  // ── Block 2: Loadings per Month chart ──────────────────────────────────────
+  var _boChart = null;
+
+  function renderChart(data, range) {
+    var visits = (data.visits || []).filter(function(v){ return v.class_max === 'VLCC' || v.class_max === 'SuezAframax'; });
+    var co = cutoffDate(range);
+    if (co) visits = visits.filter(function(v){ return new Date(v.start_date) >= co; });
+
+    var months = {}, order = [];
+    visits.forEach(function(v) {
+      var m = v.start_date.slice(0,7);
+      if (!months[m]) { months[m] = {vlcc:0, suez:0, na:0}; order.push(m); }
+      if (v.berth === 'southeast_pier') months[m].na++;
+      else if (v.class_max === 'VLCC') months[m].vlcc++;
+      else months[m].suez++;
+    });
+    order.sort();
+
+    var moNames = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    var labels = order.map(function(m){ var p=m.split('-'); return moNames[parseInt(p[1])-1]+' '+p[0].slice(2); });
+    var vlccData = order.map(function(m){ return months[m].vlcc; });
+    var suezData = order.map(function(m){ return months[m].suez; });
+    var naData   = order.map(function(m){ return months[m].na; });
+
+    var canvas = document.getElementById('bo2-chart');
+    var wrap = document.getElementById('bo2-chart-wrap');
+    if (!canvas || !wrap) return;
+    wrap.style.display = '';
+
+    if (_boChart) { _boChart.destroy(); _boChart = null; }
+    _boChart = new Chart(canvas.getContext('2d'), {
+      type: 'bar',
+      data: {
+        labels: labels,
+        datasets: [
+          { label:'VLCC',        data:vlccData, backgroundColor:'#f87171', stack:'s' },
+          { label:'SuezAframax', data:suezData, backgroundColor:'#fbbf24', stack:'s' },
+          { label:'n/a',         data:naData,   backgroundColor:'#64748b', stack:'s' }
+        ]
+      },
+      options: {
+        responsive:true, maintainAspectRatio:false,
+        plugins:{
+          legend:{display:false},
+          tooltip:{mode:'index',intersect:false}
+        },
+        scales:{
+          x:{ stacked:true, grid:{color:'rgba(148,163,184,0.1)'}, ticks:{color:'rgba(148,163,184,0.7)',font:{size:11}} },
+          y:{ stacked:true, beginAtZero:true, grid:{color:'rgba(148,163,184,0.1)'}, ticks:{color:'rgba(148,163,184,0.7)',font:{size:11},stepSize:1} }
+        }
       }
     });
-    rowKeys.forEach(function(rowKey,ri){
-      var berth=rowKey.split(':')[0], side=rowKey.split(':')[1];
-      var y=HEADER_H+ri*CELL_H;
-      var lbl=document.createElementNS(NS,'text');
-      lbl.setAttribute('x',ROW_LABEL_W-4); lbl.setAttribute('y',y+CELL_H/2+3);
-      lbl.setAttribute('font-size','7.5'); lbl.setAttribute('fill','#9ca3af');
-      lbl.setAttribute('text-anchor','end'); lbl.textContent=rowLabel(rowKey); svg.appendChild(lbl);
-      recent.forEach(function(p,ci){
-        var bd=p[berth]||{}, hulls=bd.hulls||[], det=bd.det||'';
-        var fillColor=EMP_COLOR, tipText=p.date+' o'+p.orbit+' · '+(BERTH_LABELS[berth]||berth);
-        if(side==='main'){
-          var best=hulls.length?hulls.reduce(function(a,b){return a.len_m>b.len_m?a:b;}):null;
-          if(best){fillColor=best.class==='VLCC'?VLCC_COLOR:SUEZ_COLOR;
-            tipText+='\n'+best.class+' · '+best.len_m+'m'+(best.new_load?' · новое':' · то же');}
-          else if(det==='OCC'){fillColor=SUEZ_COLOR;}
+  }
+
+  // ── Block 3: Pass log (grouped by ~6-day Sentinel-1 cycle) ────────────────
+  function renderPassLog(data, range) {
+    var passes = (data.passes || []).slice().sort(function(a,b){ return a.date < b.date ? 1 : -1; });
+    var co = cutoffDate(range);
+    if (co) passes = passes.filter(function(p){ return new Date(p.date) >= co; });
+
+    var tbody = document.getElementById('bo2-pass-body');
+    var wrap = document.getElementById('bo2-passlog-wrap');
+    if (!tbody || !wrap) return;
+    wrap.style.display = '';
+
+    // Group consecutive passes within 4 days into one cycle row
+    var cycles = [];
+    passes.forEach(function(p) {
+      if (cycles.length === 0) { cycles.push([p]); return; }
+      var last = cycles[cycles.length - 1];
+      var gapDays = (new Date(last[0].date) - new Date(p.date)) / 86400000;
+      if (gapDays <= 4) last.push(p);
+      else cycles.push([p]);
+    });
+
+    var rows = [];
+    cycles.forEach(function(cycle) {
+      // Aggregate per berth: best class + new flag across all passes in cycle
+      var berthCls = {}, berthNew = {};
+      BERTHS.forEach(function(b){ berthCls[b] = null; berthNew[b] = false; });
+
+      cycle.forEach(function(p) {
+        BERTHS.forEach(function(b) {
+          (p[b] || {}).hulls && p[b].hulls.forEach(function(h) {
+            var cls = displayClass(h, b);
+            if (!cls) return;
+            if (!berthCls[b] || cls === 'VLCC') berthCls[b] = cls;
+            else if (cls === 'SuezAframax' && berthCls[b] !== 'VLCC') berthCls[b] = cls;
+            else if (cls === 'n/a' && !berthCls[b]) berthCls[b] = cls;
+            if (h.new_load === true || h.new_load === 'True') berthNew[b] = true;
+          });
+        });
+      });
+
+      var shipCount = 0;
+      BERTHS.forEach(function(b){ if (berthCls[b]) shipCount++; });
+
+      // Oil estimate: sum new loadings this cycle
+      var oilCycle = 0;
+      BERTHS.forEach(function(b) {
+        if (!berthNew[b] || !berthCls[b]) return;
+        if (b === 'southeast_pier') oilCycle += 0.7;
+        else if (berthCls[b] === 'VLCC') oilCycle += 2.0;
+        else oilCycle += 0.85;
+      });
+
+      var dateStr = cycle[0].date;
+      var orbitSet = [];
+      cycle.forEach(function(p){ var o = 'o'+p.orbit; if (orbitSet.indexOf(o)<0) orbitSet.push(o); });
+      var orbits = orbitSet.join('+');
+
+      var cells = BERTHS.map(function(b) {
+        var cls = berthCls[b];
+        if (!cls) return '<td style="text-align:center;padding:0.3rem 0.5rem;color:#374151">—</td>';
+        var clr = cls === 'VLCC' ? '#f87171' : cls === 'SuezAframax' ? '#fbbf24' : '#64748b';
+        var newBadge = berthNew[b]
+          ? ' <span style="font-size:0.58rem;background:#22c55e22;color:#22c55e;padding:0 3px;border-radius:2px;font-family:monospace">new</span>' : '';
+        return '<td style="text-align:center;padding:0.3rem 0.5rem"><span style="color:' + clr + '">' + cls + '</span>' + newBadge + '</td>';
+      });
+
+      var oilCell = oilCycle > 0
+        ? '<td style="text-align:center;padding:0.3rem 0.5rem;color:#38bdf8;font-variant-numeric:tabular-nums">' + oilCycle.toFixed(2) + '</td>'
+        : '<td style="text-align:center;padding:0.3rem 0.5rem;color:#374151">—</td>';
+
+      rows.push('<tr style="border-bottom:1px solid rgba(255,255,255,0.03)">' +
+        '<td style="padding:0.3rem 0.5rem;color:var(--muted);white-space:nowrap">' + fmtDate(dateStr) + '</td>' +
+        '<td style="text-align:center;padding:0.3rem 0.5rem;color:var(--dim);font-size:0.68rem">' + orbits + '</td>' +
+        cells.join('') +
+        '<td style="text-align:center;padding:0.3rem 0.5rem;color:var(--muted)">' + (shipCount > 0 ? shipCount : '—') + '</td>' +
+        oilCell + '</tr>');
+    });
+    tbody.innerHTML = rows.join('');
+  }
+
+  // ── Block 4: Snapshots ─────────────────────────────────────────────────────
+  function renderSnaps(data, snaps) {
+    var wrap = document.getElementById('bo2-snaps-wrap');
+    if (!wrap) return;
+    var passes = data.passes || [];
+
+    function renderPanel(panelId, snapKey, labelTxt, accent) {
+      var panel = document.getElementById(panelId);
+      if (!panel) return;
+      var snap = snaps[snapKey] || (snapKey === 'last_ship' ? snaps['prev'] : null);
+      if (!snap || !snap.url) {
+        panel.innerHTML = '<div style="font-size:0.65rem;color:var(--dim);padding:1rem 0">' + labelTxt + ': no data</div>';
+        return;
+      }
+
+      var pass = null;
+      for (var i = 0; i < passes.length; i++) {
+        if (passes[i].date === snap.date && String(passes[i].orbit) === String(snap.orbit)) { pass = passes[i]; break; }
+      }
+      if (!pass) pass = {};
+
+      var labels = [];
+      BERTHS.forEach(function(b) {
+        var hulls = (pass[b] || {}).hulls || [];
+        var largeHulls = hulls.filter(function(h){ return !!displayClass(h, b); });
+        if (largeHulls.length > 0) {
+          largeHulls.forEach(function(h) {
+            var cls = displayClass(h, b);
+            var clr = clsColor(cls);
+            var arr = (h.arrived === true || h.arrived === 'True') ? 'arrived' : 'same';
+            labels.push({ lbl: fmtBerth(b) + ': ' + cls + ' · ' + arr, clr: clr });
+          });
         } else {
-          var h=hulls.find(function(h){return String(h.side)===side;});
-          if(h){fillColor=h.class==='VLCC'?VLCC_COLOR:SUEZ_COLOR;
-            tipText+='\nСторона '+(side==='1'?'A':'B')+' · '+h.class+' · '+h.len_m+'m'+(h.new_load?' · новое':' · то же');}
+          labels.push({ lbl: fmtBerth(b) + ': empty', clr: '#374151' });
         }
-        var rect=document.createElementNS(NS,'rect');
-        rect.setAttribute('x',ROW_LABEL_W+ci*CELL_W+1); rect.setAttribute('y',y+1);
-        rect.setAttribute('width',CELL_W-2); rect.setAttribute('height',CELL_H-2);
-        rect.setAttribute('fill',fillColor); rect.setAttribute('rx','1');
-        var title=document.createElementNS(NS,'title'); title.textContent=tipText;
-        rect.appendChild(title); svg.appendChild(rect);
       });
+
+      var vlcc = 0, sm = 0;
+      BERTHS.forEach(function(b) {
+        (pass[b] && pass[b].hulls || []).forEach(function(h) {
+          var c = displayClass(h, b);
+          if (c === 'VLCC') vlcc++;
+          else if (c) sm++;
+        });
+      });
+
+      panel.innerHTML =
+        '<div style="font-size:0.6rem;letter-spacing:1px;text-transform:uppercase;color:' + accent + ';margin-bottom:0.5rem">' + labelTxt + ' · ' + snap.date + ' · o' + snap.orbit + '</div>' +
+        '<img src="' + snap.url + '" alt="' + snapKey + ' SAR pass" style="width:100%;border-radius:4px;display:block;margin-bottom:0.5rem" loading="lazy">' +
+        '<div style="display:flex;flex-direction:column;gap:0.2rem;font-size:0.68rem">' +
+        labels.map(function(l){ return '<span style="color:' + l.clr + '">' + l.lbl + '</span>'; }).join('') +
+        '</div>' +
+        '<div style="margin-top:0.5rem;font-size:0.65rem;color:var(--muted)">At berths: ' + (vlcc+sm) + ' (VLCC ' + vlcc + ', smaller ' + sm + ')</div>';
+    }
+
+    renderPanel('bo2-snap-prev',   'last_ship', 'Last ship seen', 'var(--muted)');
+    renderPanel('bo2-snap-latest', 'latest',    'Latest pass',    'var(--accent)');
+    wrap.style.display = '';
+  }
+
+  // ── Block 5: Details — lazy, collapsed ─────────────────────────────────────
+  function renderDetails(data) {
+    var tbody = document.getElementById('bo2-det-body');
+    if (!tbody || tbody.dataset.filled) return;
+    tbody.dataset.filled = '1';
+
+    var passes = (data.passes || []).slice().sort(function(a,b){ return a.date < b.date ? 1 : -1; });
+    var rows = [];
+    passes.forEach(function(p) {
+      var cellHtml = BERTHS.map(function(b) {
+        var bd = p[b] || {}, det = bd.det || '—', hulls = bd.hulls || [];
+        if (det === 'OCC' && hulls.length > 0) {
+          var large = hulls.filter(function(h){ return h['class'] === 'VLCC' || h['class'] === 'SuezAframax'; });
+          var vc = large.filter(function(h){ return h['class'] === 'VLCC'; }).length;
+          if (!large.length) return '<td style="text-align:center;padding:0.25rem 0.4rem;color:#374151">·</td>';
+          return '<td style="text-align:center;padding:0.25rem 0.4rem"><span style="color:#3b82f6;font-weight:600">' + (large.length > 1 ? large.length + '×' : '●') + '</span>' + (vc ? ' <span style="color:#fbbf24;font-size:0.6rem">V</span>' : '') + '</td>';
+        }
+        if (det === 'EMP') return '<td style="text-align:center;padding:0.25rem 0.4rem;color:#374151">·</td>';
+        return '<td style="text-align:center;padding:0.25rem 0.4rem;color:#374151">—</td>';
+      }).join('');
+
+      var allH = [];
+      BERTHS.forEach(function(b){ allH = allH.concat((p[b]||{}).hulls||[]); });
+      var nl = allH.filter(function(h){ return h.new_load === true || h.new_load === 'True'; }).length;
+
+      rows.push('<tr style="border-bottom:1px solid rgba(255,255,255,0.02)">' +
+        '<td style="padding:0.25rem 0.4rem;color:var(--muted)">' + p.date + '</td>' +
+        '<td style="text-align:center;padding:0.25rem 0.4rem;color:var(--dim)">o' + p.orbit + '</td>' +
+        cellHtml +
+        '<td style="text-align:center;padding:0.25rem 0.4rem;color:' + (nl > 0 ? '#34d399' : '#374151') + '">' + (nl > 0 ? '+'+nl : '—') + '</td></tr>');
     });
-    container.innerHTML=''; container.appendChild(svg);
+    tbody.innerHTML = rows.join('');
   }
 
-  function renderLoadingList(loadings) {
-    var wrap=document.getElementById('bo-loadings-list');
-    var empty=document.getElementById('bo-loadings-empty');
-    if(!wrap) return;
-    if(!loadings||!loadings.length){if(empty)empty.style.display='';return;}
-    var getWeek=function(dateStr){
-      var d=new Date(dateStr), day=d.getUTCDay()||7;
-      d.setUTCDate(d.getUTCDate()-day+1); return d.toISOString().slice(0,10);
-    };
-    var sorted=loadings.slice().reverse(), weeks={};
-    sorted.forEach(function(l){ var wk=getWeek(l.date); if(!weeks[wk])weeks[wk]=[]; weeks[wk].push(l); });
-    var html=[];
-    Object.keys(weeks).sort().reverse().forEach(function(wk){
-      html.push('<div style="border-top:1px solid rgba(255,255,255,0.05);padding:4px 0 2px">');
-      html.push('<div style="font-size:0.6rem;letter-spacing:1px;text-transform:uppercase;color:var(--dim);padding:2px 0 4px">'+wk+'</div>');
-      weeks[wk].forEach(function(l){
-        var color=l.class==='VLCC'?VLCC_COLOR:SUEZ_COLOR;
-        html.push('<div style="display:flex;gap:0.75rem;align-items:center;padding:3px 0;font-size:0.72rem;color:var(--muted)">');
-        html.push('<span style="color:'+color+';font-weight:700;min-width:70px">'+l.class+'</span>');
-        html.push('<span style="color:var(--text);font-variant-numeric:tabular-nums;min-width:50px">'+l.len_m+' м</span>');
-        html.push('<span>'+(BERTH_LABELS[l.berth]||l.berth)+'</span>');
-        html.push('<span style="color:var(--dim)">'+l.date+' · o'+l.orbit+'</span>');
-        html.push('</div>');
-      });
-      html.push('</div>');
-    });
-    wrap.innerHTML=html.join('');
-  }
-
-  function loadSnapshots() {
-    fetch('/data/berth_snapshots.json').then(function(r){return r.json();}).then(function(snaps){
-      var wrap=document.getElementById('bo-snaps');
-      if(!wrap) return;
-      var any=false;
-      [['prev','bo-snap-prev-link','bo-snap-prev-img','bo-snap-prev-meta','bo-snap-prev-sum'],
-       ['latest','bo-snap-latest-link','bo-snap-latest-img','bo-snap-latest-meta','bo-snap-latest-sum']
-      ].forEach(function(arr){
-        var key=arr[0],lid=arr[1],iid=arr[2],mid=arr[3],sid=arr[4];
-        var s=snaps[key]; if(!s||!s.url) return;
-        var link=document.getElementById(lid), img=document.getElementById(iid);
-        var meta=document.getElementById(mid), sum=document.getElementById(sid);
-        if(link)link.href=s.url; if(img)img.src=s.url;
-        if(meta)meta.textContent=s.date+' · o'+s.orbit;
-        if(sum)sum.textContent=s.summary||''; any=true;
-      });
-      var change=document.getElementById('bo-snap-change');
-      if(change&&snaps.change)change.textContent=snaps.change;
-      if(any)wrap.style.display='';
-    }).catch(function(){});
-  }
-
-  function renderLegacy(d) {
-    var passesMap={};
-    (d.rows||[]).forEach(function(r){
-      var key=r.date+'_'+r.orbit;
-      if(!passesMap[key])passesMap[key]={date:r.date,orbit:r.orbit};
-      ['sea_island','east_t_head','southeast_pier'].forEach(function(b){
-        if(r[b])passesMap[key][b]={det:r[b],hulls:[]};
-      });
-    });
-    var passes=Object.values(passesMap).sort(function(a,b){return a.date>b.date?1:-1;});
-    renderHeatmap(passes);
-  }
-
+  // ── Main load ──────────────────────────────────────────────────────────────
   function boLoad() {
-    fetch('/data/berth_occupancy.json').then(function(r){return r.json();}).then(function(d){
-      boData=d; window._boLoaded=true;
-      if(d.version&&d.version.startsWith('v5')){
-        renderMetrics(d.metrics); renderHeatmap(d.passes); renderLoadingList(d.loadings);
-      } else { renderLegacy(d); }
-      loadSnapshots();
-    }).catch(function(){
-      var el=document.getElementById('bo-load4w'); if(el)el.textContent='—';
+    if (boLoaded) return;
+    boLoaded = true;
+    Promise.all([
+      fetch('/data/berth_occupancy.json').then(function(r){ return r.json(); }),
+      fetch('/data/berth_snapshots.json').then(function(r){ return r.json(); }).catch(function(){ return {}; })
+    ]).then(function(res) {
+      var data = res[0], snaps = res[1];
+      renderCards(data);
+      renderChart(data, '6m');
+      renderPassLog(data, '6m');
+      renderSnaps(data, snaps);
+
+      var chartBtns = document.getElementById('bo2-chart-range');
+      if (chartBtns) chartBtns.addEventListener('click', function(e) {
+        var btn = e.target.closest('[data-r]');
+        if (!btn) return;
+        chartBtns.querySelectorAll('.aq-rbtn').forEach(function(b){ b.classList.remove('aq-rbtn-active'); });
+        btn.classList.add('aq-rbtn-active');
+        renderChart(data, btn.dataset.r);
+      });
+
+      var logBtns = document.getElementById('bo2-log-range');
+      if (logBtns) logBtns.addEventListener('click', function(e) {
+        var btn = e.target.closest('[data-r]');
+        if (!btn) return;
+        logBtns.querySelectorAll('.aq-rbtn').forEach(function(b){ b.classList.remove('aq-rbtn-active'); });
+        btn.classList.add('aq-rbtn-active');
+        renderPassLog(data, btn.dataset.r);
+      });
+
+      var details = document.getElementById('bo2-details');
+      var arr = document.getElementById('bo2-arr');
+      if (details) {
+        details.addEventListener('toggle', function() {
+          if (arr) arr.textContent = details.open ? '▼' : '▶';
+          if (details.open) renderDetails(data);
+        });
+      }
+    }).catch(function() {
+      var w = document.getElementById('bo2-cards');
+      if (w) w.innerHTML = '<div style="color:var(--red);padding:2rem;text-align:center">Failed to load data.</div>';
     });
   }
-  window._boLoad = boLoad;
+
+  document.addEventListener('DOMContentLoaded', function() {
+    var origShow = window.showSection;
+    window.showSection = function(id, callerEl) {
+      origShow && origShow(id, callerEl);
+      if (id === 'berth') boLoad();
+    };
+  });
 })();
 </script>
 </body>
