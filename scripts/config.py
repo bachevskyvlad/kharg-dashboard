@@ -79,6 +79,11 @@ DB_FLOOR = -5.0
 # Daily output is intentionally unsmoothed — analysts want raw signal.
 EWMA_ALPHA     = 0.1
 
+# ── Product terminals (upstream SAR ingest only) ─────────────────────────────
+# Only these three terminals are ingested by the pipeline. Kharg is handled
+# separately via its own raw_observations table and ingest code path.
+PRODUCT_TERMINALS = ["goreh_omid", "bahregan", "jask"]
+
 # ── File paths ────────────────────────────────────────────────────────────────
 RAW_CACHE_PATH = "public/data_raw_cache.json"   # per-tank raw dB records
 DAILY_PATH     = "data/data_daily.json"         # served to frontend
