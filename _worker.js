@@ -54,7 +54,6 @@ export default {
         '/gas-storage':   '/marketing/mobile-gas-storage.html',
         '/team':          '/marketing/mobile-team.html',
         '/tanks':         '/marketing/mobile-tanks.html',
-        '/anchorage':     '/marketing/mobile-anchorage.html',
         '/bosphorus':     '/marketing/mobile-bosphorus.html',
         '/dardanelles':   '/marketing/mobile-dardanelles.html',
         '/bab-el-mandeb':  '/marketing/mobile-bab-el-mandeb.html',
@@ -62,7 +61,6 @@ export default {
         '/zh/monitor':    '/marketing/zh-monitor.html',
         '/zh/gas-storage':'/marketing/zh-gas-storage.html',
         '/zh/team':       '/marketing/zh-team.html',
-        '/zh/anchorage':  '/marketing/zh-anchorage.html',
         '/zh/dashboard':  '/product/zh-dashboard.html',
       };
       const mobilePath = mobileMap[path];
@@ -80,7 +78,6 @@ export default {
       '/gas-storage':   '/marketing/gas-storage.html',
       '/team':          '/marketing/team.html',
       '/tanks':         '/marketing/tanks.html',
-      '/anchorage':     '/marketing/anchorage.html',
       '/bosphorus':     '/marketing/bosphorus.html',
       '/dardanelles':   '/marketing/dardanelles.html',
       '/bab-el-mandeb':  '/marketing/bab-el-mandeb.html',
@@ -92,7 +89,6 @@ export default {
       '/zh/monitor':    '/marketing/zh-monitor.html',
       '/zh/gas-storage':'/marketing/zh-gas-storage.html',
       '/zh/team':       '/marketing/zh-team.html',
-      '/zh/anchorage':  '/marketing/zh-anchorage.html',
       '/zh/dashboard':  '/product/zh-dashboard.html',
     };
     const desktopPath = desktopMap[path];
