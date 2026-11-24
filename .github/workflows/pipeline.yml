@@ -5,22 +5,22 @@ on:
     - cron: "0 4 * * *"
   workflow_dispatch:
     inputs:
-      jobs:
-        description: "Jobs to run: comma-separated (tanks,terminals,prices,gas,anchorage,berths,hormuz,hormuz_corridor,jask_monitor,gulf_exit) or 'all'"
+      steps:
+        description: "Steps to run: comma-separated or 'all'. Options: tanks,anchorage,berths,hormuz_queue,gulf_exit,export_static,freshness"
         required: false
         default: "all"
       full_recalc:
         description: "berths: full history recalculation (drop --incremental flag)"
         required: false
         default: "false"
-      gulf_exit_backfill:
-        description: "gulf_exit: run --backfill instead of --incremental"
-        required: false
-        default: "false"
       hormuz_backfill_since:
-        description: "hormuz: if set (e.g. 2026-11-03), run --commit --start <date> to catch up missed weeks"
+        description: "hormuz_queue: if set (e.g. 2026-11-03), run --commit --start <date> to catch up missed passes"
         required: false
         default: ""
+      gulf_exit_days:
+        description: "gulf_exit: number of days to look back (default 14)"
+        required: false
+        default: "14"
 
 concurrency:
   group: pipeline
@@ -28,251 +28,19 @@ concurrency:
 
 jobs:
 
-  # ──────────────────────────────────────────────────────────────
-  # tanks: ingest → compute → export (gate: new SAR scenes only)
-  # ──────────────────────────────────────────────────────────────
-  tanks:
+  # One job, sequential steps on a shared filesystem — no artifacts to merge.
+  # Every step uses continue-on-error: true so a failure in one source does
+  # not block downstream steps. The freshness step reports the final state.
+
+  pipeline:
     runs-on: ubuntu-latest
-    timeout-minutes: 60
-    if: >
-      (inputs.jobs || 'all') == 'all' ||
-      contains(inputs.jobs || 'all', 'tanks')
-    outputs:
-      status: ${{ steps.outcome.outputs.status }}
+    timeout-minutes: 360
+
     steps:
       - uses: actions/checkout@v4
         with:
           ref: main
-
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "3.11"
-
-      - name: Install dependencies
-        run: pip install -r scripts/requirements.txt --quiet
-
-      - name: Ingest
-        id: ingest
-        env:
-          CLIENT_ID:     ${{ secrets.CLIENT_ID }}
-          CLIENT_SECRET: ${{ secrets.CLIENT_SECRET }}
-          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
-          SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
-        run: python scripts/ingest.py
-
-      - name: Gate — new SAR scenes?
-        id: gate
-        run: |
-          if git diff --quiet data/; then
-            echo "new_data=false" >> "$GITHUB_OUTPUT"
-          else
-            echo "new_data=true" >> "$GITHUB_OUTPUT"
-          fi
-
-      - name: Compute
-        if: steps.gate.outputs.new_data == 'true'
-        env:
-          CLIENT_ID:     ${{ secrets.CLIENT_ID }}
-          CLIENT_SECRET: ${{ secrets.CLIENT_SECRET }}
-          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
-          SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
-        run: python scripts/compute.py
-
-      - name: Export
-        if: steps.gate.outputs.new_data == 'true'
-        env:
-          CLIENT_ID:     ${{ secrets.CLIENT_ID }}
-          CLIENT_SECRET: ${{ secrets.CLIENT_SECRET }}
-          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
-          SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
-        run: python scripts/export.py
-
-      - name: Upload artifact
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: tanks-out
-          path: |
-            data/data.json
-            data/data_daily.json
-            data/terminals/
-            public/
-          retention-days: 1
-          if-no-files-found: warn
-
-      - name: Set outcome
-        id: outcome
-        if: always()
-        run: |
-          if [ "${{ steps.ingest.outcome }}" = "failure" ] ||
-             [ "${{ steps.compute.outcome }}" = "failure" ] ||
-             [ "${{ steps.export.outcome }}" = "failure" ]; then
-            echo "status=fail" >> "$GITHUB_OUTPUT"
-          elif [ "${{ steps.gate.outputs.new_data }}" = "false" ]; then
-            echo "status=no_data" >> "$GITHUB_OUTPUT"
-          else
-            echo "status=ok" >> "$GITHUB_OUTPUT"
-          fi
-
-  # ──────────────────────────────────────────────────────────────
-  # terminals: export_terminal_json.py (runs after tanks so compute is fresh)
-  # ──────────────────────────────────────────────────────────────
-  terminals:
-    runs-on: ubuntu-latest
-    timeout-minutes: 15
-    needs: [tanks]
-    if: >
-      always() && (
-        (inputs.jobs || 'all') == 'all' ||
-        contains(inputs.jobs || 'all', 'terminals')
-      )
-    outputs:
-      status: ${{ steps.outcome.outputs.status }}
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          ref: main
-
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "3.11"
-
-      - name: Install dependencies
-        run: pip install supabase pandas --quiet
-
-      - name: Export terminals
-        id: export
-        env:
-          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
-          SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
-        run: python scripts/export_terminal_json.py
-
-      - name: Upload artifact
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: terminals-out
-          path: data/terminals/
-          retention-days: 1
-          if-no-files-found: warn
-
-      - name: Set outcome
-        id: outcome
-        if: always()
-        run: |
-          if [ "${{ steps.export.outcome }}" = "failure" ]; then
-            echo "status=fail" >> "$GITHUB_OUTPUT"
-          else
-            echo "status=ok" >> "$GITHUB_OUTPUT"
-          fi
-
-  # ──────────────────────────────────────────────────────────────
-  # prices: fetch_prices.py
-  # ──────────────────────────────────────────────────────────────
-  prices:
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
-    if: >
-      (inputs.jobs || 'all') == 'all' ||
-      contains(inputs.jobs || 'all', 'prices')
-    outputs:
-      status: ${{ steps.outcome.outputs.status }}
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          ref: main
-
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "3.11"
-
-      - name: Install dependencies
-        run: pip install yfinance requests --quiet
-
-      - name: Fetch prices
-        id: fetch
-        run: python scripts/fetch_prices.py
-
-      - name: Upload artifact
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: prices-out
-          path: data/prices.json
-          retention-days: 1
-          if-no-files-found: warn
-
-      - name: Set outcome
-        id: outcome
-        if: always()
-        run: |
-          if [ "${{ steps.fetch.outcome }}" = "failure" ]; then
-            echo "status=fail" >> "$GITHUB_OUTPUT"
-          else
-            echo "status=ok" >> "$GITHUB_OUTPUT"
-          fi
-
-  # ──────────────────────────────────────────────────────────────
-  # gas: fetch_gas_storage.py
-  # ──────────────────────────────────────────────────────────────
-  gas:
-    runs-on: ubuntu-latest
-    timeout-minutes: 15
-    if: >
-      (inputs.jobs || 'all') == 'all' ||
-      contains(inputs.jobs || 'all', 'gas')
-    outputs:
-      status: ${{ steps.outcome.outputs.status }}
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          ref: main
-
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "3.11"
-
-      - name: Install dependencies
-        run: pip install requests --quiet
-
-      - name: Fetch gas storage
-        id: fetch
-        run: python scripts/fetch_gas_storage.py
-
-      - name: Upload artifact
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: gas-out
-          path: data/gas_storage.json
-          retention-days: 1
-          if-no-files-found: warn
-
-      - name: Set outcome
-        id: outcome
-        if: always()
-        run: |
-          if [ "${{ steps.fetch.outcome }}" = "failure" ]; then
-            echo "status=fail" >> "$GITHUB_OUTPUT"
-          else
-            echo "status=ok" >> "$GITHUB_OUTPUT"
-          fi
-
-  # ──────────────────────────────────────────────────────────────
-  # anchorage: hist_backfill.py --update  (ship_backfill removed)
-  # ──────────────────────────────────────────────────────────────
-  anchorage:
-    runs-on: ubuntu-latest
-    timeout-minutes: 120
-    if: >
-      (inputs.jobs || 'all') == 'all' ||
-      contains(inputs.jobs || 'all', 'anchorage')
-    outputs:
-      status: ${{ steps.outcome.outputs.status }}
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          ref: main
+          token: ${{ secrets.GITHUB_TOKEN }}
 
       - uses: actions/setup-python@v5
         with:
@@ -282,12 +50,64 @@ jobs:
         run: |
           pip install \
             sentinelhub scipy numpy Pillow matplotlib \
-            rasterio shapely requests supabase \
+            rasterio shapely requests supabase pandas \
             pystac-client planetary-computer pyproj \
             --quiet
 
+      # ── step 1: tanks ─────────────────────────────────────────────────────────
+      # Ingest goreh_omid, bahregan, jask (PRODUCT_TERMINALS only); compute
+      # terminal_volume_timeseries; export Kharg data.json / data_daily.json.
+      # ─────────────────────────────────────────────────────────────────────────
+      - name: Ingest (tanks + product terminals)
+        id: ingest
+        continue-on-error: true
+        timeout-minutes: 90
+        if: >
+          (inputs.steps || 'all') == 'all' ||
+          contains(inputs.steps || 'all', 'tanks')
+        env:
+          CLIENT_ID:     ${{ secrets.CLIENT_ID }}
+          CLIENT_SECRET: ${{ secrets.CLIENT_SECRET }}
+          SUPABASE_URL:  ${{ secrets.SUPABASE_URL }}
+          SUPABASE_KEY:  ${{ secrets.SUPABASE_KEY }}
+        run: python scripts/ingest.py
+
+      - name: Compute (Kharg + terminal volumes)
+        id: compute
+        continue-on-error: true
+        timeout-minutes: 30
+        if: >
+          (inputs.steps || 'all') == 'all' ||
+          contains(inputs.steps || 'all', 'tanks')
+        env:
+          CLIENT_ID:     ${{ secrets.CLIENT_ID }}
+          CLIENT_SECRET: ${{ secrets.CLIENT_SECRET }}
+          SUPABASE_URL:  ${{ secrets.SUPABASE_URL }}
+          SUPABASE_KEY:  ${{ secrets.SUPABASE_KEY }}
+        run: python scripts/compute.py
+
+      - name: Export Kharg JSON
+        id: export_kharg
+        continue-on-error: true
+        timeout-minutes: 15
+        if: >
+          (inputs.steps || 'all') == 'all' ||
+          contains(inputs.steps || 'all', 'tanks')
+        env:
+          CLIENT_ID:     ${{ secrets.CLIENT_ID }}
+          CLIENT_SECRET: ${{ secrets.CLIENT_SECRET }}
+          SUPABASE_URL:  ${{ secrets.SUPABASE_URL }}
+          SUPABASE_KEY:  ${{ secrets.SUPABASE_KEY }}
+        run: python scripts/export.py
+
+      # ── step 2: anchorage + anchorage_tracks ──────────────────────────────────
       - name: Anchorage update
-        id: update
+        id: anchorage
+        continue-on-error: true
+        timeout-minutes: 120
+        if: >
+          (inputs.steps || 'all') == 'all' ||
+          contains(inputs.steps || 'all', 'anchorage')
         env:
           CLIENT_ID:          ${{ secrets.CLIENT_ID }}
           CLIENT_SECRET:      ${{ secrets.CLIENT_SECRET }}
@@ -297,71 +117,26 @@ jobs:
         run: python diagnostics/anchorage_hist/hist_backfill.py --update
 
       - name: Anchorage tracks + snapshots
-        id: tracks
+        id: anchorage_tracks
+        continue-on-error: true
+        timeout-minutes: 30
+        if: >
+          (inputs.steps || 'all') == 'all' ||
+          contains(inputs.steps || 'all', 'anchorage')
         env:
           SUPABASE_URL:            ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_KEY:    ${{ secrets.SUPABASE_SERVICE_KEY }}
           PC_SDK_SUBSCRIPTION_KEY: ${{ secrets.PC_SDK_SUBSCRIPTION_KEY }}
         run: python scripts/anchorage/tracks.py
 
-      - name: Export anchorage.json from anchorage_queue
-        id: export_static
-        env:
-          SUPABASE_URL:         ${{ secrets.SUPABASE_URL }}
-          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
-        run: python scripts/anchorage/export_static.py
-
-      - name: Upload artifact
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: anchorage-out
-          path: |
-            data/anchorage.json
-            data/bab_anchorage.json
-          retention-days: 1
-          if-no-files-found: warn
-
-      - name: Set outcome
-        id: outcome
-        if: always()
-        run: |
-          if [ "${{ steps.update.outcome }}" = "failure" ] ||
-             [ "${{ steps.export_static.outcome }}" = "failure" ]; then
-            echo "status=fail" >> "$GITHUB_OUTPUT"
-          else
-            echo "status=ok" >> "$GITHUB_OUTPUT"
-          fi
-
-  # ──────────────────────────────────────────────────────────────
-  # berths: v4_history incremental + assert gate + snapshots
-  # ──────────────────────────────────────────────────────────────
-  berths:
-    runs-on: ubuntu-latest
-    timeout-minutes: 90
-    if: >
-      (inputs.jobs || 'all') == 'all' ||
-      contains(inputs.jobs || 'all', 'berths')
-    outputs:
-      status: ${{ steps.outcome.outputs.status }}
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "3.11"
-
-      - name: Install dependencies
-        run: |
-          pip install \
-            sentinelhub \
-            pystac-client planetary-computer \
-            rasterio scipy numpy Pillow matplotlib \
-            shapely requests supabase \
-            --quiet
-
-      - name: Build 2026 BG (east_t_head o101, if missing)
+      # ── step 3: berths ────────────────────────────────────────────────────────
+      - name: Berths — build 2026 BG if missing
         id: bg2026
+        continue-on-error: true
+        timeout-minutes: 15
+        if: >
+          (inputs.steps || 'all') == 'all' ||
+          contains(inputs.steps || 'all', 'berths')
         env:
           PC_SDK_SUBSCRIPTION_KEY: ${{ secrets.PC_SDK_SUBSCRIPTION_KEY }}
         run: |
@@ -377,8 +152,13 @@ jobs:
             echo "2026 BG present — skip build"
           fi
 
-      - name: v4 history (CSV only, no DB write)
-        id: history
+      - name: Berths — v4 history (CSV only)
+        id: berths_history
+        continue-on-error: true
+        timeout-minutes: 60
+        if: >
+          (inputs.steps || 'all') == 'all' ||
+          contains(inputs.steps || 'all', 'berths')
         env:
           PC_SDK_SUBSCRIPTION_KEY: ${{ secrets.PC_SDK_SUBSCRIPTION_KEY }}
           SUPABASE_URL:            ${{ secrets.SUPABASE_URL }}
@@ -390,20 +170,36 @@ jobs:
             python scripts/berth_v4_history.py --incremental
           fi
 
-      - name: Assert gate
-        id: assert
+      - name: Berths — assert gate
+        id: berths_assert
+        continue-on-error: true
+        timeout-minutes: 5
+        if: >
+          (inputs.steps || 'all') == 'all' ||
+          contains(inputs.steps || 'all', 'berths')
         run: python scripts/berth_validate_optics_v4.py
 
-      - name: DB write (assert gate passed)
-        id: dbwrite
+      - name: Berths — DB write
+        id: berths_dbwrite
+        continue-on-error: true
+        timeout-minutes: 10
+        if: >
+          ((inputs.steps || 'all') == 'all' ||
+          contains(inputs.steps || 'all', 'berths')) &&
+          steps.berths_assert.outcome == 'success'
         env:
           SUPABASE_URL:         ${{ secrets.SUPABASE_URL }}
           SUPABASE_KEY:         ${{ secrets.SUPABASE_KEY }}
           SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
         run: python scripts/berth_v4_history.py --write-db
 
-      - name: Berth snapshots
-        id: snapshots
+      - name: Berths — snapshots
+        id: berths_snapshots
+        continue-on-error: true
+        timeout-minutes: 15
+        if: >
+          (inputs.steps || 'all') == 'all' ||
+          contains(inputs.steps || 'all', 'berths')
         env:
           PC_SDK_SUBSCRIPTION_KEY: ${{ secrets.PC_SDK_SUBSCRIPTION_KEY }}
           SUPABASE_URL:            ${{ secrets.SUPABASE_URL }}
@@ -411,61 +207,14 @@ jobs:
           SUPABASE_SERVICE_KEY:    ${{ secrets.SUPABASE_SERVICE_KEY }}
         run: python scripts/berth_snapshots.py
 
-      - name: Upload artifact
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: berths-out
-          path: |
-            data/berth_occupancy.json
-            data/berth_snapshots.json
-            data/berth_snapshots/
-            public/
-          retention-days: 1
-          if-no-files-found: warn
-
-      - name: Set outcome
-        id: outcome
-        if: always()
-        run: |
-          if [ "${{ steps.history.outcome }}" = "failure" ] ||
-             [ "${{ steps.assert.outcome }}" = "failure" ] ||
-             [ "${{ steps.dbwrite.outcome }}" = "failure" ] ||
-             [ "${{ steps.snapshots.outcome }}" = "failure" ]; then
-            echo "status=fail" >> "$GITHUB_OUTPUT"
-          else
-            echo "status=ok" >> "$GITHUB_OUTPUT"
-          fi
-
-  # ──────────────────────────────────────────────────────────────
-  # hormuz: hormuz_queue_backfill.py --weekly --commit
-  # ──────────────────────────────────────────────────────────────
-  hormuz:
-    runs-on: ubuntu-latest
-    timeout-minutes: 90
-    if: >
-      (inputs.jobs || 'all') == 'all' ||
-      contains(inputs.jobs || 'all', 'hormuz')
-    outputs:
-      status: ${{ steps.outcome.outputs.status }}
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          ref: main
-
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "3.11"
-
-      - name: Install dependencies
-        run: |
-          pip install \
-            pystac-client planetary-computer \
-            rasterio scipy numpy supabase \
-            --quiet
-
-      - name: Hormuz weekly update
-        id: update
+      # ── step 4: hormuz_queue ──────────────────────────────────────────────────
+      - name: Hormuz queue — 35-day window
+        id: hormuz_queue
+        continue-on-error: true
+        timeout-minutes: 90
+        if: >
+          (inputs.steps || 'all') == 'all' ||
+          contains(inputs.steps || 'all', 'hormuz_queue')
         env:
           SUPABASE_URL:            ${{ secrets.SUPABASE_URL }}
           SUPABASE_KEY:            ${{ secrets.SUPABASE_KEY }}
@@ -475,262 +224,101 @@ jobs:
           TG_CHAT:                 ${{ secrets.TG_CHAT }}
         run: |
           if [ -n "${{ inputs.hormuz_backfill_since }}" ]; then
-            python scripts/hormuz_queue_backfill.py --commit --start "${{ inputs.hormuz_backfill_since }}"
+            python scripts/hormuz_queue_backfill.py --commit --no-ais --start "${{ inputs.hormuz_backfill_since }}"
           else
-            python scripts/hormuz_queue_backfill.py --weekly --commit
+            python scripts/hormuz_queue_backfill.py --window 35 --no-ais
           fi
 
-      - name: Upload artifact
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: hormuz-out
-          path: |
-            data/hormuz_latest.jpg
-            data/hormuz_scene1.jpg
-            data/hormuz_scene2.jpg
-            data/hormuz_scene3.jpg
-            data/hormuz_timeseries.csv
-            data/hormuz_timeseries.jpg
-          retention-days: 1
-          if-no-files-found: warn
-
-      - name: Set outcome
-        id: outcome
-        if: always()
-        run: |
-          if [ "${{ steps.update.outcome }}" = "failure" ]; then
-            echo "status=fail" >> "$GITHUB_OUTPUT"
-          else
-            echo "status=ok" >> "$GITHUB_OUTPUT"
-          fi
-
-  # ──────────────────────────────────────────────────────────────
-  # hormuz_corridor: orbit-93 exit-corridor ship detection
-  # ──────────────────────────────────────────────────────────────
-  hormuz_corridor:
-    runs-on: ubuntu-latest
-    timeout-minutes: 120
-    if: >
-      (inputs.jobs || 'all') == 'all' ||
-      contains(inputs.jobs || 'all', 'hormuz_corridor')
-    outputs:
-      status: ${{ steps.outcome.outputs.status }}
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "3.11"
-
-      - name: Install dependencies
-        run: |
-          pip install \
-            pystac-client planetary-computer \
-            rasterio scipy numpy shapely fiona \
-            requests supabase \
-            --quiet
-
-      - name: Backfill / incremental detect
-        id: detect
+      # ── step 5: gulf_exit ─────────────────────────────────────────────────────
+      # Detects corridor + irlane (orbit 93) and jask (orbit 57) directly from
+      # Planetary Computer. No frozen CSVs. Upserts to gulf_exit_passes.
+      # ─────────────────────────────────────────────────────────────────────────
+      - name: Gulf exit detect (corridor + irlane + jask)
+        id: gulf_exit
+        continue-on-error: true
+        timeout-minutes: 90
+        if: >
+          (inputs.steps || 'all') == 'all' ||
+          contains(inputs.steps || 'all', 'gulf_exit')
         env:
           SUPABASE_URL:            ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_KEY:    ${{ secrets.SUPABASE_SERVICE_KEY }}
           PC_SDK_SUBSCRIPTION_KEY: ${{ secrets.PC_SDK_SUBSCRIPTION_KEY }}
-        run: python scripts/hormuz_corridor_detect.py --incremental
+        run: python scripts/gulf_exit_detect.py --days "${{ inputs.gulf_exit_days || '14' }}"
 
-      - name: Upload artifact
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: hormuz-corridor-out
-          path: data/hormuz_corridor_ships.csv
-          retention-days: 7
-          if-no-files-found: warn
-
-      - name: Set outcome
-        id: outcome
-        if: always()
-        run: |
-          if [ "${{ steps.detect.outcome }}" = "failure" ]; then
-            echo "status=fail" >> "$GITHUB_OUTPUT"
-          else
-            echo "status=ok" >> "$GITHUB_OUTPUT"
-          fi
-
-  # ──────────────────────────────────────────────────────────────
-  # jask_monitor: orbit-57 Jask terminal + anchorage ship detection
-  # ──────────────────────────────────────────────────────────────
-  jask_monitor:
-    runs-on: ubuntu-latest
-    timeout-minutes: 30
-    continue-on-error: true
-    if: >
-      (inputs.jobs || 'all') == 'all' ||
-      contains(inputs.jobs || 'all', 'jask_monitor')
-    outputs:
-      status: ${{ steps.outcome.outputs.status }}
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "3.11"
-
-      - name: Install dependencies
-        run: |
-          pip install \
-            pystac-client planetary-computer \
-            rasterio scipy numpy shapely fiona \
-            requests supabase \
-            --quiet
-
-      - name: Backfill / incremental detect
-        id: detect
+      # ── step 6: export_static ─────────────────────────────────────────────────
+      # Always runs: exports terminal JSON files and anchorage.json.
+      # ─────────────────────────────────────────────────────────────────────────
+      - name: Export terminal JSONs
+        id: export_terminals
+        continue-on-error: true
+        timeout-minutes: 15
+        if: >
+          (inputs.steps || 'all') == 'all' ||
+          contains(inputs.steps || 'all', 'export_static') ||
+          contains(inputs.steps || 'all', 'tanks')
         env:
-          SUPABASE_URL:            ${{ secrets.SUPABASE_URL }}
-          SUPABASE_SERVICE_KEY:    ${{ secrets.SUPABASE_SERVICE_KEY }}
-          PC_SDK_SUBSCRIPTION_KEY: ${{ secrets.PC_SDK_SUBSCRIPTION_KEY }}
-        run: python scripts/jask_ship_detect.py --incremental
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+        run: python scripts/export_terminal_json.py
 
-      - name: Upload artifact
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: jask-monitor-out
-          path: data/jask_ship_obs.csv
-          retention-days: 7
-          if-no-files-found: warn
-
-      - name: Set outcome
-        id: outcome
-        if: always()
-        run: |
-          if [ "${{ steps.detect.outcome }}" = "failure" ]; then
-            echo "status=fail" >> "$GITHUB_OUTPUT"
-          else
-            echo "status=ok" >> "$GITHUB_OUTPUT"
-          fi
-
-  # ──────────────────────────────────────────────────────────────
-  # gulf_exit: aggregate corridor + irlane + jask → gulf_exit_passes
-  # ──────────────────────────────────────────────────────────────
-  gulf_exit:
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
-    if: >
-      (inputs.jobs || 'all') == 'all' ||
-      contains(inputs.jobs || 'all', 'gulf_exit')
-    outputs:
-      status: ${{ steps.outcome.outputs.status }}
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "3.11"
-
-      - name: Install dependencies
-        run: pip install requests --quiet
-
-      - name: Run gulf_exit pipeline
-        id: run
+      - name: Export anchorage.json
+        id: export_anchorage
+        continue-on-error: true
+        timeout-minutes: 10
+        if: >
+          (inputs.steps || 'all') == 'all' ||
+          contains(inputs.steps || 'all', 'export_static') ||
+          contains(inputs.steps || 'all', 'anchorage')
         env:
           SUPABASE_URL:         ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
-        run: |
-          if [ "${{ inputs.gulf_exit_backfill }}" = "true" ]; then
-            python scripts/gulf_exit_pipeline.py --backfill
-          else
-            python scripts/gulf_exit_pipeline.py --incremental
-          fi
+        run: python scripts/anchorage/export_static.py
 
-      - name: Set outcome
-        id: outcome
-        if: always()
-        run: |
-          if [ "${{ steps.run.outcome }}" = "failure" ]; then
-            echo "status=fail" >> "$GITHUB_OUTPUT"
-          else
-            echo "status=ok" >> "$GITHUB_OUTPUT"
-          fi
-
-  # ──────────────────────────────────────────────────────────────
-  # collect: merge all artifacts → one commit to main
-  # ──────────────────────────────────────────────────────────────
-  collect:
-    needs: [tanks, terminals, prices, gas, anchorage, berths, hormuz, hormuz_corridor, jask_monitor, gulf_exit]
-    if: always()
-    runs-on: ubuntu-latest
-    timeout-minutes: 15
-    outputs:
-      data_changed: ${{ steps.commit.outputs.data_changed }}
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          ref: main
-          token: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Download all artifacts
-        uses: actions/download-artifact@v4
-        with:
-          path: _artifacts/
+      # ── step 7: freshness ─────────────────────────────────────────────────────
+      - name: Freshness check (9 sources vs SLA)
+        id: freshness
         continue-on-error: true
+        timeout-minutes: 5
+        env:
+          SUPABASE_URL:         ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+          TG_BOT:               ${{ secrets.TG_BOT }}
+          TG_CHAT:              ${{ secrets.TG_CHAT }}
+        run: python scripts/freshness_check.py --no-fail
 
-      - name: Merge artifacts into working tree
-        run: |
-          for dir in _artifacts/*/; do
-            [ -d "$dir" ] || continue
-            rsync -av --exclude='*.yml' --exclude='*.yaml' "$dir" . 2>/dev/null || true
-          done
-          rm -rf _artifacts/
-
-      - name: Commit
+      # ── step 8: commit + deploy + notify ──────────────────────────────────────
+      - name: Commit data/
         id: commit
+        continue-on-error: true
+        timeout-minutes: 5
         run: |
-          git config user.name  "bot"
-          git config user.email "bot@github.com"
+          git config user.name  "OilRadar Pipeline"
+          git config user.email "pipeline@oilradar.io"
           git add data/ public/
           if git diff --cached --quiet; then
             echo "data_changed=false" >> "$GITHUB_OUTPUT"
+            echo "No data changes to commit."
             exit 0
           fi
-          tanks_s="${{ needs.tanks.outputs.status || 'skip' }}"
-          terminals_s="${{ needs.terminals.outputs.status || 'skip' }}"
-          prices_s="${{ needs.prices.outputs.status || 'skip' }}"
-          gas_s="${{ needs.gas.outputs.status || 'skip' }}"
-          anchorage_s="${{ needs.anchorage.outputs.status || 'skip' }}"
-          berths_s="${{ needs.berths.outputs.status || 'skip' }}"
-          hormuz_s="${{ needs.hormuz.outputs.status || 'skip' }}"
-          hormuz_corridor_s="${{ needs.hormuz_corridor.outputs.status || 'skip' }}"
-          jask_monitor_s="${{ needs.jask_monitor.outputs.status || 'skip' }}"
-          gulf_exit_s="${{ needs.gulf_exit.outputs.status || 'skip' }}"
-          SUMMARY="tanks $tanks_s, terminals $terminals_s, prices $prices_s, gas $gas_s, anchorage $anchorage_s, berths $berths_s, hormuz $hormuz_s, hormuz_corridor $hormuz_corridor_s, jask_monitor $jask_monitor_s, gulf_exit $gulf_exit_s"
-          git commit -m "data: pipeline $(date -u +'%Y-%m-%d') [$SUMMARY]"
+          git commit -m "data: pipeline $(date -u +'%Y-%m-%d') [run ${{ github.run_id }}]"
           git pull --rebase --autostash origin main
           git push
           echo "data_changed=true" >> "$GITHUB_OUTPUT"
 
-  # ──────────────────────────────────────────────────────────────
-  # deploy: Cloudflare Workers — only when collect succeeded + data changed
-  # ──────────────────────────────────────────────────────────────
-  deploy:
-    needs: collect
-    if: >
-      always() &&
-      needs.collect.result == 'success' &&
-      needs.collect.outputs.data_changed == 'true'
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          ref: main
-
       - name: Check dashboard integrity
+        id: check_site
+        continue-on-error: true
+        timeout-minutes: 5
+        if: steps.commit.outputs.data_changed == 'true'
         run: python3 scripts/check_site.py
 
-      - uses: cloudflare/wrangler-action@v3
+      - name: Deploy to Cloudflare
+        id: deploy
+        continue-on-error: true
+        timeout-minutes: 10
+        if: steps.commit.outputs.data_changed == 'true'
+        uses: cloudflare/wrangler-action@v3
         with:
           apiToken:       ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId:      ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
@@ -754,41 +342,29 @@ jobs:
           SUPABASE_URL:         ${{ secrets.SUPABASE_URL }}
           SUPABASE_KEY:         ${{ secrets.SUPABASE_KEY }}
 
-  # ──────────────────────────────────────────────────────────────
-  # notify: one Telegram message with per-job status
-  # ──────────────────────────────────────────────────────────────
-  notify:
-    needs: [tanks, terminals, prices, gas, anchorage, berths, hormuz, hormuz_corridor, jask_monitor]
-    if: always()
-    runs-on: ubuntu-latest
-    timeout-minutes: 5
-    steps:
-      - name: Send Telegram
+      - name: Notify Telegram
+        id: notify
+        if: always()
+        timeout-minutes: 5
         env:
           TG_BOT:  ${{ secrets.TG_BOT }}
           TG_CHAT: ${{ secrets.TG_CHAT }}
         run: |
           icon() {
             case "$1" in
-              ok)      printf "✅" ;;
-              no_data) printf "⚪" ;;
-              skip)    printf "➖" ;;
-              *)       printf "❌" ;;
+              success)   printf "✅" ;;
+              skipped)   printf "➖" ;;
+              *)         printf "❌" ;;
             esac
           }
-          tanks_s="${{ needs.tanks.outputs.status || 'skip' }}"
-          terminals_s="${{ needs.terminals.outputs.status || 'skip' }}"
-          prices_s="${{ needs.prices.outputs.status || 'skip' }}"
-          gas_s="${{ needs.gas.outputs.status || 'skip' }}"
-          anchorage_s="${{ needs.anchorage.outputs.status || 'skip' }}"
-          berths_s="${{ needs.berths.outputs.status || 'skip' }}"
-          hormuz_s="${{ needs.hormuz.outputs.status || 'skip' }}"
-          hormuz_corridor_s="${{ needs.hormuz_corridor.outputs.status || 'skip' }}"
-          jask_monitor_s="${{ needs.jask_monitor.outputs.status || 'skip' }}"
-          TEXT=$(printf '%s tanks  %s terminals  %s prices\n%s gas  %s anchorage  %s berths  %s hormuz\n%s hormuz_corridor  %s jask_monitor\n\n%s\n%s' \
-            "$(icon "$tanks_s")" "$(icon "$terminals_s")" "$(icon "$prices_s")" \
-            "$(icon "$gas_s")" "$(icon "$anchorage_s")" "$(icon "$berths_s")" "$(icon "$hormuz_s")" \
-            "$(icon "$hormuz_corridor_s")" "$(icon "$jask_monitor_s")" \
+          TEXT=$(printf '%s ingest  %s compute  %s anchorage  %s berths\n%s hormuz_queue  %s gulf_exit  %s deploy\n\n%s\n%s' \
+            "$(icon "${{ steps.ingest.outcome }}")" \
+            "$(icon "${{ steps.compute.outcome }}")" \
+            "$(icon "${{ steps.anchorage.outcome }}")" \
+            "$(icon "${{ steps.berths_dbwrite.outcome }}")" \
+            "$(icon "${{ steps.hormuz_queue.outcome }}")" \
+            "$(icon "${{ steps.gulf_exit.outcome }}")" \
+            "$(icon "${{ steps.deploy.outcome }}")" \
             "$(date -u +'%Y-%m-%d %H:%M UTC')" \
             "https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}")
           curl -s -X POST "https://api.telegram.org/bot${TG_BOT}/sendMessage" \

@@ -21,7 +21,7 @@ import warnings
 warnings.filterwarnings("ignore")
 
 import pandas as pd
-from config import sb, RESOLUTION, BUFFER_METERS, START_DATE, DB_FLOOR
+from config import sb, RESOLUTION, BUFFER_METERS, START_DATE, DB_FLOOR, PRODUCT_TERMINALS
 from locations import raw_tanks, get_super_bbox, TERMINALS
 from sar_fetch import get_all_scene_dates, build_crescent_masks, fetch_new_records
 from export_data import upsert_raw_observations
@@ -138,6 +138,8 @@ if run_terminals:
         tid   = terminal["id"]
         tanks = terminal["tanks"]
 
+        if tid not in PRODUCT_TERMINALS:
+            continue
         if target_tid and tid != target_tid:
             continue
 

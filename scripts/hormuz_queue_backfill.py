@@ -576,11 +576,15 @@ def main():
     ap.add_argument("--commit",   action="store_true")
     ap.add_argument("--weekly",   action="store_true",
                     help="Only process passes since latest in DB")
+    ap.add_argument("--window",   type=int, default=None,
+                    help="Recompute last N days (35-day rolling window mode)")
+    ap.add_argument("--no-ais",   action="store_true",
+                    help="Skip PortWatch AIS fetch; set AIS columns to NULL")
     ap.add_argument("--start", default="2024-01-01")
     ap.add_argument("--end",   default=date.today().isoformat())
     args = ap.parse_args()
 
-    if args.weekly and not SB_SERVICE_KEY:
+    if (args.weekly or args.window) and not SB_SERVICE_KEY:
         tg_alert("⚠️ Hormuz weekly: SUPABASE_SERVICE_KEY not set — aborting write")
         print("ABORT: no SUPABASE_SERVICE_KEY for weekly run")
         sys.exit(1)
@@ -588,7 +592,10 @@ def main():
     start = args.start
     end   = args.end
 
-    if args.weekly:
+    if args.window:
+        start = (date.today() - timedelta(days=args.window)).isoformat()
+        print(f"Window mode: recomputing last {args.window} days from {start}")
+    elif args.weekly:
         # Find last pass date in DB
         rows = sb_fetch("hormuz_passes", select="date", filters={})
         if rows:
@@ -598,7 +605,7 @@ def main():
         else:
             print("No existing passes; full backfill")
 
-    dry_run = args.dry_run or not (args.commit or args.weekly)
+    dry_run = args.dry_run or not (args.commit or args.weekly or args.window)
 
     print(f"Detecting SAR passes {start} → {end} ...")
     passes_v11 = run_detection(start, end)
@@ -624,10 +631,14 @@ def main():
     else:
         passes_v11 = compute_tracking(passes_v11, len_tol=0.25)
 
-    # Fetch AIS
-    print("Fetching AIS from IMF PortWatch ...")
-    ais_daily = fetch_ais(start, end)
-    print(f"  Got {len(ais_daily)} AIS days")
+    # Fetch AIS (skipped when --no-ais)
+    if args.no_ais:
+        ais_daily = {}
+        print("AIS fetch skipped (--no-ais)")
+    else:
+        print("Fetching AIS from IMF PortWatch ...")
+        ais_daily = fetch_ais(start, end)
+        print(f"  Got {len(ais_daily)} AIS days")
 
     # Build weekly
     weekly_rows = aggregate_weekly(passes_v11, ais_daily)
