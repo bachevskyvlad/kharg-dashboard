@@ -1045,7 +1045,6 @@
                     <thead>
                         <tr style="border-bottom:1px solid var(--border)">
                             <th style="text-align:left;padding:0.3rem 0.5rem;font-size:0.6rem;letter-spacing:1px;text-transform:uppercase;color:var(--muted);font-weight:600">Date</th>
-                            <th style="text-align:center;padding:0.3rem 0.5rem;font-size:0.6rem;letter-spacing:1px;text-transform:uppercase;color:var(--muted);font-weight:600">Orbit</th>
                             <th style="text-align:center;padding:0.3rem 0.5rem;font-size:0.6rem;letter-spacing:1px;text-transform:uppercase;color:var(--muted);font-weight:600">Sea Island</th>
                             <th style="text-align:center;padding:0.3rem 0.5rem;font-size:0.6rem;letter-spacing:1px;text-transform:uppercase;color:var(--muted);font-weight:600">East T-Head</th>
                             <th style="text-align:center;padding:0.3rem 0.5rem;font-size:0.6rem;letter-spacing:1px;text-transform:uppercase;color:var(--muted);font-weight:600">SE Pier</th>
@@ -1060,7 +1059,8 @@
 
         <!-- Snapshots -->
         <div id="bo2-snaps-wrap" style="display:none;margin-bottom:1.25rem">
-            <div style="font-size:0.65rem;letter-spacing:1px;text-transform:uppercase;color:var(--accent);margin-bottom:0.6rem">Pass State</div>
+            <div style="font-size:0.65rem;letter-spacing:1px;text-transform:uppercase;color:var(--accent);margin-bottom:0.25rem">Pass State — SAR Snapshots</div>
+            <div style="font-size:0.62rem;color:var(--dim);font-family:monospace;margin-bottom:0.6rem">Left: most recent pass with vessel detected · Right: latest SAR pass (may be empty)</div>
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem">
                 <div id="bo2-snap-prev" style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:0.75rem"></div>
                 <div id="bo2-snap-latest" style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:0.75rem"></div>
@@ -1125,18 +1125,22 @@
             </div>
         </div>
 
+        <!-- Global range selector for all Hormuz charts -->
+        <div style="display:flex;justify-content:flex-end;margin-bottom:1rem">
+            <div style="display:flex;gap:4px" id="hz-range-global">
+                <button class="aq-rbtn" data-r="3m">3M</button>
+                <button class="aq-rbtn aq-rbtn-active" data-r="6m">6M</button>
+                <button class="aq-rbtn" data-r="1y">1Y</button>
+                <button class="aq-rbtn" data-r="all">ALL</button>
+            </div>
+        </div>
+
         <!-- Chart A: Large ships on-scene -->
         <div style="background:var(--surface);border:1px solid var(--border);padding:1.25rem 1.5rem 1rem;margin-bottom:1.25rem;">
             <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;flex-wrap:wrap;gap:0.5rem;">
                 <div>
                     <div style="font-size:0.7rem;letter-spacing:1px;text-transform:uppercase;color:var(--accent)">Ships On-Scene</div>
                     <div style="font-size:0.65rem;color:var(--muted);margin-top:0.2rem">Large (≥250 m) vs all detected · weekly avg</div>
-                </div>
-                <div style="display:flex;gap:4px" id="hz-range-a">
-                    <button class="aq-rbtn" data-r="3m">3M</button>
-                    <button class="aq-rbtn aq-rbtn-active" data-r="6m">6M</button>
-                    <button class="aq-rbtn" data-r="1y">1Y</button>
-                    <button class="aq-rbtn" data-r="all">ALL</button>
                 </div>
             </div>
             <canvas id="hzChartA" style="width:100%;display:block;height:240px"></canvas>
@@ -1153,12 +1157,6 @@
                     <div style="font-size:0.7rem;letter-spacing:1px;text-transform:uppercase;color:var(--accent)">Departure Rate</div>
                     <div style="font-size:0.65rem;color:var(--muted);margin-top:0.2rem">Ships/day leaving Larak staging area · SAR tracking v1.1</div>
                 </div>
-                <div style="display:flex;gap:4px" id="hz-range-b">
-                    <button class="aq-rbtn" data-r="3m">3M</button>
-                    <button class="aq-rbtn aq-rbtn-active" data-r="6m">6M</button>
-                    <button class="aq-rbtn" data-r="1y">1Y</button>
-                    <button class="aq-rbtn" data-r="all">ALL</button>
-                </div>
             </div>
             <canvas id="hzChartB" style="width:100%;display:block;height:200px"></canvas>
         </div>
@@ -1169,12 +1167,6 @@
                 <div>
                     <div style="font-size:0.7rem;letter-spacing:1px;text-transform:uppercase;color:var(--accent)">Dwell Time & Stay Rate</div>
                     <div style="font-size:0.65rem;color:var(--muted);margin-top:0.2rem">Estimated days on-scene + fraction of large ships persisting week-on-week</div>
-                </div>
-                <div style="display:flex;gap:4px" id="hz-range-c">
-                    <button class="aq-rbtn" data-r="3m">3M</button>
-                    <button class="aq-rbtn aq-rbtn-active" data-r="6m">6M</button>
-                    <button class="aq-rbtn" data-r="1y">1Y</button>
-                    <button class="aq-rbtn" data-r="all">ALL</button>
                 </div>
             </div>
             <canvas id="hzChartC" style="width:100%;display:block;height:200px"></canvas>
@@ -3130,19 +3122,21 @@ function hzDrawBar(ctx, w, h, pad, labels, vals, color) {
 }
 
 function hzRedrawAll() {
-    ['a','b','c'].forEach(k => hzRedraw(k, hzCurrentRange(k)));
+    ['a','b','c'].forEach(k => hzRedraw(k, _hzRangeGlobal));
 }
 
-const _hzRange = {a:'6m', b:'6m', c:'6m'};
-function hzCurrentRange(k) { return _hzRange[k]; }
+let _hzRangeGlobal = '6m';
+const _hzPlotRows = {};
+function hzCurrentRange() { return _hzRangeGlobal; }
 
 function hzRedraw(k, r) {
-    _hzRange[k] = r;
-    document.querySelectorAll(`#hz-range-${k} .aq-rbtn`).forEach(b => {
+    _hzRangeGlobal = r;
+    document.querySelectorAll('#hz-range-global .aq-rbtn').forEach(b => {
         b.classList.toggle('aq-rbtn-active', b.dataset.r === r);
     });
     const months = r === 'all' ? null : r === '1y' ? 12 : r === '6m' ? 6 : 3;
     const rows = hzFilter(months);
+    _hzPlotRows[k] = rows;
     const labels = rows.map(r => r.week);
     const PAD = {l:42, r:16, t:12, b:22};
 
@@ -3213,13 +3207,59 @@ async function initHormuz() {
     }
 }
 
-// range button wiring
+function hzTooltip(k, canvas, e) {
+    const rows = _hzPlotRows[k];
+    const tip = document.getElementById('hz-tip');
+    if (!tip || !rows || !rows.length) { if (tip) tip.style.display = 'none'; return; }
+    const rect = canvas.getBoundingClientRect();
+    const mx = e.clientX - rect.left;
+    const PAD = {l:42, r:16, t:12, b:22};
+    const xw = canvas.offsetWidth - PAD.l - PAD.r;
+    const n = rows.length;
+    let idx = Math.round((mx - PAD.l) / (xw / Math.max(n - 1, 1)));
+    idx = Math.max(0, Math.min(n - 1, idx));
+    const row = rows[idx];
+    if (!row) { tip.style.display = 'none'; return; }
+    let html = '<div style="color:#38bdf8;margin-bottom:4px;font-weight:600">' + row.week + '</div>';
+    if (k === 'a') {
+        html += '<div>Large ships: <span style="color:#f59e0b">' + (row.large_avg != null ? (+row.large_avg).toFixed(1) : '—') + '</span></div>';
+        html += '<div>All ships: <span style="color:#94a3b8">' + (row.all_avg != null ? (+row.all_avg).toFixed(1) : '—') + '</span></div>';
+    } else if (k === 'b') {
+        html += '<div>Departure rate: <span style="color:#ef4444">' + (row.gone_per_day != null ? (+row.gone_per_day).toFixed(2) : '—') + '</span> ships/day</div>';
+    } else {
+        html += '<div>Dwell: <span style="color:#a78bfa">' + (row.dwell_days != null ? Math.min(+row.dwell_days, 60).toFixed(1) : '—') + '</span> days</div>';
+        html += '<div>Stay rate: <span style="color:#38bdf8">' + (row.stay_share != null ? (+row.stay_share * 100).toFixed(0) + '%' : '—') + '</span></div>';
+    }
+    tip.innerHTML = html;
+    tip.style.display = 'block';
+    const tw = tip.offsetWidth || 160;
+    const th = tip.offsetHeight || 80;
+    const x = Math.max(4, e.clientX - tw - 12);
+    const y = Math.max(4, Math.min(window.innerHeight - th - 4, e.clientY - th / 2));
+    tip.style.left = x + 'px';
+    tip.style.top = y + 'px';
+}
+
+// range button wiring + hover handlers
 document.addEventListener('DOMContentLoaded', function() {
+    const globalWrap = document.getElementById('hz-range-global');
+    if (globalWrap) {
+        globalWrap.querySelectorAll('.aq-rbtn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                _hzRangeGlobal = btn.dataset.r;
+                hzRedrawAll();
+            });
+        });
+    }
     ['a','b','c'].forEach(k => {
-        const wrap = document.getElementById('hz-range-' + k);
-        if (!wrap) return;
-        wrap.querySelectorAll('.aq-rbtn').forEach(btn => {
-            btn.addEventListener('click', () => hzRedraw(k, btn.dataset.r));
+        const chartId = 'hzChart' + k.toUpperCase();
+        const canvas = document.getElementById(chartId);
+        if (!canvas) return;
+        canvas.style.cursor = 'crosshair';
+        canvas.addEventListener('mousemove', e => hzTooltip(k, canvas, e));
+        canvas.addEventListener('mouseleave', () => {
+            const tip = document.getElementById('hz-tip');
+            if (tip) tip.style.display = 'none';
         });
     });
 });
@@ -3604,9 +3644,9 @@ document.addEventListener('DOMContentLoaded', function() {
     var canvas = document.getElementById('bo2-chart');
     var wrap = document.getElementById('bo2-chart-wrap');
     if (!canvas || !wrap) return;
-    wrap.style.display = '';
-
     if (_boChart) { _boChart.destroy(); _boChart = null; }
+    if (order.length === 0) { wrap.style.display = 'none'; return; }
+    wrap.style.display = '';
     _boChart = new Chart(canvas.getContext('2d'), {
       type: 'bar',
       data: {
@@ -3704,7 +3744,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
       rows.push('<tr style="border-bottom:1px solid rgba(255,255,255,0.03)">' +
         '<td style="padding:0.3rem 0.5rem;color:var(--muted);white-space:nowrap">' + fmtDate(dateStr) + '</td>' +
-        '<td style="text-align:center;padding:0.3rem 0.5rem;color:var(--dim);font-size:0.68rem">' + orbits + '</td>' +
         cells.join('') +
         '<td style="text-align:center;padding:0.3rem 0.5rem;color:var(--muted)">' + (shipCount > 0 ? shipCount : '—') + '</td>' +
         oilCell + '</tr>');
@@ -3861,5 +3900,6 @@ document.addEventListener('DOMContentLoaded', function() {
   });
 })();
 </script>
+<div id="hz-tip" style="position:fixed;display:none;background:rgba(15,23,42,0.95);border:1px solid rgba(100,116,139,0.3);border-radius:6px;padding:8px 12px;font-size:0.68rem;font-family:monospace;color:#94a3b8;pointer-events:none;z-index:999;min-width:140px"></div>
 </body>
 </html>
