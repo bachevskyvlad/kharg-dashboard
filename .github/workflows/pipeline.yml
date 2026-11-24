@@ -24,7 +24,7 @@ on:
 
 concurrency:
   group: pipeline
-  cancel-in-progress: false
+  cancel-in-progress: true
 
 jobs:
 
@@ -548,7 +548,8 @@ jobs:
   # ──────────────────────────────────────────────────────────────
   jask_monitor:
     runs-on: ubuntu-latest
-    timeout-minutes: 120
+    timeout-minutes: 30
+    continue-on-error: true
     if: >
       (inputs.jobs || 'all') == 'all' ||
       contains(inputs.jobs || 'all', 'jask_monitor')
