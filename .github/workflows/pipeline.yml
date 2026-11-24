@@ -115,14 +115,17 @@ jobs:
           fi
 
   # ──────────────────────────────────────────────────────────────
-  # terminals: export_terminal_json.py
+  # terminals: export_terminal_json.py (runs after tanks so compute is fresh)
   # ──────────────────────────────────────────────────────────────
   terminals:
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    needs: [tanks]
     if: >
-      (inputs.jobs || 'all') == 'all' ||
-      contains(inputs.jobs || 'all', 'terminals')
+      always() && (
+        (inputs.jobs || 'all') == 'all' ||
+        contains(inputs.jobs || 'all', 'terminals')
+      )
     outputs:
       status: ${{ steps.outcome.outputs.status }}
     steps:
