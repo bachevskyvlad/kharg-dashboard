@@ -1,15 +1,15 @@
 {
-  "prev": {
-    "url": "/data/berth_snapshots/previous.png",
-    "date": "2026-11-15",
+  "latest": {
+    "url": "/data/berth_snapshots/latest.png",
+    "date": "2026-11-21",
     "orbit": 101,
     "summary": "Berths: 0 ships (VLCC 0, Suez/Aframax 0)"
   },
-  "latest": {
-    "url": "/data/berth_snapshots/latest.png",
-    "date": "2026-11-17",
+  "last_ship": {
+    "url": "/data/berth_snapshots/last_ship.png",
+    "date": "2026-09-30",
     "orbit": 35,
-    "summary": "Berths: 0 ships (VLCC 0, Suez/Aframax 0)"
+    "summary": "Berths: 2 ships (VLCC 1, Suez/Aframax 1)"
   },
-  "change": "no change"
+  "change": "-2 ship left the terminal"
 }
