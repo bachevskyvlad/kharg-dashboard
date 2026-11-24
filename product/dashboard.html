@@ -1059,8 +1059,7 @@
 
         <!-- Snapshots -->
         <div id="bo2-snaps-wrap" style="display:none;margin-bottom:1.25rem">
-            <div style="font-size:0.65rem;letter-spacing:1px;text-transform:uppercase;color:var(--accent);margin-bottom:0.25rem">Pass State — SAR Snapshots</div>
-            <div style="font-size:0.62rem;color:var(--dim);font-family:monospace;margin-bottom:0.6rem">Left: most recent pass with vessel detected · Right: latest SAR pass (may be empty)</div>
+            <div style="font-size:0.65rem;letter-spacing:1px;text-transform:uppercase;color:var(--accent);margin-bottom:0.6rem">Pass State — SAR Snapshots</div>
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem">
                 <div id="bo2-snap-prev" style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:0.75rem"></div>
                 <div id="bo2-snap-latest" style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:0.75rem"></div>
@@ -3797,6 +3796,12 @@ document.addEventListener('DOMContentLoaded', function() {
         });
       });
 
+      // Hide panels with no ships — avoids confusing "empty latest pass" next to detection
+      if (vlcc + sm === 0 && snapKey !== 'last_ship') {
+        panel.style.display = 'none';
+        return;
+      }
+
       panel.innerHTML =
         '<div style="font-size:0.6rem;letter-spacing:1px;text-transform:uppercase;color:' + accent + ';margin-bottom:0.5rem">' + labelTxt + ' · ' + snap.date + ' · o' + snap.orbit + '</div>' +
         '<img src="' + snap.url + '" alt="' + snapKey + ' SAR pass" style="width:100%;border-radius:4px;display:block;margin-bottom:0.5rem" loading="lazy">' +
@@ -3806,8 +3811,14 @@ document.addEventListener('DOMContentLoaded', function() {
         '<div style="margin-top:0.5rem;font-size:0.65rem;color:var(--muted)">At berths: ' + (vlcc+sm) + ' (VLCC ' + vlcc + ', smaller ' + sm + ')</div>';
     }
 
-    renderPanel('bo2-snap-prev',   'last_ship', 'Last ship seen', 'var(--muted)');
+    renderPanel('bo2-snap-prev',   'last_ship', 'Last ship seen', 'var(--accent)');
     renderPanel('bo2-snap-latest', 'latest',    'Latest pass',    'var(--accent)');
+    // If only one panel is visible, switch to 1-column grid
+    var grid = wrap.querySelector('[style*="grid-template-columns"]');
+    var latestPanel = document.getElementById('bo2-snap-latest');
+    if (grid && latestPanel && latestPanel.style.display === 'none') {
+      grid.style.gridTemplateColumns = '1fr';
+    }
     wrap.style.display = '';
   }
 
