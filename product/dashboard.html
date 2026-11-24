@@ -1835,8 +1835,8 @@ function tRatio(db, p5, p95) {
 
 async function loadStagingSignal() {
     try {
-        const headers = { apikey: SUPABASE_KEY, Authorization: 'Bearer ' + SUPABASE_KEY };
-        const url = `${SUPABASE_URL}/rest/v1/raw_observations?select=date,tank_id,db_mean&tank_id=in.(t60_0,t40_22)&order=date.desc&limit=120`;
+        const headers = { apikey: window.SUPABASE_KEY, Authorization: 'Bearer ' + window.SUPABASE_KEY };
+        const url = `${window.SUPABASE_URL}/rest/v1/raw_observations?select=date,tank_id,db_mean&tank_id=in.(t60_0,t40_22)&order=date.desc&limit=120`;
         const raw = await fetch(url, { headers }).then(r => r.json());
         if (!Array.isArray(raw) || raw.length < 4) return null;
         const byTank = { t60_0: [], t40_22: [] };
@@ -2073,7 +2073,7 @@ async function loadFlows() {
 
     const _sigFlowsEl = document.getElementById('sigFlows');
     if (_sigFlowsEl) _sigFlowsEl.textContent = 'Loading gross flow data…';
-    const headers = { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` };
+    const headers = { 'apikey': window.SUPABASE_KEY, 'Authorization': `Bearer ${window.SUPABASE_KEY}` };
 
     try {
         // kharg_gross_flows_v2: computed by scripts/gross_flows.py with the same
@@ -2081,10 +2081,10 @@ async function loadFlows() {
         // kharg_gross_flows is DEPRECATED — read only as a fallback until v2 is
         // populated (transition period, remove after 2026-11-20).
         const FLOWS_SELECT = 'select=date_from,date_to,days,gross_out_mb,gross_in_mb,net_mb,tanks_draining,tanks_filling&order=date_to';
-        let all = await fetch(`${SUPABASE_URL}/rest/v1/kharg_gross_flows_v2?${FLOWS_SELECT}`, { headers }).then(r => r.json()).catch(() => null);
+        let all = await fetch(`${window.SUPABASE_URL}/rest/v1/kharg_gross_flows_v2?${FLOWS_SELECT}`, { headers }).then(r => r.json()).catch(() => null);
         if (!Array.isArray(all) || all.length === 0) {
             console.warn('kharg_gross_flows_v2 unavailable — falling back to deprecated kharg_gross_flows');
-            all = await fetch(`${SUPABASE_URL}/rest/v1/kharg_gross_flows?${FLOWS_SELECT}`, { headers }).then(r => r.json());
+            all = await fetch(`${window.SUPABASE_URL}/rest/v1/kharg_gross_flows?${FLOWS_SELECT}`, { headers }).then(r => r.json());
         }
         _flowsData = all;
         try { localStorage.setItem(FLOWS_CACHE_KEY, JSON.stringify({ ts: Date.now(), data: all })); } catch {}
