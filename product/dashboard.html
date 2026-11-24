@@ -1111,16 +1111,6 @@
                     <div style="font-size:2rem;font-weight:700;color:#ef4444;font-family:'Space Grotesk',sans-serif" id="hz-gpd">—</div>
                     <div style="font-size:0.7rem;color:var(--muted)">ships/day leaving</div>
                 </div>
-                <div>
-                    <div style="font-size:0.65rem;letter-spacing:1px;text-transform:uppercase;color:var(--muted);margin-bottom:0.25rem">Est. Dwell Time</div>
-                    <div style="font-size:2rem;font-weight:700;color:#a78bfa;font-family:'Space Grotesk',sans-serif" id="hz-dwell">—</div>
-                    <div style="font-size:0.7rem;color:var(--muted)">days on-scene</div>
-                </div>
-                <div>
-                    <div style="font-size:0.65rem;letter-spacing:1px;text-transform:uppercase;color:var(--muted);margin-bottom:0.25rem">Stay-Rate</div>
-                    <div style="font-size:2rem;font-weight:700;color:#38bdf8;font-family:'Space Grotesk',sans-serif" id="hz-stay">—</div>
-                    <div style="font-size:0.7rem;color:var(--muted)" id="hz-updated">% large ships persisting</div>
-                </div>
             </div>
         </div>
 
@@ -1134,21 +1124,6 @@
             </div>
         </div>
 
-        <!-- Chart A: Large ships on-scene -->
-        <div style="background:var(--surface);border:1px solid var(--border);padding:1.25rem 1.5rem 1rem;margin-bottom:1.25rem;">
-            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;flex-wrap:wrap;gap:0.5rem;">
-                <div>
-                    <div style="font-size:0.7rem;letter-spacing:1px;text-transform:uppercase;color:var(--accent)">Ships On-Scene</div>
-                    <div style="font-size:0.65rem;color:var(--muted);margin-top:0.2rem">Large (≥250 m) vs all detected · weekly avg</div>
-                </div>
-            </div>
-            <canvas id="hzChartA" style="width:100%;display:block;height:240px"></canvas>
-            <div style="display:flex;gap:16px;flex-wrap:wrap;margin-top:10px;">
-                <span style="display:flex;align-items:center;gap:6px;font-size:0.68rem;color:var(--muted);font-family:monospace"><span style="width:12px;height:12px;border-radius:50%;background:#f59e0b;flex-shrink:0"></span>Large ships (≥250 m)</span>
-                <span style="display:flex;align-items:center;gap:6px;font-size:0.68rem;color:var(--muted);font-family:monospace"><span style="width:18px;height:2px;background:rgba(148,163,184,0.4);flex-shrink:0"></span>All ships</span>
-            </div>
-        </div>
-
         <!-- Chart B: Departure rate -->
         <div style="background:var(--surface);border:1px solid var(--border);padding:1.25rem 1.5rem 1rem;margin-bottom:1.25rem;">
             <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;flex-wrap:wrap;gap:0.5rem;">
@@ -1158,21 +1133,6 @@
                 </div>
             </div>
             <canvas id="hzChartB" style="width:100%;display:block;height:200px"></canvas>
-        </div>
-
-        <!-- Chart C: Dwell time -->
-        <div style="background:var(--surface);border:1px solid var(--border);padding:1.25rem 1.5rem 1rem;margin-bottom:1.25rem;">
-            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;flex-wrap:wrap;gap:0.5rem;">
-                <div>
-                    <div style="font-size:0.7rem;letter-spacing:1px;text-transform:uppercase;color:var(--accent)">Dwell Time & Stay Rate</div>
-                    <div style="font-size:0.65rem;color:var(--muted);margin-top:0.2rem">Estimated days on-scene + fraction of large ships persisting week-on-week</div>
-                </div>
-            </div>
-            <canvas id="hzChartC" style="width:100%;display:block;height:200px"></canvas>
-            <div style="display:flex;gap:16px;flex-wrap:wrap;margin-top:10px;">
-                <span style="display:flex;align-items:center;gap:6px;font-size:0.68rem;color:var(--muted);font-family:monospace"><span style="width:12px;height:12px;border-radius:50%;background:#a78bfa;flex-shrink:0"></span>Dwell days</span>
-                <span style="display:flex;align-items:center;gap:6px;font-size:0.68rem;color:var(--muted);font-family:monospace"><span style="width:18px;height:0;border-top:2px dashed #38bdf8;flex-shrink:0"></span>Stay rate</span>
-            </div>
         </div>
 
         <div style="font-size:0.65rem;color:var(--dim);font-family:monospace;padding:0.5rem 0">
@@ -1192,11 +1152,6 @@
                     <div style="font-size:0.6rem;letter-spacing:1px;text-transform:uppercase;color:var(--muted);margin-bottom:0.2rem">Large ships exiting, radar</div>
                     <div style="font-size:1.6rem;font-weight:700;color:#3b82f6;font-family:'Space Grotesk',sans-serif" id="ge-kpi-radar">—</div>
                     <div style="font-size:0.65rem;color:var(--muted)" id="ge-kpi-radar-sub">last 4 wks vs 2025 avg</div>
-                </div>
-                <div style="background:var(--surface);border:1px solid var(--border);padding:0.9rem 1.1rem;min-width:160px;">
-                    <div style="font-size:0.6rem;letter-spacing:1px;text-transform:uppercase;color:var(--muted);margin-bottom:0.2rem">AIS tankers / day</div>
-                    <div style="font-size:1.6rem;font-weight:700;color:#94a3b8;font-family:'Space Grotesk',sans-serif" id="ge-kpi-ais">—</div>
-                    <div style="font-size:0.65rem;color:var(--muted)" id="ge-kpi-ais-sub">last 4 wks vs 2025 avg</div>
                 </div>
                 <div style="background:var(--surface);border:1px solid var(--border);padding:0.9rem 1.1rem;min-width:160px;">
                     <div style="font-size:0.6rem;letter-spacing:1px;text-transform:uppercase;color:var(--muted);margin-bottom:0.2rem">Iranian-lane share</div>
@@ -1222,7 +1177,6 @@
                 <div style="display:flex;gap:16px;flex-wrap:wrap;margin-top:10px;">
                     <span style="display:flex;align-items:center;gap:6px;font-size:0.68rem;color:var(--muted);font-family:monospace"><span style="width:12px;height:12px;background:#3b82f6;flex-shrink:0"></span>Corridor</span>
                     <span style="display:flex;align-items:center;gap:6px;font-size:0.68rem;color:var(--muted);font-family:monospace"><span style="width:12px;height:12px;background:#22c55e;flex-shrink:0"></span>IR Lane</span>
-                    <span style="display:flex;align-items:center;gap:6px;font-size:0.68rem;color:var(--muted);font-family:monospace"><span style="width:14px;height:2px;background:#94a3b8;flex-shrink:0;border-top:2px dashed #94a3b8"></span>AIS tankers/day</span>
                 </div>
             </div>
             <div style="font-size:0.65rem;color:var(--dim);font-family:monospace;padding:0.25rem 0;margin-top:0.25rem">
@@ -1242,19 +1196,9 @@
                     <div style="font-size:0.65rem;color:var(--muted)">latest pass</div>
                 </div>
                 <div style="background:var(--surface);border:1px solid var(--border);padding:0.9rem 1.1rem;min-width:130px;">
-                    <div style="font-size:0.6rem;letter-spacing:1px;text-transform:uppercase;color:var(--muted);margin-bottom:0.2rem">Terminal VLCC</div>
-                    <div style="font-size:1.6rem;font-weight:700;color:#ef4444;font-family:'Space Grotesk',sans-serif" id="jk-term-vlcc">—</div>
-                    <div style="font-size:0.65rem;color:var(--muted)">≥ 300 m, latest pass</div>
-                </div>
-                <div style="background:var(--surface);border:1px solid var(--border);padding:0.9rem 1.1rem;min-width:130px;">
                     <div style="font-size:0.6rem;letter-spacing:1px;text-transform:uppercase;color:var(--muted);margin-bottom:0.2rem">Anchorage Ships</div>
                     <div style="font-size:1.6rem;font-weight:700;color:#a78bfa;font-family:'Space Grotesk',sans-serif" id="jk-anch-n">—</div>
                     <div style="font-size:0.65rem;color:var(--muted)">latest pass</div>
-                </div>
-                <div style="background:var(--surface);border:1px solid var(--border);padding:0.9rem 1.1rem;min-width:130px;">
-                    <div style="font-size:0.6rem;letter-spacing:1px;text-transform:uppercase;color:var(--muted);margin-bottom:0.2rem">Anchorage VLCC</div>
-                    <div style="font-size:1.6rem;font-weight:700;color:#38bdf8;font-family:'Space Grotesk',sans-serif" id="jk-anch-vlcc">—</div>
-                    <div style="font-size:0.65rem;color:var(--muted)">≥ 300 m, latest pass</div>
                 </div>
             </div>
 
@@ -3121,7 +3065,7 @@ function hzDrawBar(ctx, w, h, pad, labels, vals, color) {
 }
 
 function hzRedrawAll() {
-    ['a','b','c'].forEach(k => hzRedraw(k, _hzRangeGlobal));
+    hzRedraw('b', _hzRangeGlobal);
 }
 
 let _hzRangeGlobal = '6m';
@@ -3139,17 +3083,7 @@ function hzRedraw(k, r) {
     const labels = rows.map(r => r.week);
     const PAD = {l:42, r:16, t:12, b:22};
 
-    if (k === 'a') {
-        const c = document.getElementById('hzChartA');
-        const ctx = c.getContext('2d');
-        const dpr = window.devicePixelRatio || 1;
-        c.width = c.offsetWidth * dpr; c.height = c.offsetHeight * dpr;
-        ctx.scale(dpr, dpr);
-        hzDrawLine(ctx, c.offsetWidth, c.offsetHeight, PAD, labels, [
-            {vals: rows.map(r => r.large_avg != null ? +r.large_avg : null), color:'#f59e0b', fill:true, step:2},
-            {vals: rows.map(r => r.all_avg   != null ? +r.all_avg   : null), color:'rgba(148,163,184,0.5)', dashed:true, step:5}
-        ]);
-    } else if (k === 'b') {
+    if (k === 'b') {
         const c = document.getElementById('hzChartB');
         const ctx = c.getContext('2d');
         const dpr = window.devicePixelRatio || 1;
@@ -3157,17 +3091,6 @@ function hzRedraw(k, r) {
         ctx.scale(dpr, dpr);
         hzDrawBar(ctx, c.offsetWidth, c.offsetHeight, PAD, labels,
             rows.map(r => r.gone_per_day != null ? +r.gone_per_day : null), '#ef4444');
-    } else {
-        const c = document.getElementById('hzChartC');
-        const ctx = c.getContext('2d');
-        const dpr = window.devicePixelRatio || 1;
-        c.width = c.offsetWidth * dpr; c.height = c.offsetHeight * dpr;
-        ctx.scale(dpr, dpr);
-        const dwLabels = rows.map(r => r.week);
-        hzDrawLine(ctx, c.offsetWidth, c.offsetHeight, PAD, dwLabels, [
-            {vals: rows.map(r => r.dwell_days != null ? Math.min(+r.dwell_days, 60) : null), color:'#a78bfa', fill:true, step:5},
-            {vals: rows.map(r => r.stay_share != null ? +r.stay_share * 100 : null), color:'#38bdf8', dashed:true, step:10}
-        ]);
     }
 }
 
@@ -3182,27 +3105,16 @@ async function initHormuz() {
         _hzRows = await resp.json();
         console.log('[hz] rows:', _hzRows.length, 'dwell non-null:', _hzRows.filter(r=>r.dwell_days!=null).length, 'sample:', JSON.stringify(_hzRows.slice(-3)));
         if (!Array.isArray(_hzRows) || !_hzRows.length) {
-            document.getElementById('hz-updated').textContent = 'No data loaded';
             return;
         }
         // KPIs: last row for large/gpd/stay; last 4 weeks with dwell_days != null for dwell
         const last = _hzRows[_hzRows.length - 1];
         document.getElementById('hz-large').textContent  = last.large_avg  != null ? (+last.large_avg).toFixed(1) : '—';
         document.getElementById('hz-gpd').textContent    = last.gone_per_day != null ? (+last.gone_per_day).toFixed(2) : '—';
-        document.getElementById('hz-stay').textContent   = last.stay_share != null ? (+last.stay_share * 100).toFixed(0) + '%' : '—';
-        document.getElementById('hz-updated').textContent = 'Updated ' + last.week + ' · orbits 57 & 166';
-        // dwell KPI: avg of last 4 weeks with ≥4 pairs
-        const dwellRows = _hzRows.filter(r => r.dwell_days != null).slice(-4);
-        if (dwellRows.length) {
-            const dwellAvg = dwellRows.reduce((s,r)=>s+(+r.dwell_days),0)/dwellRows.length;
-            document.getElementById('hz-dwell').textContent = dwellAvg > 60 ? '60+' : dwellAvg.toFixed(1);
-        } else {
-            document.getElementById('hz-dwell').textContent = '—';
-        }
         _hzInited = true;
         hzRedrawAll();
     } catch(e) {
-        document.getElementById('hz-updated').textContent = 'Error loading data';
+        console.error('[hz] load error:', e);
     }
 }
 
@@ -3220,15 +3132,7 @@ function hzTooltip(k, canvas, e) {
     const row = rows[idx];
     if (!row) { tip.style.display = 'none'; return; }
     let html = '<div style="color:#38bdf8;margin-bottom:4px;font-weight:600">' + row.week + '</div>';
-    if (k === 'a') {
-        html += '<div>Large ships: <span style="color:#f59e0b">' + (row.large_avg != null ? (+row.large_avg).toFixed(1) : '—') + '</span></div>';
-        html += '<div>All ships: <span style="color:#94a3b8">' + (row.all_avg != null ? (+row.all_avg).toFixed(1) : '—') + '</span></div>';
-    } else if (k === 'b') {
-        html += '<div>Departure rate: <span style="color:#ef4444">' + (row.gone_per_day != null ? (+row.gone_per_day).toFixed(2) : '—') + '</span> ships/day</div>';
-    } else {
-        html += '<div>Dwell: <span style="color:#a78bfa">' + (row.dwell_days != null ? Math.min(+row.dwell_days, 60).toFixed(1) : '—') + '</span> days</div>';
-        html += '<div>Stay rate: <span style="color:#38bdf8">' + (row.stay_share != null ? (+row.stay_share * 100).toFixed(0) + '%' : '—') + '</span></div>';
-    }
+    html += '<div>Departure rate: <span style="color:#ef4444">' + (row.gone_per_day != null ? (+row.gone_per_day).toFixed(2) : '—') + '</span> ships/day</div>';
     tip.innerHTML = html;
     tip.style.display = 'block';
     const tw = tip.offsetWidth || 160;
@@ -3250,17 +3154,15 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         });
     }
-    ['a','b','c'].forEach(k => {
-        const chartId = 'hzChart' + k.toUpperCase();
-        const canvas = document.getElementById(chartId);
-        if (!canvas) return;
-        canvas.style.cursor = 'crosshair';
-        canvas.addEventListener('mousemove', e => hzTooltip(k, canvas, e));
-        canvas.addEventListener('mouseleave', () => {
+    const hzB = document.getElementById('hzChartB');
+    if (hzB) {
+        hzB.style.cursor = 'crosshair';
+        hzB.addEventListener('mousemove', e => hzTooltip('b', hzB, e));
+        hzB.addEventListener('mouseleave', () => {
             const tip = document.getElementById('hz-tip');
             if (tip) tip.style.display = 'none';
         });
-    });
+    }
 });
 
 // ── Gulf Exit + Jask (gulf_exit_passes) ───────────────────────────────────
@@ -3304,36 +3206,15 @@ function geRedraw(key, r) {
         const corrVals = allM.map(m => { const i = corr.labels.indexOf(m); return i>=0 ? corr.vals[i] : null; });
         const irVals   = allM.map(m => { const i = ir.labels.indexOf(m);   return i>=0 ? ir.vals[i]   : null; });
 
-        // AIS line from hormuz_weekly.n_tanker (monthly avg)
-        let aisVals = null;
-        if (_hzRows && _hzRows.length) {
-            const aisMonths = {};
-            const cutIso = months ? (() => { const d=new Date(); d.setMonth(d.getMonth()-months); return d.toISOString().slice(0,7); })() : null;
-            _hzRows.forEach(r => {
-                if (!r.n_tanker) return;
-                const m = r.week.slice(0,7);
-                if (cutIso && m < cutIso) return;
-                if (!aisMonths[m]) aisMonths[m] = {sum:0,n:0};
-                aisMonths[m].sum += +r.n_tanker; aisMonths[m].n++;
-            });
-            aisVals = allM.map(m => aisMonths[m] ? aisMonths[m].sum/aisMonths[m].n : null);
-        }
-
         const c = document.getElementById('geChart');
         if (!c) return;
         const dpr = window.devicePixelRatio||1;
         c.width = c.offsetWidth*dpr; c.height = c.offsetHeight*dpr;
         if (_geChart) { _geChart.destroy(); _geChart = null; }
         const datasets = [
-            { label:'Corridor', data: corrVals, backgroundColor:'rgba(59,130,246,0.75)', borderRadius:3, barPercentage:0.6, yAxisID:'y' },
-            { label:'IR Lane',  data: irVals,   backgroundColor:'rgba(34,197,94,0.75)',  borderRadius:3, barPercentage:0.6, yAxisID:'y' }
+            { label:'Corridor', data: corrVals, backgroundColor:'rgba(59,130,246,0.75)', borderRadius:3, barPercentage:0.6 },
+            { label:'IR Lane',  data: irVals,   backgroundColor:'rgba(34,197,94,0.75)',  borderRadius:3, barPercentage:0.6 }
         ];
-        if (aisVals) datasets.push({
-            label:'AIS tankers/day', data: aisVals, type:'line',
-            borderColor:'rgba(148,163,184,0.85)', backgroundColor:'transparent',
-            borderWidth:1.5, borderDash:[4,3], pointRadius:2, pointBackgroundColor:'rgba(148,163,184,0.85)',
-            yAxisID:'y2', tension:0.3
-        });
         _geChart = new Chart(c, {
             type: 'bar',
             data: { labels: allM, datasets },
@@ -3342,8 +3223,7 @@ function geRedraw(key, r) {
                 plugins:{ legend:{display:false}, tooltip:{callbacks:{label: ctx=>`${ctx.dataset.label}: ${ctx.parsed.y!=null?ctx.parsed.y.toFixed(1):'—'}`}} },
                 scales:{
                     x:{ ticks:{color:'rgba(100,116,139,0.8)',font:{size:10},maxRotation:0}, grid:{color:'rgba(255,255,255,0.05)'} },
-                    y:{ ticks:{color:'rgba(100,116,139,0.8)',font:{size:10}}, grid:{color:'rgba(255,255,255,0.05)'}, beginAtZero:true },
-                    y2:{ position:'right', ticks:{color:'rgba(148,163,184,0.6)',font:{size:9}}, grid:{display:false}, beginAtZero:true, display: !!aisVals }
+                    y:{ ticks:{color:'rgba(100,116,139,0.8)',font:{size:10}}, grid:{color:'rgba(255,255,255,0.05)'}, beginAtZero:true }
                 }
             }
         });
@@ -3435,18 +3315,6 @@ async function initGulfExit() {
         document.getElementById('ge-kpi-radar-sub').textContent =
             radarCurr != null ? `${radarCurr.toFixed(1)} ships/pass · vs 2025 avg` : 'last 4 wks vs 2025 avg';
 
-        // AIS KPI: from _hzRows (hormuz_weekly.n_tanker)
-        if (_hzRows && _hzRows.length) {
-            const aisRows4w = _hzRows.filter(r => r.week >= w4s && r.n_tanker != null);
-            const aisRows25 = _hzRows.filter(r => r.week >= y25s && r.week <= y25e && r.n_tanker != null);
-            const aisCurr = aisRows4w.length ? aisRows4w.reduce((s,r)=>s+(+r.n_tanker),0)/aisRows4w.length : null;
-            const aisBase = aisRows25.length ? aisRows25.reduce((s,r)=>s+(+r.n_tanker),0)/aisRows25.length : null;
-            const aisPct = geKpiPct(aisCurr, aisBase);
-            document.getElementById('ge-kpi-ais').textContent = geKpiText(aisPct);
-            document.getElementById('ge-kpi-ais-sub').textContent =
-                aisCurr != null ? `${aisCurr.toFixed(1)} t/day · vs 2025 avg` : 'last 4 wks vs 2025 avg';
-        }
-
         // IR share KPI
         const irCurr4 = geWeeklyAvg(irRows, 'large', w4s, w4e);
         const corrCurr4 = geWeeklyAvg(_geRows, 'large', w4s, w4e);
@@ -3466,10 +3334,8 @@ async function initGulfExit() {
         // Jask KPIs
         const jkLast = all.filter(r => r.zone==='jask').slice(-1)[0];
         if (jkLast) {
-            document.getElementById('jk-term-n').textContent    = jkLast.terminal_n    ?? '—';
-            document.getElementById('jk-term-vlcc').textContent = jkLast.terminal_vlcc ?? '—';
-            document.getElementById('jk-anch-n').textContent    = jkLast.anchorage_n   ?? '—';
-            document.getElementById('jk-anch-vlcc').textContent = jkLast.anchorage_vlcc ?? '—';
+            document.getElementById('jk-term-n').textContent = jkLast.terminal_n  ?? '—';
+            document.getElementById('jk-anch-n').textContent = jkLast.anchorage_n ?? '—';
         }
         _geInited = true;
         geRedraw('ge', _geRange.ge);
