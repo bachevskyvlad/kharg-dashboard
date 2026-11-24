@@ -1004,19 +1004,21 @@
             <div style="text-align:center;padding:2rem;color:var(--muted);font-size:0.75rem">Loading…</div>
         </div>
 
+        <!-- Single shared range selector -->
+        <div style="display:flex;justify-content:flex-end;margin-bottom:1rem" id="bo2-range-wrap">
+            <div style="display:flex;gap:4px" id="bo2-range">
+                <button class="aq-rbtn" data-r="3m">3M</button>
+                <button class="aq-rbtn aq-rbtn-active" data-r="6m">6M</button>
+                <button class="aq-rbtn" data-r="1y">1Y</button>
+                <button class="aq-rbtn" data-r="all">ALL</button>
+            </div>
+        </div>
+
         <!-- Loadings per Month chart -->
         <div style="background:var(--surface);border:1px solid var(--border);padding:1.25rem 1.5rem 1rem;margin-bottom:1.25rem;display:none" id="bo2-chart-wrap">
-            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;flex-wrap:wrap;gap:0.5rem">
-                <div>
-                    <div style="font-size:0.7rem;letter-spacing:1px;text-transform:uppercase;color:var(--accent)">Loadings per Month</div>
-                    <div style="font-size:0.65rem;color:var(--muted);margin-top:0.2rem">VLCC and smaller vessels · confirmed loadings only</div>
-                </div>
-                <div style="display:flex;gap:4px" id="bo2-chart-range">
-                    <button class="aq-rbtn" data-r="3m">3M</button>
-                    <button class="aq-rbtn aq-rbtn-active" data-r="6m">6M</button>
-                    <button class="aq-rbtn" data-r="1y">1Y</button>
-                    <button class="aq-rbtn" data-r="all">ALL</button>
-                </div>
+            <div style="margin-bottom:1rem">
+                <div style="font-size:0.7rem;letter-spacing:1px;text-transform:uppercase;color:var(--accent)">Loadings per Month</div>
+                <div style="font-size:0.65rem;color:var(--muted);margin-top:0.2rem">VLCC and smaller vessels · confirmed loadings only</div>
             </div>
             <div style="position:relative;height:200px"><canvas id="bo2-chart" style="width:100%;height:100%;display:block"></canvas></div>
             <div style="display:flex;gap:16px;flex-wrap:wrap;margin-top:10px">
@@ -1028,17 +1030,9 @@
 
         <!-- Pass log -->
         <div style="background:var(--surface);border:1px solid var(--border);padding:1.25rem 1.5rem 1rem;margin-bottom:1.25rem;display:none" id="bo2-passlog-wrap">
-            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.75rem;flex-wrap:wrap;gap:0.5rem">
-                <div>
-                    <div style="font-size:0.7rem;letter-spacing:1px;text-transform:uppercase;color:var(--accent)">Pass Log</div>
-                    <div style="font-size:0.65rem;color:var(--muted);margin-top:0.2rem">Every Sentinel-1 pass · newest first</div>
-                </div>
-                <div style="display:flex;gap:4px" id="bo2-log-range">
-                    <button class="aq-rbtn" data-r="3m">3M</button>
-                    <button class="aq-rbtn aq-rbtn-active" data-r="6m">6M</button>
-                    <button class="aq-rbtn" data-r="1y">1Y</button>
-                    <button class="aq-rbtn" data-r="all">ALL</button>
-                </div>
+            <div style="margin-bottom:0.75rem">
+                <div style="font-size:0.7rem;letter-spacing:1px;text-transform:uppercase;color:var(--accent)">Pass Log</div>
+                <div style="font-size:0.65rem;color:var(--muted);margin-top:0.2rem">Every Sentinel-1 pass · newest first</div>
             </div>
             <div style="overflow-x:auto">
                 <table style="width:100%;border-collapse:collapse;font-size:0.75rem">
@@ -1066,7 +1060,7 @@
         </div>
 
         <div style="font-size:0.65rem;color:var(--dim);border-top:1px solid var(--border);padding-top:0.75rem;line-height:1.6">
-            Sentinel-1 radar · Planetary Computer · updated every pass. Vessel class estimated from hull size. Visits shorter than the gap between passes may be missed — lower bound.
+            Sentinel-1 radar · orbit 35 · updated every pass. Vessel class estimated from hull size. Visits shorter than the gap between passes may be missed — lower bound.
         </div>
     </div>
 
@@ -3587,7 +3581,7 @@ document.addEventListener('DOMContentLoaded', function() {
       var panel = document.getElementById(panelId);
       if (!panel) return;
       var snap = snaps[snapKey] || (snapKey === 'last_ship' ? snaps['prev'] : null);
-      if (!snap || !snap.url) {
+      if (!snap) {
         panel.innerHTML = '<div style="font-size:0.65rem;color:var(--dim);padding:1rem 0">' + labelTxt + ': no data</div>';
         return;
       }
@@ -3595,6 +3589,12 @@ document.addEventListener('DOMContentLoaded', function() {
       var pass = null;
       for (var i = 0; i < passes.length; i++) {
         if (passes[i].date === snap.date && String(passes[i].orbit) === String(snap.orbit)) { pass = passes[i]; break; }
+      }
+      if (!pass) {
+        // Find nearest pass by date
+        for (var i = 0; i < passes.length; i++) {
+          if (passes[i].date === snap.date) { pass = passes[i]; break; }
+        }
       }
       if (!pass) pass = {};
 
@@ -3610,7 +3610,7 @@ document.addEventListener('DOMContentLoaded', function() {
             labels.push({ lbl: fmtBerth(b) + ': ' + cls + ' · ' + arr, clr: clr });
           });
         } else {
-          labels.push({ lbl: fmtBerth(b) + ': empty', clr: '#374151' });
+          labels.push({ lbl: fmtBerth(b) + ': empty', clr: 'var(--dim)' });
         }
       });
 
@@ -3623,15 +3623,13 @@ document.addEventListener('DOMContentLoaded', function() {
         });
       });
 
-      // Hide panels with no ships — avoids confusing "empty latest pass" next to detection
-      if (vlcc + sm === 0 && snapKey !== 'last_ship') {
-        panel.style.display = 'none';
-        return;
-      }
+      var imgHtml = snap.url
+        ? '<img src="' + snap.url + '" alt="' + snapKey + ' SAR pass" style="width:100%;border-radius:4px;display:block;margin-bottom:0.5rem" loading="lazy">'
+        : '<div style="font-size:0.65rem;color:var(--dim);padding:0.5rem 0 0.75rem">Scene not yet available</div>';
 
       panel.innerHTML =
         '<div style="font-size:0.6rem;letter-spacing:1px;text-transform:uppercase;color:' + accent + ';margin-bottom:0.5rem">' + labelTxt + ' · ' + snap.date + ' · o' + snap.orbit + '</div>' +
-        '<img src="' + snap.url + '" alt="' + snapKey + ' SAR pass" style="width:100%;border-radius:4px;display:block;margin-bottom:0.5rem" loading="lazy">' +
+        imgHtml +
         '<div style="display:flex;flex-direction:column;gap:0.2rem;font-size:0.68rem">' +
         labels.map(function(l){ return '<span style="color:' + l.clr + '">' + l.lbl + '</span>'; }).join('') +
         '</div>' +
@@ -3656,22 +3654,15 @@ document.addEventListener('DOMContentLoaded', function() {
       renderPassLog(data, '6m');
       renderSnaps(data, snaps);
 
-      var chartBtns = document.getElementById('bo2-chart-range');
-      if (chartBtns) chartBtns.addEventListener('click', function(e) {
+      var rangeBtns = document.getElementById('bo2-range');
+      if (rangeBtns) rangeBtns.addEventListener('click', function(e) {
         var btn = e.target.closest('[data-r]');
         if (!btn) return;
-        chartBtns.querySelectorAll('.aq-rbtn').forEach(function(b){ b.classList.remove('aq-rbtn-active'); });
+        rangeBtns.querySelectorAll('.aq-rbtn').forEach(function(b){ b.classList.remove('aq-rbtn-active'); });
         btn.classList.add('aq-rbtn-active');
-        renderChart(data, btn.dataset.r);
-      });
-
-      var logBtns = document.getElementById('bo2-log-range');
-      if (logBtns) logBtns.addEventListener('click', function(e) {
-        var btn = e.target.closest('[data-r]');
-        if (!btn) return;
-        logBtns.querySelectorAll('.aq-rbtn').forEach(function(b){ b.classList.remove('aq-rbtn-active'); });
-        btn.classList.add('aq-rbtn-active');
-        renderPassLog(data, btn.dataset.r);
+        var r = btn.dataset.r;
+        renderChart(data, r);
+        renderPassLog(data, r);
       });
 
     }).catch(function() {
