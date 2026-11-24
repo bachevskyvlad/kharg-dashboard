@@ -2101,20 +2101,21 @@ function renderFlows(raw) {
         const cutoff = new Date();
         cutoff.setDate(cutoff.getDate() - _flowsRange);
         const cutStr = cutoff.toISOString().slice(0, 10);
-        data = raw.filter(r => r.date_to >= cutStr);
+        data = raw.filter(r => (r.date_to || r.d1) >= cutStr);
     } else {
-        data = raw.filter(r => r.date_from >= '2017-01-01');
+        data = raw.filter(r => (r.date_from || r.d0) >= '2017-01-01');
     }
 
-    // Normalise to passes array (field names from kharg_gross_flows_v2)
+    // Normalise to passes array — handle both kharg_gross_flows_v2 and legacy kharg_gross_flows field names
     const passes = data.map(r => ({
-        d0: r.date_from, d1: r.date_to,
-        days: r.days,
-        grossOut: parseFloat(r.gross_out_mb),
-        grossIn:  parseFloat(r.gross_in_mb),
-        net:      parseFloat(r.net_mb),
-        tanksOut: r.tanks_draining,
-        tanksIn:  r.tanks_filling
+        d0: r.date_from || r.d0,
+        d1: r.date_to   || r.d1,
+        days: r.days || Math.max(1, (new Date(r.date_to || r.d1) - new Date(r.date_from || r.d0)) / 86400000),
+        grossOut: parseFloat(r.gross_out_mb != null ? r.gross_out_mb : (r.grossOut || 0)),
+        grossIn:  parseFloat(r.gross_in_mb  != null ? r.gross_in_mb  : (r.grossIn  || 0)),
+        net:      parseFloat(r.net_mb != null ? r.net_mb : (r.net || 0)),
+        tanksOut: r.tanks_draining != null ? r.tanks_draining : (r.tanksOut || 0),
+        tanksIn:  r.tanks_filling  != null ? r.tanks_filling  : (r.tanksIn  || 0)
     }));
 
     if (!passes.length) {
