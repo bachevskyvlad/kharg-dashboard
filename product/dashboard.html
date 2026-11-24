@@ -1156,6 +1156,8 @@
         </div>
     </div>
 
+<div style="padding:12px 0 4px;font-size:11px;color:var(--dim);border-top:1px solid var(--border);margin-top:24px">Contains modified Copernicus Sentinel data [2015–2026] · processed by OilRadar</div>
+
 </div><!-- /main -->
 
 <script>
@@ -1695,7 +1697,7 @@ function render() {
     destroyCharts();
     renderMainChart(dates, values);
     renderFillRateChart(dates, chartFR);
-    renderSPIChart(dates, spiSeries);
+    if (document.getElementById('spiChart')) renderSPIChart(dates, spiSeries);
     renderMonthlyChart(rawSlice.dates, rawSlice.values);
 }
 
@@ -2223,6 +2225,7 @@ function renderRevenue() {
 
 checkAuth();
 loadData();
+loadFlows();
 
 // ── Per-Tank Map ───────────────────────────────────────────────────────────
 const SUPABASE_URL = window.SUPABASE_URL;
@@ -3011,6 +3014,5 @@ async function initAnchorage() {
   window._boLoad = boLoad;
 })();
 </script>
-<div style="text-align:center;padding:12px 16px;font-size:11px;color:#6b7280;font-family:sans-serif;border-top:1px solid #e5e7eb;margin-top:24px">Contains modified Copernicus Sentinel data [2015–2026] · processed by OilRadar</div>
 </body>
 </html>
