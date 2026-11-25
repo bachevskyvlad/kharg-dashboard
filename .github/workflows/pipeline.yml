@@ -116,6 +116,18 @@ jobs:
           RUN_ID:               gha-${{ github.run_id }}
         run: python diagnostics/anchorage_hist/hist_backfill.py --update
 
+      - name: Sync anchorage_queue from anchorage_daily
+        id: anchorage_queue_sync
+        continue-on-error: true
+        timeout-minutes: 10
+        if: >
+          (inputs.steps || 'all') == 'all' ||
+          contains(inputs.steps || 'all', 'anchorage')
+        env:
+          SUPABASE_URL:         ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+        run: python scripts/anchorage/daily_to_queue.py
+
       - name: Anchorage tracks + snapshots
         id: anchorage_tracks
         continue-on-error: true
