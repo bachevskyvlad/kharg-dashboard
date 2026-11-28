@@ -250,7 +250,7 @@ def main():
         tg_chat = os.environ.get("TG_CHAT", "")
         if not tg_bot or not tg_chat:
             sys.exit("FATAL: TG_BOT and TG_CHAT must be set")
-        _send(text, tg_bot, tg_chat)
+        _send(text, f"https://api.telegram.org/bot{tg_bot}/sendMessage", tg_chat)
         print("Sent to Telegram.")
     else:
         print("(dry-run, not sent)")
